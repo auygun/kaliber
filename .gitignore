@@ -1,0 +1,8 @@
+.vscode
+build/android/.gradle
+build/android/app/.cxx
+build/android/app/build
+build/android/build
+build/linux/gltest_x86_64_debug
+build/linux/gltest_x86_64_release
+build/linux/obj
