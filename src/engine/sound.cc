@@ -24,7 +24,7 @@ Sound::~Sound() {
 
 bool Sound::Load(const std::string& file_name) {
   if (IsImmutable()) {
-    LOG << "Error: Asset is mutable. Failed to load.";
+    LOG << "Error: Sound is immutable. Failed to load.";
     return false;
   }
 
@@ -76,7 +76,7 @@ size_t Sound::GetSize() const {
 
 float* Sound::GetBuffer(int channel) {
   if (IsImmutable()) {
-    LOG << "Error: Asset is mutable. Failed to return writable buffer.";
+    LOG << "Error: Sound is immutable. Failed to return writable buffer.";
     return nullptr;
   }
 
