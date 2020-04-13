@@ -163,6 +163,10 @@ bool Image::Load(const char *fileName, bool convertPow2) {
 unsigned Image::GetSize() const {
   switch (format) {
   case kRGBA32:   return width * height * 4;
+  case kDXT1:     return ((width + 3) / 4) * ((height + 3) / 4) * 8;
+  case kDXT5:     return ((width + 3) / 4) * ((height + 3) / 4) * 16;
+  case kATC:      return ((width + 3) / 4) * ((height + 3) / 4) * 16;
+  case kETC1:     return (width * height * 4) / 8;
   default:        return 0;
   }
 }

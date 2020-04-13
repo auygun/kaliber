@@ -6,7 +6,11 @@
 class Image {
 public:
   enum Format {
-    kRGBA32
+    kRGBA32,
+    kDXT1,
+    kDXT5,
+    kETC1,
+    kATC
   };
 
   Image();
