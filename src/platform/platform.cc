@@ -2,15 +2,17 @@
 #include "../base/timer.h"
 #include "../engine/engine.h"
 
+Platform::InternalError Platform::internal_error;
+
 Platform& Platform::Get() {
   static Platform platform;
   return platform;
 }
 
-bool Platform::RunMainLoop() {
+void Platform::RunMainLoop() {
   if (!engine::Engine::Get().Init()) {
     printf("Failed to initialize the engine.\n");
-    return false;
+    throw internal_error;
   }
 
   // Use fixed time steps.
@@ -27,9 +29,10 @@ bool Platform::RunMainLoop() {
     engine::Engine::Get().Draw(frame_frac);
 
     Update();
+
     if (ShouldExit()) {
       engine::Engine::Get().Shutdown();
-      return true;
+      return;
     }
 
     timer.Update();

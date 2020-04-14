@@ -46,7 +46,10 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       break;
     case APP_CMD_INIT_WINDOW:
       if (app->window != NULL) {
-        engine::Engine::Get().GetRenderer().Init();
+        if (!engine::Engine::Get().GetRenderer().Init()) {
+          LOG("Failed to initialize the renderer.\n");
+          throw internal_error;
+        }
         platform->has_focus_ = true;
       }
       break;
@@ -70,7 +73,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
   }
 }
 
-bool Platform::Initialize(android_app *app) {
+void Platform::Initialize(android_app *app) {
   app_ = app;
   root_path_ = GetApkPath(app->activity);
   LOG("Root path: %s", root_path_.c_str());
@@ -80,8 +83,6 @@ bool Platform::Initialize(android_app *app) {
   app->onAppCmd = Platform::HandleCmd;
 
   Update();
-
-  return true;
 }
 
 void Platform::Update() {
@@ -103,7 +104,9 @@ void Platform::Update() {
 
 void android_main(android_app* app) {
   Platform &platform = Platform::Get();
-  if (!platform.Initialize(app))
-    return;
-  platform.RunMainLoop();
+  try {
+    platform.Initialize(app);
+    platform.RunMainLoop();
+  } catch (Platform::InternalError &e) {
+  }
 }

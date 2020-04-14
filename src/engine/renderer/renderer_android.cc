@@ -28,7 +28,7 @@ bool Renderer::Init() {
       ContextLost();
       // TODO: LoadResources();
     } else {
-        assert(0);
+        return false;
     }
   }
 
