@@ -1,13 +1,16 @@
 #include "renderer.h"
 #include "../../base/log.h"
+#include "../../platform/platform.h"
 #include "../../third_party/android/GLContext.h"
+#include <cassert>
 #include <sstream>
 #include <android/native_window.h>
 
 namespace engine {
 
-bool Renderer::Init(ANativeWindow* window) {
+bool Renderer::Init() {
   ndk_helper::GLContext* gl_context = ndk_helper::GLContext::GetInstance();
+  ANativeWindow *window = Platform::Get().GetNativeWindow();
 
   if (!gl_context->IsInitialzed()) {
     gl_context->Init(window);
@@ -15,37 +18,42 @@ bool Renderer::Init(ANativeWindow* window) {
   } else if(window != gl_context->GetANativeWindow()) {
     // Re-initialize ANativeWindow.
     // On some devices, ANativeWindow is re-created when the app is resumed
-    assert(gl_context->GetANativeWindow());
-    // TODO: UnloadResources();
+    ContextLost();
     gl_context->Invalidate();
     gl_context->Init(window);
     // TODO: LoadResources();
   } else {
-    // TODO:
     // initialize OpenGL ES and EGL
-    // if (EGL_SUCCESS == gl_context->Resume(window)) {
-    //   UnloadResources();
-    //   LoadResources();
-    // } else {
-    //     assert(0);
-    // }
+    if (EGL_SUCCESS == gl_context->Resume(window)) {
+      ContextLost();
+      // TODO: LoadResources();
+    } else {
+        assert(0);
+    }
   }
 
-  Init(gl_context->GetScreenWidth(), gl_context->GetScreenHeight());
+  screen_width_ = gl_context->GetScreenWidth();
+  screen_height_ = gl_context->GetScreenHeight();
 
+  LogVersion();
+  LOG("Screen size: %d, %d\n", screen_width_, screen_height_);
+
+  std::set<std::string> extensions = SetupExtensions();
+
+  if (extensions.find("GL_OES_vertex_array_object") != extensions.end()) {
+      LOG("Supports Vertex Array Objects\n");
+      vertexArrayObjects = true;
+  }
+
+  glViewport(0, 0, screen_width_, screen_height_);
   return true;
 }
 
-bool Renderer::SetupOpenGLWindow(int width, int height) {
-  return true;
-}
-
-void Renderer::ShutdownOpenGLWindow() {
-  // TODO: gl_context_->Invalidate();
+void Renderer::Shutdown() {
   ndk_helper::GLContext::GetInstance()->Suspend();
 }
 
-void Renderer::UpdateOpenGLWindow() {
+void Renderer::Present() {
   if (EGL_SUCCESS != ndk_helper::GLContext::GetInstance()->Swap()) {
     // TODO:
     // UnloadResources();
@@ -53,11 +61,9 @@ void Renderer::UpdateOpenGLWindow() {
   }
 }
 
-void Renderer::PlatformInit(const std::set<std::string> &extensions) {
-  if (extensions.find("GL_OES_vertex_array_object") != extensions.end()) {
-      LOG("Supports Vertex Array Objects\n");
-      vertexArrayObjects = true;
-  }
+void Renderer::TrimMemory() {
+  LOG("Trimming memory");
+  ndk_helper::GLContext::GetInstance()->Invalidate();
 }
 
 } // namespace engine

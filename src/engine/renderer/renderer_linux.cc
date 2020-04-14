@@ -7,7 +7,10 @@
 
 namespace engine {
 
-bool Renderer::SetupOpenGLWindow(int width, int height) {
+bool Renderer::Init() {
+  screen_width_ = 1280;
+  screen_height_ = 1024;
+
   // Try to open the local display.
   display = XOpenDisplay(NULL);
   if (!display) {
@@ -30,7 +33,7 @@ bool Renderer::SetupOpenGLWindow(int width, int height) {
   XSetWindowAttributes windowAttributes;
   windowAttributes.colormap = XCreateColormap(display, rootWindow, visualInfo->visual, AllocNone);
   windowAttributes.event_mask = ExposureMask | KeyPressMask;
-  window = XCreateWindow(display, rootWindow, 0, 0, width, height, 0, visualInfo->depth,
+  window = XCreateWindow(display, rootWindow, 0, 0, screen_width_, screen_height_, 0, visualInfo->depth,
                          InputOutput, visualInfo->visual, CWColormap | CWEventMask, &windowAttributes);
   XMapWindow(display, window);
   XStoreName(display, window, "Opera Testbed");
@@ -49,10 +52,21 @@ bool Renderer::SetupOpenGLWindow(int width, int height) {
     return false;
   }
 
+  LogVersion();
+  LOG("Screen size: %d, %d\n", screen_width_, screen_height_);
+
+  std::set<std::string> extensions = SetupExtensions();
+
+  if (extensions.find("GL_OES_vertex_array_object") != extensions.end()) {
+      LOG("Supports Vertex Array Objects\n");
+      vertexArrayObjects = true;
+  }
+
+  glViewport(0, 0, screen_width_, screen_height_);
   return true;
 }
 
-void Renderer::ShutdownOpenGLWindow() {
+void Renderer::Shutdown() {
   if (display) {
     glXMakeCurrent(display, None, NULL);
     glXDestroyContext(display, glxContext);
@@ -62,13 +76,12 @@ void Renderer::ShutdownOpenGLWindow() {
   }
 }
 
-void Renderer::UpdateOpenGLWindow() {
+void Renderer::Present() {
   if (display)
     glXSwapBuffers(display, window);
 }
 
-void Renderer::PlatformInit(const std::set<std::string> &extensions) {
-}
+void Renderer::TrimMemory() {}
 
 } // namespace engine
 

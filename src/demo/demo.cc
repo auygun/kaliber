@@ -14,8 +14,6 @@ DECLARE_GAME_END
 
 #define FULLSCREEN_TEST
 
-Demo::Demo() : config_{1280, 1024} {}
-
 bool Demo::Initialize() {
   if (!quad_.Create())
     return false;
@@ -28,8 +26,10 @@ bool Demo::Initialize() {
 
   // Ddetermine the quad scale.
   constexpr int quad_size = 50;
-  float horizontal_ratio = (float)config_.screen_width / quad_size;
-  float vertical_ratio = (float)config_.screen_height / quad_size;
+  float horizontal_ratio =
+    (float)engine::Engine::Get().GetRenderer().GetScreenWidth() / quad_size;
+  float vertical_ratio =
+    (float)engine::Engine::Get().GetRenderer().GetScreenHeight() / quad_size;
 
   // The orthogonal viewport is (-1.0 .. 1.0) x (-1.0 .. 1.0).
   scale_.x = 2.0f / horizontal_ratio;

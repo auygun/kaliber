@@ -1,11 +1,14 @@
 #include "timer.h"
 
-bool Timer::Init() {
+Timer::Timer() {
+  Reset();
+}
+
+void Timer::Reset() {
   gettimeofday(&lastTime, nullptr);
 
   secondsPassed = 0.0f;
   secondsAccumulated = 0.0f;
-  return true;
 }
 
 void Timer::Update() {

@@ -78,6 +78,7 @@ GLTEST_SRC := \
 	$(SRC_ROOT)/engine/renderer/shader.cc \
 	$(SRC_ROOT)/engine/renderer/texture.cc \
 	$(SRC_ROOT)/platform/platform_linux.cc \
+	$(SRC_ROOT)/platform/platform.cc \
   $(SRC_ROOT)/demo/demo.cc \
   $(SRC_ROOT)/third_party/glew/glew.c \
   $(SRC_ROOT)/third_party/minizip/ioapi.c \

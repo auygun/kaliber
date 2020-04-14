@@ -10,26 +10,25 @@
 #include <set>
 #include <string>
 
-#if defined(__ANDROID__)
-struct ANativeWindow;
-#endif
-
 namespace engine {
 
 class Renderer {
 public:
-  Renderer();
+  Renderer() = default;
 
-#if defined(__ANDROID__)
-  bool Init(ANativeWindow* window);
-#endif
-
-  bool Init(int width, int height);
+  bool Init();
   void Shutdown();
 
   void EnableAlphaBlending();
   void Clear(const float *rgba);
   void Present();
+
+  void ContextLost();
+
+  void TrimMemory();
+
+  int GetScreenWidth() { return screen_width_; }
+  int GetScreenHeight() { return screen_height_; }
 
   bool SupportsETC1() const     { return textureCompression.etc1; }
   bool SupportsDXT1() const     { return textureCompression.dxt1 || textureCompression.s3tc; }
@@ -38,6 +37,9 @@ public:
 
   bool SupportsVAO() const      { return vertexArrayObjects; }
   bool SupportsKHRImage() const { return khrImage && eglImage; }
+
+#if defined(__ANDROID__)
+#endif
 
 private:
   struct TextureCompression {
@@ -58,10 +60,13 @@ private:
     }
   };
 
-  TextureCompression  textureCompression;
-  bool                vertexArrayObjects,
-                      khrImage,
-                      eglImage;
+  TextureCompression textureCompression;
+  bool vertexArrayObjects = false;
+  bool khrImage = false;
+  bool eglImage = false;
+
+  int screen_width_ = 0;
+  int screen_height_ = 0;
 
 #if defined(__linux__) && !defined(__ANDROID__)
   Display* display = NULL;
@@ -69,11 +74,9 @@ private:
   GLXContext glxContext = NULL;
 #endif
 
-  void PlatformInit(const std::set<std::string> &extensions);
+  std::set<std::string> SetupExtensions();
 
-  bool SetupOpenGLWindow(int width, int height);
-  void ShutdownOpenGLWindow();
-  void UpdateOpenGLWindow();
+  void LogVersion();
 };
 
 } // namespace engine

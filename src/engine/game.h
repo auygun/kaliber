@@ -3,8 +3,6 @@
 
 namespace engine {
 
-struct EngineConfig;
-
 class Game {
  public:
   virtual ~Game() = default;
@@ -16,8 +14,6 @@ class Game {
   virtual void Update(float delta_time) = 0;
 
   virtual void Draw(float frame_frac) = 0;
-
-  virtual const EngineConfig& GetEngineConfig() = 0;
 };
 
 } // namespace engine

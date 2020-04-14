@@ -1,9 +1,9 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-#include "../base/timer.h"
 #include "renderer/renderer.h"
 #include "font.h"
+#include <memory>
 
 #if defined(__ANDROID__)
 struct ANativeWindow;
@@ -11,34 +11,32 @@ struct ANativeWindow;
 
 namespace engine {
 
-struct EngineConfig;
+class Game;
 
 class Engine {
 public:
   static Engine &Get();
 
-#if defined(__ANDROID__)
-  bool Init(ANativeWindow* window);
-#else
-  bool Init(const EngineConfig &config);
-#endif
+  bool Init();
 
   void Shutdown();
   
-  void Update();
-  void Clear();
-  void Present();
+  void Update(float delta_time);
+  void Draw(float frame_frac);
 
-  Timer &GetTimer()         { return timer; }
+  void TrimMemory();
+
   Renderer &GetRenderer()   { return renderer; }
   Font &GetFont()           { return font; }
 
-  static int Run();
-
 private:
-  Timer           timer;
+  std::unique_ptr<Game> game_;
+
   Renderer        renderer;
   Font            font;
+
+  void Clear();
+  void Present();
 };
 
 } // namespace engine
