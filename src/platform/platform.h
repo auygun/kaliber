@@ -30,6 +30,8 @@ class Platform {
 
   bool HasFocus() { return has_focus_; }
 
+  const std::string& GetRootPath() { return root_path_; }
+
 #if defined(__ANDROID__)
   ANativeWindow* GetNativeWindow();
 #endif

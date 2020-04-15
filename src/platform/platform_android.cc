@@ -77,7 +77,6 @@ void Platform::Initialize(android_app *app) {
   app_ = app;
   root_path_ = GetApkPath(app->activity);
   LOG("Root path: %s", root_path_.c_str());
-  File::SetRootPath(root_path_.c_str());
 
   app->userData = reinterpret_cast<void*>(this);
   app->onAppCmd = Platform::HandleCmd;

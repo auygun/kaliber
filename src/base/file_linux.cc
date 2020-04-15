@@ -1,6 +1,7 @@
 #if defined(__linux__)
 
 #include "file.h"
+#include "../platform/platform.h"
 #include <string>
 
 File::File()
@@ -11,10 +12,9 @@ File::~File() {
 }
 
 bool File::Open(const char *fileName) {
-  std::string fullPath = rootPath;
-  fullPath += fileName;
-
-  file = fopen(fullPath.c_str(), "rb");
+  std::string full_path = Platform::Get().GetRootPath();
+  full_path += fileName;
+  file = fopen(full_path.c_str(), "rb");
   return !!file;
 }
 

@@ -2,6 +2,7 @@
 
 #include "file.h"
 #include "log.h"
+#include "../platform/platform.h"
 #include <assert.h>
 #include <string>
 
@@ -17,9 +18,10 @@ File::~File() {
 bool File::Open(const char *fileName) {
   do {
     // Try to open the zip archive.
-    archive = unzOpen(rootPath);
+    const char *root_path = Platform::Get().GetRootPath().c_str();
+    archive = unzOpen(root_path);
     if (!archive) {
-      LOG("Failed to open zip file: %s\n", rootPath);
+      LOG("Failed to open zip file: %s\n", root_path);
       break;
     }
 

@@ -2,8 +2,6 @@
 #include "log.h"
 #include <assert.h>
 
-const char *File::rootPath = "../../assets/";
-
 char *File::ReadWholeFile(const char *fileName, unsigned *length,
                           bool nullTerminate) {
   // Determine how big the file is.
