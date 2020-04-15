@@ -54,13 +54,6 @@ add_library(native-activity SHARED
 
 target_include_directories(native-activity PRIVATE
     ${ANDROID_NDK}/sources/android/native_app_glue
-    ../../../src/base
-    ../../../src
-    ../../../src/engine/renderer
-    ../../../src/platform
-    ../../../src/third_party/android
-    ../../../src/third_party/minizip
-    ../../../src/third_party/texture_compress
     )
 
 # add lib dependencies
