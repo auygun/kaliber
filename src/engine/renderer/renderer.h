@@ -19,7 +19,7 @@ public:
   bool Init();
   void Shutdown();
 
-  void EnableAlphaBlending();
+  void EnableBlend();
   void Clear(const float *rgba);
   void Present();
 

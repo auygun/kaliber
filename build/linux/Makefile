@@ -66,17 +66,17 @@ ifneq ($(filter gltest,$(APPS)),)
 GLTEST_SRC := \
 	$(SRC_ROOT)/base/file_linux.cc \
 	$(SRC_ROOT)/base/file.cc \
+	$(SRC_ROOT)/base/font.cc \
 	$(SRC_ROOT)/base/image.cc \
 	$(SRC_ROOT)/base/random.cc \
 	$(SRC_ROOT)/base/timer.cc \
 	$(SRC_ROOT)/engine/engine.cc \
-	$(SRC_ROOT)/engine/font.cc \
-	$(SRC_ROOT)/engine/quad.cc \
 	$(SRC_ROOT)/engine/renderer/geometry.cc \
 	$(SRC_ROOT)/engine/renderer/renderer_linux.cc \
 	$(SRC_ROOT)/engine/renderer/renderer.cc \
 	$(SRC_ROOT)/engine/renderer/shader.cc \
 	$(SRC_ROOT)/engine/renderer/texture.cc \
+	$(SRC_ROOT)/engine/sprite.cc \
 	$(SRC_ROOT)/platform/platform_linux.cc \
 	$(SRC_ROOT)/platform/platform.cc \
   $(SRC_ROOT)/demo/demo.cc \

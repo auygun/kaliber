@@ -1,0 +1,30 @@
+#ifndef SPRITE_H
+#define SPRITE_H
+
+#include "../base/image.h"
+#include "renderer/texture.h"
+#include "vecmath.h"
+
+#include <string>
+
+namespace engine {
+
+class Sprite {
+public:
+  Sprite() = default;
+  ~Sprite() = default;
+
+  bool Create(const std::string &asset_name, const Vector2 &offset, const Vector2 &scale);
+
+  void Draw(const Vector2 &offset);
+
+private:
+  Image image_;
+  Texture texture_;
+  Vector2 offset_;
+  Vector2 scale_;
+};
+
+} // namespace engine
+
+#endif // SPRITE_H

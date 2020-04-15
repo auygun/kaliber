@@ -1,8 +1,10 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include "../base/font.h"
 #include "renderer/renderer.h"
-#include "font.h"
+#include "renderer/geometry.h"
+#include "renderer/shader.h"
 #include <memory>
 
 #if defined(__ANDROID__)
@@ -27,13 +29,21 @@ public:
   void TrimMemory();
 
   Renderer &GetRenderer()   { return renderer; }
-  Font &GetFont()           { return font; }
+  Geometry& GetQuad() { return quad_; }
+  Shader& GetPassThroughShader() { return pass_through_shader_; }
+  Fontx &GetFont()           { return font; }
 
 private:
   std::unique_ptr<Game> game_;
 
-  Renderer        renderer;
-  Font            font;
+  Renderer renderer;
+
+  Geometry quad_;
+  Shader pass_through_shader_;
+
+  Fontx font;
+
+  bool CreateRenderResources();
 
   void Clear();
   void Present();

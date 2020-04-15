@@ -1,23 +1,20 @@
-#include "../base/file.h"
-#include "../base/log.h"
-#include "../base/image.h"
 #include "font.h"
+#include "file.h"
+#include "log.h"
 #include <stdint.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "../third_party/stb/stb_truetype.h"
 
-namespace engine {
-
-Font::Font()
+Fontx::Fontx()
   : glyphCache(NULL) {
 }
 
-Font::~Font() {
+Fontx::~Fontx() {
   Destroy();
 }
 
-bool Font::Create() {
+bool Fontx::Create() {
   Destroy();
 
   // Read the font file.
@@ -55,7 +52,7 @@ bool Font::Create() {
   return result;
 }
 
-void Font::Destroy() {
+void Fontx::Destroy() {
   delete [] glyphCache;
   glyphCache = NULL;
 }
@@ -108,7 +105,7 @@ static void StretchBlit_I8_to_RGBA32(int dst_x0, int dst_y0, int dst_x1, int dst
   }
 }
 
-void Font::CalculateBoundingBox(const char *text, int &x0, int &y0, int &x1, int &y1) {
+void Fontx::CalculateBoundingBox(const char *text, int &x0, int &y0, int &x1, int &y1) {
   x0 = 0;
   y0 = 0;
   x1 = 0;
@@ -142,14 +139,14 @@ void Font::CalculateBoundingBox(const char *text, int &x0, int &y0, int &x1, int
   }
 }
 
-void Font::CalculateBoundingBox(const char *text, int &width, int &height) {
+void Fontx::CalculateBoundingBox(const char *text, int &width, int &height) {
   int x0, y0, x1, y1;
   CalculateBoundingBox(text, x0, y0, x1, y1);
   width = x1 - x0;
   height = y1 - y0;
 }
 
-void Font::Print(int x, int y, const char *text, Image &image) {
+void Fontx::Print(int x, int y, const char *text, uint8_t *buffer, unsigned width) {
   //LOG("Font::Print() = %s\n", text);
 
   float fx = (float)x,
@@ -175,12 +172,10 @@ void Font::Print(int x, int y, const char *text, Image &image) {
 
       StretchBlit_I8_to_RGBA32(ix0, iy0, ix1, iy1,
                                iu0, iv0, iu1, iv1,
-                               image.GetBuffer(), image.GetWidth(),
+                               buffer, width,
                                glyphCache, kGlyphSize);
 
       ++text;
     }
   }
 }
-
-} // namespace engine

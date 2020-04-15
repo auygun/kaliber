@@ -1,17 +1,13 @@
-#ifndef TEXT_H
-#define TEXT_H
+#ifndef FONT_H
+#define FONT_H
 
 #include <stdint.h>
 #include "../third_party/stb/stb_truetype.h"
 
-class Image;
-
-namespace engine {
-
-class Font {
+class Fontx {
 public:
-  Font();
-  ~Font();
+  Fontx();
+  ~Fontx();
 
   bool Create();
   void Destroy();
@@ -19,7 +15,7 @@ public:
   void CalculateBoundingBox(const char *text, int &width, int &height);
   void CalculateBoundingBox(const char *text, int &x0, int &y0, int &x1, int &y1);
 
-  void Print(int x, int y, const char *text, Image &image);
+  void Print(int x, int y, const char *text, uint8_t *buffer, unsigned width);
 
 private:
   enum Constants {
@@ -32,6 +28,4 @@ private:
   stbtt_bakedchar glyphInfo[kNumChars]; // Coordinates and advance.
 };
 
-} // namespace engine
-
-#endif // TEXT_H
+#endif // FONT_H

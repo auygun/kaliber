@@ -2,8 +2,7 @@
 #define DEMO_H
 
 #include "../engine/game.h"
-#include "../engine/quad.h"
-#include "../engine/renderer/texture.h"
+#include "../engine/sprite.h"
 
 class Demo : public engine::Game {
  public:
@@ -19,9 +18,7 @@ class Demo : public engine::Game {
   void Draw(float frame_frac) override;
 
  private:
-  engine::Quad quad_;
-  engine::Texture texture_;
-  Vector2 scale_ = {1 ,1};
+  engine::Sprite sprite_;
 };
 
 #endif // DEMO_H

@@ -90,7 +90,7 @@ bool Geometry::Create(GLenum primitive, const char *vertexDescription,
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
   }
 
-  return false;
+  return true;
 }
 
 void Geometry::Destroy() {

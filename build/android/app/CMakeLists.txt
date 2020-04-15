@@ -32,18 +32,18 @@ set(CMAKE_SHARED_LINKER_FLAGS
 add_library(native-activity SHARED
     ../../../src/base/file_android.cc
     ../../../src/base/file.cc
+    ../../../src/base/font.cc
     ../../../src/base/image.cc
     ../../../src/base/random.cc
     ../../../src/base/timer.cc
     ../../../src/demo/demo.cc
     ../../../src/engine/engine.cc
-    ../../../src/engine/font.cc
-    ../../../src/engine/quad.cc
     ../../../src/engine/renderer/geometry.cc
     ../../../src/engine/renderer/renderer_android.cc
     ../../../src/engine/renderer/renderer.cc
     ../../../src/engine/renderer/shader.cc
     ../../../src/engine/renderer/texture.cc
+    ../../../src/engine/sprite.cc
     ../../../src/platform/platform_android.cc
     ../../../src/platform/platform.cc
     ../../../src/third_party/android/gl3stub.c
