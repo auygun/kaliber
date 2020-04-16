@@ -62,7 +62,7 @@ void Renderer::Present() {
 }
 
 void Renderer::TrimMemory() {
-  LOG("Trimming memory");
+  LOG("Trimming memor\n");
   ndk_helper::GLContext::GetInstance()->Invalidate();
 }
 

@@ -10,7 +10,7 @@
 
 void Platform::Initialize() {
   root_path_ = "../../assets/";
-  LOG("Root path: %s", root_path_.c_str());
+  LOG("Root path: %s\n", root_path_.c_str());
   if (!engine::Engine::Get().GetRenderer().Init()) {
     LOG("Failed to initialize the renderer.\n");
     throw internal_error;
