@@ -38,9 +38,6 @@ public:
   bool SupportsVAO() const      { return vertexArrayObjects; }
   bool SupportsKHRImage() const { return khrImage && eglImage; }
 
-#if defined(__ANDROID__)
-#endif
-
 private:
   struct TextureCompression {
     unsigned  etc1    : 1,
