@@ -63,7 +63,26 @@ bool Renderer::Init() {
   }
 
   glViewport(0, 0, screen_width_, screen_height_);
+
+  Atom WM_DELETE_WINDOW = XInternAtom(display, "WM_DELETE_WINDOW", false);
+  XSetWMProtocols(display, window, &WM_DELETE_WINDOW, 1);
+
   return true;
+}
+
+bool Renderer::ShouldExit() {
+  if (!XPending(display))
+    return false;
+  XEvent e;
+  XNextEvent(display, &e);
+  if (e.type == KeyPress) {
+    return false;
+  } else if (e.type == ClientMessage) {
+    // TODO: Should check here for other client message types. However the only
+    // protocol registered above is WM_DELETE_WINDOW for now.
+    return true;
+  }
+  return false;
 }
 
 void Renderer::Shutdown() {

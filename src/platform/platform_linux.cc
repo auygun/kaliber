@@ -18,6 +18,7 @@ void Platform::Initialize() {
 }
 
 void Platform::Update() {
+  should_exit_ = engine::Engine::Get().GetRenderer().ShouldExit();
 }
 
 int main(int argc, char **argv) {
