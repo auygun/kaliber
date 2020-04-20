@@ -81,6 +81,9 @@ bool Renderer::ShouldExit() {
   XEvent e;
   XNextEvent(display_, &e);
   if (e.type == KeyPress) {
+    if (e.xkey.keycode == XKeysymToKeycode(display_, XK_Y) &&
+        !(e.xkey.state & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask)))
+      LOG("Y pressed!!! %d\n", e.xkey.state);
     return false;
   } else if (e.type == ClientMessage) {
     // TODO: Should check here for other client message types. However the only
