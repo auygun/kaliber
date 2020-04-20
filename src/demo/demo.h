@@ -1,14 +1,14 @@
 #ifndef DEMO_H
 #define DEMO_H
 
+#include <vector>
 #include "../engine/game.h"
 #include "../engine/sprite.h"
-#include <vector>
 
 class Demo : public engine::Game {
  public:
   Demo() = default;
-  ~Demo() override  = default;
+  ~Demo() override = default;
 
   bool Initialize() override;
 
@@ -26,4 +26,4 @@ class Demo : public engine::Game {
   Vector2 ToScale(int width, int height);
 };
 
-#endif // DEMO_H
+#endif  // DEMO_H

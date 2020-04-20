@@ -8,20 +8,20 @@ class Image;
 namespace engine {
 
 class Texture {
-public:
+ public:
   Texture() = default;
   ~Texture();
-  
-  bool Create(const Image &image);
+
+  bool Create(const Image& image);
   void Destroy();
 
   void Activate();
-  bool Update(const Image &image);
+  bool Update(const Image& image);
 
-private:
+ private:
   GLuint id_ = 0;
 };
 
-} // namespace engine
+}  // namespace engine
 
-#endif // TEXTURE_H
+#endif  // TEXTURE_H

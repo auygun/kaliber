@@ -1,17 +1,14 @@
 #if defined(__linux__)
 
-#include "file.h"
-#include "../platform/platform.h"
 #include <string>
+#include "../platform/platform.h"
+#include "file.h"
 
-File::File()
-  : file_(NULL) {
-}
+File::File() : file_(NULL) {}
 
-File::~File() {
-}
+File::~File() {}
 
-bool File::Open(const char *file_name) {
+bool File::Open(const char* file_name) {
   std::string full_path = Platform::Get().GetRootPath();
   full_path += file_name;
   file_ = fopen(full_path.c_str(), "rb");
@@ -40,11 +37,11 @@ unsigned File::GetSize() {
   return size;
 }
 
-unsigned File::Read(char *data, unsigned size) {
+unsigned File::Read(char* data, unsigned size) {
   if (file_)
     return (unsigned)fread(data, 1, size, file_);
 
   return 0;
 }
 
-#endif // __linux__
+#endif  // __linux__

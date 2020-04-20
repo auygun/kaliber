@@ -1,11 +1,11 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-#include "../base/font.h"
-#include "renderer/renderer.h"
-#include "renderer/geometry.h"
-#include "renderer/shader.h"
 #include <memory>
+#include "../base/font.h"
+#include "renderer/geometry.h"
+#include "renderer/renderer.h"
+#include "renderer/shader.h"
 
 #if defined(__ANDROID__)
 struct ANativeWindow;
@@ -16,24 +16,24 @@ namespace engine {
 class Game;
 
 class Engine {
-public:
-  static Engine &Get();
+ public:
+  static Engine& Get();
 
   bool Init();
 
   void Shutdown();
-  
+
   void Update(float delta_time);
   void Draw(float frame_frac);
 
   void TrimMemory();
 
-  Renderer &GetRenderer()   { return renderer_; }
+  Renderer& GetRenderer() { return renderer_; }
   Geometry& GetQuad() { return quad_; }
   Shader& GetPassThroughShader() { return pass_through_shader_; }
-  Fontx &GetFont()           { return font_; }
+  Fontx& GetFont() { return font_; }
 
-private:
+ private:
   std::unique_ptr<Game> game_;
 
   Renderer renderer_;
@@ -49,6 +49,6 @@ private:
   void Present();
 };
 
-} // namespace engine
+}  // namespace engine
 
-#endif // ENGINE_H
+#endif  // ENGINE_H

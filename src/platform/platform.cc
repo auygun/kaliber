@@ -28,8 +28,7 @@ void Platform::RunMainLoop() {
   float accumulator = 0.0;
   float frame_frac = 0.0f;
 
-  for (;;)
-  {
+  for (;;) {
     engine::Engine::Get().Draw(frame_frac);
 
     Update();
@@ -46,8 +45,7 @@ void Platform::RunMainLoop() {
     accumulator += frame_time;
 
     // Subdivide the frame time.
-    while (accumulator >= time_step)
-    {
+    while (accumulator >= time_step) {
       engine::Engine::Get().Update(time_step);
       accumulator -= time_step;
     }

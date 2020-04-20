@@ -13,14 +13,14 @@
 namespace engine {
 
 class Renderer {
-public:
+ public:
   Renderer() = default;
 
   bool Init();
   void Shutdown();
 
   void EnableBlend();
-  void Clear(const float *rgba);
+  void Clear(const float* rgba);
   void Present();
 
   void ContextLost();
@@ -30,34 +30,35 @@ public:
   int GetScreenWidth() { return screen_width_; }
   int GetScreenHeight() { return screen_height_; }
 
-  bool SupportsETC1() const     { return texture_compression_.etc1; }
-  bool SupportsDXT1() const     { return texture_compression_.dxt1 || texture_compression_.s3tc; }
-  bool SupportsDXT5() const     { return texture_compression_.s3tc; }
-  bool SupportsATC() const      { return texture_compression_.atc; }
+  bool SupportsETC1() const { return texture_compression_.etc1; }
+  bool SupportsDXT1() const {
+    return texture_compression_.dxt1 || texture_compression_.s3tc;
+  }
+  bool SupportsDXT5() const { return texture_compression_.s3tc; }
+  bool SupportsATC() const { return texture_compression_.atc; }
 
-  bool SupportsVAO() const      { return vertex_array_objects_; }
+  bool SupportsVAO() const { return vertex_array_objects_; }
 
 #if defined(__linux__) && !defined(__ANDROID__)
   bool ShouldExit();
 #endif
 
-private:
+ private:
   struct TextureCompression {
-    unsigned  etc1    : 1;
-    unsigned  dxt1    : 1;
-    unsigned  latc    : 1;
-    unsigned  s3tc    : 1;
-    unsigned  pvrtc   : 1;
-    unsigned  atc     : 1;
+    unsigned etc1 : 1;
+    unsigned dxt1 : 1;
+    unsigned latc : 1;
+    unsigned s3tc : 1;
+    unsigned pvrtc : 1;
+    unsigned atc : 1;
 
     TextureCompression()
-      : etc1(false)
-      , dxt1(false)
-      , latc(false)
-      , s3tc(false)
-      , pvrtc(false)
-      , atc(false) {
-    }
+        : etc1(false),
+          dxt1(false),
+          latc(false),
+          s3tc(false),
+          pvrtc(false),
+          atc(false) {}
   };
 
   TextureCompression texture_compression_;
@@ -77,6 +78,6 @@ private:
   void LogVersion();
 };
 
-} // namespace engine
+}  // namespace engine
 
-#endif // RENDERER_H
+#endif  // RENDERER_H

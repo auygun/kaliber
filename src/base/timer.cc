@@ -14,8 +14,9 @@ void Timer::Reset() {
 void Timer::Update() {
   timeval currentTime;
   gettimeofday(&currentTime, nullptr);
-  seconds_passed_ =             (float)(currentTime.tv_sec - last_time_.tv_sec) +
-                  0.000001f * (float)(currentTime.tv_usec - last_time_.tv_usec);
+  seconds_passed_ =
+      (float)(currentTime.tv_sec - last_time_.tv_sec) +
+      0.000001f * (float)(currentTime.tv_usec - last_time_.tv_usec);
 
   last_time_ = currentTime;
 

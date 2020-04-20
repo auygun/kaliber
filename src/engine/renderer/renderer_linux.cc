@@ -1,9 +1,9 @@
 #if defined(__linux__)
 
-#include "renderer.h"
 #include <X11/Xutil.h>
 #include "../../base/log.h"
 #include "../../third_party/glew/glew.h"
+#include "renderer.h"
 
 namespace engine {
 
@@ -14,27 +14,32 @@ bool Renderer::Init() {
   // Try to open the local display.
   display_ = XOpenDisplay(NULL);
   if (!display_) {
-    LOG("Can't connect to X server. Try to set the DISPLAY environment variable (hostname:number.screen_number).\n");
+    LOG("Can't connect to X server. Try to set the DISPLAY environment "
+        "variable (hostname:number.screen_number).\n");
     return false;
   }
 
   Window root_window = DefaultRootWindow(display_);
 
   // Look for the right visual to set up the OpenGL context.
-  GLint glx_attributes[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
-  XVisualInfo *visual_info = glXChooseVisual(display_, 0, glx_attributes);
+  GLint glx_attributes[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER,
+                            None};
+  XVisualInfo* visual_info = glXChooseVisual(display_, 0, glx_attributes);
   if (!visual_info) {
     LOG("No appropriate visual found.\n");
     return false;
   }
-  LOG("Visual %p selected\n", (void *)visual_info->visualid);
+  LOG("Visual %p selected\n", (void*)visual_info->visualid);
 
   // Create the main window.
   XSetWindowAttributes window_attributes;
-  window_attributes.colormap = XCreateColormap(display_, root_window, visual_info->visual, AllocNone);
+  window_attributes.colormap =
+      XCreateColormap(display_, root_window, visual_info->visual, AllocNone);
   window_attributes.event_mask = ExposureMask | KeyPressMask;
-  window_ = XCreateWindow(display_, root_window, 0, 0, screen_width_, screen_height_, 0, visual_info->depth,
-                         InputOutput, visual_info->visual, CWColormap | CWEventMask, &window_attributes);
+  window_ =
+      XCreateWindow(display_, root_window, 0, 0, screen_width_, screen_height_,
+                    0, visual_info->depth, InputOutput, visual_info->visual,
+                    CWColormap | CWEventMask, &window_attributes);
   XMapWindow(display_, window_);
   XStoreName(display_, window_, "Opera Testbed");
 
@@ -58,8 +63,8 @@ bool Renderer::Init() {
   std::set<std::string> extensions = SetupExtensions();
 
   if (extensions.find("GL_OES_vertex_array_object") != extensions.end()) {
-      LOG("Supports Vertex Array Objects\n");
-      vertex_array_objects_ = true;
+    LOG("Supports Vertex Array Objects\n");
+    vertex_array_objects_ = true;
   }
 
   glViewport(0, 0, screen_width_, screen_height_);
@@ -102,6 +107,6 @@ void Renderer::Present() {
 
 void Renderer::TrimMemory() {}
 
-} // namespace engine
+}  // namespace engine
 
 #endif

@@ -1,7 +1,7 @@
-#include "platform.h"
 #include "../base/log.h"
 #include "../engine/engine.h"
 #include "../engine/renderer/renderer.h"
+#include "platform.h"
 // #include <pthread.h>
 
 // void PTreadWorkaround() {
@@ -21,14 +21,14 @@ void Platform::Update() {
   should_exit_ = engine::Engine::Get().GetRenderer().ShouldExit();
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   // PTreadWorkaround();
-  Platform &platform = Platform::Get();
+  Platform& platform = Platform::Get();
   try {
     platform.Initialize();
     platform.RunMainLoop();
     platform.Shutdown();
-  } catch (Platform::InternalError &e) {
+  } catch (Platform::InternalError& e) {
     return -1;
   }
   return 0;

@@ -6,10 +6,10 @@
 // additional functionality the drivers may expose but which the system headers
 // do not.
 #include "../../third_party/android/gl3stub.h"
-# include <GLES2/gl2ext.h>
+#include <GLES2/gl2ext.h>
 
 #elif defined(__linux__)
-# include "../../third_party/glew/glew.h"
+#include "../../third_party/glew/glew.h"
 
 // Define the missing format for the etc1
 #ifndef GL_ETC1_RGB8_OES
@@ -18,4 +18,4 @@
 
 #endif
 
-#endif // OPENGL_H
+#endif  // OPENGL_H

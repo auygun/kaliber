@@ -1,21 +1,21 @@
-#include "renderer.h"
+#include <android/native_window.h>
+#include <cassert>
+#include <sstream>
 #include "../../base/log.h"
 #include "../../platform/platform.h"
 #include "../../third_party/android/GLContext.h"
-#include <cassert>
-#include <sstream>
-#include <android/native_window.h>
+#include "renderer.h"
 
 namespace engine {
 
 bool Renderer::Init() {
   ndk_helper::GLContext* gl_context = ndk_helper::GLContext::GetInstance();
-  ANativeWindow *window = Platform::Get().GetNativeWindow();
+  ANativeWindow* window = Platform::Get().GetNativeWindow();
 
   if (!gl_context->IsInitialzed()) {
     gl_context->Init(window);
     // TODO: LoadResources();
-  } else if(window != gl_context->GetANativeWindow()) {
+  } else if (window != gl_context->GetANativeWindow()) {
     // Re-initialize ANativeWindow.
     // On some devices, ANativeWindow is re-created when the app is resumed
     ContextLost();
@@ -28,7 +28,7 @@ bool Renderer::Init() {
       ContextLost();
       // TODO: LoadResources();
     } else {
-        return false;
+      return false;
     }
   }
 
@@ -41,8 +41,8 @@ bool Renderer::Init() {
   std::set<std::string> extensions = SetupExtensions();
 
   if (extensions.find("GL_OES_vertex_array_object") != extensions.end()) {
-      LOG("Supports Vertex Array Objects\n");
-      vertex_array_objects_ = true;
+    LOG("Supports Vertex Array Objects\n");
+    vertex_array_objects_ = true;
   }
 
   glViewport(0, 0, screen_width_, screen_height_);
@@ -66,4 +66,4 @@ void Renderer::TrimMemory() {
   ndk_helper::GLContext::GetInstance()->Invalidate();
 }
 
-} // namespace engine
+}  // namespace engine

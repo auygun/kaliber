@@ -4,7 +4,7 @@
 #include <sys/time.h>
 
 class Timer {
-public:
+ public:
   Timer();
   ~Timer() = default;
 
@@ -12,14 +12,14 @@ public:
 
   void Update();
 
-  float GetSecondsPassed() const        { return seconds_passed_; }
-  float GetSecondsAccumulated() const   { return seconds_accumulated_; }
+  float GetSecondsPassed() const { return seconds_passed_; }
+  float GetSecondsAccumulated() const { return seconds_accumulated_; }
 
-private:
+ private:
   float seconds_passed_ = 0.0f;
   float seconds_accumulated_ = 0.0f;
 
   timeval last_time_;
 };
 
-#endif // TIMER_H
+#endif  // TIMER_H

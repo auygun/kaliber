@@ -1,13 +1,14 @@
 #include "sprite.h"
+#include "../base/log.h"
+#include "engine.h"
 #include "renderer/geometry.h"
 #include "renderer/shader.h"
-#include "engine.h"
-#include "../base/log.h"
 
 namespace engine {
 
-
-bool Sprite::Create(const std::string &asset_name, const Vector2 &offset, const Vector2 &scale) {
+bool Sprite::Create(const std::string& asset_name,
+                    const Vector2& offset,
+                    const Vector2& scale) {
   if (!image_.Load(asset_name.c_str()))
     return false;
 
@@ -17,13 +18,13 @@ bool Sprite::Create(const std::string &asset_name, const Vector2 &offset, const 
   return texture_.Create(image_);
 }
 
-void Sprite::Draw(const Vector2 &offset) {
+void Sprite::Draw(const Vector2& offset) {
   Vector2 draw_offset = offset_ + offset;
 
   texture_.Activate();
 
-  Geometry &quad = Engine::Get().GetQuad();
-  Shader &shader = Engine::Get().GetPassThroughShader();
+  Geometry& quad = Engine::Get().GetQuad();
+  Shader& shader = Engine::Get().GetPassThroughShader();
 
   shader.Activate();
   shader.SetUniform("offset", draw_offset);
@@ -34,4 +35,4 @@ void Sprite::Draw(const Vector2 &offset) {
   quad.Draw();
 }
 
-} // namespace engine
+}  // namespace engine

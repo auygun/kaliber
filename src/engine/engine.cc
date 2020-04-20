@@ -1,12 +1,12 @@
+#include "engine.h"
 #include "../base/log.h"
 #include "../base/random.h"
-#include "engine.h"
 #include "game.h"
 #include "game_factory.h"
 
 namespace engine {
 
-Engine &Engine::Get() {
+Engine& Engine::Get() {
   static Engine engine;
   return engine;
 }
@@ -56,7 +56,7 @@ void Engine::Clear() {
   // grey += 0.01f;
   // if (grey > 1.0f)
   //   grey = 0.0f;
-  const float clearColor[] = { grey, grey, grey, 1.0f };
+  const float clearColor[] = {grey, grey, grey, 1.0f};
   renderer_.Clear(clearColor);
 }
 
@@ -70,16 +70,16 @@ void Engine::TrimMemory() {
 
 bool Engine::CreateRenderResources() {
   // Create the shader we can reuse for all tiles.
-  const char *vertex_description = "p2f;t2f";
-  if (!pass_through_shader_.Create("shaders/pass_through", vertex_description)) {
+  const char* vertex_description = "p2f;t2f";
+  if (!pass_through_shader_.Create("shaders/pass_through",
+                                   vertex_description)) {
     LOG("Could not create pass through shader.\n");
     return false;
   }
 
   // Create the quad geometry we can reuse for all sprites.
   // This creates a normalized unit sized quad.
-  const float vertices[] =
-  {
+  const float vertices[] = {
     -0.5f, -0.5f, 0.0f, 1.0f,
      0.5f, -0.5f, 1.0f, 1.0f,
     -0.5f,  0.5f, 0.0f, 0.0f,
@@ -93,4 +93,4 @@ bool Engine::CreateRenderResources() {
   return true;
 }
 
-} // namespace engine
+}  // namespace engine

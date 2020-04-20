@@ -8,7 +8,7 @@
 #include <malloc.h>
 #endif
 
-inline void *AlignedAlloc(size_t size) {
+inline void* AlignedAlloc(size_t size) {
   const size_t kAlignment = 16;
 
   void* ptr = NULL;
@@ -19,12 +19,12 @@ inline void *AlignedAlloc(size_t size) {
     ptr = NULL;
 #endif
   assert(ptr);
-  //assert(((unsigned)ptr & (kAlignment - 1)) == 0);
+  // assert(((unsigned)ptr & (kAlignment - 1)) == 0);
   return ptr;
 }
 
-#define AlignedFree(mem)   free(mem)
+#define AlignedFree(mem) free(mem)
 
 #define ALIGN_MEM(alignment) __attribute__((aligned(alignment)))
 
-#endif // MEM_H
+#endif  // MEM_H

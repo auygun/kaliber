@@ -1,11 +1,11 @@
-#include "platform.h"
-#include "../base/log.h"
-#include "../base/file.h"
-#include "../engine/engine.h"
-#include "../engine/renderer/renderer.h"
 #include <android_native_app_glue.h>
 #include <memory>
 #include <string>
+#include "../base/file.h"
+#include "../base/log.h"
+#include "../engine/engine.h"
+#include "../engine/renderer/renderer.h"
+#include "platform.h"
 
 namespace {
 
@@ -14,16 +14,19 @@ std::string GetApkPath(ANativeActivity* activity) {
   activity->vm->AttachCurrentThread(&env, nullptr);
 
   jclass activity_clazz = env->GetObjectClass(activity->clazz);
-  jmethodID get_application_info_id = env->GetMethodID(activity_clazz,
-                                                  "getApplicationInfo",
-                                                  "()Landroid/content/pm/ApplicationInfo;");
-  jobject app_info_obj = env->CallObjectMethod(activity->clazz, get_application_info_id);
+  jmethodID get_application_info_id =
+      env->GetMethodID(activity_clazz, "getApplicationInfo",
+                       "()Landroid/content/pm/ApplicationInfo;");
+  jobject app_info_obj =
+      env->CallObjectMethod(activity->clazz, get_application_info_id);
 
   jclass app_info_clazz = env->GetObjectClass(app_info_obj);
-  jfieldID source_dir_id = env->GetFieldID(app_info_clazz, "sourceDir", "Ljava/lang/String;");
-  jstring source_dir_obj = (jstring)env->GetObjectField(app_info_obj, source_dir_id);
+  jfieldID source_dir_id =
+      env->GetFieldID(app_info_clazz, "sourceDir", "Ljava/lang/String;");
+  jstring source_dir_obj =
+      (jstring)env->GetObjectField(app_info_obj, source_dir_id);
 
-  const char *source_dir = env->GetStringUTFChars(source_dir_obj, nullptr);
+  const char* source_dir = env->GetStringUTFChars(source_dir_obj, nullptr);
   std::string apk_path = std::string(source_dir);
 
   env->ReleaseStringUTFChars(source_dir_obj, source_dir);
@@ -33,14 +36,14 @@ std::string GetApkPath(ANativeActivity* activity) {
   return apk_path;
 }
 
-} // namespace
+}  // namespace
 
 ANativeWindow* Platform::GetNativeWindow() {
   return app_->window;
 }
 
 void Platform::HandleCmd(android_app* app, int32_t cmd) {
-  Platform *platform = reinterpret_cast<Platform*>(app->userData);
+  Platform* platform = reinterpret_cast<Platform*>(app->userData);
   switch (cmd) {
     case APP_CMD_SAVE_STATE:
       break;
@@ -73,7 +76,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
   }
 }
 
-void Platform::Initialize(android_app *app) {
+void Platform::Initialize(android_app* app) {
   app_ = app;
   root_path_ = GetApkPath(app->activity);
   LOG("Root path: %s\n", root_path_.c_str());
@@ -90,7 +93,7 @@ void Platform::Update() {
   android_poll_source* source;
 
   while ((id = ALooper_pollAll(HasFocus() ? 0 : -1, NULL, &events,
-         (void**)&source)) >= 0) {
+                               (void**)&source)) >= 0) {
     if (source != NULL)
       source->process(app_, source);
     if (HasFocus())
@@ -102,11 +105,11 @@ void Platform::Update() {
 }
 
 void android_main(android_app* app) {
-  Platform &platform = Platform::Get();
+  Platform& platform = Platform::Get();
   try {
     platform.Initialize(app);
     platform.RunMainLoop();
     platform.Shutdown();
-  } catch (Platform::InternalError &e) {
+  } catch (Platform::InternalError& e) {
   }
 }

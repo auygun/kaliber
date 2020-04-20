@@ -1,24 +1,21 @@
 #if defined(__ANDROID__)
 
-#include "file.h"
-#include "log.h"
-#include "../platform/platform.h"
 #include <assert.h>
 #include <string>
+#include "../platform/platform.h"
+#include "file.h"
+#include "log.h"
 
-File::File()
-  : archive_(0)
-  , uncompressed_size_(0) {
-}
+File::File() : archive_(0), uncompressed_size_(0) {}
 
 File::~File() {
   Close();
 }
 
-bool File::Open(const char *file_name) {
+bool File::Open(const char* file_name) {
   do {
     // Try to open the zip archive.
-    const char *root_path = Platform::Get().GetRootPath().c_str();
+    const char* root_path = Platform::Get().GetRootPath().c_str();
     archive_ = unzOpen(root_path);
     if (!archive_) {
       LOG("Failed to open zip file: %s\n", root_path);
@@ -35,8 +32,8 @@ bool File::Open(const char *file_name) {
 
     // Need to get the uncompressed size of the file.
     unz_file_info info;
-    if (UNZ_OK != unzGetCurrentFileInfo(archive_, &info, NULL, 0, NULL, 0, NULL,
-                                        0)) {
+    if (UNZ_OK !=
+        unzGetCurrentFileInfo(archive_, &info, NULL, 0, NULL, 0, NULL, 0)) {
       LOG("Failed to get file info: %s\n", file_name);
       break;
     }
@@ -49,8 +46,7 @@ bool File::Open(const char *file_name) {
     }
 
     return true;
-  }
-  while (false);
+  } while (false);
 
   Close();
   return false;
@@ -73,10 +69,10 @@ unsigned File::GetSize() {
   return uncompressed_size_;
 }
 
-unsigned File::Read(char *data, unsigned size) {
+unsigned File::Read(char* data, unsigned size) {
   // Uncompress data into the buffer.
   int result = unzReadCurrentFile(archive_, data, size);
   return result < size ? 0 : result;
 }
 
-#endif // __ANDROID__
+#endif  // __ANDROID__

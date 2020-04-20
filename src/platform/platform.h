@@ -1,8 +1,8 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#include <string>
 #include <exception>
+#include <string>
 
 #if defined(__ANDROID__)
 struct android_app;
@@ -17,7 +17,7 @@ class Platform {
   static Platform& Get();
 
 #if defined(__ANDROID__)
-  void Initialize(android_app *app);
+  void Initialize(android_app* app);
 #elif defined(__linux__)
   void Initialize();
 #endif
@@ -38,7 +38,8 @@ class Platform {
   ANativeWindow* GetNativeWindow();
 #endif
 
-  static class InternalError : public std::exception {} internal_error;
+  static class InternalError : public std::exception {
+  } internal_error;
 
  private:
   std::string root_path_;
@@ -46,10 +47,10 @@ class Platform {
   bool should_exit_ = false;
 
 #if defined(__ANDROID__)
-  android_app *app_ = nullptr;
+  android_app* app_ = nullptr;
 
   static void HandleCmd(android_app* app, int32_t cmd);
 #endif
 };
 
-#endif // PLATFORM_H
+#endif  // PLATFORM_H

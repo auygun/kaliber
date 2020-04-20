@@ -1,16 +1,16 @@
 #include "demo.h"
-#include "../base/log.h"
+#include <math.h>
+#include <stdio.h>
+#include <set>
+#include <sstream>
+#include <string>
 #include "../base/image.h"
+#include "../base/log.h"
 #include "../engine/engine.h"
 #include "../engine/game_factory.h"
-#include <sstream>
-#include <stdio.h>
-#include <string>
-#include <set>
-#include <math.h>
 
 DECLARE_GAME_BEGIN
-  DECLARE_GAME(Demo)
+DECLARE_GAME(Demo)
 DECLARE_GAME_END
 
 bool Demo::Initialize() {
@@ -30,8 +30,7 @@ bool Demo::Initialize() {
   return true;
 }
 
-void Demo::Shutdown() {
-}
+void Demo::Shutdown() {}
 
 void Demo::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
@@ -54,9 +53,9 @@ void Demo::Draw(float frame_frac) {
 
 Vector2 Demo::ToScale(int width, int height) {
   float horizontal_ratio =
-    (float)width / engine::Engine::Get().GetRenderer().GetScreenWidth();
+      (float)width / engine::Engine::Get().GetRenderer().GetScreenWidth();
   float vertical_ratio =
-    (float)height/ engine::Engine::Get().GetRenderer().GetScreenHeight();
+      (float)height / engine::Engine::Get().GetRenderer().GetScreenHeight();
 
   // The orthogonal viewport is (-1.0 .. 1.0) x (-1.0 .. 1.0).
   return Vector2(horizontal_ratio * 2.0f, vertical_ratio * 2.0f);

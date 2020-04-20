@@ -16,6 +16,6 @@ class Game {
   virtual void Draw(float frame_frac) = 0;
 };
 
-} // namespace engine
+}  // namespace engine
 
-#endif // GAME_H
+#endif  // GAME_H
