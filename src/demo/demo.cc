@@ -15,7 +15,7 @@ DECLARE_GAME_END
 
 bool Demo::Initialize() {
   Vector2 scale = ToScale(256, 256);
-  if (!bg_tiles_.Create("star-blasts.jpg", Vector2(0, 0), scale)) {
+  if (!bg_.Create("star-blasts.jpg", Vector2(0, 0), scale)) {
     LOG("Failed to create the backgroud.");
     return false;
   }
@@ -34,17 +34,17 @@ void Demo::Shutdown() {
 }
 
 void Demo::Update(float delta_time) {
-  secondsAccumulated += delta_time;
+  seconds_accumulated_ += delta_time;
   // LOG("%f\n", secondsAccumulated);
 }
 
 void Demo::Draw(float frame_frac) {
   engine::Engine::Get().GetRenderer().EnableBlend();
 
-  float scroll_offset_y = fmod(-secondsAccumulated * 0.15f, bg_tiles_.GetScale().y);
-  for (float y = -1.0f; y <= 1.0f + bg_tiles_.GetScale().y; y += bg_tiles_.GetScale().y) {
-    for (float x = -1.0f; x <= 1.0f + bg_tiles_.GetScale().x; x += bg_tiles_.GetScale().x) {
-      bg_tiles_.Draw(Vector2(x, y + scroll_offset_y));
+  float scroll_offset_y = fmod(-seconds_accumulated_ * 0.15f, bg_.GetScale().y);
+  for (float y = -1.0f; y <= 1.0f + bg_.GetScale().y; y += bg_.GetScale().y) {
+    for (float x = -1.0f; x <= 1.0f + bg_.GetScale().x; x += bg_.GetScale().x) {
+      bg_.Draw(Vector2(x, y + scroll_offset_y));
     }
   }
 

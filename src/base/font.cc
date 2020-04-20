@@ -7,7 +7,7 @@
 #include "../third_party/stb/stb_truetype.h"
 
 Fontx::Fontx()
-  : glyphCache(NULL) {
+  : glyph_cache_(NULL) {
 }
 
 Fontx::~Fontx() {
@@ -30,8 +30,8 @@ bool Fontx::Create() {
     // Allocate a cache bitmap for the glyphs.
     // This is one 8 bit channel intensity data.
     // It's tighly packed.
-    glyphCache = new uint8_t [kGlyphSize * kGlyphSize];
-    if (!glyphCache) {
+    glyph_cache_ = new uint8_t [kGlyphSize * kGlyphSize];
+    if (!glyph_cache_) {
       LOG("Failed to allocate glyph cache.\n");
       break;
     }
@@ -39,8 +39,8 @@ bool Fontx::Create() {
     // Rasterize glyphs and pack them into the cache.
     const float kFontHeight = 32.0f;
     if (stbtt_BakeFontBitmap((unsigned char *)buffer, 0, kFontHeight,
-                             glyphCache, kGlyphSize, kGlyphSize,
-                             kFirstChar, kNumChars, glyphInfo) <= 0) {
+                             glyph_cache_, kGlyphSize, kGlyphSize,
+                             kFirstChar, kNumChars, glyph_info_) <= 0) {
       LOG("Failed to bake the glyph cache: %d\n", result);
       break;
     }
@@ -53,8 +53,8 @@ bool Fontx::Create() {
 }
 
 void Fontx::Destroy() {
-  delete [] glyphCache;
-  glyphCache = NULL;
+  delete [] glyph_cache_;
+  glyph_cache_ = NULL;
 }
 
 static void StretchBlit_I8_to_RGBA32(int dst_x0, int dst_y0, int dst_x1, int dst_y1,
@@ -117,7 +117,7 @@ void Fontx::CalculateBoundingBox(const char *text, int &x0, int &y0, int &x1, in
   while (*text) {
     if (*text >= kFirstChar /*&& *text < (kFirstChar + kNumChars)*/) {
       stbtt_aligned_quad q;
-      stbtt_GetBakedQuad(glyphInfo, kGlyphSize, kGlyphSize, *text - kFirstChar,
+      stbtt_GetBakedQuad(glyph_info_, kGlyphSize, kGlyphSize, *text - kFirstChar,
                          &x, &y, &q, 1);
 
       int ix0 = (int)q.x0,
@@ -155,7 +155,7 @@ void Fontx::Print(int x, int y, const char *text, uint8_t *buffer, unsigned widt
   while (*text) {
     if (*text >= kFirstChar /*&& *text < (kFirstChar + kNumChars)*/) {
       stbtt_aligned_quad q;
-      stbtt_GetBakedQuad(glyphInfo, kGlyphSize, kGlyphSize, *text - kFirstChar,
+      stbtt_GetBakedQuad(glyph_info_, kGlyphSize, kGlyphSize, *text - kFirstChar,
                          &fx, &fy, &q, 1);
 
       // LOG("-- glyph --\nxy = (%f %f) .. (%f %f)\nuv = (%f %f) .. (%f %f)\n",
@@ -173,7 +173,7 @@ void Fontx::Print(int x, int y, const char *text, uint8_t *buffer, unsigned widt
       StretchBlit_I8_to_RGBA32(ix0, iy0, ix1, iy1,
                                iu0, iv0, iu1, iv1,
                                buffer, width,
-                               glyphCache, kGlyphSize);
+                               glyph_cache_, kGlyphSize);
 
       ++text;
     }

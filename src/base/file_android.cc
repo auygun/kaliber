@@ -7,44 +7,44 @@
 #include <string>
 
 File::File()
-  : archive(0)
-  , uncompressedSize(0) {
+  : archive_(0)
+  , uncompressed_size_(0) {
 }
 
 File::~File() {
   Close();
 }
 
-bool File::Open(const char *fileName) {
+bool File::Open(const char *file_name) {
   do {
     // Try to open the zip archive.
     const char *root_path = Platform::Get().GetRootPath().c_str();
-    archive = unzOpen(root_path);
-    if (!archive) {
+    archive_ = unzOpen(root_path);
+    if (!archive_) {
       LOG("Failed to open zip file: %s\n", root_path);
       break;
     }
 
     // Try to find the file.
     std::string fullName = "assets/";
-    fullName += fileName;
-    if (UNZ_OK != unzLocateFile(archive, fullName.c_str(), 1)) {
-      LOG("Failed to locate file in zip archive: %s\n", fileName);
+    fullName += file_name;
+    if (UNZ_OK != unzLocateFile(archive_, fullName.c_str(), 1)) {
+      LOG("Failed to locate file in zip archive: %s\n", file_name);
       break;
     }
 
     // Need to get the uncompressed size of the file.
     unz_file_info info;
-    if (UNZ_OK != unzGetCurrentFileInfo(archive, &info, NULL, 0, NULL, 0, NULL,
+    if (UNZ_OK != unzGetCurrentFileInfo(archive_, &info, NULL, 0, NULL, 0, NULL,
                                         0)) {
-      LOG("Failed to get file info: %s\n", fileName);
+      LOG("Failed to get file info: %s\n", file_name);
       break;
     }
-    uncompressedSize = info.uncompressed_size;
+    uncompressed_size_ = info.uncompressed_size;
 
     // Open the current file.
-    if (UNZ_OK != unzOpenCurrentFile(archive)) {
-      LOG("Failed to open file: %s\n", fileName);
+    if (UNZ_OK != unzOpenCurrentFile(archive_)) {
+      LOG("Failed to open file: %s\n", file_name);
       break;
     }
 
@@ -57,25 +57,25 @@ bool File::Open(const char *fileName) {
 }
 
 bool File::Close() {
-  if (archive) {
+  if (archive_) {
     // This could potentially be called without having opened a file, but that
     // should be a harmless nop.
-    unzCloseCurrentFile(archive);
+    unzCloseCurrentFile(archive_);
 
-    unzClose(archive);
-    archive = 0;
+    unzClose(archive_);
+    archive_ = 0;
   }
 
   return true;
 }
 
 unsigned File::GetSize() {
-  return uncompressedSize;
+  return uncompressed_size_;
 }
 
 unsigned File::Read(char *data, unsigned size) {
   // Uncompress data into the buffer.
-  int result = unzReadCurrentFile(archive, data, size);
+  int result = unzReadCurrentFile(archive_, data, size);
   return result < size ? 0 : result;
 }
 

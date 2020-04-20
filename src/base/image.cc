@@ -14,12 +14,12 @@
 #include "../third_party/stb/stb_image.h"
 
 Image::Image()
-  : buffer(NULL)
-  , width(0)
-  , height(0)
-  , format(kRGBA32)
-  , u(1)
-  , v(1) {
+  : buffer_(NULL)
+  , width_(0)
+  , height_(0)
+  , format_(kRGBA32)
+  , u_(1)
+  , v_(1) {
 }
 
 Image::~Image() {
@@ -27,44 +27,44 @@ Image::~Image() {
 }
 
 bool Image::Create(unsigned w, unsigned h) {
-  width = w;
-  height = h;
-  buffer = (uint8_t *)AlignedAlloc(w * h * 4 * sizeof(uint8_t));
-  return !!buffer;
+  width_ = w;
+  height_ = h;
+  buffer_ = (uint8_t *)AlignedAlloc(w * h * 4 * sizeof(uint8_t));
+  return !!buffer_;
 }
 
 void Image::Destroy() {
-  AlignedFree(buffer);
+  AlignedFree(buffer_);
 }
 
 void Image::Copy(const Image &image) {
-  if (image.buffer) {
+  if (image.buffer_) {
     unsigned size = image.GetSize();
-    buffer = (uint8_t *)AlignedAlloc(size);
-    memcpy(buffer, image.buffer, size);
+    buffer_ = (uint8_t *)AlignedAlloc(size);
+    memcpy(buffer_, image.buffer_, size);
   }
-  width = image.width;
-  height = image.height;
-  format = image.format;
-  u = image.u;
-  v = image.v;
+  width_ = image.width_;
+  height_ = image.height_;
+  format_ = image.format_;
+  u_ = image.u_;
+  v_ = image.v_;
 }
 
-bool Image::Load(const char *fileName, bool convertPow2) {
+bool Image::Load(const char *file_name, bool convert_pow2) {
   std::string fullPath = "images/";
-  fullPath += fileName;
+  fullPath += file_name;
 
   unsigned fileSize = 0;
   char *fileBuffer = File::ReadWholeFile(fullPath.c_str(), &fileSize);
   if (!fileBuffer) {
-    LOG("Failed to read file: %s\n", fileName);
+    LOG("Failed to read file: %s\n", file_name);
     return false;
   }
 
   int w, h, c;
-  buffer = (uint8_t *)stbi_load_from_memory((const stbi_uc *)fileBuffer, fileSize, &w, &h, &c, 0);
-  if (!buffer) {
-    LOG("Failed to load image file: %s\n", fileName);
+  buffer_ = (uint8_t *)stbi_load_from_memory((const stbi_uc *)fileBuffer, fileSize, &w, &h, &c, 0);
+  if (!buffer_) {
+    LOG("Failed to load image file: %s\n", file_name);
     return false;
   }
 
@@ -75,9 +75,9 @@ bool Image::Load(const char *fileName, bool convertPow2) {
     // Assume it's an intensity, duplicate it to RGB and fill A with opaque.
     convertedBuffer = (uint8_t *)AlignedAlloc(w * h * 4 * sizeof(uint8_t));
     for (unsigned i = 0; i < w * h; ++i) {
-      convertedBuffer[i * 4 + 0] = buffer[i];
-      convertedBuffer[i * 4 + 1] = buffer[i];
-      convertedBuffer[i * 4 + 2] = buffer[i];
+      convertedBuffer[i * 4 + 0] = buffer_[i];
+      convertedBuffer[i * 4 + 1] = buffer_[i];
+      convertedBuffer[i * 4 + 2] = buffer_[i];
       convertedBuffer[i * 4 + 3] = 255;
     }
     break;
@@ -87,9 +87,9 @@ bool Image::Load(const char *fileName, bool convertPow2) {
     // Add an opaque channel.
     convertedBuffer = (uint8_t *)AlignedAlloc(w * h * 4 * sizeof(uint8_t));
     for (unsigned i = 0; i < w * h; ++i) {
-      convertedBuffer[i * 4 + 0] = buffer[i * 3 + 0];
-      convertedBuffer[i * 4 + 1] = buffer[i * 3 + 1];
-      convertedBuffer[i * 4 + 2] = buffer[i * 3 + 2];
+      convertedBuffer[i * 4 + 0] = buffer_[i * 3 + 0];
+      convertedBuffer[i * 4 + 1] = buffer_[i * 3 + 1];
+      convertedBuffer[i * 4 + 2] = buffer_[i * 3 + 2];
       convertedBuffer[i * 4 + 3] = 255;
     }
     break;
@@ -99,24 +99,24 @@ bool Image::Load(const char *fileName, bool convertPow2) {
 
   case 2:
   default:
-    LOG("Image had unsuitable number of color components: %d %s\n", c, fileName);
+    LOG("Image had unsuitable number of color components: %d %s\n", c, file_name);
     return false;
   }
 
   if (convertedBuffer) {
-    AlignedFree(buffer);
-    buffer = convertedBuffer;
+    AlignedFree(buffer_);
+    buffer_ = convertedBuffer;
   }
 
-  width = (unsigned)w;
-  height = (unsigned)h;
+  width_ = (unsigned)w;
+  height_ = (unsigned)h;
 
   // Create a bigger canvas if needed to satisfy the pow2 dimension requirement.
-  if (convertPow2) {
-    unsigned newWidth = RoundUpToPow2(width);
-    unsigned newHeight = RoundUpToPow2(height);
-    if ((newWidth != width) || (newHeight != height)) {
-      LOG("Converting loaded image from (%d, %d) to (%d, %d)\n", width, height, newWidth, newHeight);
+  if (convert_pow2) {
+    unsigned newWidth = RoundUpToPow2(width_);
+    unsigned newHeight = RoundUpToPow2(height_);
+    if ((newWidth != width_) || (newHeight != height_)) {
+      LOG("Converting loaded image from (%d, %d) to (%d, %d)\n", width_, height_, newWidth, newHeight);
 
       unsigned biggerSize = newWidth * newHeight * 4 * sizeof(uint8_t);
       uint8_t *biggerBuffer = (uint8_t *)AlignedAlloc(biggerSize);
@@ -126,20 +126,20 @@ bool Image::Load(const char *fileName, bool convertPow2) {
 
       // Copy over the old bitmap.
       // Centered in the new bitmap.
-      int offsetX = (newWidth - width) / 2,
-          offsetY = (newHeight - height) / 2;
-      for (unsigned y = 0; y < height; ++y)
-        memcpy(biggerBuffer + (offsetX + (y + offsetY) * newWidth) * 4, buffer + y * width * 4, width * 4);
+      int offsetX = (newWidth - width_) / 2,
+          offsetY = (newHeight - height_) / 2;
+      for (unsigned y = 0; y < height_; ++y)
+        memcpy(biggerBuffer + (offsetX + (y + offsetY) * newWidth) * 4, buffer_ + y * width_ * 4, width_ * 4);
 
       // Store the texture coordinate scaling.
-      u = width / (float)newWidth;
-      v = height / (float)newHeight;
+      u_ = width_ / (float)newWidth;
+      v_ = height_ / (float)newHeight;
 
       // Swap the buffers and dimensions.
-      AlignedFree(buffer);
-      buffer  = biggerBuffer;
-      width   = newWidth;
-      height  = newHeight;
+      AlignedFree(buffer_);
+      buffer_  = biggerBuffer;
+      width_   = newWidth;
+      height_  = newHeight;
     }
   }
 
@@ -157,16 +157,16 @@ bool Image::Load(const char *fileName, bool convertPow2) {
 #endif
 
   delete [] fileBuffer;
-  return !!buffer;
+  return !!buffer_;
 }
 
 unsigned Image::GetSize() const {
-  switch (format) {
-  case kRGBA32:   return width * height * 4;
-  case kDXT1:     return ((width + 3) / 4) * ((height + 3) / 4) * 8;
-  case kDXT5:     return ((width + 3) / 4) * ((height + 3) / 4) * 16;
-  case kATC:      return ((width + 3) / 4) * ((height + 3) / 4) * 16;
-  case kETC1:     return (width * height * 4) / 8;
+  switch (format_) {
+  case kRGBA32:   return width_ * height_ * 4;
+  case kDXT1:     return ((width_ + 3) / 4) * ((height_ + 3) / 4) * 8;
+  case kDXT5:     return ((width_ + 3) / 4) * ((height_ + 3) / 4) * 16;
+  case kATC:      return ((width_ + 3) / 4) * ((height_ + 3) / 4) * 16;
+  case kETC1:     return (width_ * height_ * 4) / 8;
   default:        return 0;
   }
 }
@@ -179,29 +179,29 @@ void Image::Clear(const float *rgba) {
           a = (uint8_t)(rgba[3] * 255.0f);
 
   // Fill out the first line manually.
-  for (unsigned w = 0; w < width; ++w) {
-    buffer[w * 4 + 0] = r;
-    buffer[w * 4 + 1] = g;
-    buffer[w * 4 + 2] = b;
-    buffer[w * 4 + 3] = a;
+  for (unsigned w = 0; w < width_; ++w) {
+    buffer_[w * 4 + 0] = r;
+    buffer_[w * 4 + 1] = g;
+    buffer_[w * 4 + 2] = b;
+    buffer_[w * 4 + 3] = a;
   }
 
   // Copy the first line to the rest of them.
-  for (unsigned h = 1; h < height; ++h)
-    memcpy(buffer + h * width * 4, buffer, width * 4);
+  for (unsigned h = 1; h < height_; ++h)
+    memcpy(buffer_ + h * width_ * 4, buffer_, width_ * 4);
 }
 
 void Image::Gradient() {
   // Fill out the first line manually.
-  for (unsigned x = 0; x < width; ++x) {
+  for (unsigned x = 0; x < width_; ++x) {
     uint8_t intensity = x > 255 ? 255 : x;
-    buffer[x * 4 + 0] = intensity;
-    buffer[x * 4 + 1] = intensity;
-    buffer[x * 4 + 2] = intensity;
-    buffer[x * 4 + 3] = 255;
+    buffer_[x * 4 + 0] = intensity;
+    buffer_[x * 4 + 1] = intensity;
+    buffer_[x * 4 + 2] = intensity;
+    buffer_[x * 4 + 3] = 255;
   }
 
   // Copy the first line to the rest of them.
-  for (unsigned h = 1; h < height; ++h)
-    memcpy(buffer + h * width * 4, buffer, width * 4);
+  for (unsigned h = 1; h < height_; ++h)
+    memcpy(buffer_ + h * width_ * 4, buffer_, width_ * 4);
 }

@@ -5,24 +5,24 @@
 #include <string>
 
 File::File()
-  : file(NULL) {
+  : file_(NULL) {
 }
 
 File::~File() {
 }
 
-bool File::Open(const char *fileName) {
+bool File::Open(const char *file_name) {
   std::string full_path = Platform::Get().GetRootPath();
-  full_path += fileName;
-  file = fopen(full_path.c_str(), "rb");
-  return !!file;
+  full_path += file_name;
+  file_ = fopen(full_path.c_str(), "rb");
+  return !!file_;
 }
 
 bool File::Close() {
   bool result = false;
-  if (file) {
-    result = (0 == fclose(file));
-    file = NULL;
+  if (file_) {
+    result = (0 == fclose(file_));
+    file_ = NULL;
   }
   return result;
 }
@@ -30,10 +30,10 @@ bool File::Close() {
 unsigned File::GetSize() {
   unsigned size = 0;
 
-  if (file) {
-    if (!fseek(file, 0, SEEK_END)) {
-      size = (unsigned)ftell(file);
-      rewind(file);
+  if (file_) {
+    if (!fseek(file_, 0, SEEK_END)) {
+      size = (unsigned)ftell(file_);
+      rewind(file_);
     }
   }
 
@@ -41,8 +41,8 @@ unsigned File::GetSize() {
 }
 
 unsigned File::Read(char *data, unsigned size) {
-  if (file)
-    return (unsigned)fread(data, 1, size, file);
+  if (file_)
+    return (unsigned)fread(data, 1, size, file_);
 
   return 0;
 }

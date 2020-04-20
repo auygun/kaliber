@@ -19,7 +19,7 @@ public:
   bool Update(const Image &image);
 
 private:
-  GLuint id = 0;
+  GLuint id_ = 0;
 };
 
 } // namespace engine

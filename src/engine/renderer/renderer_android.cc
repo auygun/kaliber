@@ -42,7 +42,7 @@ bool Renderer::Init() {
 
   if (extensions.find("GL_OES_vertex_array_object") != extensions.end()) {
       LOG("Supports Vertex Array Objects\n");
-      vertexArrayObjects = true;
+      vertex_array_objects_ = true;
   }
 
   glViewport(0, 0, screen_width_, screen_height_);

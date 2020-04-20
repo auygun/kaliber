@@ -5,19 +5,19 @@ Timer::Timer() {
 }
 
 void Timer::Reset() {
-  gettimeofday(&lastTime, nullptr);
+  gettimeofday(&last_time_, nullptr);
 
-  secondsPassed = 0.0f;
-  secondsAccumulated = 0.0f;
+  seconds_passed_ = 0.0f;
+  seconds_accumulated_ = 0.0f;
 }
 
 void Timer::Update() {
   timeval currentTime;
   gettimeofday(&currentTime, nullptr);
-  secondsPassed =             (float)(currentTime.tv_sec - lastTime.tv_sec) +
-                  0.000001f * (float)(currentTime.tv_usec - lastTime.tv_usec);
+  seconds_passed_ =             (float)(currentTime.tv_sec - last_time_.tv_sec) +
+                  0.000001f * (float)(currentTime.tv_usec - last_time_.tv_usec);
 
-  lastTime = currentTime;
+  last_time_ = currentTime;
 
-  secondsAccumulated += secondsPassed;
+  seconds_accumulated_ += seconds_passed_;
 }

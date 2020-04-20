@@ -13,22 +13,22 @@ public:
   File();
   ~File();
 
-  bool Open(const char *fileName);
+  bool Open(const char *file_name);
   bool Close();
 
   unsigned GetSize();
 
   unsigned Read(char *data, unsigned size);
 
-  static char *ReadWholeFile(const char *fileName, unsigned *length = 0,
-                             bool nullTerminate = false);
+  static char *ReadWholeFile(const char *file_name, unsigned *length = 0,
+                             bool null_terminate = false);
 
 private:
 #if defined(__ANDROID__)
-  unzFile   archive;
-  unsigned  uncompressedSize;
+  unzFile   archive_;
+  unsigned  uncompressed_size_;
 #elif defined(__linux)
-  FILE      *file;
+  FILE      *file_;
 #endif
 };
 

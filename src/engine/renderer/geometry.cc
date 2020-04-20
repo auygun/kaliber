@@ -26,62 +26,61 @@ unsigned GetIndexSize(GLenum type) {
 namespace engine {
 
 Geometry::Geometry()
-  : primitive(GL_NONE)
-  , indexType(GL_NONE)
-  , vertexSize(0)
-  , vertexArrayId(0)
-  , vertexBufferId(0)
-  , indexBufferId(0) {
+  : primitive_(GL_NONE)
+  , index_type_(GL_NONE)
+  , vertex_size_(0)
+  , vertex_array_id_(0)
+  , vertex_buffer_id_(0)
+  , index_buffer_id_(0) {
 }
 
 Geometry::~Geometry() {
   Destroy();
 }
 
-bool Geometry::Create(GLenum primitive, const char *vertexDescription,
-                      unsigned numVertices, const void *vertices,
-                      GLenum indexDescription, unsigned numIndices,
+bool Geometry::Create(GLenum primitive, const char *vertex_description,
+                      unsigned num_vertices, const void *vertices,
+                      GLenum index_description, unsigned num_indices,
                       const void *indices) {
   // Verify that we have a valid layout and get the total byte size per vertex.
-  vertexSize = GetVertexSize(vertexDescription);
-  if (!vertexSize) {
+  vertex_size_ = GetVertexSize(vertex_description);
+  if (!vertex_size_) {
     LOG("Invalid vertex layout\n");
     return false;
   }
 
-  this->numVertices = numVertices;
-  this->numIndices  = numIndices;
-  this->primitive   = primitive;
+  this->num_vertices_ = num_vertices;
+  this->num_indices_  = num_indices;
+  this->primitive_   = primitive;
 
-  bool useVAO = false;
-  if (Engine::Get().GetRenderer().SupportsVAO()) {
-    useVAO = true;
-    glGenVertexArrays(1, &vertexArrayId);
-    glBindVertexArray(vertexArrayId);
+  bool use_vao = Engine::Get().GetRenderer().SupportsVAO();
+  if (use_vao) {
+    glGenVertexArrays(1, &vertex_array_id_);
+    glBindVertexArray(vertex_array_id_);
   }
 
   // Create the vertex buffer and upload the data.
-  glGenBuffers(1, &vertexBufferId);
-  glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
-  glBufferData(GL_ARRAY_BUFFER, numVertices * vertexSize, vertices,
+  glGenBuffers(1, &vertex_buffer_id_);
+  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id_);
+  glBufferData(GL_ARRAY_BUFFER, num_vertices * vertex_size_, vertices,
                GL_STATIC_DRAW);
 
   // Make sure the vertex format is understood and the attribute pointers are
   // set up.
-  if (!SetupVertexLayout(vertexDescription, vertexSize, useVAO))
+  if (!SetupVertexLayout(vertex_description, vertex_size_, use_vao))
     return false;
 
   // Create the index buffer and upload the data.
   if (indices) {
-    indexType = indexDescription;
+    index_type_ = index_description;
 
-    glGenBuffers(1, &indexBufferId);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndices * GetIndexSize(indexType),
+    glGenBuffers(1, &index_buffer_id_);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_id_);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices * GetIndexSize(index_type_),
                  indices, GL_STATIC_DRAW);
   }
 
-  if (useVAO) {
+  if (use_vao) {
     // De-activate the buffer again and we're done.
     glBindVertexArray(0);
   } else {
@@ -94,64 +93,64 @@ bool Geometry::Create(GLenum primitive, const char *vertexDescription,
 }
 
 void Geometry::Destroy() {
-  if (indexBufferId) {
-    glDeleteBuffers(1, &indexBufferId);
-    indexBufferId = 0;
+  if (index_buffer_id_) {
+    glDeleteBuffers(1, &index_buffer_id_);
+    index_buffer_id_ = 0;
   }
-  if (vertexBufferId) {
-    glDeleteBuffers(1, &vertexBufferId);
-    vertexBufferId = 0;
+  if (vertex_buffer_id_) {
+    glDeleteBuffers(1, &vertex_buffer_id_);
+    vertex_buffer_id_ = 0;
   }
-  if (vertexArrayId) {
-    glDeleteVertexArrays(1, &vertexArrayId);
-    vertexArrayId = 0;
+  if (vertex_array_id_) {
+    glDeleteVertexArrays(1, &vertex_array_id_);
+    vertex_array_id_ = 0;
   }
-  vertexLayout.clear();
+  vertex_layout_.clear();
 }
 
 void Geometry::Draw() {
   // Set up the vertex data.
-  if (vertexArrayId)
-    glBindVertexArray(vertexArrayId);
+  if (vertex_array_id_)
+    glBindVertexArray(vertex_array_id_);
   else {
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
-    for (GLuint attributeIndex = 0; attributeIndex < (GLuint)vertexLayout.size();
-         ++attributeIndex) {
-      Element &e = vertexLayout[attributeIndex];
-      glEnableVertexAttribArray(attributeIndex);
-      glVertexAttribPointer(attributeIndex, e.numElements, e.type, GL_FALSE,
-                            vertexSize, (const GLvoid *)e.vertexOffset);
+    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id_);
+    for (GLuint attribute_index = 0; attribute_index < (GLuint)vertex_layout_.size();
+         ++attribute_index) {
+      Element &e = vertex_layout_[attribute_index];
+      glEnableVertexAttribArray(attribute_index);
+      glVertexAttribPointer(attribute_index, e.num_elements_, e.type_, GL_FALSE,
+                            vertex_size_, (const GLvoid *)e.vertex_offset_);
     }
 
-    if (numIndices > 0)
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferId);
+    if (num_indices_ > 0)
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_id_);
   }
 
   // Draw the primitive.
-  if (numIndices > 0)
-    glDrawElements(primitive, numIndices, indexType, NULL);
+  if (num_indices_ > 0)
+    glDrawElements(primitive_, num_indices_, index_type_, NULL);
   else
-    glDrawArrays(primitive, 0, numVertices);
+    glDrawArrays(primitive_, 0, num_vertices_);
 
   // Clean up states.
-  if (vertexArrayId)
+  if (vertex_array_id_)
     glBindVertexArray(0);
   else {
-    for (GLuint attributeIndex = 0; attributeIndex < (GLuint)vertexLayout.size();
-         ++attributeIndex)
-      glDisableVertexAttribArray(attributeIndex);
+    for (GLuint attribute_index = 0; attribute_index < (GLuint)vertex_layout_.size();
+         ++attribute_index)
+      glDisableVertexAttribArray(attribute_index);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
   }
 }
 
-GLuint Geometry::GetVertexSize(const char *vertexDescription) {
+GLuint Geometry::GetVertexSize(const char *vertex_description) {
   GLuint size = 0;
 
   // Parse the description.
   char buffer[32];
-  strcpy(buffer, vertexDescription);
+  strcpy(buffer, vertex_description);
   char *token = strtok(buffer, kLayoutDelimiter);
 
   // Parse each encountered attribute.
@@ -160,23 +159,23 @@ GLuint Geometry::GetVertexSize(const char *vertexDescription) {
     // Ignore(token[0]);
 
     // There can be between 1 and 4 elements in an attribute.
-    size_t numElements = token[1] - '1' + 1;
-    if (numElements < 1 || numElements > 4)
+    size_t num_elements = token[1] - '1' + 1;
+    if (num_elements < 1 || num_elements > 4)
       return 0;
 
     // The data type is needed, the most common ones are supported.
-    size_t typeSize;
+    size_t type_size;
     switch (token[2]) {
-    case 'b': typeSize = sizeof(GLbyte);    break;
-    case 'f': typeSize = sizeof(GLfloat);   break;
-    case 'i': typeSize = sizeof(GLint);     break;
-    case 's': typeSize = sizeof(GLshort);   break;
-    case 'u': typeSize = sizeof(GLuint);    break;
-    case 'w': typeSize = sizeof(GLushort);  break;
+    case 'b': type_size = sizeof(GLbyte);    break;
+    case 'f': type_size = sizeof(GLfloat);   break;
+    case 'i': type_size = sizeof(GLint);     break;
+    case 's': type_size = sizeof(GLshort);   break;
+    case 'u': type_size = sizeof(GLuint);    break;
+    case 'w': type_size = sizeof(GLushort);  break;
     default:  return 0;
     }
 
-    size += numElements * typeSize;
+    size += num_elements * type_size;
 
     token = strtok(NULL, kLayoutDelimiter);
   }
@@ -184,14 +183,14 @@ GLuint Geometry::GetVertexSize(const char *vertexDescription) {
   return size;
 }
 
-bool Geometry::SetupVertexLayout(const char *vertexDescription,
-                                 GLuint vertexSize, bool useVAO) {
-  GLuint attributeIndex = 0;
-  size_t vertexOffset = 0;
+bool Geometry::SetupVertexLayout(const char *vertex_description,
+                                 GLuint vertex_size, bool use_vao) {
+  GLuint attribute_index = 0;
+  size_t vertex_offset = 0;
 
   // Parse the layout.
   char buffer[32];
-  strcpy(buffer, vertexDescription);
+  strcpy(buffer, vertex_description);
   char *token = strtok(buffer, kLayoutDelimiter);
 
   // Parse each encountered attribute.
@@ -201,48 +200,48 @@ bool Geometry::SetupVertexLayout(const char *vertexDescription,
       return false;
 
     // There's a limitation of 16 attributes in OpenGL ES 2.0
-    if (attributeIndex >= 16)
+    if (attribute_index >= 16)
       return false;
 
     // Don't care about the kind of attribute here.
     // Ignore(token[0]);
 
     // There can be between 1 and 4 elements in an attribute.
-    GLsizei numElements = token[1] - '1' + 1;
-    if (numElements < 1 || numElements > 4)
+    GLsizei num_elements = token[1] - '1' + 1;
+    if (num_elements < 1 || num_elements > 4)
       return false;
 
     // The data type is needed, the most common ones are supported.
     GLenum type;
-    size_t typeSize;
+    size_t type_size;
     switch (token[2]) {
-    case 'b': type = GL_UNSIGNED_BYTE;  typeSize = sizeof(GLbyte);    break;
-    case 'f': type = GL_FLOAT;          typeSize = sizeof(GLfloat);   break;
-    case 'i': type = GL_INT;            typeSize = sizeof(GLint);     break;
-    case 's': type = GL_SHORT;          typeSize = sizeof(GLshort);   break;
-    case 'u': type = GL_UNSIGNED_INT;   typeSize = sizeof(GLuint);    break;
-    case 'w': type = GL_UNSIGNED_SHORT; typeSize = sizeof(GLushort);  break;
+    case 'b': type = GL_UNSIGNED_BYTE;  type_size = sizeof(GLbyte);    break;
+    case 'f': type = GL_FLOAT;          type_size = sizeof(GLfloat);   break;
+    case 'i': type = GL_INT;            type_size = sizeof(GLint);     break;
+    case 's': type = GL_SHORT;          type_size = sizeof(GLshort);   break;
+    case 'u': type = GL_UNSIGNED_INT;   type_size = sizeof(GLuint);    break;
+    case 'w': type = GL_UNSIGNED_SHORT; type_size = sizeof(GLushort);  break;
     default:  return false;
     }
 
     // We got all we need to define this attribute.
-    if (useVAO) {
+    if (use_vao) {
       // This will be saved into the vertex array object.
-      glEnableVertexAttribArray(attributeIndex);
-      glVertexAttribPointer(attributeIndex, numElements, type, GL_FALSE,
-                            vertexSize, (const GLvoid *)vertexOffset);
+      glEnableVertexAttribArray(attribute_index);
+      glVertexAttribPointer(attribute_index, num_elements, type, GL_FALSE,
+                            vertex_size, (const GLvoid *)vertex_offset);
     } else {
       // Need to keep this information for when rendering.
       Element element;
-      element.numElements   = numElements;
-      element.type          = type;
-      element.vertexOffset  = vertexOffset;
-      vertexLayout.push_back(element);
+      element.num_elements_   = num_elements;
+      element.type_          = type;
+      element.vertex_offset_  = vertex_offset;
+      vertex_layout_.push_back(element);
     }
 
     // Move on to the next attribute.
-    ++attributeIndex;
-    vertexOffset += numElements * typeSize;
+    ++attribute_index;
+    vertex_offset += num_elements * type_size;
     token = strtok(NULL, kLayoutDelimiter);
   }
 

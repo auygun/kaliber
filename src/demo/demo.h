@@ -19,8 +19,8 @@ class Demo : public engine::Game {
   void Draw(float frame_frac) override;
 
  private:
-  float secondsAccumulated = 0.0f;
-  engine::Sprite bg_tiles_;
+  float seconds_accumulated_ = 0.0f;
+  engine::Sprite bg_;
   engine::Sprite sprite_;
 
   Vector2 ToScale(int width, int height);

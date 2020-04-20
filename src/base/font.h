@@ -24,8 +24,8 @@ private:
     kNumChars   = 96    // Covers almost all ASCII chars.
   };
 
-  uint8_t         *glyphCache;          // Image data.
-  stbtt_bakedchar glyphInfo[kNumChars]; // Coordinates and advance.
+  uint8_t         *glyph_cache_;          // Image data.
+  stbtt_bakedchar glyph_info_[kNumChars]; // Coordinates and advance.
 };
 
 #endif // FONT_H

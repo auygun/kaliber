@@ -11,7 +11,7 @@ Texture::~Texture() {
 bool Texture::Create(const Image &image) {
   Destroy();
 
-  glGenTextures(1, &id);
+  glGenTextures(1, &id_);
 
   if (!Update(image))
     return false;
@@ -25,12 +25,12 @@ bool Texture::Create(const Image &image) {
 }
 
 void Texture::Destroy() {
-  if (id)
-    glDeleteTextures(1, &id);
+  if (id_)
+    glDeleteTextures(1, &id_);
 }
 
 void Texture::Activate() {
-  glBindTexture(GL_TEXTURE_2D, id);
+  glBindTexture(GL_TEXTURE_2D, id_);
 }
 
 bool Texture::Update(const Image &image) {

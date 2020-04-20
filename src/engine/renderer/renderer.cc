@@ -17,17 +17,17 @@ std::set<std::string> Renderer::SetupExtensions() {
 
   // Check for supported texture compression extensions.
   if (extensions.find("GL_OES_compressed_ETC1_RGB8_texture") != extensions.end())
-    textureCompression.etc1 = true;
+    texture_compression_.etc1 = true;
   if (extensions.find("GL_EXT_texture_compression_dxt1") != extensions.end())
-    textureCompression.dxt1 = true;
+    texture_compression_.dxt1 = true;
   if (extensions.find("GL_EXT_texture_compression_latc") != extensions.end())
-    textureCompression.latc = true;
+    texture_compression_.latc = true;
   if (extensions.find("GL_EXT_texture_compression_s3tc") != extensions.end())
-    textureCompression.s3tc = true;
+    texture_compression_.s3tc = true;
   if (extensions.find("GL_IMG_texture_compression_pvrtc") != extensions.end())
-    textureCompression.pvrtc = true;
+    texture_compression_.pvrtc = true;
   if (extensions.find("GL_AMD_compressed_ATC_texture") != extensions.end() || extensions.find("GL_ATI_texture_compression_atitc") != extensions.end())
-    textureCompression.atc = true;
+    texture_compression_.atc = true;
 
   return extensions;
 }

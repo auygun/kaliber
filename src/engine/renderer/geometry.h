@@ -11,9 +11,9 @@ public:
   Geometry();
   ~Geometry();
 
-  bool Create(GLenum primitive, const char *vertexDescription,
-              unsigned numVertices, const void *vertices,
-              GLenum indexDescription = GL_NONE, unsigned numIndices = 0,
+  bool Create(GLenum primitive, const char *vertex_description,
+              unsigned num_vertices, const void *vertices,
+              GLenum index_description = GL_NONE, unsigned num_indices = 0,
               const void *indices = NULL);
   void Destroy();
 
@@ -22,26 +22,26 @@ public:
 
 private:
   struct Element {
-    GLsizei numElements;
-    GLenum  type;
-    size_t  vertexOffset;
+    GLsizei num_elements_;
+    GLenum  type_;
+    size_t  vertex_offset_;
   };
 
-  unsigned              numVertices,
-                        numIndices;
-  GLenum                primitive,
-                        indexType;
-  std::vector<Element>  vertexLayout;
-  size_t                vertexSize;
+  unsigned              num_vertices_;
+  unsigned              num_indices_;
+  GLenum                primitive_;
+  GLenum                index_type_;
+  std::vector<Element>  vertex_layout_;
+  size_t                vertex_size_;
 
-  GLuint                vertexArrayId,
-                        vertexBufferId,
-                        indexBufferId;
+  GLuint                vertex_array_id_;
+  GLuint                vertex_buffer_id_;
+  GLuint                index_buffer_id_;
 
 
-  GLuint GetVertexSize(const char *vertexDescription);
-  bool SetupVertexLayout(const char *vertexDescription, GLuint vertexSize,
-                         bool useVAO);
+  GLuint GetVertexSize(const char *vertex_description);
+  bool SetupVertexLayout(const char *vertex_description, GLuint vertex_size,
+                         bool use_vao);
 };
 
 } // namespace engine

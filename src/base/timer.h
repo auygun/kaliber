@@ -12,14 +12,14 @@ public:
 
   void Update();
 
-  float GetSecondsPassed() const        { return secondsPassed; }
-  float GetSecondsAccumulated() const   { return secondsAccumulated; }
+  float GetSecondsPassed() const        { return seconds_passed_; }
+  float GetSecondsAccumulated() const   { return seconds_accumulated_; }
 
 private:
-  float secondsPassed = 0.0f;
-  float secondsAccumulated = 0.0f;
+  float seconds_passed_ = 0.0f;
+  float seconds_accumulated_ = 0.0f;
 
-  timeval lastTime;
+  timeval last_time_;
 };
 
 #endif // TIMER_H

@@ -30,13 +30,12 @@ public:
   int GetScreenWidth() { return screen_width_; }
   int GetScreenHeight() { return screen_height_; }
 
-  bool SupportsETC1() const     { return textureCompression.etc1; }
-  bool SupportsDXT1() const     { return textureCompression.dxt1 || textureCompression.s3tc; }
-  bool SupportsDXT5() const     { return textureCompression.s3tc; }
-  bool SupportsATC() const      { return textureCompression.atc; }
+  bool SupportsETC1() const     { return texture_compression_.etc1; }
+  bool SupportsDXT1() const     { return texture_compression_.dxt1 || texture_compression_.s3tc; }
+  bool SupportsDXT5() const     { return texture_compression_.s3tc; }
+  bool SupportsATC() const      { return texture_compression_.atc; }
 
-  bool SupportsVAO() const      { return vertexArrayObjects; }
-  bool SupportsKHRImage() const { return khrImage && eglImage; }
+  bool SupportsVAO() const      { return vertex_array_objects_; }
 
 #if defined(__linux__) && !defined(__ANDROID__)
   bool ShouldExit();
@@ -44,12 +43,12 @@ public:
 
 private:
   struct TextureCompression {
-    unsigned  etc1    : 1,
-              dxt1    : 1,
-              latc    : 1,
-              s3tc    : 1,
-              pvrtc   : 1,
-              atc     : 1;
+    unsigned  etc1    : 1;
+    unsigned  dxt1    : 1;
+    unsigned  latc    : 1;
+    unsigned  s3tc    : 1;
+    unsigned  pvrtc   : 1;
+    unsigned  atc     : 1;
 
     TextureCompression()
       : etc1(false)
@@ -61,18 +60,16 @@ private:
     }
   };
 
-  TextureCompression textureCompression;
-  bool vertexArrayObjects = false;
-  bool khrImage = false;
-  bool eglImage = false;
+  TextureCompression texture_compression_;
+  bool vertex_array_objects_ = false;
 
   int screen_width_ = 0;
   int screen_height_ = 0;
 
 #if defined(__linux__) && !defined(__ANDROID__)
-  Display* display = NULL;
-  Window window = 0;
-  GLXContext glxContext = NULL;
+  Display* display_ = NULL;
+  Window window_ = 0;
+  GLXContext glx_context_ = NULL;
 #endif
 
   std::set<std::string> SetupExtensions();

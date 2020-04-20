@@ -14,7 +14,7 @@ Engine &Engine::Get() {
 bool Engine::Init() {
   RandomInit();
 
-  if (!font.Create()) {
+  if (!font_.Create()) {
     LOG("Failed to create the font.\n");
     return false;
   }
@@ -57,21 +57,21 @@ void Engine::Clear() {
   // if (grey > 1.0f)
   //   grey = 0.0f;
   const float clearColor[] = { grey, grey, grey, 1.0f };
-  renderer.Clear(clearColor);
+  renderer_.Clear(clearColor);
 }
 
 void Engine::Present() {
-  renderer.Present();
+  renderer_.Present();
 }
 
 void Engine::TrimMemory() {
-  renderer.TrimMemory();
+  renderer_.TrimMemory();
 }
 
 bool Engine::CreateRenderResources() {
   // Create the shader we can reuse for all tiles.
-  const char *vertexDescription = "p2f;t2f";
-  if (!pass_through_shader_.Create("shaders/pass_through", vertexDescription)) {
+  const char *vertex_description = "p2f;t2f";
+  if (!pass_through_shader_.Create("shaders/pass_through", vertex_description)) {
     LOG("Could not create pass through shader.\n");
     return false;
   }
@@ -85,7 +85,7 @@ bool Engine::CreateRenderResources() {
     -0.5f,  0.5f, 0.0f, 0.0f,
      0.5f,  0.5f, 1.0f, 0.0f
   };
-  if (!quad_.Create(GL_TRIANGLE_STRIP, vertexDescription, 4, vertices)) {
+  if (!quad_.Create(GL_TRIANGLE_STRIP, vertex_description, 4, vertices)) {
     LOG("Could not create quad geometry.\n");
     return false;
   }

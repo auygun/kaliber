@@ -3,7 +3,7 @@
 
 #include "../../base/vecmath.h"
 #include "opengl.h"
-#include <map>
+#include <unordered_map>
 #include <string>
 
 namespace engine {
@@ -13,7 +13,7 @@ public:
   Shader();
   ~Shader();
 
-  bool Create(const char *name, const char *vertexDescription);
+  bool Create(const char *name, const char *vertex_description);
   void Destroy();
   void Activate();
 
@@ -23,17 +23,17 @@ public:
 
 
 private:
-  typedef std::map<std::string, GLuint> UniformMap;
+  typedef std::unordered_map<std::string, GLuint> UniformMap;
 
-  GLuint      id;
-  UniformMap  uniforms;
+  GLuint      id_;
+  UniformMap  uniforms_;
 
 
-  bool CreateProgram(const char *name, const char *vertexDescription);
-  bool CreateProgram(const char *vertexSource, const char *fragmentSource,
-                     const char *vertexDescription);
+  bool CreateProgram(const char *name, const char *vertex_description);
+  bool CreateProgram(const char *vertex_source, const char *fragment_source,
+                     const char *vertex_description);
   GLuint CreateShader(const char *source, GLenum type);
-  bool BindAttributeLocation(const char *vertexDescription);
+  bool BindAttributeLocation(const char *vertex_description);
   GLint GetUniformLocation(const std::string &name);
 };
 

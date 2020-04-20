@@ -28,20 +28,20 @@ public:
 
   void TrimMemory();
 
-  Renderer &GetRenderer()   { return renderer; }
+  Renderer &GetRenderer()   { return renderer_; }
   Geometry& GetQuad() { return quad_; }
   Shader& GetPassThroughShader() { return pass_through_shader_; }
-  Fontx &GetFont()           { return font; }
+  Fontx &GetFont()           { return font_; }
 
 private:
   std::unique_ptr<Game> game_;
 
-  Renderer renderer;
+  Renderer renderer_;
 
   Geometry quad_;
   Shader pass_through_shader_;
 
-  Fontx font;
+  Fontx font_;
 
   bool CreateRenderResources();
 

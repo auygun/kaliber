@@ -20,30 +20,29 @@ public:
   void Destroy();
   void Copy(const Image &image);
 
-  bool Load(const char *fileName, bool convertPow2 = true);
+  bool Load(const char *file_name, bool convertPow2 = true);
 
-  unsigned GetWidth() const                       { return width; }
-  unsigned GetHeight() const                      { return height; }
-  Format GetFormat() const                        { return format; }
-  bool IsCompressed() const                       { return format > kRGBA32; }
+  unsigned GetWidth() const                       { return width_; }
+  unsigned GetHeight() const                      { return height_; }
+  Format GetFormat() const                        { return format_; }
+  bool IsCompressed() const                       { return format_ > kRGBA32; }
 
   unsigned GetSize() const;
 
-  const uint8_t *GetBuffer() const                { return buffer; }
-  uint8_t *GetBuffer()                            { return buffer; }
+  const uint8_t *GetBuffer() const                { return buffer_; }
+  uint8_t *GetBuffer()                            { return buffer_; }
 
   void Clear(const float *rgba);
   void Gradient();
 
-  void GetUV(float &_u, float &_v) const          { _u = u; _v = v; }
-
+  void GetUV(float &_u, float &_v) const          { _u = u_; _v = v_; }
 
 private:
-  uint8_t   *buffer;
-  unsigned  width,
-            height;
-  Format    format;
-  float     u, v;
+  uint8_t   *buffer_;
+  unsigned  width_;
+  unsigned  height_;
+  Format    format_;
+  float     u_, v_;
 };
 
 #endif // IMAGE_H
