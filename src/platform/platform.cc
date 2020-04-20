@@ -9,6 +9,10 @@ Platform& Platform::Get() {
   return platform;
 }
 
+void Platform::Shutdown() {
+  engine::Engine::Get().GetRenderer().Shutdown();
+}
+
 void Platform::RunMainLoop() {
   if (!engine::Engine::Get().Init()) {
     printf("Failed to initialize the engine.\n");

@@ -37,7 +37,6 @@ bool Engine::Init() {
 }
 
 void Engine::Shutdown() {
-  renderer.Shutdown();
   game_->Shutdown();
 }
 

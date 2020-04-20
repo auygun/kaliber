@@ -106,6 +106,7 @@ void android_main(android_app* app) {
   try {
     platform.Initialize(app);
     platform.RunMainLoop();
+    platform.Shutdown();
   } catch (Platform::InternalError &e) {
   }
 }

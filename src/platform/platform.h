@@ -22,6 +22,8 @@ class Platform {
   void Initialize();
 #endif
 
+  void Shutdown();
+
   void Update();
 
   void RunMainLoop();

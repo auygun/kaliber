@@ -26,6 +26,7 @@ int main(int argc, char **argv) {
   try {
     platform.Initialize();
     platform.RunMainLoop();
+    platform.Shutdown();
   } catch (Platform::InternalError &e) {
     return -1;
   }
