@@ -40,9 +40,11 @@ void Demo::Update(float delta_time) {
 void Demo::Draw(float frame_frac) {
   engine::Engine::Get().GetRenderer().EnableBlend();
 
-  float scroll_offset_y = fmod(-seconds_accumulated_ * 0.15f, bg_.GetScale().y);
-  for (float y = -1.0f; y <= 1.0f + bg_.GetScale().y; y += bg_.GetScale().y) {
-    for (float x = -1.0f; x <= 1.0f + bg_.GetScale().x; x += bg_.GetScale().x) {
+  float scale_x = bg_.GetScale().x;
+  float scale_y = bg_.GetScale().y;
+  float scroll_offset_y = fmod(-seconds_accumulated_ * 0.15f, scale_y);
+  for (float y = -1.0f + scale_y / 2; y <= 1.0f + scale_y; y += scale_y) {
+    for (float x = -1.0f + scale_x / 2; x <= 1.0f; x += scale_x) {
       bg_.Draw(Vector2(x, y + scroll_offset_y));
     }
   }
