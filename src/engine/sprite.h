@@ -3,7 +3,7 @@
 
 #include "../base/image.h"
 #include "renderer/texture.h"
-#include "vecmath.h"
+#include "../base/vecmath.h"
 
 #include <string>
 

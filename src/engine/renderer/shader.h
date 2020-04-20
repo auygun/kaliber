@@ -1,7 +1,7 @@
 #ifndef SHADER_H
 #define SHADER_H
 
-#include "../vecmath.h"
+#include "../../base/vecmath.h"
 #include "opengl.h"
 #include <map>
 #include <string>
