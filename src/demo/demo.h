@@ -3,6 +3,7 @@
 
 #include "../engine/game.h"
 #include "../engine/sprite.h"
+#include <vector>
 
 class Demo : public engine::Game {
  public:
@@ -18,7 +19,11 @@ class Demo : public engine::Game {
   void Draw(float frame_frac) override;
 
  private:
+  float secondsAccumulated = 0.0f;
+  engine::Sprite bg_tiles_;
   engine::Sprite sprite_;
+
+  Vector2 ToScale(int width, int height);
 };
 
 #endif // DEMO_H

@@ -18,6 +18,9 @@ public:
 
   void Draw(const Vector2 &offset);
 
+  Vector2 GetOffset() { return offset_; }
+  Vector2 GetScale() { return scale_; }
+
 private:
   Image image_;
   Texture texture_;
