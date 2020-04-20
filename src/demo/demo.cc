@@ -22,7 +22,7 @@ bool Demo::Initialize() {
 
   scale = ToScale(50, 50);
   LOG("scale_: %f %f\n", scale.x, scale.y);
-  if (!sprite_.Create("stock-1.jpg", Vector2(0, 0), scale)) {
+  if (!sprite_.Create("spaceship.png", Vector2(0, 0), scale)) {
     LOG("Failed to create the sprite.");
     return false;
   }
