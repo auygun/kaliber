@@ -40,7 +40,8 @@ class Renderer {
   bool SupportsVAO() const { return vertex_array_objects_; }
 
 #if defined(__linux__) && !defined(__ANDROID__)
-  bool ShouldExit();
+  Display* display() { return display_; }
+  Window window() { return window_; }
 #endif
 
  private:

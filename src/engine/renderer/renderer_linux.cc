@@ -69,28 +69,7 @@ bool Renderer::Init() {
 
   glViewport(0, 0, screen_width_, screen_height_);
 
-  Atom WM_DELETE_WINDOW = XInternAtom(display_, "WM_DELETE_WINDOW", false);
-  XSetWMProtocols(display_, window_, &WM_DELETE_WINDOW, 1);
-
   return true;
-}
-
-bool Renderer::ShouldExit() {
-  if (!XPending(display_))
-    return false;
-  XEvent e;
-  XNextEvent(display_, &e);
-  if (e.type == KeyPress) {
-    if (e.xkey.keycode == XKeysymToKeycode(display_, XK_Y) &&
-        !(e.xkey.state & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask)))
-      LOG("Y pressed!!! %d\n", e.xkey.state);
-    return false;
-  } else if (e.type == ClientMessage) {
-    // TODO: Should check here for other client message types. However the only
-    // protocol registered above is WM_DELETE_WINDOW for now.
-    return true;
-  }
-  return false;
 }
 
 void Renderer::Shutdown() {
