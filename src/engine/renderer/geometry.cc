@@ -4,7 +4,6 @@
 #include "../../base/log.h"
 #include "../engine.h"
 #include "../renderer/renderer.h"
-
 namespace {
 
 // Used to parse the vertex layout,
@@ -12,7 +11,7 @@ namespace {
 const char kLayoutDelimiter[] = ";/ \t";
 
 // Map the OpenGL enumerator to the actual byte size.
-unsigned GetIndexSize(GLenum type) {
+int GetIndexSize(GLenum type) {
   switch (type) {
     case GL_UNSIGNED_BYTE:
       return sizeof(GLbyte);
@@ -42,11 +41,11 @@ Geometry::~Geometry() {
 }
 
 bool Geometry::Create(GLenum primitive,
-                      const char* vertex_description,
-                      unsigned num_vertices,
+                      const std::string& vertex_description,
+                      int num_vertices,
                       const void* vertices,
                       GLenum index_description,
-                      unsigned num_indices,
+                      int num_indices,
                       const void* indices) {
   // Verify that we have a valid layout and get the total byte size per vertex.
   vertex_size_ = GetVertexSize(vertex_description);
@@ -152,12 +151,12 @@ void Geometry::Draw() {
   }
 }
 
-GLuint Geometry::GetVertexSize(const char* vertex_description) {
+GLuint Geometry::GetVertexSize(const std::string& vertex_description) {
   GLuint size = 0;
 
   // Parse the description.
   char buffer[32];
-  strcpy(buffer, vertex_description);
+  strcpy(buffer, vertex_description.c_str());
   char* token = strtok(buffer, kLayoutDelimiter);
 
   // Parse each encountered attribute.
@@ -203,7 +202,7 @@ GLuint Geometry::GetVertexSize(const char* vertex_description) {
   return size;
 }
 
-bool Geometry::SetupVertexLayout(const char* vertex_description,
+bool Geometry::SetupVertexLayout(const std::string& vertex_description,
                                  GLuint vertex_size,
                                  bool use_vao) {
   GLuint attribute_index = 0;
@@ -211,7 +210,7 @@ bool Geometry::SetupVertexLayout(const char* vertex_description,
 
   // Parse the layout.
   char buffer[32];
-  strcpy(buffer, vertex_description);
+  strcpy(buffer, vertex_description.c_str());
   char* token = strtok(buffer, kLayoutDelimiter);
 
   // Parse each encountered attribute.

@@ -9,6 +9,7 @@
 
 #include <set>
 #include <string>
+#include <array>
 
 namespace engine {
 
@@ -20,7 +21,7 @@ class Renderer {
   void Shutdown();
 
   void EnableBlend();
-  void Clear(const float* rgba);
+  void Clear(const std::array<float, 4>& rgba);
   void Present();
 
   void ContextLost();

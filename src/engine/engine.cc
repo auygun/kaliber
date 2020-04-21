@@ -56,8 +56,7 @@ void Engine::Clear() {
   // grey += 0.01f;
   // if (grey > 1.0f)
   //   grey = 0.0f;
-  const float clearColor[] = {grey, grey, grey, 1.0f};
-  renderer_.Clear(clearColor);
+  renderer_.Clear({grey, grey, grey, 1.0f});
 }
 
 void Engine::Present() {

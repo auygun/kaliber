@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include "../../base/vecmath.h"
 #include "opengl.h"
+#include <memory>
 
 namespace engine {
 
@@ -13,7 +14,7 @@ class Shader {
   Shader();
   ~Shader();
 
-  bool Create(const char* name, const char* vertex_description);
+  bool Create(const std::string& name, const std::string& vertex_description);
   void Destroy();
   void Activate();
 
@@ -27,12 +28,12 @@ class Shader {
   GLuint id_;
   UniformMap uniforms_;
 
-  bool CreateProgram(const char* name, const char* vertex_description);
+  bool CreateProgram(const std::string& name, const std::string& vertex_description);
   bool CreateProgram(const char* vertex_source,
                      const char* fragment_source,
-                     const char* vertex_description);
+                     const std::string& vertex_description);
   GLuint CreateShader(const char* source, GLenum type);
-  bool BindAttributeLocation(const char* vertex_description);
+  bool BindAttributeLocation(const std::string& vertex_description);
   GLint GetUniformLocation(const std::string& name);
 };
 

@@ -1,7 +1,6 @@
 #include "shader.h"
-#include <stdlib.h>
-#include <string.h>
-#include <string>
+#include <cstdlib>
+#include <cstring>
 #include "../../base/file.h"
 #include "../../base/log.h"
 
@@ -13,7 +12,7 @@ Shader::~Shader() {
   Destroy();
 }
 
-bool Shader::Create(const char* name, const char* vertex_description) {
+bool Shader::Create(const std::string& name, const std::string& vertex_description) {
   Destroy();
   return CreateProgram(name, vertex_description);
 }
@@ -49,38 +48,32 @@ void Shader::SetUniform(const std::string& name, int i) {
     glUniform1i(index, i);
 }
 
-bool Shader::CreateProgram(const char* name, const char* vertex_description) {
-  char* vertex_source = NULL;
-  char* fragment_source = NULL;
+bool Shader::CreateProgram(const std::string& name, const std::string& vertex_description) {
   bool result = false;
-
   do {
     std::string vertex_file_name = name;
     vertex_file_name += "_vertex.glsl";
-    char* vertex_source =
-        File::ReadWholeFile(vertex_file_name.c_str(), NULL, true);
+    std::unique_ptr<const char[]> vertex_source;
+    vertex_source.reset(File::ReadWholeFile(vertex_file_name.c_str(), NULL, true));
     if (!vertex_source)
       break;
 
     std::string fragment_file_name = name;
     fragment_file_name += "_fragment.glsl";
-    char* fragment_source =
-        File::ReadWholeFile(fragment_file_name.c_str(), NULL, true);
+    std::unique_ptr<const char[]> fragment_source;
+    fragment_source.reset(File::ReadWholeFile(fragment_file_name.c_str(), NULL, true));
     if (!fragment_source)
       break;
 
-    result = CreateProgram(vertex_source, fragment_source, vertex_description);
+    result = CreateProgram(vertex_source.get(), fragment_source.get(), vertex_description);
   } while (false);
-
-  delete[] vertex_source;
-  delete[] fragment_source;
 
   return result;
 }
 
 bool Shader::CreateProgram(const char* vertex_source,
                            const char* fragment_source,
-                           const char* vertex_description) {
+                           const std::string& vertex_description) {
   GLuint vertex_shader = CreateShader(vertex_source, GL_VERTEX_SHADER);
   if (!vertex_shader)
     return false;
@@ -145,13 +138,13 @@ GLuint Shader::CreateShader(const char* source, GLenum type) {
   return shader;
 }
 
-bool Shader::BindAttributeLocation(const char* vertex_description) {
+bool Shader::BindAttributeLocation(const std::string& vertex_description) {
   int current = 0, tex_coord = 0;
 
   // Parse the description.
   const char kLayoutDelimiters[] = ";/ \t";
   char buffer[32];
-  strcpy(buffer, vertex_description);
+  strcpy(buffer, vertex_description.c_str());
   char* token = strtok(buffer, kLayoutDelimiters);
 
   char tex_coord_buffer[32];

@@ -10,10 +10,12 @@ std::set<std::string> Renderer::SetupExtensions() {
   std::set<std::string> extensions;
   while (std::getline(stream, token, ' '))
     extensions.insert(token);
-  // LOG("  extensions:");
-  // for (std::set<std::string>::iterator i = extensions.begin(); i !=
-  // extensions.end(); ++i)
-  //   LOG("    %s\n", i->c_str());
+
+#if 0
+  LOG("  extensions:");
+  for (auto& ext : extensions)
+    LOG("    %s\n", ext.c_str());
+#endif
 
   // Check for supported texture compression extensions.
   if (extensions.find("GL_OES_compressed_ETC1_RGB8_texture") !=
@@ -39,7 +41,7 @@ void Renderer::EnableBlend() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void Renderer::Clear(const float* rgba) {
+void Renderer::Clear(const std::array<float, 4>& rgba) {
   glClearColor(rgba[0], rgba[1], rgba[2], rgba[3]);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }

@@ -2,6 +2,8 @@
 #define GEOMETRY_H
 
 #include <vector>
+#include <memory>
+#include <string>
 #include "opengl.h"
 
 namespace engine {
@@ -12,11 +14,11 @@ class Geometry {
   ~Geometry();
 
   bool Create(GLenum primitive,
-              const char* vertex_description,
-              unsigned num_vertices,
+              const std::string& vertex_description,
+              int num_vertices,
               const void* vertices,
               GLenum index_description = GL_NONE,
-              unsigned num_indices = 0,
+              int num_indices = 0,
               const void* indices = NULL);
   void Destroy();
 
@@ -29,8 +31,8 @@ class Geometry {
     size_t vertex_offset_;
   };
 
-  unsigned num_vertices_;
-  unsigned num_indices_;
+  int num_vertices_;
+  int num_indices_;
   GLenum primitive_;
   GLenum index_type_;
   std::vector<Element> vertex_layout_;
@@ -40,8 +42,8 @@ class Geometry {
   GLuint vertex_buffer_id_;
   GLuint index_buffer_id_;
 
-  GLuint GetVertexSize(const char* vertex_description);
-  bool SetupVertexLayout(const char* vertex_description,
+  GLuint GetVertexSize(const std::string& vertex_description);
+  bool SetupVertexLayout(const std::string& vertex_description,
                          GLuint vertex_size,
                          bool use_vao);
 };
