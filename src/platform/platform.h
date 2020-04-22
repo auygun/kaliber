@@ -28,10 +28,6 @@ class Platform {
 
   void RunMainLoop();
 
-  bool ShouldExit() { return should_exit_; }
-
-  bool HasFocus() { return has_focus_; }
-
   const std::string& GetRootPath() { return root_path_; }
 
 #if defined(__ANDROID__)

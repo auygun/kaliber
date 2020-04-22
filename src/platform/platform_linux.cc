@@ -3,24 +3,37 @@
 #include "../engine/renderer/renderer.h"
 #include "platform.h"
 #include <X11/Xlib.h>
-// #include <pthread.h>
+#include <X11/Xutil.h>
 
-// void PTreadWorkaround() {
-//   int i = pthread_getconcurrency();
-// };
+#include <pthread.h>
+
+void PTreadWorkaround() {
+  int i = pthread_getconcurrency();
+};
 
 void Platform::Initialize() {
   root_path_ = "../../assets/";
   LOG("Root path: %s\n", root_path_.c_str());
-  if (!engine::Engine::Get().GetRenderer().Init()) {
+
+  if (!engine::Engine::Get().GetRenderer().CreateWindow()) {
+    LOG("Failed to create the window.\n");
+    throw internal_error;
+  }
+  if (!engine::Engine::Get().GetRenderer().StartWorker()) {
     LOG("Failed to initialize the renderer.\n");
     throw internal_error;
   }
+  LOG("Initialized the renderer.\n");
 
   Display* display = engine::Engine::Get().GetRenderer().display();
   Window window = engine::Engine::Get().GetRenderer().window();
   Atom WM_DELETE_WINDOW = XInternAtom(display, "WM_DELETE_WINDOW", false);
   XSetWMProtocols(display, window, &WM_DELETE_WINDOW, 1);
+}
+
+void Platform::Shutdown() {
+  engine::Engine::Get().GetRenderer().TerminateWorker();
+  engine::Engine::Get().GetRenderer().DestroyWindow();
 }
 
 void Platform::Update() {
@@ -41,7 +54,7 @@ void Platform::Update() {
 }
 
 int main(int argc, char** argv) {
-  // PTreadWorkaround();
+  PTreadWorkaround();
   Platform& platform = Platform::Get();
   try {
     platform.Initialize();

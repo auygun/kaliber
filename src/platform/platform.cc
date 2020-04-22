@@ -1,16 +1,14 @@
 #include "platform.h"
+#include "../base/log.h"
 #include "../base/timer.h"
 #include "../engine/engine.h"
+#include <math.h>
 
 Platform::InternalError Platform::internal_error;
 
 Platform& Platform::Get() {
   static Platform platform;
   return platform;
-}
-
-void Platform::Shutdown() {
-  engine::Engine::Get().GetRenderer().Shutdown();
 }
 
 void Platform::RunMainLoop() {
@@ -20,7 +18,7 @@ void Platform::RunMainLoop() {
   }
 
   // Use fixed time steps.
-  constexpr float time_step = 1.0f / 60.0f;
+  constexpr float time_step = 1.0f / 30.0f;
   constexpr float speed = 1.0f;
 
   Timer timer;
@@ -28,14 +26,18 @@ void Platform::RunMainLoop() {
   float accumulator = 0.0;
   float frame_frac = 0.0f;
 
+  bool should_draw = true;
   for (;;) {
-    engine::Engine::Get().Draw(frame_frac);
+    if (should_draw) {
+      // LOG("Draw!!!\n");
+      should_draw = false;
+      engine::Engine::Get().Draw(frame_frac);
 
-    Update();
-
-    if (ShouldExit()) {
-      engine::Engine::Get().Shutdown();
-      return;
+      Update();
+      if (should_exit_) {
+        engine::Engine::Get().Shutdown();
+        return;
+      }
     }
 
     timer.Update();
@@ -43,12 +45,21 @@ void Platform::RunMainLoop() {
     float frame_time = (new_time - last_time) * speed;
     last_time = new_time;
     accumulator += frame_time;
+    // LOG("accumulator: %f\n", accumulator);
+
+    if (accumulator < time_step) {
+      float sleep_time = time_step - accumulator;
+      // LOG("sleep for: %f\n", sleep_time);
+      std::this_thread::sleep_for(std::chrono::nanoseconds((int)(sleep_time * 1000000000.0f)));
+      accumulator += sleep_time;
+    }
 
     // Subdivide the frame time.
     while (accumulator >= time_step) {
       engine::Engine::Get().Update(time_step);
       accumulator -= time_step;
-    }
+      should_draw = true;
+    };
 
     // Calculate frame fraction from remainder of the frame time.
     frame_frac = accumulator / time_step;

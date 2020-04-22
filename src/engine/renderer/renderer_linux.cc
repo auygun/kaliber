@@ -7,7 +7,7 @@
 
 namespace engine {
 
-bool Renderer::Init() {
+bool Renderer::CreateWindow() {
   screen_width_ = 1280;
   screen_height_ = 1024;
 
@@ -24,27 +24,31 @@ bool Renderer::Init() {
   // Look for the right visual to set up the OpenGL context.
   GLint glx_attributes[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER,
                             None};
-  XVisualInfo* visual_info = glXChooseVisual(display_, 0, glx_attributes);
-  if (!visual_info) {
+  visual_info_ = glXChooseVisual(display_, 0, glx_attributes);
+  if (!visual_info_) {
     LOG("No appropriate visual found.\n");
     return false;
   }
-  LOG("Visual %p selected\n", (void*)visual_info->visualid);
+  LOG("Visual %p selected\n", (void*)visual_info_->visualid);
 
   // Create the main window.
   XSetWindowAttributes window_attributes;
   window_attributes.colormap =
-      XCreateColormap(display_, root_window, visual_info->visual, AllocNone);
+      XCreateColormap(display_, root_window, visual_info_->visual, AllocNone);
   window_attributes.event_mask = ExposureMask | KeyPressMask;
   window_ =
       XCreateWindow(display_, root_window, 0, 0, screen_width_, screen_height_,
-                    0, visual_info->depth, InputOutput, visual_info->visual,
+                    0, visual_info_->depth, InputOutput, visual_info_->visual,
                     CWColormap | CWEventMask, &window_attributes);
   XMapWindow(display_, window_);
-  XStoreName(display_, window_, "Opera Testbed");
+  XStoreName(display_, window_, "gltest");
 
+  return true;
+}
+
+bool Renderer::Init() {
   // Create the OpenGL context.
-  glx_context_ = glXCreateContext(display_, visual_info, NULL, GL_TRUE);
+  glx_context_ = glXCreateContext(display_, visual_info_, NULL, GL_TRUE);
   if (!glx_context_) {
     LOG("Couldn't create the glx context.\n");
     return false;
@@ -72,13 +76,17 @@ bool Renderer::Init() {
   return true;
 }
 
+void Renderer::DestroyWindow() {
+  if (display_) {
+    XDestroyWindow(display_, window_);
+    XCloseDisplay(display_);
+  }
+}
+
 void Renderer::Shutdown() {
   if (display_) {
     glXMakeCurrent(display_, None, NULL);
     glXDestroyContext(display_, glx_context_);
-
-    XDestroyWindow(display_, window_);
-    XCloseDisplay(display_);
   }
 }
 

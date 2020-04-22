@@ -4,68 +4,114 @@
 
 namespace engine {
 
-void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
-  command_queue_.push_back(std::move(cmd));
+bool Renderer::StartWorker() {
+  LOG("%s\n", __func__);
+  std::promise<bool> promise;
+  std::future<bool> future = promise.get_future();
+  worker_thread_ = std::thread(&Renderer::WorkerMain, this, std::move(promise));
+  return future.get();
 }
 
-void Renderer::WorkerMain() {
-  for(;;) {
-    if (command_queue_.empty())
+void Renderer::TerminateWorker() {
+  LOG("%s\n", __func__);
+  // Notify worker thread and wait for it to terminate.
+  {
+    std::unique_lock<std::mutex> scoped_lock(mutex_);
+    if (terminate_worker_)
       return;
-    std::unique_ptr<RenderCommand> cmd;
-    cmd.swap(command_queue_.front());
-    command_queue_.pop_front();
+    terminate_worker_ = true;
+  }
+  cv_.notify_one();
+  worker_thread_.join();
+}
 
-    switch(cmd->cmd_id) {
-    case HASH("CmdEableBlend"):
-      HandleCmdEnableBlend(std::move(cmd));
-      break;
-    case HASH("CmdClear"):
-      HandleCmdClear(std::move(cmd));
-      break;
-    case HASH("CmdPresent"):
-      HandleCmdPresent(std::move(cmd));
-      break;
-    case HASH("CmdCreateTexture"):
-      HandleCmdCreateTexture(std::move(cmd));
-      break;
-    case HASH("CmdDestoryTexture"):
-      HandleCmdDestoryTexture(std::move(cmd));
-      break;
-    case HASH("CmdActivateTexture"):
-      HandleCmdActivateTexture(std::move(cmd));
-      break;
-    case HASH("CmdCreateGeometry"):
-      HandleCmdCreateGeometry(std::move(cmd));
-      break;
-    case HASH("CmdDestroyGeometry"):
-      HandleCmdDestroyGeometry(std::move(cmd));
-      break;
-    case HASH("CmdDrawGeometry"):
-      HandleCmdDrawGeometry(std::move(cmd));
-      break;
-    case HASH("CmdCreateShader"):
-      HandleCmdCreateShader(std::move(cmd));
-      break;
-    case HASH("CmdDestroyShader"):
-      HandleCmdDestroyShader(std::move(cmd));
-      break;
-    case HASH("CmdActivateShader"):
-      HandleCmdActivateShader(std::move(cmd));
-      break;
-    case HASH("CmdSetUniformVec2"):
-      HandleCmdSetUniformVec2(std::move(cmd));
-      break;
-    case HASH("CmdSetUniformVec3"):
-      HandleCmdSetUniformVec3(std::move(cmd));
-      break;
-    case HASH("CmdSetUniformInt"):
-      HandleCmdSetUniformInt(std::move(cmd));
-      break;
-    default:
-      // assert(false);
-      break;
+void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
+  std::unique_lock<std::mutex> scoped_lock(mutex_);
+  command_queue_.push_back(std::move(cmd));
+  cv_.notify_one();
+}
+
+void Renderer::WorkerMain(std::promise<bool> promise) {
+  promise.set_value(Init());
+
+  std::deque<std::unique_ptr<RenderCommand>> cq;
+  for(;;) {
+    {
+      std::unique_lock<std::mutex> scoped_lock(mutex_);
+      cv_.wait(scoped_lock, [&]()->bool {
+        return !command_queue_.empty() || terminate_worker_;
+      });
+      if (terminate_worker_) {
+        Shutdown();
+        return;
+      }
+      cq.swap(command_queue_);
     }
+
+#if 0
+    LOG("queue size: %d\n", (int)cq.size());
+#endif
+
+    do {
+      std::unique_ptr<RenderCommand> cmd;
+      cmd.swap(cq.front());
+      cq.pop_front();
+
+#if 0
+      LOG("cmd: %s\n", cmd->cmd_name.c_str());
+#endif
+
+      switch(cmd->cmd_id) {
+      case HASH("CmdEableBlend"):
+        HandleCmdEnableBlend(std::move(cmd));
+        break;
+      case HASH("CmdClear"):
+        HandleCmdClear(std::move(cmd));
+        break;
+      case HASH("CmdPresent"):
+        HandleCmdPresent(std::move(cmd));
+        break;
+      case HASH("CmdCreateTexture"):
+        HandleCmdCreateTexture(std::move(cmd));
+        break;
+      case HASH("CmdDestoryTexture"):
+        HandleCmdDestoryTexture(std::move(cmd));
+        break;
+      case HASH("CmdActivateTexture"):
+        HandleCmdActivateTexture(std::move(cmd));
+        break;
+      case HASH("CmdCreateGeometry"):
+        HandleCmdCreateGeometry(std::move(cmd));
+        break;
+      case HASH("CmdDestroyGeometry"):
+        HandleCmdDestroyGeometry(std::move(cmd));
+        break;
+      case HASH("CmdDrawGeometry"):
+        HandleCmdDrawGeometry(std::move(cmd));
+        break;
+      case HASH("CmdCreateShader"):
+        HandleCmdCreateShader(std::move(cmd));
+        break;
+      case HASH("CmdDestroyShader"):
+        HandleCmdDestroyShader(std::move(cmd));
+        break;
+      case HASH("CmdActivateShader"):
+        HandleCmdActivateShader(std::move(cmd));
+        break;
+      case HASH("CmdSetUniformVec2"):
+        HandleCmdSetUniformVec2(std::move(cmd));
+        break;
+      case HASH("CmdSetUniformVec3"):
+        HandleCmdSetUniformVec3(std::move(cmd));
+        break;
+      case HASH("CmdSetUniformInt"):
+        HandleCmdSetUniformInt(std::move(cmd));
+        break;
+      default:
+        // assert(false);
+        break;
+      }
+    } while (!cq.empty());
   }
 }
 
@@ -196,7 +242,6 @@ void Renderer::Clear(const std::array<float, 4>& rgba) {
 void Renderer::Present() {
   auto cmd = std::make_unique<CmdPresent>();
   EnqueueCommand(std::move(cmd));
-  WorkerMain();
 }
 
 void Renderer::ContextLost() {}

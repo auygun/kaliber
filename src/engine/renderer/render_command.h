@@ -19,19 +19,34 @@ constexpr inline size_t HORNER_HASH(size_t prime, const char (&str)[N], size_t L
 
 #define HASH(x) (HORNER_HASH(31, x))
 
+#ifdef _DEBUG
+#define RENDER_COMMAND_BEGIN(NAME) \
+  struct NAME : RenderCommand { \
+    static constexpr CommandId CMD_ID = HASH(#NAME); \
+    NAME() : RenderCommand(CMD_ID, #NAME) {}
+#define RENDER_COMMAND_END };
+#else
 #define RENDER_COMMAND_BEGIN(NAME) \
   struct NAME : RenderCommand { \
     static constexpr CommandId CMD_ID = HASH(#NAME); \
     NAME() : RenderCommand(CMD_ID) {}
 #define RENDER_COMMAND_END };
+#endif
 
 struct RenderCommand {
   using CommandId = size_t;
   static constexpr CommandId INVALID_CMD_ID = 0;
 
+#ifdef _DEBUG
+  RenderCommand(CommandId id, const char* name) : cmd_id(id), cmd_name(name) {}
+#else
   RenderCommand(CommandId id) : cmd_id(id) {}
+#endif
 
   const CommandId cmd_id = INVALID_CMD_ID;
+#ifdef _DEBUG
+  std::string cmd_name;
+#endif
 };
 
 RENDER_COMMAND_BEGIN(CmdEableBlend)

@@ -17,12 +17,21 @@
 cmake_minimum_required(VERSION 3.4.1)
 
 # build native_app_glue as a static lib
-set(${CMAKE_C_FLAGS}, "${CMAKE_C_FLAGS}")
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+    set(${CMAKE_C_FLAGS}, "${CMAKE_C_FLAGS} -D_DEBUG")
+else ()
+    set(${CMAKE_C_FLAGS}, "${CMAKE_C_FLAGS}")
+endif ()
 add_library(native_app_glue STATIC
     ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
 
 # now build app's shared lib
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Werror")
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Werror -D_DEBUG")
+else ()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Werror")
+endif ()
+
 
 # Export ANativeActivity_onCreate(),
 # Refer to: https://github.com/android-ndk/ndk/issues/381.

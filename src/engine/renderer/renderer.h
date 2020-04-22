@@ -16,6 +16,10 @@
 #include <unordered_map>
 #include <string>
 #include <array>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <future>
 #include <deque>
 
 namespace engine {
@@ -23,6 +27,9 @@ namespace engine {
 class Renderer {
  public:
   Renderer() = default;
+
+  bool StartWorker();
+  void TerminateWorker();
 
   bool Init();
   void Shutdown();
@@ -48,28 +55,14 @@ class Renderer {
   bool SupportsVAO() const { return vertex_array_objects_; }
 
 #if defined(__linux__) && !defined(__ANDROID__)
+  bool CreateWindow();
+  void DestroyWindow();
+
   Display* display() { return display_; }
   Window window() { return window_; }
 #endif
 
   void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
-  void WorkerMain();
-
-  void HandleCmdEnableBlend(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdClear(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdPresent(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdCreateTexture(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdDestoryTexture(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdActivateTexture(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdCreateGeometry(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdDestroyGeometry(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdDrawGeometry(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdCreateShader(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdDestroyShader(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdActivateShader(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdSetUniformVec2(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdSetUniformVec3(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdSetUniformInt(std::unique_ptr<RenderCommand> cmd);
 
  private:
   struct TextureCompression {
@@ -101,11 +94,35 @@ class Renderer {
 
   std::deque<std::unique_ptr<RenderCommand>> command_queue_;
 
+  std::condition_variable cv_;
+  std::mutex mutex_;
+  std::thread worker_thread_;
+  bool terminate_worker_ = false;
+
 #if defined(__linux__) && !defined(__ANDROID__)
   Display* display_ = NULL;
   Window window_ = 0;
+  XVisualInfo* visual_info_;
   GLXContext glx_context_ = NULL;
 #endif
+
+  void WorkerMain(std::promise<bool> promise);
+
+  void HandleCmdEnableBlend(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdClear(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdPresent(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdCreateTexture(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdDestoryTexture(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdActivateTexture(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdCreateGeometry(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdDestroyGeometry(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdDrawGeometry(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdCreateShader(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdDestroyShader(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdActivateShader(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdSetUniformVec2(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdSetUniformVec3(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdSetUniformInt(std::unique_ptr<RenderCommand> cmd);
 
   std::unordered_set<std::string> SetupExtensions();
 

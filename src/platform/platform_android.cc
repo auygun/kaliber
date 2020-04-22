@@ -49,7 +49,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       break;
     case APP_CMD_INIT_WINDOW:
       if (app->window != NULL) {
-        if (!engine::Engine::Get().GetRenderer().Init()) {
+        if (!engine::Engine::Get().GetRenderer().StartWorker()) {
           LOG("Failed to initialize the renderer.\n");
           throw internal_error;
         }
@@ -57,7 +57,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       }
       break;
     case APP_CMD_TERM_WINDOW:
-      engine::Engine::Get().GetRenderer().Shutdown();
+      engine::Engine::Get().GetRenderer().TerminateWorker();
       platform->has_focus_ = false;
       break;
     case APP_CMD_STOP:
@@ -87,21 +87,26 @@ void Platform::Initialize(android_app* app) {
   Update();
 }
 
+void Platform::Shutdown() {
+  engine::Engine::Get().GetRenderer().TerminateWorker();
+}
+
 void Platform::Update() {
   int id;
   int events;
   android_poll_source* source;
 
-  while ((id = ALooper_pollAll(HasFocus() ? 0 : -1, NULL, &events,
+  while ((id = ALooper_pollAll(has_focus_ ? 0 : -1, NULL, &events,
                                (void**)&source)) >= 0) {
     if (source != NULL)
       source->process(app_, source);
-    if (HasFocus())
+    if (app_->destroyRequested != 0) {
+      should_exit_ = true;
+      break;
+    }
+    if (has_focus_)
       break;
   }
-
-  if (app_->destroyRequested != 0)
-    should_exit_ = true;
 }
 
 void android_main(android_app* app) {
