@@ -60,7 +60,7 @@ bool Renderer::Init() {
   LogVersion();
   LOG("Screen size: %d, %d\n", screen_width_, screen_height_);
 
-  std::set<std::string> extensions = SetupExtensions();
+  std::unordered_set<std::string> extensions = SetupExtensions();
 
   if (extensions.find("GL_OES_vertex_array_object") != extensions.end()) {
     LOG("Supports Vertex Array Objects\n");
@@ -82,7 +82,7 @@ void Renderer::Shutdown() {
   }
 }
 
-void Renderer::Present() {
+void Renderer::HandleCmdPresent(std::unique_ptr<RenderCommand> cmd) {
   if (display_)
     glXSwapBuffers(display_, window_);
 }

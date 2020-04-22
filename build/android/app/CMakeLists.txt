@@ -39,9 +39,12 @@ add_library(native-activity SHARED
     ../../../src/demo/demo.cc
     ../../../src/engine/engine.cc
     ../../../src/engine/renderer/geometry.cc
+    ../../../src/engine/renderer/igeometry.cc
     ../../../src/engine/renderer/renderer_android.cc
     ../../../src/engine/renderer/renderer.cc
+    ../../../src/engine/renderer/ishader.cc
     ../../../src/engine/renderer/shader.cc
+    ../../../src/engine/renderer/itexture.cc
     ../../../src/engine/renderer/texture.cc
     ../../../src/engine/sprite.cc
     ../../../src/platform/platform_android.cc

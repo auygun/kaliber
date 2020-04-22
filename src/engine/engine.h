@@ -3,9 +3,9 @@
 
 #include <memory>
 #include "../base/font.h"
-#include "renderer/geometry.h"
+#include "renderer/igeometry.h"
 #include "renderer/renderer.h"
-#include "renderer/shader.h"
+#include "renderer/ishader.h"
 
 #if defined(__ANDROID__)
 struct ANativeWindow;
@@ -29,8 +29,8 @@ class Engine {
   void TrimMemory();
 
   Renderer& GetRenderer() { return renderer_; }
-  Geometry& GetQuad() { return quad_; }
-  Shader& GetPassThroughShader() { return pass_through_shader_; }
+  IGeometry& GetQuad() { return quad_; }
+  IShader& GetPassThroughShader() { return pass_through_shader_; }
   Fontx& GetFont() { return font_; }
 
  private:
@@ -38,8 +38,8 @@ class Engine {
 
   Renderer renderer_;
 
-  Geometry quad_;
-  Shader pass_through_shader_;
+  IGeometry quad_;
+  IShader pass_through_shader_;
 
   Fontx font_;
 

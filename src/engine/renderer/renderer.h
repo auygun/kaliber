@@ -7,9 +7,16 @@
 #include "../../third_party/glew/glxew.h"
 #endif
 
-#include <set>
+#include "texture.h"
+#include "shader.h"
+#include "geometry.h"
+#include "render_command.h"
+#include <memory>
+#include <unordered_set>
+#include <unordered_map>
 #include <string>
 #include <array>
+#include <deque>
 
 namespace engine {
 
@@ -45,6 +52,25 @@ class Renderer {
   Window window() { return window_; }
 #endif
 
+  void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
+  void WorkerMain();
+
+  void HandleCmdEnableBlend(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdClear(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdPresent(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdCreateTexture(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdDestoryTexture(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdActivateTexture(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdCreateGeometry(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdDestroyGeometry(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdDrawGeometry(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdCreateShader(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdDestroyShader(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdActivateShader(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdSetUniformVec2(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdSetUniformVec3(std::unique_ptr<RenderCommand> cmd);
+  void HandleCmdSetUniformInt(std::unique_ptr<RenderCommand> cmd);
+
  private:
   struct TextureCompression {
     unsigned etc1 : 1;
@@ -69,13 +95,19 @@ class Renderer {
   int screen_width_ = 0;
   int screen_height_ = 0;
 
+  std::unordered_map<int, std::unique_ptr<Texture>> texture_map_;
+  std::unordered_map<int, std::unique_ptr<Geometry>> geometry_map_;
+  std::unordered_map<int, std::unique_ptr<Shader>> shader_map_;
+
+  std::deque<std::unique_ptr<RenderCommand>> command_queue_;
+
 #if defined(__linux__) && !defined(__ANDROID__)
   Display* display_ = NULL;
   Window window_ = 0;
   GLXContext glx_context_ = NULL;
 #endif
 
-  std::set<std::string> SetupExtensions();
+  std::unordered_set<std::string> SetupExtensions();
 
   void LogVersion();
 };

@@ -1,21 +1,22 @@
 #include "sprite.h"
 #include "../base/log.h"
 #include "engine.h"
-#include "renderer/geometry.h"
-#include "renderer/shader.h"
+#include "renderer/igeometry.h"
+#include "renderer/ishader.h"
 
 namespace engine {
 
 bool Sprite::Create(const std::string& asset_name,
                     const Vector2& offset,
                     const Vector2& scale) {
-  if (!image_.Load(asset_name.c_str()))
+  auto image = std::make_unique<Image>();
+  if (!image->Load(asset_name.c_str()))
     return false;
 
   offset_ = offset;
   scale_ = scale;
 
-  return texture_.Create(image_);
+  return texture_.Create(std::move(image));
 }
 
 void Sprite::Draw(const Vector2& offset) {
@@ -23,8 +24,8 @@ void Sprite::Draw(const Vector2& offset) {
 
   texture_.Activate();
 
-  Geometry& quad = Engine::Get().GetQuad();
-  Shader& shader = Engine::Get().GetPassThroughShader();
+  IGeometry& quad = Engine::Get().GetQuad();
+  IShader& shader = Engine::Get().GetPassThroughShader();
 
   shader.Activate();
   shader.SetUniform("offset", draw_offset);
