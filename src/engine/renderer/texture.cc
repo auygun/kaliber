@@ -1,18 +1,18 @@
 #include "../../base/image.h"
 #include "../../base/log.h"
-#include "itexture.h"
+#include "texture.h"
 #include "render_command.h"
 #include "../engine.h"
 
 namespace engine {
 
-int ITexture::last_id = 0;
+int Texture::last_id = 0;
 
-ITexture::~ITexture() {
+Texture::~Texture() {
   Destroy();
 }
 
-bool ITexture::Create(std::unique_ptr<Image> image) {
+bool Texture::Create(std::unique_ptr<Image> image) {
   Destroy();
 
   auto cmd = std::make_unique<CmdCreateTexture>();
@@ -24,7 +24,7 @@ bool ITexture::Create(std::unique_ptr<Image> image) {
   return true;
 }
 
-void ITexture::Destroy() {
+void Texture::Destroy() {
   if (id) {
     auto cmd = std::make_unique<CmdDestoryTexture>();
     cmd->id = id;
@@ -33,7 +33,7 @@ void ITexture::Destroy() {
   }
 }
 
-void ITexture::Activate() {
+void Texture::Activate() {
   if (id) {
     auto cmd = std::make_unique<CmdActivateTexture>();
     cmd->id = id;

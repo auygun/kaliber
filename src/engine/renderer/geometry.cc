@@ -1,19 +1,19 @@
 #include "../../base/log.h"
 #include "../renderer/renderer.h"
 // #include "../engine.h"
-#include "igeometry.h"
+#include "geometry.h"
 #include "render_command.h"
 #include "../engine.h"
 
 namespace engine {
 
-int IGeometry::last_id = 0;
+int Geometry::last_id = 0;
 
-IGeometry::~IGeometry() {
+Geometry::~Geometry() {
   Destroy();
 }
 
-bool IGeometry::Create(unsigned int primitive,
+bool Geometry::Create(unsigned int primitive,
                        const std::string& vertex_description,
                        int num_vertices,
                        const void* vertices,
@@ -36,7 +36,7 @@ bool IGeometry::Create(unsigned int primitive,
   return true;
 }
 
-void IGeometry::Destroy() {
+void Geometry::Destroy() {
   if (id) {
     auto cmd = std::make_unique<CmdDestroyGeometry>();
     cmd->id = id;
@@ -45,7 +45,7 @@ void IGeometry::Destroy() {
   }
 }
 
-void IGeometry::Draw() {
+void Geometry::Draw() {
   if (id) {
     auto cmd = std::make_unique<CmdDrawGeometry>();
     cmd->id = id;

@@ -1,6 +1,6 @@
 #include "../../base/file.h"
 #include "../../base/log.h"
-#include "ishader.h"
+#include "shader.h"
 #include "render_command.h"
 #include "../engine.h"
 #include <stdlib.h>
@@ -10,13 +10,13 @@
 
 namespace engine {
 
-int IShader::last_id = 0;
+int Shader::last_id = 0;
 
-IShader::~IShader() {
+Shader::~Shader() {
   Destroy();
 }
 
-bool IShader::Create(const std::string& name, const std::string& vertex_description) {
+bool Shader::Create(const std::string& name, const std::string& vertex_description) {
   Destroy();
 
   std::unique_ptr<char[]> vertexSource;
@@ -45,7 +45,7 @@ bool IShader::Create(const std::string& name, const std::string& vertex_descript
   return true;
 }
 
-void IShader::Destroy() {
+void Shader::Destroy() {
   if (id) {
     auto cmd = std::make_unique<CmdDestroyShader>();
     cmd->id = id;
@@ -54,7 +54,7 @@ void IShader::Destroy() {
   }
 }
 
-void IShader::Activate() {
+void Shader::Activate() {
   if (id) {
     auto cmd = std::make_unique<CmdActivateShader>();
     cmd->id = id;
@@ -62,7 +62,7 @@ void IShader::Activate() {
   }
 }
 
-void IShader::SetUniform(const std::string &name, const Vector2 &v) {
+void Shader::SetUniform(const std::string &name, const Vector2 &v) {
   if (id) {
     auto cmd = std::make_unique<CmdSetUniformVec2>();
     cmd->id = id;
@@ -72,7 +72,7 @@ void IShader::SetUniform(const std::string &name, const Vector2 &v) {
   }
 }
 
-void IShader::SetUniform(const std::string &name, const Vector3 &v) {
+void Shader::SetUniform(const std::string &name, const Vector3 &v) {
   if (id) {
     auto cmd = std::make_unique<CmdSetUniformVec3>();
     cmd->id = id;
@@ -82,7 +82,7 @@ void IShader::SetUniform(const std::string &name, const Vector3 &v) {
   }
 }
 
-void IShader::SetUniform(const std::string &name, int i) {
+void Shader::SetUniform(const std::string &name, int i) {
   if (id) {
     auto cmd = std::make_unique<CmdSetUniformInt>();
     cmd->id = id;

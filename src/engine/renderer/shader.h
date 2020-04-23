@@ -1,5 +1,5 @@
-#ifndef ISHADER_H
-#define ISHADER_H
+#ifndef SHADER_H
+#define SHADER_H
 
 #include "../../base/vecmath.h"
 #include "opengl.h"
@@ -8,10 +8,10 @@
 
 namespace engine {
 
-class IShader {
+class Shader {
 public:
-  IShader() = default;
-  ~IShader();
+  Shader() = default;
+  ~Shader();
 
   bool Create(const std::string& name, const std::string& vertex_description);
   void Destroy();
@@ -29,4 +29,4 @@ private:
 
 } // namespace engine
 
-#endif // ISHADER_H
+#endif // SHADER_H

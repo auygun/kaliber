@@ -3,7 +3,7 @@
 
 #include "../base/image.h"
 #include "../base/vecmath.h"
-#include "renderer/itexture.h"
+#include "renderer/texture.h"
 
 #include <string>
 
@@ -24,7 +24,7 @@ class Sprite {
   Vector2 GetScale() { return scale_; }
 
  private:
-  ITexture texture_;
+  Texture texture_;
   Vector2 offset_;
   Vector2 scale_;
 };

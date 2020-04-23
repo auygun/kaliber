@@ -1,14 +1,14 @@
-#ifndef IGEOMETRY_H
-#define IGEOMETRY_H
+#ifndef GEOMETRY_H
+#define GEOMETRY_H
 
 #include <string>
 
 namespace engine {
 
-class IGeometry {
+class Geometry {
 public:
-  IGeometry() = default;
-  ~IGeometry();
+  Geometry() = default;
+  ~Geometry();
 
   bool Create(unsigned int primitive,
               const std::string& vertex_description,
@@ -28,4 +28,4 @@ private:
 
 } // namespace engine
 
-#endif // IGEOMETRY_H
+#endif // GEOMETRY_H

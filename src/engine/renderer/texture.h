@@ -1,5 +1,5 @@
-#ifndef ITEXTURE_H
-#define ITEXTURE_H
+#ifndef TEXTURE_H
+#define TEXTURE_H
 
 #include <memory>
 
@@ -7,10 +7,10 @@ class Image;
 
 namespace engine {
 
-class ITexture {
+class Texture {
 public:
-  ITexture() = default;
-  ~ITexture();
+  Texture() = default;
+  ~Texture();
   
   bool Create(std::unique_ptr<Image> image);
   void Destroy();
@@ -24,4 +24,4 @@ private:
 
 } // namespace engine
 
-#endif // ITEXTURE_H
+#endif // TEXTURE_H

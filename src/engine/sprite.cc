@@ -1,8 +1,8 @@
 #include "sprite.h"
 #include "../base/log.h"
 #include "engine.h"
-#include "renderer/igeometry.h"
-#include "renderer/ishader.h"
+#include "renderer/geometry.h"
+#include "renderer/shader.h"
 
 namespace engine {
 
@@ -24,8 +24,8 @@ void Sprite::Draw(const Vector2& offset) {
 
   texture_.Activate();
 
-  IGeometry& quad = Engine::Get().GetQuad();
-  IShader& shader = Engine::Get().GetPassThroughShader();
+  Geometry& quad = Engine::Get().GetQuad();
+  Shader& shader = Engine::Get().GetPassThroughShader();
 
   shader.Activate();
   shader.SetUniform("offset", draw_offset);
