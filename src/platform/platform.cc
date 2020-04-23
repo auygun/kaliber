@@ -43,9 +43,8 @@ void Platform::RunMainLoop() {
 
     timer.Update();
     float new_time = timer.GetSecondsAccumulated();
-    float frame_time = (new_time - last_time) * speed;
+    accumulator += new_time - last_time;
     last_time = new_time;
-    accumulator += frame_time;
     // LOG("accumulator: %f\n", accumulator);
 
     if (accumulator < time_step) {
@@ -57,7 +56,7 @@ void Platform::RunMainLoop() {
 
     // Subdivide the frame time.
     while (accumulator >= time_step) {
-      engine::Engine::Get().Update(time_step);
+      engine::Engine::Get().Update(time_step * speed);
       accumulator -= time_step;
       should_draw = true;
     };
