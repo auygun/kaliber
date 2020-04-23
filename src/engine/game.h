@@ -9,8 +9,6 @@ class Game {
 
   virtual bool Initialize() = 0;
 
-  virtual void Shutdown() = 0;
-
   virtual void Update(float delta_time) = 0;
 
   virtual void Draw(float frame_frac) = 0;

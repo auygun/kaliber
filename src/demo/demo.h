@@ -8,11 +8,9 @@
 class Demo : public engine::Game {
  public:
   Demo() = default;
-  ~Demo() override;
+  ~Demo() override = default;
 
   bool Initialize() override;
-
-  void Shutdown() override;
 
   void Update(float delta_time) override;
 
