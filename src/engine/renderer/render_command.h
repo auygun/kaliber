@@ -93,7 +93,8 @@ RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdCreateShader)
   int id;
-  std::string name;
+  std::unique_ptr<char[]> vertex_source;
+  std::unique_ptr<char[]> fragment_source;
   std::string vertex_description;
 RENDER_COMMAND_END
 

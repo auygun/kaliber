@@ -1,8 +1,72 @@
 #include "renderer.h"
 #include <sstream>
+#include <cassert>
+#include <cstring>
 #include "../../base/log.h"
+#include "render_command.h"
+
+namespace {
+
+// Used to parse the vertex layout,
+// e.g. "p3f;c4b" for "position 3 floats, color 4 bytes".
+const char kLayoutDelimiter[] = ";/ \t";
+
+GLuint GetVertexSize(const std::string &vertexDescription) {
+  GLuint size = 0;
+
+  // Parse the description.
+  char buffer[32];
+  strcpy(buffer, vertexDescription.c_str());
+  char *token = strtok(buffer, kLayoutDelimiter);
+
+  // Parse each encountered attribute.
+  while (token) {
+    // Don't care about the kind of attribute here.
+    // Ignore(token[0]);
+
+    // There can be between 1 and 4 elements in an attribute.
+    size_t numElements = token[1] - '1' + 1;
+    if (numElements < 1 || numElements > 4)
+      return 0;
+
+    // The data type is needed, the most common ones are supported.
+    size_t typeSize;
+    switch (token[2]) {
+    case 'b': typeSize = sizeof(GLbyte);    break;
+    case 'f': typeSize = sizeof(GLfloat);   break;
+    case 'i': typeSize = sizeof(GLint);     break;
+    case 's': typeSize = sizeof(GLshort);   break;
+    case 'u': typeSize = sizeof(GLuint);    break;
+    case 'w': typeSize = sizeof(GLushort);  break;
+    default:  return 0;
+    }
+
+    size += numElements * typeSize;
+
+    token = strtok(NULL, kLayoutDelimiter);
+  }
+
+  return size;
+}
+
+unsigned GetIndexSize(GLenum type) {
+  switch (type) {
+  case GL_UNSIGNED_BYTE:  return sizeof(GLbyte);
+  case GL_UNSIGNED_SHORT: return sizeof(GLushort);
+  case GL_UNSIGNED_INT:   return sizeof(GLuint);
+  default:                return 0;
+  }
+}
+
+} // namespace
 
 namespace engine {
+
+Renderer::Renderer() {}
+
+Renderer::~Renderer() {
+  TerminateWorker();
+}
 
 bool Renderer::StartWorker() {
 #ifdef THREADED_RENDERING
@@ -19,7 +83,6 @@ bool Renderer::StartWorker() {
 
 void Renderer::TerminateWorker() {
 #ifdef THREADED_RENDERING
-  LOG("Terminating render thread\n");
   // Notify worker thread and wait for it to terminate.
   {
     std::unique_lock<std::mutex> scoped_lock(mutex_);
@@ -28,6 +91,7 @@ void Renderer::TerminateWorker() {
     terminate_worker_ = true;
   }
   cv_.notify_one();
+  LOG("Terminating render thread\n");
   worker_thread_.join();
 #else
   Shutdown();
@@ -164,72 +228,427 @@ void Renderer::HandleCmdClear(std::unique_ptr<RenderCommand> cmd) {
 
 void Renderer::HandleCmdCreateTexture(std::unique_ptr<RenderCommand> cmd) {
   auto *c = static_cast<CmdCreateTexture*>(cmd.get());
-  auto t = std::make_unique<Texture>();
-  t->Create(*(c->image.get()));
-  texture_map_[c->id] = std::move(t);
+  auto it = texture_map_.find(c->id);
+  if (it != texture_map_.end())
+    return; // TODO: error handling
+
+  GLuint gl_id = 0;
+  glGenTextures(1, &gl_id);
+
+  // TODO: move to a separate update function.
+  glBindTexture(GL_TEXTURE_2D, gl_id);
+  if (c->image->IsCompressed()) {
+    GLenum format;
+    switch (c->image->GetFormat()) {
+    case Image::kDXT1:  format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;    break;
+    case Image::kDXT5:  format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;   break;
+    case Image::kETC1:  format = GL_ETC1_RGB8_OES;                   break;
+#if defined(__ANDROID__)
+    case Image::kATC:   format = GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD; break;
+#endif
+    default:
+      assert(false);
+      return;
+    }
+
+    glCompressedTexImage2D(GL_TEXTURE_2D, 0, format,
+                           c->image->GetWidth(), c->image->GetHeight(), 0,
+                           c->image->GetSize(), c->image->GetBuffer());
+
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR)
+      LOG("GL ERROR after glCompressedTexImage2D: %d", (int)err);
+  } else {
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, c->image->GetWidth(), c->image->GetHeight(),
+                   0, GL_RGBA, GL_UNSIGNED_BYTE, c->image->GetBuffer());
+  }
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+  texture_map_[c->id] = gl_id;
+  // TODO: error handling.
 }
 
 void Renderer::HandleCmdDestoryTexture(std::unique_ptr<RenderCommand> cmd) {
   auto *c = static_cast<CmdDestoryTexture*>(cmd.get());
-  texture_map_[c->id]->Destroy();
-  texture_map_.erase(c->id);
+  auto it = texture_map_.find(c->id);
+  if (it != texture_map_.end()) {
+    glDeleteTextures(1, &(it->second));
+    texture_map_.erase(it);
+  }
+  // TODO: error handling
 }
 
 void Renderer::HandleCmdActivateTexture(std::unique_ptr<RenderCommand> cmd) {
   auto *c = static_cast<CmdActivateTexture*>(cmd.get());
-  texture_map_[c->id]->Activate();
+  auto it = texture_map_.find(c->id);
+  if (it != texture_map_.end())
+    glBindTexture(GL_TEXTURE_2D, it->second);
+  // TODO: error handling
 }
 
 void Renderer::HandleCmdCreateGeometry(std::unique_ptr<RenderCommand> cmd) {
   auto *c = static_cast<CmdCreateGeometry*>(cmd.get());
-  auto g = std::make_unique<Geometry>();
-  g->Create(c->primitive, c->vertex_description, c->num_vertices, c->vertices,
-      c->index_description, c->num_indices, c->indices);
-  geometry_map_[c->id] = std::move(g);
+  auto it = geometry_map_.find(c->id);
+  if (it != geometry_map_.end())
+    return; // TODO: error handling
+
+  // Verify that we have a valid layout and get the total byte size per vertex.
+  GLuint vertexSize = GetVertexSize(c->vertex_description);
+  if (!vertexSize) {
+    LOG("Invalid vertex layout\n");
+    return;  // TODO: error handling
+  }
+
+  GLuint vertexArrayId = 0;
+  if (SupportsVAO()) {
+    glGenVertexArrays(1, &vertexArrayId);
+    glBindVertexArray(vertexArrayId);
+  }
+
+  // Create the vertex buffer and upload the data.
+  GLuint vertexBufferId = 0;
+  glGenBuffers(1, &vertexBufferId);
+  glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
+  glBufferData(GL_ARRAY_BUFFER, c->num_vertices * vertexSize, c->vertices,
+               GL_STATIC_DRAW);
+
+  // Make sure the vertex format is understood and the attribute pointers are
+  // set up.
+  std::vector<Geometry::Element> vertexLayout;
+  if (!SetupVertexLayout(c->vertex_description, vertexSize, SupportsVAO(), vertexLayout))
+    return; // TODO: Error handling
+
+  // Create the index buffer and upload the data.
+  GLuint indexBufferId = 0;
+  GLenum indexType = GL_NONE;
+  if (c->indices) {
+    // it->second.indexType = c->index_description;
+    indexType = c->index_description;
+    glGenBuffers(1, &indexBufferId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferId);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, c->num_indices * GetIndexSize(indexType),
+                 c->indices, GL_STATIC_DRAW);
+  }
+
+  if (vertexArrayId) {
+    // De-activate the buffer again and we're done.
+    glBindVertexArray(0);
+  } else {
+    // De-activate the individual buffers.
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+  }
+
+  geometry_map_[c->id] = {
+    c->num_vertices,
+    c->num_indices,
+    c->primitive,
+    indexType,
+    vertexLayout,
+    vertexSize,
+    vertexArrayId,
+    vertexBufferId,
+    indexBufferId
+  };
 }
 
 void Renderer::HandleCmdDestroyGeometry(std::unique_ptr<RenderCommand> cmd) {
   auto *c = static_cast<CmdDestroyGeometry*>(cmd.get());
-  geometry_map_[c->id]->Destroy();
-  geometry_map_.erase(c->id);
-}
+  auto it = geometry_map_.find(c->id);
+  if (it == geometry_map_.end())
+    return; // TODO: error handling
+
+  if (it->second.indexBufferId)
+    glDeleteBuffers(1, &(it->second.indexBufferId));
+  if (it->second.vertexBufferId)
+    glDeleteBuffers(1, &(it->second.vertexBufferId));
+  if (it->second.vertexArrayId)
+    glDeleteVertexArrays(1, &(it->second.vertexArrayId));
+  geometry_map_.erase(it);}
 
 void Renderer::HandleCmdDrawGeometry(std::unique_ptr<RenderCommand> cmd) {
   auto *c = static_cast<CmdDrawGeometry*>(cmd.get());
-  geometry_map_[c->id]->Draw();
+  auto it = geometry_map_.find(c->id);
+  if (it == geometry_map_.end())
+    return; // TODO: error handling
+
+  // Set up the vertex data.
+  if (it->second.vertexArrayId)
+    glBindVertexArray(it->second.vertexArrayId);
+  else {
+    glBindBuffer(GL_ARRAY_BUFFER, it->second.vertexBufferId);
+    for (GLuint attributeIndex = 0; attributeIndex < (GLuint)it->second.vertexLayout.size();
+         ++attributeIndex) {
+      Geometry::Element &e = it->second.vertexLayout[attributeIndex];
+      glEnableVertexAttribArray(attributeIndex);
+      glVertexAttribPointer(attributeIndex, e.numElements, e.type, GL_FALSE,
+                            it->second.vertexSize, (const GLvoid *)e.vertexOffset);
+    }
+
+    if (it->second.numIndices > 0)
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, it->second.indexBufferId);
+  }
+
+  // Draw the primitive.
+  if (it->second.numIndices > 0)
+    glDrawElements(it->second.primitive, it->second.numIndices, it->second.indexType, NULL);
+  else
+    glDrawArrays(it->second.primitive, 0, it->second.numVertices);
+
+  // Clean up states.
+  if (it->second.vertexArrayId)
+    glBindVertexArray(0);
+  else {
+    for (GLuint attributeIndex = 0; attributeIndex < (GLuint)it->second.vertexLayout.size();
+         ++attributeIndex)
+      glDisableVertexAttribArray(attributeIndex);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+  }
 }
 
 void Renderer::HandleCmdCreateShader(std::unique_ptr<RenderCommand> cmd) {
   auto *c = static_cast<CmdCreateShader*>(cmd.get());
-  auto s = std::make_unique<Shader>();
-  s->Create(c->name, c->vertex_description);
-  shader_map_[c->id] = std::move(s);
+  auto it = shader_map_.find(c->id);
+  if (it != shader_map_.end())
+    return; // TODO: Error handling.
+
+  GLuint vertexShader = CreateShader(c->vertex_source.get(), GL_VERTEX_SHADER);
+  if (!vertexShader)
+    return; // TODO: Error handling.
+
+  GLuint fragmentShader = CreateShader(c->fragment_source.get(), GL_FRAGMENT_SHADER);
+  if (!fragmentShader)
+    return; // TODO: Error handling.
+
+  GLuint id = glCreateProgram();
+  if (id) {
+    glAttachShader(id, vertexShader);
+    glAttachShader(id, fragmentShader);
+    if (!BindAttributeLocation(id, c->vertex_description))
+      return; // TODO: Error handling.
+
+    glLinkProgram(id);
+    GLint linkStatus = GL_FALSE;
+    glGetProgramiv(id, GL_LINK_STATUS, &linkStatus);
+    if (linkStatus != GL_TRUE) {
+      GLint length = 0;
+      glGetProgramiv(id, GL_INFO_LOG_LENGTH, &length);
+      if (length > 0) {
+        char *buffer = (char *)malloc(length);
+        if (buffer) {
+          glGetProgramInfoLog(id, length, NULL, buffer);
+          LOG("Could not link program:\n%s\n", buffer);
+          free(buffer);
+        }
+      }
+      glDeleteProgram(id);
+      return; // TODO: Error handling.
+    }
+  }
+
+  shader_map_[c->id] = { id, {} };
 }
 
 void Renderer::HandleCmdDestroyShader(std::unique_ptr<RenderCommand> cmd) {
   auto *c = static_cast<CmdDestroyShader*>(cmd.get());
-  shader_map_[c->id]->Destroy();
-  shader_map_.erase(c->id);
+  auto it = shader_map_.find(c->id);
+  if (it != shader_map_.end()) {
+    glDeleteProgram(it->second.id);
+    shader_map_.erase(it);
+  }
 }
 
 void Renderer::HandleCmdActivateShader(std::unique_ptr<RenderCommand> cmd) {
   auto *c = static_cast<CmdActivateShader*>(cmd.get());
-  shader_map_[c->id]->Activate();
+  auto it = shader_map_.find(c->id);
+  if (it != shader_map_.end())
+    glUseProgram(it->second.id);
 }
 
 void Renderer::HandleCmdSetUniformVec2(std::unique_ptr<RenderCommand> cmd) {
   auto *c = static_cast<CmdSetUniformVec2*>(cmd.get());
-  shader_map_[c->id]->SetUniform(c->name, c->v);
+  auto it = shader_map_.find(c->id);
+  if (it != shader_map_.end()) {
+    GLint index = GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+    if (index >= 0)
+      glUniform2fv(index, 1, c->v.GetData());
+  }
 }
 
 void Renderer::HandleCmdSetUniformVec3(std::unique_ptr<RenderCommand> cmd) {
   auto *c = static_cast<CmdSetUniformVec3*>(cmd.get());
-  shader_map_[c->id]->SetUniform(c->name, c->v);
+  auto it = shader_map_.find(c->id);
+  if (it != shader_map_.end()) {
+    GLint index = GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+    if (index >= 0)
+      glUniform3fv(index, 1, c->v.GetData());
+  }
 }
 
 void Renderer::HandleCmdSetUniformInt(std::unique_ptr<RenderCommand> cmd) {
   auto *c = static_cast<CmdSetUniformInt*>(cmd.get());
-  shader_map_[c->id]->SetUniform(c->name, c->i);
+  auto it = shader_map_.find(c->id);
+  if (it != shader_map_.end()) {
+    GLint index = GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+    if (index >= 0)
+      glUniform1i(index, c->i);
+  }
+}
+
+bool Renderer::SetupVertexLayout(const std::string &vertexDescription,
+                                 GLuint vertexSize, bool useVAO,
+                                 std::vector<Geometry::Element> &vertexLayout) {
+  GLuint attributeIndex = 0;
+  size_t vertexOffset = 0;
+
+  // Parse the layout.
+  char buffer[32];
+  strcpy(buffer, vertexDescription.c_str());
+  char *token = strtok(buffer, kLayoutDelimiter);
+
+  // Parse each encountered attribute.
+  while (token) {
+    // Check for invalid format.
+    if (strlen(token) != 3)
+      return false;
+
+    // There's a limitation of 16 attributes in OpenGL ES 2.0
+    if (attributeIndex >= 16)
+      return false;
+
+    // Don't care about the kind of attribute here.
+    // Ignore(token[0]);
+
+    // There can be between 1 and 4 elements in an attribute.
+    GLsizei numElements = token[1] - '1' + 1;
+    if (numElements < 1 || numElements > 4)
+      return false;
+
+    // The data type is needed, the most common ones are supported.
+    GLenum type;
+    size_t typeSize;
+    switch (token[2]) {
+    case 'b': type = GL_UNSIGNED_BYTE;  typeSize = sizeof(GLbyte);    break;
+    case 'f': type = GL_FLOAT;          typeSize = sizeof(GLfloat);   break;
+    case 'i': type = GL_INT;            typeSize = sizeof(GLint);     break;
+    case 's': type = GL_SHORT;          typeSize = sizeof(GLshort);   break;
+    case 'u': type = GL_UNSIGNED_INT;   typeSize = sizeof(GLuint);    break;
+    case 'w': type = GL_UNSIGNED_SHORT; typeSize = sizeof(GLushort);  break;
+    default:  return false;
+    }
+
+    // We got all we need to define this attribute.
+    if (useVAO) {
+      // This will be saved into the vertex array object.
+      glEnableVertexAttribArray(attributeIndex);
+      glVertexAttribPointer(attributeIndex, numElements, type, GL_FALSE,
+                            vertexSize, (const GLvoid *)vertexOffset);
+    } else {
+      // Need to keep this information for when rendering.
+      Geometry::Element element;
+      element.numElements   = numElements;
+      element.type          = type;
+      element.vertexOffset  = vertexOffset;
+      vertexLayout.push_back(element);
+    }
+
+    // Move on to the next attribute.
+    ++attributeIndex;
+    vertexOffset += numElements * typeSize;
+    token = strtok(NULL, kLayoutDelimiter);
+  }
+
+  return true;
+}
+
+GLuint Renderer::CreateShader(const char *source, GLenum type) {
+  LOG("%s - %s\n", __func__, source);
+  GLuint shader = glCreateShader(type);
+  if (shader) {
+    glShaderSource(shader, 1, &source, NULL);
+    glCompileShader(shader);
+    GLint compiled = 0;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
+    if (!compiled) {
+      GLint length = 0;
+      glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
+      if (length) {
+        char *buffer = (char *)malloc(length);
+        if (buffer) {
+          glGetShaderInfoLog(shader, length, NULL, buffer);
+          LOG("Could not compile shader %d:\n%s\n", type, buffer);
+          free(buffer);
+        }
+        glDeleteShader(shader);
+        shader = 0;
+      }
+    }
+  }
+
+  return shader;
+}
+
+bool Renderer::BindAttributeLocation(GLuint id, const std::string &vertexDescription) {
+  int current = 0,
+      texCoord = 0;
+
+  // Parse the description.
+  char buffer[32];
+  strcpy(buffer, vertexDescription.c_str());
+  char *token = strtok(buffer, kLayoutDelimiter);
+
+  char texCoordBuffer[32];
+
+  // Parse each encountered attribute.
+  while (token) {
+    // Check for invalid format.
+    if (strlen(token) != 3)
+      return false;
+
+    switch (token[0]) {
+    case 'c': glBindAttribLocation(id, current++, "inColor");     break;
+    case 'n': glBindAttribLocation(id, current++, "inNormal");    break;
+    case 'p': glBindAttribLocation(id, current++, "inPosition");  break;
+
+    case 't':
+      sprintf(texCoordBuffer, "inTexCoord%d", texCoord++);
+      glBindAttribLocation(id, current++, texCoordBuffer);
+      break;
+
+    default:
+      LOG("Unknown attribute: %s\n", token);
+      return false;
+    }
+
+    token = strtok(NULL, kLayoutDelimiter);
+  }
+
+  // We need at least one position attribute.
+  return current > 0;
+}
+
+GLint Renderer::GetUniformLocation(GLuint id, const std::string &name, std::unordered_map<std::string, GLuint> &uniforms) {
+  // Check if we've encountered this uniform before.
+  auto i = uniforms.find(name);
+  GLint index;
+  if (i != uniforms.end()) {
+    // Yes, we already have the mapping.
+    index = i->second;
+  } else {
+    // No, ask the driver for the mapping and save it.
+    index = glGetUniformLocation(id, name.c_str());
+    if (index >= 0)
+      uniforms[name] = index;
+    else
+      LOG("Cannot find uniform %s (shader: %d)\n", name.c_str(), id);
+  }
+  return index;
 }
 
 std::unordered_set<std::string> Renderer::SetupExtensions() {

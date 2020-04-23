@@ -19,10 +19,26 @@ IShader::~IShader() {
 bool IShader::Create(const std::string& name, const std::string& vertex_description) {
   Destroy();
 
+  std::unique_ptr<char[]> vertexSource;
+  std::unique_ptr<char[]> fragmentSource;
+
+  std::string vertexFileName = name;
+  vertexFileName += "_vertex.glsl";
+  vertexSource.reset(File::ReadWholeFile(vertexFileName.c_str(), NULL, true));
+  if (!vertexSource)
+    return false;
+
+  std::string fragmentFileName = name;
+  fragmentFileName += "_fragment.glsl";
+  fragmentSource.reset(File::ReadWholeFile(fragmentFileName.c_str(), NULL, true));
+  if (!fragmentSource)
+    return false;
+
   auto cmd = std::make_unique<CmdCreateShader>();
   id = ++last_id;
   cmd->id = id;
-  cmd->name = name;
+  cmd->fragment_source = std::move(fragmentSource);
+  cmd->vertex_source = std::move(vertexSource);
   cmd->vertex_description = vertex_description;
   Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
 

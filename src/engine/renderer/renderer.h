@@ -7,15 +7,12 @@
 #include "../../third_party/glew/glxew.h"
 #endif
 
-#include "texture.h"
-#include "shader.h"
-#include "geometry.h"
-#include "render_command.h"
 #include <memory>
 #include <unordered_set>
 #include <unordered_map>
 #include <string>
 #include <array>
+#include <vector>
 
 #define THREADED_RENDERING
 
@@ -29,9 +26,12 @@
 
 namespace engine {
 
+struct RenderCommand;
+
 class Renderer {
  public:
-  Renderer() = default;
+  Renderer();
+  ~Renderer();
 
   bool StartWorker();
   void TerminateWorker();
@@ -87,15 +87,38 @@ class Renderer {
           atc(false) {}
   };
 
+  struct Geometry {
+    struct Element {
+      GLsizei numElements;
+      GLenum type;
+      size_t vertexOffset;
+    };
+
+    int numVertices;
+    int numIndices;
+    GLenum primitive;
+    GLenum indexType;
+    std::vector<Element> vertexLayout;
+    GLuint vertexSize;
+    GLuint vertexArrayId;
+    GLuint vertexBufferId;
+    GLuint indexBufferId;
+  };
+
+  struct Shader {
+    GLuint id;
+    std::unordered_map<std::string, GLuint> uniforms;
+  };
+
   TextureCompression texture_compression_;
   bool vertex_array_objects_ = false;
 
   int screen_width_ = 0;
   int screen_height_ = 0;
 
-  std::unordered_map<int, std::unique_ptr<Texture>> texture_map_;
-  std::unordered_map<int, std::unique_ptr<Geometry>> geometry_map_;
-  std::unordered_map<int, std::unique_ptr<Shader>> shader_map_;
+  std::unordered_map<int, GLuint> texture_map_;
+  std::unordered_map<int, Geometry> geometry_map_;
+  std::unordered_map<int, Shader> shader_map_;
 
 #ifdef THREADED_RENDERING
   std::deque<std::unique_ptr<RenderCommand>> command_queue_[2];
@@ -135,6 +158,11 @@ class Renderer {
   void HandleCmdSetUniformVec3(std::unique_ptr<RenderCommand> cmd);
   void HandleCmdSetUniformInt(std::unique_ptr<RenderCommand> cmd);
 
+  bool SetupVertexLayout(const std::string &vertexDescription, GLuint vertexSize,
+                         bool useVAO, std::vector<Geometry::Element> &vertexLayout);
+  GLuint CreateShader(const char *source, GLenum type);
+  bool BindAttributeLocation(GLuint id, const std::string &vertexDescription);
+  GLint GetUniformLocation(GLuint id, const std::string &name, std::unordered_map<std::string, GLuint> &uniforms);
   std::unordered_set<std::string> SetupExtensions();
 
   void LogVersion();
