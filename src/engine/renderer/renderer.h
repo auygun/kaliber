@@ -98,7 +98,7 @@ class Renderer {
   std::unordered_map<int, std::unique_ptr<Shader>> shader_map_;
 
 #ifdef THREADED_RENDERING
-  std::deque<std::unique_ptr<RenderCommand>> command_queue_;
+  std::deque<std::unique_ptr<RenderCommand>> command_queue_[2];
 
   std::condition_variable cv_;
   std::mutex mutex_;

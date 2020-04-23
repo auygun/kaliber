@@ -36,9 +36,20 @@ void Renderer::TerminateWorker() {
 
 void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
 #ifdef THREADED_RENDERING
+  bool swap = cmd->cmd_id == HASH("CmdPresent");
+  int discarded = 0;
   std::unique_lock<std::mutex> scoped_lock(mutex_);
-  command_queue_.push_back(std::move(cmd));
+  command_queue_[1].push_back(std::move(cmd));
+  if (swap) {
+    command_queue_[1].swap(command_queue_[0]);
+    discarded = (int)command_queue_[1].size();
+    command_queue_[1].clear();
+  }
   cv_.notify_one();
+#if 0
+  if (discarded)
+    LOG("Discarding %d commands.\n", discarded);
+#endif
 #else
   WorkerMain(std::move(cmd));
 #endif // THREADED_RENDERING
@@ -54,13 +65,17 @@ void Renderer::WorkerMain(std::promise<bool> promise) {
     {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
       cv_.wait(scoped_lock, [&]()->bool {
-        return !command_queue_.empty() || terminate_worker_;
+        return !command_queue_[0].empty() || !command_queue_[1].empty() ||
+               terminate_worker_;
       });
       if (terminate_worker_) {
         Shutdown();
         return;
       }
-      cq.swap(command_queue_);
+      if (!command_queue_[0].empty())
+        cq.swap(command_queue_[0]);
+      else
+        cq.swap(command_queue_[1]);
     }
 
 #if 0
