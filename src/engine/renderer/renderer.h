@@ -16,11 +16,16 @@
 #include <unordered_map>
 #include <string>
 #include <array>
+
+#define THREADED_RENDERING
+
+#ifdef THREADED_RENDERING
 #include <thread>
 #include <mutex>
 #include <condition_variable>
 #include <future>
 #include <deque>
+#endif // THREADED_RENDERING
 
 namespace engine {
 
@@ -92,12 +97,14 @@ class Renderer {
   std::unordered_map<int, std::unique_ptr<Geometry>> geometry_map_;
   std::unordered_map<int, std::unique_ptr<Shader>> shader_map_;
 
+#ifdef THREADED_RENDERING
   std::deque<std::unique_ptr<RenderCommand>> command_queue_;
 
   std::condition_variable cv_;
   std::mutex mutex_;
   std::thread worker_thread_;
   bool terminate_worker_ = false;
+#endif // THREADED_RENDERING
 
 #if defined(__linux__) && !defined(__ANDROID__)
   Display* display_ = NULL;
@@ -106,7 +113,11 @@ class Renderer {
   GLXContext glx_context_ = NULL;
 #endif
 
+#ifdef THREADED_RENDERING
   void WorkerMain(std::promise<bool> promise);
+#else
+  void WorkerMain(std::unique_ptr<RenderCommand> cmd);
+#endif // THREADED_RENDERING
 
   void HandleCmdEnableBlend(std::unique_ptr<RenderCommand> cmd);
   void HandleCmdClear(std::unique_ptr<RenderCommand> cmd);

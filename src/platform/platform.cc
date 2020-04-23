@@ -3,6 +3,7 @@
 #include "../base/timer.h"
 #include "../engine/engine.h"
 #include <math.h>
+#include <thread>
 
 Platform::InternalError Platform::internal_error;
 

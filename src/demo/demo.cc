@@ -13,6 +13,10 @@ DECLARE_GAME_BEGIN
 DECLARE_GAME(Demo)
 DECLARE_GAME_END
 
+Demo::~Demo() {
+  Shutdown();
+}
+
 bool Demo::Initialize() {
   Vector2 scale = ToScale(256, 256);
   if (!bg_.Create("star-blasts.jpg", Vector2(0, 0), scale)) {

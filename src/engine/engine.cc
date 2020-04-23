@@ -37,7 +37,7 @@ bool Engine::Init() {
 }
 
 void Engine::Shutdown() {
-  game_->Shutdown();
+  game_.reset();
 }
 
 void Engine::Update(float delta_time) {

@@ -84,9 +84,10 @@ void Renderer::DestroyWindow() {
 }
 
 void Renderer::Shutdown() {
-  if (display_) {
+  if (display_ && glx_context_) {
     glXMakeCurrent(display_, None, NULL);
     glXDestroyContext(display_, glx_context_);
+    glx_context_ = nullptr;
   }
 }
 

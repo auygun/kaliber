@@ -5,15 +5,21 @@
 namespace engine {
 
 bool Renderer::StartWorker() {
-  LOG("%s\n", __func__);
+#ifdef THREADED_RENDERING
+  LOG("Strating render thread.\n");
   std::promise<bool> promise;
   std::future<bool> future = promise.get_future();
   worker_thread_ = std::thread(&Renderer::WorkerMain, this, std::move(promise));
   return future.get();
+#else
+  LOG("Single threaded rendering.\n");
+  return Init();
+#endif // THREADED_RENDERING
 }
 
 void Renderer::TerminateWorker() {
-  LOG("%s\n", __func__);
+#ifdef THREADED_RENDERING
+  LOG("Terminating render thread\n");
   // Notify worker thread and wait for it to terminate.
   {
     std::unique_lock<std::mutex> scoped_lock(mutex_);
@@ -23,13 +29,22 @@ void Renderer::TerminateWorker() {
   }
   cv_.notify_one();
   worker_thread_.join();
+#else
+  Shutdown();
+#endif // THREADED_RENDERING
 }
 
 void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
+#ifdef THREADED_RENDERING
   std::unique_lock<std::mutex> scoped_lock(mutex_);
   command_queue_.push_back(std::move(cmd));
   cv_.notify_one();
+#else
+  WorkerMain(std::move(cmd));
+#endif // THREADED_RENDERING
 }
+
+#ifdef THREADED_RENDERING
 
 void Renderer::WorkerMain(std::promise<bool> promise) {
   promise.set_value(Init());
@@ -56,6 +71,10 @@ void Renderer::WorkerMain(std::promise<bool> promise) {
       std::unique_ptr<RenderCommand> cmd;
       cmd.swap(cq.front());
       cq.pop_front();
+
+#else
+void Renderer::WorkerMain(std::unique_ptr<RenderCommand> cmd) {
+#endif // THREADED_RENDERING
 
 #if 0
       LOG("cmd: %s\n", cmd->cmd_name.c_str());
@@ -111,8 +130,10 @@ void Renderer::WorkerMain(std::promise<bool> promise) {
         // assert(false);
         break;
       }
+#ifdef THREADED_RENDERING
     } while (!cq.empty());
   }
+#endif // THREADED_RENDERING
 }
 
 void Renderer::HandleCmdEnableBlend(std::unique_ptr<RenderCommand> cmd) {

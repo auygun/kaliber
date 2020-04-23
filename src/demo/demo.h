@@ -8,7 +8,7 @@
 class Demo : public engine::Game {
  public:
   Demo() = default;
-  ~Demo() override = default;
+  ~Demo() override;
 
   bool Initialize() override;
 
