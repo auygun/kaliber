@@ -19,18 +19,20 @@ void Platform::RunMainLoop() {
   }
 
   // Use fixed time steps.
-  constexpr float time_step = 1.0f / 30.0f;
+  constexpr float time_step = 1.0f / 60.0f;
   constexpr float speed = 1.0f;
 
   Timer timer;
   float last_time = timer.GetSecondsAccumulated();
+  float new_time = 0.0f;
+  float frame_time = 0.0f;
   float accumulator = 0.0;
   float frame_frac = 0.0f;
 
   bool should_draw = true;
   for (;;) {
+    // Save battery for mobile devices.
     if (should_draw) {
-      // LOG("Draw!!!\n");
       should_draw = false;
       engine::Engine::Get().Draw(frame_frac);
 
@@ -41,18 +43,18 @@ void Platform::RunMainLoop() {
       }
     }
 
-    timer.Update();
-    float new_time = timer.GetSecondsAccumulated();
-    accumulator += new_time - last_time;
-    last_time = new_time;
-    // LOG("accumulator: %f\n", accumulator);
-
-    if (accumulator < time_step) {
-      float sleep_time = time_step - accumulator;
-      // LOG("sleep for: %f\n", sleep_time);
-      std::this_thread::sleep_for(std::chrono::nanoseconds((int)(sleep_time * 1000000000.0f)));
-      accumulator += sleep_time;
+    // Accumulate time in case world updates too fast.
+    for (;;) {
+      timer.Update();
+      new_time = timer.GetSecondsAccumulated();
+      frame_time = new_time - last_time;
+      if (frame_time > 0.00001)
+        break;
+      std::this_thread::sleep_for(std::chrono::microseconds(10));
     }
+    last_time = new_time;
+    accumulator += frame_time;
+    // LOG("accumulator: %f\n", accumulator);
 
     // Subdivide the frame time.
     while (accumulator >= time_step) {
