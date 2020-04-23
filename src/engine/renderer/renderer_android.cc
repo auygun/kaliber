@@ -36,12 +36,12 @@ bool Renderer::Init() {
   screen_height_ = gl_context->GetScreenHeight();
 
   LogVersion();
-  LOG("Screen size: %d, %d\n", screen_width_, screen_height_);
+  LOG << "Screen size: " << screen_width_ << ", " << screen_height_;
 
   std::unordered_set<std::string> extensions = SetupExtensions();
 
   if (extensions.find("GL_OES_vertex_array_object") != extensions.end()) {
-    LOG("Supports Vertex Array Objects\n");
+    LOG << "Supports Vertex Array Objects";
     vertex_array_objects_ = true;
   }
 
@@ -62,7 +62,7 @@ void Renderer::HandleCmdPresent(std::unique_ptr<RenderCommand> cmd) {
 }
 
 void Renderer::TrimMemory() {
-  LOG("Trimming memor\n");
+  LOG << "Trimming memor";
   ndk_helper::GLContext::GetInstance()->Invalidate();
 }
 

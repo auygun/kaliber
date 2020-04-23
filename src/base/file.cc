@@ -16,8 +16,7 @@ char* File::ReadWholeFile(const char* file_name,
       // Read all of it.
       unsigned bytesRead = file.Read(buffer, size);
       if (!bytesRead) {
-        LOG("Failed to read a buffer of size %d from file %s\n", (int)size,
-            file_name);
+        LOG << "Failed to read a buffer of size: " << (int)size << " from file " << file_name;
         delete[] buffer;
         return NULL;
       }

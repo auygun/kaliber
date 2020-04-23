@@ -51,7 +51,7 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
   unsigned fileSize = 0;
   char* fileBuffer = File::ReadWholeFile(fullPath.c_str(), &fileSize);
   if (!fileBuffer) {
-    LOG("Failed to read file: %s\n", file_name);
+    LOG << "Failed to read file: " << file_name;
     return false;
   }
 
@@ -59,7 +59,7 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
   buffer_ = (uint8_t*)stbi_load_from_memory((const stbi_uc*)fileBuffer,
                                             fileSize, &w, &h, &c, 0);
   if (!buffer_) {
-    LOG("Failed to load image file: %s\n", file_name);
+    LOG << "Failed to load image file: " << file_name;
     return false;
   }
 
@@ -94,8 +94,8 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
 
     case 2:
     default:
-      LOG("Image had unsuitable number of color components: %d %s\n", c,
-          file_name);
+      LOG << "Image had unsuitable number of color components: " << c << " " <<
+          file_name;
       return false;
   }
 
@@ -112,8 +112,8 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
     unsigned newWidth = RoundUpToPow2(width_);
     unsigned newHeight = RoundUpToPow2(height_);
     if ((newWidth != width_) || (newHeight != height_)) {
-      LOG("Converting loaded image from (%d, %d) to (%d, %d)\n", width_,
-          height_, newWidth, newHeight);
+      LOG << "Converting loaded image from ("
+          << width_ << ", " << height_ << ") to (" << newWidth << ", " << newHeight << ")";
 
       unsigned biggerSize = newWidth * newHeight * 4 * sizeof(uint8_t);
       uint8_t* biggerBuffer = (uint8_t*)AlignedAlloc(biggerSize);

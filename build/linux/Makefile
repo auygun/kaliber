@@ -68,6 +68,7 @@ GLTEST_SRC := \
 	$(SRC_ROOT)/base/file.cc \
 	$(SRC_ROOT)/base/font.cc \
 	$(SRC_ROOT)/base/image.cc \
+	$(SRC_ROOT)/base/log.cc \
 	$(SRC_ROOT)/base/random.cc \
 	$(SRC_ROOT)/base/timer.cc \
 	$(SRC_ROOT)/engine/engine.cc \

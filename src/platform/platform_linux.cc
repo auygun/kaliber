@@ -13,17 +13,17 @@ void PTreadWorkaround() {
 
 void Platform::Initialize() {
   root_path_ = "../../assets/";
-  LOG("Root path: %s\n", root_path_.c_str());
+  LOG << "Root path: " << root_path_.c_str();
 
   if (!engine::Engine::Get().GetRenderer().CreateWindow()) {
-    LOG("Failed to create the window.\n");
+    LOG << "Failed to create the window.";
     throw internal_error;
   }
   if (!engine::Engine::Get().GetRenderer().StartWorker()) {
-    LOG("Failed to initialize the renderer.\n");
+    LOG << "Failed to initialize the renderer.";
     throw internal_error;
   }
-  LOG("Initialized the renderer.\n");
+  LOG << "Initialized the renderer.";
 
   Display* display = engine::Engine::Get().GetRenderer().display();
   Window window = engine::Engine::Get().GetRenderer().window();
@@ -45,7 +45,7 @@ void Platform::Update() {
   if (e.type == KeyPress) {
     if (e.xkey.keycode == XKeysymToKeycode(display, XK_Y) &&
         !(e.xkey.state & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask)))
-      LOG("Y pressed!!! %d\n", e.xkey.state);
+      DLOG << "Y pressed!!! " << e.xkey.state;
   } else if (e.type == ClientMessage) {
     // TODO: Should check here for other client message types. However the only
     // protocol registered above is WM_DELETE_WINDOW for now.

@@ -16,14 +16,14 @@ DECLARE_GAME_END
 bool Demo::Initialize() {
   Vector2 scale = ToScale(256, 256);
   if (!bg_.Create("star-blasts.jpg", Vector2(0, 0), scale)) {
-    LOG("Failed to create the backgroud.");
+    LOG << "Failed to create the backgroud.";
     return false;
   }
 
   scale = ToScale(50, 50);
-  LOG("scale_: %f %f\n", scale.x, scale.y);
+  LOG << "scale_: " << scale.x << " " << scale.y;
   if (!sprite_.Create("spaceship.png", Vector2(0, 0), scale)) {
-    LOG("Failed to create the sprite.");
+    LOG << "Failed to create the sprite.";
     return false;
   }
 

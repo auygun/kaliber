@@ -43,6 +43,7 @@ add_library(native-activity SHARED
     ../../../src/base/file.cc
     ../../../src/base/font.cc
     ../../../src/base/image.cc
+    ../../../src/base/log.cc
     ../../../src/base/random.cc
     ../../../src/base/timer.cc
     ../../../src/demo/demo.cc

@@ -14,8 +14,8 @@ bool Renderer::CreateWindow() {
   // Try to open the local display.
   display_ = XOpenDisplay(NULL);
   if (!display_) {
-    LOG("Can't connect to X server. Try to set the DISPLAY environment "
-        "variable (hostname:number.screen_number).\n");
+    LOG << "Can't connect to X server. Try to set the DISPLAY environment "
+           "variable (hostname:number.screen_number).";
     return false;
   }
 
@@ -26,10 +26,10 @@ bool Renderer::CreateWindow() {
                             None};
   visual_info_ = glXChooseVisual(display_, 0, glx_attributes);
   if (!visual_info_) {
-    LOG("No appropriate visual found.\n");
+    LOG << "No appropriate visual found.";
     return false;
   }
-  LOG("Visual %p selected\n", (void*)visual_info_->visualid);
+  LOG << "Visual " << (void*)visual_info_->visualid << " selected";
 
   // Create the main window.
   XSetWindowAttributes window_attributes;
@@ -50,24 +50,24 @@ bool Renderer::Init() {
   // Create the OpenGL context.
   glx_context_ = glXCreateContext(display_, visual_info_, NULL, GL_TRUE);
   if (!glx_context_) {
-    LOG("Couldn't create the glx context.\n");
+    LOG << "Couldn't create the glx context.";
     return false;
   }
 
   glXMakeCurrent(display_, window_, glx_context_);
 
   if (GLEW_OK != glewInit()) {
-    LOG("Couldn't initialize OpenGL extension wrangler.\n");
+    LOG << "Couldn't initialize OpenGL extension wrangler.";
     return false;
   }
 
   LogVersion();
-  LOG("Screen size: %d, %d\n", screen_width_, screen_height_);
+  LOG << "Screen size: " << screen_width_ << ", " << screen_height_;
 
   std::unordered_set<std::string> extensions = SetupExtensions();
 
   if (extensions.find("GL_OES_vertex_array_object") != extensions.end()) {
-    LOG("Supports Vertex Array Objects\n");
+    LOG << "Supports Vertex Array Objects";
     vertex_array_objects_ = true;
   }
 

@@ -15,7 +15,7 @@ bool Engine::Init() {
   RandomInit();
 
   if (!font_.Create()) {
-    LOG("Failed to create the font.\n");
+    LOG << "Failed to create the font.";
     return false;
   }
 
@@ -29,7 +29,7 @@ bool Engine::Init() {
   }
 
   if (!game_->Initialize()) {
-    LOG("Failed to initialize the game.\n");
+    LOG << "Failed to initialize the game.";
     return false;
   }
 
@@ -72,7 +72,7 @@ bool Engine::CreateRenderResources() {
   const char* vertex_description = "p2f;t2f";
   if (!pass_through_shader_.Create("shaders/pass_through",
                                    vertex_description)) {
-    LOG("Could not create pass through shader.\n");
+    LOG << "Could not create pass through shader.";
     return false;
   }
 
@@ -85,7 +85,7 @@ bool Engine::CreateRenderResources() {
      0.5f,  0.5f, 1.0f, 0.0f
   };
   if (!quad_.Create(GL_TRIANGLE_STRIP, vertex_description, 4, vertices)) {
-    LOG("Could not create quad geometry.\n");
+    LOG << "Could not create quad geometry.";
     return false;
   }
 

@@ -70,13 +70,13 @@ Renderer::~Renderer() {
 
 bool Renderer::StartWorker() {
 #ifdef THREADED_RENDERING
-  LOG("Strating render thread.\n");
+  LOG << "Strating render thread.";
   std::promise<bool> promise;
   std::future<bool> future = promise.get_future();
   worker_thread_ = std::thread(&Renderer::WorkerMain, this, std::move(promise));
   return future.get();
 #else
-  LOG("Single threaded rendering.\n");
+  LOG << "Single threaded rendering.";
   return Init();
 #endif // THREADED_RENDERING
 }
@@ -91,7 +91,7 @@ void Renderer::TerminateWorker() {
     terminate_worker_ = true;
   }
   cv_.notify_one();
-  LOG("Terminating render thread\n");
+  LOG << "Terminating render thread";
   worker_thread_.join();
 #else
   Shutdown();
@@ -110,9 +110,9 @@ void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
     command_queue_[1].clear();
   }
   cv_.notify_one();
-#if 0
+#if 1
   if (discarded)
-    LOG("Discarding %d commands.\n", discarded);
+    LOG << "Discarding " << discarded << " render commands.";
 #endif
 #else
   WorkerMain(std::move(cmd));
@@ -142,8 +142,9 @@ void Renderer::WorkerMain(std::promise<bool> promise) {
         cq.swap(command_queue_[1]);
     }
 
-#if 0
-    LOG("queue size: %d\n", (int)cq.size());
+#if 1
+    // LOG << "queue size: " << (int)cq.size();
+    DLOG << "queue size: " << (int)cq.size();
 #endif
 
     do {
@@ -156,7 +157,7 @@ void Renderer::WorkerMain(std::unique_ptr<RenderCommand> cmd) {
 #endif // THREADED_RENDERING
 
 #if 0
-      LOG("cmd: %s\n", cmd->cmd_name.c_str());
+      LOG << "Processing command: " << cmd->cmd_name.c_str();
 #endif
 
       switch(cmd->cmd_id) {
@@ -257,7 +258,7 @@ void Renderer::HandleCmdCreateTexture(std::unique_ptr<RenderCommand> cmd) {
 
     GLenum err = glGetError();
     if (err != GL_NO_ERROR)
-      LOG("GL ERROR after glCompressedTexImage2D: %d", (int)err);
+      LOG << "GL ERROR after glCompressedTexImage2D: " << (int)err;
   } else {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, c->image->GetWidth(), c->image->GetHeight(),
                    0, GL_RGBA, GL_UNSIGNED_BYTE, c->image->GetBuffer());
@@ -299,7 +300,7 @@ void Renderer::HandleCmdCreateGeometry(std::unique_ptr<RenderCommand> cmd) {
   // Verify that we have a valid layout and get the total byte size per vertex.
   GLuint vertexSize = GetVertexSize(c->vertex_description);
   if (!vertexSize) {
-    LOG("Invalid vertex layout\n");
+    LOG << "Invalid vertex layout";
     return;  // TODO: error handling
   }
 
@@ -443,7 +444,7 @@ void Renderer::HandleCmdCreateShader(std::unique_ptr<RenderCommand> cmd) {
         char *buffer = (char *)malloc(length);
         if (buffer) {
           glGetProgramInfoLog(id, length, NULL, buffer);
-          LOG("Could not link program:\n%s\n", buffer);
+          LOG << "Could not link program:\n" <<  buffer;
           free(buffer);
         }
       }
@@ -568,7 +569,6 @@ bool Renderer::SetupVertexLayout(const std::string &vertexDescription,
 }
 
 GLuint Renderer::CreateShader(const char *source, GLenum type) {
-  LOG("%s - %s\n", __func__, source);
   GLuint shader = glCreateShader(type);
   if (shader) {
     glShaderSource(shader, 1, &source, NULL);
@@ -582,7 +582,7 @@ GLuint Renderer::CreateShader(const char *source, GLenum type) {
         char *buffer = (char *)malloc(length);
         if (buffer) {
           glGetShaderInfoLog(shader, length, NULL, buffer);
-          LOG("Could not compile shader %d:\n%s\n", type, buffer);
+          LOG << "Could not compile shader " << type << ":\n" << buffer;
           free(buffer);
         }
         glDeleteShader(shader);
@@ -622,7 +622,7 @@ bool Renderer::BindAttributeLocation(GLuint id, const std::string &vertexDescrip
       break;
 
     default:
-      LOG("Unknown attribute: %s\n", token);
+      LOG << "Unknown attribute: " << token;
       return false;
     }
 
@@ -646,7 +646,7 @@ GLint Renderer::GetUniformLocation(GLuint id, const std::string &name, std::unor
     if (index >= 0)
       uniforms[name] = index;
     else
-      LOG("Cannot find uniform %s (shader: %d)\n", name.c_str(), id);
+      LOG << "Cannot find uniform " << name.c_str() << " (shader: " << id << ")";
   }
   return index;
 }
@@ -659,9 +659,9 @@ std::unordered_set<std::string> Renderer::SetupExtensions() {
     extensions.insert(token);
 
 #if 0
-  LOG("  extensions:");
+  LOG << "  extensions:";
   for (auto& ext : extensions)
-    LOG("    %s\n", ext.c_str());
+    LOG << "    " << ext.c_str());
 #endif
 
   // Check for supported texture compression extensions.
@@ -702,12 +702,12 @@ void Renderer::Present() {
 void Renderer::ContextLost() {}
 
 void Renderer::LogVersion() {
-  LOG("OpenGL:\n");
-  LOG("  vendor:         %s\n", (const char*)glGetString(GL_VENDOR));
-  LOG("  renderer:       %s\n", (const char*)glGetString(GL_RENDERER));
-  LOG("  version:        %s\n", (const char*)glGetString(GL_VERSION));
-  LOG("  shader version: %s\n",
-      (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION));
+  LOG << "OpenGL:";
+  LOG << "  vendor:         " << (const char*)glGetString(GL_VENDOR);
+  LOG << "  renderer:       " << (const char*)glGetString(GL_RENDERER);
+  LOG << "  version:        " << (const char*)glGetString(GL_VERSION);
+  LOG << "  shader version: " <<
+      (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
 }
 
 }  // namespace engine

@@ -18,7 +18,7 @@ bool File::Open(const char* file_name) {
     const char* root_path = Platform::Get().GetRootPath().c_str();
     archive_ = unzOpen(root_path);
     if (!archive_) {
-      LOG("Failed to open zip file: %s\n", root_path);
+      LOG << "Failed to open zip file: " << root_path;
       break;
     }
 
@@ -26,7 +26,7 @@ bool File::Open(const char* file_name) {
     std::string fullName = "assets/";
     fullName += file_name;
     if (UNZ_OK != unzLocateFile(archive_, fullName.c_str(), 1)) {
-      LOG("Failed to locate file in zip archive: %s\n", file_name);
+      LOG << "Failed to locate file in zip archive: " << file_name;
       break;
     }
 
@@ -34,14 +34,14 @@ bool File::Open(const char* file_name) {
     unz_file_info info;
     if (UNZ_OK !=
         unzGetCurrentFileInfo(archive_, &info, NULL, 0, NULL, 0, NULL, 0)) {
-      LOG("Failed to get file info: %s\n", file_name);
+      LOG << "Failed to get file info: " << file_name;
       break;
     }
     uncompressed_size_ = info.uncompressed_size;
 
     // Open the current file.
     if (UNZ_OK != unzOpenCurrentFile(archive_)) {
-      LOG("Failed to open file: %s\n", file_name);
+      LOG << "Failed to open file: " << file_name;
       break;
     }
 

@@ -1,13 +1,45 @@
 #ifndef LOG_H
 #define LOG_H
 
-#if defined(__ANDROID__)
-#include <android/log.h>
-#define LOG(...) __android_log_print(ANDROID_LOG_ERROR, "gltest", __VA_ARGS__)
+#include <sstream>
+
+#define EAT_STREAM_PARAMETERS \
+  true ? (void)0              \
+       : Log::Voidify() & (*Log::swallow_stream)
+
+#define LOG Log(__FILE__, __LINE__)
+
+#ifdef _DEBUG
+#define DLOG Log(__FILE__, __LINE__)
 #else
-#include <stdarg.h>
-#include <stdio.h>
-#define LOG(...) printf(__VA_ARGS__)
+#define DLOG EAT_STREAM_PARAMETERS
 #endif
+
+class Log {
+ public:
+  class Voidify {
+   public:
+    Voidify() = default;
+    // This has to be an operator with a precedence lower than << but
+    // higher than ?:
+    void operator&(Log&) { }
+  };
+
+  Log(const char* file, int line);
+  ~Log();
+
+  template<typename T>
+  Log& operator<<(const T& arg) {
+    stream_ << arg;
+    return *this;
+  }
+
+  static Log* swallow_stream;
+
+ private:
+  const char* file_;
+  const int line_;
+  std::ostringstream stream_;
+};
 
 #endif  // LOG_H

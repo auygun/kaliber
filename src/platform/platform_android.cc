@@ -50,7 +50,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
     case APP_CMD_INIT_WINDOW:
       if (app->window != NULL) {
         if (!engine::Engine::Get().GetRenderer().StartWorker()) {
-          LOG("Failed to initialize the renderer.\n");
+          LOG << "Failed to initialize the renderer.";
           throw internal_error;
         }
         platform->has_focus_ = true;
@@ -79,7 +79,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
 void Platform::Initialize(android_app* app) {
   app_ = app;
   root_path_ = GetApkPath(app->activity);
-  LOG("Root path: %s\n", root_path_.c_str());
+  LOG << "Root path: " << root_path_.c_str();
 
   app->userData = reinterpret_cast<void*>(this);
   app->onAppCmd = Platform::HandleCmd;

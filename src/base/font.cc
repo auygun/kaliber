@@ -19,7 +19,7 @@ bool Fontx::Create() {
   unsigned bufferSize = 0;
   char* buffer = File::ReadWholeFile("fonts/Roboto-Regular.ttf", &bufferSize);
   if (!buffer) {
-    LOG("Failed to read font file.\n");
+    LOG << "Failed to read font file.";
     return false;
   }
 
@@ -30,7 +30,7 @@ bool Fontx::Create() {
     // It's tighly packed.
     glyph_cache_ = new uint8_t[kGlyphSize * kGlyphSize];
     if (!glyph_cache_) {
-      LOG("Failed to allocate glyph cache.\n");
+      LOG << "Failed to allocate glyph cache.";
       break;
     }
 
@@ -39,7 +39,7 @@ bool Fontx::Create() {
     if (stbtt_BakeFontBitmap((unsigned char*)buffer, 0, kFontHeight,
                              glyph_cache_, kGlyphSize, kGlyphSize, kFirstChar,
                              kNumChars, glyph_info_) <= 0) {
-      LOG("Failed to bake the glyph cache: %d\n", result);
+      LOG << "Failed to bake the glyph cache: " << result;
       break;
     }
 
