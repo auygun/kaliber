@@ -226,11 +226,13 @@ void Renderer::HandleCmdClear(std::unique_ptr<RenderCommand> cmd) {
 void Renderer::HandleCmdCreateTexture(std::unique_ptr<RenderCommand> cmd) {
   auto *c = static_cast<CmdCreateTexture*>(cmd.get());
   auto it = texture_map_.find(c->id);
-  if (it != texture_map_.end())
-    return; // TODO: error handling
+  bool new_texture = it == texture_map_.end();
 
   GLuint gl_id = 0;
-  glGenTextures(1, &gl_id);
+  if (new_texture)
+    glGenTextures(1, &gl_id);
+  else
+    gl_id = it->second;
 
   // TODO: move to a separate update function.
   glBindTexture(GL_TEXTURE_2D, gl_id);
@@ -260,10 +262,12 @@ void Renderer::HandleCmdCreateTexture(std::unique_ptr<RenderCommand> cmd) {
                    0, GL_RGBA, GL_UNSIGNED_BYTE, c->image->GetBuffer());
   }
 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  if (new_texture) {
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  }
 
   texture_map_[c->id] = gl_id;
   // TODO: error handling.
