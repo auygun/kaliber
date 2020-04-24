@@ -33,8 +33,6 @@ bool Engine::Init() {
     return false;
   }
 
-  GetRenderer().Sync();
-
   return true;
 }
 

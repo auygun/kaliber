@@ -100,7 +100,9 @@ void Renderer::TerminateWorker() {
 
 void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
 #ifdef THREADED_RENDERING
-  if (cmd->cmd_id == HASH("CmdSync")) {
+  bool swap = cmd->cmd_id == HASH("CmdPresent");
+  command_queue_[1].push_back(std::move(cmd));
+  if (swap) {
     {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
       command_queue_[0].swap(command_queue_[1]);
@@ -112,8 +114,6 @@ void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
       LOG << "Discarding " << discarded << " render commands.";
 #endif
     command_queue_[1].clear();
-  } else {
-    command_queue_[1].push_back(std::move(cmd));
   }
 #else
   WorkerMain(std::move(cmd));
@@ -691,12 +691,8 @@ void Renderer::Clear(const std::array<float, 4>& rgba) {
 }
 
 void Renderer::Present() {
-  EnqueueCommand(std::make_unique<CmdPresent>());
-  Sync();
-}
-
-void Renderer::Sync() {
-  EnqueueCommand(std::make_unique<CmdSync>());
+  auto cmd = std::make_unique<CmdPresent>();
+  EnqueueCommand(std::move(cmd));
 }
 
 void Renderer::ContextLost() {}
