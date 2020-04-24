@@ -110,7 +110,7 @@ void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
     command_queue_[1].clear();
   }
   cv_.notify_one();
-#if 1
+#if 0
   if (discarded)
     LOG << "Discarding " << discarded << " render commands.";
 #endif
@@ -142,9 +142,9 @@ void Renderer::WorkerMain(std::promise<bool> promise) {
         cq.swap(command_queue_[1]);
     }
 
-#if 1
+#if 0
     // LOG << "queue size: " << (int)cq.size();
-    DLOG << "queue size: " << (int)cq.size();
+    LOG << "queue size: " << (int)cq.size();
 #endif
 
     do {
