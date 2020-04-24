@@ -23,7 +23,7 @@ void Platform::RunMainLoop() {
   // Use fixed time steps.
   constexpr float time_step = 1.0f / 60.0f;
   constexpr float speed = 1.0f;
-  constexpr float epsilon = 0.000001f;
+  constexpr float epsilon = 0.0001f;
 
   Timer timer;
   float accumulator = 0.0;
@@ -40,7 +40,6 @@ void Platform::RunMainLoop() {
       if (time_step - accumulator > epsilon) {
         float sleep_time = time_step - accumulator - epsilon;
         std::this_thread::sleep_for(std::chrono::microseconds((int)(sleep_time * 1000000.0f)));
-        accumulator += sleep_time;
       }
     };
 #else
