@@ -42,6 +42,7 @@ class Renderer {
   void EnableBlend();
   void Clear(const std::array<float, 4>& rgba);
   void Present();
+  void Sync();
 
   void ContextLost();
 
