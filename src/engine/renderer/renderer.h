@@ -59,6 +59,11 @@ class Renderer {
 
   bool SupportsVAO() const { return vertex_array_objects_; }
 
+  void EnterDrawStage();
+  void ExitDrawStage();
+
+  void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
+
 #if defined(__linux__) && !defined(__ANDROID__)
   bool CreateWindow();
   void DestroyWindow();
@@ -66,8 +71,6 @@ class Renderer {
   Display* display() { return display_; }
   Window window() { return window_; }
 #endif
-
-  void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
 
  private:
   struct TextureCompression {
@@ -116,12 +119,23 @@ class Renderer {
   int screen_width_ = 0;
   int screen_height_ = 0;
 
+  // True if the renderer is in draw stage. Render commands pushed during draw
+  // stage can be discarded.
+  bool draw_stage_ = false;
+
   std::unordered_map<int, GLuint> texture_map_;
   std::unordered_map<int, Geometry> geometry_map_;
   std::unordered_map<int, Shader> shader_map_;
 
 #ifdef THREADED_RENDERING
-  std::deque<std::unique_ptr<RenderCommand>> command_queue_[2];
+  // Global commands are independent from frames and guaranteed to be processed.
+  // All render commands pushed when the renderer is not in draw stage are kept
+  // in this queue.
+  std::deque<std::unique_ptr<RenderCommand>> global_commands_;
+  // Draw commands are fame specific and can be discarded if the renderer deems
+  // frame drop. All render commands pushed during draw stage are kept in this
+  // queue.
+  std::deque<std::unique_ptr<RenderCommand>> draw_commands_[2];
 
   std::condition_variable cv_;
   std::mutex mutex_;
@@ -138,25 +152,25 @@ class Renderer {
 
 #ifdef THREADED_RENDERING
   void WorkerMain(std::promise<bool> promise);
-#else
-  void WorkerMain(std::unique_ptr<RenderCommand> cmd);
 #endif // THREADED_RENDERING
 
-  void HandleCmdEnableBlend(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdClear(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdPresent(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdCreateTexture(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdDestoryTexture(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdActivateTexture(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdCreateGeometry(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdDestroyGeometry(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdDrawGeometry(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdCreateShader(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdDestroyShader(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdActivateShader(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdSetUniformVec2(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdSetUniformVec3(std::unique_ptr<RenderCommand> cmd);
-  void HandleCmdSetUniformInt(std::unique_ptr<RenderCommand> cmd);
+  void ProcessCommand(RenderCommand* cmd);
+
+  void HandleCmdEnableBlend(RenderCommand* cmd);
+  void HandleCmdClear(RenderCommand* cmd);
+  void HandleCmdPresent(RenderCommand* cmd);
+  void HandleCmdCreateTexture(RenderCommand* cmd);
+  void HandleCmdDestoryTexture(RenderCommand* cmd);
+  void HandleCmdActivateTexture(RenderCommand* cmd);
+  void HandleCmdCreateGeometry(RenderCommand* cmd);
+  void HandleCmdDestroyGeometry(RenderCommand* cmd);
+  void HandleCmdDrawGeometry(RenderCommand* cmd);
+  void HandleCmdCreateShader(RenderCommand* cmd);
+  void HandleCmdDestroyShader(RenderCommand* cmd);
+  void HandleCmdActivateShader(RenderCommand* cmd);
+  void HandleCmdSetUniformVec2(RenderCommand* cmd);
+  void HandleCmdSetUniformVec3(RenderCommand* cmd);
+  void HandleCmdSetUniformInt(RenderCommand* cmd);
 
   bool SetupVertexLayout(const std::string &vertexDescription, GLuint vertexSize,
                          bool useVAO, std::vector<Geometry::Element> &vertexLayout);

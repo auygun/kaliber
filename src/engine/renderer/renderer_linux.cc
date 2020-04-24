@@ -91,7 +91,7 @@ void Renderer::Shutdown() {
   }
 }
 
-void Renderer::HandleCmdPresent(std::unique_ptr<RenderCommand> cmd) {
+void Renderer::HandleCmdPresent(RenderCommand* cmd) {
   if (display_)
     glXSwapBuffers(display_, window_);
 }

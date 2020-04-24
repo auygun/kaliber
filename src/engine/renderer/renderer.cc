@@ -98,25 +98,39 @@ void Renderer::TerminateWorker() {
 #endif // THREADED_RENDERING
 }
 
+void Renderer::EnterDrawStage() {
+  draw_stage_ = true;
+}
+
+void Renderer::ExitDrawStage() {
+  draw_stage_ = false;
+}
+
 void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
 #ifdef THREADED_RENDERING
-  bool swap = cmd->cmd_id == HASH("CmdPresent");
-  command_queue_[1].push_back(std::move(cmd));
-  if (swap) {
+  if (!draw_stage_) {
+    std::unique_lock<std::mutex> scoped_lock(mutex_);
+    global_commands_.push_back(std::move(cmd));
+    cv_.notify_one();
+    return;
+  }
+  bool new_frame = cmd->cmd_id == HASH("CmdPresent");
+  draw_commands_[1].push_back(std::move(cmd));
+  if (new_frame) {
     {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
-      command_queue_[0].swap(command_queue_[1]);
+      draw_commands_[0].swap(draw_commands_[1]);
       cv_.notify_one();
     }
 #if 0
-    int discarded = (int)command_queue_[1].size();
+    int discarded = (int)draw_commands_[1].size();
     if (discarded)
-      LOG << "Discarding " << discarded << " render commands.";
+      LOG << "Discarding " << discarded << " draw commands.";
 #endif
-    command_queue_[1].clear();
+    draw_commands_[1].clear();
   }
 #else
-  WorkerMain(std::move(cmd));
+  ProcessCommand(cmd.get());
 #endif // THREADED_RENDERING
 }
 
@@ -125,106 +139,115 @@ void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
 void Renderer::WorkerMain(std::promise<bool> promise) {
   promise.set_value(Init());
 
-  std::deque<std::unique_ptr<RenderCommand>> cq;
+  std::deque<std::unique_ptr<RenderCommand>> cq[2];
   for(;;) {
     {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
       cv_.wait(scoped_lock, [&]()->bool {
-        return !command_queue_[0].empty() || terminate_worker_;
+        return !global_commands_.empty() || !draw_commands_[0].empty() ||
+            terminate_worker_;
       });
       if (terminate_worker_) {
         Shutdown();
         return;
       }
-      cq.swap(command_queue_[0]);
+      cq[0].swap(global_commands_);
+      cq[1].swap(draw_commands_[0]);
     }
 
 #if 0
-    LOG << "queue size: " << (int)cq.size();
+    LOG << "qlobal queue size: " << (int)cq[0].size();
+    LOG << "draw queue size: " << (int)cq[1].size();
 #endif
 
-    do {
+    while (!cq[0].empty()) {
       std::unique_ptr<RenderCommand> cmd;
-      cmd.swap(cq.front());
-      cq.pop_front();
-
-#else
-void Renderer::WorkerMain(std::unique_ptr<RenderCommand> cmd) {
-#endif // THREADED_RENDERING
-
-#if 0
-      LOG << "Processing command: " << cmd->cmd_name.c_str();
-#endif
-
-      switch(cmd->cmd_id) {
-      case HASH("CmdEableBlend"):
-        HandleCmdEnableBlend(std::move(cmd));
-        break;
-      case HASH("CmdClear"):
-        HandleCmdClear(std::move(cmd));
-        break;
-      case HASH("CmdPresent"):
-        HandleCmdPresent(std::move(cmd));
-        break;
-      case HASH("CmdCreateTexture"):
-        HandleCmdCreateTexture(std::move(cmd));
-        break;
-      case HASH("CmdDestoryTexture"):
-        HandleCmdDestoryTexture(std::move(cmd));
-        break;
-      case HASH("CmdActivateTexture"):
-        HandleCmdActivateTexture(std::move(cmd));
-        break;
-      case HASH("CmdCreateGeometry"):
-        HandleCmdCreateGeometry(std::move(cmd));
-        break;
-      case HASH("CmdDestroyGeometry"):
-        HandleCmdDestroyGeometry(std::move(cmd));
-        break;
-      case HASH("CmdDrawGeometry"):
-        HandleCmdDrawGeometry(std::move(cmd));
-        break;
-      case HASH("CmdCreateShader"):
-        HandleCmdCreateShader(std::move(cmd));
-        break;
-      case HASH("CmdDestroyShader"):
-        HandleCmdDestroyShader(std::move(cmd));
-        break;
-      case HASH("CmdActivateShader"):
-        HandleCmdActivateShader(std::move(cmd));
-        break;
-      case HASH("CmdSetUniformVec2"):
-        HandleCmdSetUniformVec2(std::move(cmd));
-        break;
-      case HASH("CmdSetUniformVec3"):
-        HandleCmdSetUniformVec3(std::move(cmd));
-        break;
-      case HASH("CmdSetUniformInt"):
-        HandleCmdSetUniformInt(std::move(cmd));
-        break;
-      default:
-        // assert(false);
-        break;
-      }
-#ifdef THREADED_RENDERING
-    } while (!cq.empty());
+      cmd.swap(cq[0].front());
+      cq[0].pop_front();
+      ProcessCommand(cmd.get());
+    }
+    while (!cq[1].empty()) {
+      std::unique_ptr<RenderCommand> cmd;
+      cmd.swap(cq[1].front());
+      cq[1].pop_front();
+      ProcessCommand(cmd.get());
+    }
   }
-#endif // THREADED_RENDERING
 }
 
-void Renderer::HandleCmdEnableBlend(std::unique_ptr<RenderCommand> cmd) {
+#endif // THREADED_RENDERING
+
+void Renderer::ProcessCommand(RenderCommand* cmd) {
+#if 0
+  LOG << "Processing command: " << cmd->cmd_name.c_str();
+#endif
+
+  switch(cmd->cmd_id) {
+  case HASH("CmdEableBlend"):
+    HandleCmdEnableBlend(cmd);
+    break;
+  case HASH("CmdClear"):
+    HandleCmdClear(cmd);
+    break;
+  case HASH("CmdPresent"):
+    HandleCmdPresent(cmd);
+    break;
+  case HASH("CmdCreateTexture"):
+    HandleCmdCreateTexture(cmd);
+    break;
+  case HASH("CmdDestoryTexture"):
+    HandleCmdDestoryTexture(cmd);
+    break;
+  case HASH("CmdActivateTexture"):
+    HandleCmdActivateTexture(cmd);
+    break;
+  case HASH("CmdCreateGeometry"):
+    HandleCmdCreateGeometry(cmd);
+    break;
+  case HASH("CmdDestroyGeometry"):
+    HandleCmdDestroyGeometry(cmd);
+    break;
+  case HASH("CmdDrawGeometry"):
+    HandleCmdDrawGeometry(cmd);
+    break;
+  case HASH("CmdCreateShader"):
+    HandleCmdCreateShader(cmd);
+    break;
+  case HASH("CmdDestroyShader"):
+    HandleCmdDestroyShader(cmd);
+    break;
+  case HASH("CmdActivateShader"):
+    HandleCmdActivateShader(cmd);
+    break;
+  case HASH("CmdSetUniformVec2"):
+    HandleCmdSetUniformVec2(cmd);
+    break;
+  case HASH("CmdSetUniformVec3"):
+    HandleCmdSetUniformVec3(cmd);
+    break;
+  case HASH("CmdSetUniformInt"):
+    HandleCmdSetUniformInt(cmd);
+    break;
+  default:
+    // assert(false);
+    break;
+  }
+}
+
+
+void Renderer::HandleCmdEnableBlend(RenderCommand* cmd) {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void Renderer::HandleCmdClear(std::unique_ptr<RenderCommand> cmd) {
-  auto *c = static_cast<CmdClear*>(cmd.get());
+void Renderer::HandleCmdClear(RenderCommand* cmd) {
+  auto *c = static_cast<CmdClear*>(cmd);
   glClearColor(c->rgba[0], c->rgba[1], c->rgba[2], c->rgba[3]);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Renderer::HandleCmdCreateTexture(std::unique_ptr<RenderCommand> cmd) {
-  auto *c = static_cast<CmdCreateTexture*>(cmd.get());
+void Renderer::HandleCmdCreateTexture(RenderCommand* cmd) {
+  auto *c = static_cast<CmdCreateTexture*>(cmd);
   auto it = texture_map_.find(c->id);
   bool new_texture = it == texture_map_.end();
 
@@ -273,8 +296,8 @@ void Renderer::HandleCmdCreateTexture(std::unique_ptr<RenderCommand> cmd) {
   // TODO: error handling.
 }
 
-void Renderer::HandleCmdDestoryTexture(std::unique_ptr<RenderCommand> cmd) {
-  auto *c = static_cast<CmdDestoryTexture*>(cmd.get());
+void Renderer::HandleCmdDestoryTexture(RenderCommand* cmd) {
+  auto *c = static_cast<CmdDestoryTexture*>(cmd);
   auto it = texture_map_.find(c->id);
   if (it != texture_map_.end()) {
     glDeleteTextures(1, &(it->second));
@@ -283,16 +306,16 @@ void Renderer::HandleCmdDestoryTexture(std::unique_ptr<RenderCommand> cmd) {
   // TODO: error handling
 }
 
-void Renderer::HandleCmdActivateTexture(std::unique_ptr<RenderCommand> cmd) {
-  auto *c = static_cast<CmdActivateTexture*>(cmd.get());
+void Renderer::HandleCmdActivateTexture(RenderCommand* cmd) {
+  auto *c = static_cast<CmdActivateTexture*>(cmd);
   auto it = texture_map_.find(c->id);
   if (it != texture_map_.end())
     glBindTexture(GL_TEXTURE_2D, it->second);
   // TODO: error handling
 }
 
-void Renderer::HandleCmdCreateGeometry(std::unique_ptr<RenderCommand> cmd) {
-  auto *c = static_cast<CmdCreateGeometry*>(cmd.get());
+void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
+  auto *c = static_cast<CmdCreateGeometry*>(cmd);
   auto it = geometry_map_.find(c->id);
   if (it != geometry_map_.end())
     return; // TODO: error handling
@@ -357,8 +380,8 @@ void Renderer::HandleCmdCreateGeometry(std::unique_ptr<RenderCommand> cmd) {
   };
 }
 
-void Renderer::HandleCmdDestroyGeometry(std::unique_ptr<RenderCommand> cmd) {
-  auto *c = static_cast<CmdDestroyGeometry*>(cmd.get());
+void Renderer::HandleCmdDestroyGeometry(RenderCommand* cmd) {
+  auto *c = static_cast<CmdDestroyGeometry*>(cmd);
   auto it = geometry_map_.find(c->id);
   if (it == geometry_map_.end())
     return; // TODO: error handling
@@ -371,8 +394,8 @@ void Renderer::HandleCmdDestroyGeometry(std::unique_ptr<RenderCommand> cmd) {
     glDeleteVertexArrays(1, &(it->second.vertexArrayId));
   geometry_map_.erase(it);}
 
-void Renderer::HandleCmdDrawGeometry(std::unique_ptr<RenderCommand> cmd) {
-  auto *c = static_cast<CmdDrawGeometry*>(cmd.get());
+void Renderer::HandleCmdDrawGeometry(RenderCommand* cmd) {
+  auto *c = static_cast<CmdDrawGeometry*>(cmd);
   auto it = geometry_map_.find(c->id);
   if (it == geometry_map_.end())
     return; // TODO: error handling
@@ -413,8 +436,8 @@ void Renderer::HandleCmdDrawGeometry(std::unique_ptr<RenderCommand> cmd) {
   }
 }
 
-void Renderer::HandleCmdCreateShader(std::unique_ptr<RenderCommand> cmd) {
-  auto *c = static_cast<CmdCreateShader*>(cmd.get());
+void Renderer::HandleCmdCreateShader(RenderCommand* cmd) {
+  auto *c = static_cast<CmdCreateShader*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end())
     return; // TODO: Error handling.
@@ -456,8 +479,8 @@ void Renderer::HandleCmdCreateShader(std::unique_ptr<RenderCommand> cmd) {
   shader_map_[c->id] = { id, {} };
 }
 
-void Renderer::HandleCmdDestroyShader(std::unique_ptr<RenderCommand> cmd) {
-  auto *c = static_cast<CmdDestroyShader*>(cmd.get());
+void Renderer::HandleCmdDestroyShader(RenderCommand* cmd) {
+  auto *c = static_cast<CmdDestroyShader*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end()) {
     glDeleteProgram(it->second.id);
@@ -465,15 +488,15 @@ void Renderer::HandleCmdDestroyShader(std::unique_ptr<RenderCommand> cmd) {
   }
 }
 
-void Renderer::HandleCmdActivateShader(std::unique_ptr<RenderCommand> cmd) {
-  auto *c = static_cast<CmdActivateShader*>(cmd.get());
+void Renderer::HandleCmdActivateShader(RenderCommand* cmd) {
+  auto *c = static_cast<CmdActivateShader*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end())
     glUseProgram(it->second.id);
 }
 
-void Renderer::HandleCmdSetUniformVec2(std::unique_ptr<RenderCommand> cmd) {
-  auto *c = static_cast<CmdSetUniformVec2*>(cmd.get());
+void Renderer::HandleCmdSetUniformVec2(RenderCommand* cmd) {
+  auto *c = static_cast<CmdSetUniformVec2*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end()) {
     GLint index = GetUniformLocation(it->second.id, c->name, it->second.uniforms);
@@ -482,8 +505,8 @@ void Renderer::HandleCmdSetUniformVec2(std::unique_ptr<RenderCommand> cmd) {
   }
 }
 
-void Renderer::HandleCmdSetUniformVec3(std::unique_ptr<RenderCommand> cmd) {
-  auto *c = static_cast<CmdSetUniformVec3*>(cmd.get());
+void Renderer::HandleCmdSetUniformVec3(RenderCommand* cmd) {
+  auto *c = static_cast<CmdSetUniformVec3*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end()) {
     GLint index = GetUniformLocation(it->second.id, c->name, it->second.uniforms);
@@ -492,8 +515,8 @@ void Renderer::HandleCmdSetUniformVec3(std::unique_ptr<RenderCommand> cmd) {
   }
 }
 
-void Renderer::HandleCmdSetUniformInt(std::unique_ptr<RenderCommand> cmd) {
-  auto *c = static_cast<CmdSetUniformInt*>(cmd.get());
+void Renderer::HandleCmdSetUniformInt(RenderCommand* cmd) {
+  auto *c = static_cast<CmdSetUniformInt*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end()) {
     GLint index = GetUniformLocation(it->second.id, c->name, it->second.uniforms);

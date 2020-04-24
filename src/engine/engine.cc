@@ -45,9 +45,11 @@ void Engine::Update(float delta_time) {
 }
 
 void Engine::Draw(float frame_frac) {
+  renderer_.EnterDrawStage();
   Clear();
   game_->Draw(frame_frac);
   Present();
+  renderer_.ExitDrawStage();
 }
 
 void Engine::Clear() {

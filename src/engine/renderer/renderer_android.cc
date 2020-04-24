@@ -53,7 +53,7 @@ void Renderer::Shutdown() {
   ndk_helper::GLContext::GetInstance()->Suspend();
 }
 
-void Renderer::HandleCmdPresent(std::unique_ptr<RenderCommand> cmd) {
+void Renderer::HandleCmdPresent(RenderCommand* cmd) {
   if (EGL_SUCCESS != ndk_helper::GLContext::GetInstance()->Swap()) {
     // TODO:
     // UnloadResources();
