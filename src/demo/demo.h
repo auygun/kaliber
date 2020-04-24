@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "../engine/game.h"
-#include "../engine/sprite.h"
+#include "../engine/image_quad.h"
 
 class Demo : public engine::Game {
  public:
@@ -18,8 +18,8 @@ class Demo : public engine::Game {
 
  private:
   float seconds_accumulated_ = 0.0f;
-  engine::Sprite bg_;
-  engine::Sprite sprite_;
+  engine::ImageQuad bg_;
+  engine::ImageQuad sprite_;
 
   Vector2 ToScale(int width, int height);
 };

@@ -1,4 +1,4 @@
-#include "sprite.h"
+#include "image_quad.h"
 #include "../base/log.h"
 #include "engine.h"
 #include "renderer/geometry.h"
@@ -6,7 +6,7 @@
 
 namespace engine {
 
-bool Sprite::Create(const std::string& asset_name,
+bool ImageQuad::Create(const std::string& asset_name,
                     const Vector2& offset,
                     const Vector2& scale) {
   auto image = std::make_unique<Image>();
@@ -19,7 +19,7 @@ bool Sprite::Create(const std::string& asset_name,
   return texture_.Create(std::move(image));
 }
 
-void Sprite::Draw(const Vector2& offset) {
+void ImageQuad::Draw(const Vector2& offset) {
   Vector2 draw_offset = offset_ + offset;
 
   texture_.Activate();

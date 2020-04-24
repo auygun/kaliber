@@ -9,10 +9,10 @@
 
 namespace engine {
 
-class Sprite {
+class ImageQuad {
  public:
-  Sprite() = default;
-  ~Sprite() = default;
+  ImageQuad() = default;
+  ~ImageQuad() = default;
 
   bool Create(const std::string& asset_name,
               const Vector2& offset,

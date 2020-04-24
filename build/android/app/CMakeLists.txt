@@ -53,7 +53,7 @@ add_library(native-activity SHARED
     ../../../src/engine/renderer/renderer.cc
     ../../../src/engine/renderer/shader.cc
     ../../../src/engine/renderer/texture.cc
-    ../../../src/engine/sprite.cc
+    ../../../src/engine/image_quad.cc
     ../../../src/platform/platform_android.cc
     ../../../src/platform/platform.cc
     ../../../src/third_party/android/gl3stub.c
