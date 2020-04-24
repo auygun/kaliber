@@ -5,6 +5,8 @@
 #include <math.h>
 #include <thread>
 
+#define USE_SLEEP
+
 Platform::InternalError Platform::internal_error;
 
 Platform& Platform::Get() {
@@ -24,34 +26,35 @@ void Platform::RunMainLoop() {
   constexpr float epsilon = 0.000001f;
 
   Timer timer;
-  float last_time = timer.GetSecondsAccumulated();
   float accumulator = 0.0;
   float frame_frac = 0.0f;
 
   for (;;) {
     engine::Engine::Get().Draw(frame_frac);
 
-    Update();
-    if (should_exit_) {
-      engine::Engine::Get().Shutdown();
-      return;
-    }
-
+#ifdef USE_SLEEP
     // Accumulate time.
     while (accumulator < time_step) {
       timer.Update();
-      float new_time = timer.GetSecondsAccumulated();
-      accumulator += new_time - last_time;
-      last_time = new_time;
+      accumulator += timer.GetSecondsPassed();
       if (time_step - accumulator > epsilon) {
         float sleep_time = time_step - accumulator - epsilon;
         std::this_thread::sleep_for(std::chrono::microseconds((int)(sleep_time * 1000000.0f)));
         accumulator += sleep_time;
       }
     };
+#else
+    timer.Update();
+    accumulator += timer.GetSecondsPassed();
+#endif // USE_SLEEP
 
     // Subdivide the frame time.
     while (accumulator >= time_step) {
+      Update();
+      if (should_exit_) {
+        engine::Engine::Get().Shutdown();
+        return;
+      }
       engine::Engine::Get().Update(time_step * speed);
       accumulator -= time_step;
     };
