@@ -4,6 +4,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <vector>
 #include "../base/image.h"
 #include "../base/log.h"
 #include "../engine/engine.h"
@@ -14,25 +15,37 @@ DECLARE_GAME(Demo)
 DECLARE_GAME_END
 
 bool Demo::Initialize() {
-  Vector2 scale = ToScale(256, 256);
-  if (!bg_.Create("star-blasts.jpg", Vector2(0, 0), scale)) {
+  if (!bg_.Create("star-blasts.jpg", Vector2(0, 0))) {
     LOG << "Failed to create the backgroud.";
     return false;
   }
+  bg_.SetScale(ToScale(256, 256));
 
-  scale = ToScale(50, 50);
-  LOG << "scale_: " << scale.x << " " << scale.y;
-  if (!sprite_.Create("spaceship.png", Vector2(0, 0), scale)) {
+  if (!sprite_.Create("spaceship.png", Vector2(0, 0))) {
     LOG << "Failed to create the sprite.";
     return false;
   }
+  sprite_.SetScale(ToScale(50, 50));
 
   return true;
 }
 
 void Demo::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
-  // LOG("%f\n", secondsAccumulated);
+
+  std::vector<std::string> lines;
+  std::string line = "frames dropped: ";
+  line += std::to_string(engine::Engine::Get().GetRenderer().num_frames_dropped());
+  lines.push_back(line);
+  line = "global commands: ";
+  line += std::to_string(engine::Engine::Get().GetRenderer().num_global_commands());
+  lines.push_back(line);
+  line = "render queue: ";
+  line += std::to_string(engine::Engine::Get().GetRenderer().max_render_queue_size());
+  lines.push_back(line);
+  if (!stats_.Print(lines, 300, Vector2(0, 0))) {
+    LOG << "Failed to create the text.";
+  }
 }
 
 void Demo::Draw(float frame_frac) {
@@ -47,7 +60,7 @@ void Demo::Draw(float frame_frac) {
     }
   }
 
-  sprite_.Draw(Vector2(0, 0));
+  stats_.Draw(Vector2(0, 0));
   sprite_.Draw(Vector2(0.5f, 0.5f));
 }
 

@@ -64,6 +64,10 @@ class Renderer {
 
   void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
 
+  size_t num_frames_dropped() { return num_frames_dropped_; }
+  size_t num_global_commands() { return num_global_commands_; }
+  size_t max_render_queue_size() { return max_render_queue_size_; }
+
 #if defined(__linux__) && !defined(__ANDROID__)
   bool CreateWindow();
   void DestroyWindow();
@@ -142,6 +146,11 @@ class Renderer {
   std::thread worker_thread_;
   bool terminate_worker_ = false;
 #endif // THREADED_RENDERING
+
+  // Stats.
+  size_t num_frames_dropped_ = 0;
+  size_t num_global_commands_ = 0;
+  size_t max_render_queue_size_ = 0;
 
 #if defined(__linux__) && !defined(__ANDROID__)
   Display* display_ = NULL;

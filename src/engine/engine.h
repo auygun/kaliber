@@ -28,6 +28,8 @@ class Engine {
 
   void TrimMemory();
 
+  Vector2 ToScale(int width, int height);
+
   Renderer& GetRenderer() { return renderer_; }
   Geometry& GetQuad() { return quad_; }
   Shader& GetPassThroughShader() { return pass_through_shader_; }

@@ -20,6 +20,7 @@ class Demo : public engine::Game {
   float seconds_accumulated_ = 0.0f;
   engine::ImageQuad bg_;
   engine::ImageQuad sprite_;
+  engine::ImageQuad stats_;
 
   Vector2 ToScale(int width, int height);
 };

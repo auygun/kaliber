@@ -3,13 +3,14 @@
 
 #include <stdint.h>
 #include "../third_party/stb/stb_truetype.h"
+#include <string>
 
 class Fontx {
  public:
   Fontx();
   ~Fontx();
 
-  bool Create();
+  bool Create(const std::string& font_name);
   void Destroy();
 
   void CalculateBoundingBox(const char* text, int& width, int& height);
@@ -21,6 +22,8 @@ class Fontx {
 
   void Print(int x, int y, const char* text, uint8_t* buffer, unsigned width);
 
+  int GetLineHeight() { return line_height_; }
+
  private:
   enum Constants {
     kGlyphSize = 512,
@@ -30,6 +33,9 @@ class Fontx {
 
   uint8_t* glyph_cache_;                   // Image data.
   stbtt_bakedchar glyph_info_[kNumChars];  // Coordinates and advance.
+
+  int line_height_;
+  int vertical_shift_;
 };
 
 #endif  // FONT_H

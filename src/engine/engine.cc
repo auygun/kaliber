@@ -14,7 +14,7 @@ Engine& Engine::Get() {
 bool Engine::Init() {
   RandomInit();
 
-  if (!font_.Create()) {
+  if (!font_.Create("Roboto-Regular.ttf")) {
     LOG << "Failed to create the font.";
     return false;
   }
@@ -67,6 +67,16 @@ void Engine::Present() {
 
 void Engine::TrimMemory() {
   renderer_.TrimMemory();
+}
+
+Vector2 Engine::ToScale(int width, int height) {
+  float horizontal_ratio =
+      (float)width / GetRenderer().GetScreenWidth();
+  float vertical_ratio =
+      (float)height / GetRenderer().GetScreenHeight();
+
+  // The orthogonal viewport is (-1.0 .. 1.0) x (-1.0 .. 1.0).
+  return Vector2(horizontal_ratio * 2.0f, vertical_ratio * 2.0f);
 }
 
 bool Engine::CreateRenderResources() {

@@ -12,12 +12,15 @@ Fontx::~Fontx() {
   Destroy();
 }
 
-bool Fontx::Create() {
+bool Fontx::Create(const std::string& font_name) {
   Destroy();
+
+  std::string fullPath = "fonts/";
+  fullPath += font_name;
 
   // Read the font file.
   unsigned bufferSize = 0;
-  char* buffer = File::ReadWholeFile("fonts/Roboto-Regular.ttf", &bufferSize);
+  char* buffer = File::ReadWholeFile(fullPath.c_str(), &bufferSize);
   if (!buffer) {
     LOG << "Failed to read font file.";
     return false;
@@ -35,7 +38,7 @@ bool Fontx::Create() {
     }
 
     // Rasterize glyphs and pack them into the cache.
-    const float kFontHeight = 32.0f;
+    const float kFontHeight = 28.0f;
     if (stbtt_BakeFontBitmap((unsigned char*)buffer, 0, kFontHeight,
                              glyph_cache_, kGlyphSize, kGlyphSize, kFirstChar,
                              kNumChars, glyph_info_) <= 0) {
@@ -47,6 +50,12 @@ bool Fontx::Create() {
   } while (0);
 
   delete[] buffer;
+
+  int x0, y0, x1, y1;
+  CalculateBoundingBox("Ilfgjy", x0, y0, x1, y1);
+  line_height_ = y1 - y0;
+  vertical_shift_ = -y0;
+
   return result;
 }
 
@@ -67,11 +76,11 @@ static void StretchBlit_I8_to_RGBA32(int dst_x0,
                                      int dst_pitch,
                                      const uint8_t* src_i,
                                      int src_pitch) {
-  // LOG("-- StretchBlit: --\n"
-  //     "dst: rect(%d, %d)..(%d..%d), pitch(%d)\n"
-  //     "src: rect(%d, %d)..(%d..%d), pitch(%d)\n",
-  //     dst_x0, dst_y0, dst_x1, dst_y1, dst_pitch,
-  //     src_x0, src_y0, src_x1, src_y1, src_pitch);
+  // LOG << "-- StretchBlit: --";
+  // LOG << "dst: rect(" << dst_x0 << ", " << dst_y0 << ")..("
+  //     << dst_x1 << ".." << dst_y1 << "), pitch(" << dst_pitch << ")";
+  // LOG << "src: rect(" << src_x0 << ", " << src_y0 << ")..("
+  //     << src_x1 << ".." << src_y1 << "), pitch(" << src_pitch << ")";
 
   int dst_width = dst_x1 - dst_x0, dst_height = dst_y1 - dst_y0,
       src_width = src_x1 - src_x0, src_height = src_y1 - src_y0;
@@ -79,10 +88,8 @@ static void StretchBlit_I8_to_RGBA32(int dst_x0,
   // int dst_dx = dst_width > 0 ? 1 : -1,
   //     dst_dy = dst_height > 0 ? 1 : -1;
 
-  // LOG("dst_width  = %d, src_width  = %d\n"
-  //     "dst_height = %d, src_height = %d\n",
-  //     dst_width, src_width,
-  //     dst_height, src_height);
+  // LOG << "dst_width = " << dst_width << ", dst_height = " << dst_height;
+  // LOG << "src_width = " << src_width << ", src_height = " << src_height;
 
   uint8_t* dst = dst_rgba + (dst_x0 + dst_y0 * dst_pitch) * 4;
   const uint8_t* src = src_i + (src_x0 + src_y0 * src_pitch) * 1;
@@ -148,6 +155,7 @@ void Fontx::CalculateBoundingBox(const char* text, int& width, int& height) {
   CalculateBoundingBox(text, x0, y0, x1, y1);
   width = x1 - x0;
   height = y1 - y0;
+  // LOG << "width = " << width << ", height = " << height;
 }
 
 void Fontx::Print(int x,
@@ -157,7 +165,7 @@ void Fontx::Print(int x,
                   unsigned width) {
   // LOG("Font::Print() = %s\n", text);
 
-  float fx = (float)x, fy = (float)y;
+  float fx = (float)x, fy = (float)y + (float)vertical_shift_;
 
   while (*text) {
     if (*text >= kFirstChar /*&& *text < (kFirstChar + kNumChars)*/) {
