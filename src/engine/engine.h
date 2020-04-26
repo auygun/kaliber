@@ -7,6 +7,7 @@
 #include "renderer/renderer.h"
 #include "renderer/shader.h"
 #include "text_box.h"
+#include "asset_manager.h"
 #include <list>
 
 #if defined(__ANDROID__)
@@ -36,6 +37,7 @@ class Engine {
 
   Vector2 ToScale(int width, int height);
 
+  AssetManager& GetAssetManager() { return asset_manager_; }
   Renderer& GetRenderer() { return renderer_; }
   Geometry& GetQuad() { return quad_; }
   Shader& GetPassThroughShader() { return pass_through_shader_; }
@@ -43,6 +45,8 @@ class Engine {
 
  private:
   std::unique_ptr<Game> game_;
+
+  AssetManager asset_manager_;
 
   Renderer renderer_;
 

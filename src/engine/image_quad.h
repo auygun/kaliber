@@ -17,7 +17,7 @@ class ImageQuad : public Drawable {
   ImageQuad() = default;
   ~ImageQuad() override = default;
 
-  bool Create(std::unique_ptr<Image> image);
+  bool Create(std::shared_ptr<const Image> image);
 
   void Draw() override;
 

@@ -15,12 +15,14 @@ DECLARE_GAME(Demo)
 DECLARE_GAME_END
 
 bool Demo::Initialize() {
+  engine::Engine& engine = engine::Engine::Get();
+
   bg_.Initialize();
 
-  auto image = std::make_unique<Image>();
-  if (!image->Load("spaceship.png"))
+  auto image = engine.GetAssetManager().GetImage("spaceship.png");
+  if (!image)
     return false;
-  if (!ship_.Create(std::move(image))) {
+  if (!ship_.Create(image)) {
     LOG << "Failed to create the sprite.";
     return false;
   }
@@ -28,10 +30,8 @@ bool Demo::Initialize() {
   ship_.Scale(engine::Engine::Get().ToScale(50, 50));
   engine::Engine::Get().AddDrawable(&ship_);
 
-  image = std::make_unique<Image>();
-  if (!image->Load("enemy.png"))
-    return false;
-  if (!enemy_.Create(std::move(image))) {
+  image = engine.GetAssetManager().GetImage("enemy.png");
+  if (!enemy_.Create(image)) {
     LOG << "Failed to create the sprite.";
     return false;
   }

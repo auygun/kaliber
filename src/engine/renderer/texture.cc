@@ -12,12 +12,12 @@ Texture::~Texture() {
   Destroy();
 }
 
-bool Texture::Create(std::unique_ptr<Image> image) {
+bool Texture::Create(std::shared_ptr<const Image> image) {
   auto cmd = std::make_unique<CmdCreateTexture>();
   if (id == 0)
     id = ++last_id;
   cmd->id = id;
-  cmd->image = std::move(image);
+  cmd->image = image;
   Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
 
   return true;

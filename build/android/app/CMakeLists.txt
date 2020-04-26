@@ -48,6 +48,7 @@ add_library(native-activity SHARED
     ../../../src/base/timer.cc
     ../../../src/demo/background.cc
     ../../../src/demo/demo.cc
+    ../../../src/engine/asset_manager.cc
     ../../../src/engine/engine.cc
     ../../../src/engine/image_quad.cc
     ../../../src/engine/renderer/geometry.cc

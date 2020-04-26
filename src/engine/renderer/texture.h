@@ -12,7 +12,7 @@ public:
   Texture() = default;
   ~Texture();
 
-  bool Create(std::unique_ptr<Image> image);
+  bool Create(std::shared_ptr<const Image> image);
   void Destroy();
 
   void Activate();

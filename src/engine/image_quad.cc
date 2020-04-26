@@ -8,9 +8,9 @@
 
 namespace engine {
 
-bool ImageQuad::Create(std::unique_ptr<Image> image) {
+bool ImageQuad::Create(std::shared_ptr<const Image> image) {
   scale_ = engine::Engine::Get().ToScale(image->GetWidth(), image->GetHeight());
-  return texture_.Create(std::move(image));
+  return texture_.Create(image);
 }
 
 void ImageQuad::Draw() {

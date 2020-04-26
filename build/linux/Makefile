@@ -73,6 +73,7 @@ GLTEST_SRC := \
   $(SRC_ROOT)/base/timer.cc \
   $(SRC_ROOT)/demo/background.cc \
   $(SRC_ROOT)/demo/demo.cc \
+  $(SRC_ROOT)/engine/asset_manager.cc \
   $(SRC_ROOT)/engine/engine.cc \
   $(SRC_ROOT)/engine/image_quad.cc \
   $(SRC_ROOT)/engine/renderer/geometry.cc \

@@ -61,7 +61,7 @@ RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdCreateTexture)
   int id;
-  std::unique_ptr<Image> image;
+  std::shared_ptr<const Image> image;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdDestoryTexture)
