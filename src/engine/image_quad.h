@@ -3,6 +3,7 @@
 
 #include "../base/vecmath.h"
 #include "renderer/texture.h"
+#include "drawable.h"
 
 #include <string>
 #include <vector>
@@ -11,14 +12,14 @@ class Image;
 
 namespace engine {
 
-class ImageQuad {
+class ImageQuad : public Drawable {
  public:
   ImageQuad() = default;
-  ~ImageQuad() = default;
+  ~ImageQuad() override = default;
 
   bool Create(std::unique_ptr<Image> image);
 
-  void Draw();
+  void Draw() override;
 
   void Translate(const Vector2& offset) { offset_ = offset; }
   void Scale(const Vector2& scale) { scale_ = scale; }

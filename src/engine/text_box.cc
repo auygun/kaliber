@@ -51,6 +51,9 @@ bool TextBox::Print(Fontx& font, const std::vector<std::string> lines,
 }
 
 void TextBox::Draw() {
+  if (!texture_.IsValid())
+    return;
+
   texture_.Activate();
 
   Geometry& quad = Engine::Get().GetQuad();

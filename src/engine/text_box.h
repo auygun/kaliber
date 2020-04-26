@@ -3,6 +3,7 @@
 
 #include "../base/vecmath.h"
 #include "renderer/texture.h"
+#include "drawable.h"
 
 #include <string>
 #include <vector>
@@ -11,15 +12,15 @@ class Fontx;
 
 namespace engine {
 
-class TextBox {
+class TextBox : public Drawable {
  public:
   TextBox() = default;
-  ~TextBox() = default;
+  ~TextBox() override = default;
 
   bool Print(Fontx& font, const std::string& text);
   bool Print(Fontx& font, const std::vector<std::string> lines, int width);
 
-  void Draw();
+  void Draw() override;
 
   void Translate(const Vector2& offset) { offset_ = offset; }
   void Scale(const Vector2& scale) { scale_ = scale; }

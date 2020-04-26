@@ -46,14 +46,15 @@ add_library(native-activity SHARED
     ../../../src/base/log.cc
     ../../../src/base/random.cc
     ../../../src/base/timer.cc
+    ../../../src/demo/background.cc
     ../../../src/demo/demo.cc
     ../../../src/engine/engine.cc
+    ../../../src/engine/image_quad.cc
     ../../../src/engine/renderer/geometry.cc
     ../../../src/engine/renderer/renderer_android.cc
     ../../../src/engine/renderer/renderer.cc
     ../../../src/engine/renderer/shader.cc
     ../../../src/engine/renderer/texture.cc
-    ../../../src/engine/image_quad.cc
     ../../../src/engine/text_box.cc
     ../../../src/platform/platform_android.cc
     ../../../src/platform/platform.cc

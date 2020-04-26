@@ -7,6 +7,7 @@
 #include "renderer/renderer.h"
 #include "renderer/shader.h"
 #include "text_box.h"
+#include <list>
 
 #if defined(__ANDROID__)
 struct ANativeWindow;
@@ -15,6 +16,7 @@ struct ANativeWindow;
 namespace engine {
 
 class Game;
+class Drawable;
 
 class Engine {
  public:
@@ -23,6 +25,9 @@ class Engine {
   bool Init();
 
   void Shutdown();
+
+  void AddDrawable(Drawable* drawable);
+  void RemoveDrawable(Drawable* drawable);
 
   void Update(float delta_time);
   void Draw(float frame_frac);
@@ -46,7 +51,9 @@ class Engine {
 
   Fontx font_;
 
-  TextBox stats_;
+  TextBox stats_; // TODO: add to drawables.
+
+  std::list<Drawable*> drawables_;
 
   bool CreateRenderResources();
 

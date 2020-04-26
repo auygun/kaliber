@@ -64,24 +64,25 @@ objs_from_src_in = $(call objs_from_src, $(shell find $(1) -name "*.cc" -o -name
 ifneq ($(filter gltest,$(APPS)),)
 
 GLTEST_SRC := \
-	$(SRC_ROOT)/base/file_linux.cc \
-	$(SRC_ROOT)/base/file.cc \
-	$(SRC_ROOT)/base/font.cc \
-	$(SRC_ROOT)/base/image.cc \
-	$(SRC_ROOT)/base/log.cc \
-	$(SRC_ROOT)/base/random.cc \
-	$(SRC_ROOT)/base/timer.cc \
-	$(SRC_ROOT)/engine/engine.cc \
-	$(SRC_ROOT)/engine/renderer/geometry.cc \
-	$(SRC_ROOT)/engine/renderer/renderer_linux.cc \
-	$(SRC_ROOT)/engine/renderer/renderer.cc \
-	$(SRC_ROOT)/engine/renderer/shader.cc \
-	$(SRC_ROOT)/engine/renderer/texture.cc \
-	$(SRC_ROOT)/engine/image_quad.cc \
-	$(SRC_ROOT)/engine/text_box.cc \
-	$(SRC_ROOT)/platform/platform_linux.cc \
-	$(SRC_ROOT)/platform/platform.cc \
+  $(SRC_ROOT)/base/file_linux.cc \
+  $(SRC_ROOT)/base/file.cc \
+  $(SRC_ROOT)/base/font.cc \
+  $(SRC_ROOT)/base/image.cc \
+  $(SRC_ROOT)/base/log.cc \
+  $(SRC_ROOT)/base/random.cc \
+  $(SRC_ROOT)/base/timer.cc \
+  $(SRC_ROOT)/demo/background.cc \
   $(SRC_ROOT)/demo/demo.cc \
+  $(SRC_ROOT)/engine/engine.cc \
+  $(SRC_ROOT)/engine/image_quad.cc \
+  $(SRC_ROOT)/engine/renderer/geometry.cc \
+  $(SRC_ROOT)/engine/renderer/renderer_linux.cc \
+  $(SRC_ROOT)/engine/renderer/renderer.cc \
+  $(SRC_ROOT)/engine/renderer/shader.cc \
+  $(SRC_ROOT)/engine/renderer/texture.cc \
+  $(SRC_ROOT)/engine/text_box.cc \
+  $(SRC_ROOT)/platform/platform_linux.cc \
+  $(SRC_ROOT)/platform/platform.cc \
   $(SRC_ROOT)/third_party/glew/glew.c \
   $(SRC_ROOT)/third_party/minizip/ioapi.c \
   $(SRC_ROOT)/third_party/minizip/unzip.c

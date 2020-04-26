@@ -3,6 +3,9 @@
 #include "../base/random.h"
 #include "game.h"
 #include "game_factory.h"
+#include "drawable.h"
+#include "image_quad.h"
+#include "text_box.h"
 
 namespace engine {
 
@@ -42,6 +45,14 @@ void Engine::Shutdown() {
   game_.reset();
 }
 
+void Engine::AddDrawable(Drawable* drawable) {
+  drawables_.push_back(drawable);
+}
+
+void Engine::RemoveDrawable(Drawable* drawable) {
+  // TODO: Implement.
+}
+
 void Engine::Update(float delta_time) {
   game_->Update(delta_time);
 
@@ -63,7 +74,10 @@ void Engine::Update(float delta_time) {
 void Engine::Draw(float frame_frac) {
   renderer_.EnterDrawStage();
   Clear();
-  game_->Draw(frame_frac);
+  renderer_.EnableBlend();
+  // game_->Draw(frame_frac);
+  for (auto d : drawables_)
+    d->Draw();
   stats_.Draw();
   Present();
   renderer_.ExitDrawStage();

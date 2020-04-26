@@ -11,11 +11,13 @@ class Texture {
 public:
   Texture() = default;
   ~Texture();
-  
+
   bool Create(std::unique_ptr<Image> image);
   void Destroy();
 
   void Activate();
+
+  bool IsValid() { return id > 0; }
 
 private:
   int id = 0;
