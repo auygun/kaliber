@@ -21,8 +21,6 @@ class Demo : public engine::Game {
   engine::ImageQuad bg_;
   engine::ImageQuad ship_;
   engine::ImageQuad enemy_;
-
-  Vector2 ToScale(int width, int height);
 };
 
 #endif  // DEMO_H

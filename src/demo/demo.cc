@@ -22,7 +22,7 @@ bool Demo::Initialize() {
     LOG << "Failed to create the backgroud.";
     return false;
   }
-  bg_.Scale(ToScale(256, 256));
+  bg_.Scale(engine::Engine::Get().ToScale(256, 256));
 
   image = std::make_unique<Image>();
   if (!image->Load("spaceship.png"))
@@ -31,7 +31,7 @@ bool Demo::Initialize() {
     LOG << "Failed to create the sprite.";
     return false;
   }
-  ship_.Scale(ToScale(50, 50));
+  ship_.Scale(engine::Engine::Get().ToScale(50, 50));
 
   image = std::make_unique<Image>();
   if (!image->Load("enemy.png"))
@@ -66,14 +66,4 @@ void Demo::Draw(float frame_frac) {
 
   enemy_.Translate(Vector2(0.5f, 0.5f));
   enemy_.Draw();
-}
-
-Vector2 Demo::ToScale(int width, int height) {
-  float horizontal_ratio =
-      (float)width / engine::Engine::Get().GetRenderer().GetScreenWidth();
-  float vertical_ratio =
-      (float)height / engine::Engine::Get().GetRenderer().GetScreenHeight();
-
-  // The orthogonal viewport is (-1.0 .. 1.0) x (-1.0 .. 1.0).
-  return Vector2(horizontal_ratio * 2.0f, vertical_ratio * 2.0f);
 }
