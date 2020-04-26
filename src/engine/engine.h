@@ -6,6 +6,7 @@
 #include "renderer/geometry.h"
 #include "renderer/renderer.h"
 #include "renderer/shader.h"
+#include "text_box.h"
 
 #if defined(__ANDROID__)
 struct ANativeWindow;
@@ -44,6 +45,8 @@ class Engine {
   Shader pass_through_shader_;
 
   Fontx font_;
+
+  TextBox stats_;
 
   bool CreateRenderResources();
 

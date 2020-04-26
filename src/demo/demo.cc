@@ -15,53 +15,57 @@ DECLARE_GAME(Demo)
 DECLARE_GAME_END
 
 bool Demo::Initialize() {
-  if (!bg_.Create("star-blasts.jpg", Vector2(0, 0))) {
+  auto image = std::make_unique<Image>();
+  if (!image->Load("star-blasts.jpg"))
+    return false;
+  if (!bg_.Create(std::move(image))) {
     LOG << "Failed to create the backgroud.";
     return false;
   }
-  bg_.SetScale(ToScale(256, 256));
+  bg_.Scale(ToScale(256, 256));
 
-  if (!sprite_.Create("spaceship.png", Vector2(0, 0))) {
+  image = std::make_unique<Image>();
+  if (!image->Load("spaceship.png"))
+    return false;
+  if (!ship_.Create(std::move(image))) {
     LOG << "Failed to create the sprite.";
     return false;
   }
-  sprite_.SetScale(ToScale(50, 50));
+  ship_.Scale(ToScale(50, 50));
+
+  image = std::make_unique<Image>();
+  if (!image->Load("enemy.png"))
+    return false;
+  if (!enemy_.Create(std::move(image))) {
+    LOG << "Failed to create the sprite.";
+    return false;
+  }
 
   return true;
 }
 
 void Demo::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
-
-  std::vector<std::string> lines;
-  std::string line = "frames dropped: ";
-  line += std::to_string(engine::Engine::Get().GetRenderer().num_frames_dropped());
-  lines.push_back(line);
-  line = "global commands: ";
-  line += std::to_string(engine::Engine::Get().GetRenderer().num_global_commands());
-  lines.push_back(line);
-  line = "render queue: ";
-  line += std::to_string(engine::Engine::Get().GetRenderer().max_render_queue_size());
-  lines.push_back(line);
-  if (!stats_.Print(lines, 300, Vector2(0, 0))) {
-    LOG << "Failed to create the text.";
-  }
 }
 
 void Demo::Draw(float frame_frac) {
   engine::Engine::Get().GetRenderer().EnableBlend();
 
-  float scale_x = bg_.GetScale().x;
-  float scale_y = bg_.GetScale().y;
+  float scale_x = bg_.scale().x;
+  float scale_y = bg_.scale().y;
   float scroll_offset_y = fmod(-seconds_accumulated_ * 0.15f, scale_y);
   for (float y = -1.0f + scale_y / 2; y <= 1.0f + scale_y; y += scale_y) {
     for (float x = -1.0f + scale_x / 2; x <= 1.0f; x += scale_x) {
-      bg_.Draw(Vector2(x, y + scroll_offset_y));
+      bg_.Translate(Vector2(x, y + scroll_offset_y));
+      bg_.Draw();
     }
   }
 
-  stats_.Draw(Vector2(0, 0));
-  sprite_.Draw(Vector2(0.5f, 0.5f));
+  ship_.Translate(Vector2(0, -0.5f));
+  ship_.Draw();
+
+  enemy_.Translate(Vector2(0.5f, 0.5f));
+  enemy_.Draw();
 }
 
 Vector2 Demo::ToScale(int width, int height) {

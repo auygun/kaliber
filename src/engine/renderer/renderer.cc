@@ -109,17 +109,18 @@ void Renderer::ExitDrawStage() {
 void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
 #ifdef THREADED_RENDERING
   if (!draw_stage_) {
-    ++num_global_commands_;
-    std::unique_lock<std::mutex> scoped_lock(mutex_);
-    global_commands_.push_back(std::move(cmd));
-    cv_.notify_one();
+    {
+      std::unique_lock<std::mutex> scoped_lock(mutex_);
+      global_commands_.push_back(std::move(cmd));
+      cv_.notify_one();
+    }
+    global_queue_size_ = global_commands_.size();
     return;
   }
   bool new_frame = cmd->cmd_id == HASH("CmdPresent");
   draw_commands_[1].push_back(std::move(cmd));
   if (new_frame) {
-    if (draw_commands_[1].size() > max_render_queue_size_)
-      max_render_queue_size_ = draw_commands_[1].size();
+    render_queue_size_ = draw_commands_[1].size();
     {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
       draw_commands_[0].swap(draw_commands_[1]);

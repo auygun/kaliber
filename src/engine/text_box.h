@@ -1,5 +1,5 @@
-#ifndef IMAGE_QUAD_H
-#define IMAGE_QUAD_H
+#ifndef TEXT_BO_H
+#define TEXT_BO_H
 
 #include "../base/vecmath.h"
 #include "renderer/texture.h"
@@ -7,16 +7,17 @@
 #include <string>
 #include <vector>
 
-class Image;
+class Fontx;
 
 namespace engine {
 
-class ImageQuad {
+class TextBox {
  public:
-  ImageQuad() = default;
-  ~ImageQuad() = default;
+  TextBox() = default;
+  ~TextBox() = default;
 
-  bool Create(std::unique_ptr<Image> image);
+  bool Print(Fontx& font, const std::string& text);
+  bool Print(Fontx& font, const std::vector<std::string> lines, int width);
 
   void Draw();
 
@@ -34,4 +35,4 @@ class ImageQuad {
 
 }  // namespace engine
 
-#endif  // IMAGE_QUAD_H
+#endif  // TEXT_BO_H

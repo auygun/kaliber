@@ -33,6 +33,8 @@ bool Engine::Init() {
     return false;
   }
 
+  stats_.Translate({-0.74, 0.9});
+
   return true;
 }
 
@@ -42,12 +44,27 @@ void Engine::Shutdown() {
 
 void Engine::Update(float delta_time) {
   game_->Update(delta_time);
+
+  std::vector<std::string> lines;
+  std::string line = "frames dropped: ";
+  line += std::to_string(engine::Engine::Get().GetRenderer().num_frames_dropped());
+  lines.push_back(line);
+  line = "global queue: ";
+  line += std::to_string(engine::Engine::Get().GetRenderer().global_queue_size());
+  lines.push_back(line);
+  line = "render queue: ";
+  line += std::to_string(engine::Engine::Get().GetRenderer().render_queue_size());
+  lines.push_back(line);
+  if (!stats_.Print(engine::Engine::Get().GetFont(), lines, 300)) {
+    LOG << "Failed to create the text.";
+  }
 }
 
 void Engine::Draw(float frame_frac) {
   renderer_.EnterDrawStage();
   Clear();
   game_->Draw(frame_frac);
+  stats_.Draw();
   Present();
   renderer_.ExitDrawStage();
 }
