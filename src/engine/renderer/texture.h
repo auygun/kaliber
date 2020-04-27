@@ -3,9 +3,9 @@
 
 #include <memory>
 
-class Image;
-
 namespace engine {
+
+class Image;
 
 class Texture {
 public:
@@ -20,7 +20,7 @@ public:
   bool IsValid() { return id > 0; }
 
 private:
-  int id = 0;
+  int id = 0; // TODO: ResourceId
   static int last_id;
 };
 

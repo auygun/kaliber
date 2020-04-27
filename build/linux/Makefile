@@ -67,13 +67,13 @@ GLTEST_SRC := \
   $(SRC_ROOT)/base/file_linux.cc \
   $(SRC_ROOT)/base/file.cc \
   $(SRC_ROOT)/base/font.cc \
-  $(SRC_ROOT)/base/image.cc \
   $(SRC_ROOT)/base/log.cc \
   $(SRC_ROOT)/base/random.cc \
   $(SRC_ROOT)/base/timer.cc \
   $(SRC_ROOT)/demo/background.cc \
   $(SRC_ROOT)/demo/demo.cc \
-  $(SRC_ROOT)/engine/asset_manager.cc \
+  $(SRC_ROOT)/engine/asset_manager/asset_manager.cc \
+  $(SRC_ROOT)/engine/asset_manager/image.cc \
   $(SRC_ROOT)/engine/engine.cc \
   $(SRC_ROOT)/engine/image_quad.cc \
   $(SRC_ROOT)/engine/renderer/geometry.cc \

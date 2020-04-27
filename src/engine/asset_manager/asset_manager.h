@@ -6,9 +6,9 @@
 #include <memory>
 #include <unordered_map>
 
-class Image;
-
 namespace engine {
+
+class Image;
 
 // Manages shared assets. Assets returned from this class are immutable so they
 // can be shared/accessed between multiple threads without locaking.

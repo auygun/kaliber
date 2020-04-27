@@ -5,7 +5,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "../base/image.h"
+#include "../engine/asset_manager/image.h"
 #include "../base/log.h"
 #include "../engine/engine.h"
 #include "../engine/game_factory.h"

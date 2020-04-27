@@ -7,7 +7,7 @@
 #include "renderer/renderer.h"
 #include "renderer/shader.h"
 #include "text_box.h"
-#include "asset_manager.h"
+#include "asset_manager/asset_manager.h"
 #include <list>
 
 #if defined(__ANDROID__)

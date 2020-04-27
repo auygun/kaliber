@@ -1,5 +1,5 @@
 #include "asset_manager.h"
-#include "../base/image.h"
+#include "image.h"
 
 namespace engine {
 

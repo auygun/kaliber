@@ -2,14 +2,14 @@
 #define RENDER_COMMAND_H
 
 #include "../../base/vecmath.h"
-#include "../../base/image.h"
+#include "../../engine/asset_manager/image.h"
 #include <memory>
 #include <string>
 #include <array>
 
-class Image;
-
 namespace engine {
+
+class Image;
 
 template <size_t N>
 constexpr inline size_t HORNER_HASH(size_t prime, const char (&str)[N], size_t Len = N-1)

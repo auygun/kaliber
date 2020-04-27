@@ -59,6 +59,10 @@ class Renderer {
 
   bool SupportsVAO() const { return vertex_array_objects_; }
 
+  // TODO: Move to ResourceManager.
+  void AddTexture(const std::string& name, int id);
+  int GetTexture(const std::string& name) const;
+
   void EnterDrawStage();
   void ExitDrawStage();
 
@@ -126,6 +130,9 @@ class Renderer {
   // True if the renderer is in draw stage. Render commands pushed during draw
   // stage can be discarded.
   bool draw_stage_ = false;
+
+  // TODO: Move to resource manager.
+  std::unordered_map<std::string, int> texture_resource_map_;
 
   std::unordered_map<int, GLuint> texture_map_;
   std::unordered_map<int, Geometry> geometry_map_;

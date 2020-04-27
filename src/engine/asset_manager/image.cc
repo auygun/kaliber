@@ -2,16 +2,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
-#include "file.h"
-#include "log.h"
-#include "mem.h"
-#include "misc.h"
+#include "../../base/file.h"
+#include "../../base/log.h"
+#include "../../base/mem.h"
+#include "../../base/misc.h"
 
 // This 3rd party library is written in C and uses malloc, which means that we
 // have to do the same.
 
 #define STBI_NO_STDIO
-#include "../third_party/stb/stb_image.h"
+#include "../../third_party/stb/stb_image.h"
+
+namespace engine {
 
 Image::Image()
     : buffer_(NULL), width_(0), height_(0), format_(kRGBA32), u_(1), v_(1) {}
@@ -45,6 +47,8 @@ void Image::Copy(const Image& image) {
 }
 
 bool Image::Load(const char* file_name, bool convert_pow2) {
+  SetName(file_name);
+  
   std::string fullPath = "images/";
   fullPath += file_name;
 
@@ -207,3 +211,5 @@ void Image::Gradient() {
   for (unsigned h = 1; h < height_; ++h)
     memcpy(buffer_ + h * width_ * 4, buffer_, width_ * 4);
 }
+
+}  // namespace engine

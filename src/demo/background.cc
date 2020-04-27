@@ -2,7 +2,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string>
-#include "../base/image.h"
+#include "../engine/asset_manager/image.h"
 #include "../base/log.h"
 #include "../engine/engine.h"
 

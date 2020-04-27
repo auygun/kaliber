@@ -1,14 +1,17 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
+#include "asset.h"
 #include <stdint.h>
 
-class Image {
+namespace engine {
+
+class Image : public Asset{
  public:
   enum Format { kRGBA32, kDXT1, kDXT5, kETC1, kATC };
 
   Image();
-  ~Image();
+  ~Image() override;
 
   bool Create(unsigned width, unsigned height);
   void Destroy();
@@ -41,5 +44,7 @@ class Image {
   Format format_;
   float u_, v_;
 };
+
+}  // namespace engine
 
 #endif  // IMAGE_H

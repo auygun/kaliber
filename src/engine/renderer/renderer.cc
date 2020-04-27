@@ -98,6 +98,18 @@ void Renderer::TerminateWorker() {
 #endif // THREADED_RENDERING
 }
 
+void Renderer::AddTexture(const std::string& name, int id) {
+  assert(texture_resource_map_.find(name) == texture_resource_map_.end());
+  texture_resource_map_[name] = id;
+}
+
+int Renderer::GetTexture(const std::string& name) const {
+  auto it = texture_resource_map_.find(name);
+  if (it != texture_resource_map_.end())
+    return it->second;
+  return 0;
+}
+
 void Renderer::EnterDrawStage() {
   draw_stage_ = true;
 }

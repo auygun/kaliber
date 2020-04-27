@@ -8,9 +8,9 @@
 #include <string>
 #include <vector>
 
-class Image;
-
 namespace engine {
+
+class Image;
 
 class ImageQuad : public Drawable {
  public:
