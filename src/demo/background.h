@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include "../engine/image_quad.h"
+#include "../engine/draw_animator.h"
 
 class Background {
  public:
@@ -15,8 +16,8 @@ class Background {
   void Update(float delta_time);
 
  private:
-  float seconds_accumulated_ = 0.0f;
   std::vector<std::unique_ptr<engine::ImageQuad>> bg_tiles_;
+  engine::DrawAnimator draw_animator_;
 };
 
 #endif  // BACKGROUND_H

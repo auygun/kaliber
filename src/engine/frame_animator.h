@@ -14,12 +14,11 @@ class FrameAnimator {
   FrameAnimator() = default;
   ~FrameAnimator() = default;
 
-  void AttachDrawable(FrameController *drawable);
+  void AttachFrameController(FrameController *drawable);
 
   void SetFrameRange(size_t start_frame, size_t end_frame);
   void SetIdleFrame(size_t idle_frame);
 
-  // Time in seconds between frames.
   void SetSpeed(float speed);
 
   void Play();
@@ -33,10 +32,11 @@ class FrameAnimator {
 
   State state_ = kStopped;
 
-  std::vector<FrameController*> animatables_;
+  std::vector<FrameController*> controllers_;
 
-  float seconds_accumulated_ = 0.0f;
+  // Time in seconds between frames.
   float speed_ = 0.1f;
+  float seconds_accumulated_ = 0.0f;
 
   size_t idle_frame_ = 0;
   size_t start_frame_ = 0;

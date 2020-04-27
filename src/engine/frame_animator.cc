@@ -4,8 +4,8 @@
 
 namespace engine {
 
-void FrameAnimator::AttachDrawable(FrameController *animatable) {
-  animatables_.push_back(animatable);
+void FrameAnimator::AttachFrameController(FrameController *controller) {
+  controllers_.push_back(controller);
 }
 
 void FrameAnimator::SetFrameRange(size_t start_frame, size_t end_frame) {
@@ -37,23 +37,31 @@ void FrameAnimator::Stop() {
 }
 
 void FrameAnimator::Update(float delta_time) {
-  for (auto animatable : animatables_) {
+  if (state_ == kPaused)
+    return;
+
+  seconds_accumulated_ += delta_time;
+  if (seconds_accumulated_ <= speed_)
+    return;
+  seconds_accumulated_ = 0;
+
+  for (auto controller : controllers_) {
     switch (state_) {
-    case kPaused:
-      break;
     case kStopped:
-      if (animatable->GetCurrentFrame() == idle_frame_)
+      if (controller->GetCurrentFrame() == idle_frame_)
         break;
       assert(idle_frame_ >= start_frame_ && idle_frame_ < end_frame_);
       // Fall through.
-    case kPlaying:
-      seconds_accumulated_ += delta_time;
-      if (seconds_accumulated_ > speed_) {
-        seconds_accumulated_ = 0;
-        size_t ef = end_frame_ > 0 ? end_frame_ : animatable->GetNumFrames();
-        int next = animatable->GetCurrentFrame() + 1;
-        animatable->SetCurrentFrame(next >= ef ? start_frame_ : next);
-      }
+
+    case kPlaying: {
+      size_t ef = end_frame_ > 0 ? end_frame_ : controller->GetNumFrames();
+      int next = controller->GetCurrentFrame() + 1;
+      controller->SetCurrentFrame(next >= ef ? start_frame_ : next);
+      break;
+    }
+
+    default:
+      break;
     }
   }
 }

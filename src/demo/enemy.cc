@@ -19,7 +19,7 @@ bool Enemy::Initialize() {
   sprite_.SetOffset(Vector2(0.5f, 0.5f));
   engine::Engine::Get().AddDrawable(&sprite_);
 
-  frame_animator_.AttachDrawable(&sprite_);
+  frame_animator_.AttachFrameController(&sprite_);
   frame_animator_.Play();
   return true;
 }

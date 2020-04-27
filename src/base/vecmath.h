@@ -1,6 +1,8 @@
 #ifndef VEC_MATH_H
 #define VEC_MATH_H
 
+#include <math.h>
+
 class Vector2 {
  public:
   float x, y;
@@ -8,7 +10,11 @@ class Vector2 {
   Vector2() {}
   Vector2(float _x, float _y) : x(_x), y(_y) {}
 
-  Vector2 operator+(const Vector2& v) { return Vector2(x + v.x, y + v.y); }
+  float Magnitude() { return sqrt(x * x + y * y); }
+
+  void Normalize() { float m = Magnitude(); x /= m; y /= m; }
+
+  Vector2 operator*=(float s) { x *= s; y *= s; return *this; }
 
   const float* GetData() const { return &x; }
 };
@@ -22,5 +28,18 @@ class Vector3 {
 
   const float* GetData() const { return &x; }
 };
+
+inline Vector2 operator+(const Vector2& v1, const Vector2& v2) {
+  return Vector2(v1.x + v2.x, v1.y + v2.y);
+}
+
+inline Vector2 operator-(const Vector2& v1, const Vector2& v2) {
+  return Vector2(v1.x - v2.x, v1.y - v2.y);
+}
+
+inline Vector2 operator*(const Vector2& v, float s)
+{
+  return Vector2(v.x * s, v.y * s);
+}
 
 #endif  // VEC_MATH_H

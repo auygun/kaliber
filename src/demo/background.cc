@@ -30,29 +30,17 @@ bool Background::Initialize() {
       float fy = (1.0f + scale.y / 2) - y * scale.y;
       iq->SetOffset(Vector2(fx, fy));
       engine.AddDrawable(iq.get());
+      draw_animator_.AttachDrawable(iq.get());
       bg_tiles_.push_back(std::move(iq));
     }
   }
+
+  draw_animator_.SetMovement(Vector2(0, -1), scale.y);
+  draw_animator_.Play();
 
   return true;
 }
 
 void Background::Update(float delta_time) {
-  seconds_accumulated_ += delta_time;
-
-  engine::Engine& engine = engine::Engine::Get();
-
-  float horizontal_ratio = (float)engine.GetRenderer().GetScreenWidth() / 256.0f;
-  float vertical_ratio  = (float)engine.GetRenderer().GetScreenHeight() / 256.0f;
-  Vector2 scale = engine.ToScale(256, 256);
-  float scroll_offset_y = fmod(-seconds_accumulated_ * 0.15f, scale.y);
-  int num_horizontal_tiles = (int)(horizontal_ratio + 0.5f);
-  int num_vertical_tiles = (int)(vertical_ratio + 0.5f) + 1;
-  for (int y = 0; y < num_vertical_tiles; ++y) {
-    for (int x = 0; x < num_horizontal_tiles; ++x) {
-      float fx = (-1.0f + scale.x / 2) + x * scale.x;
-      float fy = (1.0f + scale.y / 2) - y * scale.y;
-      bg_tiles_[y * num_horizontal_tiles + x]->SetOffset(Vector2(fx, fy + scroll_offset_y));
-    }
-  }
+  draw_animator_.Update(delta_time);
 }
