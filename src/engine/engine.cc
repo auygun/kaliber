@@ -54,6 +54,7 @@ void Engine::RemoveDrawable(Drawable* drawable) {
 }
 
 void Engine::Update(float delta_time) {
+  seconds_accumulated_ += delta_time;
   game_->Update(delta_time);
 
   std::vector<std::string> lines;

@@ -43,6 +43,8 @@ class Engine {
   Shader& GetPassThroughShader() { return pass_through_shader_; }
   Fontx& GetFont() { return font_; }
 
+  float seconds_accumulated() { return seconds_accumulated_; }
+
  private:
   std::unique_ptr<Game> game_;
 
@@ -58,6 +60,8 @@ class Engine {
   TextBox stats_; // TODO: add to drawables.
 
   std::list<Drawable*> drawables_;
+
+  float seconds_accumulated_ = 0.0f;
 
   bool CreateRenderResources();
 

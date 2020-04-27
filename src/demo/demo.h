@@ -4,9 +4,9 @@
 #include <vector>
 #include <memory>
 #include "background.h"
+#include "enemy.h"
 #include "../engine/game.h"
 #include "../engine/image_quad.h"
-#include "../engine/movie_quad.h"
 
 class Demo : public engine::Game {
  public:
@@ -20,12 +20,9 @@ class Demo : public engine::Game {
   // void Draw(float frame_frac) override;
 
  private:
-  float seconds_accumulated_ = 0.0f;
   Background bg_;
+  Enemy enemy_;
   engine::ImageQuad ship_;
-  engine::MovieQuad enemy_;
-
-  int next_ = 0;
 };
 
 #endif  // DEMO_H

@@ -30,6 +30,7 @@ class MovieQuad : public Drawable {
 
   Vector2 offset() { return offset_; }
   Vector2 scale() { return scale_; }
+  size_t active_texture() { return active_texture_; };
 
  private:
   std::vector<std::unique_ptr<Texture>> textures_;
