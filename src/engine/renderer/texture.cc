@@ -9,6 +9,8 @@ namespace engine {
 int Texture::last_id = 0;
 
 Texture::~Texture() {
+  // TODO: This is wrong. Same texture id is used by many texture instances.
+  // Create a resource manager.
   Destroy();
 }
 

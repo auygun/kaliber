@@ -6,6 +6,7 @@
 #include "background.h"
 #include "../engine/game.h"
 #include "../engine/image_quad.h"
+#include "../engine/movie_quad.h"
 
 class Demo : public engine::Game {
  public:
@@ -22,7 +23,9 @@ class Demo : public engine::Game {
   float seconds_accumulated_ = 0.0f;
   Background bg_;
   engine::ImageQuad ship_;
-  engine::ImageQuad enemy_;
+  engine::MovieQuad enemy_;
+
+  int next_ = 0;
 };
 
 #endif  // DEMO_H
