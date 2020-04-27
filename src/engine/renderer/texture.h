@@ -21,7 +21,6 @@ public:
 
 private:
   int id = 0; // TODO: ResourceId
-  static int last_id;
 };
 
 } // namespace engine

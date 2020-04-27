@@ -27,6 +27,7 @@
 namespace engine {
 
 struct RenderCommand;
+class Image;
 
 class Renderer {
  public:
@@ -59,9 +60,9 @@ class Renderer {
 
   bool SupportsVAO() const { return vertex_array_objects_; }
 
-  // TODO: Move to ResourceManager.
-  void AddTexture(const std::string& name, int id);
-  int GetTexture(const std::string& name) const;
+  // Resouce management.
+  int AcquireTextureResource(std::shared_ptr<const Image> image);
+  void ReturnTextureResource(int id);
 
   void EnterDrawStage();
   void ExitDrawStage();
@@ -132,7 +133,9 @@ class Renderer {
   bool draw_stage_ = false;
 
   // TODO: Move to resource manager.
-  std::unordered_map<std::string, int> texture_resource_map_;
+  std::unordered_map<std::string, int> texture_id_by_asset_name_;
+  std::unordered_map<int, std::string> asset_name_by_texture_id_;
+  int last_texture_id_ = 0;
 
   std::unordered_map<int, GLuint> texture_map_;
   std::unordered_map<int, Geometry> geometry_map_;

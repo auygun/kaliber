@@ -98,16 +98,36 @@ void Renderer::TerminateWorker() {
 #endif // THREADED_RENDERING
 }
 
-void Renderer::AddTexture(const std::string& name, int id) {
-  assert(texture_resource_map_.find(name) == texture_resource_map_.end());
-  texture_resource_map_[name] = id;
+int Renderer::AcquireTextureResource(std::shared_ptr<const Image> image) {
+  int id = 0;
+  if (image->GetName().empty()) {
+    id = ++last_texture_id_;
+  } else {
+    auto it = texture_id_by_asset_name_.find(image->GetName());
+    if (it != texture_id_by_asset_name_.end())
+      return it->second;
+    id = ++last_texture_id_;
+    texture_id_by_asset_name_[image->GetName()] = id;
+    asset_name_by_texture_id_[id] = image->GetName();
+  }
+
+  auto cmd = std::make_unique<CmdCreateTexture>();
+  cmd->id = id;
+  cmd->image = image;
+  EnqueueCommand(std::move(cmd));
+  return id;
 }
 
-int Renderer::GetTexture(const std::string& name) const {
-  auto it = texture_resource_map_.find(name);
-  if (it != texture_resource_map_.end())
-    return it->second;
-  return 0;
+void Renderer::ReturnTextureResource(int id) {
+  auto it = asset_name_by_texture_id_.find(id);
+  if (it == asset_name_by_texture_id_.end())
+    return;
+  texture_id_by_asset_name_.erase(it->second);
+  asset_name_by_texture_id_.erase(it);
+
+  auto cmd = std::make_unique<CmdDestoryTexture>();
+  cmd->id = id;
+  EnqueueCommand(std::move(cmd));
 }
 
 void Renderer::EnterDrawStage() {
