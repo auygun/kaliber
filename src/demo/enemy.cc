@@ -16,20 +16,14 @@ bool Enemy::Initialize() {
     LOG << "Failed to create the sprite.";
     return false;
   }
-  sprite_.SetActiveTexture(0);
-  sprite_.Translate(Vector2(0.5f, 0.5f));
+  sprite_.SetOffset(Vector2(0.5f, 0.5f));
   engine::Engine::Get().AddDrawable(&sprite_);
+
+  frame_animator_.AttachDrawable(&sprite_);
+  frame_animator_.Play();
   return true;
 }
 
 void Enemy::Update(float delta_time) {
-  seconds_accumulated_ += delta_time;
-  if (seconds_accumulated_ > 0.1f) {
-    seconds_accumulated_ = 0;
-    size_t next = sprite_.active_texture() + 1;
-    if (sprite_.active_texture() + 1 >= sprite_.GetNumTextures())
-      sprite_.SetActiveTexture(0);
-    else
-      sprite_.SetActiveTexture(next);
-  }
+  frame_animator_.Update(delta_time);
 }

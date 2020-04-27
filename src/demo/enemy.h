@@ -3,6 +3,7 @@
 
 #include "game_object.h"
 #include "../engine/movie_quad.h"
+#include "../engine/frame_animator.h"
 
 class Enemy : public GameObject {
  public:
@@ -14,8 +15,8 @@ class Enemy : public GameObject {
   void Update(float delta_time) override;
 
  private:
-  float seconds_accumulated_ = 0.0f;
   engine::MovieQuad sprite_;
+  engine::FrameAnimator frame_animator_;
 };
 
 #endif  // ENEMY_H

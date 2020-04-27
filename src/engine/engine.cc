@@ -36,7 +36,7 @@ bool Engine::Init() {
     return false;
   }
 
-  stats_.Translate({-0.74, 0.9});
+  stats_.SetOffset(Vector2(-0.74, 0.9));
 
   return true;
 }

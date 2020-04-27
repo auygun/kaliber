@@ -4,6 +4,7 @@
 #include "../base/vecmath.h"
 #include "renderer/texture.h"
 #include "drawable.h"
+#include "frame_controller.h"
 
 #include <string>
 #include <vector>
@@ -13,30 +14,24 @@ namespace engine {
 
 class Image;
 
-class MovieQuad : public Drawable {
+class MovieQuad : public Drawable, public FrameController {
  public:
   MovieQuad() = default;
   ~MovieQuad() override = default;
 
   bool Create(std::vector<std::shared_ptr<const Image>> images);
 
-  size_t GetNumTextures() { return textures_.size(); }
-  void SetActiveTexture(int i) { active_texture_ = i; }
+  size_t GetNumFrames() override;
+  size_t GetCurrentFrame() override;
+  void SetCurrentFrame(size_t frame) override;
 
   void Draw() override;
 
-  void Translate(const Vector2& offset) { offset_ = offset; }
-  void Scale(const Vector2& scale) { scale_ = scale; }
-
-  Vector2 offset() { return offset_; }
-  Vector2 scale() { return scale_; }
-  size_t active_texture() { return active_texture_; };
+  size_t active_texture() { return active_texture_; }
 
  private:
   std::vector<std::unique_ptr<Texture>> textures_;
   size_t active_texture_ = 0;
-  Vector2 offset_ = {0, 0};
-  Vector2 scale_ = {1, 1};
 };
 
 }  // namespace engine

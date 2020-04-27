@@ -25,10 +25,10 @@ bool Background::Initialize() {
         LOG << "Failed to create the backgroud.";
         return false;
       }
-      iq->Scale(scale);
+      iq->SetScale(scale);
       float fx = (-1.0f + scale.x / 2) + x * scale.x;
       float fy = (1.0f + scale.y / 2) - y * scale.y;
-      iq->Translate(Vector2(fx, fy));
+      iq->SetOffset(Vector2(fx, fy));
       engine.AddDrawable(iq.get());
       bg_tiles_.push_back(std::move(iq));
     }
@@ -52,7 +52,7 @@ void Background::Update(float delta_time) {
     for (int x = 0; x < num_horizontal_tiles; ++x) {
       float fx = (-1.0f + scale.x / 2) + x * scale.x;
       float fy = (1.0f + scale.y / 2) - y * scale.y;
-      bg_tiles_[y * num_horizontal_tiles + x]->Translate(Vector2(fx, fy + scroll_offset_y));
+      bg_tiles_[y * num_horizontal_tiles + x]->SetOffset(Vector2(fx, fy + scroll_offset_y));
     }
   }
 }

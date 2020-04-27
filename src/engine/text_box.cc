@@ -20,7 +20,7 @@ bool TextBox::Print(Fontx& font, const std::string& text) {
 
   font.Print(0, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
 
-  scale_ = engine::Engine::Get().ToScale(w, h);
+  SetScale(engine::Engine::Get().ToScale(w, h));
 
   return texture_.Create(std::move(image));
 }
@@ -45,7 +45,7 @@ bool TextBox::Print(Fontx& font, const std::vector<std::string> lines,
     y += line_height + margin;
   }
 
-  scale_ = engine::Engine::Get().ToScale(image_width, image_height);
+  SetScale(engine::Engine::Get().ToScale(image_width, image_height));
 
   return texture_.Create(std::move(image));
 }
@@ -60,8 +60,8 @@ void TextBox::Draw() {
   Shader& shader = Engine::Get().GetPassThroughShader();
 
   shader.Activate();
-  shader.SetUniform("offset", offset_);
-  shader.SetUniform("scale", scale_);
+  shader.SetUniform("offset", offset());
+  shader.SetUniform("scale", scale());
   shader.SetUniform("tileColor", Vector3(1, 1, 1));
   shader.SetUniform("tileImage", 0);
 

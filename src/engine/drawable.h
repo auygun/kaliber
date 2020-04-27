@@ -2,6 +2,7 @@
 #define DRAWABLE_H
 
 #include "../base/vecmath.h"
+#include <cstdlib>
 
 namespace engine {
 
@@ -12,8 +13,12 @@ class Drawable {
 
   virtual void Draw() = 0;
 
-  void Translate(const Vector2& offset) { offset_ = offset; }
-  void Scale(const Vector2& scale) { scale_ = scale; }
+  void Translate(const Vector2& offset) {
+    offset_.x += offset.x;
+    offset_.y += offset.y;
+  }
+  void SetOffset(const Vector2& offset) { offset_ = offset; }
+  void SetScale(const Vector2& scale) { scale_ = scale; }
 
   Vector2 offset() { return offset_; }
   Vector2 scale() { return scale_; }
