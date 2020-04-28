@@ -12,7 +12,9 @@ class Vector2 {
 
   float Magnitude() { return sqrt(x * x + y * y); }
 
-  void Normalize() { float m = Magnitude(); x /= m; y /= m; }
+  Vector2 Normalize() { float m = Magnitude(); x /= m; y /= m; return *this; }
+
+  float DotProduct(const Vector2& v) { return x * v.x + y * v.y; }
 
   Vector2 operator*=(float s) { x *= s; y *= s; return *this; }
 
@@ -37,9 +39,22 @@ inline Vector2 operator-(const Vector2& v1, const Vector2& v2) {
   return Vector2(v1.x - v2.x, v1.y - v2.y);
 }
 
+inline Vector2 operator*(const Vector2& v1, const Vector2& v2) {
+  return Vector2(v1.x * v2.x, v1.y * v2.y);
+}
+
+inline Vector2 operator/(const Vector2& v1, const Vector2& v2) {
+  return Vector2(v1.x / v2.x, v1.y / v2.y);
+}
+
 inline Vector2 operator*(const Vector2& v, float s)
 {
   return Vector2(v.x * s, v.y * s);
+}
+
+inline Vector2 operator/(const Vector2& v, float s)
+{
+  return Vector2(v.x / s, v.y / s);
 }
 
 #endif  // VEC_MATH_H

@@ -1,6 +1,7 @@
 #ifndef LOG_H
 #define LOG_H
 
+#include "vecmath.h"
 #include <sstream>
 
 #define EAT_STREAM_PARAMETERS \
@@ -31,6 +32,12 @@ class Log {
   template<typename T>
   Log& operator<<(const T& arg) {
     stream_ << arg;
+    return *this;
+  }
+
+  template<>
+  Log& operator<<<Vector2>(const Vector2& arg) {
+    stream_ << "(" << arg.x << ", " << arg.y << ")";
     return *this;
   }
 
