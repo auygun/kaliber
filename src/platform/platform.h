@@ -1,18 +1,27 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
+#include "../base/vecmath.h"
 #include <exception>
 #include <string>
+#include <memory>
 
 #if defined(__ANDROID__)
 struct android_app;
 struct ANativeWindow;
+struct AInputEvent;
+
+namespace ndk_helper {
+  class DoubletapDetector;
+  class PinchDetector;
+  class DragDetector;
+} // namespace ndk_helper
 #endif
 
 class Platform {
  public:
-  Platform() = default;
-  ~Platform() = default;
+  Platform();
+  ~Platform();
 
   static Platform& Get();
 
@@ -45,6 +54,11 @@ class Platform {
 #if defined(__ANDROID__)
   android_app* app_ = nullptr;
 
+  std::unique_ptr<ndk_helper::DoubletapDetector> doubletap_detector_;
+  std::unique_ptr<ndk_helper::PinchDetector> pinch_detector_;
+  std::unique_ptr<ndk_helper::DragDetector> drag_detector_;
+
+  static int32_t HandleInput(android_app* app, AInputEvent* event);
   static void HandleCmd(android_app* app, int32_t cmd);
 #endif
 };

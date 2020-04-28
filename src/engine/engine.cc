@@ -111,6 +111,13 @@ Vector2 Engine::ToScale(int width, int height) {
   return Vector2(horizontal_ratio * 2.0f, vertical_ratio * 2.0f);
 }
 
+void Engine::TransformPosition(Vector2& vec) {
+  vec = Vector2(2.0f, 2.0f) * vec /
+            Vector2((float)GetRenderer().GetScreenWidth(),
+                    (float)GetRenderer().GetScreenHeight()) -
+        Vector2(1.f, 1.f);
+}
+
 bool Engine::CreateRenderResources() {
   // Create the shader we can reuse for all tiles.
   const char* vertex_description = "p2f;t2f";

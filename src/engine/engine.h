@@ -36,6 +36,7 @@ class Engine {
   void TrimMemory();
 
   Vector2 ToScale(int width, int height);
+  void TransformPosition(Vector2& vec);
 
   AssetManager& GetAssetManager() { return asset_manager_; }
   Renderer& GetRenderer() { return renderer_; }

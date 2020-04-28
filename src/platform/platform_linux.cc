@@ -11,6 +11,9 @@ void PTreadWorkaround() {
   int i = pthread_getconcurrency();
 };
 
+Platform::Platform() = default;
+Platform::~Platform() = default;
+
 void Platform::Initialize() {
   root_path_ = "../../assets/";
   LOG << "Root path: " << root_path_.c_str();
