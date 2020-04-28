@@ -62,6 +62,7 @@ void TextBox::Draw() {
   shader.Activate();
   shader.SetUniform("offset", offset());
   shader.SetUniform("scale", scale());
+  shader.SetUniform("rotation", rotation());
   shader.SetUniform("tileColor", Vector3(1, 1, 1));
   shader.SetUniform("tileImage", 0);
 

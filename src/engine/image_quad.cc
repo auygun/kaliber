@@ -1,8 +1,8 @@
 #include "image_quad.h"
 #include "../base/log.h"
-#include "../engine/asset_manager/image.h"
 #include "../base/font.h"
 #include "engine.h"
+#include "asset_manager/image.h"
 #include "renderer/geometry.h"
 #include "renderer/shader.h"
 
@@ -22,6 +22,7 @@ void ImageQuad::Draw() {
   shader.Activate();
   shader.SetUniform("offset", offset());
   shader.SetUniform("scale", scale());
+  shader.SetUniform("rotation", rotation());
   shader.SetUniform("tileColor", Vector3(1, 1, 1));
   shader.SetUniform("tileImage", 0);
 

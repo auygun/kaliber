@@ -27,7 +27,7 @@ bool Demo::Initialize() {
     return false;
   }
   ship_.SetOffset(Vector2(0, -0.5f));
-  ship_.SetScale(engine::Engine::Get().ToScale(50, 50));
+  ship_.Scale(0.3f);
   engine::Engine::Get().AddDrawable(&ship_);
 
   if (!enemy_.Initialize()) {
