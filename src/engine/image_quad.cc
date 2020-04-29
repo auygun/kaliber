@@ -24,6 +24,7 @@ void ImageQuad::Draw() {
   shader.Activate();
   shader.SetUniform("offset", offset());
   shader.SetUniform("scale", scale());
+  shader.SetUniform("center", center());
   shader.SetUniform("rotation", rotation());
   shader.SetUniform("uv_scale", uv_scale_);
   shader.SetUniform("projection", engine::Engine::Get().GetRenderer().projection());

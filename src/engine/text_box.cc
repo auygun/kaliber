@@ -62,6 +62,7 @@ void TextBox::Draw() {
   shader.Activate();
   shader.SetUniform("offset", offset());
   shader.SetUniform("scale", scale());
+  shader.SetUniform("center", center());
   shader.SetUniform("rotation", rotation());
   shader.SetUniform("uv_scale", Vector2(1, 1));
   shader.SetUniform("projection", engine::Engine::Get().GetRenderer().projection());
