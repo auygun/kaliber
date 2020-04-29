@@ -130,6 +130,12 @@ RENDER_COMMAND_BEGIN(CmdSetUniformInt)
   int i;
 RENDER_COMMAND_END
 
+RENDER_COMMAND_BEGIN(CmdSetUniformFloat)
+  int id;
+  std::string name;
+  float f;
+RENDER_COMMAND_END
+
 } // namespace engine 
 
 #endif // RENDER_COMMAND_H

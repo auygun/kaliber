@@ -260,6 +260,9 @@ void Renderer::ProcessCommand(RenderCommand* cmd) {
   case HASH("CmdSetUniformMat4"):
     HandleCmdSetUniformMat4(cmd);
     break;
+  case HASH("CmdSetUniformFloat"):
+    HandleCmdSetUniformFloat(cmd);
+    break;
   case HASH("CmdSetUniformInt"):
     HandleCmdSetUniformInt(cmd);
     break;
@@ -556,6 +559,16 @@ void Renderer::HandleCmdSetUniformMat4(RenderCommand* cmd) {
     GLint index = GetUniformLocation(it->second.id, c->name, it->second.uniforms);
     if (index >= 0)
       glUniformMatrix4fv(index, 1, GL_FALSE, c->m.GetData());
+  }
+}
+
+void Renderer::HandleCmdSetUniformFloat(RenderCommand* cmd) {
+  auto *c = static_cast<CmdSetUniformFloat*>(cmd);
+  auto it = shader_map_.find(c->id);
+  if (it != shader_map_.end()) {
+    GLint index = GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+    if (index >= 0)
+      glUniform1f(index, c->f);
   }
 }
 
