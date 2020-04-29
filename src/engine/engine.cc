@@ -113,22 +113,14 @@ Vector2 Engine::GetScreenSize() {
   }
 }
 
-Vector2 Engine::ToScale(int width, int height) {
-  float horizontal_ratio =
-      (float)width / GetRenderer().GetScreenWidth();
-  float vertical_ratio =
-      (float)height / GetRenderer().GetScreenHeight();
-
-
-  // The orthogonal viewport is (-1.0 .. 1.0) x (-1.0 .. 1.0).
-  return Vector2(horizontal_ratio, vertical_ratio) * GetScreenSize();
+Vector2 Engine::ToScale(const Vector2& vec) {
+  return GetScreenSize() * vec /
+      Vector2((float)GetRenderer().GetScreenWidth(),
+              (float)GetRenderer().GetScreenHeight());
 }
 
-void Engine::TransformPosition(Vector2& vec) {
-  vec = Vector2(2.0f, 2.0f) * vec /
-            Vector2((float)GetRenderer().GetScreenWidth(),
-                    (float)GetRenderer().GetScreenHeight()) -
-        Vector2(1.f, 1.f);
+Vector2 Engine::ToPosition(const Vector2& vec) {
+  return ToScale(vec) - GetScreenSize() / 2.0f;
 }
 
 bool Engine::CreateRenderResources() {

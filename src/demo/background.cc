@@ -14,7 +14,8 @@ bool Background::Initialize() {
     return false;
 
   Vector2 screen_size = engine.GetScreenSize();
-  Vector2 scale = engine.ToScale(image->GetWidth(), image->GetHeight());
+  Vector2 scale = engine.ToScale(
+      Vector2(image->GetWidth(), image->GetHeight()));
 
   Vector2 num_tiles = screen_size / scale;
   int num_horizontal_tiles = (int)(num_tiles.x + 0.5f);

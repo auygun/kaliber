@@ -61,7 +61,7 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
       // platform->tap_camera_.Reset(true);
       Vector2 v;
       platform->doubletap_detector_->GetPointer(v);
-      engine::Engine::Get().TransformPosition(v);
+      v = engine::Engine::Get().ToPosition(v);
       LOG << "double-tap: " << v;
     } else {
       // Handle drag state
@@ -69,13 +69,13 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
         // Otherwise, start dragging
         Vector2 v;
         platform->drag_detector_->GetPointer(v);
-        engine::Engine::Get().TransformPosition(v);
+        v = engine::Engine::Get().ToPosition(v);
         // platform->tap_camera_.BeginDrag(v);
       LOG << "drag-start: " << v;
       } else if (dragState & ndk_helper::GESTURE_STATE_MOVE) {
         Vector2 v;
         platform->drag_detector_->GetPointer(v);
-        engine::Engine::Get().TransformPosition(v);
+        v = engine::Engine::Get().ToPosition(v);
         // platform->tap_camera_.Drag(v);
       LOG << "drag: " << v;
       } else if (dragState & ndk_helper::GESTURE_STATE_END) {
@@ -89,8 +89,8 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
         Vector2 v1;
         Vector2 v2;
         platform->pinch_detector_->GetPointers(v1, v2);
-        engine::Engine::Get().TransformPosition(v1);
-        engine::Engine::Get().TransformPosition(v2);
+        v1 = engine::Engine::Get().ToPosition(v1);
+        v2 = engine::Engine::Get().ToPosition(v2);
         // platform->tap_camera_.BeginPinch(v1, v2);
         LOG << "pinch-start: " << v1 << " " << v2;
       } else if (pinchState & ndk_helper::GESTURE_STATE_MOVE) {
@@ -99,8 +99,8 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
         Vector2 v1;
         Vector2 v2;
         platform->pinch_detector_->GetPointers(v1, v2);
-        engine::Engine::Get().TransformPosition(v1);
-        engine::Engine::Get().TransformPosition(v2);
+        v1 = engine::Engine::Get().ToPosition(v1);
+        v2 = engine::Engine::Get().ToPosition(v2);
         // platform->tap_camera_.Pinch(v1, v2);
         LOG << "pinch: " << v1 << " " << v2;
       }

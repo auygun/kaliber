@@ -17,6 +17,10 @@ class Drawable {
     offset_ += offset;
   }
 
+  void Scale(const Vector2& scale) {
+    scale_ *= scale;
+  }
+
   void Scale(float scale) {
     scale_ *= scale;
   }

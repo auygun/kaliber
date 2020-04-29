@@ -13,8 +13,8 @@ bool MovieQuad::Create(std::vector<std::shared_ptr<const Image>> images) {
   if (images.empty())
     return false;
 
-  SetScale(engine::Engine::Get().ToScale(images[0]->GetWidth(),
-      images[0]->GetHeight()));
+  SetScale(engine::Engine::Get().ToScale(
+      Vector2(images[0]->GetWidth(), images[0]->GetHeight())));
 
   for (auto& image : images) {
     // TODO: make atomic.

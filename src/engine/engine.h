@@ -37,8 +37,8 @@ class Engine {
 
   Vector2 GetScreenSize();
 
-  Vector2 ToScale(int width, int height);
-  void TransformPosition(Vector2& vec);
+  Vector2 ToScale(const Vector2& vec);
+  Vector2 ToPosition(const Vector2& vec);
 
   AssetManager& GetAssetManager() { return asset_manager_; }
   Renderer& GetRenderer() { return renderer_; }

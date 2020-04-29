@@ -9,8 +9,8 @@
 namespace engine {
 
 bool ImageQuad::Create(std::shared_ptr<const Image> image) {
-  SetScale(engine::Engine::Get().ToScale(image->GetWidth(),
-      image->GetHeight()));
+  SetScale(engine::Engine::Get().ToScale(
+      Vector2(image->GetWidth(), image->GetHeight())));
   return texture_.Create(image);
 }
 

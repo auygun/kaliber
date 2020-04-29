@@ -20,7 +20,7 @@ bool TextBox::Print(Fontx& font, const std::string& text) {
 
   font.Print(0, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
 
-  SetScale(engine::Engine::Get().ToScale(w, h));
+  SetScale(engine::Engine::Get().ToScale(Vector2(w, h)));
 
   return texture_.Create(std::move(image));
 }
@@ -45,7 +45,7 @@ bool TextBox::Print(Fontx& font, const std::vector<std::string> lines,
     y += line_height + margin;
   }
 
-  SetScale(engine::Engine::Get().ToScale(image_width, image_height));
+  SetScale(engine::Engine::Get().ToScale(Vector2(image_width, image_height)));
 
   return texture_.Create(std::move(image));
 }
