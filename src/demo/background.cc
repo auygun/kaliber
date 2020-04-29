@@ -28,6 +28,7 @@ bool Background::Initialize() {
         LOG << "Failed to create the backgroud.";
         return false;
       }
+      iq->SetVisible(true);
       iq->SetScale(scale);
       float fx = (-screen_size.x / 2 + scale.x / 2) + x * scale.x;
       float fy = (screen_size.y / 2 + scale.y / 2) - y * scale.y;

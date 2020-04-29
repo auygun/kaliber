@@ -40,6 +40,8 @@ class Drawable {
   void SetCenter(const Vector2& center) { center_ = center; }
   void SetRotation(const Vector2& rotation) { rotation_ = rotation; }
 
+  void SetVisible(bool visible) { visible_ = visible; }
+
   void PlaceToLeftOf(const Drawable& d) {
     Translate({d.scale().x / -2.0f + scale().x / -2.0f, 0});
   }
@@ -52,12 +54,15 @@ class Drawable {
   Vector2 scale() const { return scale_; }
   Vector2 center() const { return center_; }
   Vector2 rotation() const { return rotation_; }
+  bool visible() const { return visible_; }
 
  private:
   Vector2 offset_ = {0, 0};
   Vector2 scale_ = {1, 1};
   Vector2 center_ = {0, 0};
   Vector2 rotation_ = {0, 1};
+
+  bool visible_ = false;
 };
 
 }  // namespace engine

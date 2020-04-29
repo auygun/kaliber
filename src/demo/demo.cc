@@ -26,6 +26,7 @@ bool Demo::Initialize() {
     LOG << "Failed to create the sprite.";
     return false;
   }
+  ship_.SetVisible(true);
   ship_.Scale(0.4f);
   ship_.SetOffset(Vector2(0, -0.5f));
   engine::Engine::Get().AddDrawable(&ship_);

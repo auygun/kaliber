@@ -43,6 +43,8 @@ bool Beam::Initialize() {
   engine::Engine::Get().AddDrawable(&mid_);
   engine::Engine::Get().AddDrawable(&end_);
 
+  SetVisible(true);
+
   return true;
 }
 
@@ -59,4 +61,10 @@ void Beam::Translate(const Vector2& offset) {
   start_.Translate(offset);
   mid_.Translate(offset);
   end_.Translate(offset);
+}
+
+void Beam::SetVisible(bool visible) {
+  start_.SetVisible(visible);
+  mid_.SetVisible(visible);
+  end_.SetVisible(visible);
 }

@@ -36,6 +36,8 @@ bool Engine::Init() {
     return false;
   }
 
+  stats_.SetVisible(true);
+
   return true;
 }
 
@@ -78,9 +80,12 @@ void Engine::Draw(float frame_frac) {
   renderer_.EnterDrawStage();
   Clear();
   renderer_.EnableBlend();
-  for (auto d : drawables_)
-    d->Draw();
-  stats_.Draw();
+  for (auto d : drawables_) {
+    if (d->visible())
+      d->Draw();
+  }
+  if (stats_.visible())
+    stats_.Draw();
   Present();
   renderer_.ExitDrawStage();
 }

@@ -17,6 +17,7 @@ bool Enemy::Initialize() {
     LOG << "Failed to create the sprite.";
     return false;
   }
+  sprite_.SetVisible(true);
   sprite_.SetOffset(Vector2(0.5f, 0.5f));
   engine::Engine::Get().AddDrawable(&sprite_);
 

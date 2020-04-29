@@ -21,6 +21,8 @@ class Beam : public GameObject {
 
   void Translate(const Vector2& offset);
   void Rotate(float angle);
+
+  void SetVisible(bool visible);
 };
 
 #endif  // BEAM_H
