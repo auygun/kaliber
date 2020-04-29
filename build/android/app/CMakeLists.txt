@@ -46,6 +46,7 @@ add_library(native-activity SHARED
     ../../../src/base/random.cc
     ../../../src/base/timer.cc
     ../../../src/demo/background.cc
+    ../../../src/demo/beam.cc
     ../../../src/demo/demo.cc
     ../../../src/demo/enemy.cc
     ../../../src/engine/asset_manager/asset_manager.cc

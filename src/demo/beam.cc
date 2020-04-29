@@ -2,6 +2,7 @@
 #include "../base/log.h"
 #include "../engine/asset_manager/image.h"
 #include "../engine/engine.h"
+#include "../engine/input_event.h"
 #include <math.h>
 #include <memory>
 
@@ -43,12 +44,25 @@ bool Beam::Initialize() {
   engine::Engine::Get().AddDrawable(&mid_);
   engine::Engine::Get().AddDrawable(&end_);
 
-  SetVisible(true);
-
   return true;
 }
 
 void Beam::Update(float delta_time) {
+  if (start_.visible()) {
+    float cos_angle = start_pos_.DotProduct(end_pos_);
+    Rotate(acos(cos_angle) - M_PI_2);
+  }
+}
+
+void Beam::OnInputEvent(std::unique_ptr<engine::InputEvent> event) {
+  if (event->GetEventType() == engine::InputEvent::kDragStart) {
+    start_pos_ = event->GetEventVector(0).Normalize();
+    SetVisible(true);
+  } else if (event->GetEventType() == engine::InputEvent::kDrag) {
+    end_pos_ = event->GetEventVector(0).Normalize();
+  } else if (event->GetEventType() == engine::InputEvent::kDragEnd) {
+    SetVisible(false);
+  }
 }
 
 void Beam::Rotate(float angle) {

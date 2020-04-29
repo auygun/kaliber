@@ -6,6 +6,7 @@
 #include "drawable.h"
 #include "image_quad.h"
 #include "text_box.h"
+#include "input_event.h"
 
 namespace engine {
 
@@ -126,6 +127,19 @@ Vector2 Engine::ToScale(const Vector2& vec) {
 
 Vector2 Engine::ToPosition(const Vector2& vec) {
   return ToScale(vec) - GetScreenSize() / 2.0f;
+}
+
+void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
+  input_queue_.push_back(std::move(event));
+}
+
+std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
+  std::unique_ptr<InputEvent> event;
+  if (!input_queue_.empty()) {
+    event.swap(input_queue_.front());
+    input_queue_.pop_front();
+  }
+  return event;
 }
 
 bool Engine::CreateRenderResources() {

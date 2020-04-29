@@ -9,6 +9,7 @@
 #include "../base/log.h"
 #include "../engine/engine.h"
 #include "../engine/game_factory.h"
+#include "../engine/input_event.h"
 
 DECLARE_GAME_BEGIN
 DECLARE_GAME(Demo)
@@ -45,6 +46,17 @@ bool Demo::Initialize() {
 }
 
 void Demo::Update(float delta_time) {
+  engine::Engine& engine = engine::Engine::Get();
+
+  while (std::unique_ptr<engine::InputEvent> event = engine.GetNextInputEvent()) {
+    if (event) {
+      if (event->GetEventType() == engine::InputEvent::kDragStart ||
+          event->GetEventType() == engine::InputEvent::kDrag ||
+          event->GetEventType() == engine::InputEvent::kDragEnd)
+        beam_.OnInputEvent(std::move(event));
+    }
+  }
+
   bg_.Update(delta_time);
   enemy_.Update(delta_time);
   beam_.Update(delta_time);

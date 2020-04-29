@@ -9,6 +9,7 @@
 #include "text_box.h"
 #include "asset_manager/asset_manager.h"
 #include <list>
+#include <deque>
 
 #if defined(__ANDROID__)
 struct ANativeWindow;
@@ -18,6 +19,7 @@ namespace engine {
 
 class Game;
 class Drawable;
+class InputEvent;
 
 class Engine {
  public:
@@ -39,6 +41,9 @@ class Engine {
 
   Vector2 ToScale(const Vector2& vec);
   Vector2 ToPosition(const Vector2& vec);
+
+  void AddInputEvent(std::unique_ptr<InputEvent> event);
+  std::unique_ptr<InputEvent> GetNextInputEvent();
 
   AssetManager& GetAssetManager() { return asset_manager_; }
   Renderer& GetRenderer() { return renderer_; }
@@ -65,6 +70,9 @@ class Engine {
   std::list<Drawable*> drawables_;
 
   float seconds_accumulated_ = 0.0f;
+
+  // TODO: Move to InputQueue class.
+  std::deque<std::unique_ptr<InputEvent>> input_queue_;
 
   bool CreateRenderResources();
 
