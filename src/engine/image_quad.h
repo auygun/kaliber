@@ -23,6 +23,7 @@ class ImageQuad : public Drawable {
 
  private:
   Texture texture_;
+  Vector2 uv_scale_ = {1, 1};
 };
 
 }  // namespace engine

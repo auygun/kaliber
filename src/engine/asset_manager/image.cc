@@ -16,7 +16,7 @@
 namespace engine {
 
 Image::Image()
-    : buffer_(NULL), width_(0), height_(0), format_(kRGBA32), u_(1), v_(1) {}
+    : buffer_(NULL), width_(0), height_(0), format_(kRGBA32) {}
 
 Image::~Image() {
   Destroy();
@@ -25,6 +25,8 @@ Image::~Image() {
 bool Image::Create(unsigned w, unsigned h) {
   width_ = w;
   height_ = h;
+  original_width_ = w;
+  original_height_ = h;
   buffer_ = (uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t));
   return !!buffer_;
 }
@@ -41,9 +43,10 @@ void Image::Copy(const Image& image) {
   }
   width_ = image.width_;
   height_ = image.height_;
+  original_width_ = image.original_width_;
+  original_height_ = image.original_height_;
   format_ = image.format_;
-  u_ = image.u_;
-  v_ = image.v_;
+  uv_ = image.uv_;
 }
 
 bool Image::Load(const char* file_name, bool convert_pow2) {
@@ -108,15 +111,15 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
     buffer_ = convertedBuffer;
   }
 
-  width_ = (unsigned)w;
-  height_ = (unsigned)h;
+  original_width_ = width_ = (unsigned)w;
+  original_height_ = height_ = (unsigned)h;
 
   // Create a bigger canvas if needed to satisfy the pow2 dimension requirement.
   if (convert_pow2) {
     unsigned newWidth = RoundUpToPow2(width_);
     unsigned newHeight = RoundUpToPow2(height_);
     if ((newWidth != width_) || (newHeight != height_)) {
-      LOG << "Converting loaded image from ("
+      LOG << "Converting image " << file_name << " from ("
           << width_ << ", " << height_ << ") to (" << newWidth << ", " << newHeight << ")";
 
       unsigned biggerSize = newWidth * newHeight * 4 * sizeof(uint8_t);
@@ -126,16 +129,21 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
       memset(biggerBuffer, 0, biggerSize);
 
       // Copy over the old bitmap.
+#if 0
       // Centered in the new bitmap.
-      int offsetX = (newWidth - width_) / 2,
-          offsetY = (newHeight - height_) / 2;
+      int offsetX = (newWidth - width_) / 2;
+      int offsetY = (newHeight - height_) / 2;
       for (unsigned y = 0; y < height_; ++y)
         memcpy(biggerBuffer + (offsetX + (y + offsetY) * newWidth) * 4,
                buffer_ + y * width_ * 4, width_ * 4);
+#else
+      for (unsigned y = 0; y < height_; ++y)
+        memcpy(biggerBuffer + (y * newWidth) * 4,
+               buffer_ + y * width_ * 4, width_ * 4);
+#endif
 
       // Store the texture coordinate scaling.
-      u_ = width_ / (float)newWidth;
-      v_ = height_ / (float)newHeight;
+      uv_ = {width_ / (float)newWidth, height_ / (float)newHeight};
 
       // Swap the buffers and dimensions.
       AlignedFree(buffer_);

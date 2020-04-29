@@ -1,6 +1,7 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
+#include "../../base/vecmath.h"
 #include "asset.h"
 #include <stdint.h>
 
@@ -21,6 +22,8 @@ class Image : public Asset{
 
   unsigned GetWidth() const { return width_; }
   unsigned GetHeight() const { return height_; }
+  unsigned GetOriginalWidth() const { return original_width_; }
+  unsigned GetOriginalHeight() const { return original_height_; }
   Format GetFormat() const { return format_; }
   bool IsCompressed() const { return format_ > kRGBA32; }
 
@@ -32,17 +35,16 @@ class Image : public Asset{
   void Clear(const float* rgba);
   void Gradient();
 
-  void GetUV(float& _u, float& _v) const {
-    _u = u_;
-    _v = v_;
-  }
+  Vector2 GetUV() const { return uv_; }
 
  private:
   uint8_t* buffer_;
   unsigned width_;
   unsigned height_;
+  unsigned original_width_;
+  unsigned original_height_;
   Format format_;
-  float u_, v_;
+  Vector2 uv_ = {1, 1};
 };
 
 }  // namespace engine

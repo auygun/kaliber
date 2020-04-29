@@ -32,6 +32,7 @@ class MovieQuad : public Drawable, public FrameController {
  private:
   std::vector<std::unique_ptr<Texture>> textures_;
   size_t active_texture_ = 0;
+  Vector2 uv_scale_ = {1, 1};
 };
 
 }  // namespace engine

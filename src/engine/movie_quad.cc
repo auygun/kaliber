@@ -13,8 +13,9 @@ bool MovieQuad::Create(std::vector<std::shared_ptr<const Image>> images) {
   if (images.empty())
     return false;
 
+  uv_scale_ = images[0]->GetUV();
   SetScale(engine::Engine::Get().ToScale(
-      Vector2(images[0]->GetWidth(), images[0]->GetHeight())));
+      Vector2(images[0]->GetOriginalWidth(), images[0]->GetOriginalHeight())));
 
   for (auto& image : images) {
     // TODO: make atomic.
@@ -48,6 +49,7 @@ void MovieQuad::Draw() {
   shader.SetUniform("offset", offset());
   shader.SetUniform("scale", scale());
   shader.SetUniform("rotation", rotation());
+  shader.SetUniform("uv_scale", uv_scale_);
   shader.SetUniform("projection", engine::Engine::Get().GetRenderer().projection());
   shader.SetUniform("tile_color", Vector3(1, 1, 1));
   shader.SetUniform("tile_image", 0);
