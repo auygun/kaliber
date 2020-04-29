@@ -5,6 +5,7 @@
 #include <memory>
 #include "background.h"
 #include "enemy.h"
+#include "beam.h"
 #include "../engine/game.h"
 #include "../engine/image_quad.h"
 
@@ -22,6 +23,7 @@ class Demo : public engine::Game {
  private:
   Background bg_;
   Enemy enemy_;
+  Beam beam_;
   engine::ImageQuad ship_;
 };
 

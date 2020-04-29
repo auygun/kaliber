@@ -25,6 +25,11 @@ class Drawable {
     scale_ *= scale;
   }
 
+  void ResetCenter(const Vector2& offset) {
+    center_ = offset_ + offset;
+    offset_ += offset;
+  }
+
   void Rotate(float angle) {
     rotation_.x = sin(angle);
     rotation_.y = cos(angle);

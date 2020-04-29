@@ -35,10 +35,16 @@ bool Demo::Initialize() {
     return false;
   }
 
+  if (!beam_.Initialize()) {
+    LOG << "Failed to create the enemy.";
+    return false;
+  }
+
   return true;
 }
 
 void Demo::Update(float delta_time) {
   bg_.Update(delta_time);
   enemy_.Update(delta_time);
+  beam_.Update(delta_time);
 }
