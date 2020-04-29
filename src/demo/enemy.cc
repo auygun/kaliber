@@ -1,5 +1,6 @@
 #include "enemy.h"
 #include "../base/log.h"
+#include "../engine/asset_manager/image.h"
 #include "../engine/engine.h"
 #include <memory>
 
@@ -25,5 +26,6 @@ bool Enemy::Initialize() {
 }
 
 void Enemy::Update(float delta_time) {
+  sprite_.Rotate(engine::Engine::Get().seconds_accumulated());
   frame_animator_.Update(delta_time);
 }

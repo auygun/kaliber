@@ -9,7 +9,8 @@
 namespace engine {
 
 bool ImageQuad::Create(std::shared_ptr<const Image> image) {
-  SetScale(engine::Engine::Get().ToScale(image->GetWidth(), image->GetHeight()));
+  SetScale(engine::Engine::Get().ToScale(image->GetWidth(),
+      image->GetHeight()));
   return texture_.Create(image);
 }
 
@@ -23,8 +24,9 @@ void ImageQuad::Draw() {
   shader.SetUniform("offset", offset());
   shader.SetUniform("scale", scale());
   shader.SetUniform("rotation", rotation());
-  shader.SetUniform("tileColor", Vector3(1, 1, 1));
-  shader.SetUniform("tileImage", 0);
+  shader.SetUniform("projection", engine::Engine::Get().GetRenderer().projection());
+  shader.SetUniform("tile_color", Vector3(1, 1, 1));
+  shader.SetUniform("tile_image", 0);
 
   quad.Draw();
 }

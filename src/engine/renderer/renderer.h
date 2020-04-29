@@ -7,6 +7,7 @@
 #include "../../third_party/glew/glxew.h"
 #endif
 
+#include "../../base/vecmath.h"
 #include <memory>
 #include <unordered_set>
 #include <unordered_map>
@@ -69,6 +70,8 @@ class Renderer {
 
   void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
 
+  Matrix4x4 projection() { return projection_; }
+
   size_t num_frames_dropped() { return num_frames_dropped_; }
   size_t global_queue_size() { return global_queue_size_; }
   size_t render_queue_size() { return render_queue_size_; }
@@ -127,6 +130,7 @@ class Renderer {
 
   int screen_width_ = 0;
   int screen_height_ = 0;
+  Matrix4x4 projection_;
 
   // True if the renderer is in draw stage. Render commands pushed during draw
   // stage can be discarded.
@@ -189,6 +193,7 @@ class Renderer {
   void HandleCmdActivateShader(RenderCommand* cmd);
   void HandleCmdSetUniformVec2(RenderCommand* cmd);
   void HandleCmdSetUniformVec3(RenderCommand* cmd);
+  void HandleCmdSetUniformMat4(RenderCommand* cmd);
   void HandleCmdSetUniformInt(RenderCommand* cmd);
 
   bool SetupVertexLayout(const std::string &vertexDescription, GLuint vertexSize,

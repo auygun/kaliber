@@ -12,8 +12,10 @@ namespace engine {
 bool MovieQuad::Create(std::vector<std::shared_ptr<const Image>> images) {
   if (images.empty())
     return false;
-  SetScale(engine::Engine::Get().ToScale(images.back()->GetWidth(),
-      images.back()->GetHeight()));
+
+  SetScale(engine::Engine::Get().ToScale(images[0]->GetWidth(),
+      images[0]->GetHeight()));
+
   for (auto& image : images) {
     // TODO: make atomic.
     textures_.emplace_back(std::make_unique<Texture>());
@@ -46,8 +48,9 @@ void MovieQuad::Draw() {
   shader.SetUniform("offset", offset());
   shader.SetUniform("scale", scale());
   shader.SetUniform("rotation", rotation());
-  shader.SetUniform("tileColor", Vector3(1, 1, 1));
-  shader.SetUniform("tileImage", 0);
+  shader.SetUniform("projection", engine::Engine::Get().GetRenderer().projection());
+  shader.SetUniform("tile_color", Vector3(1, 1, 1));
+  shader.SetUniform("tile_image", 0);
 
   quad.Draw();
 }

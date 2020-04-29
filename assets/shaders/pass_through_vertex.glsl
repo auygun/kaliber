@@ -1,23 +1,22 @@
-attribute vec2 inPosition;
-attribute vec2 inTexCoord0;
+attribute vec2 in_position;
+attribute vec2 in_tex_coord_0;
 
-uniform vec2  scale;
-uniform vec2  offset;
-uniform vec2  rotation;
+uniform vec2 scale;
+uniform vec2 offset;
+uniform vec2 rotation;
+uniform mat4 projection;
 
-varying vec2  texCoord0;
+varying vec2 tex_coord_0;
 
 void main() {
   // Simple 2d transform.
-  vec2 position = inPosition;
+  vec2 position = in_position;
   position *= scale;
+  position = vec2(position.x * rotation.y + position.y * rotation.x,
+                  position.y * rotation.y - position.x * rotation.x);
   position += offset;
 
-  texCoord0 = inTexCoord0;
-  texCoord0 -= vec2(0.5, 0.5);
-  texCoord0 = vec2(texCoord0.x * rotation.y + texCoord0.y * rotation.x,
-                  texCoord0.y * rotation.y - texCoord0.x * rotation.x);
-  texCoord0 += vec2(0.5, 0.5);
+  tex_coord_0 = in_tex_coord_0;
 
-  gl_Position = vec4(position, 0.0, 1.0);
+  gl_Position = projection * vec4(position, 0.0, 1.0);
 }

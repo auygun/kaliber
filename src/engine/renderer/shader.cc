@@ -82,6 +82,16 @@ void Shader::SetUniform(const std::string &name, const Vector3 &v) {
   }
 }
 
+void Shader::SetUniform(const std::string &name, const Matrix4x4& m) {
+  if (id) {
+    auto cmd = std::make_unique<CmdSetUniformMat4>();
+    cmd->id = id;
+    cmd->name = name;
+    cmd->m = m;
+    Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
+  }
+}
+
 void Shader::SetUniform(const std::string &name, int i) {
   if (id) {
     auto cmd = std::make_unique<CmdSetUniformInt>();

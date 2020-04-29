@@ -38,7 +38,7 @@ bool Fontx::Create(const std::string& font_name) {
     }
 
     // Rasterize glyphs and pack them into the cache.
-    const float kFontHeight = 28.0f;
+    const float kFontHeight = 32.0f;
     if (stbtt_BakeFontBitmap((unsigned char*)buffer, 0, kFontHeight,
                              glyph_cache_, kGlyphSize, kGlyphSize, kFirstChar,
                              kNumChars, glyph_info_) <= 0) {

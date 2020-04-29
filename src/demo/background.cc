@@ -13,11 +13,13 @@ bool Background::Initialize() {
   if (!image)
     return false;
 
-  float horizontal_ratio = (float)engine.GetRenderer().GetScreenWidth() / 256.0f;
-  float vertical_ratio  = (float)engine.GetRenderer().GetScreenHeight() / 256.0f;
-  Vector2 scale = engine.ToScale(256, 256);
-  int num_horizontal_tiles = (int)(horizontal_ratio + 0.5f);
-  int num_vertical_tiles = (int)(vertical_ratio + 0.5f) + 1;
+  Vector2 screen_size = engine.GetScreenSize();
+  Vector2 scale = engine.ToScale(image->GetWidth(), image->GetHeight());
+
+  Vector2 num_tiles = screen_size / scale;
+  int num_horizontal_tiles = (int)(num_tiles.x + 0.5f);
+  int num_vertical_tiles = (int)(num_tiles.y + 0.5f) + 1;
+
   for (int y = 0; y < num_vertical_tiles; ++y) {
     for (int x = 0; x < num_horizontal_tiles; ++x) {
       auto iq = std::make_unique<engine::ImageQuad>();
@@ -26,8 +28,8 @@ bool Background::Initialize() {
         return false;
       }
       iq->SetScale(scale);
-      float fx = (-1.0f + scale.x / 2) + x * scale.x;
-      float fy = (1.0f + scale.y / 2) - y * scale.y;
+      float fx = (-screen_size.x / 2 + scale.x / 2) + x * scale.x;
+      float fy = (screen_size.y / 2 + scale.y / 2) - y * scale.y;
       iq->SetOffset(Vector2(fx, fy));
       engine.AddDrawable(iq.get());
       draw_animator_.AttachDrawable(iq.get());

@@ -35,6 +35,8 @@ class Engine {
 
   void TrimMemory();
 
+  Vector2 GetScreenSize();
+
   Vector2 ToScale(int width, int height);
   void TransformPosition(Vector2& vec);
 

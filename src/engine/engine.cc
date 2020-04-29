@@ -36,8 +36,6 @@ bool Engine::Init() {
     return false;
   }
 
-  stats_.SetOffset(Vector2(-0.74, 0.9));
-
   return true;
 }
 
@@ -70,13 +68,16 @@ void Engine::Update(float delta_time) {
   if (!stats_.Print(engine::Engine::Get().GetFont(), lines, 300)) {
     LOG << "Failed to create the text.";
   }
+
+  Vector2 pos = (GetScreenSize() / 2 - stats_.scale() / 2);
+  pos -= Vector2(0.02f, 0.1f);
+  stats_.SetOffset(pos * Vector2(-1, 1));
 }
 
 void Engine::Draw(float frame_frac) {
   renderer_.EnterDrawStage();
   Clear();
   renderer_.EnableBlend();
-  // game_->Draw(frame_frac);
   for (auto d : drawables_)
     d->Draw();
   stats_.Draw();
@@ -101,14 +102,26 @@ void Engine::TrimMemory() {
   renderer_.TrimMemory();
 }
 
+// TODO: do once during initialization.
+Vector2 Engine::GetScreenSize() {
+  if (GetRenderer().GetScreenWidth() > GetRenderer().GetScreenHeight()) {
+    float ratio = (float)GetRenderer().GetScreenWidth() / (float)GetRenderer().GetScreenHeight();
+    return Vector2(ratio * 2.0f, 2.0f);
+  } else {
+    float ratio = (float)GetRenderer().GetScreenHeight() / (float)GetRenderer().GetScreenWidth();
+    return Vector2(2.0f, ratio * 2.0f);
+  }
+}
+
 Vector2 Engine::ToScale(int width, int height) {
   float horizontal_ratio =
       (float)width / GetRenderer().GetScreenWidth();
   float vertical_ratio =
       (float)height / GetRenderer().GetScreenHeight();
 
+
   // The orthogonal viewport is (-1.0 .. 1.0) x (-1.0 .. 1.0).
-  return Vector2(horizontal_ratio * 2.0f, vertical_ratio * 2.0f);
+  return Vector2(horizontal_ratio, vertical_ratio) * GetScreenSize();
 }
 
 void Engine::TransformPosition(Vector2& vec) {
