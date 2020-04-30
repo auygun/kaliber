@@ -7,13 +7,9 @@
 bool Enemy::Initialize() {
   engine::Engine& engine = engine::Engine::Get();
 
-  std::vector<std::shared_ptr<const engine::Image>> enemy_frames;
-  enemy_frames.push_back(engine.GetAssetManager().GetImage("enemy1.png"));
-  enemy_frames.push_back(engine.GetAssetManager().GetImage("enemy2.png"));
-  enemy_frames.push_back(engine.GetAssetManager().GetImage("enemy3.png"));
-  enemy_frames.push_back(engine.GetAssetManager().GetImage("enemy4.png"));
-  enemy_frames.push_back(engine.GetAssetManager().GetImage("enemy5.png"));
-  if (!sprite_.Create(enemy_frames)) {
+  std::shared_ptr<const engine::Image> enemy_frames =
+      engine.GetAssetManager().GetImage("enemy_anims_01_frames_ok.png");
+  if (!sprite_.Create(enemy_frames, {10, 6})) {
     LOG << "Failed to create the sprite.";
     return false;
   }

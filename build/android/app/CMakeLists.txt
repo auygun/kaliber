@@ -55,7 +55,6 @@ add_library(native-activity SHARED
     ../../../src/engine/engine.cc
     ../../../src/engine/frame_animator.cc
     ../../../src/engine/image_quad.cc
-    ../../../src/engine/movie_quad.cc
     ../../../src/engine/renderer/geometry.cc
     ../../../src/engine/renderer/renderer_android.cc
     ../../../src/engine/renderer/renderer.cc

@@ -5,7 +5,8 @@ uniform vec2 scale;
 uniform vec2 offset;
 uniform vec2 center;
 uniform vec2 rotation;
-uniform vec2 uv_scale;
+uniform vec2 tex_offset;
+uniform vec2 tex_scale;
 uniform mat4 projection;
 
 varying vec2 tex_coord_0;
@@ -19,7 +20,7 @@ void main() {
                   position.y * rotation.y - position.x * rotation.x);
   position += offset - center;
 
-  tex_coord_0 = in_tex_coord_0 * uv_scale;
+  tex_coord_0 = (in_tex_coord_0 + tex_offset) * tex_scale;
 
   gl_Position = projection * vec4(position, 0.0, 1.0);
 }

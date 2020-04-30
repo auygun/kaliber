@@ -2,7 +2,7 @@
 #define ENEMY_H
 
 #include "game_object.h"
-#include "../engine/movie_quad.h"
+#include "../engine/image_quad.h"
 #include "../engine/frame_animator.h"
 
 class Enemy : public GameObject {
@@ -15,7 +15,7 @@ class Enemy : public GameObject {
   void Update(float delta_time) override;
 
  private:
-  engine::MovieQuad sprite_;
+  engine::ImageQuad sprite_;
   engine::FrameAnimator frame_animator_;
 };
 

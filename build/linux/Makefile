@@ -80,7 +80,6 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/draw_animator.cc \
   $(SRC_ROOT)/engine/frame_animator.cc \
   $(SRC_ROOT)/engine/image_quad.cc \
-  $(SRC_ROOT)/engine/movie_quad.cc \
   $(SRC_ROOT)/engine/renderer/geometry.cc \
   $(SRC_ROOT)/engine/renderer/renderer_linux.cc \
   $(SRC_ROOT)/engine/renderer/renderer.cc \

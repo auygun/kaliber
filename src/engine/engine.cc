@@ -4,7 +4,6 @@
 #include "game.h"
 #include "game_factory.h"
 #include "drawable.h"
-#include "image_quad.h"
 #include "text_box.h"
 #include "input_event.h"
 
