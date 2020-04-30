@@ -1,5 +1,5 @@
-#ifndef BEAM_H
-#define BEAM_H
+#ifndef PLAYER_H
+#define PLAYER_H
 
 #include "../base/vecmath.h"
 #include "game_object.h"
@@ -9,10 +9,10 @@ namespace engine {
 class InputEvent;
 } //  namespace engine
 
-class Beam : public GameObject {
+class Player : public GameObject {
  public:
-  Beam() = default;
-  ~Beam() override = default;
+  Player() = default;
+  ~Player() override = default;
 
   bool Initialize() override;
 
@@ -21,17 +21,17 @@ class Beam : public GameObject {
   void OnInputEvent(std::unique_ptr<engine::InputEvent> event);
 
  private:
-  engine::ImageQuad start_;
-  engine::ImageQuad mid_;
-  engine::ImageQuad end_;
+  engine::ImageQuad beam_start_;
+  engine::ImageQuad beam_mid_;
+  engine::ImageQuad beam_end_;
 
   Vector2 start_pos_ = {0, 0};
   Vector2 end_pos_ = {0, 0};
 
-  void Translate(const Vector2& offset);
-  void Rotate(float angle);
-
-  void SetVisible(bool visible);
+  bool CreateBeam();
+  void TranslateBeam(const Vector2& offset);
+  void RotateBeam(float angle);
+  void SetBeamVisible(bool visible);
 };
 
-#endif  // BEAM_H
+#endif  // PLAYER_H

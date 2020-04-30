@@ -37,7 +37,7 @@ bool Demo::Initialize() {
     return false;
   }
 
-  if (!beam_.Initialize()) {
+  if (!player_.Initialize()) {
     LOG << "Failed to create the enemy.";
     return false;
   }
@@ -53,11 +53,11 @@ void Demo::Update(float delta_time) {
       if (event->GetEventType() == engine::InputEvent::kDragStart ||
           event->GetEventType() == engine::InputEvent::kDrag ||
           event->GetEventType() == engine::InputEvent::kDragEnd)
-        beam_.OnInputEvent(std::move(event));
+        player_.OnInputEvent(std::move(event));
     }
   }
 
   bg_.Update(delta_time);
   enemy_.Update(delta_time);
-  beam_.Update(delta_time);
+  player_.Update(delta_time);
 }

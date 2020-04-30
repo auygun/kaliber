@@ -71,9 +71,9 @@ GLTEST_SRC := \
   $(SRC_ROOT)/base/random.cc \
   $(SRC_ROOT)/base/timer.cc \
   $(SRC_ROOT)/demo/background.cc \
-  $(SRC_ROOT)/demo/beam.cc \
   $(SRC_ROOT)/demo/demo.cc \
   $(SRC_ROOT)/demo/enemy.cc \
+  $(SRC_ROOT)/demo/player.cc \
   $(SRC_ROOT)/engine/asset_manager/asset_manager.cc \
   $(SRC_ROOT)/engine/asset_manager/image.cc \
   $(SRC_ROOT)/engine/engine.cc \
