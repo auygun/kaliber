@@ -118,6 +118,12 @@ RENDER_COMMAND_BEGIN(CmdSetUniformVec3)
   Vector3 v;
 RENDER_COMMAND_END
 
+RENDER_COMMAND_BEGIN(CmdSetUniformVec4)
+  int id;
+  std::string name;
+  Vector4 v;
+RENDER_COMMAND_END
+
 RENDER_COMMAND_BEGIN(CmdSetUniformMat4)
   int id;
   std::string name;

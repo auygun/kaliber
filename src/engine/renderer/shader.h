@@ -19,6 +19,7 @@ public:
 
   void SetUniform(const std::string &name, const Vector2 &v);
   void SetUniform(const std::string &name, const Vector3 &v);
+  void SetUniform(const std::string &name, const Vector4 &v);
   void SetUniform(const std::string &name, const Matrix4x4& m);
   void SetUniform(const std::string &name, float f);
   void SetUniform(const std::string &name, int i);

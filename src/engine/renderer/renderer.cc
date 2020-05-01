@@ -257,6 +257,9 @@ void Renderer::ProcessCommand(RenderCommand* cmd) {
   case HASH("CmdSetUniformVec3"):
     HandleCmdSetUniformVec3(cmd);
     break;
+  case HASH("CmdSetUniformVec4"):
+    HandleCmdSetUniformVec4(cmd);
+    break;
   case HASH("CmdSetUniformMat4"):
     HandleCmdSetUniformMat4(cmd);
     break;
@@ -549,6 +552,16 @@ void Renderer::HandleCmdSetUniformVec3(RenderCommand* cmd) {
     GLint index = GetUniformLocation(it->second.id, c->name, it->second.uniforms);
     if (index >= 0)
       glUniform3fv(index, 1, c->v.GetData());
+  }
+}
+
+void Renderer::HandleCmdSetUniformVec4(RenderCommand* cmd) {
+  auto *c = static_cast<CmdSetUniformVec4*>(cmd);
+  auto it = shader_map_.find(c->id);
+  if (it != shader_map_.end()) {
+    GLint index = GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+    if (index >= 0)
+      glUniform4fv(index, 1, c->v.GetData());
   }
 }
 

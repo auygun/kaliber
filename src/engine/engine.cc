@@ -93,9 +93,9 @@ void Engine::Draw(float frame_frac) {
 void Engine::Clear() {
   // Pulsate the clear color to make it more visible if we see it.
   static float grey = 0.0f;
-  grey += 0.01f;
-  if (grey > 1.0f)
-    grey = 0.0f;
+  // grey += 0.01f;
+  // if (grey > 1.0f)
+  //   grey = 0.0f;
   renderer_.Clear({grey, grey, grey, 1.0f});
 }
 

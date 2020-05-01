@@ -193,6 +193,7 @@ class Renderer {
   void HandleCmdActivateShader(RenderCommand* cmd);
   void HandleCmdSetUniformVec2(RenderCommand* cmd);
   void HandleCmdSetUniformVec3(RenderCommand* cmd);
+  void HandleCmdSetUniformVec4(RenderCommand* cmd);
   void HandleCmdSetUniformMat4(RenderCommand* cmd);
   void HandleCmdSetUniformFloat(RenderCommand* cmd);
   void HandleCmdSetUniformInt(RenderCommand* cmd);

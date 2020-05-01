@@ -54,8 +54,8 @@ void ImageQuad::Draw() {
   shader.SetUniform("tex_offset", GetUVOffset(current_frame_));
   shader.SetUniform("tex_scale", tex_scale_);
   shader.SetUniform("projection", Engine::Get().GetRenderer().projection());
-  shader.SetUniform("tile_color", Vector3(1, 1, 1));
-  shader.SetUniform("tile_image", 0);
+  shader.SetUniform("color", color());
+  shader.SetUniform("texture", 0);
 
   quad.Draw();
 }

@@ -67,8 +67,8 @@ void TextBox::Draw() {
   shader.SetUniform("tex_offset", Vector2(0, 0));
   shader.SetUniform("tex_scale", Vector2(1, 1));
   shader.SetUniform("projection", engine::Engine::Get().GetRenderer().projection());
-  shader.SetUniform("tile_color", Vector3(1, 1, 1));
-  shader.SetUniform("tile_image", 0);
+  shader.SetUniform("color", Vector4(1, 1, 1, 1));
+  shader.SetUniform("texture", 0);
 
   quad.Draw();
 }

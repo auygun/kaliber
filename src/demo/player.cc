@@ -17,13 +17,13 @@ void Player::Update(float delta_time) {
 }
 
 void Player::OnInputEvent(std::unique_ptr<engine::InputEvent> event) {
-  // if (event->GetEventType() == engine::InputEvent::kDragStart) {
-  //   drag_start_ = event->GetEventVector(0).Normalize();
-  // } else if (event->GetEventType() == engine::InputEvent::kDrag) {
-  //   drag_end_ = event->GetEventVector(0).Normalize();
-  // } else if (event->GetEventType() == engine::InputEvent::kDragEnd) {
-  //   Fire();
-  // }
+  if (event->GetEventType() == engine::InputEvent::kDragStart) {
+    drag_start_ = event->GetEventVector(0).Normalize();
+  } else if (event->GetEventType() == engine::InputEvent::kDrag) {
+    drag_end_ = event->GetEventVector(0).Normalize();
+  } else if (event->GetEventType() == engine::InputEvent::kDragEnd) {
+    Fire();
+  }
 }
 
 void Player::Fire() {
@@ -57,6 +57,7 @@ void Player::CreateWeapon() {
     weapon_[i].Translate(offset);
 
     weapon_[i].SetVisible(true);
+    beam_[i].SetVisible(true);
 
     engine.AddDrawable(&beam_[i]);
     engine.AddDrawable(&weapon_[i]);

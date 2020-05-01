@@ -39,6 +39,7 @@ class Drawable {
   void SetScale(const Vector2& scale) { scale_ = scale; }
   void SetCenter(const Vector2& center) { center_ = center; }
   void SetRotation(const Vector2& rotation) { rotation_ = rotation; }
+  void SetColor(const Vector4& color) { color_ = color; }
 
   void SetVisible(bool visible) { visible_ = visible; }
 
@@ -54,6 +55,7 @@ class Drawable {
   Vector2 scale() const { return scale_; }
   Vector2 center() const { return center_; }
   Vector2 rotation() const { return rotation_; }
+  Vector4 color() const { return color_; }
   bool visible() const { return visible_; }
 
  private:
@@ -61,7 +63,7 @@ class Drawable {
   Vector2 scale_ = {1, 1};
   Vector2 center_ = {0, 0};
   Vector2 rotation_ = {0, 1};
-
+  Vector4 color_ = {1, 1, 1, 1};
   bool visible_ = false;
 };
 
