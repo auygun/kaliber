@@ -21,7 +21,7 @@ class FrameAnimator {
 
   void SetSpeed(float speed);
 
-  void Play();
+  void Play(bool loop);
   void Pause();
   void Stop();
 
@@ -31,6 +31,7 @@ class FrameAnimator {
   enum State { kStopped, kPlaying, kPaused };
 
   State state_ = kStopped;
+  bool loop_ = false;
 
   std::vector<FrameController*> controllers_;
 

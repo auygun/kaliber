@@ -18,7 +18,7 @@ bool Enemy::Initialize() {
   engine::Engine::Get().AddDrawable(&sprite_);
 
   frame_animator_.AttachFrameController(&sprite_);
-  frame_animator_.Play();
+  frame_animator_.Play(true);
   return true;
 }
 

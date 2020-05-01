@@ -7,83 +7,63 @@
 #include <memory>
 
 bool Player::Initialize() {
-  if (!CreateBeam())
-    return false;
+  CreateWeapon();
   return true;
 }
 
 void Player::Update(float delta_time) {
-  if (beam_start_.visible()) {
-    float cos_angle = start_pos_.DotProduct(end_pos_);
-    RotateBeam(acos(cos_angle) - M_PI_2);
-  }
+  for (int i = 0; i < 2; ++i)
+    weapon_animator_[i].Update(delta_time);
 }
 
 void Player::OnInputEvent(std::unique_ptr<engine::InputEvent> event) {
-  if (event->GetEventType() == engine::InputEvent::kDragStart) {
-    start_pos_ = event->GetEventVector(0).Normalize();
-    SetBeamVisible(true);
-  } else if (event->GetEventType() == engine::InputEvent::kDrag) {
-    end_pos_ = event->GetEventVector(0).Normalize();
-  } else if (event->GetEventType() == engine::InputEvent::kDragEnd) {
-    SetBeamVisible(false);
-  }
+  // if (event->GetEventType() == engine::InputEvent::kDragStart) {
+  //   drag_start_ = event->GetEventVector(0).Normalize();
+  // } else if (event->GetEventType() == engine::InputEvent::kDrag) {
+  //   drag_end_ = event->GetEventVector(0).Normalize();
+  // } else if (event->GetEventType() == engine::InputEvent::kDragEnd) {
+  //   Fire();
+  // }
 }
 
-bool Player::CreateBeam() {
+void Player::Fire() {
+  // if (beam_start_.visible()) {
+  //   float cos_angle = drag_start_.DotProduct(drag_end_);
+  //   RotateBeam(acos(cos_angle) - M_PI_2);
+  // }
+}
+
+void Player::CreateWeapon() {
   engine::Engine& engine = engine::Engine::Get();
 
-  std::shared_ptr<const engine::Image> image_start;
-  std::shared_ptr<const engine::Image> image_mid;
-  std::shared_ptr<const engine::Image> image_end;
-  image_start = engine.GetAssetManager().GetImage("gbeam_start.png");
-  image_mid = engine.GetAssetManager().GetImage("gbeam_mid.png");
-  image_end = engine.GetAssetManager().GetImage("gbeam_end.png");
-  if (!beam_start_.Create(image_start)) {
-    LOG << "Failed to create the sprite.";
-    return false;
+  auto weapon_image =
+      engine.GetAssetManager().GetImage("enemy_anims_flare_ok.png");
+  auto beam_image =
+      engine.GetAssetManager().GetImage("enemy_ray_ok.png");
+  for (int i = 0; i < 2; ++i) {
+    weapon_[i].Create(weapon_image, {8, 2});
+    beam_[i].Create(beam_image, {1, 2});
+
+    beam_[i].SetCurrentFrame(i);
+    beam_[i].PlaceToRightOf(weapon_[i]);
+    beam_[i].Translate(beam_[i].offset() * Vector2(-0.2f, 0));
+
+    beam_[i].ResetCenter({0, 0});
+    weapon_[i].ResetCenter({0, 0});
+
+    Vector2 offset = engine.GetScreenSize() / Vector2(i ? -4 : 4 , -2)
+        + Vector2(0, weapon_[i].scale().y);
+    beam_[i].Translate(offset);
+    weapon_[i].Translate(offset);
+
+    weapon_[i].SetVisible(true);
+
+    engine.AddDrawable(&beam_[i]);
+    engine.AddDrawable(&weapon_[i]);
+
+    weapon_animator_[i].AttachFrameController(&weapon_[i]);
+    weapon_animator_[i].SetFrameRange(i * 8 + 1, i * 8 + 8);
+    weapon_animator_[i].SetIdleFrame(i * 8 + 1);
+    weapon_animator_[i].Play(false);
   }
-  if (!beam_mid_.Create(image_mid)) {
-    LOG << "Failed to create the sprite.";
-    return false;
-  }
-  if (!beam_end_.Create(image_end)) {
-    LOG << "Failed to create the sprite.";
-    return false;
-  }
-
-  beam_start_.PlaceToLeftOf(beam_mid_);
-  beam_end_.PlaceToRightOf(beam_mid_);
-
-  Vector2 center_offset =
-      {beam_start_.scale().x / 2 +  beam_mid_.scale().x / 2 + beam_end_.scale().x / 2, 0};
-  beam_start_.ResetCenter(center_offset);
-  beam_mid_.ResetCenter(center_offset);
-  beam_end_.ResetCenter(center_offset);
-
-  TranslateBeam({0, -engine::Engine::Get().GetScreenSize().y / 2 + 0.2f});
-
-  engine::Engine::Get().AddDrawable(&beam_start_);
-  engine::Engine::Get().AddDrawable(&beam_mid_);
-  engine::Engine::Get().AddDrawable(&beam_end_);
-
-  return true;
-}
-
-void Player::TranslateBeam(const Vector2& offset) {
-  beam_start_.Translate(offset);
-  beam_mid_.Translate(offset);
-  beam_end_.Translate(offset);
-}
-
-void Player::RotateBeam(float angle) {
-  beam_start_.Rotate(angle);
-  beam_mid_.Rotate(angle);
-  beam_end_.Rotate(angle);
-}
-
-void Player::SetBeamVisible(bool visible) {
-  beam_start_.SetVisible(visible);
-  beam_mid_.SetVisible(visible);
-  beam_end_.SetVisible(visible);
 }

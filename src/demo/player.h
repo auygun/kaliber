@@ -4,6 +4,7 @@
 #include "../base/vecmath.h"
 #include "game_object.h"
 #include "../engine/image_quad.h"
+#include "../engine/frame_animator.h"
 
 namespace engine {
 class InputEvent;
@@ -20,18 +21,17 @@ class Player : public GameObject {
 
   void OnInputEvent(std::unique_ptr<engine::InputEvent> event);
 
+  void Fire();
+
  private:
-  engine::ImageQuad beam_start_;
-  engine::ImageQuad beam_mid_;
-  engine::ImageQuad beam_end_;
+  engine::ImageQuad weapon_[2];
+  engine::ImageQuad beam_[2];
+  engine::FrameAnimator weapon_animator_[2];
 
-  Vector2 start_pos_ = {0, 0};
-  Vector2 end_pos_ = {0, 0};
+  Vector2 drag_start_ = {0, 0};
+  Vector2 drag_end_ = {0, 0};
 
-  bool CreateBeam();
-  void TranslateBeam(const Vector2& offset);
-  void RotateBeam(float angle);
-  void SetBeamVisible(bool visible);
+  void CreateWeapon();
 };
 
 #endif  // PLAYER_H
