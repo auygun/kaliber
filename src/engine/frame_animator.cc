@@ -25,6 +25,11 @@ void FrameAnimator::SetSpeed(float speed) {
   speed_ = speed;
 }
 
+void FrameAnimator::SetCallback(size_t frame, Callback callback) {
+  callback_frame_ = frame;
+  callback_ = std::move(callback);
+}
+
 void FrameAnimator::Play(bool loop) {
   loop_ = loop;
   if (state_ == kPlaying)
@@ -62,6 +67,8 @@ void FrameAnimator::Update(float delta_time) {
       size_t ef = end_frame_ > 0 ? end_frame_ : controller->GetNumFrames();
       int next = controller->GetCurrentFrame() + 1;
       controller->SetCurrentFrame(next >= ef ? start_frame_ : next);
+      if (callback_frame_ != 0 && controller->GetCurrentFrame() == start_frame_ + callback_frame_)
+        callback_();
       if (!loop_ && controller->GetCurrentFrame() == idle_frame_)
         state_ = kStopped;
       break;

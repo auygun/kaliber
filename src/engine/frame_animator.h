@@ -4,6 +4,7 @@
 #include "../base/vecmath.h"
 #include <cstdlib>
 #include <vector>
+#include <functional>
 
 namespace engine {
 
@@ -11,6 +12,8 @@ class FrameController;
 
 class FrameAnimator {
  public:
+  using Callback = std::function<void()>;
+
   FrameAnimator() = default;
   ~FrameAnimator() = default;
 
@@ -21,11 +24,15 @@ class FrameAnimator {
 
   void SetSpeed(float speed);
 
+  void SetCallback(size_t frame, Callback c);
+
   void Play(bool loop);
   void Pause();
   void Stop();
 
   void Update(float delta_time);
+
+  bool IsPlaying() const { return state_ == kPlaying; }
 
  private:
   enum State { kStopped, kPlaying, kPaused };
@@ -42,6 +49,9 @@ class FrameAnimator {
   size_t idle_frame_ = 0;
   size_t start_frame_ = 0;
   size_t end_frame_ = 0;
+
+  size_t callback_frame_ = 0;
+  Callback callback_;
 };
 
 }  // namespace engine

@@ -16,12 +16,12 @@ bool ImageQuad::Create(std::shared_ptr<const Image> image,
   if (!texture_.Create(image))
     return false;
 
-  int frame_width = image->GetOriginalWidth() / num_frames[0];
-  int frame_height = image->GetOriginalHeight() / num_frames[1];
-  SetScale(engine::Engine::Get().ToScale(Vector2(frame_width, frame_height)));
+  frame_width_ = image->GetOriginalWidth() / num_frames[0];
+  frame_height_ = image->GetOriginalHeight() / num_frames[1];
+  ResetScale();
   tex_scale_ = {
-    (float)frame_width / (float)image->GetWidth(),
-    (float)frame_height / (float)image->GetHeight()
+    (float)frame_width_ / (float)image->GetWidth(),
+    (float)frame_height_ / (float)image->GetHeight()
   };
   num_frames_ = std::move(num_frames);
   return true;
@@ -58,6 +58,10 @@ void ImageQuad::Draw() {
   shader.SetUniform("texture", 0);
 
   quad.Draw();
+}
+
+void ImageQuad::ResetScale() {
+  SetScale(engine::Engine::Get().ToScale(Vector2(frame_width_, frame_height_)));
 }
 
 Vector2 ImageQuad::GetUVOffset(int frame) {

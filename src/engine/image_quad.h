@@ -29,6 +29,8 @@ class ImageQuad : public Drawable, public FrameController {
 
   void Draw() override;
 
+  void ResetScale();
+
   size_t current_frame() { return current_frame_; }
 
  private:
@@ -36,6 +38,8 @@ class ImageQuad : public Drawable, public FrameController {
   Vector2 tex_scale_ = {1, 1};
   size_t current_frame_ = 0;
   std::array<int, 2> num_frames_ = {1, 1}; // horizontal, vertical
+  int frame_width_ = 0;
+  int frame_height_ = 0;
 
   Vector2 GetUVOffset(int frame);
 };

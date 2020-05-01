@@ -4,6 +4,7 @@
 #include "../base/vecmath.h"
 #include <cstdlib>
 #include <vector>
+#include <functional>
 
 namespace engine {
 
@@ -11,6 +12,8 @@ class Drawable;
 
 class DrawAnimator {
  public:
+  using Callback = std::function<void()>;
+
   DrawAnimator() = default;
   ~DrawAnimator() = default;
 
@@ -20,10 +23,15 @@ class DrawAnimator {
 
   void SetSpeed(float speed);
 
-  void Play();
+  void SetCallback(Callback c);
+
+  void Play(bool loop);
   void Pause();
+  void Stop();
 
   void Update(float delta_time);
+
+  bool IsPlaying() const { return is_playing_; }
 
  private:
   struct DrawableTraits {
@@ -32,6 +40,7 @@ class DrawAnimator {
   };
 
   bool is_playing_ = false;
+  bool loop_ = false;
 
   std::vector<DrawableTraits> drawables_;
 
@@ -41,6 +50,9 @@ class DrawAnimator {
   Vector2 dir_ = {0, 0};
   float distance_ = 0.0f;
   float movement_ = 0.0f;
+
+  bool call_callback_ = false;
+  Callback callback_;
 };
 
 }  // namespace engine

@@ -40,7 +40,7 @@ bool Background::Initialize() {
   }
 
   draw_animator_.SetMovement(Vector2(0, -1), scale.y);
-  draw_animator_.Play();
+  draw_animator_.Play(true);
 
   return true;
 }

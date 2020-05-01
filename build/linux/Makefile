@@ -74,10 +74,11 @@ GLTEST_SRC := \
   $(SRC_ROOT)/demo/demo.cc \
   $(SRC_ROOT)/demo/enemy.cc \
   $(SRC_ROOT)/demo/player.cc \
+  $(SRC_ROOT)/engine/alpha_animator.cc \
   $(SRC_ROOT)/engine/asset_manager/asset_manager.cc \
   $(SRC_ROOT)/engine/asset_manager/image.cc \
-  $(SRC_ROOT)/engine/engine.cc \
   $(SRC_ROOT)/engine/draw_animator.cc \
+  $(SRC_ROOT)/engine/engine.cc \
   $(SRC_ROOT)/engine/frame_animator.cc \
   $(SRC_ROOT)/engine/image_quad.cc \
   $(SRC_ROOT)/engine/renderer/geometry.cc \
