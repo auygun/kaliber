@@ -29,6 +29,7 @@ class Player : public GameObject {
   engine::ImageQuad beam_[2];
   engine::ImageQuad beam_dot_[2];
   engine::ImageQuad beam_spark_[2];
+
   engine::FrameAnimator weapon_animator_[2];
   engine::AlphaAnimator beam_animator_[2];
   engine::DrawAnimator beam_dot_animator_[2];

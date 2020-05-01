@@ -24,7 +24,6 @@ class Demo : public engine::Game {
   Background bg_;
   Enemy enemy_;
   Player player_;
-  engine::ImageQuad ship_;
 };
 
 #endif  // DEMO_H
