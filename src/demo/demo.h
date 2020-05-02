@@ -18,12 +18,13 @@ class Demo : public engine::Game {
 
   void Update(float delta_time) override;
 
-  // void Draw(float frame_frac) override;
+  Player& GetPlayer() { return player_; }
+  Enemy& GetEnemy() { return enemy_; }
 
  private:
   Background bg_;
-  Enemy enemy_;
   Player player_;
+  Enemy enemy_;
 };
 
 #endif  // DEMO_H

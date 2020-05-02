@@ -19,20 +19,21 @@ class FrameAnimator {
 
   void AttachFrameController(FrameController *drawable);
 
-  void SetFrameRange(size_t start_frame, size_t end_frame);
-  void SetIdleFrame(size_t idle_frame);
+  void SetFrameRange(size_t start_frame, size_t end_frame, size_t idle_frame);
 
   void SetSpeed(float speed);
 
   void SetCallback(size_t frame, Callback c);
 
-  void Play(bool loop);
+  void Play(bool loop, bool reset);
   void Pause();
   void Stop();
 
   void Update(float delta_time);
 
   bool IsPlaying() const { return state_ == kPlaying; }
+
+  size_t idle_frame() { return idle_frame_; }
 
  private:
   enum State { kStopped, kPlaying, kPaused };

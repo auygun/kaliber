@@ -8,16 +8,15 @@ void FrameAnimator::AttachFrameController(FrameController *controller) {
   controllers_.push_back(controller);
 }
 
-void FrameAnimator::SetFrameRange(size_t start_frame, size_t end_frame) {
+void FrameAnimator::SetFrameRange(size_t start_frame,
+                                  size_t end_frame,
+                                  size_t idle_frame) {
   start_frame_ = start_frame;
   end_frame_ = end_frame;
-}
-
-void FrameAnimator::SetIdleFrame(size_t idle_frame) {
   idle_frame_ = idle_frame;
   if (state_ == kStopped) {
     for (auto controller : controllers_)
-      controller->SetCurrentFrame(idle_frame);
+      controller->SetCurrentFrame(start_frame_);
   }
 }
 
@@ -30,12 +29,16 @@ void FrameAnimator::SetCallback(size_t frame, Callback callback) {
   callback_ = std::move(callback);
 }
 
-void FrameAnimator::Play(bool loop) {
-  loop_ = loop;
-  if (state_ == kPlaying)
-    return;
+void FrameAnimator::Play(bool loop, bool reset) {
+  if (state_ != kPlaying)
+    seconds_accumulated_ = 0.0f;
   state_ = kPlaying;
-  seconds_accumulated_ = 0.0f;
+  loop_ = loop;
+  if (reset) {
+    seconds_accumulated_ = 0.0f;
+    for (auto controller : controllers_)
+      controller->SetCurrentFrame(start_frame_);
+  }
 }
 
 void FrameAnimator::Pause() {
@@ -64,9 +67,8 @@ void FrameAnimator::Update(float delta_time) {
       // Fall through.
 
     case kPlaying: {
-      size_t ef = end_frame_ > 0 ? end_frame_ : controller->GetNumFrames();
       int next = controller->GetCurrentFrame() + 1;
-      controller->SetCurrentFrame(next >= ef ? start_frame_ : next);
+      controller->SetCurrentFrame(next >= end_frame_ ? start_frame_ : next);
       if (callback_frame_ != 0 && controller->GetCurrentFrame() == start_frame_ + callback_frame_)
         callback_();
       if (!loop_ && controller->GetCurrentFrame() == idle_frame_)

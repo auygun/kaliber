@@ -51,6 +51,8 @@ class Engine {
   Shader& GetPassThroughShader() { return pass_through_shader_; }
   Fontx& GetFont() { return font_; }
 
+  Game* GetGame() { return game_.get(); }
+
   float seconds_accumulated() { return seconds_accumulated_; }
 
  private:

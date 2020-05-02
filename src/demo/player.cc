@@ -1,4 +1,5 @@
 #include "player.h"
+#include "demo.h"
 #include "../base/log.h"
 #include "../engine/asset_manager/image.h"
 #include "../engine/engine.h"
@@ -21,6 +22,8 @@ void Player::Update(float delta_time) {
 }
 
 void Player::OnInputEvent(std::unique_ptr<engine::InputEvent> event) {
+  engine::Engine& engine = engine::Engine::Get();
+
   if (event->GetEventType() == engine::InputEvent::kDragStart) {
     drag_start_ = event->GetEventVector(0);
     SetActiveWeapon(drag_start_);
@@ -30,8 +33,11 @@ void Player::OnInputEvent(std::unique_ptr<engine::InputEvent> event) {
     }
   } else if (event->GetEventType() == engine::InputEvent::kDrag) {
     drag_end_ = event->GetEventVector(0);
-    if (active_weapon_ >=0 )
+    if (active_weapon_ >=0 ) {
       drag_sign_[active_weapon_].SetOffset(drag_end_);
+      Demo* game = static_cast<Demo*>(engine.GetGame());
+      game->GetEnemy().TryTarget(weapon_[active_weapon_].offset(), drag_end_);
+    }
   } else if (event->GetEventType() == engine::InputEvent::kDragEnd) {
     if (active_weapon_ >=0 ) {
       drag_sign_[active_weapon_].SetVisible(false);
@@ -86,7 +92,7 @@ void Player::Fire(int i) {
   beam_dot_animator_[i].SetMovement(-dir, beam_[i].scale().x * 0.9f);
   beam_spark_animator_[i].SetMovement(-dir, beam_[i].scale().x * 0.9f);
 
-  weapon_animator_[i].Play(false);
+  weapon_animator_[i].Play(false, true);
 }
 
 bool Player::IsFiring(int i) {
@@ -159,8 +165,7 @@ void Player::SetupWeapons() {
     // Setup animators.
     weapon_animator_[i].AttachFrameController(&weapon_[i]);
     weapon_animator_[i].SetSpeed(0.016f);
-    weapon_animator_[i].SetFrameRange(i * 8 + 1, i * 8 + 8);
-    weapon_animator_[i].SetIdleFrame(i * 8 + 1);
+    weapon_animator_[i].SetFrameRange(i * 8 + 1, i * 8 + 8, i * 8 + 1);
     weapon_animator_[i].SetCallback(5, [&, i]()->void {
       beam_[i].SetColor({1, 1, 1, 1});
       beam_[i].SetVisible(true);
