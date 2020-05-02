@@ -15,7 +15,6 @@ class Drawable {
   void Translate(const Vector2& offset);
   void Scale(const Vector2& scale);
   void Scale(float scale);
-  void ResetPivot(const Vector2& offset);
   void Rotate(float angle);
 
   void SetOffset(const Vector2& offset) { offset_ = offset; }

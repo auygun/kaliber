@@ -56,7 +56,7 @@ void Player::SetBeamLength(int i, float len) {
   beam_[i].Scale({len, 2});
   beam_[i].PlaceToRightOf(weapon_[i]);
   beam_[i].Translate(weapon_[i].scale() * Vector2(-0.5f, 0));
-  beam_[i].ResetPivot({0, 0});
+  beam_[i].SetPivot(beam_[i].offset());
 
   Vector2 offset = engine.GetScreenSize() / Vector2(i ? -4 : 4 , -2)
       + Vector2(0, weapon_[i].scale().y);
@@ -131,10 +131,9 @@ void Player::SetupWeapons() {
     beam_spark_[i].PlaceToRightOf(weapon_[i]);
     beam_spark_[i].Translate(weapon_[i].scale() * Vector2(-0.5f, 0));
 
-    beam_[i].ResetPivot({0, 0});
-    beam_dot_[i].ResetPivot({0, 0});
-    beam_spark_[i].ResetPivot({0, 0});
-    weapon_[i].ResetPivot({0, 0});
+    beam_[i].SetPivot(beam_[i].offset());
+    beam_dot_[i].SetPivot(beam_dot_[i].offset());
+    beam_spark_[i].SetPivot(beam_spark_[i].offset());
 
     Vector2 offset = engine.GetScreenSize() / Vector2(i ? -4 : 4 , -2)
         + Vector2(0, weapon_[i].scale().y);
