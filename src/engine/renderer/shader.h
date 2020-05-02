@@ -28,7 +28,7 @@ public:
   void SetUniform(const std::string &name, int i);
 
 private:
-  int id = 0;
+  int resource_id_ = 0;
   static int last_id;
 };
 

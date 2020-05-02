@@ -20,10 +20,10 @@ public:
 
   void Activate();
 
-  bool IsValid() { return id > 0; }
+  bool IsValid() { return resource_id_ > 0; }
 
 private:
-  int id = 0; // TODO: ResourceId
+  int resource_id_ = 0; // TODO: ResourceId
 };
 
 } // namespace engine

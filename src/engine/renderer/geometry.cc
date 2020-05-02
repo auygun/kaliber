@@ -23,8 +23,8 @@ bool Geometry::Create(unsigned int primitive,
   Destroy();
 
   auto cmd = std::make_unique<CmdCreateGeometry>();
-  id = ++last_id;
-  cmd->id = id;
+  resource_id_ = ++last_id;
+  cmd->id = resource_id_;
   cmd->primitive = primitive;
   cmd->vertex_description = vertex_description;
   cmd->num_vertices = num_vertices;
@@ -37,18 +37,18 @@ bool Geometry::Create(unsigned int primitive,
 }
 
 void Geometry::Destroy() {
-  if (id) {
+  if (resource_id_) {
     auto cmd = std::make_unique<CmdDestroyGeometry>();
-    cmd->id = id;
+    cmd->id = resource_id_;
     Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
-    id = 0;
+    resource_id_ = 0;
   }
 }
 
 void Geometry::Draw() {
-  if (id) {
+  if (resource_id_) {
     auto cmd = std::make_unique<CmdDrawGeometry>();
-    cmd->id = id;
+    cmd->id = resource_id_;
     Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
   }
 }

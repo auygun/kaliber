@@ -13,19 +13,19 @@ Texture::~Texture() {
 // TODO: separate create and update.
 bool Texture::Create(std::shared_ptr<const Image> image) {
   Destroy();
-  id = Engine::Get().GetRenderer().AcquireTextureResource(image);
-  return id > 0;
+  resource_id_ = Engine::Get().GetRenderer().AcquireTextureResource(image);
+  return resource_id_ > 0;
 }
 
 void Texture::Destroy() {
-  if (id)
-    Engine::Get().GetRenderer().ReturnTextureResource(id);
+  if (resource_id_)
+    Engine::Get().GetRenderer().ReturnTextureResource(resource_id_);
 }
 
 void Texture::Activate() {
-  if (id) {
+  if (resource_id_) {
     auto cmd = std::make_unique<CmdActivateTexture>();
-    cmd->id = id;
+    cmd->id = resource_id_;
     Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
   }
 }
