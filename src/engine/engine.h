@@ -6,7 +6,7 @@
 #include "renderer/geometry.h"
 #include "renderer/renderer.h"
 #include "renderer/shader.h"
-#include "text_box.h"
+#include "image_quad.h"
 #include "asset_manager/asset_manager.h"
 #include <list>
 #include <deque>
@@ -65,7 +65,7 @@ class Engine {
 
   Fontx font_;
 
-  TextBox stats_; // TODO: add to drawables.
+  ImageQuad stats_;
 
   std::list<Drawable*> drawables_;
 
@@ -78,6 +78,8 @@ class Engine {
 
   void Clear();
   void Present();
+
+  void PrintStats();
 };
 
 }  // namespace engine

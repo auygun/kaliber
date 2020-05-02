@@ -27,6 +27,10 @@ bool ImageQuad::Create(std::shared_ptr<const Image> image,
   return true;
 }
 
+void ImageQuad::ResetScale() {
+  SetScale(engine::Engine::Get().ToScale(Vector2(frame_width_, frame_height_)));
+}
+
 size_t ImageQuad::GetNumFrames() {
   return num_frames_[0] * num_frames_[1];
 }
@@ -49,7 +53,7 @@ void ImageQuad::Draw() {
   shader.Activate();
   shader.SetUniform("offset", offset());
   shader.SetUniform("scale", scale());
-  shader.SetUniform("center", center());
+  shader.SetUniform("pivot", pivot());
   shader.SetUniform("rotation", rotation());
   shader.SetUniform("tex_offset", GetUVOffset(current_frame_));
   shader.SetUniform("tex_scale", tex_scale_);
@@ -60,10 +64,7 @@ void ImageQuad::Draw() {
   quad.Draw();
 }
 
-void ImageQuad::ResetScale() {
-  SetScale(engine::Engine::Get().ToScale(Vector2(frame_width_, frame_height_)));
-}
-
+// Return the uv offset for the given frame.
 Vector2 ImageQuad::GetUVOffset(int frame) {
   assert(frame < num_frames_[0] * num_frames_[1]);
   if (num_frames_[0] == 1 && num_frames_[1] == 1)

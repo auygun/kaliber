@@ -1,10 +1,10 @@
 #include "engine.h"
 #include "../base/log.h"
 #include "../base/random.h"
+#include "asset_manager/image.h"
 #include "game.h"
 #include "game_factory.h"
 #include "drawable.h"
-#include "text_box.h"
 #include "input_event.h"
 
 namespace engine {
@@ -37,6 +37,7 @@ bool Engine::Init() {
   }
 
   stats_.SetVisible(true);
+  AddDrawable(&stats_);
 
   return true;
 }
@@ -56,24 +57,7 @@ void Engine::RemoveDrawable(Drawable* drawable) {
 void Engine::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
   game_->Update(delta_time);
-
-  std::vector<std::string> lines;
-  std::string line = "frames dropped: ";
-  line += std::to_string(engine::Engine::Get().GetRenderer().num_frames_dropped());
-  lines.push_back(line);
-  line = "global queue: ";
-  line += std::to_string(engine::Engine::Get().GetRenderer().global_queue_size());
-  lines.push_back(line);
-  line = "render queue: ";
-  line += std::to_string(engine::Engine::Get().GetRenderer().render_queue_size());
-  lines.push_back(line);
-  if (!stats_.Print(engine::Engine::Get().GetFont(), lines, 300)) {
-    LOG << "Failed to create the text.";
-  }
-
-  Vector2 pos = (GetScreenSize() / 2 - stats_.scale() / 2);
-  pos -= Vector2(0.02f, 0.1f);
-  stats_.SetOffset(pos * Vector2(-1, 1));
+  PrintStats();
 }
 
 void Engine::Draw(float frame_frac) {
@@ -84,8 +68,6 @@ void Engine::Draw(float frame_frac) {
     if (d->visible())
       d->Draw();
   }
-  if (stats_.visible())
-    stats_.Draw();
   Present();
   renderer_.ExitDrawStage();
 }
@@ -164,6 +146,46 @@ bool Engine::CreateRenderResources() {
   }
 
   return true;
+}
+
+void Engine::PrintStats() {
+  constexpr int width = 300;
+  std::vector<std::string> lines;
+  std::string line = "frames dropped: ";
+  line += std::to_string(engine::Engine::Get().GetRenderer().num_frames_dropped());
+  lines.push_back(line);
+  line = "global queue: ";
+  line += std::to_string(engine::Engine::Get().GetRenderer().global_queue_size());
+  lines.push_back(line);
+  line = "render queue: ";
+  line += std::to_string(engine::Engine::Get().GetRenderer().render_queue_size());
+  lines.push_back(line);
+  // if (!stats_.Print(engine::Engine::Get().GetFont(), lines, 300)) {
+  //   LOG << "Failed to create the text.";
+  // }
+
+  constexpr int margin = 3;
+  int line_height = font_.GetLineHeight();
+  int image_width = width + margin * 2;
+  int image_height = (line_height + margin) * lines.size() + margin;
+
+  auto image = std::make_shared<Image>();
+  image->Create(image_width, image_height);
+  float c[4] = {1, 1, 1, 0.08f};
+  image->Clear(c);
+
+  int y = margin;
+  for (auto& text : lines) {
+    font_.Print(margin, y + margin, text.c_str(), image->GetBuffer(),
+        image->GetWidth());
+    y += line_height + margin;
+  }
+
+  stats_.Create(image);
+
+  Vector2 pos = (GetScreenSize() / 2 - stats_.scale() / 2);
+  pos -= Vector2(0.02f, 0.1f);
+  stats_.SetOffset(pos * Vector2(-1, 1));
 }
 
 }  // namespace engine

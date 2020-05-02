@@ -78,6 +78,7 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/asset_manager/asset_manager.cc \
   $(SRC_ROOT)/engine/asset_manager/image.cc \
   $(SRC_ROOT)/engine/draw_animator.cc \
+  $(SRC_ROOT)/engine/drawable.cc \
   $(SRC_ROOT)/engine/engine.cc \
   $(SRC_ROOT)/engine/frame_animator.cc \
   $(SRC_ROOT)/engine/image_quad.cc \
@@ -86,7 +87,6 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/renderer/renderer.cc \
   $(SRC_ROOT)/engine/renderer/shader.cc \
   $(SRC_ROOT)/engine/renderer/texture.cc \
-  $(SRC_ROOT)/engine/text_box.cc \
   $(SRC_ROOT)/platform/platform_linux.cc \
   $(SRC_ROOT)/platform/platform.cc \
   $(SRC_ROOT)/third_party/glew/glew.c \

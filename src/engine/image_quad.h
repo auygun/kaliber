@@ -23,15 +23,23 @@ class ImageQuad : public Drawable, public FrameController {
   bool Create(std::shared_ptr<const Image> image,
               std::array<int, 2> num_frames = {1, 1});
 
+  void ResetScale();
+
+  // FrameController interface.
   size_t GetNumFrames() override;
   size_t GetCurrentFrame() override;
   void SetCurrentFrame(size_t frame) override;
 
+  // Drawable interface.
   void Draw() override;
 
-  void ResetScale();
+  void PlaceToLeftOf(const ImageQuad& d) {
+    Translate({d.scale().x / -2.0f + scale().x / -2.0f, 0});
+  }
 
-  size_t current_frame() { return current_frame_; }
+  void PlaceToRightOf(const ImageQuad& d) {
+    Translate({d.scale().x / 2.0f + scale().x / 2.0f, 0});
+  }
 
  private:
   Texture texture_;
