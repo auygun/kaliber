@@ -71,6 +71,8 @@ void Player::Fire(int i) {
   float len = dir.Magnitude();
   if (len < weapon_[i].scale().y)
     return;
+  if (dir.DotProduct(Vector2(0 ,1)) >= 0)
+    return;
 
   SetBeamLength(i, len);
 
