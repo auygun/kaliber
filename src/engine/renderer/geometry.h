@@ -10,6 +10,9 @@ public:
   Geometry() = default;
   ~Geometry();
 
+  Geometry(const Geometry&) = delete;
+  Geometry& operator=(const Geometry&) = delete;
+
   bool Create(unsigned int primitive,
               const std::string& vertex_description,
               int num_vertices,

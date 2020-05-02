@@ -13,6 +13,9 @@ public:
   Shader() = default;
   ~Shader();
 
+  Shader(const Shader&) = delete;
+  Shader& operator=(const Shader&) = delete;
+
   bool Create(const std::string& name, const std::string& vertex_description);
   void Destroy();
   void Activate();

@@ -6,6 +6,7 @@
 #include "game_factory.h"
 #include "drawable.h"
 #include "input_event.h"
+#include <algorithm>
 
 namespace engine {
 
@@ -51,7 +52,11 @@ void Engine::AddDrawable(Drawable* drawable) {
 }
 
 void Engine::RemoveDrawable(Drawable* drawable) {
-  // TODO: Implement.
+  auto it = std::find(drawables_.begin(), drawables_.end(), drawable);
+  if (it != drawables_.end()) {
+    drawables_.erase(it);
+    return;
+  }
 }
 
 void Engine::Update(float delta_time) {

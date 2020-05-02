@@ -8,7 +8,10 @@ namespace engine {
 class Drawable {
  public:
   Drawable() = default;
-  virtual ~Drawable() = default;
+  virtual ~Drawable();
+
+  Drawable(const Drawable&) = delete;
+  Drawable& operator=(const Drawable&) = delete;
 
   virtual void Draw() = 0;
 

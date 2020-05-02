@@ -12,6 +12,9 @@ public:
   Texture() = default;
   ~Texture();
 
+  Texture(const Texture&) = delete;
+  Texture& operator=(const Texture&) = delete;
+
   bool Create(std::shared_ptr<const Image> image);
   void Destroy();
 

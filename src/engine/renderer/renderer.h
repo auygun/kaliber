@@ -35,6 +35,9 @@ class Renderer {
   Renderer();
   ~Renderer();
 
+  Renderer(const Renderer&) = delete;
+  Renderer& operator=(const Renderer&) = delete;
+
   bool StartWorker();
   void TerminateWorker();
 
