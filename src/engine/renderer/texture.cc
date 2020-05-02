@@ -7,20 +7,17 @@
 namespace engine {
 
 Texture::~Texture() {
-  // TODO: This is wrong. Same texture id is used by many texture instances.
-  // Create a resource manager.
   Destroy();
 }
 
 // TODO: separate create and update.
 bool Texture::Create(std::shared_ptr<const Image> image) {
+  Destroy();
   id = Engine::Get().GetRenderer().AcquireTextureResource(image);
   return id > 0;
 }
 
 void Texture::Destroy() {
-  // TODO: This is wrong. Same texture id is used by many texture instances.
-  // Create a resource manager.
   if (id)
     Engine::Get().GetRenderer().ReturnTextureResource(id);
 }

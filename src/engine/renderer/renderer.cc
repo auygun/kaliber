@@ -4,6 +4,7 @@
 #include <cstring>
 #include "../../base/log.h"
 #include "render_command.h"
+#include <algorithm>
 
 namespace {
 
@@ -99,34 +100,39 @@ void Renderer::TerminateWorker() {
 }
 
 int Renderer::AcquireTextureResource(std::shared_ptr<const Image> image) {
-  int id = 0;
+  int resource_id = 0;
   if (image->GetName().empty()) {
-    id = ++last_texture_id_;
+    resource_id = ++last_texture_resource_id_;
   } else {
-    auto it = texture_id_by_asset_name_.find(image->GetName());
-    if (it != texture_id_by_asset_name_.end())
-      return it->second;
-    id = ++last_texture_id_;
-    texture_id_by_asset_name_[image->GetName()] = id;
-    asset_name_by_texture_id_[id] = image->GetName();
+    auto it = texture_resources_.find(image->GetName());
+    if (it != texture_resources_.end()) {
+      ++(it->second.ref_count);
+      return it->second.resource_id;
+    }
+    resource_id = ++last_texture_resource_id_;
+    texture_resources_[image->GetName()] = {resource_id, 1};
+    DLOG << "AcquireTextureResource - Create! asset: " << image->GetName()
+         << ", resource_id: " << resource_id;
   }
 
   auto cmd = std::make_unique<CmdCreateTexture>();
-  cmd->id = id;
+  cmd->id = resource_id;
   cmd->image = image;
   EnqueueCommand(std::move(cmd));
-  return id;
+  return resource_id;
 }
 
-void Renderer::ReturnTextureResource(int id) {
-  auto it = asset_name_by_texture_id_.find(id);
-  if (it == asset_name_by_texture_id_.end())
-    return;
-  texture_id_by_asset_name_.erase(it->second);
-  asset_name_by_texture_id_.erase(it);
-
+void Renderer::ReturnTextureResource(int resource_id) {
+  auto it = std::find_if(texture_resources_.begin(), texture_resources_.end(),
+      [resource_id](auto& p){ return p.second.resource_id == resource_id; });
+  if (it != texture_resources_.end()) {
+    if (--(it->second.ref_count) > 0)
+      return;
+    DLOG << "ReturnTextureResource - Destroy! resource_id: " << resource_id;
+    texture_resources_.erase(it);
+  }
   auto cmd = std::make_unique<CmdDestoryTexture>();
-  cmd->id = id;
+  cmd->id = resource_id;
   EnqueueCommand(std::move(cmd));
 }
 

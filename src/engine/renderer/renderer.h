@@ -66,7 +66,7 @@ class Renderer {
 
   // Resouce management.
   int AcquireTextureResource(std::shared_ptr<const Image> image);
-  void ReturnTextureResource(int id);
+  void ReturnTextureResource(int resource_id);
 
   void EnterDrawStage();
   void ExitDrawStage();
@@ -128,6 +128,11 @@ class Renderer {
     std::unordered_map<std::string, GLuint> uniforms;
   };
 
+  struct TextureResource {
+    int resource_id = 0;
+    int ref_count = 0;
+  };
+
   TextureCompression texture_compression_;
   bool vertex_array_objects_ = false;
 
@@ -140,9 +145,9 @@ class Renderer {
   bool draw_stage_ = false;
 
   // TODO: Move to resource manager.
-  std::unordered_map<std::string, int> texture_id_by_asset_name_;
-  std::unordered_map<int, std::string> asset_name_by_texture_id_;
-  int last_texture_id_ = 0;
+  std::unordered_map<std::string, TextureResource> texture_resources_;
+  // TODO: Recycle resource ids.
+  int last_texture_resource_id_ = 0;
 
   std::unordered_map<int, GLuint> texture_map_;
   std::unordered_map<int, Geometry> geometry_map_;
