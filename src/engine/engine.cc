@@ -48,6 +48,8 @@ void Engine::Shutdown() {
 }
 
 void Engine::AddDrawable(Drawable* drawable) {
+  assert(std::find(drawables_.begin(), drawables_.end(), drawable) ==
+      drawables_.end());
   drawables_.push_back(drawable);
 }
 
