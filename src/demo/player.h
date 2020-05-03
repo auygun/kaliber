@@ -3,6 +3,7 @@
 
 #include "../base/vecmath.h"
 #include "game_object.h"
+#include "damage_type.h"
 #include "../engine/image_quad.h"
 #include "../engine/alpha_animator.h"
 #include "../engine/frame_animator.h"
@@ -23,8 +24,8 @@ class Player : public GameObject {
 
   void OnInputEvent(std::unique_ptr<engine::InputEvent> event);
 
-  Vector2 GetWeaponPos(int i) const { return weapon_[i].offset(); }
-  Vector2 GetWeaponScale(int i) const { return weapon_[i].scale(); }
+  Vector2 GetWeaponPos(DamageType type) const;
+  Vector2 GetWeaponScale(DamageType type) const;
 
  private:
   engine::ImageQuad drag_sign_[2];
@@ -38,17 +39,17 @@ class Player : public GameObject {
   engine::DrawAnimator beam_dot_animator_[2];
   engine::DrawAnimator beam_spark_animator_[2];
 
-  int active_weapon_ = -1;
+  DamageType active_weapon_ = kDamageType_Invalid;
 
   Vector2 drag_start_ = {0, 0};
   Vector2 drag_end_ = {0, 0};
 
-  void SetActiveWeapon(const Vector2& pos);
+  DamageType GetWeaponType(const Vector2& pos);
 
-  void SetBeamLength(int i, float len);
+  void SetBeamLength(DamageType type, float len);
 
-  void Fire(int i);
-  bool IsFiring(int i);
+  void Fire(DamageType type);
+  bool IsFiring(DamageType type);
 
   void SetupWeapons();
 };
