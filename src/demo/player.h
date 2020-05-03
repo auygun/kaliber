@@ -23,6 +23,9 @@ class Player : public GameObject {
 
   void OnInputEvent(std::unique_ptr<engine::InputEvent> event);
 
+  Vector2 GetWeaponPos(int i) const { return weapon_[i].offset(); }
+  Vector2 GetWeaponScale(int i) const { return weapon_[i].scale(); }
+
  private:
   engine::ImageQuad drag_sign_[2];
   engine::ImageQuad weapon_[2];

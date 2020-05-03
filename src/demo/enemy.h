@@ -17,7 +17,7 @@ class Enemy : public GameObject {
 
   void Update(float delta_time) override;
 
-  void TryTarget(const Vector2& weapon_pos, const Vector2& target_pos);
+  void SelectTarget(const Vector2& weapon_pos, const Vector2& target_pos);
 
  private:
   enum Type { kGreem, kBlue };

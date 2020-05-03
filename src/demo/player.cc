@@ -36,7 +36,7 @@ void Player::OnInputEvent(std::unique_ptr<engine::InputEvent> event) {
     if (active_weapon_ >=0 ) {
       drag_sign_[active_weapon_].SetOffset(drag_end_);
       Demo* game = static_cast<Demo*>(engine.GetGame());
-      game->GetEnemy().TryTarget(weapon_[active_weapon_].offset(), drag_end_);
+      game->GetEnemy().SelectTarget(weapon_[active_weapon_].offset(), drag_end_);
     }
   } else if (event->GetEventType() == engine::InputEvent::kDragEnd) {
     if (active_weapon_ >=0 ) {

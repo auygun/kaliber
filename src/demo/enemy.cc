@@ -1,9 +1,11 @@
 #include "enemy.h"
+#include "demo.h"
 #include "../base/log.h"
 #include "../base/random.h"
 #include "../engine/asset_manager/image.h"
 #include "../engine/engine.h"
 #include <memory>
+#include <limits>
 
 bool Enemy::Initialize() {
   engine::Engine& engine = engine::Engine::Get();
@@ -40,33 +42,46 @@ void Enemy::Update(float delta_time) {
   }
 }
 
-void Enemy::TryTarget(const Vector2& weapon_pos, const Vector2& target_pos) {
-  Vector2 beam_dir = (target_pos - weapon_pos).Normalize();
-
-  float smallest_cos_ang = 0;
+void Enemy::SelectTarget(const Vector2& weapon_pos, const Vector2& target_pos) {
   EnemyTraits* current_enemy = nullptr;
   EnemyTraits* best_enemy = nullptr;
+
+  Vector2 beam_dir = (target_pos - weapon_pos).Normalize();
+  float closest_dist = std::numeric_limits<float>::max();
+  LOG << "begin";
   for (auto& e : enemies_) {
     if (e.targetted)
       current_enemy = &e;
-    if ((e.sprite.offset() - target_pos).Magnitude() > e.sprite.scale().y * 2)
+
+    float target_enemy_dist = (e.sprite.offset() - target_pos).Magnitude();
+    if (e.sprite.offset().y > target_pos.y &&
+        target_enemy_dist > e.sprite.scale().y * 3)
       continue;
-    Vector2 enemy_dir = (e.sprite.offset() - weapon_pos).Normalize();
-    float cos_ang = enemy_dir.DotProduct(beam_dir);
-    LOG << cos_ang;
-    if (cos_ang > smallest_cos_ang) {
-      smallest_cos_ang = cos_ang;
+
+    Vector2 weapon_enemy_dir = e.sprite.offset() - weapon_pos;
+    float enemy_weapon_dist = weapon_enemy_dir.Magnitude();
+    weapon_enemy_dir.Normalize();
+    float sin_theta = weapon_enemy_dir.CrossProduct(beam_dir);
+    float beam_perpendicular_dist = abs(enemy_weapon_dist * sin_theta);
+    if (beam_perpendicular_dist > e.sprite.scale().x)
+      continue;
+
+    if (closest_dist > enemy_weapon_dist) {
+      closest_dist = enemy_weapon_dist;
       best_enemy = &e;
     }
   }
 
-  if (current_enemy && (best_enemy != current_enemy || smallest_cos_ang < 0.98f)) {
+  if (best_enemy == current_enemy)
+    return;
+
+  if (current_enemy) {
     current_enemy->targetted = false;
     current_enemy->target.SetVisible(false);
     current_enemy->target_frame_animator.Stop();
   }
 
-  if (best_enemy && best_enemy != current_enemy && smallest_cos_ang >= 0.98f) {
+  if (best_enemy) {
     best_enemy->targetted = true;
     best_enemy->target.SetVisible(true);
     best_enemy->target_frame_animator.Play(false, true);
@@ -75,6 +90,7 @@ void Enemy::TryTarget(const Vector2& weapon_pos, const Vector2& target_pos) {
 
 void Enemy::Spawn(Type type, const Vector2& pos, float speed) {
   engine::Engine& engine = engine::Engine::Get();
+  Demo* game = static_cast<Demo*>(engine.GetGame());
 
   auto& e = enemies_.emplace_back();
   e.type = type;
@@ -102,9 +118,13 @@ void Enemy::Spawn(Type type, const Vector2& pos, float speed) {
   else
     e.target_frame_animator.SetFrameRange(6 ,12, 11);
 
+  float max_distance = engine.GetScreenSize().y / 2 +
+      abs(game->GetPlayer().GetWeaponPos(0).y) -
+      game->GetPlayer().GetWeaponScale(0).y;
+
   e.draw_animator.AttachDrawable(&e.sprite);
   e.draw_animator.AttachDrawable(&e.target);
-  e.draw_animator.SetMovement({0, -1}, engine.GetScreenSize().y);
+  e.draw_animator.SetMovement({0, -1}, max_distance);
   e.draw_animator.SetCallback([&]()->void {
     e.sprite_frame_animator.Stop();
     e.sprite.SetVisible(false);
