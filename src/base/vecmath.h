@@ -16,6 +16,8 @@ class Vector2 {
 
   float DotProduct(const Vector2& v) { return x * v.x + y * v.y; }
 
+  float CrossProduct(const Vector2& v) { return x * v.y - y * v.x; }
+
   Vector2 operator-() { return Vector2(x * -1.0f, y * -1.0f); }
 
   Vector2 operator+=(const Vector2& v) { x += v.x; y += v.y; return *this; }
