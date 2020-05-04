@@ -34,7 +34,8 @@ void Enemy::Update(float delta_time) {
     Vector2 pos = {x, s.y / 2};
     float speed = RandomFloat();
 
-    UnitType unit_type = (UnitType)(RandomInt() % kUnitType_Max);
+    UnitType unit_type = (RandomInt() % 5) == 0 ?
+        kUnitType_Bug : kUnitType_Skull;
     DamageType damage_type = (DamageType)(RandomInt() % kDamageType_Max);
     Spawn(unit_type, damage_type, pos, speed);
   }
