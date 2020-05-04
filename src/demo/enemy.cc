@@ -34,7 +34,7 @@ void Enemy::Update(float delta_time) {
   }
 
   for (auto it = enemies_.begin(); it != enemies_.end(); ++ it) {
-    if (!it->alive) {
+    if (it->marked_for_removal) {
       it = enemies_.erase(it);
       continue;
     }
@@ -72,11 +72,6 @@ void Enemy::SelectTarget(DamageType type,
     if (e.targetted_by_weapon_ == type)
       current_enemy = &e;
 
-    float target_enemy_dist = (e.sprite.offset() - target_pos).Magnitude();
-    if (e.sprite.offset().y > target_pos.y &&
-        target_enemy_dist > e.sprite.scale().y * 3)
-      continue;
-
     Vector2 weapon_enemy_dir = e.sprite.offset() - weapon_pos;
     float enemy_weapon_dist = weapon_enemy_dir.Magnitude();
     weapon_enemy_dir.Normalize();
@@ -111,15 +106,28 @@ void Enemy::SelectTarget(DamageType type,
   }
 }
 
+void Enemy::DeselectTarget(DamageType type) {
+  EnemyTraits *target = GetTarget(type);
+  if (target) {
+    target->targetted_by_weapon_ = kDamageType_Invalid;
+    target->target.SetVisible(false);
+    target->target_frame_animator.Stop();
+  }
+}
+
 void Enemy::KillTarget(DamageType type) {
   EnemyTraits *target = GetTarget(type);
-  if (!target || target->type != type)
+  if (!target || target->type != type) {
+    if (target)
+      target->target.SetVisible(false);
     return;
+  }
+  target->alive = false;
   target->sprite.SetVisible(false);
   target->blast.SetVisible(true);
   target->blast_frame_animator.Play(false, true);
   target->blast_frame_animator.SetCallback(5, [target]()->void {
-    target->alive = false;
+    target->marked_for_removal = true;
   });
 }
 
@@ -175,6 +183,7 @@ void Enemy::Spawn(DamageType type, const Vector2& pos, float speed) {
     e.sprite_frame_animator.Stop();
     e.sprite.SetVisible(false);
     e.alive = false;
+    e.marked_for_removal = true;
   });
   e.draw_animator.Play(false);
 }

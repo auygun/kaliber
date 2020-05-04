@@ -23,6 +23,7 @@ class Enemy {
   void SelectTarget(DamageType type,
                     const Vector2& weapon_pos,
                     const Vector2& target_pos);
+  void DeselectTarget(DamageType type);
   void KillTarget(DamageType type);
 
  private:
@@ -30,6 +31,7 @@ class Enemy {
   struct EnemyTraits {
     DamageType type = kDamageType_Invalid;
     bool alive = true;
+    bool marked_for_removal = false;
     DamageType targetted_by_weapon_ = kDamageType_Invalid;
     engine::ImageQuad sprite;
     engine::ImageQuad target;

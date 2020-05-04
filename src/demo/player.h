@@ -49,6 +49,11 @@ class Player {
   bool IsFiring(DamageType type);
 
   void SetupWeapons();
+
+  void DragStart(const Vector2& pos);
+  void Drag(const Vector2& pos);
+  void DragEnd();
+  bool ValidateDrag();
 };
 
 #endif  // PLAYER_H

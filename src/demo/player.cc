@@ -21,34 +21,12 @@ void Player::Update(float delta_time) {
 }
 
 void Player::OnInputEvent(std::unique_ptr<engine::InputEvent> event) {
-  engine::Engine& engine = engine::Engine::Get();
-
-  if (event->GetEventType() == engine::InputEvent::kDragStart) {
-    drag_start_ = event->GetEventVector(0);
-    active_weapon_ = GetWeaponType(drag_start_);
-    if (active_weapon_ != kDamageType_Invalid) {
-      // active_weapon_ = type;
-      drag_sign_[active_weapon_].SetOffset(drag_start_);
-      drag_sign_[active_weapon_].SetVisible(true);
-    }
-  } else if (event->GetEventType() == engine::InputEvent::kDrag) {
-    drag_end_ = event->GetEventVector(0);
-    if (active_weapon_ != kDamageType_Invalid) {
-      drag_sign_[active_weapon_].SetOffset(drag_end_);
-      if (!IsFiring(active_weapon_)) {
-        Demo* game = static_cast<Demo*>(engine.GetGame());
-        game->GetEnemy().SelectTarget((DamageType)active_weapon_,
-            weapon_[active_weapon_].offset(), drag_end_);
-      }
-    }
-  } else if (event->GetEventType() == engine::InputEvent::kDragEnd) {
-    if (active_weapon_ != kDamageType_Invalid) {
-      drag_sign_[active_weapon_].SetVisible(false);
-      if (!IsFiring(active_weapon_))
-        Fire(active_weapon_);
-      active_weapon_ = kDamageType_Invalid;
-    }
-  }
+  if (event->GetEventType() == engine::InputEvent::kDragStart)
+    DragStart(event->GetEventVector(0));
+  else if (event->GetEventType() == engine::InputEvent::kDrag)
+    Drag(event->GetEventVector(0));
+  else if (event->GetEventType() == engine::InputEvent::kDragEnd)
+    DragEnd();
 }
 
 Vector2 Player::GetWeaponPos(DamageType type) const {
@@ -60,11 +38,9 @@ Vector2 Player::GetWeaponScale(DamageType type) const {
 }
 
 DamageType Player::GetWeaponType(const Vector2& pos) {
-  for (int i = 0; i < 2; ++i) {
-    if ((drag_start_ - weapon_[i].offset()).Magnitude() < weapon_[i].scale().x)
-      return (DamageType)i;
-  }
-  return kDamageType_Invalid;
+  if (pos.y > 0)
+    return kDamageType_Invalid;
+  return pos.x < 0 ? kDamageType_Blue : kDamageType_Green;
 }
 
 void Player::SetBeamLength(DamageType type, float len) {
@@ -88,12 +64,8 @@ void Player::Fire(DamageType type) {
 
   Vector2 dir = weapon_[type].offset() -
       (enemy.HasTarget(type) ? enemy.GetTargetPos(type) : drag_end_);
-  float len = dir.Magnitude();
-  if (len < weapon_[type].scale().y)
-    return;
-  if (dir.DotProduct(Vector2(0 ,1)) >= 0)
-    return;
 
+  float len = dir.Magnitude();
   SetBeamLength(type, len);
 
   dir.Normalize();
@@ -179,4 +151,68 @@ void Player::SetupWeapons() {
     beam_animator_[i].AttachDrawable(&beam_[i]);
     beam_animator_[i].SetSpeed(8);
   }
+}
+
+void Player::DragStart(const Vector2& pos) {
+  drag_start_ = pos;
+  active_weapon_ = GetWeaponType(drag_start_);
+  if (active_weapon_ == kDamageType_Invalid)
+    return;
+  drag_sign_[active_weapon_].SetOffset(drag_start_);
+  drag_sign_[active_weapon_].SetVisible(true);
+}
+
+void Player::Drag(const Vector2& pos) {
+  drag_end_ = pos;
+  if (active_weapon_ == kDamageType_Invalid)
+    return;
+  drag_sign_[active_weapon_].SetOffset(drag_end_);
+
+  if (IsFiring(active_weapon_))
+    return;
+
+  engine::Engine& engine = engine::Engine::Get();
+  Demo* game = static_cast<Demo*>(engine.GetGame());
+
+  if (!ValidateDrag()) {
+    game->GetEnemy().DeselectTarget((DamageType)active_weapon_);
+    return;
+  }
+
+  game->GetEnemy().SelectTarget((DamageType)active_weapon_,
+  weapon_[active_weapon_].offset(), drag_end_);
+}
+
+void Player::DragEnd() {
+  DamageType type = active_weapon_;
+  active_weapon_ = kDamageType_Invalid;
+  drag_sign_[type].SetVisible(false);
+
+  if (type == kDamageType_Invalid)
+    return;
+
+  engine::Engine& engine = engine::Engine::Get();
+  Demo* game = static_cast<Demo*>(engine.GetGame());
+
+  if (IsFiring(type))
+    return;
+
+  if (!ValidateDrag()) {
+    game->GetEnemy().DeselectTarget((DamageType)type);
+    return;
+  }
+
+  Fire(type);
+  type = kDamageType_Invalid;
+}
+
+bool Player::ValidateDrag() {
+  Vector2 dir = drag_end_ - drag_start_;
+  float len = dir.Magnitude();
+  dir.Normalize();
+  if (len < weapon_[active_weapon_].scale().y)
+    return false;
+  if (dir.DotProduct(Vector2(0 ,1)) < 0)
+    return false;
+  return true;
 }
