@@ -146,7 +146,7 @@ void Player::SetupWeapons() {
       beam_spark_animator_[i].Stop();
       beam_spark_[i].SetVisible(false);
       beam_animator_[i].FadeOut();
-      static_cast<Demo*>(engine.GetGame())->GetEnemy().KillTarget((DamageType)i);
+      static_cast<Demo*>(engine.GetGame())->GetEnemy().HitTarget((DamageType)i);
     });
     beam_animator_[i].AttachDrawable(&beam_[i]);
     beam_animator_[i].SetSpeed(8);

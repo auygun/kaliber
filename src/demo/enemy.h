@@ -24,7 +24,7 @@ class Enemy {
                     const Vector2& weapon_pos,
                     const Vector2& target_pos);
   void DeselectTarget(DamageType damage_type);
-  void KillTarget(DamageType damage_type);
+  void HitTarget(DamageType damage_type);
 
  private:
   enum UnitType {
@@ -38,9 +38,9 @@ class Enemy {
     UnitType unit_type = kUnitType_Invalid;
     DamageType damage_type = kDamageType_Invalid;
 
-    bool alive = true;
     bool marked_for_removal = false;
     DamageType targetted_by_weapon_ = kDamageType_Invalid;
+    int hit_points = 0;
 
     engine::ImageQuad sprite;
     engine::ImageQuad target;

@@ -72,7 +72,7 @@ void Enemy::SelectTarget(DamageType damage_type,
   float closest_dist = std::numeric_limits<float>::max();
   LOG << "begin";
   for (auto& e : enemies_) {
-    if (!e.alive)
+    if (e.hit_points <= 0 || e.marked_for_removal)
       continue;
 
     if (e.targetted_by_weapon_ == damage_type)
@@ -121,20 +121,30 @@ void Enemy::DeselectTarget(DamageType damage_type) {
   }
 }
 
-void Enemy::KillTarget(DamageType damage_type) {
+void Enemy::HitTarget(DamageType damage_type) {
   Unit *target = GetTarget(damage_type);
   if (!target || target->damage_type != damage_type) {
     if (target)
       target->target.SetVisible(false);
     return;
   }
-  target->alive = false;
-  target->sprite.SetVisible(false);
-  target->blast.SetVisible(true);
-  target->blast_frame_animator.Play(false, true);
-  target->blast_frame_animator.SetCallback(5, [target]()->void {
-    target->marked_for_removal = true;
-  });
+  if (--target->hit_points <= 0) {
+    target->sprite.SetVisible(false);
+    target->blast.SetVisible(true);
+    target->blast_frame_animator.Play(false, true);
+    target->blast_frame_animator.SetCallback(5, [target]()->void {
+      target->marked_for_removal = true;
+    });
+  } else {
+    target->targetted_by_weapon_ = kDamageType_Invalid;
+    target->blast.SetVisible(true);
+    target->target_frame_animator.Stop();
+    target->blast_frame_animator.Play(false, true);
+    target->blast_frame_animator.SetCallback(5, [target]()->void {
+      target->target.SetVisible(false);
+      target->blast.SetVisible(false);
+    });
+  }
 }
 
 void Enemy::Spawn(UnitType unit_type,
@@ -150,10 +160,13 @@ void Enemy::Spawn(UnitType unit_type,
   auto& e = enemies_.emplace_back();
   e.unit_type = unit_type;
   e.damage_type = damage_type;
-  if (unit_type == kUnitType_Skull)
+  if (unit_type == kUnitType_Skull) {
+    e.hit_points = 1;
     e.sprite.Create(skull_frames_, {10, 6});
-  else
+  } else {
+    e.hit_points = 2;
     e.sprite.Create(bug_frames_, {10, 4});
+  }
   e.sprite.Scale(2);
   e.sprite.SetVisible(true);
   e.sprite.SetOffset(pos);
@@ -205,7 +218,6 @@ void Enemy::Spawn(UnitType unit_type,
   e.draw_animator.SetCallback([&]()->void {
     e.sprite_frame_animator.Stop();
     e.sprite.SetVisible(false);
-    e.alive = false;
     e.marked_for_removal = true;
   });
   e.draw_animator.Play(false);
@@ -213,7 +225,8 @@ void Enemy::Spawn(UnitType unit_type,
 
 Enemy::Unit* Enemy::GetTarget(DamageType damage_type) {
   for (auto& e : enemies_) {
-    if (e.targetted_by_weapon_ == damage_type)
+    if (e.targetted_by_weapon_ == damage_type && e.hit_points > 0 &&
+       !e.marked_for_removal)
       return &e;
   }
   return nullptr;
