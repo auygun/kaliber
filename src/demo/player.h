@@ -2,7 +2,6 @@
 #define PLAYER_H
 
 #include "../base/vecmath.h"
-#include "game_object.h"
 #include "damage_type.h"
 #include "../engine/image_quad.h"
 #include "../engine/alpha_animator.h"
@@ -13,14 +12,14 @@ namespace engine {
 class InputEvent;
 } //  namespace engine
 
-class Player : public GameObject {
+class Player {
  public:
   Player() = default;
-  ~Player() override = default;
+  ~Player() = default;
 
-  bool Initialize() override;
+  bool Initialize();
 
-  void Update(float delta_time) override;
+  void Update(float delta_time);
 
   void OnInputEvent(std::unique_ptr<engine::InputEvent> event);
 

@@ -1,7 +1,6 @@
 #ifndef ENEMY_H
 #define ENEMY_H
 
-#include "game_object.h"
 #include "damage_type.h"
 #include "../engine/image_quad.h"
 #include "../engine/draw_animator.h"
@@ -9,14 +8,14 @@
 #include <list>
 #include <memory>
 
-class Enemy : public GameObject {
+class Enemy {
  public:
   Enemy() = default;
-  ~Enemy() override = default;
+  ~Enemy() = default;
 
-  bool Initialize() override;
+  bool Initialize();
 
-  void Update(float delta_time) override;
+  void Update(float delta_time);
 
   bool HasTarget(DamageType type);
   Vector2 GetTargetPos(DamageType type);
