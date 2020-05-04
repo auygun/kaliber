@@ -32,7 +32,7 @@ void Enemy::Update(float delta_time) {
     float col = (float)(RandomInt() % 5);
     float x = (s.x / 5) / 2 + (s.x / 5) * col - s.x / 2;
     Vector2 pos = {x, s.y / 2};
-    float speed = RandomFloat();
+    float speed = (RandomInt() % 4) == 0 ? 0.01f : 0.006f;
 
     UnitType unit_type = (RandomInt() % 5) == 0 ?
         kUnitType_Bug : kUnitType_Skull;
@@ -215,7 +215,7 @@ void Enemy::Spawn(UnitType unit_type,
   e.draw_animator.AttachDrawable(&e.target);
   e.draw_animator.AttachDrawable(&e.blast);
   e.draw_animator.SetMovement({0, -1}, max_distance);
-  e.draw_animator.SetSpeed(0.006f);
+  e.draw_animator.SetSpeed(speed);
   e.draw_animator.SetCallback([&]()->void {
     e.sprite_frame_animator.Stop();
     e.sprite.SetVisible(false);
