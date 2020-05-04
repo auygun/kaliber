@@ -170,7 +170,8 @@ void Enemy::Spawn(UnitType unit_type,
   }
   e.sprite.Scale(2);
   e.sprite.SetVisible(true);
-  e.sprite.SetOffset(pos);
+  Vector2 spawn_pos = pos + Vector2(0, e.sprite.scale().y /2);
+  e.sprite.SetOffset(spawn_pos);
   engine.AddDrawable(&e.sprite);
 
   e.sprite_frame_animator.AttachFrameController(&e.sprite);
@@ -189,12 +190,12 @@ void Enemy::Spawn(UnitType unit_type,
 
   e.target.Create(target_frames_, {6, 2});
   e.target.Scale(2);
-  e.target.SetOffset(pos);
+  e.target.SetOffset(spawn_pos);
   engine.AddDrawable(&e.target);
 
   e.blast.Create(blast_frames_, {6, 2});
   e.blast.Scale(2);
-  e.blast.SetOffset(pos);
+  e.blast.SetOffset(spawn_pos);
   engine.AddDrawable(&e.blast);
 
   e.target_frame_animator.AttachFrameController(&e.target);
