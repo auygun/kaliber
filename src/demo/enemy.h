@@ -27,8 +27,7 @@ class Enemy {
   void KillTarget(DamageType type);
 
  private:
-
-  struct EnemyTraits {
+  struct Unit {
     DamageType type = kDamageType_Invalid;
     bool alive = true;
     bool marked_for_removal = false;
@@ -46,12 +45,12 @@ class Enemy {
   std::shared_ptr<const engine::Image> target_frames_;
   std::shared_ptr<const engine::Image> blast_frames_;
 
-  std::list<EnemyTraits> enemies_;
+  std::list<Unit> enemies_;
   float seconds_since_last_spawn_ = 0;
 
   void Spawn(DamageType type, const Vector2& pos, float speed);
 
-  EnemyTraits* GetTarget(DamageType type);
+  Unit* GetTarget(DamageType type);
 };
 
 #endif  // ENEMY_H

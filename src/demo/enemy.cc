@@ -50,7 +50,7 @@ bool Enemy::HasTarget(DamageType type) {
 }
 
 Vector2 Enemy::GetTargetPos(DamageType type) {
-  EnemyTraits *target = GetTarget(type);
+  Unit *target = GetTarget(type);
   if (target)
     return target->sprite.offset() - Vector2(0, target->sprite.scale().y / 2.5f);
   return {0, 0};
@@ -59,8 +59,8 @@ Vector2 Enemy::GetTargetPos(DamageType type) {
 void Enemy::SelectTarget(DamageType type,
                          const Vector2& weapon_pos,
                          const Vector2& target_pos) {
-  EnemyTraits* current_enemy = nullptr;
-  EnemyTraits* best_enemy = nullptr;
+  Unit* current_enemy = nullptr;
+  Unit* best_enemy = nullptr;
 
   Vector2 beam_dir = (target_pos - weapon_pos).Normalize();
   float closest_dist = std::numeric_limits<float>::max();
@@ -107,7 +107,7 @@ void Enemy::SelectTarget(DamageType type,
 }
 
 void Enemy::DeselectTarget(DamageType type) {
-  EnemyTraits *target = GetTarget(type);
+  Unit *target = GetTarget(type);
   if (target) {
     target->targetted_by_weapon_ = kDamageType_Invalid;
     target->target.SetVisible(false);
@@ -116,7 +116,7 @@ void Enemy::DeselectTarget(DamageType type) {
 }
 
 void Enemy::KillTarget(DamageType type) {
-  EnemyTraits *target = GetTarget(type);
+  Unit *target = GetTarget(type);
   if (!target || target->type != type) {
     if (target)
       target->target.SetVisible(false);
@@ -188,7 +188,7 @@ void Enemy::Spawn(DamageType type, const Vector2& pos, float speed) {
   e.draw_animator.Play(false);
 }
 
-Enemy::EnemyTraits* Enemy::GetTarget(DamageType type) {
+Enemy::Unit* Enemy::GetTarget(DamageType type) {
   for (auto& e : enemies_) {
     if (e.targetted_by_weapon_ == type)
       return &e;
