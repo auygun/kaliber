@@ -16,7 +16,6 @@ void Player::Update(float delta_time) {
   for (int i = 0; i < 2; ++i) {
     weapon_animator_[i].Update(delta_time);
     beam_animator_[i].Update(delta_time);
-    beam_dot_animator_[i].Update(delta_time);
     beam_spark_animator_[i].Update(delta_time);
   }
 }
@@ -101,19 +100,15 @@ void Player::Fire(DamageType type) {
   float cos_angle = dir.DotProduct(Vector2(1 ,0));
   float angle = acos(cos_angle) + M_PI;
   beam_[type].Rotate(angle);
-  beam_dot_[type].Rotate(angle);
   beam_spark_[type].Rotate(angle);
 
-  beam_dot_animator_[type].SetMovement(-dir, beam_[type].scale().x * 0.9f);
   beam_spark_animator_[type].SetMovement(-dir, beam_[type].scale().x * 0.9f);
-
   weapon_animator_[type].Play(false, true);
 }
 
 bool Player::IsFiring(DamageType type) {
   return weapon_animator_[type].IsPlaying() ||
       beam_animator_[type].IsPlaying() ||
-      beam_dot_animator_[type].IsPlaying() ||
       beam_spark_animator_[type].IsPlaying();
 }
 
@@ -124,8 +119,6 @@ void Player::SetupWeapons() {
       engine.GetAssetManager().GetImage("enemy_anims_flare_ok.png");
   auto beam_image =
       engine.GetAssetManager().GetImage("enemy_ray_ok.png");
-  auto beam_dot_image =
-      engine.GetAssetManager().GetImage("enemy_ray_dot_ok.png");
 
   for (int i = 0; i < 2; ++i) {
     // Setup draw sign.
@@ -149,15 +142,6 @@ void Player::SetupWeapons() {
     beam_[i].SetPivot(beam_[i].offset());
     engine.AddDrawable(&beam_[i]);
 
-    // Setup beam dot.
-    beam_dot_[i].Create(beam_dot_image, {1, 2});
-    beam_dot_[i].SetCurrentFrame(i);
-    beam_dot_[i].Scale(2);
-    beam_dot_[i].PlaceToRightOf(weapon_[i]);
-    beam_dot_[i].Translate(weapon_[i].scale() * Vector2(-0.5f, 0));
-    beam_dot_[i].SetPivot(beam_dot_[i].offset());
-    engine.AddDrawable(&beam_dot_[i]);
-
     // Setup beam spark.
     beam_spark_[i].Create(weapon_image, {8, 2});
     beam_spark_[i].SetCurrentFrame(i * 8 + 1);
@@ -171,7 +155,6 @@ void Player::SetupWeapons() {
     Vector2 offset = engine.GetScreenSize() / Vector2(i ? -4 : 4 , -2)
         + Vector2(0, weapon_[i].scale().y);
     beam_[i].Translate(offset);
-    beam_dot_[i].Translate(offset);
     beam_spark_[i].Translate(offset);
     weapon_[i].Translate(offset);
 
@@ -182,14 +165,6 @@ void Player::SetupWeapons() {
     weapon_animator_[i].SetCallback(5, [&, i]()->void {
       beam_[i].SetColor({1, 1, 1, 1});
       beam_[i].SetVisible(true);
-      beam_dot_[i].SetVisible(true);
-      beam_dot_animator_[i].Play(false);
-    });
-    beam_dot_animator_[i].AttachDrawable(&beam_dot_[i]);
-    beam_dot_animator_[i].SetSpeed(0.2f);
-    beam_dot_animator_[i].SetCallback([&, i]()->void {
-      beam_dot_animator_[i].Stop();
-      beam_dot_[i].SetVisible(false);
       beam_spark_[i].SetVisible(true);
       beam_spark_animator_[i].Play(false);
     });

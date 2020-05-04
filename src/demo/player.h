@@ -30,12 +30,10 @@ class Player {
   engine::ImageQuad drag_sign_[2];
   engine::ImageQuad weapon_[2];
   engine::ImageQuad beam_[2];
-  engine::ImageQuad beam_dot_[2];
   engine::ImageQuad beam_spark_[2];
 
   engine::FrameAnimator weapon_animator_[2];
   engine::AlphaAnimator beam_animator_[2];
-  engine::DrawAnimator beam_dot_animator_[2];
   engine::DrawAnimator beam_spark_animator_[2];
 
   DamageType active_weapon_ = kDamageType_Invalid;
