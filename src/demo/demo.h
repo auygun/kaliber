@@ -6,6 +6,7 @@
 #include "background.h"
 #include "enemy.h"
 #include "player.h"
+#include "sky_quad.h"
 #include "../engine/game.h"
 #include "../engine/image_quad.h"
 
@@ -25,6 +26,7 @@ class Demo : public engine::Game {
   Background bg_;
   Player player_;
   Enemy enemy_;
+  engine::SkyQuad sky_;
 };
 
 #endif  // DEMO_H

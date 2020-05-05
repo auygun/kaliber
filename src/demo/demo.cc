@@ -16,7 +16,12 @@ DECLARE_GAME(Demo)
 DECLARE_GAME_END
 
 bool Demo::Initialize() {
-  bg_.Initialize();
+  // bg_.Initialize();
+
+  engine::Engine& engine = engine::Engine::Get();
+  sky_.Create();
+  sky_.SetVisible(true);
+  engine.AddDrawable(&sky_);
 
   if (!enemy_.Initialize()) {
     LOG << "Failed to create the enemy.";
@@ -43,7 +48,7 @@ void Demo::Update(float delta_time) {
     }
   }
 
-  bg_.Update(delta_time);
+  // bg_.Update(delta_time);
   enemy_.Update(delta_time);
   player_.Update(delta_time);
 }

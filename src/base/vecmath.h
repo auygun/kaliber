@@ -67,6 +67,10 @@ class Vector3 {
   const float* GetData() const { return &x; }
 };
 
+inline Vector3 operator+(const Vector3& v1, const Vector3& v2) {
+  return Vector3(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
+}
+
 class Vector4 {
  public:
   float x, y, z, w;
