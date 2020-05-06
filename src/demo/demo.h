@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <memory>
-#include "background.h"
 #include "enemy.h"
 #include "player.h"
 #include "sky_quad.h"
@@ -23,7 +22,6 @@ class Demo : public engine::Game {
   Enemy& GetEnemy() { return enemy_; }
 
  private:
-  Background bg_;
   Player player_;
   Enemy enemy_;
   engine::SkyQuad sky_;
