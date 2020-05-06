@@ -3,6 +3,7 @@
 #include "../engine/asset_manager/image.h"
 #include "../base/font.h"
 #include "engine.h"
+#include "../platform/platform.h"
 #include "renderer/geometry.h"
 #include "renderer/shader.h"
 #include <cassert>
@@ -29,6 +30,7 @@ bool ImageQuad::Create(std::shared_ptr<const Image> image,
 
 void ImageQuad::ResetScale() {
   SetScale(engine::Engine::Get().ToScale(Vector2(frame_width_, frame_height_)));
+  Scale((float)Platform::Get().GetDeviceDpi() / 200.0f);
 }
 
 size_t ImageQuad::GetNumFrames() {

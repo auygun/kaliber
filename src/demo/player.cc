@@ -47,8 +47,7 @@ void Player::SetBeamLength(DamageType type, float len) {
   engine::Engine& engine = engine::Engine::Get();
 
   beam_[type].SetOffset({0, 0});
-  beam_[type].ResetScale();
-  beam_[type].Scale({len, 2});
+  beam_[type].SetScale({len, beam_[type].scale().y});
   beam_[type].PlaceToRightOf(weapon_[type]);
   beam_[type].Translate(weapon_[type].scale() * Vector2(-0.5f, 0));
   beam_[type].SetPivot(beam_[type].offset());
@@ -96,19 +95,16 @@ void Player::SetupWeapons() {
     // Setup draw sign.
     drag_sign_[i].Create(weapon_image, {8, 2});
     drag_sign_[i].SetCurrentFrame(i * 8);
-    drag_sign_[i].Scale(2);
     engine.AddDrawable(&drag_sign_[i]);
 
     // Setup weapon.
     weapon_[i].Create(weapon_image, {8, 2});
-    weapon_[i].Scale(2);
     weapon_[i].SetVisible(true);
     engine.AddDrawable(&weapon_[i]);
 
     // Setup beam.
     beam_[i].Create(beam_image, {1, 2});
     beam_[i].SetCurrentFrame(i);
-    beam_[i].Scale(2);
     beam_[i].PlaceToRightOf(weapon_[i]);
     beam_[i].Translate(weapon_[i].scale() * Vector2(-0.5f, 0));
     beam_[i].SetPivot(beam_[i].offset());
@@ -117,7 +113,6 @@ void Player::SetupWeapons() {
     // Setup beam spark.
     beam_spark_[i].Create(weapon_image, {8, 2});
     beam_spark_[i].SetCurrentFrame(i * 8 + 1);
-    beam_spark_[i].Scale(2);
     beam_spark_[i].PlaceToRightOf(weapon_[i]);
     beam_spark_[i].Translate(weapon_[i].scale() * Vector2(-0.5f, 0));
     beam_spark_[i].SetPivot(beam_spark_[i].offset());

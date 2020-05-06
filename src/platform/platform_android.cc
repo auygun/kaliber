@@ -201,8 +201,8 @@ void Platform::Initialize(android_app* app) {
   root_path_ = GetApkPath(app->activity);
   LOG << "Root path: " << root_path_.c_str();
 
-  int dpi = getDensityDpi(app);
-  LOG << "DPI: " << dpi;
+  device_dpi_ = getDensityDpi(app);
+  LOG << "Device DPI: " << device_dpi_;
 
   app->userData = reinterpret_cast<void*>(this);
   app->onAppCmd = Platform::HandleCmd;

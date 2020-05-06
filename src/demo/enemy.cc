@@ -168,7 +168,6 @@ void Enemy::Spawn(UnitType unit_type,
     e.hit_points = 2;
     e.sprite.Create(bug_frames_, {10, 4});
   }
-  e.sprite.Scale(2);
   e.sprite.SetVisible(true);
   Vector2 spawn_pos = pos + Vector2(0, e.sprite.scale().y /2);
   e.sprite.SetOffset(spawn_pos);
@@ -189,12 +188,10 @@ void Enemy::Spawn(UnitType unit_type,
   e.sprite_frame_animator.Play(true, true);
 
   e.target.Create(target_frames_, {6, 2});
-  e.target.Scale(2);
   e.target.SetOffset(spawn_pos);
   engine.AddDrawable(&e.target);
 
   e.blast.Create(blast_frames_, {6, 2});
-  e.blast.Scale(2);
   e.blast.SetOffset(spawn_pos);
   engine.AddDrawable(&e.blast);
 

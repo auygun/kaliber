@@ -37,7 +37,9 @@ class Platform {
 
   void RunMainLoop();
 
-  const std::string& GetRootPath() { return root_path_; }
+  int GetDeviceDpi() const { return device_dpi_; }
+
+  const std::string& GetRootPath() const { return root_path_; }
 
 #if defined(__ANDROID__)
   ANativeWindow* GetNativeWindow();
@@ -47,6 +49,7 @@ class Platform {
   } internal_error;
 
  private:
+  int device_dpi_ = 200;
   std::string root_path_;
   bool has_focus_ = false;
   bool should_exit_ = false;
