@@ -34,8 +34,17 @@ std::string GetApkPath(ANativeActivity* activity) {
   env->ReleaseStringUTFChars(source_dir_obj, source_dir);
   env->DeleteLocalRef(app_info_clazz);
   env->DeleteLocalRef(activity_clazz);
+  activity->vm->DetachCurrentThread();
 
   return apk_path;
+}
+
+int32_t getDensityDpi(android_app* app) {
+  AConfiguration* config = AConfiguration_new();
+  AConfiguration_fromAssetManager(config, app->activity->assetManager);
+  int32_t density = AConfiguration_getDensity(config);
+  AConfiguration_delete(config);
+  return density;
 }
 
 }  // namespace
@@ -147,6 +156,18 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       platform->has_focus_ = false;
       break;
 
+    case APP_CMD_CONFIG_CHANGED:
+      if (platform->app_->window != NULL) {
+        int width = engine::Engine::Get().GetRenderer().GetScreenWidth();
+        int height = engine::Engine::Get().GetRenderer().GetScreenHeight();
+        if (width != ANativeWindow_getWidth(app->window) ||
+            height != ANativeWindow_getHeight(app->window)) {
+          engine::Engine::Get().GetRenderer().TerminateWorker();
+          engine::Engine::Get().GetRenderer().StartWorker();
+        }
+      }
+    break;
+
     case APP_CMD_STOP:
       break;
 
@@ -179,6 +200,9 @@ void Platform::Initialize(android_app* app) {
 
   root_path_ = GetApkPath(app->activity);
   LOG << "Root path: " << root_path_.c_str();
+
+  int dpi = getDensityDpi(app);
+  LOG << "DPI: " << dpi;
 
   app->userData = reinterpret_cast<void*>(this);
   app->onAppCmd = Platform::HandleCmd;
