@@ -53,7 +53,7 @@ void Player::SetBeamLength(DamageType type, float len) {
   beam_[type].SetPivot(beam_[type].offset());
 
   Vector2 offset = engine.GetScreenSize() / Vector2(type ? -4 : 4 , -2)
-      + Vector2(0, weapon_[type].scale().y);
+      + Vector2(0, weapon_[type].scale().y) / 2;
   beam_[type].Translate(offset);
 }
 
@@ -73,7 +73,7 @@ void Player::Fire(DamageType type) {
   beam_[type].Rotate(angle);
   beam_spark_[type].Rotate(angle);
 
-  beam_spark_animator_[type].SetMovement(-dir, beam_[type].scale().x * 0.9f);
+  beam_spark_animator_[type].SetMovement(-dir, beam_[type].scale().x * 0.85f);
   weapon_animator_[type].Play(false, true);
 }
 
@@ -118,9 +118,9 @@ void Player::SetupWeapons() {
     beam_spark_[i].SetPivot(beam_spark_[i].offset());
     engine.AddDrawable(&beam_spark_[i]);
 
-    // Place parts.
+    // Place parts on the screen.
     Vector2 offset = engine.GetScreenSize() / Vector2(i ? -4 : 4 , -2)
-        + Vector2(0, weapon_[i].scale().y);
+        + Vector2(0, weapon_[i].scale().y / 2);
     beam_[i].Translate(offset);
     beam_spark_[i].Translate(offset);
     weapon_[i].Translate(offset);
