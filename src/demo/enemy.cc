@@ -29,7 +29,7 @@ void Enemy::Update(float delta_time) {
     seconds_since_last_spawn_ = 0;
 
     Vector2 s = engine.GetScreenSize();
-    float col = (float)(RandomInt() % 5);
+    float col = (float)(RandomInt() % 4);
     float x = (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2;
     Vector2 pos = {x, s.y / 2};
     float speed = (RandomInt() % 4) == 0 ? 0.65f : 0.4f;
