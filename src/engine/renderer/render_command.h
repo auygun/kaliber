@@ -7,7 +7,7 @@
 #include <string>
 #include <array>
 
-namespace engine {
+namespace eng {
 
 class Image;
 
@@ -142,6 +142,6 @@ RENDER_COMMAND_BEGIN(CmdSetUniformFloat)
   float f;
 RENDER_COMMAND_END
 
-} // namespace engine 
+} // namespace eng
 
 #endif // RENDER_COMMAND_H

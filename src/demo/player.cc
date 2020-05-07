@@ -21,17 +21,17 @@ void Player::Update(float delta_time) {
   }
 }
 
-void Player::OnInputEvent(std::unique_ptr<engine::InputEvent> event) {
-  if (event->GetEventType() == engine::InputEvent::kDragStart)
+void Player::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
+  if (event->GetEventType() == eng::InputEvent::kDragStart)
     DragStart(event->GetEventVector(0));
-  else if (event->GetEventType() == engine::InputEvent::kDrag)
+  else if (event->GetEventType() == eng::InputEvent::kDrag)
     Drag(event->GetEventVector(0));
-  else if (event->GetEventType() == engine::InputEvent::kDragEnd)
+  else if (event->GetEventType() == eng::InputEvent::kDragEnd)
     DragEnd();
 }
 
 Vector2 Player::GetWeaponPos(DamageType type) const {
-  engine::Engine& engine = engine::Engine::Get();
+  eng::Engine& engine = eng::Engine::Get();
   return engine.GetScreenSize() /
       Vector2(type == kDamageType_Green ? 4 : -4 , -2) +
       Vector2(0, weapon_[type].GetScale().y / 2);
@@ -51,7 +51,7 @@ void Player::SetBeamLength(DamageType type, float len) {
 }
 
 void Player::Fire(DamageType type) {
-  engine::Engine& engine = engine::Engine::Get();
+  eng::Engine& engine = eng::Engine::Get();
   Enemy &enemy = static_cast<Demo*>(engine.GetGame())->GetEnemy();
 
   Vector2 dir = weapon_[type].GetOffset() -
@@ -77,7 +77,7 @@ bool Player::IsFiring(DamageType type) {
 }
 
 void Player::SetupWeapons() {
-  engine::Engine& engine = engine::Engine::Get();
+  eng::Engine& engine = eng::Engine::Get();
 
   auto weapon_image =
       engine.GetAssetManager().GetImage("enemy_anims_flare_ok.png");
@@ -162,7 +162,7 @@ void Player::Drag(const Vector2& pos) {
   if (IsFiring(active_weapon_))
     return;
 
-  engine::Engine& engine = engine::Engine::Get();
+  eng::Engine& engine = eng::Engine::Get();
   Demo* game = static_cast<Demo*>(engine.GetGame());
 
   if (!ValidateDrag()) {
@@ -182,7 +182,7 @@ void Player::DragEnd() {
   if (type == kDamageType_Invalid)
     return;
 
-  engine::Engine& engine = engine::Engine::Get();
+  eng::Engine& engine = eng::Engine::Get();
   Demo* game = static_cast<Demo*>(engine.GetGame());
 
   if (IsFiring(type))

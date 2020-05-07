@@ -16,7 +16,7 @@ DECLARE_GAME(Demo)
 DECLARE_GAME_END
 
 bool Demo::Initialize() {
-  engine::Engine& engine = engine::Engine::Get();
+  eng::Engine& engine = eng::Engine::Get();
   sky_.Create();
   sky_.SetVisible(true);
   engine.AddDrawable(&sky_);
@@ -35,13 +35,13 @@ bool Demo::Initialize() {
 }
 
 void Demo::Update(float delta_time) {
-  engine::Engine& engine = engine::Engine::Get();
+  eng::Engine& engine = eng::Engine::Get();
 
-  while (std::unique_ptr<engine::InputEvent> event = engine.GetNextInputEvent()) {
+  while (std::unique_ptr<eng::InputEvent> event = engine.GetNextInputEvent()) {
     if (event) {
-      if (event->GetEventType() == engine::InputEvent::kDragStart ||
-          event->GetEventType() == engine::InputEvent::kDrag ||
-          event->GetEventType() == engine::InputEvent::kDragEnd)
+      if (event->GetEventType() == eng::InputEvent::kDragStart ||
+          event->GetEventType() == eng::InputEvent::kDrag ||
+          event->GetEventType() == eng::InputEvent::kDragEnd)
         player_.OnInputEvent(std::move(event));
     }
   }

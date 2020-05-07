@@ -13,7 +13,7 @@
 #define STBI_NO_STDIO
 #include "../../third_party/stb/stb_image.h"
 
-namespace engine {
+namespace eng {
 
 Image::Image()
     : buffer_(NULL), width_(0), height_(0), format_(kRGBA32) {}
@@ -220,4 +220,4 @@ void Image::Gradient() {
     memcpy(buffer_ + h * width_ * 4, buffer_, width_ * 4);
 }
 
-}  // namespace engine
+}  // namespace eng

@@ -1,7 +1,7 @@
 #include "asset_manager.h"
 #include "image.h"
 
-namespace engine {
+namespace eng {
 
 std::shared_ptr<const Image> AssetManager::GetImage(const std::string& name) {
   auto it = images_.find(name);
@@ -16,4 +16,4 @@ std::shared_ptr<const Image> AssetManager::GetImage(const std::string& name) {
   return image;
 }
 
-}  // namespace engine
+}  // namespace eng

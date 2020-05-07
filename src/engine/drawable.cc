@@ -1,10 +1,10 @@
 #include "drawable.h"
 #include "engine.h"
 
-namespace engine {
+namespace eng {
 
 Drawable::~Drawable() {
   Engine::Get().RemoveDrawable(this);
 }
 
-}  // namespace engine
+}  // namespace eng

@@ -10,7 +10,7 @@
 #include <memory>
 #include <array>
 
-namespace engine {
+namespace eng {
 
 class Image;
 
@@ -76,6 +76,6 @@ class ImageQuad : public Drawable {
   Vector2 GetUVOffset(int frame);
 };
 
-}  // namespace engine
+}  // namespace eng
 
 #endif  // IMAGE_QUAD_H

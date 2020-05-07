@@ -6,7 +6,7 @@
 #include <vector>
 #include <functional>
 
-namespace engine {
+namespace eng {
 
 class ImageQuad;
 
@@ -63,6 +63,6 @@ class DrawAnimator {
   Callback callback_;
 };
 
-}  // namespace engine
+}  // namespace eng
 
 #endif  // DRAW_ANIMATOR_H

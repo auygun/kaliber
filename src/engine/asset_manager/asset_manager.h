@@ -6,7 +6,7 @@
 #include <memory>
 #include <unordered_map>
 
-namespace engine {
+namespace eng {
 
 class Image;
 
@@ -23,6 +23,6 @@ class AssetManager {
   std::unordered_map<std::string, std::shared_ptr<const Image>> images_;
 };
 
-}  // namespace engine
+}  // namespace eng
 
 #endif  // ASSET_MANAGER_H

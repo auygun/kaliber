@@ -7,14 +7,14 @@
 #include <vector>
 
 #define DECLARE_GAME_BEGIN                                      \
-  std::vector<std::pair<std::string, engine::GameFactoryBase*>> \
-      engine::GameFactoryBase::game_classes = {
-#define DECLARE_GAME(CLASS) {#CLASS, new engine::GameFactory<CLASS>()},
+  std::vector<std::pair<std::string, eng::GameFactoryBase*>> \
+      eng::GameFactoryBase::game_classes = {
+#define DECLARE_GAME(CLASS) {#CLASS, new eng::GameFactory<CLASS>()},
 #define DECLARE_GAME_END \
   }                      \
   ;
 
-namespace engine {
+namespace eng {
 
 class Game;
 
@@ -53,6 +53,6 @@ class GameFactory : public GameFactoryBase {
   }
 };
 
-}  // namespace engine
+}  // namespace eng
 
 #endif  // GAME_FACTORY_H

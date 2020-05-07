@@ -42,20 +42,20 @@ class Enemy {
     DamageType targetted_by_weapon_ = kDamageType_Invalid;
     int hit_points = 0;
 
-    engine::ImageQuad sprite;
-    engine::ImageQuad target;
-    engine::ImageQuad blast;
+    eng::ImageQuad sprite;
+    eng::ImageQuad target;
+    eng::ImageQuad blast;
 
-    engine::DrawAnimator draw_animator;
-    engine::FrameAnimator sprite_frame_animator;
-    engine::FrameAnimator target_frame_animator;
-    engine::FrameAnimator blast_frame_animator;
+    eng::DrawAnimator draw_animator;
+    eng::FrameAnimator sprite_frame_animator;
+    eng::FrameAnimator target_frame_animator;
+    eng::FrameAnimator blast_frame_animator;
   };
 
-  std::shared_ptr<const engine::Image> skull_frames_;
-  std::shared_ptr<const engine::Image> bug_frames_;
-  std::shared_ptr<const engine::Image> target_frames_;
-  std::shared_ptr<const engine::Image> blast_frames_;
+  std::shared_ptr<const eng::Image> skull_frames_;
+  std::shared_ptr<const eng::Image> bug_frames_;
+  std::shared_ptr<const eng::Image> target_frames_;
+  std::shared_ptr<const eng::Image> blast_frames_;
 
   std::list<Unit> enemies_;
   float seconds_since_last_spawn_ = 0;

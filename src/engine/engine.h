@@ -11,11 +11,7 @@
 #include <list>
 #include <deque>
 
-#if defined(__ANDROID__)
-struct ANativeWindow;
-#endif
-
-namespace engine {
+namespace eng {
 
 class Game;
 class Drawable;
@@ -84,6 +80,6 @@ class Engine {
   void PrintStats();
 };
 
-}  // namespace engine
+}  // namespace eng
 
 #endif  // ENGINE_H

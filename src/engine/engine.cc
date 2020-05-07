@@ -8,7 +8,7 @@
 #include "input_event.h"
 #include <algorithm>
 
-namespace engine {
+namespace eng {
 
 Engine& Engine::Get() {
   static Engine engine;
@@ -26,7 +26,7 @@ bool Engine::Init() {
   if (!CreateRenderResources())
     return false;
 
-  game_ = engine::GameFactoryBase::CreateGame("");
+  game_ = eng::GameFactoryBase::CreateGame("");
   if (!game_) {
     printf("No game found to run.\n");
     return false;
@@ -159,15 +159,15 @@ void Engine::PrintStats() {
   constexpr int width = 300;
   std::vector<std::string> lines;
   std::string line = "frames dropped: ";
-  line += std::to_string(engine::Engine::Get().GetRenderer().num_frames_dropped());
+  line += std::to_string(eng::Engine::Get().GetRenderer().num_frames_dropped());
   lines.push_back(line);
   line = "global queue: ";
-  line += std::to_string(engine::Engine::Get().GetRenderer().global_queue_size());
+  line += std::to_string(eng::Engine::Get().GetRenderer().global_queue_size());
   lines.push_back(line);
   line = "render queue: ";
-  line += std::to_string(engine::Engine::Get().GetRenderer().render_queue_size());
+  line += std::to_string(eng::Engine::Get().GetRenderer().render_queue_size());
   lines.push_back(line);
-  // if (!stats_.Print(engine::Engine::Get().GetFont(), lines, 300)) {
+  // if (!stats_.Print(eng::Engine::Get().GetFont(), lines, 300)) {
   //   LOG << "Failed to create the text.";
   // }
 
@@ -195,4 +195,4 @@ void Engine::PrintStats() {
   stats_.SetOffset(pos * Vector2(-1, 1));
 }
 
-}  // namespace engine
+}  // namespace eng

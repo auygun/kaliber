@@ -15,7 +15,7 @@ Platform& Platform::Get() {
 }
 
 void Platform::RunMainLoop() {
-  if (!engine::Engine::Get().Init()) {
+  if (!eng::Engine::Get().Init()) {
     printf("Failed to initialize the engine.\n");
     throw internal_error;
   }
@@ -30,7 +30,7 @@ void Platform::RunMainLoop() {
   float frame_frac = 0.0f;
 
   for (;;) {
-    engine::Engine::Get().Draw(frame_frac);
+    eng::Engine::Get().Draw(frame_frac);
 
 #ifdef USE_SLEEP
     // Accumulate time.
@@ -51,10 +51,10 @@ void Platform::RunMainLoop() {
     while (accumulator >= time_step) {
       Update();
       if (should_exit_) {
-        engine::Engine::Get().Shutdown();
+        eng::Engine::Get().Shutdown();
         return;
       }
-      engine::Engine::Get().Update(time_step * speed);
+      eng::Engine::Get().Update(time_step * speed);
       accumulator -= time_step;
     };
 

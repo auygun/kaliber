@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace engine {
+namespace eng {
 
 class Asset {
  public:
@@ -17,6 +17,6 @@ class Asset {
   std::string name_;
 };
 
-}  // namespace engine
+}  // namespace eng
 
 #endif  // ASSET_H

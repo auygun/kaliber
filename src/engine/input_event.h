@@ -4,7 +4,7 @@
 #include "../base/vecmath.h"
 #include <cassert>
 
-namespace engine {
+namespace eng {
 
 class InputEvent {
  public:
@@ -31,6 +31,6 @@ class InputEvent {
   Vector2 vec_[2];
 };
 
-}  // namespace engine
+}  // namespace eng
 
 #endif  // INPUT_EVENT_H

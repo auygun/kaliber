@@ -1,7 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 
-namespace engine {
+namespace eng {
 
 class Game {
  public:
@@ -12,6 +12,6 @@ class Game {
   virtual void Update(float delta_time) = 0;
 };
 
-}  // namespace engine
+}  // namespace eng
 
 #endif  // GAME_H

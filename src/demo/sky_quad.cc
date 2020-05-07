@@ -4,7 +4,7 @@
 #include "../engine/engine.h"
 #include <cassert>
 
-namespace engine {
+namespace eng {
 
 bool SkyQuad::Create() {
   const char* vertex_description = "p2f";
@@ -48,4 +48,4 @@ void SkyQuad::Draw() {
   quad_.Draw();
 }
 
-}  // namespace engine
+}  // namespace eng

@@ -3,7 +3,7 @@
 #include "../base/log.h"
 #include <cassert>
 
-namespace engine {
+namespace eng {
 
 void DrawAnimator::Attach(ImageQuad *quad) {
   quads_.push_back({quad, quad->GetOffset()});
@@ -88,4 +88,4 @@ void DrawAnimator::Update(float delta_time) {
     callback_();
 }
 
-}  // namespace engine
+}  // namespace eng

@@ -6,7 +6,7 @@
 #include <vector>
 #include <functional>
 
-namespace engine {
+namespace eng {
 
 class ImageQuad;
 
@@ -55,6 +55,6 @@ class FrameAnimator {
   Callback callback_;
 };
 
-}  // namespace engine
+}  // namespace eng
 
 #endif  // FRAME_ANIMATOR_H

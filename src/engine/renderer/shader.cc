@@ -8,7 +8,7 @@
 #include <cstring>
 #include <memory>
 
-namespace engine {
+namespace eng {
 
 int Shader::last_id = 0;
 
@@ -122,4 +122,4 @@ void Shader::SetUniform(const std::string &name, int i) {
   }
 }
 
-} // namespace engine
+} // namespace eng

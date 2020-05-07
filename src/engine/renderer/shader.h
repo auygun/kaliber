@@ -6,7 +6,7 @@
 #include <map>
 #include <string>
 
-namespace engine {
+namespace eng {
 
 class Shader {
 public:
@@ -32,6 +32,6 @@ private:
   static int last_id;
 };
 
-} // namespace engine
+} // namespace eng
 
 #endif // SHADER_H

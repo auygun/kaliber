@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <vector>
 
-namespace engine {
+namespace eng {
 
 class ImageQuad;
 
@@ -31,6 +31,6 @@ class AlphaAnimator {
   float speed_ = 4;
 };
 
-}  // namespace engine
+}  // namespace eng
 
 #endif  // ALPHA_ANIMATOR_H

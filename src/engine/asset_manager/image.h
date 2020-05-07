@@ -5,7 +5,7 @@
 #include "asset.h"
 #include <stdint.h>
 
-namespace engine {
+namespace eng {
 
 class Image : public Asset{
  public:
@@ -47,6 +47,6 @@ class Image : public Asset{
   Vector2 uv_ = {1, 1};
 };
 
-}  // namespace engine
+}  // namespace eng
 
 #endif  // IMAGE_H

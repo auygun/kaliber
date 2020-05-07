@@ -3,7 +3,7 @@
 
 #include <memory>
 
-namespace engine {
+namespace eng {
 
 class Image;
 
@@ -26,6 +26,6 @@ private:
   int resource_id_ = 0; // TODO: ResourceId
 };
 
-} // namespace engine
+} // namespace eng
 
 #endif // TEXTURE_H

@@ -70,35 +70,35 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
       // Detect double tap
       Vector2 v;
       platform->doubletap_detector_->GetPointer(v);
-      v = engine::Engine::Get().ToPosition(v);
+      v = eng::Engine::Get().ToPosition(v);
       // LOG << "double-tap: " << v;
-      auto input_event = std::make_unique<engine::InputEvent>(
-          engine::InputEvent::kDoubleTap, v * Vector2(1, -1), Vector2(0, 0));
-      engine::Engine::Get().AddInputEvent(std::move(input_event));
+      auto input_event = std::make_unique<eng::InputEvent>(
+          eng::InputEvent::kDoubleTap, v * Vector2(1, -1), Vector2(0, 0));
+      eng::Engine::Get().AddInputEvent(std::move(input_event));
     } else {
       // Handle drag state
       if (dragState & ndk_helper::GESTURE_STATE_START) {
         // Otherwise, start dragging
         Vector2 v;
         platform->drag_detector_->GetPointer(v);
-        v = engine::Engine::Get().ToPosition(v);
+        v = eng::Engine::Get().ToPosition(v);
         // LOG << "drag-start: " << v;
-        auto input_event = std::make_unique<engine::InputEvent>(
-            engine::InputEvent::kDragStart, v * Vector2(1, -1), Vector2(0, 0));
-        engine::Engine::Get().AddInputEvent(std::move(input_event));
+        auto input_event = std::make_unique<eng::InputEvent>(
+            eng::InputEvent::kDragStart, v * Vector2(1, -1), Vector2(0, 0));
+        eng::Engine::Get().AddInputEvent(std::move(input_event));
       } else if (dragState & ndk_helper::GESTURE_STATE_MOVE) {
         Vector2 v;
         platform->drag_detector_->GetPointer(v);
-        v = engine::Engine::Get().ToPosition(v);
+        v = eng::Engine::Get().ToPosition(v);
         // LOG << "drag: " << v;
-        auto input_event = std::make_unique<engine::InputEvent>(
-            engine::InputEvent::kDrag, v * Vector2(1, -1), Vector2(0, 0));
-        engine::Engine::Get().AddInputEvent(std::move(input_event));
+        auto input_event = std::make_unique<eng::InputEvent>(
+            eng::InputEvent::kDrag, v * Vector2(1, -1), Vector2(0, 0));
+        eng::Engine::Get().AddInputEvent(std::move(input_event));
       } else if (dragState & ndk_helper::GESTURE_STATE_END) {
         // LOG << "drag-end!";
-        auto input_event = std::make_unique<engine::InputEvent>(
-            engine::InputEvent::kDragEnd, Vector2(0, 0), Vector2(0, 0));
-        engine::Engine::Get().AddInputEvent(std::move(input_event));
+        auto input_event = std::make_unique<eng::InputEvent>(
+            eng::InputEvent::kDragEnd, Vector2(0, 0), Vector2(0, 0));
+        eng::Engine::Get().AddInputEvent(std::move(input_event));
       }
 
       // Handle pinch state
@@ -107,26 +107,26 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
         Vector2 v1;
         Vector2 v2;
         platform->pinch_detector_->GetPointers(v1, v2);
-        v1 = engine::Engine::Get().ToPosition(v1);
-        v2 = engine::Engine::Get().ToPosition(v2);
+        v1 = eng::Engine::Get().ToPosition(v1);
+        v2 = eng::Engine::Get().ToPosition(v2);
         // LOG << "pinch-start: " << v1 << " " << v2;
-        auto input_event = std::make_unique<engine::InputEvent>(
-            engine::InputEvent::kPinchStart, v1 * Vector2(1, -1),
+        auto input_event = std::make_unique<eng::InputEvent>(
+            eng::InputEvent::kPinchStart, v1 * Vector2(1, -1),
             v2 * Vector2(1, -1));
-        engine::Engine::Get().AddInputEvent(std::move(input_event));
+        eng::Engine::Get().AddInputEvent(std::move(input_event));
       } else if (pinchState & ndk_helper::GESTURE_STATE_MOVE) {
         // Multi touch
         // Start new pinch
         Vector2 v1;
         Vector2 v2;
         platform->pinch_detector_->GetPointers(v1, v2);
-        v1 = engine::Engine::Get().ToPosition(v1);
-        v2 = engine::Engine::Get().ToPosition(v2);
+        v1 = eng::Engine::Get().ToPosition(v1);
+        v2 = eng::Engine::Get().ToPosition(v2);
         // LOG << "pinch: " << v1 << " " << v2;
-        auto input_event = std::make_unique<engine::InputEvent>(
-            engine::InputEvent::kPinch, v1 * Vector2(1, -1),
+        auto input_event = std::make_unique<eng::InputEvent>(
+            eng::InputEvent::kPinch, v1 * Vector2(1, -1),
             v2 * Vector2(1, -1));
-        engine::Engine::Get().AddInputEvent(std::move(input_event));
+        eng::Engine::Get().AddInputEvent(std::move(input_event));
       }
     }
     return 1;
@@ -143,7 +143,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
 
     case APP_CMD_INIT_WINDOW:
       if (app->window != NULL) {
-        if (!engine::Engine::Get().GetRenderer().StartWorker()) {
+        if (!eng::Engine::Get().GetRenderer().StartWorker()) {
           LOG << "Failed to initialize the renderer.";
           throw internal_error;
         }
@@ -152,18 +152,18 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       break;
 
     case APP_CMD_TERM_WINDOW:
-      engine::Engine::Get().GetRenderer().TerminateWorker();
+      eng::Engine::Get().GetRenderer().TerminateWorker();
       platform->has_focus_ = false;
       break;
 
     case APP_CMD_CONFIG_CHANGED:
       if (platform->app_->window != NULL) {
-        int width = engine::Engine::Get().GetRenderer().GetScreenWidth();
-        int height = engine::Engine::Get().GetRenderer().GetScreenHeight();
+        int width = eng::Engine::Get().GetRenderer().GetScreenWidth();
+        int height = eng::Engine::Get().GetRenderer().GetScreenHeight();
         if (width != ANativeWindow_getWidth(app->window) ||
             height != ANativeWindow_getHeight(app->window)) {
-          engine::Engine::Get().GetRenderer().TerminateWorker();
-          engine::Engine::Get().GetRenderer().StartWorker();
+          eng::Engine::Get().GetRenderer().TerminateWorker();
+          eng::Engine::Get().GetRenderer().StartWorker();
         }
       }
     break;
@@ -182,7 +182,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       break;
 
     case APP_CMD_LOW_MEMORY:
-      engine::Engine::Get().TrimMemory();
+      eng::Engine::Get().TrimMemory();
       break;
   }
 }
@@ -212,7 +212,7 @@ void Platform::Initialize(android_app* app) {
 }
 
 void Platform::Shutdown() {
-  engine::Engine::Get().GetRenderer().TerminateWorker();
+  eng::Engine::Get().GetRenderer().TerminateWorker();
 }
 
 void Platform::Update() {

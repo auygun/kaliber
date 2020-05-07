@@ -61,7 +61,7 @@ unsigned GetIndexSize(GLenum type) {
 
 } // namespace
 
-namespace engine {
+namespace eng {
 
 Renderer::Renderer() {}
 
@@ -809,4 +809,4 @@ void Renderer::LogVersion() {
       (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
 }
 
-}  // namespace engine
+}  // namespace eng

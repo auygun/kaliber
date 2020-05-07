@@ -3,7 +3,7 @@
 
 #include "../base/vecmath.h"
 
-namespace engine {
+namespace eng {
 
 class Drawable {
  public:
@@ -22,6 +22,6 @@ class Drawable {
   bool visible_ = false;
 };
 
-}  // namespace engine
+}  // namespace eng
 
 #endif  // DRAWABLE_H

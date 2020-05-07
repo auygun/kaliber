@@ -2,7 +2,7 @@
 #include "image_quad.h"
 #include <cassert>
 
-namespace engine {
+namespace eng {
 
 void AlphaAnimator::Attach(ImageQuad *quad) {
   quads_.push_back(quad);
@@ -35,4 +35,4 @@ void AlphaAnimator::Update(float delta_time) {
   }
 }
 
-}  // namespace engine
+}  // namespace eng

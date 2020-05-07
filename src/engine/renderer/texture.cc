@@ -4,7 +4,7 @@
 #include "render_command.h"
 #include "../engine.h"
 
-namespace engine {
+namespace eng {
 
 Texture::~Texture() {
   Destroy();
@@ -30,4 +30,4 @@ void Texture::Activate() {
   }
 }
 
-} // namespace engine
+} // namespace eng

@@ -9,7 +9,7 @@
 #include "../engine/game.h"
 #include "../engine/image_quad.h"
 
-class Demo : public engine::Game {
+class Demo : public eng::Game {
  public:
   Demo() = default;
   ~Demo() override = default;
@@ -24,7 +24,7 @@ class Demo : public engine::Game {
  private:
   Player player_;
   Enemy enemy_;
-  engine::SkyQuad sky_;
+  eng::SkyQuad sky_;
 };
 
 #endif  // DEMO_H

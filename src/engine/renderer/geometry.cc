@@ -5,7 +5,7 @@
 #include "render_command.h"
 #include "../engine.h"
 
-namespace engine {
+namespace eng {
 
 int Geometry::last_id = 0;
 
@@ -53,4 +53,4 @@ void Geometry::Draw() {
   }
 }
 
-} // namespace engine
+} // namespace eng

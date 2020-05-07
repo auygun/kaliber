@@ -5,7 +5,7 @@
 #include "../../third_party/glew/glew.h"
 #include "renderer.h"
 
-namespace engine {
+namespace eng {
 
 bool Renderer::CreateWindow() {
   screen_width_ = 1280;
@@ -112,6 +112,6 @@ void Renderer::HandleCmdPresent(RenderCommand* cmd) {
 
 void Renderer::TrimMemory() {}
 
-}  // namespace engine
+}  // namespace eng
 
 #endif

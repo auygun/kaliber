@@ -6,7 +6,7 @@
 #include "../../third_party/android/GLContext.h"
 #include "renderer.h"
 
-namespace engine {
+namespace eng {
 
 bool Renderer::Init() {
   ndk_helper::GLContext* gl_context = ndk_helper::GLContext::GetInstance();
@@ -81,4 +81,4 @@ void Renderer::TrimMemory() {
   ndk_helper::GLContext::GetInstance()->Invalidate();
 }
 
-}  // namespace engine
+}  // namespace eng

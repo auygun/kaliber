@@ -8,9 +8,9 @@
 #include "../engine/frame_animator.h"
 #include "../engine/draw_animator.h"
 
-namespace engine {
+namespace eng {
 class InputEvent;
-} //  namespace engine
+} //  namespace eng
 
 class Player {
  public:
@@ -21,20 +21,20 @@ class Player {
 
   void Update(float delta_time);
 
-  void OnInputEvent(std::unique_ptr<engine::InputEvent> event);
+  void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
 
   Vector2 GetWeaponPos(DamageType type) const;
 
  private:
-  engine::ImageQuad drag_sign_[2];
-  engine::ImageQuad weapon_[2];
-  engine::ImageQuad beam_[2];
-  engine::ImageQuad beam_spark_[2];
+  eng::ImageQuad drag_sign_[2];
+  eng::ImageQuad weapon_[2];
+  eng::ImageQuad beam_[2];
+  eng::ImageQuad beam_spark_[2];
 
-  engine::DrawAnimator weapon_rotate_animator_;
-  engine::FrameAnimator weapon_animator_[2];
-  engine::AlphaAnimator beam_animator_[2];
-  engine::DrawAnimator beam_spark_animator_[2];
+  eng::DrawAnimator weapon_rotate_animator_;
+  eng::FrameAnimator weapon_animator_[2];
+  eng::AlphaAnimator beam_animator_[2];
+  eng::DrawAnimator beam_spark_animator_[2];
 
   DamageType active_weapon_ = kDamageType_Invalid;
 

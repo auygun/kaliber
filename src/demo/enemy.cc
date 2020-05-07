@@ -9,7 +9,7 @@
 #include <cassert>
 
 bool Enemy::Initialize() {
-  engine::Engine& engine = engine::Engine::Get();
+  eng::Engine& engine = eng::Engine::Get();
   skull_frames_ = engine.GetAssetManager().GetImage(
       "enemy_anims_01_frames_ok.png");
   bug_frames_ = engine.GetAssetManager().GetImage(
@@ -22,7 +22,7 @@ bool Enemy::Initialize() {
 }
 
 void Enemy::Update(float delta_time) {
-  engine::Engine& engine = engine::Engine::Get();
+  eng::Engine& engine = eng::Engine::Get();
 
   seconds_since_last_spawn_ += delta_time;
   if (seconds_since_last_spawn_ >= 1) {
@@ -154,7 +154,7 @@ void Enemy::Spawn(UnitType unit_type,
   assert(unit_type > kUnitType_Invalid && unit_type < kUnitType_Max);
   assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Max);
 
-  engine::Engine& engine = engine::Engine::Get();
+  eng::Engine& engine = eng::Engine::Get();
   Demo* game = static_cast<Demo*>(engine.GetGame());
 
   auto& e = enemies_.emplace_back();

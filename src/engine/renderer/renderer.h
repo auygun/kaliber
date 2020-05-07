@@ -25,7 +25,7 @@
 #include <deque>
 #endif // THREADED_RENDERING
 
-namespace engine {
+namespace eng {
 
 struct RenderCommand;
 class Image;
@@ -216,6 +216,6 @@ class Renderer {
   void LogVersion();
 };
 
-}  // namespace engine
+}  // namespace eng
 
 #endif  // RENDERER_H

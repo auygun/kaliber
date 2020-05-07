@@ -11,7 +11,7 @@
 #include <memory>
 #include <array>
 
-namespace engine {
+namespace eng {
 
 class Image;
 
@@ -36,6 +36,6 @@ class SkyQuad : public Drawable {
   Vector2 scale_ = {1, 1};
 };
 
-}  // namespace engine
+}  // namespace eng
 
 #endif  // SKY_QUAD_H

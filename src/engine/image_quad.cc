@@ -8,7 +8,7 @@
 #include "renderer/shader.h"
 #include <cassert>
 
-namespace engine {
+namespace eng {
 
 bool ImageQuad::Create(std::shared_ptr<const Image> image,
                        std::array<int, 2> num_frames) {
@@ -29,7 +29,7 @@ bool ImageQuad::Create(std::shared_ptr<const Image> image,
 }
 
 void ImageQuad::AutoScale() {
-  SetScale(engine::Engine::Get().ToScale(Vector2(frame_width_, frame_height_)));
+  SetScale(eng::Engine::Get().ToScale(Vector2(frame_width_, frame_height_)));
   Scale((float)Platform::Get().GetDeviceDpi() / 200.0f);
 }
 
@@ -87,4 +87,4 @@ Vector2 ImageQuad::GetUVOffset(int frame) {
   return {(float)(frame % num_frames_[0]), (float)(frame / num_frames_[0])};
 }
 
-}  // namespace engine
+}  // namespace eng

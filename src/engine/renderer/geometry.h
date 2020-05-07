@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace engine {
+namespace eng {
 
 class Geometry {
 public:
@@ -29,6 +29,6 @@ private:
   static int last_id;
 };
 
-} // namespace engine
+} // namespace eng
 
 #endif // GEOMETRY_H

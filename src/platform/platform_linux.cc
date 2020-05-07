@@ -18,29 +18,29 @@ void Platform::Initialize() {
   root_path_ = "../../assets/";
   LOG << "Root path: " << root_path_.c_str();
 
-  if (!engine::Engine::Get().GetRenderer().CreateWindow()) {
+  if (!eng::Engine::Get().GetRenderer().CreateWindow()) {
     LOG << "Failed to create the window.";
     throw internal_error;
   }
-  if (!engine::Engine::Get().GetRenderer().StartWorker()) {
+  if (!eng::Engine::Get().GetRenderer().StartWorker()) {
     LOG << "Failed to initialize the renderer.";
     throw internal_error;
   }
   LOG << "Initialized the renderer.";
 
-  Display* display = engine::Engine::Get().GetRenderer().display();
-  Window window = engine::Engine::Get().GetRenderer().window();
+  Display* display = eng::Engine::Get().GetRenderer().display();
+  Window window = eng::Engine::Get().GetRenderer().window();
   Atom WM_DELETE_WINDOW = XInternAtom(display, "WM_DELETE_WINDOW", false);
   XSetWMProtocols(display, window, &WM_DELETE_WINDOW, 1);
 }
 
 void Platform::Shutdown() {
-  engine::Engine::Get().GetRenderer().TerminateWorker();
-  engine::Engine::Get().GetRenderer().DestroyWindow();
+  eng::Engine::Get().GetRenderer().TerminateWorker();
+  eng::Engine::Get().GetRenderer().DestroyWindow();
 }
 
 void Platform::Update() {
-  Display* display = engine::Engine::Get().GetRenderer().display();
+  Display* display = eng::Engine::Get().GetRenderer().display();
   if (!XPending(display))
     return;
   XEvent e;
