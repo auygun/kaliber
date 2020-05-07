@@ -120,7 +120,7 @@ void Player::SetupWeapons() {
     // Setup animators.
     weapon_rotate_animator_.Attach(&weapon_[i]);
     weapon_animator_[i].Attach(&weapon_[i]);
-    weapon_animator_[i].SetSpeed(0.0165f);
+    weapon_animator_[i].SetSpeed(0.01666f);
     weapon_animator_[i].SetFrameRange(i * 8 + 1, i * 8 + 8, i * 8 + 1);
     weapon_animator_[i].SetCallback(4, [&, i]()->void {
       beam_[i].SetColor({1, 1, 1, 1});
@@ -129,7 +129,7 @@ void Player::SetupWeapons() {
       beam_spark_animator_[i].Play(false);
     });
     beam_spark_animator_[i].Attach(&beam_spark_[i]);
-    beam_spark_animator_[i].SetSpeed(16.0f);
+    beam_spark_animator_[i].SetSpeed(17.0f);
     beam_spark_animator_[i].SetCallback([&, i]()->void {
       beam_spark_animator_[i].Stop();
       beam_spark_[i].SetVisible(false);
