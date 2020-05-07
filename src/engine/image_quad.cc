@@ -14,8 +14,7 @@ bool ImageQuad::Create(std::shared_ptr<const Image> image,
                        std::array<int, 2> num_frames) {
   assert(num_frames_[0] > 0 && num_frames_[1] > 0);
 
-  if (!texture_.Create(image))
-    return false;
+  texture_.Update(image);
 
   frame_width_ = image->GetOriginalWidth() / num_frames[0];
   frame_height_ = image->GetOriginalHeight() / num_frames[1];

@@ -16,6 +16,7 @@ public:
   Texture& operator=(const Texture&) = delete;
 
   bool Create(std::shared_ptr<const Image> image);
+  void Update(std::shared_ptr<const Image> image);
   void Destroy();
 
   void Activate();
