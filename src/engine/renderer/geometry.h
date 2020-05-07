@@ -13,7 +13,7 @@ public:
   Geometry(const Geometry&) = delete;
   Geometry& operator=(const Geometry&) = delete;
 
-  bool Create(unsigned int primitive,
+  void Create(unsigned int primitive,
               const std::string& vertex_description,
               int num_vertices,
               const void* vertices,
@@ -23,6 +23,8 @@ public:
   void Destroy();
 
   void Draw();
+
+  bool IsValid() { return resource_id_ > 0; }
 
 private:
   int resource_id_ = 0;

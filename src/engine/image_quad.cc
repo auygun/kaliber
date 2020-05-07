@@ -10,7 +10,7 @@
 
 namespace eng {
 
-bool ImageQuad::Create(std::shared_ptr<const Image> image,
+void ImageQuad::Create(std::shared_ptr<const Image> image,
                        std::array<int, 2> num_frames) {
   assert(num_frames_[0] > 0 && num_frames_[1] > 0);
 
@@ -24,7 +24,6 @@ bool ImageQuad::Create(std::shared_ptr<const Image> image,
     (float)frame_height_ / (float)image->GetHeight()
   };
   num_frames_ = std::move(num_frames);
-  return true;
 }
 
 void ImageQuad::AutoScale() {

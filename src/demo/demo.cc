@@ -17,6 +17,7 @@ DECLARE_GAME_END
 
 bool Demo::Initialize() {
   eng::Engine& engine = eng::Engine::Get();
+
   sky_.Create();
   sky_.SetVisible(true);
   engine.AddDrawable(&sky_);

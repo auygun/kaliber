@@ -15,7 +15,7 @@ public:
   Texture(const Texture&) = delete;
   Texture& operator=(const Texture&) = delete;
 
-  bool Create(std::shared_ptr<const Image> image);
+  void Create(std::shared_ptr<const Image> image);
   void Update(std::shared_ptr<const Image> image);
   void Destroy();
 
@@ -24,7 +24,7 @@ public:
   bool IsValid() { return resource_id_ > 0; }
 
 private:
-  int resource_id_ = 0; // TODO: ResourceId
+  int resource_id_ = 0;
 };
 
 } // namespace eng

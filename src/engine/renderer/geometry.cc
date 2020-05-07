@@ -13,13 +13,13 @@ Geometry::~Geometry() {
   Destroy();
 }
 
-bool Geometry::Create(unsigned int primitive,
-                       const std::string& vertex_description,
-                       int num_vertices,
-                       const void* vertices,
-                       unsigned int index_description,
-                       int num_indices,
-                       const void* indices) {
+void Geometry::Create(unsigned int primitive,
+                      const std::string& vertex_description,
+                      int num_vertices,
+                      const void* vertices,
+                      unsigned int index_description,
+                      int num_indices,
+                      const void* indices) {
   Destroy();
 
   auto cmd = std::make_unique<CmdCreateGeometry>();
@@ -33,7 +33,6 @@ bool Geometry::Create(unsigned int primitive,
   cmd->num_indices = num_indices;
   cmd->indices = indices;
   Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
-  return true;
 }
 
 void Geometry::Destroy() {

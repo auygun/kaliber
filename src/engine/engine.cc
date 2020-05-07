@@ -187,10 +187,7 @@ bool Engine::CreateRenderResources() {
     -0.5f,  0.5f, 0.0f, 0.0f,
      0.5f,  0.5f, 1.0f, 0.0f
   };
-  if (!quad_.Create(GL_TRIANGLE_STRIP, vertex_description, 4, vertices)) {
-    LOG << "Could not create quad geometry.";
-    return false;
-  }
+  quad_.Create(GL_TRIANGLE_STRIP, vertex_description, 4, vertices);
 
   return true;
 }

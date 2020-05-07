@@ -27,6 +27,8 @@ public:
   void SetUniform(const std::string &name, float f);
   void SetUniform(const std::string &name, int i);
 
+  bool IsValid() { return resource_id_ > 0; }
+
 private:
   int resource_id_ = 0;
   static int last_id;

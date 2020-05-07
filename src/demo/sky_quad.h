@@ -12,10 +12,10 @@
 #include <array>
 
 namespace eng {
-
 class Image;
+}  // namespace eng
 
-class SkyQuad : public Drawable {
+class SkyQuad : public eng::Drawable {
  public:
   SkyQuad() = default;
   ~SkyQuad() override = default;
@@ -29,13 +29,11 @@ class SkyQuad : public Drawable {
   void Draw() override;
 
  private:
-  Geometry quad_;
-  Shader shader_;
+  eng::Geometry quad_;
+  eng::Shader shader_;
   Vector2 sky_offset_ = {0, 0};
   Vector3 nebula_color_ = {0, 0, 0};
   Vector2 scale_ = {1, 1};
 };
-
-}  // namespace eng
 
 #endif  // SKY_QUAD_H

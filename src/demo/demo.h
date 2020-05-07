@@ -24,7 +24,7 @@ class Demo : public eng::Game {
  private:
   Player player_;
   Enemy enemy_;
-  eng::SkyQuad sky_;
+  SkyQuad sky_;
 };
 
 #endif  // DEMO_H

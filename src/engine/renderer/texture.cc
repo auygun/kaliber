@@ -10,10 +10,9 @@ Texture::~Texture() {
   Destroy();
 }
 
-bool Texture::Create(std::shared_ptr<const Image> image) {
+void Texture::Create(std::shared_ptr<const Image> image) {
   Destroy();
   resource_id_ = Engine::Get().AcquireTextureResource(image);
-  return resource_id_ > 0;
 }
 
 void Texture::Update(std::shared_ptr<const Image> image) {

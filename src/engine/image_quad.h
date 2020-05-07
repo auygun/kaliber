@@ -22,7 +22,7 @@ class ImageQuad : public Drawable {
   ImageQuad(const ImageQuad&) = delete;
   ImageQuad& operator=(const ImageQuad&) = delete;
 
-  bool Create(std::shared_ptr<const Image> image,
+  void Create(std::shared_ptr<const Image> image,
               std::array<int, 2> num_frames = {1, 1});
 
   void AutoScale();
