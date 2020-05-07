@@ -46,7 +46,7 @@ void DrawAnimator::Update(float delta_time) {
   if (!is_playing_)
     return;
 
-  Vector2 offset = dir_ * speed_;
+  Vector2 offset = dir_ * speed_ * delta_time;
   movement_ += offset.Magnitude();
   if (movement_ <= distance_) {
     for (auto& dt : drawables_)

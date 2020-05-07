@@ -32,7 +32,7 @@ void Enemy::Update(float delta_time) {
     float col = (float)(RandomInt() % 5);
     float x = (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2;
     Vector2 pos = {x, s.y / 2};
-    float speed = (RandomInt() % 4) == 0 ? 0.01f : 0.006f;
+    float speed = (RandomInt() % 4) == 0 ? 0.65f : 0.4f;
 
     UnitType unit_type = (RandomInt() % 5) == 0 ?
         kUnitType_Bug : kUnitType_Skull;

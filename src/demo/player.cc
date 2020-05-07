@@ -136,7 +136,7 @@ void Player::SetupWeapons() {
       beam_spark_animator_[i].Play(false);
     });
     beam_spark_animator_[i].AttachDrawable(&beam_spark_[i]);
-    beam_spark_animator_[i].SetSpeed(0.3f);
+    beam_spark_animator_[i].SetSpeed(14.0f);
     beam_spark_animator_[i].SetCallback([&, i]()->void {
       beam_spark_animator_[i].Stop();
       beam_spark_[i].SetVisible(false);
