@@ -40,7 +40,7 @@ void SkyQuad::Draw() {
 
   shader_.Activate();
   shader_.SetUniform("scale", scale_);
-  shader_.SetUniform("projection", Engine::Get().GetRenderer().projection());
+  shader_.SetUniform("projection", Engine::Get().GetProjectionMarix());
   shader_.SetUniform("resolution", Vector2(2000, 2000));
   shader_.SetUniform("sky_offset", sky_offset_);
   shader_.SetUniform("nebula_color", nebula_color_);

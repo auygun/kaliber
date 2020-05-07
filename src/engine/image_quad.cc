@@ -72,7 +72,7 @@ void ImageQuad::Draw() {
   shader.SetUniform("rotation", GetRotation());
   shader.SetUniform("tex_offset", GetUVOffset(current_frame_));
   shader.SetUniform("tex_scale", tex_scale_);
-  shader.SetUniform("projection", Engine::Get().GetRenderer().projection());
+  shader.SetUniform("projection", Engine::Get().GetProjectionMarix());
   shader.SetUniform("color", GetColor());
   shader.SetUniform("texture", 0);
 

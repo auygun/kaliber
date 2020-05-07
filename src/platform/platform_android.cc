@@ -158,8 +158,8 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
 
     case APP_CMD_CONFIG_CHANGED:
       if (platform->app_->window != NULL) {
-        int width = eng::Engine::Get().GetRenderer().GetScreenWidth();
-        int height = eng::Engine::Get().GetRenderer().GetScreenHeight();
+        int width = eng::Engine::Get().GetScreenWidth();
+        int height = eng::Engine::Get().GetScreenHeight();
         if (width != ANativeWindow_getWidth(app->window) ||
             height != ANativeWindow_getHeight(app->window)) {
           eng::Engine::Get().GetRenderer().TerminateWorker();

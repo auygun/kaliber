@@ -98,19 +98,19 @@ void Engine::TrimMemory() {
 
 // TODO: do once during initialization.
 Vector2 Engine::GetScreenSize() {
-  if (GetRenderer().GetScreenWidth() > GetRenderer().GetScreenHeight()) {
-    float ratio = (float)GetRenderer().GetScreenWidth() / (float)GetRenderer().GetScreenHeight();
+  if (GetScreenWidth() > GetScreenHeight()) {
+    float ratio = (float)GetScreenWidth() / (float)GetScreenHeight();
     return Vector2(ratio * 2.0f, 2.0f);
   } else {
-    float ratio = (float)GetRenderer().GetScreenHeight() / (float)GetRenderer().GetScreenWidth();
+    float ratio = (float)GetScreenHeight() / (float)GetScreenWidth();
     return Vector2(2.0f, ratio * 2.0f);
   }
 }
 
 Vector2 Engine::ToScale(const Vector2& vec) {
   return GetScreenSize() * vec /
-      Vector2((float)GetRenderer().GetScreenWidth(),
-              (float)GetRenderer().GetScreenHeight());
+      Vector2((float)GetScreenWidth(),
+              (float)GetScreenHeight());
 }
 
 Vector2 Engine::ToPosition(const Vector2& vec) {

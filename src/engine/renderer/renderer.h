@@ -52,9 +52,6 @@ class Renderer {
 
   void TrimMemory();
 
-  int GetScreenWidth() { return screen_width_; }
-  int GetScreenHeight() { return screen_height_; }
-
   bool SupportsETC1() const { return texture_compression_.etc1; }
   bool SupportsDXT1() const {
     return texture_compression_.dxt1 || texture_compression_.s3tc;
@@ -73,7 +70,9 @@ class Renderer {
 
   void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
 
-  Matrix4x4 projection() { return projection_; }
+  int screen_width() const { return screen_width_; }
+  int screen_height() const { return screen_height_; }
+  const Matrix4x4& projection() const { return projection_; }
 
   size_t num_frames_dropped() { return num_frames_dropped_; }
   size_t global_queue_size() { return global_queue_size_; }

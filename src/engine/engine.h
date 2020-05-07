@@ -3,6 +3,7 @@
 
 #include <memory>
 #include "../base/font.h"
+#include "../base/vecmath.h"
 #include "renderer/geometry.h"
 #include "renderer/renderer.h"
 #include "renderer/shader.h"
@@ -49,7 +50,14 @@ class Engine {
 
   Game* GetGame() { return game_.get(); }
 
-  float seconds_accumulated() { return seconds_accumulated_; }
+  int GetScreenWidth() const { return renderer_.screen_width(); }
+  int GetScreenHeight() const { return renderer_.screen_height(); }
+
+  const  Matrix4x4& GetProjectionMarix() const {
+    return renderer_.projection();
+  }
+
+  float seconds_accumulated() const { return seconds_accumulated_; }
 
  private:
   std::unique_ptr<Game> game_;
