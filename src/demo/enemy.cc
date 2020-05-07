@@ -71,7 +71,6 @@ void Enemy::SelectTarget(DamageType damage_type,
 
   Vector2 beam_dir = (target_pos - weapon_pos).Normalize();
   float closest_dist = std::numeric_limits<float>::max();
-  LOG << "begin";
   for (auto& e : enemies_) {
     if (e.hit_points <= 0 || e.marked_for_removal)
       continue;

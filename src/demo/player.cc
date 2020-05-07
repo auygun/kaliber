@@ -38,8 +38,6 @@ Vector2 Player::GetWeaponPos(DamageType type) const {
 }
 
 DamageType Player::GetWeaponType(const Vector2& pos) {
-  if (pos.y > 0)
-    return kDamageType_Invalid;
   return pos.x < 0 ? kDamageType_Blue : kDamageType_Green;
 }
 
