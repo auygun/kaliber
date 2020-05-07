@@ -155,7 +155,7 @@ void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
     global_queue_size_ = global_commands_.size();
     return;
   }
-  bool new_frame = cmd->cmd_id == HASH("CmdPresent");
+  bool new_frame = cmd->cmd_id == HHASH("CmdPresent");
   draw_commands_[1].push_back(std::move(cmd));
   if (new_frame) {
     render_queue_size_ = draw_commands_[1].size();
@@ -221,58 +221,58 @@ void Renderer::ProcessCommand(RenderCommand* cmd) {
 #endif
 
   switch(cmd->cmd_id) {
-  case HASH("CmdEableBlend"):
+  case HHASH("CmdEableBlend"):
     HandleCmdEnableBlend(cmd);
     break;
-  case HASH("CmdClear"):
+  case HHASH("CmdClear"):
     HandleCmdClear(cmd);
     break;
-  case HASH("CmdPresent"):
+  case HHASH("CmdPresent"):
     HandleCmdPresent(cmd);
     break;
-  case HASH("CmdCreateTexture"):
+  case HHASH("CmdCreateTexture"):
     HandleCmdCreateTexture(cmd);
     break;
-  case HASH("CmdDestoryTexture"):
+  case HHASH("CmdDestoryTexture"):
     HandleCmdDestoryTexture(cmd);
     break;
-  case HASH("CmdActivateTexture"):
+  case HHASH("CmdActivateTexture"):
     HandleCmdActivateTexture(cmd);
     break;
-  case HASH("CmdCreateGeometry"):
+  case HHASH("CmdCreateGeometry"):
     HandleCmdCreateGeometry(cmd);
     break;
-  case HASH("CmdDestroyGeometry"):
+  case HHASH("CmdDestroyGeometry"):
     HandleCmdDestroyGeometry(cmd);
     break;
-  case HASH("CmdDrawGeometry"):
+  case HHASH("CmdDrawGeometry"):
     HandleCmdDrawGeometry(cmd);
     break;
-  case HASH("CmdCreateShader"):
+  case HHASH("CmdCreateShader"):
     HandleCmdCreateShader(cmd);
     break;
-  case HASH("CmdDestroyShader"):
+  case HHASH("CmdDestroyShader"):
     HandleCmdDestroyShader(cmd);
     break;
-  case HASH("CmdActivateShader"):
+  case HHASH("CmdActivateShader"):
     HandleCmdActivateShader(cmd);
     break;
-  case HASH("CmdSetUniformVec2"):
+  case HHASH("CmdSetUniformVec2"):
     HandleCmdSetUniformVec2(cmd);
     break;
-  case HASH("CmdSetUniformVec3"):
+  case HHASH("CmdSetUniformVec3"):
     HandleCmdSetUniformVec3(cmd);
     break;
-  case HASH("CmdSetUniformVec4"):
+  case HHASH("CmdSetUniformVec4"):
     HandleCmdSetUniformVec4(cmd);
     break;
-  case HASH("CmdSetUniformMat4"):
+  case HHASH("CmdSetUniformMat4"):
     HandleCmdSetUniformMat4(cmd);
     break;
-  case HASH("CmdSetUniformFloat"):
+  case HHASH("CmdSetUniformFloat"):
     HandleCmdSetUniformFloat(cmd);
     break;
-  case HASH("CmdSetUniformInt"):
+  case HHASH("CmdSetUniformInt"):
     HandleCmdSetUniformInt(cmd);
     break;
   default:

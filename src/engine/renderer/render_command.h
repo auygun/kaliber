@@ -1,6 +1,7 @@
 #ifndef RENDER_COMMAND_H
 #define RENDER_COMMAND_H
 
+#include "../../base/hash.h"
 #include "../../base/vecmath.h"
 #include "../../engine/asset_manager/image.h"
 #include <memory>
@@ -11,24 +12,16 @@ namespace eng {
 
 class Image;
 
-template <size_t N>
-constexpr inline size_t HORNER_HASH(size_t prime, const char (&str)[N], size_t Len = N-1)
-{
-    return (Len <= 1) ? str[0] : (prime * HORNER_HASH(prime, str, Len-1) + str[Len-1]);
-}
-
-#define HASH(x) (HORNER_HASH(31, x))
-
 #ifdef _DEBUG
 #define RENDER_COMMAND_BEGIN(NAME) \
   struct NAME : RenderCommand { \
-    static constexpr CommandId CMD_ID = HASH(#NAME); \
+    static constexpr CommandId CMD_ID = HHASH(#NAME); \
     NAME() : RenderCommand(CMD_ID, #NAME) {}
 #define RENDER_COMMAND_END };
 #else
 #define RENDER_COMMAND_BEGIN(NAME) \
   struct NAME : RenderCommand { \
-    static constexpr CommandId CMD_ID = HASH(#NAME); \
+    static constexpr CommandId CMD_ID = HHASH(#NAME); \
     NAME() : RenderCommand(CMD_ID) {}
 #define RENDER_COMMAND_END };
 #endif
