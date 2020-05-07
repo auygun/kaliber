@@ -32,6 +32,7 @@ class Player {
   engine::ImageQuad beam_[2];
   engine::ImageQuad beam_spark_[2];
 
+  engine::DrawAnimator weapon_rotate_animator_;
   engine::FrameAnimator weapon_animator_[2];
   engine::AlphaAnimator beam_animator_[2];
   engine::DrawAnimator beam_spark_animator_[2];

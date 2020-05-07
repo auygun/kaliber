@@ -13,6 +13,12 @@ void DrawAnimator::SetMovement(Vector2 dir, float distance) {
   dir_ = dir;
   dir_.Normalize();
   distance_ = distance;
+  flags_ |= kFlag_Movement;
+}
+
+void DrawAnimator::SetRotation(float theta) {
+  theta_ = theta;
+  flags_ |= kFlag_Rotation;
 }
 
 void DrawAnimator::SetSpeed(float speed) {
@@ -46,22 +52,40 @@ void DrawAnimator::Update(float delta_time) {
   if (!is_playing_)
     return;
 
-  Vector2 offset = dir_ * speed_ * delta_time;
-  movement_ += offset.Magnitude();
-  if (movement_ <= distance_) {
-    for (auto& dt : drawables_)
-      dt.drawable->Translate(offset);
-  } else if (loop_) {
-    movement_ = 0;
-    for (auto& dt : drawables_)
-      dt.drawable->SetOffset(dt.start_pos);
-    if (call_callback_)
-      callback_();
-  } else {
-    is_playing_ = false;
-    if (call_callback_)
-      callback_();
+  bool do_callback = false;
+  Vector2 offset = {0, 0};
+
+  if (flags_ & kFlag_Movement) {
+    offset = dir_ * speed_ * delta_time;
+    movement_ += offset.Magnitude();
+    if (movement_ <= distance_) {
+    } else if (loop_) {
+      movement_ = 0;
+      do_callback = true;
+    } else {
+      is_playing_ = false;
+      do_callback = true;
+    }
   }
+  if (flags_ & kFlag_Rotation) {
+    rotation_ += theta_ * delta_time;
+  }
+
+  if (is_playing_) {
+    for (auto& dt : drawables_) {
+      if (flags_ & kFlag_Movement) {
+        if (movement_ == 0.0f)
+          dt.drawable->SetOffset(dt.start_pos);
+        else
+          dt.drawable->Translate(offset);
+      }
+      if (flags_ & kFlag_Rotation)
+        dt.drawable->Rotate(rotation_);
+    }
+  }
+
+  if (do_callback && call_callback_)
+    callback_();
 }
 
 }  // namespace engine

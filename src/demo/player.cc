@@ -14,6 +14,7 @@ bool Player::Initialize() {
 
 void Player::Update(float delta_time) {
   for (int i = 0; i < 2; ++i) {
+    weapon_rotate_animator_.Update(delta_time);
     weapon_animator_[i].Update(delta_time);
     beam_animator_[i].Update(delta_time);
     beam_spark_animator_[i].Update(delta_time);
@@ -126,6 +127,7 @@ void Player::SetupWeapons() {
     weapon_[i].Translate(offset);
 
     // Setup animators.
+    weapon_rotate_animator_.AttachDrawable(&weapon_[i]);
     weapon_animator_[i].AttachFrameController(&weapon_[i]);
     weapon_animator_[i].SetSpeed(0.0165f);
     weapon_animator_[i].SetFrameRange(i * 8 + 1, i * 8 + 8, i * 8 + 1);
@@ -136,7 +138,7 @@ void Player::SetupWeapons() {
       beam_spark_animator_[i].Play(false);
     });
     beam_spark_animator_[i].AttachDrawable(&beam_spark_[i]);
-    beam_spark_animator_[i].SetSpeed(14.0f);
+    beam_spark_animator_[i].SetSpeed(16.0f);
     beam_spark_animator_[i].SetCallback([&, i]()->void {
       beam_spark_animator_[i].Stop();
       beam_spark_[i].SetVisible(false);
@@ -146,6 +148,9 @@ void Player::SetupWeapons() {
     beam_animator_[i].AttachDrawable(&beam_[i]);
     beam_animator_[i].SetSpeed(8);
   }
+
+  weapon_rotate_animator_.SetRotation(-M_PI / 20);
+  weapon_rotate_animator_.Play(true);
 }
 
 void Player::DragStart(const Vector2& pos) {
@@ -175,7 +180,7 @@ void Player::Drag(const Vector2& pos) {
   }
 
   game->GetEnemy().SelectTarget((DamageType)active_weapon_,
-  weapon_[active_weapon_].offset(), drag_end_);
+      weapon_[active_weapon_].offset(), drag_end_);
 }
 
 void Player::DragEnd() {

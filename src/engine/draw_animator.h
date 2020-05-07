@@ -21,6 +21,8 @@ class DrawAnimator {
 
   void SetMovement(Vector2 dir, float distance);
 
+  void SetRotation(float theta);
+
   void SetSpeed(float speed);
 
   void SetCallback(Callback c);
@@ -39,14 +41,20 @@ class DrawAnimator {
     Vector2 start_pos;
   };
 
+  enum Flags { kFlag_Movement = 1, kFlag_Rotation = 2 };
+
+  unsigned int flags_ = 0;
+
   bool is_playing_ = false;
   bool loop_ = false;
 
   std::vector<DrawableTraits> drawables_;
 
+  float theta_ = 0.0f;
+  float rotation_ = 0.0f;
+
   // Movement speed per second.
   float speed_ = 0.002f;
-
   Vector2 dir_ = {0, 0};
   float distance_ = 0.0f;
   float movement_ = 0.0f;
