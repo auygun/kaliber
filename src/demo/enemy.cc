@@ -59,7 +59,7 @@ bool Enemy::HasTarget(DamageType damage_type) {
 Vector2 Enemy::GetTargetPos(DamageType damage_type) {
   Unit *target = GetTarget(damage_type);
   if (target)
-    return target->sprite.offset() - Vector2(0, target->sprite.scale().y / 2.5f);
+    return target->sprite.GetOffset() - Vector2(0, target->sprite.GetScale().y / 2.5f);
   return {0, 0};
 }
 
@@ -78,12 +78,12 @@ void Enemy::SelectTarget(DamageType damage_type,
     if (e.targetted_by_weapon_ == damage_type)
       current_enemy = &e;
 
-    Vector2 weapon_enemy_dir = e.sprite.offset() - weapon_pos;
+    Vector2 weapon_enemy_dir = e.sprite.GetOffset() - weapon_pos;
     float enemy_weapon_dist = weapon_enemy_dir.Magnitude();
     weapon_enemy_dir.Normalize();
     float sin_theta = weapon_enemy_dir.CrossProduct(beam_dir);
     float beam_perpendicular_dist = abs(enemy_weapon_dist * sin_theta);
-    if (beam_perpendicular_dist > e.sprite.scale().x)
+    if (beam_perpendicular_dist > e.sprite.GetScale().x)
       continue;
 
     if (closest_dist > enemy_weapon_dist) {
@@ -168,11 +168,11 @@ void Enemy::Spawn(UnitType unit_type,
     e.sprite.Create(bug_frames_, {10, 4});
   }
   e.sprite.SetVisible(true);
-  Vector2 spawn_pos = pos + Vector2(0, e.sprite.scale().y /2);
+  Vector2 spawn_pos = pos + Vector2(0, e.sprite.GetScale().y /2);
   e.sprite.SetOffset(spawn_pos);
   engine.AddDrawable(&e.sprite);
 
-  e.sprite_frame_animator.AttachFrameController(&e.sprite);
+  e.sprite_frame_animator.Attach(&e.sprite);
   if (damage_type == kDamageType_Green) {
     if (unit_type == kUnitType_Skull)
       e.sprite_frame_animator.SetFrameRange(0 ,5, 4);
@@ -194,10 +194,10 @@ void Enemy::Spawn(UnitType unit_type,
   e.blast.SetOffset(spawn_pos);
   engine.AddDrawable(&e.blast);
 
-  e.target_frame_animator.AttachFrameController(&e.target);
+  e.target_frame_animator.Attach(&e.target);
   e.target_frame_animator.SetSpeed(0.05f);
 
-  e.blast_frame_animator.AttachFrameController(&e.blast);
+  e.blast_frame_animator.Attach(&e.blast);
   e.blast_frame_animator.SetSpeed(0.05f);
   if (damage_type == kDamageType_Green)
     e.blast_frame_animator.SetFrameRange(0 ,6, 5);
@@ -207,9 +207,9 @@ void Enemy::Spawn(UnitType unit_type,
   float max_distance = engine.GetScreenSize().y / 2 +
       abs(game->GetPlayer().GetWeaponPos(kDamageType_Green).y);
 
-  e.draw_animator.AttachDrawable(&e.sprite);
-  e.draw_animator.AttachDrawable(&e.target);
-  e.draw_animator.AttachDrawable(&e.blast);
+  e.draw_animator.Attach(&e.sprite);
+  e.draw_animator.Attach(&e.target);
+  e.draw_animator.Attach(&e.blast);
   e.draw_animator.SetMovement({0, -1}, max_distance);
   e.draw_animator.SetSpeed(speed);
   e.draw_animator.SetCallback([&]()->void {

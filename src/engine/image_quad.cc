@@ -19,7 +19,7 @@ bool ImageQuad::Create(std::shared_ptr<const Image> image,
 
   frame_width_ = image->GetOriginalWidth() / num_frames[0];
   frame_height_ = image->GetOriginalHeight() / num_frames[1];
-  ResetScale();
+  AutoScale();
   tex_scale_ = {
     (float)frame_width_ / (float)image->GetWidth(),
     (float)frame_height_ / (float)image->GetHeight()
@@ -28,22 +28,35 @@ bool ImageQuad::Create(std::shared_ptr<const Image> image,
   return true;
 }
 
-void ImageQuad::ResetScale() {
+void ImageQuad::AutoScale() {
   SetScale(engine::Engine::Get().ToScale(Vector2(frame_width_, frame_height_)));
   Scale((float)Platform::Get().GetDeviceDpi() / 200.0f);
 }
 
-size_t ImageQuad::GetNumFrames() {
-  return num_frames_[0] * num_frames_[1];
+void ImageQuad::Translate(const Vector2& offset) {
+  offset_ += offset;
 }
 
-size_t ImageQuad::GetCurrentFrame() {
-  return current_frame_;
+void ImageQuad::Scale(const Vector2& scale) {
+  scale_ *= scale;
 }
 
-void ImageQuad::SetCurrentFrame(size_t frame) {
+void ImageQuad::Scale(float scale) {
+  scale_ *= scale;
+}
+
+void ImageQuad::Rotate(float angle) {
+  rotation_.x = sin(angle);
+  rotation_.y = cos(angle);
+}
+
+void ImageQuad::SetFrame(size_t frame) {
   assert(frame < GetNumFrames());
   current_frame_ = frame;
+}
+
+size_t ImageQuad::GetNumFrames() {
+  return num_frames_[0] * num_frames_[1];
 }
 
 void ImageQuad::Draw() {
@@ -53,14 +66,14 @@ void ImageQuad::Draw() {
   Shader& shader = Engine::Get().GetPassThroughShader();
 
   shader.Activate();
-  shader.SetUniform("offset", offset());
-  shader.SetUniform("scale", scale());
-  shader.SetUniform("pivot", pivot());
-  shader.SetUniform("rotation", rotation());
+  shader.SetUniform("offset", GetOffset());
+  shader.SetUniform("scale", GetScale());
+  shader.SetUniform("pivot", GetPivot());
+  shader.SetUniform("rotation", GetRotation());
   shader.SetUniform("tex_offset", GetUVOffset(current_frame_));
   shader.SetUniform("tex_scale", tex_scale_);
   shader.SetUniform("projection", Engine::Get().GetRenderer().projection());
-  shader.SetUniform("color", color());
+  shader.SetUniform("color", GetColor());
   shader.SetUniform("texture", 0);
 
   quad.Draw();

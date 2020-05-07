@@ -1,11 +1,11 @@
 #include "frame_animator.h"
-#include "frame_controller.h"
+#include "image_quad.h"
 #include <cassert>
 
 namespace engine {
 
-void FrameAnimator::AttachFrameController(FrameController *controller) {
-  controllers_.push_back(controller);
+void FrameAnimator::Attach(ImageQuad *quad) {
+  quads_.push_back(quad);
 }
 
 void FrameAnimator::SetFrameRange(size_t start_frame,
@@ -15,8 +15,8 @@ void FrameAnimator::SetFrameRange(size_t start_frame,
   end_frame_ = end_frame;
   idle_frame_ = idle_frame;
   if (state_ == kStopped) {
-    for (auto controller : controllers_)
-      controller->SetCurrentFrame(start_frame_);
+    for (auto q : quads_)
+      q->SetFrame(start_frame_);
   }
 }
 
@@ -36,8 +36,8 @@ void FrameAnimator::Play(bool loop, bool reset) {
   loop_ = loop;
   if (reset) {
     seconds_accumulated_ = 0.0f;
-    for (auto controller : controllers_)
-      controller->SetCurrentFrame(start_frame_);
+    for (auto q : quads_)
+      q->SetFrame(start_frame_);
   }
 }
 
@@ -58,20 +58,20 @@ void FrameAnimator::Update(float delta_time) {
     return;
   seconds_accumulated_ = 0;
 
-  for (auto controller : controllers_) {
+  for (auto q : quads_) {
     switch (state_) {
     case kStopped:
-      if (controller->GetCurrentFrame() == idle_frame_)
+      if (q->GetFrame() == idle_frame_)
         break;
       assert(idle_frame_ >= start_frame_ && idle_frame_ < end_frame_);
       // Fall through.
 
     case kPlaying: {
-      int next = controller->GetCurrentFrame() + 1;
-      controller->SetCurrentFrame(next >= end_frame_ ? start_frame_ : next);
-      if (callback_frame_ != 0 && controller->GetCurrentFrame() == start_frame_ + callback_frame_)
+      int next = q->GetFrame() + 1;
+      q->SetFrame(next >= end_frame_ ? start_frame_ : next);
+      if (callback_frame_ != 0 && q->GetFrame() == start_frame_ + callback_frame_)
         callback_();
-      if (!loop_ && controller->GetCurrentFrame() == idle_frame_)
+      if (!loop_ && q->GetFrame() == idle_frame_)
         state_ = kStopped;
       break;
     }

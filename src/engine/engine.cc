@@ -72,7 +72,7 @@ void Engine::Draw(float frame_frac) {
   Clear();
   renderer_.EnableBlend();
   for (auto d : drawables_) {
-    if (d->visible())
+    if (d->IsVisible())
       d->Draw();
   }
   Present();
@@ -190,7 +190,7 @@ void Engine::PrintStats() {
 
   stats_.Create(image);
 
-  Vector2 pos = (GetScreenSize() / 2 - stats_.scale() / 2);
+  Vector2 pos = (GetScreenSize() / 2 - stats_.GetScale() / 2);
   pos -= Vector2(0.02f, 0.1f);
   stats_.SetOffset(pos * Vector2(-1, 1));
 }

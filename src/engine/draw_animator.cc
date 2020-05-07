@@ -1,12 +1,12 @@
 #include "draw_animator.h"
-#include "drawable.h"
+#include "image_quad.h"
 #include "../base/log.h"
 #include <cassert>
 
 namespace engine {
 
-void DrawAnimator::AttachDrawable(Drawable *drawable) {
-  drawables_.push_back({drawable, drawable->offset()});
+void DrawAnimator::Attach(ImageQuad *quad) {
+  quads_.push_back({quad, quad->GetOffset()});
 }
 
 void DrawAnimator::SetMovement(Vector2 dir, float distance) {
@@ -44,8 +44,8 @@ void DrawAnimator::Pause() {
 void DrawAnimator::Stop() {
   is_playing_ = false;
   movement_ = 0;
-  for (auto& dt : drawables_)
-    dt.drawable->SetOffset(dt.start_pos);
+  for (auto& q : quads_)
+    q.quad->SetOffset(q.start_pos);
 }
 
 void DrawAnimator::Update(float delta_time) {
@@ -72,15 +72,15 @@ void DrawAnimator::Update(float delta_time) {
   }
 
   if (is_playing_) {
-    for (auto& dt : drawables_) {
+    for (auto& q : quads_) {
       if (flags_ & kFlag_Movement) {
         if (movement_ == 0.0f)
-          dt.drawable->SetOffset(dt.start_pos);
+          q.quad->SetOffset(q.start_pos);
         else
-          dt.drawable->Translate(offset);
+          q.quad->Translate(offset);
       }
       if (flags_ & kFlag_Rotation)
-        dt.drawable->Rotate(rotation_);
+        q.quad->Rotate(rotation_);
     }
   }
 

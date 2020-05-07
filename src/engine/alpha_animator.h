@@ -7,14 +7,14 @@
 
 namespace engine {
 
-class Drawable;
+class ImageQuad;
 
 class AlphaAnimator {
  public:
   AlphaAnimator() = default;
   ~AlphaAnimator() = default;
 
-  void AttachDrawable(Drawable *drawable);
+  void Attach(ImageQuad *quad);
 
   void SetSpeed(float speed);
 
@@ -26,7 +26,7 @@ class AlphaAnimator {
 
  private:
   bool is_playing_ = false;
-  std::vector<Drawable*> drawables_;
+  std::vector<ImageQuad*> quads_;
   float current_alpha_ = 1;
   float speed_ = 4;
 };

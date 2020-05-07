@@ -1,18 +1,18 @@
 #include "alpha_animator.h"
-#include "drawable.h"
+#include "image_quad.h"
 #include <cassert>
 
 namespace engine {
 
-void AlphaAnimator::AttachDrawable(Drawable *drawable) {
-  drawables_.push_back(drawable);
+void AlphaAnimator::Attach(ImageQuad *quad) {
+  quads_.push_back(quad);
 }
 
 void AlphaAnimator::FadeOut() {
   is_playing_ = true;
   current_alpha_ = 1;
-  for (auto& dt : drawables_)
-    dt->SetVisible(true);
+  for (auto& q : quads_)
+    q->SetVisible(true);
 }
 
 void AlphaAnimator::SetSpeed(float speed) {
@@ -27,11 +27,11 @@ void AlphaAnimator::Update(float delta_time) {
   if (current_alpha_ <= 0) {
     current_alpha_ = 0;
     is_playing_ = false;
-    for (auto& dt : drawables_)
-      dt->SetVisible(false);
+    for (auto& q : quads_)
+      q->SetVisible(false);
   } else {
-    for (auto& dt : drawables_)
-      dt->SetColor({1, 1, 1, current_alpha_});
+    for (auto& q : quads_)
+      q->SetColor({1, 1, 1, current_alpha_});
   }
 }
 

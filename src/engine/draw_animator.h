@@ -8,7 +8,7 @@
 
 namespace engine {
 
-class Drawable;
+class ImageQuad;
 
 class DrawAnimator {
  public:
@@ -17,7 +17,7 @@ class DrawAnimator {
   DrawAnimator() = default;
   ~DrawAnimator() = default;
 
-  void AttachDrawable(Drawable *drawable);
+  void Attach(ImageQuad *quad);
 
   void SetMovement(Vector2 dir, float distance);
 
@@ -36,8 +36,8 @@ class DrawAnimator {
   bool IsPlaying() const { return is_playing_; }
 
  private:
-  struct DrawableTraits {
-    Drawable* drawable;
+  struct QuadTraits {
+    ImageQuad* quad;
     Vector2 start_pos;
   };
 
@@ -48,7 +48,7 @@ class DrawAnimator {
   bool is_playing_ = false;
   bool loop_ = false;
 
-  std::vector<DrawableTraits> drawables_;
+  std::vector<QuadTraits> quads_;
 
   float theta_ = 0.0f;
   float rotation_ = 0.0f;

@@ -33,6 +33,7 @@ class SkyQuad : public Drawable {
   Shader shader_;
   Vector2 sky_offset_ = {0, 0};
   Vector3 nebula_color_ = {0, 0, 0};
+  Vector2 scale_ = {1, 1};
 };
 
 }  // namespace engine

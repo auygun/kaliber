@@ -34,7 +34,7 @@ Vector2 Player::GetWeaponPos(DamageType type) const {
   engine::Engine& engine = engine::Engine::Get();
   return engine.GetScreenSize() /
       Vector2(type == kDamageType_Green ? 4 : -4 , -2) +
-      Vector2(0, weapon_[type].scale().y / 2);
+      Vector2(0, weapon_[type].GetScale().y / 2);
 }
 
 DamageType Player::GetWeaponType(const Vector2& pos) {
@@ -43,10 +43,10 @@ DamageType Player::GetWeaponType(const Vector2& pos) {
 
 void Player::SetBeamLength(DamageType type, float len) {
   beam_[type].SetOffset({0, 0});
-  beam_[type].SetScale({len, beam_[type].scale().y});
+  beam_[type].SetScale({len, beam_[type].GetScale().y});
   beam_[type].PlaceToRightOf(weapon_[type]);
-  beam_[type].Translate(weapon_[type].scale() * Vector2(-0.5f, 0));
-  beam_[type].SetPivot(beam_[type].offset());
+  beam_[type].Translate(weapon_[type].GetScale() * Vector2(-0.5f, 0));
+  beam_[type].SetPivot(beam_[type].GetOffset());
   beam_[type].Translate(GetWeaponPos(type));
 }
 
@@ -54,7 +54,7 @@ void Player::Fire(DamageType type) {
   engine::Engine& engine = engine::Engine::Get();
   Enemy &enemy = static_cast<Demo*>(engine.GetGame())->GetEnemy();
 
-  Vector2 dir = weapon_[type].offset() -
+  Vector2 dir = weapon_[type].GetOffset() -
       (enemy.HasTarget(type) ? enemy.GetTargetPos(type) : drag_end_);
 
   float len = dir.Magnitude();
@@ -66,7 +66,7 @@ void Player::Fire(DamageType type) {
   beam_[type].Rotate(angle);
   beam_spark_[type].Rotate(angle);
 
-  beam_spark_animator_[type].SetMovement(-dir, beam_[type].scale().x * 0.85f);
+  beam_spark_animator_[type].SetMovement(-dir, beam_[type].GetScale().x * 0.85f);
   weapon_animator_[type].Play(false, true);
 }
 
@@ -87,7 +87,7 @@ void Player::SetupWeapons() {
   for (int i = 0; i < 2; ++i) {
     // Setup draw sign.
     drag_sign_[i].Create(weapon_image, {8, 2});
-    drag_sign_[i].SetCurrentFrame(i * 8);
+    drag_sign_[i].SetFrame(i * 8);
     engine.AddDrawable(&drag_sign_[i]);
 
     // Setup weapon.
@@ -97,18 +97,18 @@ void Player::SetupWeapons() {
 
     // Setup beam.
     beam_[i].Create(beam_image, {1, 2});
-    beam_[i].SetCurrentFrame(i);
+    beam_[i].SetFrame(i);
     beam_[i].PlaceToRightOf(weapon_[i]);
-    beam_[i].Translate(weapon_[i].scale() * Vector2(-0.5f, 0));
-    beam_[i].SetPivot(beam_[i].offset());
+    beam_[i].Translate(weapon_[i].GetScale() * Vector2(-0.5f, 0));
+    beam_[i].SetPivot(beam_[i].GetOffset());
     engine.AddDrawable(&beam_[i]);
 
     // Setup beam spark.
     beam_spark_[i].Create(weapon_image, {8, 2});
-    beam_spark_[i].SetCurrentFrame(i * 8 + 1);
+    beam_spark_[i].SetFrame(i * 8 + 1);
     beam_spark_[i].PlaceToRightOf(weapon_[i]);
-    beam_spark_[i].Translate(weapon_[i].scale() * Vector2(-0.5f, 0));
-    beam_spark_[i].SetPivot(beam_spark_[i].offset());
+    beam_spark_[i].Translate(weapon_[i].GetScale() * Vector2(-0.5f, 0));
+    beam_spark_[i].SetPivot(beam_spark_[i].GetOffset());
     engine.AddDrawable(&beam_spark_[i]);
 
     // Place parts on the screen.
@@ -118,8 +118,8 @@ void Player::SetupWeapons() {
     weapon_[i].Translate(offset);
 
     // Setup animators.
-    weapon_rotate_animator_.AttachDrawable(&weapon_[i]);
-    weapon_animator_[i].AttachFrameController(&weapon_[i]);
+    weapon_rotate_animator_.Attach(&weapon_[i]);
+    weapon_animator_[i].Attach(&weapon_[i]);
     weapon_animator_[i].SetSpeed(0.0165f);
     weapon_animator_[i].SetFrameRange(i * 8 + 1, i * 8 + 8, i * 8 + 1);
     weapon_animator_[i].SetCallback(4, [&, i]()->void {
@@ -128,7 +128,7 @@ void Player::SetupWeapons() {
       beam_spark_[i].SetVisible(true);
       beam_spark_animator_[i].Play(false);
     });
-    beam_spark_animator_[i].AttachDrawable(&beam_spark_[i]);
+    beam_spark_animator_[i].Attach(&beam_spark_[i]);
     beam_spark_animator_[i].SetSpeed(16.0f);
     beam_spark_animator_[i].SetCallback([&, i]()->void {
       beam_spark_animator_[i].Stop();
@@ -136,7 +136,7 @@ void Player::SetupWeapons() {
       beam_animator_[i].FadeOut();
       static_cast<Demo*>(engine.GetGame())->GetEnemy().HitTarget((DamageType)i);
     });
-    beam_animator_[i].AttachDrawable(&beam_[i]);
+    beam_animator_[i].Attach(&beam_[i]);
     beam_animator_[i].SetSpeed(8);
   }
 
@@ -171,7 +171,7 @@ void Player::Drag(const Vector2& pos) {
   }
 
   game->GetEnemy().SelectTarget((DamageType)active_weapon_,
-      weapon_[active_weapon_].offset(), drag_end_);
+      weapon_[active_weapon_].GetOffset(), drag_end_);
 }
 
 void Player::DragEnd() {
@@ -201,7 +201,7 @@ bool Player::ValidateDrag() {
   Vector2 dir = drag_end_ - drag_start_;
   float len = dir.Magnitude();
   dir.Normalize();
-  if (len < weapon_[active_weapon_].scale().y)
+  if (len < weapon_[active_weapon_].GetScale().y)
     return false;
   if (dir.DotProduct(Vector2(0 ,1)) < 0)
     return false;

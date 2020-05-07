@@ -25,7 +25,8 @@ bool SkyQuad::Create() {
     LOG << "Could not create quad geometry.";
     return false;
   }
-  Scale(Engine::Get().GetScreenSize());
+
+  scale_ = Engine::Get().GetScreenSize();
 
   nebula_color_ = {RandomFloat(-0.8f, 0.2f),
                    RandomFloat(-0.1f, 0.4f),
@@ -38,7 +39,7 @@ void SkyQuad::Draw() {
   sky_offset_ += Vector2(0, -0.0006f);
 
   shader_.Activate();
-  shader_.SetUniform("scale", scale());
+  shader_.SetUniform("scale", scale_);
   shader_.SetUniform("projection", Engine::Get().GetRenderer().projection());
   shader_.SetUniform("resolution", Vector2(2000, 2000));
   shader_.SetUniform("sky_offset", sky_offset_);

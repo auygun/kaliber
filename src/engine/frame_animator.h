@@ -8,7 +8,7 @@
 
 namespace engine {
 
-class FrameController;
+class ImageQuad;
 
 class FrameAnimator {
  public:
@@ -17,7 +17,7 @@ class FrameAnimator {
   FrameAnimator() = default;
   ~FrameAnimator() = default;
 
-  void AttachFrameController(FrameController *drawable);
+  void Attach(ImageQuad *quad);
 
   void SetFrameRange(size_t start_frame, size_t end_frame, size_t idle_frame);
 
@@ -41,7 +41,7 @@ class FrameAnimator {
   State state_ = kStopped;
   bool loop_ = false;
 
-  std::vector<FrameController*> controllers_;
+  std::vector<ImageQuad*> quads_;
 
   // Time in seconds between frames.
   float speed_ = 0.1f;
