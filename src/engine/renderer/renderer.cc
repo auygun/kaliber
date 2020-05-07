@@ -99,43 +99,6 @@ void Renderer::TerminateWorker() {
 #endif // THREADED_RENDERING
 }
 
-int Renderer::AcquireTextureResource(std::shared_ptr<const Image> image) {
-  int resource_id = 0;
-  if (image->GetName().empty()) {
-    resource_id = ++last_texture_resource_id_;
-  } else {
-    auto it = texture_resources_.find(image->GetName());
-    if (it != texture_resources_.end()) {
-      ++(it->second.ref_count);
-      return it->second.resource_id;
-    }
-    resource_id = ++last_texture_resource_id_;
-    texture_resources_[image->GetName()] = {resource_id, 1};
-    DLOG << "AcquireTextureResource - Create! asset: " << image->GetName()
-         << ", resource_id: " << resource_id;
-  }
-
-  auto cmd = std::make_unique<CmdCreateTexture>();
-  cmd->id = resource_id;
-  cmd->image = image;
-  EnqueueCommand(std::move(cmd));
-  return resource_id;
-}
-
-void Renderer::ReturnTextureResource(int resource_id) {
-  auto it = std::find_if(texture_resources_.begin(), texture_resources_.end(),
-      [resource_id](auto& p){ return p.second.resource_id == resource_id; });
-  if (it != texture_resources_.end()) {
-    if (--(it->second.ref_count) > 0)
-      return;
-    DLOG << "ReturnTextureResource - Destroy! resource_id: " << resource_id;
-    texture_resources_.erase(it);
-  }
-  auto cmd = std::make_unique<CmdDestoryTexture>();
-  cmd->id = resource_id;
-  EnqueueCommand(std::move(cmd));
-}
-
 void Renderer::EnterDrawStage() {
   draw_stage_ = true;
 }

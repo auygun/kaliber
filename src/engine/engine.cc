@@ -2,6 +2,7 @@
 #include "../base/log.h"
 #include "../base/random.h"
 #include "asset_manager/image.h"
+#include "renderer/render_command.h"
 #include "game.h"
 #include "game_factory.h"
 #include "drawable.h"
@@ -65,6 +66,7 @@ void Engine::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
   game_->Update(delta_time);
   PrintStats();
+  KillUnusedResources(delta_time);
 }
 
 void Engine::Draw(float frame_frac) {
@@ -117,6 +119,44 @@ Vector2 Engine::ToPosition(const Vector2& vec) {
   return ToScale(vec) - GetScreenSize() / 2.0f;
 }
 
+int Engine::AcquireTextureResource(std::shared_ptr<const Image> image) {
+  int resource_id = 0;
+  if (image->GetName().empty()) {
+    resource_id = ++last_texture_resource_id_;
+  } else {
+    auto it = texture_resources_.find(image->GetName());
+    if (it != texture_resources_.end()) {
+      ++(it->second.ref_count);
+      return it->second.resource_id;
+    }
+    resource_id = ++last_texture_resource_id_;
+    texture_resources_[image->GetName()] = {resource_id, 1};
+    DLOG << "AcquireTextureResource - Create! asset: " << image->GetName()
+         << ", resource_id: " << resource_id;
+  }
+
+  auto cmd = std::make_unique<CmdCreateTexture>();
+  cmd->id = resource_id;
+  cmd->image = image;
+  renderer_.EnqueueCommand(std::move(cmd));
+  return resource_id;
+}
+
+void Engine::ReturnTextureResource(int resource_id) {
+  auto it = std::find_if(texture_resources_.begin(), texture_resources_.end(),
+      [resource_id](auto& p){ return p.second.resource_id == resource_id; });
+  if (it != texture_resources_.end()) {
+    assert(it->second.ref_count > 0);
+    if (--(it->second.ref_count) > 0)
+      return;
+    it->second.time_to_die_ = 5;
+    return;
+  }
+  auto cmd = std::make_unique<CmdDestoryTexture>();
+  cmd->id = resource_id;
+  renderer_.EnqueueCommand(std::move(cmd));
+}
+
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
   input_queue_.push_back(std::move(event));
 }
@@ -155,6 +195,26 @@ bool Engine::CreateRenderResources() {
   return true;
 }
 
+void Engine::KillUnusedResources(float delta_time) {
+  for (auto it = texture_resources_.begin(); it != texture_resources_.end();
+      ++it) {
+    if (it->second.ref_count > 0)
+      continue;
+
+    it->second.time_to_die_ -= delta_time;
+    if (it->second.time_to_die_ <= 0.0f) {
+      DLOG << "ReturnTextureResource - Destroy! resource_id: "<<
+          it->second.resource_id;
+
+      auto cmd = std::make_unique<CmdDestoryTexture>();
+      cmd->id = it->second.resource_id;
+      renderer_.EnqueueCommand(std::move(cmd));
+
+      it = texture_resources_.erase(it);
+    }
+  }
+}
+
 void Engine::PrintStats() {
   constexpr int width = 300;
   std::vector<std::string> lines;
@@ -167,9 +227,6 @@ void Engine::PrintStats() {
   line = "render queue: ";
   line += std::to_string(eng::Engine::Get().GetRenderer().render_queue_size());
   lines.push_back(line);
-  // if (!stats_.Print(eng::Engine::Get().GetFont(), lines, 300)) {
-  //   LOG << "Failed to create the text.";
-  // }
 
   constexpr int margin = 3;
   int line_height = font_.GetLineHeight();

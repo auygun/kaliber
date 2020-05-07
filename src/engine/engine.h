@@ -11,6 +11,8 @@
 #include "asset_manager/asset_manager.h"
 #include <list>
 #include <deque>
+#include <unordered_map>
+
 
 namespace eng {
 
@@ -39,6 +41,9 @@ class Engine {
   Vector2 ToScale(const Vector2& vec);
   Vector2 ToPosition(const Vector2& vec);
 
+  int AcquireTextureResource(std::shared_ptr<const Image> image);
+  void ReturnTextureResource(int resource_id);
+
   void AddInputEvent(std::unique_ptr<InputEvent> event);
   std::unique_ptr<InputEvent> GetNextInputEvent();
 
@@ -60,7 +65,17 @@ class Engine {
   float seconds_accumulated() const { return seconds_accumulated_; }
 
  private:
+  struct TextureResource {
+    int resource_id = 0;
+    int ref_count = 0;
+    float time_to_die_ = 0.0f;
+  };
+
   std::unique_ptr<Game> game_;
+
+  std::unordered_map<std::string, TextureResource> texture_resources_;
+  // TODO: Recycle resource ids.
+  int last_texture_resource_id_ = 0;
 
   AssetManager asset_manager_;
 
@@ -81,6 +96,8 @@ class Engine {
   std::deque<std::unique_ptr<InputEvent>> input_queue_;
 
   bool CreateRenderResources();
+
+  void KillUnusedResources(float delta_time);
 
   void Clear();
   void Present();
