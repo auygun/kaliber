@@ -31,11 +31,10 @@ void Player::OnInputEvent(std::unique_ptr<engine::InputEvent> event) {
 }
 
 Vector2 Player::GetWeaponPos(DamageType type) const {
-  return weapon_[type].offset();
-}
-
-Vector2 Player::GetWeaponScale(DamageType type) const {
-  return weapon_[type].scale();
+  engine::Engine& engine = engine::Engine::Get();
+  return engine.GetScreenSize() /
+      Vector2(type == kDamageType_Green ? 4 : -4 , -2) +
+      Vector2(0, weapon_[type].scale().y / 2);
 }
 
 DamageType Player::GetWeaponType(const Vector2& pos) {
@@ -45,17 +44,12 @@ DamageType Player::GetWeaponType(const Vector2& pos) {
 }
 
 void Player::SetBeamLength(DamageType type, float len) {
-  engine::Engine& engine = engine::Engine::Get();
-
   beam_[type].SetOffset({0, 0});
   beam_[type].SetScale({len, beam_[type].scale().y});
   beam_[type].PlaceToRightOf(weapon_[type]);
   beam_[type].Translate(weapon_[type].scale() * Vector2(-0.5f, 0));
   beam_[type].SetPivot(beam_[type].offset());
-
-  Vector2 offset = engine.GetScreenSize() / Vector2(type ? -4 : 4 , -2)
-      + Vector2(0, weapon_[type].scale().y) / 2;
-  beam_[type].Translate(offset);
+  beam_[type].Translate(GetWeaponPos(type));
 }
 
 void Player::Fire(DamageType type) {
@@ -120,8 +114,7 @@ void Player::SetupWeapons() {
     engine.AddDrawable(&beam_spark_[i]);
 
     // Place parts on the screen.
-    Vector2 offset = engine.GetScreenSize() / Vector2(i ? -4 : 4 , -2)
-        + Vector2(0, weapon_[i].scale().y / 2);
+    Vector2 offset = GetWeaponPos((DamageType)i);
     beam_[i].Translate(offset);
     beam_spark_[i].Translate(offset);
     weapon_[i].Translate(offset);

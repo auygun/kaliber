@@ -24,7 +24,6 @@ class Player {
   void OnInputEvent(std::unique_ptr<engine::InputEvent> event);
 
   Vector2 GetWeaponPos(DamageType type) const;
-  Vector2 GetWeaponScale(DamageType type) const;
 
  private:
   engine::ImageQuad drag_sign_[2];

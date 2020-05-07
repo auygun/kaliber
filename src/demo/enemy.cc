@@ -206,8 +206,7 @@ void Enemy::Spawn(UnitType unit_type,
     e.blast_frame_animator.SetFrameRange(6 ,12, 11);
 
   float max_distance = engine.GetScreenSize().y / 2 +
-      abs(game->GetPlayer().GetWeaponPos(kDamageType_Green).y) -
-      game->GetPlayer().GetWeaponScale(kDamageType_Green).y;
+      abs(game->GetPlayer().GetWeaponPos(kDamageType_Green).y);
 
   e.draw_animator.AttachDrawable(&e.sprite);
   e.draw_animator.AttachDrawable(&e.target);
