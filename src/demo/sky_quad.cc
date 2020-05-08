@@ -22,10 +22,7 @@ bool SkyQuad::Create() {
   quad_.Create(GL_TRIANGLE_STRIP, vertex_description, 4, vertices);
 
   scale_ = eng::Engine::Get().GetScreenSize();
-
-  nebula_color_ = {RandomFloat(-0.8f, 0.2f),
-                   RandomFloat(-0.1f, 0.4f),
-                   RandomFloat(-0.1f, 0.4f)};
+  nebula_color_ = {0.962f, 0.308f, 0.112f};
 
   return true;
 }
@@ -36,7 +33,6 @@ void SkyQuad::Draw() {
   shader_.Activate();
   shader_.SetUniform("scale", scale_);
   shader_.SetUniform("projection", eng::Engine::Get().GetProjectionMarix());
-  shader_.SetUniform("resolution", Vector2(2000, 2000));
   shader_.SetUniform("sky_offset", sky_offset_);
   shader_.SetUniform("nebula_color", nebula_color_);
 

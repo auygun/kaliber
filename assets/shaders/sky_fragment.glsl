@@ -1,6 +1,7 @@
 precision highp float;
 
-uniform vec2 resolution;
+const vec2 resolution = vec2(2000.0, 2000.0);
+
 uniform vec2 sky_offset;
 uniform vec3 nebula_color;
 
@@ -38,7 +39,7 @@ float rand(vec2 p)
   return fract(sin(dot(p.xy ,vec2(54.90898, 18.233))) * 4337.5453);
 }
 
-// Thanks to David Hoskins https://www.shadertoy.com/view/4djGRh
+// https://www.shadertoy.com/view/4djGRh
 float stars(in vec2 x, float numCells, float size, float br)
 {
   vec2 n = x * numCells;
@@ -66,7 +67,7 @@ void main() {
   vec2 nebula_coord = gl_FragCoord.xy / resolution.xy;
   nebula_coord.x *= resolution.x / resolution.y;
   nebula_coord.y += sky_offset.y * 0.7;
-  float c = 0.4 * noise(nebula_coord * 3.0);
+  float c = 0.35 * noise(nebula_coord * 3.0) - 0.05;
   result += nebula_color * c;
 
   vec2 star_coord = gl_FragCoord.xy / resolution.y;
