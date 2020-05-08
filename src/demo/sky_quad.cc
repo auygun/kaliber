@@ -27,6 +27,11 @@ bool SkyQuad::Create() {
   return true;
 }
 
+void SkyQuad::ContextLost() {
+  quad_.Invalidate();
+  shader_.Invalidate();
+}
+
 void SkyQuad::Draw() {
   sky_offset_ += Vector2(0, -0.0006f);
 

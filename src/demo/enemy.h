@@ -15,6 +15,8 @@ class Enemy {
 
   bool Initialize();
 
+  void ContextLost();
+
   void Update(float delta_time);
 
   bool HasTarget(DamageType damage_type);

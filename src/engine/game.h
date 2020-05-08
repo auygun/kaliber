@@ -10,6 +10,8 @@ class Game {
   virtual bool Initialize() = 0;
 
   virtual void Update(float delta_time) = 0;
+
+  virtual void ContextLost() = 0;
 };
 
 }  // namespace eng

@@ -52,6 +52,9 @@ RENDER_COMMAND_END
 RENDER_COMMAND_BEGIN(CmdPresent)
 RENDER_COMMAND_END
 
+RENDER_COMMAND_BEGIN(CmdContextLost)
+RENDER_COMMAND_END
+
 RENDER_COMMAND_BEGIN(CmdCreateTexture)
   int id;
   std::shared_ptr<const Image> image;

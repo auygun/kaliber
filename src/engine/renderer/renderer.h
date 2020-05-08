@@ -32,11 +32,18 @@ class Image;
 
 class Renderer {
  public:
+  class Delegate {
+   public:
+    virtual void ContextLost() = 0;
+  };
+
   Renderer();
   ~Renderer();
 
   Renderer(const Renderer&) = delete;
   Renderer& operator=(const Renderer&) = delete;
+
+  void SetDelegate(Delegate* delegate);
 
   bool StartWorker();
   void TerminateWorker();
@@ -123,6 +130,8 @@ class Renderer {
     std::unordered_map<std::string, GLuint> uniforms;
   };
 
+  Delegate* delegate_ = nullptr;
+
   TextureCompression texture_compression_;
   bool vertex_array_objects_ = false;
 
@@ -175,6 +184,7 @@ class Renderer {
   void HandleCmdEnableBlend(RenderCommand* cmd);
   void HandleCmdClear(RenderCommand* cmd);
   void HandleCmdPresent(RenderCommand* cmd);
+  void HandleCmdContextLost(RenderCommand* cmd);
   void HandleCmdCreateTexture(RenderCommand* cmd);
   void HandleCmdDestoryTexture(RenderCommand* cmd);
   void HandleCmdActivateTexture(RenderCommand* cmd);

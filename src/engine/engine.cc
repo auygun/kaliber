@@ -19,6 +19,8 @@ Engine& Engine::Get() {
 bool Engine::Init() {
   RandomInit();
 
+  renderer_.SetDelegate(this);
+
   if (!font_.Create("Roboto-Regular.ttf")) {
     LOG << "Failed to create the font.";
     return false;
@@ -82,11 +84,13 @@ void Engine::Draw(float frame_frac) {
 }
 
 void Engine::Clear() {
-  // Pulsate the clear color to make it more visible if we see it.
   static float grey = 0.0f;
-  // grey += 0.01f;
-  // if (grey > 1.0f)
-  //   grey = 0.0f;
+#if 0
+  // Pulsate the clear color to make it more visible if we see it.
+  grey += 0.01f;
+  if (grey > 1.0f)
+    grey = 0.0f;
+#endif
   renderer_.Clear({grey, grey, grey, 1.0f});
 }
 
@@ -170,6 +174,18 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
   return event;
 }
 
+void Engine::ContextLost() {
+  texture_resources_.clear();
+  last_texture_resource_id_ = 0;
+
+  pass_through_shader_.Invalidate();
+  quad_.Invalidate();
+  CreateRenderResources();
+
+  stats_.ContextLost();
+  game_->ContextLost();
+}
+
 bool Engine::CreateRenderResources() {
   // Create the shader we can reuse for all tiles.
   const char* vertex_description = "p2f;t2f";
@@ -243,6 +259,7 @@ void Engine::PrintStats() {
   }
 
   stats_.Create(image);
+  stats_.AutoScale();
 
   Vector2 pos = (GetScreenSize() / 2 - stats_.GetScale() / 2);
   pos -= Vector2(0.02f, 0.1f);

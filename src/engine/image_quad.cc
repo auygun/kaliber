@@ -18,12 +18,16 @@ void ImageQuad::Create(std::shared_ptr<const Image> image,
 
   frame_width_ = image->GetOriginalWidth() / num_frames[0];
   frame_height_ = image->GetOriginalHeight() / num_frames[1];
-  AutoScale();
+
   tex_scale_ = {
     (float)frame_width_ / (float)image->GetWidth(),
     (float)frame_height_ / (float)image->GetHeight()
   };
   num_frames_ = std::move(num_frames);
+}
+
+void ImageQuad::ContextLost() {
+  texture_.Invalidate();
 }
 
 void ImageQuad::AutoScale() {

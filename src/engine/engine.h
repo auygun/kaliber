@@ -20,7 +20,7 @@ class Game;
 class Drawable;
 class InputEvent;
 
-class Engine {
+class Engine : public Renderer::Delegate {
  public:
   static Engine& Get();
 
@@ -94,6 +94,8 @@ class Engine {
 
   // TODO: Move to InputQueue class.
   std::deque<std::unique_ptr<InputEvent>> input_queue_;
+
+  void ContextLost() override;
 
   bool CreateRenderResources();
 

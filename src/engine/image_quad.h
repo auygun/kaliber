@@ -25,6 +25,8 @@ class ImageQuad : public Drawable {
   void Create(std::shared_ptr<const Image> image,
               std::array<int, 2> num_frames = {1, 1});
 
+  void ContextLost();
+
   void AutoScale();
 
   void Translate(const Vector2& offset);

@@ -21,6 +21,26 @@ bool Enemy::Initialize() {
   return true;
 }
 
+void Enemy::ContextLost() {
+  for (auto& e : enemies_) {
+    if (e.marked_for_removal)
+      continue;
+
+    LOG << "recreate enemy!!!!";
+    e.sprite.ContextLost();
+    if (e.unit_type == kUnitType_Skull)
+      e.sprite.Create(skull_frames_, {10, 6});
+    else
+      e.sprite.Create(bug_frames_, {10, 4});
+
+    e.target.ContextLost();
+    e.target.Create(target_frames_, {6, 2});
+
+    e.blast.ContextLost();
+    e.blast.Create(blast_frames_, {6, 2});
+  }
+}
+
 void Enemy::Update(float delta_time) {
   eng::Engine& engine = eng::Engine::Get();
 
@@ -133,6 +153,9 @@ void Enemy::HitTarget(DamageType damage_type) {
     target->blast.SetVisible(true);
     target->blast_frame_animator.Play(false, true);
     target->blast_frame_animator.SetCallback(5, [target]()->void {
+      target->sprite.SetVisible(false);
+      target->target.SetVisible(false);
+      target->blast.SetVisible(false);
       target->marked_for_removal = true;
     });
   } else {
@@ -167,6 +190,7 @@ void Enemy::Spawn(UnitType unit_type,
     e.hit_points = 2;
     e.sprite.Create(bug_frames_, {10, 4});
   }
+  e.sprite.AutoScale();
   e.sprite.SetVisible(true);
   Vector2 spawn_pos = pos + Vector2(0, e.sprite.GetScale().y /2);
   e.sprite.SetOffset(spawn_pos);
@@ -187,10 +211,12 @@ void Enemy::Spawn(UnitType unit_type,
   e.sprite_frame_animator.Play(true, true);
 
   e.target.Create(target_frames_, {6, 2});
+  e.target.AutoScale();
   e.target.SetOffset(spawn_pos);
   engine.AddDrawable(&e.target);
 
   e.blast.Create(blast_frames_, {6, 2});
+  e.blast.AutoScale();
   e.blast.SetOffset(spawn_pos);
   engine.AddDrawable(&e.blast);
 
@@ -215,6 +241,8 @@ void Enemy::Spawn(UnitType unit_type,
   e.draw_animator.SetCallback([&]()->void {
     e.sprite_frame_animator.Stop();
     e.sprite.SetVisible(false);
+    e.target.SetVisible(false);
+    e.blast.SetVisible(false);
     e.marked_for_removal = true;
   });
   e.draw_animator.Play(false);

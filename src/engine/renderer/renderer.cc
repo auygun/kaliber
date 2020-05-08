@@ -69,9 +69,19 @@ Renderer::~Renderer() {
   TerminateWorker();
 }
 
+void Renderer::SetDelegate(Delegate* delegate) {
+  delegate_ = delegate;
+}
+
 bool Renderer::StartWorker() {
 #ifdef THREADED_RENDERING
   LOG << "Strating render thread.";
+
+  global_commands_.clear();
+  draw_commands_[0].clear();
+  draw_commands_[1].clear();
+  terminate_worker_ = false;
+
   std::promise<bool> promise;
   std::future<bool> future = promise.get_future();
   worker_thread_ = std::thread(&Renderer::WorkerMain, this, std::move(promise));
@@ -193,6 +203,9 @@ void Renderer::ProcessCommand(RenderCommand* cmd) {
   case HHASH("CmdPresent"):
     HandleCmdPresent(cmd);
     break;
+  case HHASH("CmdContextLost"):
+    HandleCmdContextLost(cmd);
+    break;
   case HHASH("CmdCreateTexture"):
     HandleCmdCreateTexture(cmd);
     break;
@@ -254,6 +267,26 @@ void Renderer::HandleCmdClear(RenderCommand* cmd) {
   auto *c = static_cast<CmdClear*>(cmd);
   glClearColor(c->rgba[0], c->rgba[1], c->rgba[2], c->rgba[3]);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void Renderer::HandleCmdContextLost(RenderCommand* cmd) {
+  for (auto& p : texture_map_)
+    glDeleteTextures(1, &(p.second));
+  texture_map_.clear();
+
+  for (auto& p : shader_map_)
+    glDeleteProgram(p.second.id);
+  shader_map_.clear();
+
+  for (auto& p : geometry_map_) {
+    if (p.second.indexBufferId)
+      glDeleteBuffers(1, &(p.second.indexBufferId));
+    if (p.second.vertexBufferId)
+      glDeleteBuffers(1, &(p.second.vertexBufferId));
+    if (p.second.vertexArrayId)
+      glDeleteVertexArrays(1, &(p.second.vertexArrayId));
+  }
+  geometry_map_.clear();
 }
 
 void Renderer::HandleCmdCreateTexture(RenderCommand* cmd) {
@@ -761,7 +794,14 @@ void Renderer::Present() {
   EnqueueCommand(std::move(cmd));
 }
 
-void Renderer::ContextLost() {}
+void Renderer::ContextLost() {
+  LOG << "Context lost.";
+
+  auto cmd = std::make_unique<CmdContextLost>();
+  EnqueueCommand(std::move(cmd));
+
+  delegate_->ContextLost();
+}
 
 void Renderer::LogVersion() {
   LOG << "OpenGL:";

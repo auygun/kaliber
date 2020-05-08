@@ -21,6 +21,7 @@ public:
 
   void Activate();
 
+  void Invalidate() { resource_id_ = 0; }
   bool IsValid() { return resource_id_ > 0; }
 
 private:

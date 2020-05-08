@@ -12,6 +12,29 @@ bool Player::Initialize() {
   return true;
 }
 
+void Player::ContextLost() {
+  eng::Engine& engine = eng::Engine::Get();
+
+  auto weapon_image =
+      engine.GetAssetManager().GetImage("enemy_anims_flare_ok.png");
+  auto beam_image =
+      engine.GetAssetManager().GetImage("enemy_ray_ok.png");
+
+  for (int i = 0; i < 2; ++i) {
+    drag_sign_[i].ContextLost();
+    drag_sign_[i].Create(weapon_image, {8, 2});
+
+    weapon_[i].ContextLost();
+    weapon_[i].Create(weapon_image, {8, 2});
+
+    beam_[i].ContextLost();
+    beam_[i].Create(beam_image, {1, 2});
+
+    beam_spark_[i].ContextLost();
+    beam_spark_[i].Create(weapon_image, {8, 2});
+  }
+}
+
 void Player::Update(float delta_time) {
   for (int i = 0; i < 2; ++i) {
     weapon_rotate_animator_.Update(delta_time);
@@ -87,16 +110,19 @@ void Player::SetupWeapons() {
   for (int i = 0; i < 2; ++i) {
     // Setup draw sign.
     drag_sign_[i].Create(weapon_image, {8, 2});
+    drag_sign_[i].AutoScale();
     drag_sign_[i].SetFrame(i * 8);
     engine.AddDrawable(&drag_sign_[i]);
 
     // Setup weapon.
     weapon_[i].Create(weapon_image, {8, 2});
+    weapon_[i].AutoScale();
     weapon_[i].SetVisible(true);
     engine.AddDrawable(&weapon_[i]);
 
     // Setup beam.
     beam_[i].Create(beam_image, {1, 2});
+    beam_[i].AutoScale();
     beam_[i].SetFrame(i);
     beam_[i].PlaceToRightOf(weapon_[i]);
     beam_[i].Translate(weapon_[i].GetScale() * Vector2(-0.5f, 0));
@@ -105,6 +131,7 @@ void Player::SetupWeapons() {
 
     // Setup beam spark.
     beam_spark_[i].Create(weapon_image, {8, 2});
+    beam_spark_[i].AutoScale();
     beam_spark_[i].SetFrame(i * 8 + 1);
     beam_spark_[i].PlaceToRightOf(weapon_[i]);
     beam_spark_[i].Translate(weapon_[i].GetScale() * Vector2(-0.5f, 0));

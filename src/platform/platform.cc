@@ -1,6 +1,5 @@
 #include "platform.h"
 #include "../base/log.h"
-#include "../base/timer.h"
 #include "../engine/engine.h"
 #include <math.h>
 #include <thread>
@@ -25,7 +24,7 @@ void Platform::RunMainLoop() {
   constexpr float speed = 1.0f;
   constexpr float epsilon = 0.0001f;
 
-  Timer timer;
+  timer_.Reset();
   float accumulator = 0.0;
   float frame_frac = 0.0f;
 
@@ -35,16 +34,16 @@ void Platform::RunMainLoop() {
 #ifdef USE_SLEEP
     // Accumulate time.
     while (accumulator < time_step) {
-      timer.Update();
-      accumulator += timer.GetSecondsPassed();
+      timer_.Update();
+      accumulator += timer_.GetSecondsPassed();
       if (time_step - accumulator > epsilon) {
         float sleep_time = time_step - accumulator - epsilon;
         std::this_thread::sleep_for(std::chrono::microseconds((int)(sleep_time * 1000000.0f)));
       }
     };
 #else
-    timer.Update();
-    accumulator += timer.GetSecondsPassed();
+    timer_.Update();
+    accumulator += timer_.GetSecondsPassed();
 #endif // USE_SLEEP
 
     // Subdivide the frame time.

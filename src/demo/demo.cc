@@ -50,3 +50,10 @@ void Demo::Update(float delta_time) {
   enemy_.Update(delta_time);
   player_.Update(delta_time);
 }
+
+void Demo::ContextLost() {
+  enemy_.ContextLost();
+  player_.ContextLost();
+  sky_.ContextLost();
+  sky_.Create();
+}

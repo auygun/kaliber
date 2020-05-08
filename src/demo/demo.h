@@ -18,6 +18,8 @@ class Demo : public eng::Game {
 
   void Update(float delta_time) override;
 
+  void ContextLost() override;
+
   Player& GetPlayer() { return player_; }
   Enemy& GetEnemy() { return enemy_; }
 

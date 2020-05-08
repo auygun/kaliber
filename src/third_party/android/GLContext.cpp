@@ -84,6 +84,7 @@ void GLContext::InitGLES() {
 GLContext::~GLContext() { Terminate(); }
 
 bool GLContext::Init(ANativeWindow* window) {
+  LOGE(__func__);
   if (egl_context_initialized_) return true;
 
   //
@@ -213,6 +214,7 @@ void GLContext::Terminate() {
 }
 
 EGLint GLContext::Resume(ANativeWindow* window) {
+  LOGE(__func__);
   if (egl_context_initialized_ == false) {
     Init(window);
     return EGL_SUCCESS;
@@ -221,6 +223,7 @@ EGLint GLContext::Resume(ANativeWindow* window) {
   int32_t original_widhth = screen_width_;
   int32_t original_height = screen_height_;
 
+  LOGE("Create surface");
   // Create surface
   window_ = window;
   surface_ = eglCreateWindowSurface(display_, config_, window_, NULL);
@@ -239,10 +242,12 @@ EGLint GLContext::Resume(ANativeWindow* window) {
   LOGW("Unable to eglMakeCurrent %d", err);
 
   if (err == EGL_CONTEXT_LOST) {
+    LOGE("Recreate context");
     // Recreate context
     LOGI("Re-creating egl context");
     InitEGLContext();
   } else {
+    LOGE("Recreate surface");
     // Recreate surface
     Terminate();
     InitEGLSurface();

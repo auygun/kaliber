@@ -142,52 +142,61 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       break;
 
     case APP_CMD_INIT_WINDOW:
+      DLOG << "APP_CMD_INIT_WINDOW";
       if (app->window != NULL) {
         if (!eng::Engine::Get().GetRenderer().StartWorker()) {
           LOG << "Failed to initialize the renderer.";
           throw internal_error;
         }
-        platform->has_focus_ = true;
       }
       break;
 
     case APP_CMD_TERM_WINDOW:
+      DLOG << "APP_CMD_TERM_WINDOW";
       eng::Engine::Get().GetRenderer().TerminateWorker();
       platform->has_focus_ = false;
       break;
 
     case APP_CMD_CONFIG_CHANGED:
+      DLOG << "APP_CMD_CONFIG_CHANGED";
       if (platform->app_->window != NULL) {
         int width = eng::Engine::Get().GetScreenWidth();
         int height = eng::Engine::Get().GetScreenHeight();
         if (width != ANativeWindow_getWidth(app->window) ||
             height != ANativeWindow_getHeight(app->window)) {
           eng::Engine::Get().GetRenderer().TerminateWorker();
-          eng::Engine::Get().GetRenderer().StartWorker();
+          if (!eng::Engine::Get().GetRenderer().StartWorker()) {
+            LOG << "Failed to initialize the renderer.";
+            throw internal_error;
+          }
         }
       }
     break;
 
     case APP_CMD_STOP:
+      DLOG << "APP_CMD_STOP";
       break;
 
     case APP_CMD_GAINED_FOCUS:
-      // eng->ResumeSensors();
+      DLOG << "APP_CMD_GAINED_FOCUS";
+      platform->timer_.Reset();
       platform->has_focus_ = true;
       break;
 
     case APP_CMD_LOST_FOCUS:
-      // eng->SuspendSensors();
+      DLOG << "APP_CMD_LOST_FOCUS";
       platform->has_focus_ = false;
       break;
 
     case APP_CMD_LOW_MEMORY:
+      DLOG << "APP_CMD_LOW_MEMORY";
       eng::Engine::Get().TrimMemory();
       break;
   }
 }
 
 void Platform::Initialize(android_app* app) {
+  LOG << "Initializing platform.";
   app_ = app;
 
   doubletap_detector_ = std::make_unique<ndk_helper::DoubletapDetector>();
@@ -212,6 +221,7 @@ void Platform::Initialize(android_app* app) {
 }
 
 void Platform::Shutdown() {
+  LOG << "Shutting down platform.";
   eng::Engine::Get().GetRenderer().TerminateWorker();
 }
 

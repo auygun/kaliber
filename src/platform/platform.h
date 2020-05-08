@@ -2,6 +2,7 @@
 #define PLATFORM_H
 
 #include "../base/vecmath.h"
+#include "../base/timer.h"
 #include <exception>
 #include <string>
 #include <memory>
@@ -49,6 +50,7 @@ class Platform {
   } internal_error;
 
  private:
+  Timer timer_;
   int device_dpi_ = 200;
   std::string root_path_;
   bool has_focus_ = false;

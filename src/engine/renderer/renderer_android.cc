@@ -18,9 +18,9 @@ bool Renderer::Init() {
   } else if (window != gl_context->GetANativeWindow()) {
     // Re-initialize ANativeWindow.
     // On some devices, ANativeWindow is re-created when the app is resumed
-    ContextLost();
     gl_context->Invalidate();
     gl_context->Init(window);
+    ContextLost();
     // TODO: LoadResources();
   } else {
     // initialize OpenGL ES and EGL
@@ -73,6 +73,7 @@ void Renderer::HandleCmdPresent(RenderCommand* cmd) {
     // TODO:
     // UnloadResources();
     // LoadResources();
+    ContextLost();
   }
 }
 
