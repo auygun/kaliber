@@ -15,6 +15,8 @@ class Drawable {
 
   virtual void Draw() = 0;
 
+  virtual void ContextLost() = 0;
+
   void SetVisible(bool visible) { visible_ = visible; }
   bool IsVisible() const { return visible_; }
 

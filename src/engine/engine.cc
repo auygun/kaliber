@@ -182,7 +182,9 @@ void Engine::ContextLost() {
   quad_.Invalidate();
   CreateRenderResources();
 
-  stats_.ContextLost();
+  for (auto d : drawables_)
+    d->ContextLost();
+
   game_->ContextLost();
 }
 

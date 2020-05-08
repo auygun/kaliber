@@ -21,16 +21,9 @@ void Player::ContextLost() {
       engine.GetAssetManager().GetImage("enemy_ray_ok.png");
 
   for (int i = 0; i < 2; ++i) {
-    drag_sign_[i].ContextLost();
     drag_sign_[i].Create(weapon_image, {8, 2});
-
-    weapon_[i].ContextLost();
     weapon_[i].Create(weapon_image, {8, 2});
-
-    beam_[i].ContextLost();
     beam_[i].Create(beam_image, {1, 2});
-
-    beam_spark_[i].ContextLost();
     beam_spark_[i].Create(weapon_image, {8, 2});
   }
 }

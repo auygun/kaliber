@@ -25,8 +25,6 @@ class ImageQuad : public Drawable {
   void Create(std::shared_ptr<const Image> image,
               std::array<int, 2> num_frames = {1, 1});
 
-  void ContextLost();
-
   void AutoScale();
 
   void Translate(const Vector2& offset);
@@ -51,6 +49,7 @@ class ImageQuad : public Drawable {
 
   // Drawable interface.
   void Draw() override;
+  void ContextLost() override;
 
   void PlaceToLeftOf(const ImageQuad& d) {
     Translate({d.GetScale().x / -2.0f + GetScale().x / -2.0f, 0});

@@ -26,10 +26,6 @@ void ImageQuad::Create(std::shared_ptr<const Image> image,
   num_frames_ = std::move(num_frames);
 }
 
-void ImageQuad::ContextLost() {
-  texture_.Invalidate();
-}
-
 void ImageQuad::AutoScale() {
   SetScale(eng::Engine::Get().ToScale(Vector2(frame_width_, frame_height_)));
   Scale((float)Platform::Get().GetDeviceDpi() / 200.0f);
@@ -79,6 +75,10 @@ void ImageQuad::Draw() {
   shader.SetUniform("texture", 0);
 
   quad.Draw();
+}
+
+void ImageQuad::ContextLost() {
+  texture_.Invalidate();
 }
 
 // Return the uv offset for the given frame.

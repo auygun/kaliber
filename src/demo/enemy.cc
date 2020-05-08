@@ -26,17 +26,11 @@ void Enemy::ContextLost() {
     if (e.marked_for_removal)
       continue;
 
-    LOG << "recreate enemy!!!!";
-    e.sprite.ContextLost();
     if (e.unit_type == kUnitType_Skull)
       e.sprite.Create(skull_frames_, {10, 6});
     else
       e.sprite.Create(bug_frames_, {10, 4});
-
-    e.target.ContextLost();
     e.target.Create(target_frames_, {6, 2});
-
-    e.blast.ContextLost();
     e.blast.Create(blast_frames_, {6, 2});
   }
 }

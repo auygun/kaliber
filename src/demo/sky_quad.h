@@ -25,10 +25,9 @@ class SkyQuad : public eng::Drawable {
 
   bool Create();
 
-  void ContextLost();
-
   // Drawable interface.
   void Draw() override;
+  void ContextLost() override;
 
  private:
   eng::Geometry quad_;
