@@ -27,6 +27,9 @@ class Demo : public eng::Game {
   Player player_;
   Enemy enemy_;
   SkyQuad sky_;
+  eng::ImageQuad hud_;
+
+  void UpdateHud(float delta_time);
 };
 
 #endif  // DEMO_H

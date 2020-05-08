@@ -22,6 +22,9 @@ bool Demo::Initialize() {
   sky_.SetVisible(true);
   engine.AddDrawable(&sky_);
 
+  hud_.SetVisible(true);
+  engine.AddDrawable(&hud_);
+
   if (!enemy_.Initialize()) {
     LOG << "Failed to create the enemy.";
     return false;
@@ -49,10 +52,35 @@ void Demo::Update(float delta_time) {
 
   enemy_.Update(delta_time);
   player_.Update(delta_time);
+
+  UpdateHud(delta_time);
 }
 
 void Demo::ContextLost() {
   enemy_.ContextLost();
   player_.ContextLost();
   sky_.Create();
+}
+
+void Demo::UpdateHud(float delta_time) {
+  eng::Engine& engine = eng::Engine::Get();
+
+  constexpr float horizontal_margin = 0.03f;
+  constexpr float vertical_margin = 0.02f;
+
+  int width = engine.GetScreenWidth() -
+      engine.GetScreenWidth() * horizontal_margin * 2;
+  auto image = std::make_shared<eng::Image>();
+  image->Create(width, engine.GetFont().GetLineHeight());
+  float c[4] = {0.82f, 0.593, 0.088, 0};
+  image->Clear(c);
+
+  engine.GetFont().Print(0, 0, "12345", image->GetBuffer(), image->GetWidth());
+
+  hud_.Create(image);
+  hud_.AutoScale();
+
+  Vector2 pos = (engine.GetScreenSize() / 2 - hud_.GetScale() / 2);
+  pos -= engine.GetScreenSize() * Vector2(horizontal_margin, vertical_margin);
+  hud_.SetOffset(pos * Vector2(-1, 1));
 }
