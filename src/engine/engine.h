@@ -104,6 +104,7 @@ class Engine : public Renderer::Delegate {
   void Clear();
   void Present();
 
+  void ShowStats(bool show);
   void PrintStats();
 };
 

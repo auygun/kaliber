@@ -40,8 +40,9 @@ bool Engine::Init() {
     return false;
   }
 
-  stats_.SetVisible(true);
-  AddDrawable(&stats_);
+#if 0
+  ShowStats(true);
+#endif
 
   return true;
 }
@@ -185,6 +186,8 @@ void Engine::ContextLost() {
   for (auto d : drawables_)
     d->ContextLost();
 
+  stats_.ContextLost();
+
   game_->ContextLost();
 }
 
@@ -227,6 +230,16 @@ void Engine::KillUnusedResources(float delta_time) {
 
       it = texture_resources_.erase(it);
     }
+  }
+}
+
+void Engine::ShowStats(bool show) {
+  if (show) {
+    stats_.SetVisible(true);
+    AddDrawable(&stats_);
+  } else {
+    stats_.SetVisible(false);
+    RemoveDrawable(&stats_);
   }
 }
 
