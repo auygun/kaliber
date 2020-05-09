@@ -21,6 +21,8 @@ class Demo : public eng::Game {
 
   void ContextLost() override;
 
+  void AddScore(int score);
+
   Player& GetPlayer() { return player_; }
   Enemy& GetEnemy() { return enemy_; }
 
@@ -33,7 +35,10 @@ class Demo : public eng::Game {
   eng::ImageQuad hud_;
   eng::ColorAnimator hud_animator_;
 
-  void UpdateHud(float delta_time);
+  int score_ = 0;
+  int add_score_ = 0;
+
+  void PrintScore(bool flash);
 };
 
 #endif  // DEMO_H

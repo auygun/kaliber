@@ -25,6 +25,7 @@ bool Demo::Initialize() {
   hud_.SetColor({0.895f, 0.692f, 0.24f, 1});
   hud_.SetVisible(true);
   engine.AddDrawable(&hud_);
+  PrintScore(false);
 
   hud_animator_.Attach(&hud_);
 
@@ -50,21 +51,19 @@ void Demo::Update(float delta_time) {
           event->GetEventType() == eng::InputEvent::kDrag ||
           event->GetEventType() == eng::InputEvent::kDragEnd)
         player_.OnInputEvent(std::move(event));
-
-        hud_animator_.SetTarget({1, 1, 1, 1}, 0.5f);
-        hud_animator_.SetCallback([&]()->void {
-          hud_animator_.SetCallback(nullptr);
-          hud_animator_.SetTarget({0.895f, 0.692f, 0.24f, 1}, 0.5f);
-          hud_animator_.Play();
-        });
-        hud_animator_.Play();
     }
   }
 
   enemy_.Update(delta_time);
   player_.Update(delta_time);
 
-  UpdateHud(delta_time);
+  if (add_score_ > 0) {
+    score_ += add_score_;
+    add_score_ = 0;
+    PrintScore(true);
+  }
+
+  hud_animator_.Update(delta_time);
 }
 
 void Demo::ContextLost() {
@@ -73,7 +72,11 @@ void Demo::ContextLost() {
   sky_.Create();
 }
 
-void Demo::UpdateHud(float delta_time) {
+void Demo::AddScore(int score) {
+  add_score_ += score;
+}
+
+void Demo::PrintScore(bool flash) {
   eng::Engine& engine = eng::Engine::Get();
 
   constexpr float horizontal_margin = 0.055f;
@@ -86,7 +89,9 @@ void Demo::UpdateHud(float delta_time) {
   float c[4] = {1, 1, 1, 0};
   image->Clear(c);
 
-  engine.GetFont().Print(0, 0, "12345", image->GetBuffer(), image->GetWidth());
+  std::string score_str = std::to_string(score_);
+  engine.GetFont().Print(0, 0, score_str.c_str(), image->GetBuffer(),
+      image->GetWidth());
 
   hud_.Create(image);
   hud_.AutoScale();
@@ -95,5 +100,13 @@ void Demo::UpdateHud(float delta_time) {
   pos -= engine.GetScreenSize() * Vector2(horizontal_margin, vertical_margin);
   hud_.SetOffset(pos * Vector2(-1, 1));
 
-  hud_animator_.Update(delta_time);
+  if (flash) {
+    hud_animator_.SetTarget({1, 1, 1, 1}, 8);
+    hud_animator_.SetCallback([&]()->void {
+      hud_animator_.SetCallback(nullptr);
+      hud_animator_.SetTarget({0.895f, 0.692f, 0.24f, 1}, 8);
+      hud_animator_.Play();
+    });
+    hud_animator_.Play();
+  }
 }

@@ -152,6 +152,10 @@ void Enemy::HitTarget(DamageType damage_type) {
       target->blast.SetVisible(false);
       target->marked_for_removal = true;
     });
+
+    eng::Engine& engine = eng::Engine::Get();
+    Demo* game = static_cast<Demo*>(engine.GetGame());
+    game->AddScore(target->unit_type == kUnitType_Skull ? 100 : 200);
   } else {
     target->targetted_by_weapon_ = kDamageType_Invalid;
     target->blast.SetVisible(true);
