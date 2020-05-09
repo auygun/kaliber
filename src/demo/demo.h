@@ -8,6 +8,7 @@
 #include "sky_quad.h"
 #include "../engine/game.h"
 #include "../engine/image_quad.h"
+#include "../engine/color_animator.h"
 
 class Demo : public eng::Game {
  public:
@@ -26,8 +27,11 @@ class Demo : public eng::Game {
  private:
   Player player_;
   Enemy enemy_;
+
   SkyQuad sky_;
+
   eng::ImageQuad hud_;
+  eng::ColorAnimator hud_animator_;
 
   void UpdateHud(float delta_time);
 };

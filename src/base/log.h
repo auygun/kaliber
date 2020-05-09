@@ -41,6 +41,13 @@ class Log {
     return *this;
   }
 
+  template<>
+  Log& operator<<<Vector4>(const Vector4& arg) {
+    stream_ << "(" << arg.x << ", " << arg.y << ", " << arg.z << ", " <<
+        arg.w << ")";
+    return *this;
+  }
+
   static Log* swallow_stream;
 
  private:

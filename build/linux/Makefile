@@ -74,9 +74,9 @@ GLTEST_SRC := \
   $(SRC_ROOT)/demo/enemy.cc \
   $(SRC_ROOT)/demo/player.cc \
   $(SRC_ROOT)/demo/sky_quad.cc \
-  $(SRC_ROOT)/engine/alpha_animator.cc \
   $(SRC_ROOT)/engine/asset_manager/asset_manager.cc \
   $(SRC_ROOT)/engine/asset_manager/image.cc \
+  $(SRC_ROOT)/engine/color_animator.cc \
   $(SRC_ROOT)/engine/draw_animator.cc \
   $(SRC_ROOT)/engine/drawable.cc \
   $(SRC_ROOT)/engine/engine.cc \

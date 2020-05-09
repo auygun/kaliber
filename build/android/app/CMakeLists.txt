@@ -49,9 +49,9 @@ add_library(native-activity SHARED
     ../../../src/demo/enemy.cc
     ../../../src/demo/player.cc
     ../../../src/demo/sky_quad.cc
-    ../../../src/engine/alpha_animator.cc
     ../../../src/engine/asset_manager/asset_manager.cc
     ../../../src/engine/asset_manager/image.cc
+    ../../../src/engine/color_animator.cc
     ../../../src/engine/draw_animator.cc
     ../../../src/engine/drawable.cc
     ../../../src/engine/engine.cc

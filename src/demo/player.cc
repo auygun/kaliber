@@ -153,11 +153,14 @@ void Player::SetupWeapons() {
     beam_spark_animator_[i].SetCallback([&, i]()->void {
       beam_spark_animator_[i].Stop();
       beam_spark_[i].SetVisible(false);
-      beam_animator_[i].FadeOut();
+      beam_animator_[i].SetCallback([&, i]()->void {
+        beam_[i].SetVisible(false);
+      });
+      beam_animator_[i].Play();
       static_cast<Demo*>(engine.GetGame())->GetEnemy().HitTarget((DamageType)i);
     });
     beam_animator_[i].Attach(&beam_[i]);
-    beam_animator_[i].SetSpeed(8);
+    beam_animator_[i].SetTarget({1, 1, 1, 0}, 8.0f);
   }
 
   weapon_rotate_animator_.SetRotation(-M_PI / 20);
