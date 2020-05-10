@@ -18,6 +18,11 @@ DECLARE_GAME_END
 bool Demo::Initialize() {
   eng::Engine& engine = eng::Engine::Get();
 
+  if (!font_.Create("PixelCaps!.ttf")) {
+    LOG << "Failed to create the font.";
+    return false;
+  }
+
   sky_.Create();
   sky_.SetVisible(true);
   engine.AddDrawable(&sky_);
@@ -85,12 +90,12 @@ void Demo::PrintScore(bool flash) {
   int width = engine.GetScreenWidth() -
       engine.GetScreenWidth() * horizontal_margin * 2;
   auto image = std::make_shared<eng::Image>();
-  image->Create(width, engine.GetFont().GetLineHeight());
+  image->Create(width, font_.GetLineHeight());
   float c[4] = {1, 1, 1, 0};
   image->Clear(c);
 
   std::string score_str = std::to_string(score_);
-  engine.GetFont().Print(0, 0, score_str.c_str(), image->GetBuffer(),
+  font_.Print(0, 0, score_str.c_str(), image->GetBuffer(),
       image->GetWidth());
 
   hud_.Create(image);

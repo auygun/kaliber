@@ -6,6 +6,7 @@
 #include "enemy.h"
 #include "player.h"
 #include "sky_quad.h"
+#include "../base/font.h"
 #include "../engine/game.h"
 #include "../engine/image_quad.h"
 #include "../engine/color_animator.h"
@@ -34,6 +35,8 @@ class Demo : public eng::Game {
 
   eng::ImageQuad hud_;
   eng::ColorAnimator hud_animator_;
+
+  Fontx font_;
 
   int score_ = 0;
   int add_score_ = 0;
