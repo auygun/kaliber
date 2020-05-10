@@ -26,6 +26,7 @@ class Player {
   void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
 
   Vector2 GetWeaponPos(DamageType type) const;
+  Vector2 GetWeaponScale() const;
 
  private:
   eng::ImageQuad drag_sign_[2];
@@ -54,6 +55,7 @@ class Player {
 
   void DragStart(const Vector2& pos);
   void Drag(const Vector2& pos);
+  void SelectTarget();
   void DragEnd();
   bool ValidateDrag();
 };

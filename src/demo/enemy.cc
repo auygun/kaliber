@@ -97,7 +97,7 @@ void Enemy::SelectTarget(DamageType damage_type,
     weapon_enemy_dir.Normalize();
     float sin_theta = weapon_enemy_dir.CrossProduct(beam_dir);
     float beam_perpendicular_dist = abs(enemy_weapon_dist * sin_theta);
-    if (beam_perpendicular_dist > e.sprite.GetScale().x)
+    if (beam_perpendicular_dist > e.sprite.GetScale().x * 0.8f)
       continue;
 
     if (closest_dist > enemy_weapon_dist) {
@@ -228,8 +228,8 @@ void Enemy::Spawn(UnitType unit_type,
   else
     e.blast_frame_animator.SetFrameRange(6 ,12, 11);
 
-  float max_distance = engine.GetScreenSize().y / 2 +
-      abs(game->GetPlayer().GetWeaponPos(kDamageType_Green).y);
+  float max_distance = engine.GetScreenSize().y -
+      game->GetPlayer().GetWeaponScale().y;
 
   e.draw_animator.Attach(&e.sprite);
   e.draw_animator.Attach(&e.target);

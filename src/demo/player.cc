@@ -6,6 +6,7 @@
 #include "../engine/input_event.h"
 #include <math.h>
 #include <memory>
+#include <cassert>
 
 bool Player::Initialize() {
   SetupWeapons();
@@ -35,6 +36,9 @@ void Player::Update(float delta_time) {
     beam_animator_[i].Update(delta_time);
     beam_spark_animator_[i].Update(delta_time);
   }
+
+  if (active_weapon_ != kDamageType_Invalid)
+    SelectTarget();
 }
 
 void Player::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
@@ -51,6 +55,10 @@ Vector2 Player::GetWeaponPos(DamageType type) const {
   return engine.GetScreenSize() /
       Vector2(type == kDamageType_Green ? 4 : -4 , -2) +
       Vector2(0, weapon_[type].GetScale().y / 2);
+}
+
+Vector2 Player::GetWeaponScale() const {
+  return weapon_[0].GetScale();
 }
 
 DamageType Player::GetWeaponType(const Vector2& pos) {
@@ -70,8 +78,15 @@ void Player::Fire(DamageType type) {
   eng::Engine& engine = eng::Engine::Get();
   Enemy &enemy = static_cast<Demo*>(engine.GetGame())->GetEnemy();
 
-  Vector2 dir = weapon_[type].GetOffset() -
+  Vector2 dir = weapon_[type].GetOffset();
       (enemy.HasTarget(type) ? enemy.GetTargetPos(type) : drag_end_);
+  if (enemy.HasTarget(type)) {
+    dir -= enemy.GetTargetPos(type);
+  } else {
+    dir -= drag_end_;
+    dir.Normalize();
+    dir *= engine.GetScreenSize().y * 1.3f;
+  }
 
   float len = dir.Magnitude();
   SetBeamLength(type, len);
@@ -170,17 +185,21 @@ void Player::SetupWeapons() {
 void Player::DragStart(const Vector2& pos) {
   drag_start_ = pos;
   active_weapon_ = GetWeaponType(drag_start_);
-  if (active_weapon_ == kDamageType_Invalid)
-    return;
+  assert(active_weapon_ != kDamageType_Invalid);
+
   drag_sign_[active_weapon_].SetOffset(drag_start_);
   drag_sign_[active_weapon_].SetVisible(true);
 }
 
 void Player::Drag(const Vector2& pos) {
+  assert(active_weapon_ != kDamageType_Invalid);
+
   drag_end_ = pos;
-  if (active_weapon_ == kDamageType_Invalid)
-    return;
   drag_sign_[active_weapon_].SetOffset(drag_end_);
+}
+
+void Player::SelectTarget() {
+  assert(active_weapon_ != kDamageType_Invalid);
 
   if (IsFiring(active_weapon_))
     return;
@@ -198,12 +217,11 @@ void Player::Drag(const Vector2& pos) {
 }
 
 void Player::DragEnd() {
+  assert(active_weapon_ != kDamageType_Invalid);
+
   DamageType type = active_weapon_;
   active_weapon_ = kDamageType_Invalid;
   drag_sign_[type].SetVisible(false);
-
-  if (type == kDamageType_Invalid)
-    return;
 
   eng::Engine& engine = eng::Engine::Get();
   Demo* game = static_cast<Demo*>(engine.GetGame());
@@ -224,7 +242,7 @@ bool Player::ValidateDrag() {
   Vector2 dir = drag_end_ - drag_start_;
   float len = dir.Magnitude();
   dir.Normalize();
-  if (len < weapon_[active_weapon_].GetScale().y)
+  if (len < weapon_[active_weapon_].GetScale().y / 6)
     return false;
   if (dir.DotProduct(Vector2(0 ,1)) < 0)
     return false;
