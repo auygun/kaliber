@@ -4,9 +4,7 @@
 #include "../base/vecmath.h"
 #include "damage_type.h"
 #include "../engine/image_quad.h"
-#include "../engine/color_animator.h"
-#include "../engine/frame_animator.h"
-#include "../engine/draw_animator.h"
+#include "../engine/animator.h"
 
 namespace eng {
 class InputEvent;
@@ -34,10 +32,10 @@ class Player {
   eng::ImageQuad beam_[2];
   eng::ImageQuad beam_spark_[2];
 
-  eng::DrawAnimator weapon_rotate_animator_;
-  eng::FrameAnimator weapon_animator_[2];
-  eng::ColorAnimator beam_animator_[2];
-  eng::DrawAnimator beam_spark_animator_[2];
+  eng::Animator weapon_animator_[2];
+  eng::Animator::Callback weapon_animator_cb_[2];
+  eng::Animator beam_animator_[2];
+  eng::Animator beam_spark_animator_[2];
 
   DamageType active_weapon_ = kDamageType_Invalid;
 

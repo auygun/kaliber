@@ -3,8 +3,7 @@
 
 #include "damage_type.h"
 #include "../engine/image_quad.h"
-#include "../engine/draw_animator.h"
-#include "../engine/frame_animator.h"
+#include "../engine/animator.h"
 #include <list>
 #include <memory>
 
@@ -48,10 +47,10 @@ class Enemy {
     eng::ImageQuad target;
     eng::ImageQuad blast;
 
-    eng::DrawAnimator draw_animator;
-    eng::FrameAnimator sprite_frame_animator;
-    eng::FrameAnimator target_frame_animator;
-    eng::FrameAnimator blast_frame_animator;
+    eng::Animator draw_animator;
+    eng::Animator sprite_frame_animator;
+    eng::Animator target_frame_animator;
+    eng::Animator blast_frame_animator;
   };
 
   std::shared_ptr<const eng::Image> skull_frames_;

@@ -9,7 +9,7 @@
 #include "../base/font.h"
 #include "../engine/game.h"
 #include "../engine/image_quad.h"
-#include "../engine/color_animator.h"
+#include "../engine/animator.h"
 
 class Demo : public eng::Game {
  public:
@@ -34,7 +34,8 @@ class Demo : public eng::Game {
   SkyQuad sky_;
 
   eng::ImageQuad hud_;
-  eng::ColorAnimator hud_animator_;
+  eng::Animator hud_animator_;
+  eng::Animator::Callback hud_animator_cb_;
 
   Fontx font_;
 

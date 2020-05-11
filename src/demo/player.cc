@@ -8,6 +8,16 @@
 #include <memory>
 #include <cassert>
 
+namespace {
+
+constexpr int wepon_fire_frame[] = {1, 9};
+constexpr int wepon_fire_frame_count = 4;
+constexpr int wepon_cooldown_frame[] = {5, 13};
+constexpr int wepon_cooldown_frame_count = 3;
+constexpr int wepon_anim_speed = 48;
+
+} // namespace
+
 bool Player::Initialize() {
   SetupWeapons();
   return true;
@@ -31,7 +41,6 @@ void Player::ContextLost() {
 
 void Player::Update(float delta_time) {
   for (int i = 0; i < 2; ++i) {
-    weapon_rotate_animator_.Update(delta_time);
     weapon_animator_[i].Update(delta_time);
     beam_animator_[i].Update(delta_time);
     beam_spark_animator_[i].Update(delta_time);
@@ -97,14 +106,16 @@ void Player::Fire(DamageType type) {
   beam_[type].Rotate(angle);
   beam_spark_[type].Rotate(angle);
 
-  beam_spark_animator_[type].SetMovement(-dir, beam_[type].GetScale().x * 0.85f);
-  weapon_animator_[type].Play(false, true);
+  beam_spark_animator_[type].SetMovement(-dir * beam_[type].GetScale().x * 0.85f, 18);
+  weapon_animator_[type].SetFrames(wepon_fire_frame_count, wepon_anim_speed);
+  weapon_animator_[type].SetEndCallback(eng::Animator::kFrames, weapon_animator_cb_[type]);
+  weapon_animator_[type].Play(eng::Animator::kFrames, false);
 }
 
 bool Player::IsFiring(DamageType type) {
-  return weapon_animator_[type].IsPlaying() ||
-      beam_animator_[type].IsPlaying() ||
-      beam_spark_animator_[type].IsPlaying();
+  return weapon_animator_[type].IsPlaying(eng::Animator::kFrames) ||
+      beam_animator_[type].IsPlaying(eng::Animator::kBlending) ||
+      beam_spark_animator_[type].IsPlaying(eng::Animator::kMovement);
 }
 
 void Player::SetupWeapons() {
@@ -126,6 +137,7 @@ void Player::SetupWeapons() {
     weapon_[i].Create(weapon_image, {8, 2});
     weapon_[i].AutoScale();
     weapon_[i].SetVisible(true);
+    weapon_[i].SetFrame(wepon_fire_frame[i]);
     engine.AddDrawable(&weapon_[i]);
 
     // Setup beam.
@@ -153,33 +165,37 @@ void Player::SetupWeapons() {
     weapon_[i].Translate(offset);
 
     // Setup animators.
-    weapon_rotate_animator_.Attach(&weapon_[i]);
-    weapon_animator_[i].Attach(&weapon_[i]);
-    weapon_animator_[i].SetSpeed(0.01666f);
-    weapon_animator_[i].SetFrameRange(i * 8 + 1, i * 8 + 8, i * 8 + 1);
-    weapon_animator_[i].SetCallback(4, [&, i]()->void {
+    weapon_animator_cb_[i] = [&, i]()->void {
       beam_[i].SetColor({1, 1, 1, 1});
       beam_[i].SetVisible(true);
       beam_spark_[i].SetVisible(true);
-      beam_spark_animator_[i].Play(false);
-    });
-    beam_spark_animator_[i].Attach(&beam_spark_[i]);
-    beam_spark_animator_[i].SetSpeed(17.0f);
-    beam_spark_animator_[i].SetCallback([&, i]()->void {
-      beam_spark_animator_[i].Stop();
-      beam_spark_[i].SetVisible(false);
-      beam_animator_[i].SetCallback([&, i]()->void {
-        beam_[i].SetVisible(false);
+      beam_spark_animator_[i].Play(eng::Animator::kMovement, false);
+      weapon_[i].SetFrame(wepon_cooldown_frame[i]);
+      weapon_animator_[i].UpdateStartValues(eng::Animator::kFrames);
+      weapon_animator_[i].SetFrames(wepon_cooldown_frame_count, wepon_anim_speed);
+      weapon_animator_[i].SetEndCallback(eng::Animator::kFrames, [&, i]()->void {
+        weapon_[i].SetFrame(wepon_fire_frame[i]);
+        weapon_animator_[i].UpdateStartValues(eng::Animator::kFrames);
       });
-      beam_animator_[i].Play();
+      weapon_animator_[i].Play(eng::Animator::kFrames, false);
+    };
+    weapon_animator_[i].SetRotation(M_PI * 2, 0.5f);
+    weapon_animator_[i].Attach(&weapon_[i]);
+    weapon_animator_[i].Play(eng::Animator::kRotation, true);
+
+    beam_spark_animator_[i].SetEndCallback(eng::Animator::kMovement, [&, i]()->void {
+      beam_spark_[i].SetVisible(false);
+      beam_animator_[i].Play(eng::Animator::kBlending, false);
       static_cast<Demo*>(engine.GetGame())->GetEnemy().HitTarget((DamageType)i);
     });
-    beam_animator_[i].Attach(&beam_[i]);
-    beam_animator_[i].SetTarget({1, 1, 1, 0}, 8.0f);
-  }
+    beam_spark_animator_[i].Attach(&beam_spark_[i]);
 
-  weapon_rotate_animator_.SetRotation(-M_PI / 20);
-  weapon_rotate_animator_.Play(true);
+    beam_animator_[i].SetEndCallback(eng::Animator::kBlending, [&, i]()->void {
+      beam_[i].SetVisible(false);
+    });
+    beam_animator_[i].SetBlending({1, 1, 1, 0}, 8);
+    beam_animator_[i].Attach(&beam_[i]);
+  }
 }
 
 void Player::DragStart(const Vector2& pos) {

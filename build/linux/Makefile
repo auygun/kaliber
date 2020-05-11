@@ -76,11 +76,9 @@ GLTEST_SRC := \
   $(SRC_ROOT)/demo/sky_quad.cc \
   $(SRC_ROOT)/engine/asset_manager/asset_manager.cc \
   $(SRC_ROOT)/engine/asset_manager/image.cc \
-  $(SRC_ROOT)/engine/color_animator.cc \
-  $(SRC_ROOT)/engine/draw_animator.cc \
+  $(SRC_ROOT)/engine/animator.cc \
   $(SRC_ROOT)/engine/drawable.cc \
   $(SRC_ROOT)/engine/engine.cc \
-  $(SRC_ROOT)/engine/frame_animator.cc \
   $(SRC_ROOT)/engine/image_quad.cc \
   $(SRC_ROOT)/engine/renderer/geometry.cc \
   $(SRC_ROOT)/engine/renderer/renderer_linux.cc \

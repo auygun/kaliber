@@ -32,6 +32,12 @@ bool Demo::Initialize() {
   engine.AddDrawable(&hud_);
   PrintScore(false);
 
+  hud_animator_cb_ = [&]()->void {
+    hud_animator_.SetEndCallback(eng::Animator::kBlending, nullptr);
+    hud_animator_.UpdateStartValues(eng::Animator::kBlending);
+    hud_animator_.SetBlending({0.895f, 0.692f, 0.24f, 1}, 8);
+    hud_animator_.Play(eng::Animator::kBlending, false);
+  };
   hud_animator_.Attach(&hud_);
 
   if (!enemy_.Initialize()) {
@@ -106,12 +112,9 @@ void Demo::PrintScore(bool flash) {
   hud_.SetOffset(pos * Vector2(-1, 1));
 
   if (flash) {
-    hud_animator_.SetTarget({1, 1, 1, 1}, 8);
-    hud_animator_.SetCallback([&]()->void {
-      hud_animator_.SetCallback(nullptr);
-      hud_animator_.SetTarget({0.895f, 0.692f, 0.24f, 1}, 8);
-      hud_animator_.Play();
-    });
-    hud_animator_.Play();
+    hud_animator_.UpdateStartValues(eng::Animator::kBlending);
+    hud_animator_.SetBlending({1, 1, 1, 1}, 12);
+    hud_animator_.SetEndCallback(eng::Animator::kBlending, hud_animator_cb_);
+    hud_animator_.Play(eng::Animator::kBlending, false);
   }
 }
