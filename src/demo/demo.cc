@@ -81,6 +81,7 @@ void Demo::ContextLost() {
   enemy_.ContextLost();
   player_.ContextLost();
   sky_.Create();
+  PrintScore(true);
 }
 
 void Demo::AddScore(int score) {
