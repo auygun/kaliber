@@ -40,11 +40,11 @@ class Animator {
   void SetEndCallback(Flags animation, Callback cb);
 
   // Set movement animation parameters. Distance is calculated from the
-  // magnitude of direction vector. Speed is mevement per unit.
+  // magnitude of direction vector. Speed is in movement per second.
   void SetMovement(Vector2 direction, float speed);
 
-  // Set rotation animation parameters. Target is in radians. Speed is rotation
-  // per unit.
+  // Set rotation animation parameters. Target is in radians. Speed is in
+  // rotation per second.
   void SetRotation(float target, float speed);
 
   // Set color blending animation parameters. Speed is in seconds.

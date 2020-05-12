@@ -85,6 +85,31 @@ void Animator::Update(float delta_time) {
     UpdateBlending(delta_time);
   if (play_flags_ & kFrames)
     UpdateFrame(delta_time);
+
+  for (auto& a : animatables_) {
+    if (play_flags_ & kMovement) {
+      Vector2 target = a.movement_start + movement_direction_;
+      Vector2 r = Lerp(a.movement_start, target, movement_time_);
+      a.quad->SetOffset(r);
+    }
+
+    if (play_flags_ & kRotation) {
+      float r = Lerp(a.rotation_start_, rotation_target_, rotation_time_);
+      a.quad->Rotate(r);
+    }
+
+    if (play_flags_ & kBlending) {
+      Vector4 r = Blend(a.blending_start, blending_target_, blending_time_);
+      a.quad->SetColor(r);
+    }
+
+    if (play_flags_ & kFrames) {
+      int target = a.frame_start_ + frame_count_;
+      int r = Lerp(a.frame_start_, target, frame_time_);
+      if (r < target)
+        a.quad->SetFrame(r);
+    }
+  }
 }
 
 void Animator::UpdateMovement(float delta_time) {
@@ -101,12 +126,6 @@ void Animator::UpdateMovement(float delta_time) {
     movement_time_ = 1;
   else
     movement_time_ = fmod(movement_time_, 1.0f);
-
-  for (auto& a : animatables_) {
-    Vector2 target = a.movement_start + movement_direction_;
-    Vector2 r = Lerp(a.movement_start, target, movement_time_);
-    a.quad->SetOffset(r);
-  }
 }
 
 void Animator::UpdateRotation(float delta_time) {
@@ -123,11 +142,6 @@ void Animator::UpdateRotation(float delta_time) {
     rotation_time_ = 1;
   else
     rotation_time_ = fmod(rotation_time_, 1.0f);
-
-  for (auto& a : animatables_) {
-    float r = Lerp(a.rotation_start_, rotation_target_, rotation_time_);
-    a.quad->Rotate(r);
-  }
 }
 
 void Animator::UpdateBlending(float delta_time) {
@@ -144,11 +158,6 @@ void Animator::UpdateBlending(float delta_time) {
     blending_time_ = 1;
   else
     blending_time_ = fmod(blending_time_, 1.0f);
-
-  for (auto& a : animatables_) {
-    Vector4 r = Blend(a.blending_start, blending_target_, blending_time_);
-    a.quad->SetColor(r);
-  }
 }
 
 void Animator::UpdateFrame(float delta_time) {
@@ -165,13 +174,6 @@ void Animator::UpdateFrame(float delta_time) {
   frame_time_ += frame_speed_ * delta_time;
   if (frame_time_ > 1)
     frame_time_ = 1;
-
-  for (auto& a : animatables_) {
-    int target = a.frame_start_ + frame_count_;
-    int r = Lerp(a.frame_start_, target, frame_time_);
-    if (r < target)
-      a.quad->SetFrame(r);
-  }
 }
 
 }  // namespace eng
