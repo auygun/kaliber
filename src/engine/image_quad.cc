@@ -44,8 +44,15 @@ void ImageQuad::Scale(float scale) {
 }
 
 void ImageQuad::Rotate(float angle) {
-  rotation_.x = sin(angle);
-  rotation_.y = cos(angle);
+  theta_ += angle;
+  rotation_.x = sin(theta_);
+  rotation_.y = cos(theta_);
+}
+
+void ImageQuad::SetTheta(float theta) {
+  theta_ = theta;
+  rotation_.x = sin(theta_);
+  rotation_.y = cos(theta_);
 }
 
 void ImageQuad::SetFrame(size_t frame) {
@@ -64,14 +71,14 @@ void ImageQuad::Draw() {
   Shader& shader = Engine::Get().GetPassThroughShader();
 
   shader.Activate();
-  shader.SetUniform("offset", GetOffset());
-  shader.SetUniform("scale", GetScale());
-  shader.SetUniform("pivot", GetPivot());
-  shader.SetUniform("rotation", GetRotation());
+  shader.SetUniform("offset", offset_);
+  shader.SetUniform("scale", scale_);
+  shader.SetUniform("pivot", pivot_);
+  shader.SetUniform("rotation", rotation_);
   shader.SetUniform("tex_offset", GetUVOffset(current_frame_));
   shader.SetUniform("tex_scale", tex_scale_);
   shader.SetUniform("projection", Engine::Get().GetProjectionMarix());
-  shader.SetUniform("color", GetColor());
+  shader.SetUniform("color", color_);
   shader.SetUniform("texture", 0);
 
   quad.Draw();

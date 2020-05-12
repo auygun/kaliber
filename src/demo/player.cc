@@ -101,10 +101,10 @@ void Player::Fire(DamageType type) {
   SetBeamLength(type, len);
 
   dir.Normalize();
-  float cos_angle = dir.DotProduct(Vector2(1 ,0));
-  float angle = acos(cos_angle) + M_PI;
-  beam_[type].Rotate(angle);
-  beam_spark_[type].Rotate(angle);
+  float cos_theta = dir.DotProduct(Vector2(1 ,0));
+  float theta = acos(cos_theta) + M_PI;
+  beam_[type].SetTheta(theta);
+  beam_spark_[type].SetTheta(theta);
 
   spark_animator_[type].SetMovement(-dir * beam_[type].GetScale().x * 0.85f, 18);
   weapon_animator_[type].SetFrames(wepon_fire_frame_count, wepon_anim_speed);

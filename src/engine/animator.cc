@@ -7,8 +7,11 @@
 namespace eng {
 
 void Animator::Attach(ImageQuad *quad) {
-  animatables_.push_back({quad, quad->GetOffset(), 0, quad->GetColor(),
-    (int)quad->GetFrame()});
+  animatables_.push_back({quad,
+                          quad->GetOffset(),
+                          quad->GetTheta(),
+                          quad->GetColor(),
+                          (int)quad->GetFrame()});
 }
 
 void Animator::Play(Flags animation, bool loop) {
@@ -36,7 +39,7 @@ void Animator::UpdateStartValues(Flags animation) {
     if ((animation & kMovement) != 0)
       a.movement_start = a.quad->GetOffset();
     if ((animation & kRotation) != 0)
-      a.rotation_start_ = 0; //a.quad->GetRotation();
+      a.rotation_start_ = a.quad->GetTheta();
     if ((animation & kBlending) != 0)
       a.blending_start = a.quad->GetColor();
     if ((animation & kFrames) != 0)
@@ -95,7 +98,7 @@ void Animator::Update(float delta_time) {
 
     if (play_flags_ & kRotation) {
       float r = Lerp(a.rotation_start_, rotation_target_, rotation_time_);
-      a.quad->Rotate(r);
+      a.quad->SetTheta(r);
     }
 
     if (play_flags_ & kBlending) {
