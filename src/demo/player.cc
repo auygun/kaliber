@@ -43,7 +43,7 @@ void Player::Update(float delta_time) {
   for (int i = 0; i < 2; ++i) {
     weapon_animator_[i].Update(delta_time);
     beam_animator_[i].Update(delta_time);
-    beam_spark_animator_[i].Update(delta_time);
+    spark_animator_[i].Update(delta_time);
   }
 
   if (active_weapon_ != kDamageType_Invalid)
@@ -106,7 +106,7 @@ void Player::Fire(DamageType type) {
   beam_[type].Rotate(angle);
   beam_spark_[type].Rotate(angle);
 
-  beam_spark_animator_[type].SetMovement(-dir * beam_[type].GetScale().x * 0.85f, 18);
+  spark_animator_[type].SetMovement(-dir * beam_[type].GetScale().x * 0.85f, 18);
   weapon_animator_[type].SetFrames(wepon_fire_frame_count, wepon_anim_speed);
   weapon_animator_[type].SetEndCallback(eng::Animator::kFrames, weapon_animator_cb_[type]);
   weapon_animator_[type].Play(eng::Animator::kFrames, false);
@@ -115,7 +115,7 @@ void Player::Fire(DamageType type) {
 bool Player::IsFiring(DamageType type) {
   return weapon_animator_[type].IsPlaying(eng::Animator::kFrames) ||
       beam_animator_[type].IsPlaying(eng::Animator::kBlending) ||
-      beam_spark_animator_[type].IsPlaying(eng::Animator::kMovement);
+      spark_animator_[type].IsPlaying(eng::Animator::kMovement);
 }
 
 void Player::SetupWeapons() {
@@ -169,7 +169,7 @@ void Player::SetupWeapons() {
       beam_[i].SetColor({1, 1, 1, 1});
       beam_[i].SetVisible(true);
       beam_spark_[i].SetVisible(true);
-      beam_spark_animator_[i].Play(eng::Animator::kMovement, false);
+      spark_animator_[i].Play(eng::Animator::kMovement, false);
       weapon_[i].SetFrame(wepon_cooldown_frame[i]);
       weapon_animator_[i].UpdateStartValues(eng::Animator::kFrames);
       weapon_animator_[i].SetFrames(wepon_cooldown_frame_count, wepon_anim_speed);
@@ -183,12 +183,12 @@ void Player::SetupWeapons() {
     weapon_animator_[i].Attach(&weapon_[i]);
     weapon_animator_[i].Play(eng::Animator::kRotation, true);
 
-    beam_spark_animator_[i].SetEndCallback(eng::Animator::kMovement, [&, i]()->void {
+    spark_animator_[i].SetEndCallback(eng::Animator::kMovement, [&, i]()->void {
       beam_spark_[i].SetVisible(false);
       beam_animator_[i].Play(eng::Animator::kBlending, false);
       static_cast<Demo*>(engine.GetGame())->GetEnemy().HitTarget((DamageType)i);
     });
-    beam_spark_animator_[i].Attach(&beam_spark_[i]);
+    spark_animator_[i].Attach(&beam_spark_[i]);
 
     beam_animator_[i].SetEndCallback(eng::Animator::kBlending, [&, i]()->void {
       beam_[i].SetVisible(false);

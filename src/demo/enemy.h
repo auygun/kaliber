@@ -47,10 +47,10 @@ class Enemy {
     eng::ImageQuad target;
     eng::ImageQuad blast;
 
-    eng::Animator draw_animator;
-    eng::Animator sprite_frame_animator;
-    eng::Animator target_frame_animator;
-    eng::Animator blast_frame_animator;
+    eng::Animator movement_animator;
+    eng::Animator sprite_animator;
+    eng::Animator target_animator;
+    eng::Animator blast_animator;
   };
 
   std::shared_ptr<const eng::Image> skull_frames_;

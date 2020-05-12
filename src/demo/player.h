@@ -35,7 +35,7 @@ class Player {
   eng::Animator weapon_animator_[2];
   eng::Animator::Callback weapon_animator_cb_[2];
   eng::Animator beam_animator_[2];
-  eng::Animator beam_spark_animator_[2];
+  eng::Animator spark_animator_[2];
 
   DamageType active_weapon_ = kDamageType_Invalid;
 

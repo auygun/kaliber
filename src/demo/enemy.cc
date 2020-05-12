@@ -59,10 +59,10 @@ void Enemy::Update(float delta_time) {
       it = enemies_.erase(it);
       continue;
     }
-    it->sprite_frame_animator.Update(delta_time);
-    it->target_frame_animator.Update(delta_time);
-    it->blast_frame_animator.Update(delta_time);
-    it->draw_animator.Update(delta_time);
+    it->sprite_animator.Update(delta_time);
+    it->target_animator.Update(delta_time);
+    it->blast_animator.Update(delta_time);
+    it->movement_animator.Update(delta_time);
   }
 }
 
@@ -112,13 +112,13 @@ void Enemy::SelectTarget(DamageType damage_type,
   if (current_enemy) {
     current_enemy->targetted_by_weapon_ = kDamageType_Invalid;
     current_enemy->target.SetVisible(false);
-    current_enemy->target_frame_animator.Stop(eng::Animator::kAllAnimations);
+    current_enemy->target_animator.Stop(eng::Animator::kAllAnimations);
   }
 
   if (best_enemy) {
     best_enemy->targetted_by_weapon_ = damage_type;
     best_enemy->target.SetVisible(true);
-    best_enemy->target_frame_animator.Play(eng::Animator::kFrames, false);
+    best_enemy->target_animator.Play(eng::Animator::kFrames, false);
   }
 }
 
@@ -127,7 +127,7 @@ void Enemy::DeselectTarget(DamageType damage_type) {
   if (target) {
     target->targetted_by_weapon_ = kDamageType_Invalid;
     target->target.SetVisible(false);
-    target->target_frame_animator.Stop(eng::Animator::kAllAnimations);
+    target->target_animator.Stop(eng::Animator::kAllAnimations);
   }
 }
 
@@ -136,18 +136,18 @@ void Enemy::HitTarget(DamageType damage_type) {
 
   if (target) {
     target->target.SetVisible(false);
-    target->target_frame_animator.Stop(eng::Animator::kAllAnimations);
+    target->target_animator.Stop(eng::Animator::kAllAnimations);
   }
 
   if (!target || target->damage_type != damage_type)
     return;
 
   target->blast.SetVisible(true);
-  target->blast_frame_animator.Play(eng::Animator::kFrames, false);
+  target->blast_animator.Play(eng::Animator::kFrames, false);
 
   if (--target->hit_points <= 0) {
     target->sprite.SetVisible(false);
-    target->blast_frame_animator.SetEndCallback(eng::Animator::kFrames, [target]()->void {
+    target->blast_animator.SetEndCallback(eng::Animator::kFrames, [target]()->void {
       target->sprite.SetVisible(false);
       target->blast.SetVisible(false);
       target->marked_for_removal = true;
@@ -158,7 +158,7 @@ void Enemy::HitTarget(DamageType damage_type) {
     game->AddScore(target->unit_type == kUnitType_Skull ? 100 : 200);
   } else {
     target->targetted_by_weapon_ = kDamageType_Invalid;
-    target->blast_frame_animator.SetEndCallback(eng::Animator::kFrames, [target]()->void {
+    target->blast_animator.SetEndCallback(eng::Animator::kFrames, [target]()->void {
       target->blast.SetVisible(false);
     });
   }
@@ -193,22 +193,22 @@ void Enemy::Spawn(UnitType unit_type,
   if (damage_type == kDamageType_Green) {
     if (unit_type == kUnitType_Skull) {
       e.sprite.SetFrame(0);
-      e.sprite_frame_animator.SetFrames(6, 12);
+      e.sprite_animator.SetFrames(6, 12);
     } else {
       e.sprite.SetFrame(13);
-      e.sprite_frame_animator.SetFrames(6, 12);
+      e.sprite_animator.SetFrames(6, 12);
     }
   } else {
     if (unit_type == kUnitType_Skull) {
       e.sprite.SetFrame(30);
-      e.sprite_frame_animator.SetFrames(6, 12);
+      e.sprite_animator.SetFrames(6, 12);
     } else {
       e.sprite.SetFrame(33);
-      e.sprite_frame_animator.SetFrames(6, 12);
+      e.sprite_animator.SetFrames(6, 12);
     }
   }
-  e.sprite_frame_animator.Attach(&e.sprite);
-  e.sprite_frame_animator.Play(eng::Animator::kFrames, true);
+  e.sprite_animator.Attach(&e.sprite);
+  e.sprite_animator.Play(eng::Animator::kFrames, true);
 
   e.target.Create(target_frames_, {6, 2});
   e.target.AutoScale();
@@ -222,37 +222,37 @@ void Enemy::Spawn(UnitType unit_type,
 
   if (damage_type == kDamageType_Green) {
     e.target.SetFrame(0);
-    e.target_frame_animator.SetFrames(6, 28);
+    e.target_animator.SetFrames(6, 28);
   } else {
     e.target.SetFrame(6);
-    e.target_frame_animator.SetFrames(6, 28);
+    e.target_animator.SetFrames(6, 28);
   }
-  e.target_frame_animator.Attach(&e.target);
+  e.target_animator.Attach(&e.target);
 
   if (damage_type == kDamageType_Green) {
     e.blast.SetFrame(0);
-    e.blast_frame_animator.SetFrames(6, 28);
+    e.blast_animator.SetFrames(6, 28);
   } else {
     e.blast.SetFrame(6);
-    e.blast_frame_animator.SetFrames(6 ,28);
+    e.blast_animator.SetFrames(6 ,28);
   }
-  e.blast_frame_animator.Attach(&e.blast);
+  e.blast_animator.Attach(&e.blast);
 
   float max_distance = engine.GetScreenSize().y -
       game->GetPlayer().GetWeaponScale().y;
 
-  e.draw_animator.SetMovement({0, -max_distance}, speed);
-  e.draw_animator.SetEndCallback(eng::Animator::kMovement, [&]()->void {
-    e.sprite_frame_animator.Stop(eng::Animator::kAllAnimations);
+  e.movement_animator.SetMovement({0, -max_distance}, speed);
+  e.movement_animator.SetEndCallback(eng::Animator::kMovement, [&]()->void {
+    e.sprite_animator.Stop(eng::Animator::kAllAnimations);
     e.sprite.SetVisible(false);
     e.target.SetVisible(false);
     e.blast.SetVisible(false);
     e.marked_for_removal = true;
   });
-  e.draw_animator.Attach(&e.sprite);
-  e.draw_animator.Attach(&e.target);
-  e.draw_animator.Attach(&e.blast);
-  e.draw_animator.Play(eng::Animator::kMovement, false);
+  e.movement_animator.Attach(&e.sprite);
+  e.movement_animator.Attach(&e.target);
+  e.movement_animator.Attach(&e.blast);
+  e.movement_animator.Play(eng::Animator::kMovement, false);
 }
 
 Enemy::Unit* Enemy::GetTarget(DamageType damage_type) {
