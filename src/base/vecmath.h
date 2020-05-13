@@ -4,8 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
-class Vector2 {
- public:
+struct Vector2 {
   float x, y;
 
   Vector2() {}
@@ -28,6 +27,10 @@ class Vector2 {
   Vector2 operator*=(const Vector2& v) { x *= v.x; y *= v.y; return *this; }
 
   Vector2 operator*=(float s) { x *= s; y *= s; return *this; }
+
+  Vector2 operator/=(const Vector2& v) { x /= v.x; y /= v.y; return *this; }
+
+  Vector2 operator/=(float s) { x /= s; y /= s; return *this; }
 
   const float* GetData() const { return &x; }
 };
@@ -56,8 +59,15 @@ inline Vector2 operator/(const Vector2& v, float s) {
   return Vector2(v.x / s, v.y / s);
 }
 
-class Vector3 {
- public:
+inline bool operator==(const Vector2& v1, const Vector2& v2) {
+  return v1.x == v2.x && v1.y == v2.y;
+}
+
+inline bool operator!=(const Vector2& v1, const Vector2& v2) {
+  return v1.x != v2.x || v1.y != v2.y;
+}
+
+struct Vector3 {
   float x, y, z;
 
   Vector3() {}
@@ -70,8 +80,7 @@ inline Vector3 operator+(const Vector3& v1, const Vector3& v2) {
   return Vector3(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
 }
 
-class Vector4 {
- public:
+struct Vector4 {
   float x, y, z, w;
 
   Vector4() {}
@@ -90,33 +99,32 @@ inline Vector4 operator-(const Vector4& v1, const Vector4& v2) {
   return Vector4(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z, v1.w - v2.w);
 }
 
-class Matrix4x4 {
- public:
-  Vector4 col[4];
+struct Matrix4x4 {
+  Vector4 c[4];
 
   Matrix4x4() {}
   Matrix4x4(float s)
-    : col{Vector4(s, 0, 0, 0),
-          Vector4(0, s, 0, 0),
-          Vector4(0, 0, s, 0),
-          Vector4(0, 0, 0, s)} {}
+    : c{Vector4(s, 0, 0, 0),
+        Vector4(0, s, 0, 0),
+        Vector4(0, 0, s, 0),
+        Vector4(0, 0, 0, s)} {}
 
-  const float* GetData() const { return &col[0].x; }
+  const float* GetData() const { return &c[0].x; }
 };
 
 inline Matrix4x4 Ortho(float left, float right, float bottom, float top) {
   Matrix4x4 m(1);
-  m.col[0].x = 2.0f / (right - left);
-  m.col[1].y = 2.0f / (top - bottom);
-  m.col[2].z = - 1.0f;
-  m.col[3].x = - (right + left) / (right - left);
-  m.col[3].y = - (top + bottom) / (top - bottom);
+  m.c[0].x = 2.0f / (right - left);
+  m.c[1].y = 2.0f / (top - bottom);
+  m.c[2].z = - 1.0f;
+  m.c[3].x = - (right + left) / (right - left);
+  m.c[3].y = - (top + bottom) / (top - bottom);
   return m;
 }
 
 // Ray-AABB intersection test.
 // center, size: Center and size of the box.
-// origin, dir: Origin and directing of the ray.
+// origin, dir: Origin and direction of the ray.
 inline bool Intersection(Vector2 center, Vector2 size, Vector2 origin, Vector2 dir) {
   Vector2 min = center - size / 2;
   Vector2 max = center + size / 2;
