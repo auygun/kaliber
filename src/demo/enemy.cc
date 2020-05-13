@@ -92,14 +92,12 @@ void Enemy::SelectTarget(DamageType damage_type,
     if (e.targetted_by_weapon_ == damage_type)
       current_enemy = &e;
 
-    Vector2 weapon_enemy_dir = e.sprite.GetOffset() - weapon_pos;
-    float enemy_weapon_dist = weapon_enemy_dir.Magnitude();
-    weapon_enemy_dir.Normalize();
-    float sin_theta = weapon_enemy_dir.CrossProduct(beam_dir);
-    float beam_perpendicular_dist = abs(enemy_weapon_dist * sin_theta);
-    if (beam_perpendicular_dist > e.sprite.GetScale().x * 0.8f)
+    if (!Intersection(e.sprite.GetOffset(), e.sprite.GetScale(), weapon_pos,
+        beam_dir))
       continue;
 
+    Vector2 weapon_enemy_dir = e.sprite.GetOffset() - weapon_pos;
+    float enemy_weapon_dist = weapon_enemy_dir.Magnitude();
     if (closest_dist > enemy_weapon_dist) {
       closest_dist = enemy_weapon_dist;
       best_enemy = &e;
