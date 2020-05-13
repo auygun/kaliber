@@ -10,8 +10,8 @@
 
 namespace {
 
-constexpr int wepon_fire_frame[] = {1, 9};
-constexpr int wepon_fire_frame_count = 4;
+constexpr int wepon_warmup_frame[] = {1, 9};
+constexpr int wepon_warmup_frame_count = 4;
 constexpr int wepon_cooldown_frame[] = {5, 13};
 constexpr int wepon_cooldown_frame_count = 3;
 constexpr int wepon_anim_speed = 48;
@@ -41,13 +41,14 @@ void Player::ContextLost() {
 
 void Player::Update(float delta_time) {
   for (int i = 0; i < 2; ++i) {
-    weapon_animator_[i].Update(delta_time);
+    warmup_animator_[i].Update(delta_time);
+    cooldown_animator_[i].Update(delta_time);
     beam_animator_[i].Update(delta_time);
     spark_animator_[i].Update(delta_time);
   }
 
   if (active_weapon_ != kDamageType_Invalid)
-    SelectTarget();
+    UpdateTarget();
 }
 
 void Player::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
@@ -83,16 +84,26 @@ void Player::SetBeamLength(DamageType type, float len) {
   beam_[type].Translate(GetWeaponPos(type));
 }
 
-void Player::Fire(DamageType type) {
+void Player::WarmupWeapon(DamageType type) {
+  cooldown_animator_[type].Stop(eng::Animator::kFrames);
+  warmup_animator_[type].Play(eng::Animator::kFrames, false);
+}
+
+void Player::CooldownWeapon(DamageType type) {
+  warmup_animator_[type].Stop(eng::Animator::kFrames);
+  cooldown_animator_[type].Play(eng::Animator::kFrames, false);
+}
+
+void Player::Fire(DamageType type, Vector2 target_point) {
   eng::Engine& engine = eng::Engine::Get();
   Enemy &enemy = static_cast<Demo*>(engine.GetGame())->GetEnemy();
 
   Vector2 dir = weapon_[type].GetOffset();
-      (enemy.HasTarget(type) ? enemy.GetTargetPos(type) : drag_end_);
+      (enemy.HasTarget(type) ? enemy.GetTargetPos(type) : target_point);
   if (enemy.HasTarget(type)) {
     dir -= enemy.GetTargetPos(type);
   } else {
-    dir -= drag_end_;
+    dir -= target_point;
     dir.Normalize();
     dir *= engine.GetScreenSize().y * 1.3f;
   }
@@ -106,15 +117,16 @@ void Player::Fire(DamageType type) {
   beam_[type].SetTheta(theta);
   beam_spark_[type].SetTheta(theta);
 
+  beam_[type].SetColor({1, 1, 1, 1});
+  beam_[type].SetVisible(true);
+  beam_spark_[type].SetVisible(true);
+
   spark_animator_[type].SetMovement(-dir * beam_[type].GetScale().x * 0.85f, 18);
-  weapon_animator_[type].SetFrames(wepon_fire_frame_count, wepon_anim_speed);
-  weapon_animator_[type].SetEndCallback(eng::Animator::kFrames, weapon_animator_cb_[type]);
-  weapon_animator_[type].Play(eng::Animator::kFrames, false);
+  spark_animator_[type].Play(eng::Animator::kMovement, false);
 }
 
 bool Player::IsFiring(DamageType type) {
-  return weapon_animator_[type].IsPlaying(eng::Animator::kFrames) ||
-      beam_animator_[type].IsPlaying(eng::Animator::kBlending) ||
+  return beam_animator_[type].IsPlaying(eng::Animator::kBlending) ||
       spark_animator_[type].IsPlaying(eng::Animator::kMovement);
 }
 
@@ -137,7 +149,7 @@ void Player::SetupWeapons() {
     weapon_[i].Create(weapon_image, {8, 2});
     weapon_[i].AutoScale();
     weapon_[i].SetVisible(true);
-    weapon_[i].SetFrame(wepon_fire_frame[i]);
+    weapon_[i].SetFrame(wepon_warmup_frame[i]);
     engine.AddDrawable(&weapon_[i]);
 
     // Setup beam.
@@ -165,23 +177,18 @@ void Player::SetupWeapons() {
     weapon_[i].Translate(offset);
 
     // Setup animators.
-    weapon_animator_cb_[i] = [&, i]()->void {
-      beam_[i].SetColor({1, 1, 1, 1});
-      beam_[i].SetVisible(true);
-      beam_spark_[i].SetVisible(true);
-      spark_animator_[i].Play(eng::Animator::kMovement, false);
-      weapon_[i].SetFrame(wepon_cooldown_frame[i]);
-      weapon_animator_[i].UpdateStartValues(eng::Animator::kFrames);
-      weapon_animator_[i].SetFrames(wepon_cooldown_frame_count, wepon_anim_speed);
-      weapon_animator_[i].SetEndCallback(eng::Animator::kFrames, [&, i]()->void {
-        weapon_[i].SetFrame(wepon_fire_frame[i]);
-        weapon_animator_[i].UpdateStartValues(eng::Animator::kFrames);
-      });
-      weapon_animator_[i].Play(eng::Animator::kFrames, false);
-    };
-    weapon_animator_[i].SetRotation(M_PI * 2, 0.5f);
-    weapon_animator_[i].Attach(&weapon_[i]);
-    weapon_animator_[i].Play(eng::Animator::kRotation, true);
+    weapon_[i].SetFrame(wepon_cooldown_frame[i]);
+    cooldown_animator_[i].SetFrames(wepon_cooldown_frame_count, wepon_anim_speed);
+    cooldown_animator_[i].SetEndCallback(eng::Animator::kFrames, [&, i]()->void {
+      weapon_[i].SetFrame(wepon_warmup_frame[i]);
+    });
+    cooldown_animator_[i].Attach(&weapon_[i]);
+
+    weapon_[i].SetFrame(wepon_warmup_frame[i]);
+    warmup_animator_[i].SetFrames(wepon_warmup_frame_count, wepon_anim_speed);
+    warmup_animator_[i].SetRotation(M_PI * 2, 0.5f);
+    warmup_animator_[i].Attach(&weapon_[i]);
+    warmup_animator_[i].Play(eng::Animator::kRotation, true);
 
     spark_animator_[i].SetEndCallback(eng::Animator::kMovement, [&, i]()->void {
       beam_spark_[i].SetVisible(false);
@@ -198,8 +205,25 @@ void Player::SetupWeapons() {
   }
 }
 
+void Player::UpdateTarget() {
+  assert(active_weapon_ != kDamageType_Invalid);
+
+  if (IsFiring(active_weapon_))
+    return;
+
+  eng::Engine& engine = eng::Engine::Get();
+  Demo* game = static_cast<Demo*>(engine.GetGame());
+
+  if (drag_valid_) {
+    game->GetEnemy().SelectTarget((DamageType)active_weapon_,
+        weapon_[active_weapon_].GetOffset(), drag_end_);
+  } else {
+    game->GetEnemy().DeselectTarget((DamageType)active_weapon_);
+  }
+}
+
 void Player::DragStart(const Vector2& pos) {
-  drag_start_ = pos;
+  drag_start_ = drag_end_ = pos;
   active_weapon_ = GetWeaponType(drag_start_);
   assert(active_weapon_ != kDamageType_Invalid);
 
@@ -212,24 +236,16 @@ void Player::Drag(const Vector2& pos) {
 
   drag_end_ = pos;
   drag_sign_[active_weapon_].SetOffset(drag_end_);
-}
 
-void Player::SelectTarget() {
-  assert(active_weapon_ != kDamageType_Invalid);
-
-  if (IsFiring(active_weapon_))
-    return;
-
-  eng::Engine& engine = eng::Engine::Get();
-  Demo* game = static_cast<Demo*>(engine.GetGame());
-
-  if (!ValidateDrag()) {
-    game->GetEnemy().DeselectTarget((DamageType)active_weapon_);
-    return;
+  if (ValidateDrag()) {
+    if (!drag_valid_ && !IsFiring(active_weapon_))
+      WarmupWeapon(active_weapon_);
+    drag_valid_ = true;
+  } else {
+    if (drag_valid_ && !IsFiring(active_weapon_))
+      CooldownWeapon(active_weapon_);
+    drag_valid_ = false;
   }
-
-  game->GetEnemy().SelectTarget((DamageType)active_weapon_,
-      weapon_[active_weapon_].GetOffset(), drag_end_);
 }
 
 void Player::DragEnd() {
@@ -239,26 +255,31 @@ void Player::DragEnd() {
   active_weapon_ = kDamageType_Invalid;
   drag_sign_[type].SetVisible(false);
 
-  eng::Engine& engine = eng::Engine::Get();
-  Demo* game = static_cast<Demo*>(engine.GetGame());
-
-  if (IsFiring(type))
-    return;
-
-  if (!ValidateDrag()) {
-    game->GetEnemy().DeselectTarget((DamageType)type);
-    return;
+  if (drag_valid_ && !IsFiring(type)) {
+    if (warmup_animator_[type].IsPlaying(eng::Animator::kFrames)) {
+      Vector2 target_point = drag_end_;
+      warmup_animator_[type].SetEndCallback(eng::Animator::kFrames,
+          [&, type, target_point]()->void {
+            warmup_animator_[type].SetEndCallback(eng::Animator::kFrames,
+                nullptr);
+            CooldownWeapon(type);
+            Fire(type, target_point);
+          });
+    } else {
+      CooldownWeapon(type);
+      Fire(type, drag_end_);
+    }
   }
 
-  Fire(type);
-  type = kDamageType_Invalid;
+  drag_valid_ = false;
+  drag_start_ = drag_end_ = {0, 0};
 }
 
 bool Player::ValidateDrag() {
   Vector2 dir = drag_end_ - drag_start_;
   float len = dir.Magnitude();
   dir.Normalize();
-  if (len < weapon_[active_weapon_].GetScale().y / 6)
+  if (len < weapon_[active_weapon_].GetScale().y / 4)
     return false;
   if (dir.DotProduct(Vector2(0 ,1)) < 0)
     return false;

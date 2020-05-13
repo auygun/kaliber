@@ -92,8 +92,8 @@ void Enemy::SelectTarget(DamageType damage_type,
     if (e.targetted_by_weapon_ == damage_type)
       current_enemy = &e;
 
-    if (!Intersection(e.sprite.GetOffset(), e.sprite.GetScale(), weapon_pos,
-        beam_dir))
+    if (!Intersection(e.sprite.GetOffset(), e.sprite.GetScale() * 1.2f,
+        weapon_pos, beam_dir))
       continue;
 
     Vector2 weapon_enemy_dir = e.sprite.GetOffset() - weapon_pos;

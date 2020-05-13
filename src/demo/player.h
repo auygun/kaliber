@@ -32,8 +32,8 @@ class Player {
   eng::ImageQuad beam_[2];
   eng::ImageQuad beam_spark_[2];
 
-  eng::Animator weapon_animator_[2];
-  eng::Animator::Callback weapon_animator_cb_[2];
+  eng::Animator warmup_animator_[2];
+  eng::Animator cooldown_animator_[2];
   eng::Animator beam_animator_[2];
   eng::Animator spark_animator_[2];
 
@@ -41,19 +41,24 @@ class Player {
 
   Vector2 drag_start_ = {0, 0};
   Vector2 drag_end_ = {0, 0};
+  bool drag_valid_ = false;
 
   DamageType GetWeaponType(const Vector2& pos);
 
   void SetBeamLength(DamageType type, float len);
 
-  void Fire(DamageType type);
+  void WarmupWeapon(DamageType type);
+  void CooldownWeapon(DamageType type);
+
+  void Fire(DamageType type, Vector2 target_point);
   bool IsFiring(DamageType type);
 
   void SetupWeapons();
 
+  void UpdateTarget();
+
   void DragStart(const Vector2& pos);
   void Drag(const Vector2& pos);
-  void SelectTarget();
   void DragEnd();
   bool ValidateDrag();
 };
