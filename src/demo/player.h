@@ -60,6 +60,7 @@ class Player {
   void DragStart(const Vector2& pos);
   void Drag(const Vector2& pos);
   void DragEnd();
+  void DragCancel();
   bool ValidateDrag();
 };
 

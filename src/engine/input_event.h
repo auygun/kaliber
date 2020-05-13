@@ -10,15 +10,21 @@ class InputEvent {
  public:
   enum Type {
     kInvalid,
+    kTap,
     kDoubleTap,
     kDragStart,
     kDrag,
     kDragEnd,
+    kDragCancel,
     kPinchStart,
     kPinch,
     kType_Max // Not a type.
   };
 
+  InputEvent(Type type)
+      : type_(type) {}
+  InputEvent(Type type, const Vector2& vec1)
+      : type_(type), vec_{vec1, {0, 0}} {}
   InputEvent(Type type, const Vector2& vec1, const Vector2& vec2)
       : type_(type), vec_{vec1, vec2} {}
   ~InputEvent() = default;
@@ -27,8 +33,8 @@ class InputEvent {
   Vector2 GetEventVector(size_t i) { assert(i < 2); return vec_[i]; }
 
  private:
-  Type type_;
-  Vector2 vec_[2];
+  Type type_ = kInvalid;
+  Vector2 vec_[2] = {{0, 0}, {0, 0}};
 };
 
 }  // namespace eng

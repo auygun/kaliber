@@ -60,7 +60,8 @@ void Demo::Update(float delta_time) {
     if (event) {
       if (event->GetEventType() == eng::InputEvent::kDragStart ||
           event->GetEventType() == eng::InputEvent::kDrag ||
-          event->GetEventType() == eng::InputEvent::kDragEnd)
+          event->GetEventType() == eng::InputEvent::kDragEnd ||
+          event->GetEventType() == eng::InputEvent::kDragCancel)
         player_.OnInputEvent(std::move(event));
     }
   }

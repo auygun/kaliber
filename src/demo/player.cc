@@ -58,6 +58,8 @@ void Player::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
     Drag(event->GetEventVector(0));
   else if (event->GetEventType() == eng::InputEvent::kDragEnd)
     DragEnd();
+  else if (event->GetEventType() == eng::InputEvent::kDragCancel)
+    DragCancel();
 }
 
 Vector2 Player::GetWeaponPos(DamageType type) const {
@@ -268,6 +270,30 @@ void Player::DragEnd() {
     } else {
       CooldownWeapon(type);
       Fire(type, drag_end_);
+    }
+  }
+
+  drag_valid_ = false;
+  drag_start_ = drag_end_ = {0, 0};
+}
+
+void Player::DragCancel() {
+  assert(active_weapon_ != kDamageType_Invalid);
+
+  DamageType type = active_weapon_;
+  active_weapon_ = kDamageType_Invalid;
+  drag_sign_[type].SetVisible(false);
+
+  if (drag_valid_ && !IsFiring(type)) {
+    if (warmup_animator_[type].IsPlaying(eng::Animator::kFrames)) {
+      warmup_animator_[type].SetEndCallback(eng::Animator::kFrames,
+          [&, type]()->void {
+            warmup_animator_[type].SetEndCallback(eng::Animator::kFrames,
+                nullptr);
+            CooldownWeapon(type);
+          });
+    } else {
+      CooldownWeapon(type);
     }
   }
 
