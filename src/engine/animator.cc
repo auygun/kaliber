@@ -24,10 +24,14 @@ void Animator::Pause(Flags animation) {
 }
 
 void Animator::Stop(Flags animation) {
-  movement_time_ = 0;
-  rotation_time_ = 0;
-  blending_time_ = 0;
-  frame_time_ = 0;
+  if ((animation & kMovement) != 0)
+    movement_time_ = 0;
+  if ((animation & kRotation) != 0)
+    rotation_time_ = 0;
+  if ((animation & kBlending) != 0)
+    blending_time_ = 0;
+  if ((animation & kFrames) != 0)
+    frame_time_ = 0;
 
   Update(0);
 
