@@ -49,9 +49,9 @@ add_library(native-activity SHARED
     ../../../src/demo/enemy.cc
     ../../../src/demo/player.cc
     ../../../src/demo/sky_quad.cc
+    ../../../src/engine/animator.cc
     ../../../src/engine/asset_manager/asset_manager.cc
     ../../../src/engine/asset_manager/image.cc
-    ../../../src/engine/animator.cc
     ../../../src/engine/drawable.cc
     ../../../src/engine/engine.cc
     ../../../src/engine/image_quad.cc
@@ -60,6 +60,7 @@ add_library(native-activity SHARED
     ../../../src/engine/renderer/renderer.cc
     ../../../src/engine/renderer/shader.cc
     ../../../src/engine/renderer/texture.cc
+    ../../../src/engine/shape.cc
     ../../../src/platform/platform_android.cc
     ../../../src/platform/platform.cc
     ../../../src/third_party/android/gestureDetector.cpp

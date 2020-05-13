@@ -31,30 +31,6 @@ void ImageQuad::AutoScale() {
   Scale((float)Platform::Get().GetDeviceDpi() / 200.0f);
 }
 
-void ImageQuad::Translate(const Vector2& offset) {
-  offset_ += offset;
-}
-
-void ImageQuad::Scale(const Vector2& scale) {
-  scale_ *= scale;
-}
-
-void ImageQuad::Scale(float scale) {
-  scale_ *= scale;
-}
-
-void ImageQuad::Rotate(float angle) {
-  theta_ += angle;
-  rotation_.x = sin(theta_);
-  rotation_.y = cos(theta_);
-}
-
-void ImageQuad::SetTheta(float theta) {
-  theta_ = theta;
-  rotation_.x = sin(theta_);
-  rotation_.y = cos(theta_);
-}
-
 void ImageQuad::SetFrame(size_t frame) {
   assert(frame < GetNumFrames());
   current_frame_ = frame;

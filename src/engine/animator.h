@@ -7,7 +7,7 @@
 
 namespace eng {
 
-class ImageQuad;
+class Shape;
 
 class Animator {
  public:
@@ -26,7 +26,7 @@ class Animator {
   ~Animator() = default;
 
   // Attached the given animatable to this animator and sets the start values.
-  void Attach(ImageQuad *quad);
+  void Attach(Shape *shape);
 
   void Play(Flags animation, bool loop);
   void Pause(Flags animation);
@@ -61,7 +61,7 @@ class Animator {
 
  private:
   struct Animatable {
-    ImageQuad* quad;
+    Shape* shape;
     Vector2 movement_start = {0, 0};
     float rotation_start_ = 0;
     Vector4 blending_start = {0, 0, 0, 0};

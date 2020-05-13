@@ -3,7 +3,7 @@
 
 #include "../base/vecmath.h"
 #include "renderer/texture.h"
-#include "drawable.h"
+#include "shape.h"
 
 #include <string>
 #include <vector>
@@ -14,7 +14,7 @@ namespace eng {
 
 class Image;
 
-class ImageQuad : public Drawable {
+class ImageQuad : public Shape {
  public:
   ImageQuad() = default;
   ~ImageQuad() override = default;
@@ -27,47 +27,17 @@ class ImageQuad : public Drawable {
 
   void AutoScale();
 
-  void Translate(const Vector2& offset);
-  void Scale(const Vector2& scale);
-  void Scale(float scale);
-  void Rotate(float angle);
-
-  void SetOffset(const Vector2& offset) { offset_ = offset; }
-  void SetScale(const Vector2& scale) { scale_ = scale; }
-  void SetPivot(const Vector2& pivot) { pivot_ = pivot; }
-  void SetTheta(float theta);
-  void SetColor(const Vector4& color) { color_ = color; }
-  void SetFrame(size_t frame);
-
-  Vector2 GetOffset() const { return offset_; }
-  Vector2 GetScale() const { return scale_; }
-  Vector2 GetPivot() const { return pivot_; }
-  float GetTheta() const { return theta_; }
-  Vector4 GetColor() const { return color_; }
-  size_t GetFrame() { return current_frame_; }
-  size_t GetNumFrames();
+  // Shape interface.
+  void SetFrame(size_t frame) override;
+  size_t GetFrame() override { return current_frame_; }
+  size_t GetNumFrames() override;
 
   // Drawable interface.
   void Draw() override;
   void ContextLost() override;
 
-  void PlaceToLeftOf(const ImageQuad& d) {
-    Translate({d.GetScale().x / -2.0f + GetScale().x / -2.0f, 0});
-  }
-
-  void PlaceToRightOf(const ImageQuad& d) {
-    Translate({d.GetScale().x / 2.0f + GetScale().x / 2.0f, 0});
-  }
-
  private:
-  Vector2 offset_ = {0, 0};
-  Vector2 scale_ = {1, 1};
-  Vector2 pivot_ = {0, 0};
-  Vector2 rotation_ = {0, 1};
-  float theta_ = 0;
-
   Texture texture_;
-  Vector4 color_ = {1, 1, 1, 1};
   Vector2 tex_scale_ = {1, 1};
 
   size_t current_frame_ = 0;

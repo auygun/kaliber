@@ -1,17 +1,17 @@
 #include "animator.h"
 #include "../base/log.h"
 #include "../base/misc.h"
-#include "image_quad.h"
+#include "shape.h"
 #include <cmath>
 
 namespace eng {
 
-void Animator::Attach(ImageQuad *quad) {
-  animatables_.push_back({quad,
-                          quad->GetOffset(),
-                          quad->GetTheta(),
-                          quad->GetColor(),
-                          (int)quad->GetFrame()});
+void Animator::Attach(Shape *shape) {
+  animatables_.push_back({shape,
+                          shape->GetOffset(),
+                          shape->GetTheta(),
+                          shape->GetColor(),
+                          (int)shape->GetFrame()});
 }
 
 void Animator::Play(Flags animation, bool loop) {
@@ -41,13 +41,13 @@ void Animator::Stop(Flags animation) {
 void Animator::UpdateStartValues(Flags animation) {
   for (auto& a : animatables_) {
     if ((animation & kMovement) != 0)
-      a.movement_start = a.quad->GetOffset();
+      a.movement_start = a.shape->GetOffset();
     if ((animation & kRotation) != 0)
-      a.rotation_start_ = a.quad->GetTheta();
+      a.rotation_start_ = a.shape->GetTheta();
     if ((animation & kBlending) != 0)
-      a.blending_start = a.quad->GetColor();
+      a.blending_start = a.shape->GetColor();
     if ((animation & kFrames) != 0)
-      a.frame_start_ = a.quad->GetFrame();
+      a.frame_start_ = a.shape->GetFrame();
   }
 }
 
@@ -97,24 +97,24 @@ void Animator::Update(float delta_time) {
     if (play_flags_ & kMovement) {
       Vector2 target = a.movement_start + movement_direction_;
       Vector2 r = Lerp(a.movement_start, target, movement_time_);
-      a.quad->SetOffset(r);
+      a.shape->SetOffset(r);
     }
 
     if (play_flags_ & kRotation) {
       float r = Lerp(a.rotation_start_, rotation_target_, rotation_time_);
-      a.quad->SetTheta(r);
+      a.shape->SetTheta(r);
     }
 
     if (play_flags_ & kBlending) {
       Vector4 r = Blend(a.blending_start, blending_target_, blending_time_);
-      a.quad->SetColor(r);
+      a.shape->SetColor(r);
     }
 
     if (play_flags_ & kFrames) {
       int target = a.frame_start_ + frame_count_;
       int r = Lerp(a.frame_start_, target, frame_time_);
       if (r < target)
-        a.quad->SetFrame(r);
+        a.shape->SetFrame(r);
     }
   }
 }
