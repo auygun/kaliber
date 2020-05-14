@@ -23,7 +23,9 @@ class ImageQuad : public Shape {
   ImageQuad& operator=(const ImageQuad&) = delete;
 
   void Create(std::shared_ptr<const Image> image,
-              std::array<int, 2> num_frames = {1, 1});
+              std::array<int, 2> num_frames = {1, 1},
+              int frame_width = 0,
+              int frame_height = 0);
 
   void AutoScale();
 

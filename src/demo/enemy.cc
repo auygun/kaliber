@@ -27,7 +27,7 @@ void Enemy::ContextLost() {
       continue;
 
     if (e.unit_type == kUnitType_Skull)
-      e.sprite.Create(skull_frames_, {10, 6});
+      e.sprite.Create(skull_frames_, {10, 13}, 100, 100);
     else
       e.sprite.Create(bug_frames_, {10, 4});
     e.target.Create(target_frames_, {6, 2});
@@ -192,7 +192,7 @@ void Enemy::Spawn(UnitType unit_type,
   e.damage_type = damage_type;
   if (unit_type == kUnitType_Skull) {
     e.total_health = e.hit_points = 1;
-    e.sprite.Create(skull_frames_, {10, 6});
+    e.sprite.Create(skull_frames_, {10, 13}, 100, 100);
   } else {
     e.total_health = e.hit_points = 2;
     e.sprite.Create(bug_frames_, {10, 4});
@@ -206,15 +206,15 @@ void Enemy::Spawn(UnitType unit_type,
   if (damage_type == kDamageType_Green) {
     if (unit_type == kUnitType_Skull) {
       e.sprite.SetFrame(0);
-      e.sprite_animator.SetFrames(6, 12);
+      e.sprite_animator.SetFrames(7, 12);
     } else {
       e.sprite.SetFrame(13);
       e.sprite_animator.SetFrames(6, 12);
     }
   } else {
     if (unit_type == kUnitType_Skull) {
-      e.sprite.SetFrame(30);
-      e.sprite_animator.SetFrames(6, 12);
+      e.sprite.SetFrame(50);
+      e.sprite_animator.SetFrames(7, 12);
     } else {
       e.sprite.SetFrame(33);
       e.sprite_animator.SetFrames(6, 12);

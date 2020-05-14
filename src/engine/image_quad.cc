@@ -11,13 +11,22 @@
 namespace eng {
 
 void ImageQuad::Create(std::shared_ptr<const Image> image,
-                       std::array<int, 2> num_frames) {
+                       std::array<int, 2> num_frames,
+                       int frame_width,
+                       int frame_height) {
   assert(num_frames_[0] > 0 && num_frames_[1] > 0);
 
   texture_.Update(image);
 
-  frame_width_ = image->GetOriginalWidth() / num_frames[0];
-  frame_height_ = image->GetOriginalHeight() / num_frames[1];
+  if (frame_width > 0)
+    frame_width_ = frame_width;
+  else
+    frame_width_ = image->GetOriginalWidth() / num_frames[0];
+
+  if (frame_height > 0)
+    frame_height_ = frame_height;
+  else
+    frame_height_ = image->GetOriginalHeight() / num_frames[1];
 
   tex_scale_ = {
     (float)frame_width_ / (float)image->GetWidth(),
