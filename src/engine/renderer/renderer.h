@@ -68,9 +68,6 @@ class Renderer {
 
   bool SupportsVAO() const { return vertex_array_objects_; }
 
-  void EnterDrawStage();
-  void ExitDrawStage();
-
   void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
 
   int screen_width() const { return screen_width_; }
@@ -139,22 +136,15 @@ class Renderer {
   int screen_height_ = 0;
   Matrix4x4 projection_;
 
-  // True if the renderer is in draw stage. Render commands pushed during draw
-  // stage can be discarded.
-  bool draw_stage_ = false;
-
   std::unordered_map<int, GLuint> texture_map_;
   std::unordered_map<int, Geometry> geometry_map_;
   std::unordered_map<int, Shader> shader_map_;
 
 #ifdef THREADED_RENDERING
   // Global commands are independent from frames and guaranteed to be processed.
-  // All render commands pushed when the renderer is not in draw stage are kept
-  // in this queue.
   std::deque<std::unique_ptr<RenderCommand>> global_commands_;
   // Draw commands are fame specific and can be discarded if the renderer deems
-  // frame drop. All render commands pushed during draw stage are kept in this
-  // queue.
+  // frame drop.
   std::deque<std::unique_ptr<RenderCommand>> draw_commands_[2];
 
   std::condition_variable cv_;

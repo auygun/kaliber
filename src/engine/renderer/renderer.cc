@@ -109,17 +109,9 @@ void Renderer::TerminateWorker() {
 #endif // THREADED_RENDERING
 }
 
-void Renderer::EnterDrawStage() {
-  draw_stage_ = true;
-}
-
-void Renderer::ExitDrawStage() {
-  draw_stage_ = false;
-}
-
 void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
 #ifdef THREADED_RENDERING
-  if (!draw_stage_) {
+  if (cmd->global) {
     {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
       global_commands_.push_back(std::move(cmd));

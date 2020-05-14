@@ -59,7 +59,6 @@ void Engine::Update(float delta_time) {
 }
 
 void Engine::Draw(float frame_frac) {
-  renderer_.EnterDrawStage();
   Clear();
   renderer_.EnableBlend();
 
@@ -69,7 +68,6 @@ void Engine::Draw(float frame_frac) {
     stats_.Draw();
 
   Present();
-  renderer_.ExitDrawStage();
 }
 
 void Engine::Clear() {
