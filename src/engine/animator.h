@@ -32,27 +32,27 @@ class Animator {
   void Pause(Flags animation);
   void Stop(Flags animation);
 
-  // Updates start values for the given animations from attached animatables.
-  void UpdateStartValues(Flags animation);
-
   // Set callback for the given animations. It's called for each animation once
   // it ends. Not that it's not called for looping animations.
   void SetEndCallback(Flags animation, Callback cb);
 
-  // Set movement animation parameters. Distance is calculated from the
-  // magnitude of direction vector. Speed is in movement per second.
+  // Set movement animation parameters. Movement animations is relative.
+  // Distance is calculated from the magnitude of direction vector. Speed is in
+  // movement per second.
   void SetMovement(Vector2 direction, float speed);
 
-  // Set rotation animation parameters. Target is in radians. Speed is in
-  // rotation per second.
+  // Set rotation animation parameters. Rotation animation is relative. Target
+  // is in radians. Speed is in rotation per second.
   void SetRotation(float target, float speed);
 
-  // Set color blending animation parameters. Speed is in seconds.
+  // Set color blending animation parameters. Color blending animation is
+  // absolute. The absolute start colors are obtained from the attached shapes.
+  // Speed is in seconds.
   void SetBlending(Vector4 target, float speed);
 
-  // Set frame playback animation parameters. Starts from the last updated
-  // frames from attached animatables and plays count number of frames. Speed is
-  // in frames per second.
+  // Set frame playback animation parameters. Frame animation is absolute. The
+  // absolute start frames are obtained from the attached shapes. Plays count
+  // number of frames. Speed is in frames per second.
   void SetFrames(int count, int speed);
 
   void Update(float delta_time);
@@ -62,8 +62,8 @@ class Animator {
  private:
   struct Animatable {
     Shape* shape;
-    Vector2 movement_start = {0, 0};
-    float rotation_start_ = 0;
+    Vector2 movement_last_offset = {0, 0};
+    float rotation_last_theta = 0;
     Vector4 blending_start = {0, 0, 0, 0};
     int frame_start_ = 0;
   };

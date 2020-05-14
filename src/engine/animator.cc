@@ -8,8 +8,8 @@ namespace eng {
 
 void Animator::Attach(Shape *shape) {
   animatables_.push_back({shape,
-                          shape->GetOffset(),
-                          shape->GetTheta(),
+                          {0, 0},
+                          0,
                           shape->GetColor(),
                           (int)shape->GetFrame()});
 }
@@ -33,22 +33,9 @@ void Animator::Stop(Flags animation) {
   if ((animation & kFrames) != 0)
     frame_time_ = 0;
 
+  play_flags_ |= animation;
   Update(0);
-
   play_flags_ &= ~animation;
-}
-
-void Animator::UpdateStartValues(Flags animation) {
-  for (auto& a : animatables_) {
-    if ((animation & kMovement) != 0)
-      a.movement_start = a.shape->GetOffset();
-    if ((animation & kRotation) != 0)
-      a.rotation_start_ = a.shape->GetTheta();
-    if ((animation & kBlending) != 0)
-      a.blending_start = a.shape->GetColor();
-    if ((animation & kFrames) != 0)
-      a.frame_start_ = a.shape->GetFrame();
-  }
 }
 
 void Animator::SetEndCallback(Flags animation, Callback cb) {
@@ -68,19 +55,23 @@ void Animator::SetMovement(Vector2 direction, float speed) {
   movement_speed_ = speed / len;
 }
 
-void Animator::SetRotation(float target, float speed) {
-  rotation_target_ = target;
-  rotation_speed_ = speed / target;
+void Animator::SetRotation(float trget, float speed) {
+  rotation_target_ = trget;
+  rotation_speed_ = speed / trget;
 }
 
 void Animator::SetBlending(Vector4 target, float speed) {
   blending_target_ = target;
   blending_speed_ = speed;
+  for (auto& a : animatables_)
+    a.blending_start = a.shape->GetColor();
 }
 
 void Animator::SetFrames(int count, int speed) {
   frame_count_ = count;
   frame_speed_ = (float)speed / (float)count;
+  for (auto& a : animatables_)
+    a.frame_start_ = a.shape->GetFrame();
 }
 
 void Animator::Update(float delta_time) {
@@ -95,14 +86,15 @@ void Animator::Update(float delta_time) {
 
   for (auto& a : animatables_) {
     if (play_flags_ & kMovement) {
-      Vector2 target = a.movement_start + movement_direction_;
-      Vector2 r = Lerp(a.movement_start, target, movement_time_);
-      a.shape->SetOffset(r);
+      Vector2 offset = Lerp({0, 0}, movement_direction_, movement_time_);
+      a.shape->Translate(offset - a.movement_last_offset);
+      a.movement_last_offset = offset;
     }
 
     if (play_flags_ & kRotation) {
-      float r = Lerp(a.rotation_start_, rotation_target_, rotation_time_);
-      a.shape->SetTheta(r);
+      float theta = Lerp(0.0f, rotation_target_, rotation_time_);
+      a.shape->Rotate(theta - a.rotation_last_theta);
+      a.rotation_last_theta = theta;
     }
 
     if (play_flags_ & kBlending) {
