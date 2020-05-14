@@ -51,6 +51,7 @@ class Engine : public Renderer::Delegate {
   Renderer& GetRenderer() { return renderer_; }
   Geometry& GetQuad() { return quad_; }
   Shader& GetPassThroughShader() { return pass_through_shader_; }
+  Shader& GetSolidShader() { return solid_shader_; }
   Fontx& GetFont() { return font_; }
 
   Game* GetGame() { return game_.get(); }
@@ -83,6 +84,7 @@ class Engine : public Renderer::Delegate {
 
   Geometry quad_;
   Shader pass_through_shader_;
+  Shader solid_shader_;
 
   Fontx font_;
 

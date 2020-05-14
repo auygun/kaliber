@@ -180,6 +180,7 @@ void Engine::ContextLost() {
   last_texture_resource_id_ = 0;
 
   pass_through_shader_.Invalidate();
+  solid_shader_.Invalidate();
   quad_.Invalidate();
   CreateRenderResources();
 
@@ -192,11 +193,17 @@ void Engine::ContextLost() {
 }
 
 bool Engine::CreateRenderResources() {
-  // Create the shader we can reuse for all tiles.
+  // Create the shader we can reuse for texture rendering.
   const char* vertex_description = "p2f;t2f";
   if (!pass_through_shader_.Create("shaders/pass_through",
-                                   vertex_description)) {
+      vertex_description)) {
     LOG << "Could not create pass through shader.";
+    return false;
+  }
+
+  // Create the shader we can reuse for solid rendering.
+  if (!solid_shader_.Create("shaders/solid", vertex_description)) {
+    LOG << "Could not create solid pass through shader.";
     return false;
   }
 
