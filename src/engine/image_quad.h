@@ -3,7 +3,7 @@
 
 #include "../base/vecmath.h"
 #include "renderer/texture.h"
-#include "shape.h"
+#include "animatable.h"
 
 #include <string>
 #include <vector>
@@ -14,7 +14,7 @@ namespace eng {
 
 class Image;
 
-class ImageQuad : public Shape {
+class ImageQuad : public Animatable {
  public:
   ImageQuad() = default;
   ~ImageQuad() override = default;

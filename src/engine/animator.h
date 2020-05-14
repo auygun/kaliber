@@ -7,7 +7,7 @@
 
 namespace eng {
 
-class Shape;
+class Animatable;
 
 class Animator {
  public:
@@ -26,7 +26,7 @@ class Animator {
   ~Animator() = default;
 
   // Attached the given animatable to this animator and sets the start values.
-  void Attach(Shape *shape);
+  void Attach(Animatable *animatable);
 
   void Play(Flags animation, bool loop);
   void Pause(Flags animation);
@@ -46,13 +46,13 @@ class Animator {
   void SetRotation(float target, float speed);
 
   // Set color blending animation parameters. Color blending animation is
-  // absolute. The absolute start colors are obtained from the attached shapes.
-  // Speed is in seconds.
+  // absolute. The absolute start colors are obtained from the attached
+  // animatables. Speed is in seconds.
   void SetBlending(Vector4 target, float speed);
 
   // Set frame playback animation parameters. Frame animation is absolute. The
-  // absolute start frames are obtained from the attached shapes. Plays count
-  // number of frames. Speed is in frames per second.
+  // absolute start frames are obtained from the attached animatables. Plays
+  // count number of frames. Speed is in frames per second.
   void SetFrames(int count, int speed);
 
   void Update(float delta_time);
@@ -60,8 +60,8 @@ class Animator {
   bool IsPlaying(Flags animation) const { return play_flags_ & animation; }
 
  private:
-  struct Animatable {
-    Shape* shape;
+  struct Element {
+    Animatable* animatable;
     Vector2 movement_last_offset = {0, 0};
     float rotation_last_theta = 0;
     Vector4 blending_start = {0, 0, 0, 0};
@@ -70,7 +70,7 @@ class Animator {
 
   unsigned int play_flags_ = 0;
   unsigned int loop_flags_ = 0;
-  std::vector<Animatable> animatables_;
+  std::vector<Element> elements_;
 
   Vector2 movement_direction_ = {0, 0};
   float movement_speed_ = 0;

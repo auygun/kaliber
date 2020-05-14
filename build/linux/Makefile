@@ -74,6 +74,7 @@ GLTEST_SRC := \
   $(SRC_ROOT)/demo/enemy.cc \
   $(SRC_ROOT)/demo/player.cc \
   $(SRC_ROOT)/demo/sky_quad.cc \
+  $(SRC_ROOT)/engine/animatable.cc \
   $(SRC_ROOT)/engine/animator.cc \
   $(SRC_ROOT)/engine/asset_manager/asset_manager.cc \
   $(SRC_ROOT)/engine/asset_manager/image.cc \
@@ -84,7 +85,6 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/renderer/renderer.cc \
   $(SRC_ROOT)/engine/renderer/shader.cc \
   $(SRC_ROOT)/engine/renderer/texture.cc \
-  $(SRC_ROOT)/engine/shape.cc \
   $(SRC_ROOT)/engine/solid_quad.cc \
   $(SRC_ROOT)/platform/platform_linux.cc \
   $(SRC_ROOT)/platform/platform.cc \

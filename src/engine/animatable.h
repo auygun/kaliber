@@ -5,13 +5,13 @@
 
 namespace eng {
 
-class Shape {
+class Animatable {
  public:
-  Shape() = default;
-  virtual ~Shape() = default;
+  Animatable() = default;
+  virtual ~Animatable() = default;
 
-  Shape(const Shape&) = delete;
-  Shape& operator=(const Shape&) = delete;
+  Animatable(const Animatable&) = delete;
+  Animatable& operator=(const Animatable&) = delete;
 
   void Translate(const Vector2& offset);
   void Scale(const Vector2& scale);
@@ -35,19 +35,19 @@ class Shape {
   virtual size_t GetFrame() = 0;
   virtual size_t GetNumFrames() = 0;
 
-  void PlaceToLeftOf(const Shape& s) {
+  void PlaceToLeftOf(const Animatable& s) {
     Translate({s.GetScale().x / -2.0f + GetScale().x / -2.0f, 0});
   }
 
-  void PlaceToRightOf(const Shape& s) {
+  void PlaceToRightOf(const Animatable& s) {
     Translate({s.GetScale().x / 2.0f + GetScale().x / 2.0f, 0});
   }
 
-  void PlaceToTopOf(const Shape& s) {
+  void PlaceToTopOf(const Animatable& s) {
     Translate({0 ,s.GetScale().y / 2.0f + GetScale().y / 2.0f});
   }
 
-  void PlaceToBottomOf(const Shape& s) {
+  void PlaceToBottomOf(const Animatable& s) {
     Translate({0 ,s.GetScale().y / -2.0f + GetScale().y / -2.0f});
   }
 

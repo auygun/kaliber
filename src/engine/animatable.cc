@@ -1,27 +1,27 @@
-#include "shape.h"
+#include "animatable.h"
 #include <cmath>
 
 namespace eng {
 
-void Shape::Translate(const Vector2& offset) {
+void Animatable::Translate(const Vector2& offset) {
   offset_ += offset;
 }
 
-void Shape::Scale(const Vector2& scale) {
+void Animatable::Scale(const Vector2& scale) {
   scale_ *= scale;
 }
 
-void Shape::Scale(float scale) {
+void Animatable::Scale(float scale) {
   scale_ *= scale;
 }
 
-void Shape::Rotate(float angle) {
+void Animatable::Rotate(float angle) {
   theta_ += angle;
   rotation_.x = sin(theta_);
   rotation_.y = cos(theta_);
 }
 
-void Shape::SetTheta(float theta) {
+void Animatable::SetTheta(float theta) {
   theta_ = theta;
   rotation_.x = sin(theta_);
   rotation_.y = cos(theta_);

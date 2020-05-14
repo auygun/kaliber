@@ -1,17 +1,17 @@
 #include "animator.h"
 #include "../base/log.h"
 #include "../base/misc.h"
-#include "shape.h"
+#include "animatable.h"
 #include <cmath>
 
 namespace eng {
 
-void Animator::Attach(Shape *shape) {
-  animatables_.push_back({shape,
-                          {0, 0},
-                          0,
-                          shape->GetColor(),
-                          (int)shape->GetFrame()});
+void Animator::Attach(Animatable *animatable) {
+  elements_.push_back({animatable,
+                       {0, 0},
+                       0,
+                       animatable->GetColor(),
+                       (int)animatable->GetFrame()});
 }
 
 void Animator::Play(Flags animation, bool loop) {
@@ -63,15 +63,15 @@ void Animator::SetRotation(float trget, float speed) {
 void Animator::SetBlending(Vector4 target, float speed) {
   blending_target_ = target;
   blending_speed_ = 1.0f / speed;
-  for (auto& a : animatables_)
-    a.blending_start = a.shape->GetColor();
+  for (auto& a : elements_)
+    a.blending_start = a.animatable->GetColor();
 }
 
 void Animator::SetFrames(int count, int speed) {
   frame_count_ = count;
   frame_speed_ = (float)speed / (float)count;
-  for (auto& a : animatables_)
-    a.frame_start_ = a.shape->GetFrame();
+  for (auto& a : elements_)
+    a.frame_start_ = a.animatable->GetFrame();
 }
 
 void Animator::Update(float delta_time) {
@@ -84,29 +84,29 @@ void Animator::Update(float delta_time) {
   if (play_flags_ & kFrames)
     UpdateFrame(delta_time);
 
-  for (auto& a : animatables_) {
+  for (auto& a : elements_) {
     if (play_flags_ & kMovement) {
       Vector2 offset = Lerp({0, 0}, movement_direction_, movement_time_);
-      a.shape->Translate(offset - a.movement_last_offset);
+      a.animatable->Translate(offset - a.movement_last_offset);
       a.movement_last_offset = offset;
     }
 
     if (play_flags_ & kRotation) {
       float theta = Lerp(0.0f, rotation_target_, rotation_time_);
-      a.shape->Rotate(theta - a.rotation_last_theta);
+      a.animatable->Rotate(theta - a.rotation_last_theta);
       a.rotation_last_theta = theta;
     }
 
     if (play_flags_ & kBlending) {
       Vector4 r = Blend(a.blending_start, blending_target_, blending_time_);
-      a.shape->SetColor(r);
+      a.animatable->SetColor(r);
     }
 
     if (play_flags_ & kFrames) {
       int target = a.frame_start_ + frame_count_;
       int r = Lerp(a.frame_start_, target, frame_time_);
       if (r < target)
-        a.shape->SetFrame(r);
+        a.animatable->SetFrame(r);
     }
   }
 }

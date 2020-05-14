@@ -49,6 +49,7 @@ add_library(native-activity SHARED
     ../../../src/demo/enemy.cc
     ../../../src/demo/player.cc
     ../../../src/demo/sky_quad.cc
+    ../../../src/engine/animatable.cc
     ../../../src/engine/animator.cc
     ../../../src/engine/asset_manager/asset_manager.cc
     ../../../src/engine/asset_manager/image.cc
@@ -59,7 +60,6 @@ add_library(native-activity SHARED
     ../../../src/engine/renderer/renderer.cc
     ../../../src/engine/renderer/shader.cc
     ../../../src/engine/renderer/texture.cc
-    ../../../src/engine/shape.cc
     ../../../src/engine/solid_quad.cc
     ../../../src/platform/platform_android.cc
     ../../../src/platform/platform.cc

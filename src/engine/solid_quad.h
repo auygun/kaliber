@@ -2,7 +2,7 @@
 #define SOLID_QUAD_H
 
 #include "../base/vecmath.h"
-#include "shape.h"
+#include "animatable.h"
 
 #include <string>
 #include <vector>
@@ -13,7 +13,7 @@ namespace eng {
 
 class Image;
 
-class SolidQuad : public Shape {
+class SolidQuad : public Animatable {
  public:
   SolidQuad() = default;
   ~SolidQuad() override = default;
