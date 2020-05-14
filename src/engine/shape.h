@@ -45,6 +45,14 @@ class Shape : public Drawable {
     Translate({s.GetScale().x / 2.0f + GetScale().x / 2.0f, 0});
   }
 
+  void PlaceToTopOf(const Shape& s) {
+    Translate({0 ,s.GetScale().y / 2.0f + GetScale().y / 2.0f});
+  }
+
+  void PlaceToBottomOf(const Shape& s) {
+    Translate({0 ,s.GetScale().y / -2.0f + GetScale().y / -2.0f});
+  }
+
  protected:
   Vector2 offset_ = {0, 0};
   Vector2 scale_ = {1, 1};

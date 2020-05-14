@@ -3,6 +3,7 @@
 
 #include "damage_type.h"
 #include "../engine/image_quad.h"
+#include "../engine/solid_quad.h"
 #include "../engine/animator.h"
 #include <list>
 #include <memory>
@@ -41,16 +42,20 @@ class Enemy {
 
     bool marked_for_removal = false;
     DamageType targetted_by_weapon_ = kDamageType_Invalid;
+    int total_health = 0;
     int hit_points = 0;
 
     eng::ImageQuad sprite;
     eng::ImageQuad target;
     eng::ImageQuad blast;
+    eng::SolidQuad health_base;
+    eng::SolidQuad health_bar;
 
     eng::Animator movement_animator;
     eng::Animator sprite_animator;
     eng::Animator target_animator;
     eng::Animator blast_animator;
+    eng::Animator health_animator;
   };
 
   std::shared_ptr<const eng::Image> skull_frames_;

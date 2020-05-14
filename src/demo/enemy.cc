@@ -62,6 +62,7 @@ void Enemy::Update(float delta_time) {
     it->sprite_animator.Update(delta_time);
     it->target_animator.Update(delta_time);
     it->blast_animator.Update(delta_time);
+    it->health_animator.Update(delta_time);
     it->movement_animator.Update(delta_time);
   }
 }
@@ -145,6 +146,8 @@ void Enemy::HitTarget(DamageType damage_type) {
 
   if (--target->hit_points <= 0) {
     target->sprite.SetVisible(false);
+    target->health_base.SetVisible(false);
+    target->health_bar.SetVisible(false);
     target->blast_animator.SetEndCallback(eng::Animator::kFrames, [target]()->void {
       target->sprite.SetVisible(false);
       target->blast.SetVisible(false);
@@ -159,6 +162,18 @@ void Enemy::HitTarget(DamageType damage_type) {
     target->blast_animator.SetEndCallback(eng::Animator::kFrames, [target]()->void {
       target->blast.SetVisible(false);
     });
+    Vector2 s = target->sprite.GetScale() * Vector2(0.6f, 0.01f);
+    s.x *= (float)target->hit_points / (float)target->total_health;
+    float t = (s.x - target->health_bar.GetScale().x) / 2;
+    target->health_bar.SetScale(s);
+    target->health_bar.Translate({t, 0});
+
+    target->health_base.SetVisible(true);
+    target->health_bar.SetVisible(true);
+
+    target->health_animator.Stop(eng::Animator::kBlending);
+    target->health_animator.SetBlending({1, 1, 1, 0}, 2.0f);
+    target->health_animator.Play(eng::Animator::kBlending, false);
   }
 }
 
@@ -176,10 +191,10 @@ void Enemy::Spawn(UnitType unit_type,
   e.unit_type = unit_type;
   e.damage_type = damage_type;
   if (unit_type == kUnitType_Skull) {
-    e.hit_points = 1;
+    e.total_health = e.hit_points = 1;
     e.sprite.Create(skull_frames_, {10, 6});
   } else {
-    e.hit_points = 2;
+    e.total_health = e.hit_points = 2;
     e.sprite.Create(bug_frames_, {10, 4});
   }
   e.sprite.AutoScale();
@@ -218,6 +233,18 @@ void Enemy::Spawn(UnitType unit_type,
   e.blast.SetOffset(spawn_pos);
   engine.AddDrawable(&e.blast);
 
+  e.health_base.Scale(e.sprite.GetScale() * Vector2(0.6f, 0.01f));
+  e.health_base.SetOffset(spawn_pos);
+  e.health_base.PlaceToBottomOf(e.sprite);
+  e.health_base.SetColor({0.5f, 0.5f, 0.5f, 1});
+  engine.AddDrawable(&e.health_base);
+
+  e.health_bar.Scale(e.sprite.GetScale() * Vector2(0.6f, 0.01f));
+  e.health_bar.SetOffset(spawn_pos);
+  e.health_bar.PlaceToBottomOf(e.sprite);
+  e.health_bar.SetColor({0.161f, 0.89f, 0.322f, 1});
+  engine.AddDrawable(&e.health_bar);
+
   if (damage_type == kDamageType_Green) {
     e.target.SetFrame(0);
     e.target_animator.SetFrames(6, 28);
@@ -236,6 +263,13 @@ void Enemy::Spawn(UnitType unit_type,
   }
   e.blast_animator.Attach(&e.blast);
 
+  e.health_animator.SetEndCallback(eng::Animator::kBlending, [&]()->void {
+    e.health_base.SetVisible(false);
+    e.health_bar.SetVisible(false);
+  });
+  e.health_animator.Attach(&e.health_base);
+  e.health_animator.Attach(&e.health_bar);
+
   float max_distance = engine.GetScreenSize().y -
       game->GetPlayer().GetWeaponScale().y;
 
@@ -250,6 +284,8 @@ void Enemy::Spawn(UnitType unit_type,
   e.movement_animator.Attach(&e.sprite);
   e.movement_animator.Attach(&e.target);
   e.movement_animator.Attach(&e.blast);
+  e.movement_animator.Attach(&e.health_base);
+  e.movement_animator.Attach(&e.health_bar);
   e.movement_animator.Play(eng::Animator::kMovement, false);
 }
 
