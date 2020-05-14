@@ -37,16 +37,16 @@ bool Enemy::Initialize() {
 
 void Enemy::ContextLost() {
   for (auto& e : enemies_) {
-    if (e.marked_for_removal)
-      continue;
-
+    e.sprite.ContextLost();
     if (e.unit_type == kUnitType_Skull)
       e.sprite.Create(skull_frames_, {10, 13}, 100, 100);
     else if (e.unit_type == kUnitType_Bug)
       e.sprite.Create(bug_frames_, {10, 4});
     else // kUnitType_Tank
       e.sprite.Create(tank_frames_, {10, 13}, 100, 100);
+    e.target.ContextLost();
     e.target.Create(target_frames_, {6, 2});
+    e.blast.ContextLost();
     e.blast.Create(blast_frames_, {6, 2});
   }
 }
@@ -83,6 +83,21 @@ void Enemy::Update(float delta_time) {
     it->blast_animator.Update(delta_time);
     it->health_animator.Update(delta_time);
     it->movement_animator.Update(delta_time);
+  }
+}
+
+void Enemy::Draw(float frame_frac) {
+  for (auto& e : enemies_) {
+    if (e.sprite.IsVisible())
+      e.sprite.Draw();
+    if (e.target.IsVisible())
+      e.target.Draw();
+    if (e.blast.IsVisible())
+      e.blast.Draw();
+    if (e.health_base.IsVisible())
+      e.health_base.Draw();
+    if (e.health_bar.IsVisible())
+      e.health_bar.Draw();
   }
 }
 
@@ -243,7 +258,6 @@ void Enemy::Spawn(UnitType unit_type,
   e.sprite.SetVisible(true);
   Vector2 spawn_pos = pos + Vector2(0, e.sprite.GetScale().y /2);
   e.sprite.SetOffset(spawn_pos);
-  engine.AddDrawable(&e.sprite);
 
   e.sprite.SetFrame(enemy_frame_start[unit_type][damage_type]);
   e.sprite_animator.SetFrames(enemy_frame_count[unit_type][damage_type],
@@ -255,24 +269,20 @@ void Enemy::Spawn(UnitType unit_type,
   e.target.Create(target_frames_, {6, 2});
   e.target.AutoScale();
   e.target.SetOffset(spawn_pos);
-  engine.AddDrawable(&e.target);
 
   e.blast.Create(blast_frames_, {6, 2});
   e.blast.AutoScale();
   e.blast.SetOffset(spawn_pos);
-  engine.AddDrawable(&e.blast);
 
   e.health_base.Scale(e.sprite.GetScale() * Vector2(0.6f, 0.01f));
   e.health_base.SetOffset(spawn_pos);
   e.health_base.PlaceToBottomOf(e.sprite);
   e.health_base.SetColor({0.5f, 0.5f, 0.5f, 1});
-  engine.AddDrawable(&e.health_base);
 
   e.health_bar.Scale(e.sprite.GetScale() * Vector2(0.6f, 0.01f));
   e.health_bar.SetOffset(spawn_pos);
   e.health_bar.PlaceToBottomOf(e.sprite);
   e.health_bar.SetColor({0.161f, 0.89f, 0.322f, 1});
-  engine.AddDrawable(&e.health_bar);
 
   e.target_animator.Attach(&e.target);
 

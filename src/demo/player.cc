@@ -32,9 +32,13 @@ void Player::ContextLost() {
       engine.GetAssetManager().GetImage("enemy_ray_ok.png");
 
   for (int i = 0; i < 2; ++i) {
+    drag_sign_[i].ContextLost();
     drag_sign_[i].Create(weapon_image, {8, 2});
+    weapon_[i].ContextLost();
     weapon_[i].Create(weapon_image, {8, 2});
+    beam_[i].ContextLost();
     beam_[i].Create(beam_image, {1, 2});
+    beam_spark_[i].ContextLost();
     beam_spark_[i].Create(weapon_image, {8, 2});
   }
 }
@@ -60,6 +64,19 @@ void Player::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
     DragEnd();
   else if (event->GetEventType() == eng::InputEvent::kDragCancel)
     DragCancel();
+}
+
+void Player::Draw(float frame_frac) {
+  for (int i = 0; i < 2; ++i) {
+    if (drag_sign_[i].IsVisible())
+      drag_sign_[i].Draw();
+    if (weapon_[i].IsVisible())
+      weapon_[i].Draw();
+    if (beam_[i].IsVisible())
+      beam_[i].Draw();
+    if (beam_spark_[i].IsVisible())
+      beam_spark_[i].Draw();
+  }
 }
 
 Vector2 Player::GetWeaponPos(DamageType type) const {
@@ -145,14 +162,12 @@ void Player::SetupWeapons() {
     drag_sign_[i].Create(weapon_image, {8, 2});
     drag_sign_[i].AutoScale();
     drag_sign_[i].SetFrame(i * 8);
-    engine.AddDrawable(&drag_sign_[i]);
 
     // Setup weapon.
     weapon_[i].Create(weapon_image, {8, 2});
     weapon_[i].AutoScale();
     weapon_[i].SetVisible(true);
     weapon_[i].SetFrame(wepon_warmup_frame[i]);
-    engine.AddDrawable(&weapon_[i]);
 
     // Setup beam.
     beam_[i].Create(beam_image, {1, 2});
@@ -161,7 +176,6 @@ void Player::SetupWeapons() {
     beam_[i].PlaceToRightOf(weapon_[i]);
     beam_[i].Translate(weapon_[i].GetScale() * Vector2(-0.5f, 0));
     beam_[i].SetPivot(beam_[i].GetOffset());
-    engine.AddDrawable(&beam_[i]);
 
     // Setup beam spark.
     beam_spark_[i].Create(weapon_image, {8, 2});
@@ -170,7 +184,6 @@ void Player::SetupWeapons() {
     beam_spark_[i].PlaceToRightOf(weapon_[i]);
     beam_spark_[i].Translate(weapon_[i].GetScale() * Vector2(-0.5f, 0));
     beam_spark_[i].SetPivot(beam_spark_[i].GetOffset());
-    engine.AddDrawable(&beam_spark_[i]);
 
     // Place parts on the screen.
     Vector2 offset = GetWeaponPos((DamageType)i);

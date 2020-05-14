@@ -23,6 +23,8 @@ class Player {
 
   void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
 
+  void Draw(float frame_frac);
+
   Vector2 GetWeaponPos(DamageType type) const;
   Vector2 GetWeaponScale() const;
 

@@ -16,20 +16,15 @@ DECLARE_GAME(Demo)
 DECLARE_GAME_END
 
 bool Demo::Initialize() {
-  eng::Engine& engine = eng::Engine::Get();
-
   if (!font_.Create("PixelCaps!.ttf")) {
     LOG << "Failed to create the font.";
     return false;
   }
 
   sky_.Create();
-  sky_.SetVisible(true);
-  engine.AddDrawable(&sky_);
 
   hud_.SetColor({0.895f, 0.692f, 0.24f, 1});
   hud_.SetVisible(true);
-  engine.AddDrawable(&hud_);
   PrintScore(false);
 
   hud_animator_cb_ = [&]()->void {
@@ -65,8 +60,8 @@ void Demo::Update(float delta_time) {
     }
   }
 
-  enemy_.Update(delta_time);
   player_.Update(delta_time);
+  enemy_.Update(delta_time);
 
   if (add_score_ > 0) {
     score_ += add_score_;
@@ -77,10 +72,19 @@ void Demo::Update(float delta_time) {
   hud_animator_.Update(delta_time);
 }
 
+void Demo::Draw(float frame_frac) {
+  sky_.Draw();
+  player_.Draw(frame_frac);
+  enemy_.Draw(frame_frac);
+  hud_.Draw();
+}
+
 void Demo::ContextLost() {
   enemy_.ContextLost();
   player_.ContextLost();
+  sky_.ContextLost();
   sky_.Create();
+  hud_.ContextLost();
   PrintScore(true);
 }
 

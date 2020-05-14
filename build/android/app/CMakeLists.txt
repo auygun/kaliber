@@ -52,7 +52,6 @@ add_library(native-activity SHARED
     ../../../src/engine/animator.cc
     ../../../src/engine/asset_manager/asset_manager.cc
     ../../../src/engine/asset_manager/image.cc
-    ../../../src/engine/drawable.cc
     ../../../src/engine/engine.cc
     ../../../src/engine/image_quad.cc
     ../../../src/engine/renderer/geometry.cc

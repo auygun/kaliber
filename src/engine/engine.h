@@ -9,7 +9,6 @@
 #include "renderer/shader.h"
 #include "image_quad.h"
 #include "asset_manager/asset_manager.h"
-#include <list>
 #include <deque>
 #include <unordered_map>
 
@@ -17,7 +16,6 @@
 namespace eng {
 
 class Game;
-class Drawable;
 class InputEvent;
 
 class Engine : public Renderer::Delegate {
@@ -27,9 +25,6 @@ class Engine : public Renderer::Delegate {
   bool Init();
 
   void Shutdown();
-
-  void AddDrawable(Drawable* drawable);
-  void RemoveDrawable(Drawable* drawable);
 
   void Update(float delta_time);
   void Draw(float frame_frac);
@@ -89,8 +84,6 @@ class Engine : public Renderer::Delegate {
   Fontx font_;
 
   ImageQuad stats_;
-
-  std::list<Drawable*> drawables_;
 
   float seconds_accumulated_ = 0.0f;
 

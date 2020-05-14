@@ -4,7 +4,6 @@
 #include "../base/vecmath.h"
 #include "../engine/renderer/geometry.h"
 #include "../engine/renderer/shader.h"
-#include "../engine/drawable.h"
 
 #include <string>
 #include <vector>
@@ -15,19 +14,18 @@ namespace eng {
 class Image;
 }  // namespace eng
 
-class SkyQuad : public eng::Drawable {
+class SkyQuad {
  public:
   SkyQuad() = default;
-  ~SkyQuad() override = default;
+  ~SkyQuad() = default;
 
   SkyQuad(const SkyQuad&) = delete;
   SkyQuad& operator=(const SkyQuad&) = delete;
 
   bool Create();
 
-  // Drawable interface.
-  void Draw() override;
-  void ContextLost() override;
+  void Draw();
+  void ContextLost();
 
  private:
   eng::Geometry quad_;

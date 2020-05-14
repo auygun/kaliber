@@ -26,9 +26,13 @@ class SolidQuad : public Shape {
   size_t GetFrame() override { return 0; }
   size_t GetNumFrames() override { return 0; }
 
-  // Drawable interface.
-  void Draw() override;
-  void ContextLost() override {}
+  void Draw();
+
+  void SetVisible(bool visible) { visible_ = visible; }
+  bool IsVisible() const { return visible_; }
+
+private:
+  bool visible_ = false;
 };
 
 }  // namespace eng

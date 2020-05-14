@@ -11,6 +11,8 @@ class Game {
 
   virtual void Update(float delta_time) = 0;
 
+  virtual void Draw(float frame_frac) = 0;
+
   virtual void ContextLost() = 0;
 };
 

@@ -5,7 +5,6 @@
 #include "renderer/render_command.h"
 #include "game.h"
 #include "game_factory.h"
-#include "drawable.h"
 #include "input_event.h"
 #include <algorithm>
 
@@ -51,24 +50,11 @@ void Engine::Shutdown() {
   game_.reset();
 }
 
-void Engine::AddDrawable(Drawable* drawable) {
-  assert(std::find(drawables_.begin(), drawables_.end(), drawable) ==
-      drawables_.end());
-  drawables_.push_back(drawable);
-}
-
-void Engine::RemoveDrawable(Drawable* drawable) {
-  auto it = std::find(drawables_.begin(), drawables_.end(), drawable);
-  if (it != drawables_.end()) {
-    drawables_.erase(it);
-    return;
-  }
-}
-
 void Engine::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
   game_->Update(delta_time);
-  PrintStats();
+  if (stats_.IsVisible())
+    PrintStats();
   KillUnusedResources(delta_time);
 }
 
@@ -76,10 +62,12 @@ void Engine::Draw(float frame_frac) {
   renderer_.EnterDrawStage();
   Clear();
   renderer_.EnableBlend();
-  for (auto d : drawables_) {
-    if (d->IsVisible())
-      d->Draw();
-  }
+
+  game_->Draw(frame_frac);
+
+  if (stats_.IsVisible())
+    stats_.Draw();
+
   Present();
   renderer_.ExitDrawStage();
 }
@@ -184,9 +172,6 @@ void Engine::ContextLost() {
   quad_.Invalidate();
   CreateRenderResources();
 
-  for (auto d : drawables_)
-    d->ContextLost();
-
   stats_.ContextLost();
 
   game_->ContextLost();
@@ -241,13 +226,9 @@ void Engine::KillUnusedResources(float delta_time) {
 }
 
 void Engine::ShowStats(bool show) {
-  if (show) {
-    stats_.SetVisible(true);
-    AddDrawable(&stats_);
-  } else {
-    stats_.SetVisible(false);
-    RemoveDrawable(&stats_);
-  }
+  stats_.SetVisible(show);
+  if (show)
+    PrintStats();
 }
 
 void Engine::PrintStats() {

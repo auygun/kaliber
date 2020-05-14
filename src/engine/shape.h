@@ -2,15 +2,13 @@
 #define SHAPE_H
 
 #include "../base/vecmath.h"
-#include "drawable.h"
 
 namespace eng {
 
-// Class for dwarable and animatable 2d shapes.
-class Shape : public Drawable {
+class Shape {
  public:
   Shape() = default;
-  ~Shape() override = default;
+  virtual ~Shape() = default;
 
   Shape(const Shape&) = delete;
   Shape& operator=(const Shape&) = delete;

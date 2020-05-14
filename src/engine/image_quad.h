@@ -34,9 +34,11 @@ class ImageQuad : public Shape {
   size_t GetFrame() override { return current_frame_; }
   size_t GetNumFrames() override;
 
-  // Drawable interface.
-  void Draw() override;
-  void ContextLost() override;
+  void Draw();
+  void ContextLost();
+
+  void SetVisible(bool visible) { visible_ = visible; }
+  bool IsVisible() const { return visible_; }
 
  private:
   Texture texture_;
@@ -46,6 +48,8 @@ class ImageQuad : public Shape {
   std::array<int, 2> num_frames_ = {1, 1}; // horizontal, vertical
   int frame_width_ = 0;
   int frame_height_ = 0;
+
+  bool visible_ = false;
 
   Vector2 GetUVOffset(int frame);
 };
