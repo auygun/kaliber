@@ -62,7 +62,7 @@ void Animator::SetRotation(float trget, float speed) {
 
 void Animator::SetBlending(Vector4 target, float speed) {
   blending_target_ = target;
-  blending_speed_ = speed;
+  blending_speed_ = 1.0f / speed;
   for (auto& a : animatables_)
     a.blending_start = a.shape->GetColor();
 }

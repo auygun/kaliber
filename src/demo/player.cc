@@ -202,7 +202,7 @@ void Player::SetupWeapons() {
     beam_animator_[i].SetEndCallback(eng::Animator::kBlending, [&, i]()->void {
       beam_[i].SetVisible(false);
     });
-    beam_animator_[i].SetBlending({1, 1, 1, 0}, 8);
+    beam_animator_[i].SetBlending({1, 1, 1, 0}, 0.16f);
     beam_animator_[i].Attach(&beam_[i]);
   }
 }

@@ -34,7 +34,7 @@ bool Demo::Initialize() {
 
   hud_animator_cb_ = [&]()->void {
     hud_animator_.SetEndCallback(eng::Animator::kBlending, nullptr);
-    hud_animator_.SetBlending({0.895f, 0.692f, 0.24f, 1}, 8);
+    hud_animator_.SetBlending({0.895f, 0.692f, 0.24f, 1}, 0.2f);
     hud_animator_.Play(eng::Animator::kBlending, false);
   };
   hud_animator_.Attach(&hud_);
@@ -114,7 +114,7 @@ void Demo::PrintScore(bool flash) {
 
   if (flash) {
     hud_animator_.SetEndCallback(eng::Animator::kBlending, hud_animator_cb_);
-    hud_animator_.SetBlending({1, 1, 1, 1}, 12);
+    hud_animator_.SetBlending({1, 1, 1, 1}, 0.08f);
     hud_animator_.Play(eng::Animator::kBlending, false);
   }
 }
