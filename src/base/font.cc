@@ -101,14 +101,10 @@ static void StretchBlit_I8_to_RGBA32(int dst_x0,
       for (int x = 0; x < dst_width; ++x) {
         // Alpha test, no blending for now.
         if (src[x]) {
-#if 0
           dst[x * 4 + 0] = src[x];
           dst[x * 4 + 1] = src[x];
           dst[x * 4 + 2] = src[x];
           dst[x * 4 + 3] = 255;
-#else
-          dst[x * 4 + 3] = src[x];
-#endif
         }
       }
 

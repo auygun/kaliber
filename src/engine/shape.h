@@ -6,6 +6,7 @@
 
 namespace eng {
 
+// Class for dwarable and animatable 2d shapes.
 class Shape : public Drawable {
  public:
   Shape() = default;
@@ -24,13 +25,15 @@ class Shape : public Drawable {
   void SetPivot(const Vector2& pivot) { pivot_ = pivot; }
   void SetTheta(float theta);
   void SetColor(const Vector4& color) { color_ = color; }
-  virtual void SetFrame(size_t frame) = 0;
 
   Vector2 GetOffset() const { return offset_; }
   Vector2 GetScale() const { return scale_; }
   Vector2 GetPivot() const { return pivot_; }
   float GetTheta() const { return theta_; }
   Vector4 GetColor() const { return color_; }
+
+  // Pure virtuals for frame animation support.
+  virtual void SetFrame(size_t frame) = 0;
   virtual size_t GetFrame() = 0;
   virtual size_t GetNumFrames() = 0;
 
