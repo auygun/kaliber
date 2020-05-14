@@ -5,6 +5,7 @@ enum DamageType {
   kDamageType_Invalid = -1,
   kDamageType_Green,
   kDamageType_Blue,
+  kDamageType_Any,
   kDamageType_Max
 };
 

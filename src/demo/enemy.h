@@ -33,6 +33,7 @@ class Enemy {
     kUnitType_Invalid = -1,
     kUnitType_Skull,
     kUnitType_Bug,
+    kUnitType_Tank,
     kUnitType_Max
   };
 
@@ -59,6 +60,7 @@ class Enemy {
   };
 
   std::shared_ptr<const eng::Image> skull_frames_;
+  std::shared_ptr<const eng::Image> tank_frames_;
   std::shared_ptr<const eng::Image> bug_frames_;
   std::shared_ptr<const eng::Image> target_frames_;
   std::shared_ptr<const eng::Image> blast_frames_;
