@@ -286,6 +286,8 @@ void Renderer::HandleCmdCreateTexture(RenderCommand* cmd) {
   auto it = texture_map_.find(c->id);
   bool new_texture = it == texture_map_.end();
 
+  assert(c->image->IsImmutable());
+
   GLuint gl_id = 0;
   if (new_texture)
     glGenTextures(1, &gl_id);

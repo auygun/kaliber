@@ -5,6 +5,7 @@
 #include <memory>
 #include "enemy.h"
 #include "player.h"
+#include "hud.h"
 #include "sky_quad.h"
 #include "../base/font.h"
 #include "../engine/game.h"
@@ -32,19 +33,16 @@ class Demo : public eng::Game {
  private:
   Player player_;
   Enemy enemy_;
+  Hud hud_;
 
   SkyQuad sky_;
-
-  eng::ImageQuad hud_;
-  eng::Animator hud_animator_;
-  eng::Animator::Callback hud_animator_cb_;
-
-  Fontx font_;
 
   int score_ = 0;
   int add_score_ = 0;
 
-  void PrintScore(bool flash);
+  int wave_ = 1;
+
+  int last_num_enemies_killed_ = 0;
 };
 
 #endif  // DEMO_H

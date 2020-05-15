@@ -11,6 +11,7 @@ std::shared_ptr<const Image> AssetManager::GetImage(const std::string& name) {
   auto image = std::make_shared<Image>();
   if (!image->Load(name.c_str()))
     return nullptr;
+  image->SetImmutable();
 
   images_[name] = image;
   return image;

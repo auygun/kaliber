@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <cassert>
 #include "../../base/file.h"
 #include "../../base/log.h"
 #include "../../base/mem.h"
@@ -23,6 +24,8 @@ Image::~Image() {
 }
 
 bool Image::Create(unsigned w, unsigned h) {
+  assert(!IsImmutable());
+
   width_ = w;
   height_ = h;
   original_width_ = w;
@@ -32,10 +35,14 @@ bool Image::Create(unsigned w, unsigned h) {
 }
 
 void Image::Destroy() {
+  assert(!IsImmutable());
+
   AlignedFree(buffer_);
 }
 
 void Image::Copy(const Image& image) {
+  assert(!IsImmutable());
+
   if (image.buffer_) {
     unsigned size = image.GetSize();
     buffer_ = (uint8_t*)AlignedAlloc(size);
@@ -50,6 +57,8 @@ void Image::Copy(const Image& image) {
 }
 
 bool Image::Load(const char* file_name, bool convert_pow2) {
+  assert(!IsImmutable());
+
   SetName(file_name);
   
   std::string fullPath = "images/";
@@ -187,7 +196,15 @@ unsigned Image::GetSize() const {
   }
 }
 
+uint8_t* Image::GetBuffer() {
+  assert(!IsImmutable());
+
+  return buffer_;
+}
+
 void Image::Clear(const float* rgba) {
+  assert(!IsImmutable());
+
   // Quantize the color to target resolution.
   uint8_t r = (uint8_t)(rgba[0] * 255.0f), g = (uint8_t)(rgba[1] * 255.0f),
           b = (uint8_t)(rgba[2] * 255.0f), a = (uint8_t)(rgba[3] * 255.0f);
@@ -206,6 +223,8 @@ void Image::Clear(const float* rgba) {
 }
 
 void Image::Gradient() {
+  assert(!IsImmutable());
+
   // Fill out the first line manually.
   for (unsigned x = 0; x < width_; ++x) {
     uint8_t intensity = x > 255 ? 255 : x;

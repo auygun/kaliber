@@ -197,6 +197,8 @@ void Enemy::HitTarget(DamageType damage_type) {
   target->blast_animator.Play(eng::Animator::kFrames, false);
 
   if (--target->hit_points <= 0) {
+    ++num_enemies_killed_;
+
     target->sprite.SetVisible(false);
     target->health_base.SetVisible(false);
     target->health_bar.SetVisible(false);

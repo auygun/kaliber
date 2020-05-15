@@ -16,23 +16,7 @@ DECLARE_GAME(Demo)
 DECLARE_GAME_END
 
 bool Demo::Initialize() {
-  if (!font_.Create("PixelCaps!.ttf")) {
-    LOG << "Failed to create the font.";
-    return false;
-  }
-
   sky_.Create();
-
-  hud_.SetColor({0.895f, 0.692f, 0.24f, 1});
-  hud_.SetVisible(true);
-  PrintScore(false);
-
-  hud_animator_cb_ = [&]()->void {
-    hud_animator_.SetEndCallback(eng::Animator::kBlending, nullptr);
-    hud_animator_.SetBlending({0.895f, 0.692f, 0.24f, 1}, 0.2f);
-    hud_animator_.Play(eng::Animator::kBlending, false);
-  };
-  hud_animator_.Attach(&hud_);
 
   if (!enemy_.Initialize()) {
     LOG << "Failed to create the enemy.";
@@ -41,6 +25,11 @@ bool Demo::Initialize() {
 
   if (!player_.Initialize()) {
     LOG << "Failed to create the enemy.";
+    return false;
+  }
+
+  if (!hud_.Initialize()) {
+    LOG << "Failed to create the hud.";
     return false;
   }
 
@@ -66,10 +55,26 @@ void Demo::Update(float delta_time) {
   if (add_score_ > 0) {
     score_ += add_score_;
     add_score_ = 0;
-    PrintScore(true);
+    hud_.PrintScore(score_, true);
   }
 
-  hud_animator_.Update(delta_time);
+  if (enemy_.num_enemies_killed() != last_num_enemies_killed_) {
+    last_num_enemies_killed_ = enemy_.num_enemies_killed();
+    int enemies_remaining_ = 100 - last_num_enemies_killed_;
+    float progress = 1;
+    if (enemies_remaining_ <= 0) {
+      enemy_.ResetNumEnemiesKilled();
+      last_num_enemies_killed_ = 0;
+      hud_.PrintWave(++wave_);
+    } else {
+      LOG << enemies_remaining_;
+      progress = enemies_remaining_ / 100.0f;
+    }
+    LOG << progress;
+    hud_.SetProgress(progress);
+  }
+
+  hud_.Update(delta_time);
 }
 
 void Demo::Draw(float frame_frac) {
@@ -82,43 +87,11 @@ void Demo::Draw(float frame_frac) {
 void Demo::ContextLost() {
   enemy_.ContextLost();
   player_.ContextLost();
+  hud_.ContextLost();
   sky_.ContextLost();
   sky_.Create();
-  hud_.ContextLost();
-  PrintScore(true);
 }
 
 void Demo::AddScore(int score) {
   add_score_ += score;
-}
-
-void Demo::PrintScore(bool flash) {
-  eng::Engine& engine = eng::Engine::Get();
-
-  constexpr float horizontal_margin = 0.055f;
-  constexpr float vertical_margin = 0.02f;
-
-  int width = engine.GetScreenWidth() -
-      engine.GetScreenWidth() * horizontal_margin * 2;
-  auto image = std::make_shared<eng::Image>();
-  image->Create(width, font_.GetLineHeight());
-  float c[4] = {1, 1, 1, 0};
-  image->Clear(c);
-
-  std::string score_str = std::to_string(score_);
-  font_.Print(0, 0, score_str.c_str(), image->GetBuffer(),
-      image->GetWidth());
-
-  hud_.Create(image);
-  hud_.AutoScale();
-
-  Vector2 pos = (engine.GetScreenSize() / 2 - hud_.GetScale() / 2);
-  pos -= engine.GetScreenSize() * Vector2(horizontal_margin, vertical_margin);
-  hud_.SetOffset(pos * Vector2(-1, 1));
-
-  if (flash) {
-    hud_animator_.SetEndCallback(eng::Animator::kBlending, hud_animator_cb_);
-    hud_animator_.SetBlending({1, 1, 1, 1}, 0.08f);
-    hud_animator_.Play(eng::Animator::kBlending, false);
-  }
 }

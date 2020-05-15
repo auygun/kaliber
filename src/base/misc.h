@@ -3,6 +3,8 @@
 
 #include "vecmath.h"
 
+#define CRASH *((int*)nullptr) = 0;
+
 // ToDo: x86 has the bsr instruction.
 inline int GetHighestBitPos(int value) {
   return (0xFFFF0000 & value ? value &= 0xFFFF0000, 1 : 0) * 0x10 +

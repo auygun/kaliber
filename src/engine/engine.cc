@@ -111,6 +111,8 @@ Vector2 Engine::ToPosition(const Vector2& vec) {
 }
 
 int Engine::AcquireTextureResource(std::shared_ptr<const Image> image) {
+  assert(image->IsImmutable());
+
   int resource_id = 0;
   if (image->GetName().empty()) {
     resource_id = ++last_texture_resource_id_;
@@ -211,7 +213,7 @@ void Engine::KillUnusedResources(float delta_time) {
 
     it->second.time_to_die_ -= delta_time;
     if (it->second.time_to_die_ <= 0.0f) {
-      DLOG << "ReturnTextureResource - Destroy! resource_id: "<<
+      DLOG << "KillUnusedResources - Destroy! resource_id: "<<
           it->second.resource_id;
 
       auto cmd = std::make_unique<CmdDestoryTexture>();
@@ -259,6 +261,7 @@ void Engine::PrintStats() {
     y += line_height + margin;
   }
 
+  image->SetImmutable();
   stats_.Create(image);
   stats_.AutoScale();
 

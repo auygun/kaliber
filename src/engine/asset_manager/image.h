@@ -30,7 +30,7 @@ class Image : public Asset{
   unsigned GetSize() const;
 
   const uint8_t* GetBuffer() const { return buffer_; }
-  uint8_t* GetBuffer() { return buffer_; }
+  uint8_t* GetBuffer();
 
   void Clear(const float* rgba);
   void Gradient();

@@ -30,6 +30,10 @@ class Enemy {
   void DeselectTarget(DamageType damage_type);
   void HitTarget(DamageType damage_type);
 
+  void ResetNumEnemiesKilled() { num_enemies_killed_ = 0; }
+
+  int num_enemies_killed() { return num_enemies_killed_; }
+
  private:
   enum UnitType {
     kUnitType_Invalid = -1,
@@ -69,6 +73,8 @@ class Enemy {
 
   std::list<Unit> enemies_;
   float seconds_since_last_spawn_ = 0;
+
+  int num_enemies_killed_ = 0;
 
   void Spawn(UnitType unit_type,
              DamageType damage_type,
