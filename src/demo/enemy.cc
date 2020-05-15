@@ -330,7 +330,7 @@ void Enemy::Spawn(UnitType unit_type,
   e.health_animator.Attach(&e.health_bar);
 
   e.score_animator.SetMovement({0, 2}, 1.0f);
-  e.score_animator.SetBlending({1, 1, 1, 0}, 0.5f);
+  e.score_animator.SetBlending({1, 1, 1, 0}, 0.7f);
   e.score_animator.SetEndCallback(eng::Animator::kBlending, [&]()->void {
     e.score_animator.Stop(eng::Animator::kAllAnimations);
     e.score.SetVisible(false);
