@@ -3,6 +3,7 @@
 #include "../base/vecmath.h"
 #include "../engine/engine.h"
 #include "../engine/asset_manager/image.h"
+#include "../engine/asset_manager/font.h"
 
 namespace {
 
@@ -17,12 +18,13 @@ const Vector4 progress_bar_color[2] = {{0.256f, 0.434f, 0.72f,  1},
 bool Hud::Initialize() {
   eng::Engine& engine = eng::Engine::Get();
 
-  if (!font_.Create("PixelCaps!.ttf")) {
+  font_ = engine.GetAssetManager().GetFont("PixelCaps!.ttf");
+  if (!font_) {
     LOG << "Failed to create the font.";
     return false;
   }
   int tmp;
-  font_.CalculateBoundingBox("big_enough_text", max_text_width_, tmp);
+  font_->CalculateBoundingBox("big_enough_text", max_text_width_, tmp);
 
   auto image = CreateImage();
   image->SetImmutable();
@@ -111,16 +113,15 @@ void Hud::SetProgress(float progress) {
 
 void Hud::Print(int i, const std::string& text) {
   auto image = CreateImage();
-  image->Clear(bg_color);
 
   float x = 0;
   if (i == 1) {
     int w, h;
-    font_.CalculateBoundingBox(text.c_str(), w, h);
+    font_->CalculateBoundingBox(text.c_str(), w, h);
     x = image->GetWidth() - w;
   }
 
-  font_.Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
+  font_->Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
   image->SetImmutable();
 
   text_[i].Create(image);
@@ -128,7 +129,7 @@ void Hud::Print(int i, const std::string& text) {
 
 std::shared_ptr<eng::Image> Hud::CreateImage() {
   auto image = std::make_shared<eng::Image>();
-  image->Create(max_text_width_, font_.GetLineHeight());
+  image->Create(max_text_width_, font_->GetLineHeight());
   image->Clear(bg_color);
   return image;
 }

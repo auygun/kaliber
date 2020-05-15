@@ -41,7 +41,6 @@ set(CMAKE_SHARED_LINKER_FLAGS
 add_library(native-activity SHARED
     ../../../src/base/file_android.cc
     ../../../src/base/file.cc
-    ../../../src/base/font.cc
     ../../../src/base/log.cc
     ../../../src/base/random.cc
     ../../../src/base/timer.cc
@@ -53,6 +52,7 @@ add_library(native-activity SHARED
     ../../../src/engine/animatable.cc
     ../../../src/engine/animator.cc
     ../../../src/engine/asset_manager/asset_manager.cc
+    ../../../src/engine/asset_manager/font.cc
     ../../../src/engine/asset_manager/image.cc
     ../../../src/engine/engine.cc
     ../../../src/engine/image_quad.cc

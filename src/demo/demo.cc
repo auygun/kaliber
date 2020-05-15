@@ -67,10 +67,8 @@ void Demo::Update(float delta_time) {
       last_num_enemies_killed_ = 0;
       hud_.PrintWave(++wave_);
     } else {
-      LOG << enemies_remaining_;
       progress = enemies_remaining_ / 100.0f;
     }
-    LOG << progress;
     hud_.SetProgress(progress);
   }
 

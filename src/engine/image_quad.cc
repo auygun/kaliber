@@ -1,7 +1,7 @@
 #include "image_quad.h"
 #include "../base/log.h"
 #include "../engine/asset_manager/image.h"
-#include "../base/font.h"
+#include "../engine/asset_manager/font.h"
 #include "engine.h"
 #include "../platform/platform.h"
 #include "renderer/geometry.h"

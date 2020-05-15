@@ -39,11 +39,11 @@ class Animator {
 
   // Set movement animation parameters. Movement animations is relative.
   // Distance is calculated from the magnitude of direction vector. Speed is in
-  // movement per second.
+  // units per second.
   void SetMovement(Vector2 direction, float speed);
 
   // Set rotation animation parameters. Rotation animation is relative. Target
-  // is in radians. Speed is in rotation per second.
+  // is in radians. Speed is in units per second.
   void SetRotation(float target, float speed);
 
   // Set color blending animation parameters. Color blending animation is

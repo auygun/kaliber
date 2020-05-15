@@ -8,6 +8,11 @@
 #include <list>
 #include <memory>
 
+namespace eng {
+class Image;
+class Font;
+}
+
 class Enemy {
  public:
   Enemy() = default;
@@ -55,6 +60,7 @@ class Enemy {
     eng::ImageQuad sprite;
     eng::ImageQuad target;
     eng::ImageQuad blast;
+    eng::ImageQuad score;
     eng::SolidQuad health_base;
     eng::SolidQuad health_bar;
 
@@ -63,6 +69,7 @@ class Enemy {
     eng::Animator target_animator;
     eng::Animator blast_animator;
     eng::Animator health_animator;
+    eng::Animator score_animator;
   };
 
   std::shared_ptr<const eng::Image> skull_frames_;
@@ -70,6 +77,8 @@ class Enemy {
   std::shared_ptr<const eng::Image> bug_frames_;
   std::shared_ptr<const eng::Image> target_frames_;
   std::shared_ptr<const eng::Image> blast_frames_;
+
+  std::shared_ptr<eng::Font> font_;
 
   std::list<Unit> enemies_;
   float seconds_since_last_spawn_ = 0;
@@ -82,6 +91,8 @@ class Enemy {
              float speed);
 
   Unit* GetTarget(DamageType damage_type);
+
+  int GetScore(UnitType unit_type);
 };
 
 #endif  // ENEMY_H

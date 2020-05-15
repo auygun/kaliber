@@ -1,11 +1,12 @@
 #ifndef HUD_H
 #define HUD_H
 
-#include "../base/font.h"
+#include "../engine/asset_manager/font.h"
 #include "../engine/image_quad.h"
 #include "../engine/solid_quad.h"
 #include "../engine/animator.h"
 #include <string>
+#include <memory>
 
 namespace eng {
 class Image;
@@ -36,7 +37,7 @@ class Hud {
   eng::Animator hud_animator_;
   eng::Animator::Callback hud_animator_cb_;
 
-  Fontx font_;
+  std::shared_ptr<eng::Font> font_;
   int max_text_width_ = 0;
 
   int last_score_ = 0;

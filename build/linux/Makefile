@@ -66,7 +66,6 @@ ifneq ($(filter gltest,$(APPS)),)
 GLTEST_SRC := \
   $(SRC_ROOT)/base/file_linux.cc \
   $(SRC_ROOT)/base/file.cc \
-  $(SRC_ROOT)/base/font.cc \
   $(SRC_ROOT)/base/log.cc \
   $(SRC_ROOT)/base/random.cc \
   $(SRC_ROOT)/base/timer.cc \
@@ -78,6 +77,7 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/animatable.cc \
   $(SRC_ROOT)/engine/animator.cc \
   $(SRC_ROOT)/engine/asset_manager/asset_manager.cc \
+  $(SRC_ROOT)/engine/asset_manager/font.cc \
   $(SRC_ROOT)/engine/asset_manager/image.cc \
   $(SRC_ROOT)/engine/engine.cc \
   $(SRC_ROOT)/engine/image_quad.cc \

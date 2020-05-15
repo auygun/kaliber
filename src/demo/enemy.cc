@@ -3,6 +3,7 @@
 #include "../base/log.h"
 #include "../base/random.h"
 #include "../engine/asset_manager/image.h"
+#include "../engine/asset_manager/font.h"
 #include "../engine/engine.h"
 #include <memory>
 #include <limits>
@@ -18,6 +19,10 @@ constexpr int enemy_frame_count[][3] = {{ 7,  7, -1},
                                         {-1, -1,  7}};
 constexpr int enemy_frame_speed = 12;
 
+constexpr int enemy_scores[] = {100, 150, 200};
+
+constexpr float score_bg_color[4] = {1, 1, 1, 0};
+
 } // namespace
 
 bool Enemy::Initialize() {
@@ -32,6 +37,7 @@ bool Enemy::Initialize() {
       "enemy_target_single_ok.png");
   blast_frames_ = engine.GetAssetManager().GetImage(
       "enemy_anims_blast_ok.png");
+  font_ = engine.GetAssetManager().GetFont("PixelCaps!.ttf");
   return true;
 }
 
@@ -82,6 +88,7 @@ void Enemy::Update(float delta_time) {
     it->target_animator.Update(delta_time);
     it->blast_animator.Update(delta_time);
     it->health_animator.Update(delta_time);
+    it->score_animator.Update(delta_time);
     it->movement_animator.Update(delta_time);
   }
 }
@@ -98,6 +105,8 @@ void Enemy::Draw(float frame_frac) {
       e.health_base.Draw();
     if (e.health_bar.IsVisible())
       e.health_bar.Draw();
+    if (e.score.IsVisible())
+      e.score.Draw();
   }
 }
 
@@ -202,20 +211,17 @@ void Enemy::HitTarget(DamageType damage_type) {
     target->sprite.SetVisible(false);
     target->health_base.SetVisible(false);
     target->health_bar.SetVisible(false);
-    target->blast_animator.SetEndCallback(eng::Animator::kFrames, [target]()->void {
-      target->sprite.SetVisible(false);
-      target->blast.SetVisible(false);
-      target->marked_for_removal = true;
-    });
+    target->score.SetVisible(true);
+
+    target->score_animator.Play(eng::Animator::kAllAnimations, false);
+    target->movement_animator.Pause(eng::Animator::kMovement);
 
     eng::Engine& engine = eng::Engine::Get();
     Demo* game = static_cast<Demo*>(engine.GetGame());
-    game->AddScore(target->unit_type == kUnitType_Skull ? 100 : 200);
+    game->AddScore(GetScore(target->unit_type));
   } else {
     target->targetted_by_weapon_ = kDamageType_Invalid;
-    target->blast_animator.SetEndCallback(eng::Animator::kFrames, [target]()->void {
-      target->blast.SetVisible(false);
-    });
+
     Vector2 s = target->sprite.GetScale() * Vector2(0.6f, 0.01f);
     s.x *= (float)target->hit_points / (float)target->total_health;
     float t = (s.x - target->health_bar.GetScale().x) / 2;
@@ -286,8 +292,27 @@ void Enemy::Spawn(UnitType unit_type,
   e.health_bar.PlaceToBottomOf(e.sprite);
   e.health_bar.SetColor({0.161f, 0.89f, 0.322f, 1});
 
+  auto image = std::make_shared<eng::Image>();
+  image->Create(e.sprite.frame_width(), e.sprite.frame_height());
+  image->Clear(score_bg_color);
+  std::string text = std::to_string(GetScore(e.unit_type));
+  int w, h;
+  font_->CalculateBoundingBox(text.c_str(), w, h);
+  int x = (image->GetOriginalWidth() - w) / 2;
+  int y = (image->GetOriginalHeight() - h) / 2;
+  font_->Print(x, y, text.c_str(), image->GetBuffer(), image->GetWidth());
+  image->SetImmutable();
+
+  e.score.Create(image);
+  e.score.AutoScale();
+  e.score.SetColor({1, 1, 1, 1});
+  e.score.SetOffset(spawn_pos);
+
   e.target_animator.Attach(&e.target);
 
+  e.blast_animator.SetEndCallback(eng::Animator::kFrames, [&]()->void {
+    e.blast.SetVisible(false);
+  });
   if (damage_type == kDamageType_Green) {
     e.blast.SetFrame(0);
     e.blast_animator.SetFrames(6, 28);
@@ -309,6 +334,15 @@ void Enemy::Spawn(UnitType unit_type,
   e.health_animator.Attach(&e.health_base);
   e.health_animator.Attach(&e.health_bar);
 
+  e.score_animator.SetMovement({0, 2}, 1.0f);
+  e.score_animator.SetBlending({1, 1, 1, 0}, 0.5f);
+  e.score_animator.SetEndCallback(eng::Animator::kBlending, [&]()->void {
+    e.score_animator.Stop(eng::Animator::kAllAnimations);
+    e.score.SetVisible(false);
+    e.marked_for_removal = true;
+  });
+  e.score_animator.Attach(&e.score);
+
   float max_distance = engine.GetScreenSize().y -
       game->GetPlayer().GetWeaponScale().y;
 
@@ -325,6 +359,7 @@ void Enemy::Spawn(UnitType unit_type,
   e.movement_animator.Attach(&e.blast);
   e.movement_animator.Attach(&e.health_base);
   e.movement_animator.Attach(&e.health_bar);
+  e.movement_animator.Attach(&e.score);
   e.movement_animator.Play(eng::Animator::kMovement, false);
 }
 
@@ -335,4 +370,9 @@ Enemy::Unit* Enemy::GetTarget(DamageType damage_type) {
       return &e;
   }
   return nullptr;
+}
+
+int Enemy::GetScore(UnitType unit_type) {
+  assert(unit_type > kUnitType_Invalid && unit_type < kUnitType_Max);
+  return enemy_scores[unit_type];
 }

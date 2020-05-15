@@ -20,7 +20,8 @@ bool Engine::Init() {
 
   renderer_.SetDelegate(this);
 
-  if (!font_.Create("Roboto-Regular.ttf")) {
+  system_font_ = GetAssetManager().GetFont("Roboto-Regular.ttf");
+  if (!system_font_) {
     LOG << "Failed to create the font.";
     return false;
   }
@@ -245,7 +246,7 @@ void Engine::PrintStats() {
   lines.push_back(line);
 
   constexpr int margin = 3;
-  int line_height = font_.GetLineHeight();
+  int line_height = system_font_->GetLineHeight();
   int image_width = width + margin * 2;
   int image_height = (line_height + margin) * lines.size() + margin;
 
@@ -256,7 +257,7 @@ void Engine::PrintStats() {
 
   int y = margin;
   for (auto& text : lines) {
-    font_.Print(margin, y + margin, text.c_str(), image->GetBuffer(),
+    system_font_->Print(margin, y + margin, text.c_str(), image->GetBuffer(),
         image->GetWidth());
     y += line_height + margin;
   }

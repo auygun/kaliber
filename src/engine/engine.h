@@ -2,13 +2,13 @@
 #define ENGINE_H
 
 #include <memory>
-#include "../base/font.h"
 #include "../base/vecmath.h"
 #include "renderer/geometry.h"
 #include "renderer/renderer.h"
 #include "renderer/shader.h"
 #include "image_quad.h"
 #include "asset_manager/asset_manager.h"
+#include "asset_manager/font.h"
 #include <deque>
 #include <unordered_map>
 
@@ -47,7 +47,7 @@ class Engine : public Renderer::Delegate {
   Geometry& GetQuad() { return quad_; }
   Shader& GetPassThroughShader() { return pass_through_shader_; }
   Shader& GetSolidShader() { return solid_shader_; }
-  Fontx& GetFont() { return font_; }
+  std::shared_ptr<eng::Font> GetSystemFont() { return system_font_; }
 
   Game* GetGame() { return game_.get(); }
 
@@ -81,7 +81,7 @@ class Engine : public Renderer::Delegate {
   Shader pass_through_shader_;
   Shader solid_shader_;
 
-  Fontx font_;
+  std::shared_ptr<eng::Font> system_font_;
 
   ImageQuad stats_;
 

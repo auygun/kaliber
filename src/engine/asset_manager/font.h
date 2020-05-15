@@ -2,13 +2,16 @@
 #define FONT_H
 
 #include <stdint.h>
-#include "../third_party/stb/stb_truetype.h"
+#include "asset.h"
+#include "../../third_party/stb/stb_truetype.h"
 #include <string>
 
-class Fontx {
+namespace eng {
+
+class Font : public Asset {
  public:
-  Fontx();
-  ~Fontx();
+  Font();
+  ~Font();
 
   bool Create(const std::string& font_name);
   void Destroy();
@@ -37,5 +40,7 @@ class Fontx {
   int line_height_;
   int vertical_shift_;
 };
+
+}  // namespace eng
 
 #endif  // FONT_H
