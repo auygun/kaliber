@@ -14,16 +14,16 @@ void Animator::Attach(Animatable *animatable) {
                        (int)animatable->GetFrame()});
 }
 
-void Animator::Play(Flags animation, bool loop) {
+void Animator::Play(int animation, bool loop) {
   play_flags_ |= animation;
   loop_flags_ |= loop ? animation : 0;
 }
 
-void Animator::Pause(Flags animation) {
+void Animator::Pause(int animation) {
   play_flags_ &= ~animation;
 }
 
-void Animator::Stop(Flags animation) {
+void Animator::Stop(int animation) {
   if ((animation & kMovement) != 0)
     movement_time_ = 0;
   if ((animation & kRotation) != 0)
@@ -32,13 +32,15 @@ void Animator::Stop(Flags animation) {
     blending_time_ = 0;
   if ((animation & kFrames) != 0)
     frame_time_ = 0;
+  if ((animation & kTimer) != 0)
+    timer_time_ = 0;
 
   play_flags_ |= animation;
   Update(0);
   play_flags_ &= ~animation;
 }
 
-void Animator::SetEndCallback(Flags animation, Callback cb) {
+void Animator::SetEndCallback(int animation, Callback cb) {
   if ((animation & kMovement) != 0)
     movement_cb_ = cb;
   if ((animation & kRotation) != 0)
@@ -47,6 +49,8 @@ void Animator::SetEndCallback(Flags animation, Callback cb) {
     blending_cb_ = cb;
   if ((animation & kFrames) != 0)
     frame_cb_ = cb;
+  if ((animation & kTimer) != 0)
+    timer_cb_ = cb;
 }
 
 void Animator::SetMovement(Vector2 direction, float speed) {
@@ -74,6 +78,10 @@ void Animator::SetFrames(int count, int speed) {
     a.frame_start_ = a.animatable->GetFrame();
 }
 
+void Animator::SetTimer(float seconds) {
+  timer_speed_ = 1.0f / seconds;
+}
+
 void Animator::Update(float delta_time) {
   if (play_flags_ & kMovement)
     UpdateMovement(delta_time);
@@ -83,6 +91,8 @@ void Animator::Update(float delta_time) {
     UpdateBlending(delta_time);
   if (play_flags_ & kFrames)
     UpdateFrame(delta_time);
+  if (play_flags_ & kTimer)
+    UpdateTimer(delta_time);
 
   for (auto& a : elements_) {
     if (play_flags_ & kMovement) {
@@ -173,6 +183,20 @@ void Animator::UpdateFrame(float delta_time) {
   frame_time_ += frame_speed_ * delta_time;
   if (frame_time_ > 1)
     frame_time_ = 1;
+}
+
+void Animator::UpdateTimer(float delta_time) {
+  if (timer_time_ == 1.0f) {
+    timer_time_ = 0;
+    play_flags_ &= ~kTimer;
+    if (timer_cb_)
+      timer_cb_();
+    return;
+  }
+
+  timer_time_ += timer_speed_ * delta_time;
+  if (timer_time_ > 1)
+    timer_time_ = 1;
 }
 
 }  // namespace eng

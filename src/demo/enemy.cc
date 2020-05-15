@@ -223,9 +223,9 @@ void Enemy::HitTarget(DamageType damage_type) {
     target->health_base.SetVisible(true);
     target->health_bar.SetVisible(true);
 
-    target->health_animator.Stop(eng::Animator::kBlending);
-    target->health_animator.SetBlending({1, 1, 1, 0}, 2.0f);
-    target->health_animator.Play(eng::Animator::kBlending, false);
+    target->health_animator.Stop(eng::Animator::kTimer |
+        eng::Animator::kBlending);
+    target->health_animator.Play(eng::Animator::kTimer, false);
   }
 }
 
@@ -295,10 +295,15 @@ void Enemy::Spawn(UnitType unit_type,
   }
   e.blast_animator.Attach(&e.blast);
 
+  e.health_animator.SetEndCallback(eng::Animator::kTimer, [&]()->void {
+    e.health_animator.SetBlending({1, 1, 1, 0}, 0.5f);
+    e.health_animator.Play(eng::Animator::kBlending, false);
+  });
   e.health_animator.SetEndCallback(eng::Animator::kBlending, [&]()->void {
     e.health_base.SetVisible(false);
     e.health_bar.SetVisible(false);
   });
+  e.health_animator.SetTimer(1.0f);
   e.health_animator.Attach(&e.health_base);
   e.health_animator.Attach(&e.health_bar);
 

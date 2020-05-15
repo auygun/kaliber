@@ -17,6 +17,7 @@ class Animator {
     kRotation = 2,
     kBlending = 4,
     kFrames = 8,
+    kTimer = 16,
     kAllAnimations = kMovement | kRotation | kBlending | kFrames
   };
 
@@ -28,13 +29,13 @@ class Animator {
   // Attached the given animatable to this animator and sets the start values.
   void Attach(Animatable *animatable);
 
-  void Play(Flags animation, bool loop);
-  void Pause(Flags animation);
-  void Stop(Flags animation);
+  void Play(int animation, bool loop);
+  void Pause(int animation);
+  void Stop(int animation);
 
   // Set callback for the given animations. It's called for each animation once
   // it ends. Not that it's not called for looping animations.
-  void SetEndCallback(Flags animation, Callback cb);
+  void SetEndCallback(int animation, Callback cb);
 
   // Set movement animation parameters. Movement animations is relative.
   // Distance is calculated from the magnitude of direction vector. Speed is in
@@ -55,9 +56,14 @@ class Animator {
   // count number of frames. Speed is in frames per second.
   void SetFrames(int count, int speed);
 
+  // Set Timer parameters. Timer doesn't play any animation. Usefull for
+  // triggering a callback after the given seconds passed. Loop parameter is
+  // ignored when played.
+  void SetTimer(float seconds);
+
   void Update(float delta_time);
 
-  bool IsPlaying(Flags animation) const { return play_flags_ & animation; }
+  bool IsPlaying(int animation) const { return play_flags_ & animation; }
 
  private:
   struct Element {
@@ -92,10 +98,15 @@ class Animator {
   float frame_time_ = 0;
   Callback frame_cb_;
 
+  float timer_speed_ = 0;
+  float timer_time_ = 0;
+  Callback timer_cb_;
+
   void UpdateMovement(float delta_time);
   void UpdateRotation(float delta_time);
   void UpdateBlending(float delta_time);
   void UpdateFrame(float delta_time);
+  void UpdateTimer(float delta_time);
 };
 
 }  // namespace eng
