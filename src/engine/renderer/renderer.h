@@ -25,6 +25,10 @@
 #include <deque>
 #endif // THREADED_RENDERING
 
+#if defined(__ANDROID__)
+struct ANativeWindow;
+#endif
+
 namespace eng {
 
 struct RenderCommand;
@@ -45,8 +49,9 @@ class Renderer {
 
   void SetDelegate(Delegate* delegate);
 
-  bool StartWorker();
-  void TerminateWorker();
+#if defined(__ANDROID__)
+  bool Init(ANativeWindow* window);
+#endif
 
   bool Init();
   void Shutdown();
@@ -79,9 +84,6 @@ class Renderer {
   size_t render_queue_size() { return render_queue_size_; }
 
 #if defined(__linux__) && !defined(__ANDROID__)
-  bool CreateWindow();
-  void DestroyWindow();
-
   Display* display() { return display_; }
   Window window() { return window_; }
 #endif
@@ -158,12 +160,20 @@ class Renderer {
   size_t global_queue_size_ = 0;
   size_t render_queue_size_ = 0;
 
-#if defined(__linux__) && !defined(__ANDROID__)
+#if defined(__ANDROID__)
+  ANativeWindow *window_;
+#elif defined(__linux__)
   Display* display_ = NULL;
   Window window_ = 0;
   XVisualInfo* visual_info_;
   GLXContext glx_context_ = NULL;
 #endif
+
+  bool InitInternal();
+  void ShutdownInternal();
+
+  bool StartWorker();
+  void TerminateWorker();
 
 #ifdef THREADED_RENDERING
   void WorkerMain(std::promise<bool> promise);
@@ -199,6 +209,11 @@ class Renderer {
   std::unordered_set<std::string> SetupExtensions();
 
   void LogVersion();
+
+#if defined(__linux__) && !defined(__ANDROID__)
+  bool CreateWindow();
+  void DestroyWindow();
+#endif
 };
 
 }  // namespace eng

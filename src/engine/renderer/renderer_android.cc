@@ -2,29 +2,41 @@
 #include <cassert>
 #include <sstream>
 #include "../../base/log.h"
-#include "../../platform/platform.h"
 #include "../../third_party/android/GLContext.h"
 #include "renderer.h"
 
 namespace eng {
 
+bool Renderer::Init(ANativeWindow* window) {
+  window_ = window;
+  return StartWorker();
+}
+
 bool Renderer::Init() {
+  // Unreachable code.
+  assert(false);
+}
+
+void Renderer::Shutdown() {
+  TerminateWorker();
+}
+
+bool Renderer::InitInternal() {
   ndk_helper::GLContext* gl_context = ndk_helper::GLContext::GetInstance();
-  ANativeWindow* window = Platform::Get().GetNativeWindow();
 
   if (!gl_context->IsInitialzed()) {
-    gl_context->Init(window);
+    gl_context->Init(window_);
     // TODO: LoadResources();
-  } else if (window != gl_context->GetANativeWindow()) {
+  } else if (window_ != gl_context->GetANativeWindow()) {
     // Re-initialize ANativeWindow.
     // On some devices, ANativeWindow is re-created when the app is resumed
     gl_context->Invalidate();
-    gl_context->Init(window);
+    gl_context->Init(window_);
     ContextLost();
     // TODO: LoadResources();
   } else {
     // initialize OpenGL ES and EGL
-    if (EGL_SUCCESS == gl_context->Resume(window)) {
+    if (EGL_SUCCESS == gl_context->Resume(window_)) {
       ContextLost();
       // TODO: LoadResources();
     } else {
@@ -64,7 +76,7 @@ bool Renderer::Init() {
   return true;
 }
 
-void Renderer::Shutdown() {
+void Renderer::ShutdownInternal() {
   ndk_helper::GLContext::GetInstance()->Suspend();
 }
 

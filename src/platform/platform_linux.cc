@@ -18,12 +18,8 @@ void Platform::Initialize() {
   root_path_ = "../../assets/";
   LOG << "Root path: " << root_path_.c_str();
 
-  if (!eng::Engine::Get().GetRenderer().CreateWindow()) {
-    LOG << "Failed to create the window.";
-    throw internal_error;
-  }
-  if (!eng::Engine::Get().GetRenderer().StartWorker()) {
-    LOG << "Failed to initialize the renderer.";
+  if (!eng::Engine::Get().GetRenderer().Init()) {
+    LOG << "Failed to initialize renderer.";
     throw internal_error;
   }
   LOG << "Initialized the renderer.";
@@ -35,8 +31,7 @@ void Platform::Initialize() {
 }
 
 void Platform::Shutdown() {
-  eng::Engine::Get().GetRenderer().TerminateWorker();
-  eng::Engine::Get().GetRenderer().DestroyWindow();
+  eng::Engine::Get().GetRenderer().Shutdown();
 }
 
 void Platform::Update() {

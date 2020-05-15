@@ -148,7 +148,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
     case APP_CMD_INIT_WINDOW:
       DLOG << "APP_CMD_INIT_WINDOW";
       if (app->window != NULL) {
-        if (!eng::Engine::Get().GetRenderer().StartWorker()) {
+        if (!eng::Engine::Get().GetRenderer().Init(app->window)) {
           LOG << "Failed to initialize the renderer.";
           throw internal_error;
         }
@@ -157,7 +157,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
 
     case APP_CMD_TERM_WINDOW:
       DLOG << "APP_CMD_TERM_WINDOW";
-      eng::Engine::Get().GetRenderer().TerminateWorker();
+      eng::Engine::Get().GetRenderer().Shutdown();
       platform->has_focus_ = false;
       break;
 
@@ -168,8 +168,8 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
         int height = eng::Engine::Get().GetScreenHeight();
         if (width != ANativeWindow_getWidth(app->window) ||
             height != ANativeWindow_getHeight(app->window)) {
-          eng::Engine::Get().GetRenderer().TerminateWorker();
-          if (!eng::Engine::Get().GetRenderer().StartWorker()) {
+          eng::Engine::Get().GetRenderer().Shutdown();
+          if (!eng::Engine::Get().GetRenderer().Init(platform->app_->window)) {
             LOG << "Failed to initialize the renderer.";
             throw internal_error;
           }
@@ -226,7 +226,7 @@ void Platform::Initialize(android_app* app) {
 
 void Platform::Shutdown() {
   LOG << "Shutting down platform.";
-  eng::Engine::Get().GetRenderer().TerminateWorker();
+  eng::Engine::Get().GetRenderer().Shutdown();
 }
 
 void Platform::Update() {

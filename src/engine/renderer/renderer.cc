@@ -89,7 +89,7 @@ bool Renderer::StartWorker() {
   return future.get();
 #else
   LOG << "Single threaded rendering.";
-  return Init();
+  return InitInternal();
 #endif // THREADED_RENDERING
 }
 
@@ -106,7 +106,7 @@ void Renderer::TerminateWorker() {
   LOG << "Terminating render thread";
   worker_thread_.join();
 #else
-  Shutdown();
+  ShutdownInternal();
 #endif // THREADED_RENDERING
 }
 
@@ -141,7 +141,7 @@ void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
 #ifdef THREADED_RENDERING
 
 void Renderer::WorkerMain(std::promise<bool> promise) {
-  promise.set_value(Init());
+  promise.set_value(InitInternal());
 
   std::deque<std::unique_ptr<RenderCommand>> cq[2];
   for(;;) {
@@ -152,7 +152,7 @@ void Renderer::WorkerMain(std::promise<bool> promise) {
             terminate_worker_;
       });
       if (terminate_worker_) {
-        Shutdown();
+        ShutdownInternal();
         return;
       }
       cq[0].swap(global_commands_);

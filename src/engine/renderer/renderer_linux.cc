@@ -7,6 +7,17 @@
 
 namespace eng {
 
+bool Renderer::Init() {
+  if (!CreateWindow())
+    return false;
+  return StartWorker();
+}
+
+void Renderer::Shutdown() {
+  TerminateWorker();
+  DestroyWindow();
+}
+
 bool Renderer::CreateWindow() {
   screen_width_ = 1280;
   screen_height_ = 1024;
@@ -46,7 +57,7 @@ bool Renderer::CreateWindow() {
   return true;
 }
 
-bool Renderer::Init() {
+bool Renderer::InitInternal() {
   // Create the OpenGL context.
   glx_context_ = glXCreateContext(display_, visual_info_, NULL, GL_TRUE);
   if (!glx_context_) {
@@ -61,7 +72,7 @@ bool Renderer::Init() {
     return false;
   }
 
-  // TODO: Move toplatform independend function
+  // TODO: Move to platform independend function
 
   LogVersion();
   LOG << "Screen size: " << screen_width_ << ", " << screen_height_;
@@ -97,7 +108,7 @@ void Renderer::DestroyWindow() {
   }
 }
 
-void Renderer::Shutdown() {
+void Renderer::ShutdownInternal() {
   if (display_ && glx_context_) {
     glXMakeCurrent(display_, None, NULL);
     glXDestroyContext(display_, glx_context_);
