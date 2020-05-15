@@ -1,4 +1,5 @@
 #include "font.h"
+#include "engine.h"
 #include <stdint.h>
 #include "../base/file.h"
 #include "../base/log.h"
@@ -22,7 +23,8 @@ bool Font::Create(const std::string& font_name) {
 
   // Read the font file.
   unsigned bufferSize = 0;
-  char* buffer = File::ReadWholeFile(fullPath.c_str(), &bufferSize);
+  char* buffer = File::ReadWholeFile(fullPath.c_str(),
+      Engine::Get().GetRootPath().c_str(), &bufferSize);
   if (!buffer) {
     LOG << "Failed to read font file.";
     return false;

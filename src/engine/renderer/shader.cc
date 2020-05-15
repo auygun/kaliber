@@ -24,13 +24,15 @@ bool Shader::Create(const std::string& name, const std::string& vertex_descripti
 
   std::string vertexFileName = name;
   vertexFileName += "_vertex.glsl";
-  vertexSource.reset(File::ReadWholeFile(vertexFileName.c_str(), NULL, true));
+  vertexSource.reset(File::ReadWholeFile(vertexFileName.c_str(),
+      Engine::Get().GetRootPath().c_str(), NULL, true));
   if (!vertexSource)
     return false;
 
   std::string fragmentFileName = name;
   fragmentFileName += "_fragment.glsl";
-  fragmentSource.reset(File::ReadWholeFile(fragmentFileName.c_str(), NULL, true));
+  fragmentSource.reset(File::ReadWholeFile(fragmentFileName.c_str(),
+      Engine::Get().GetRootPath().c_str(), NULL, true));
   if (!fragmentSource)
     return false;
 

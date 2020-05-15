@@ -13,7 +13,7 @@ class File {
   File();
   ~File();
 
-  bool Open(const char* file_name);
+  bool Open(const char* file_name, const char* root_path);
   bool Close();
 
   unsigned GetSize();
@@ -21,6 +21,7 @@ class File {
   unsigned Read(char* data, unsigned size);
 
   static char* ReadWholeFile(const char* file_name,
+                             const char* root_path,
                              unsigned* length = 0,
                              bool null_terminate = false);
 

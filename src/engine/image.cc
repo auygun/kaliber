@@ -1,4 +1,5 @@
 #include "image.h"
+#include "engine.h"
 #include <stdlib.h>
 #include <string.h>
 #include <string>
@@ -65,7 +66,8 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
   fullPath += file_name;
 
   unsigned fileSize = 0;
-  char* fileBuffer = File::ReadWholeFile(fullPath.c_str(), &fileSize);
+  char* fileBuffer = File::ReadWholeFile(fullPath.c_str(),
+      Engine::Get().GetRootPath().c_str(), &fileSize);
   if (!fileBuffer) {
     LOG << "Failed to read file: " << file_name;
     return false;

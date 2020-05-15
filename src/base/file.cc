@@ -3,11 +3,12 @@
 #include "log.h"
 
 char* File::ReadWholeFile(const char* file_name,
+                          const char* root_path,
                           unsigned* length,
                           bool null_terminate) {
   // Determine how big the file is.
   File file;
-  if (file.Open(file_name)) {
+  if (file.Open(file_name, root_path)) {
     unsigned size = file.GetSize();
     if (size) {
       // Allocate a new buffer and add space for a null terminator.

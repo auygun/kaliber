@@ -8,13 +8,8 @@
 
 Platform::InternalError Platform::internal_error;
 
-Platform& Platform::Get() {
-  static Platform platform;
-  return platform;
-}
-
 void Platform::RunMainLoop() {
-  if (!eng::Engine::Get().Init()) {
+  if (!eng::Engine::Get().Init(this)) {
     printf("Failed to initialize the engine.\n");
     throw internal_error;
   }

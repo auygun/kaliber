@@ -10,6 +10,8 @@
 #include <deque>
 #include <unordered_map>
 
+class Platform;
+
 namespace eng {
 
 class Image;
@@ -21,7 +23,7 @@ class Engine : public Renderer::Delegate {
  public:
   static Engine& Get();
 
-  bool Init();
+  bool Init(Platform* platform);
 
   void Shutdown();
 
@@ -61,6 +63,10 @@ class Engine : public Renderer::Delegate {
     return renderer_.projection();
   }
 
+  int GetDeviceDpi() const;
+
+  const std::string& GetRootPath() const;
+
   float seconds_accumulated() const { return seconds_accumulated_; }
 
  private:
@@ -78,6 +84,8 @@ class Engine : public Renderer::Delegate {
 
   std::unordered_map<std::string, std::shared_ptr<const Image>> image_assets_;
   std::unordered_map<std::string, std::shared_ptr<Font>> font_assets_;
+
+  Platform* platform_ = nullptr;
 
   Renderer renderer_;
 

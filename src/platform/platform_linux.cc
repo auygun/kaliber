@@ -7,10 +7,6 @@
 
 #include <pthread.h>
 
-void PTreadWorkaround() {
-  int i = pthread_getconcurrency();
-};
-
 Platform::Platform() = default;
 Platform::~Platform() = default;
 
@@ -52,8 +48,7 @@ void Platform::Update() {
 }
 
 int main(int argc, char** argv) {
-  PTreadWorkaround();
-  Platform& platform = Platform::Get();
+  Platform platform;
   try {
     platform.Initialize();
     platform.RunMainLoop();

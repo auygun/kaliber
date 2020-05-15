@@ -24,8 +24,6 @@ class Platform {
   Platform();
   ~Platform();
 
-  static Platform& Get();
-
 #if defined(__ANDROID__)
   void Initialize(android_app* app);
 #elif defined(__linux__)

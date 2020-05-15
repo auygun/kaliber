@@ -12,10 +12,9 @@ File::~File() {
   Close();
 }
 
-bool File::Open(const char* file_name) {
+bool File::Open(const char* file_name, const char* root_path) {
   do {
     // Try to open the zip archive.
-    const char* root_path = Platform::Get().GetRootPath().c_str();
     archive_ = unzOpen(root_path);
     if (!archive_) {
       LOG << "Failed to open zip file: " << root_path;

@@ -8,8 +8,8 @@ File::File() : file_(NULL) {}
 
 File::~File() {}
 
-bool File::Open(const char* file_name) {
-  std::string full_path = Platform::Get().GetRootPath();
+bool File::Open(const char* file_name, const char* root_path) {
+  std::string full_path = root_path;
   full_path += file_name;
   file_ = fopen(full_path.c_str(), "rb");
   return !!file_;

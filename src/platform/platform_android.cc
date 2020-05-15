@@ -248,7 +248,7 @@ void Platform::Update() {
 }
 
 void android_main(android_app* app) {
-  Platform& platform = Platform::Get();
+  Platform platform;
   try {
     platform.Initialize(app);
     platform.RunMainLoop();

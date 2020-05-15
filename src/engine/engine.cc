@@ -1,6 +1,7 @@
 #include "engine.h"
 #include "../base/log.h"
 #include "../base/random.h"
+#include "../platform/platform.h"
 #include "image.h"
 #include "font.h"
 #include "renderer/render_command.h"
@@ -16,8 +17,10 @@ Engine& Engine::Get() {
   return engine;
 }
 
-bool Engine::Init() {
+bool Engine::Init(Platform* platform) {
   RandomInit();
+
+  platform_ = platform;
 
   renderer_.SetDelegate(this);
 
@@ -193,6 +196,14 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
     input_queue_.pop_front();
   }
   return event;
+}
+
+int Engine::GetDeviceDpi() const {
+  return platform_->GetDeviceDpi();
+}
+
+const std::string& Engine::GetRootPath() const {
+  return platform_->GetRootPath();
 }
 
 void Engine::ContextLost() {
