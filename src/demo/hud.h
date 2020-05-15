@@ -1,7 +1,6 @@
 #ifndef HUD_H
 #define HUD_H
 
-#include "../engine/asset_manager/font.h"
 #include "../engine/image_quad.h"
 #include "../engine/solid_quad.h"
 #include "../engine/animator.h"
@@ -10,6 +9,7 @@
 
 namespace eng {
 class Image;
+class Font;
 } // namespace eng
 
 class Hud {

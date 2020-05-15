@@ -1,7 +1,7 @@
 #include "player.h"
 #include "demo.h"
 #include "../base/log.h"
-#include "../engine/asset_manager/image.h"
+#include "../engine/image.h"
 #include "../engine/engine.h"
 #include "../engine/input_event.h"
 #include <math.h>
@@ -27,9 +27,9 @@ void Player::ContextLost() {
   eng::Engine& engine = eng::Engine::Get();
 
   auto weapon_image =
-      engine.GetAssetManager().GetImage("enemy_anims_flare_ok.png");
+      engine.GetImageAsset("enemy_anims_flare_ok.png");
   auto beam_image =
-      engine.GetAssetManager().GetImage("enemy_ray_ok.png");
+      engine.GetImageAsset("enemy_ray_ok.png");
 
   for (int i = 0; i < 2; ++i) {
     drag_sign_[i].ContextLost();
@@ -153,9 +153,9 @@ void Player::SetupWeapons() {
   eng::Engine& engine = eng::Engine::Get();
 
   auto weapon_image =
-      engine.GetAssetManager().GetImage("enemy_anims_flare_ok.png");
+      engine.GetImageAsset("enemy_anims_flare_ok.png");
   auto beam_image =
-      engine.GetAssetManager().GetImage("enemy_ray_ok.png");
+      engine.GetImageAsset("enemy_ray_ok.png");
 
   for (int i = 0; i < 2; ++i) {
     // Setup draw sign.

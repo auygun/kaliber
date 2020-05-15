@@ -7,7 +7,6 @@
 #include "player.h"
 #include "hud.h"
 #include "sky_quad.h"
-#include "../engine/asset_manager/font.h"
 #include "../engine/game.h"
 #include "../engine/image_quad.h"
 #include "../engine/animator.h"

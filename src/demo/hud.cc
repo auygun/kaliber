@@ -2,8 +2,8 @@
 #include "../base/log.h"
 #include "../base/vecmath.h"
 #include "../engine/engine.h"
-#include "../engine/asset_manager/image.h"
-#include "../engine/asset_manager/font.h"
+#include "../engine/image.h"
+#include "../engine/font.h"
 
 namespace {
 
@@ -18,7 +18,7 @@ const Vector4 progress_bar_color[2] = {{0.256f, 0.434f, 0.72f,  1},
 bool Hud::Initialize() {
   eng::Engine& engine = eng::Engine::Get();
 
-  font_ = engine.GetAssetManager().GetFont("PixelCaps!.ttf");
+  font_ = engine.GetFontAsset("PixelCaps!.ttf");
   if (!font_) {
     LOG << "Failed to create the font.";
     return false;

@@ -2,8 +2,8 @@
 #include "demo.h"
 #include "../base/log.h"
 #include "../base/random.h"
-#include "../engine/asset_manager/image.h"
-#include "../engine/asset_manager/font.h"
+#include "../engine/image.h"
+#include "../engine/font.h"
 #include "../engine/engine.h"
 #include <memory>
 #include <limits>
@@ -27,17 +27,12 @@ constexpr float score_bg_color[4] = {1, 1, 1, 0};
 
 bool Enemy::Initialize() {
   eng::Engine& engine = eng::Engine::Get();
-  skull_frames_ = engine.GetAssetManager().GetImage(
-      "enemy_anims_01_frames_ok.png");
-  tank_frames_ = engine.GetAssetManager().GetImage(
-      "enemy_anims_01_frames_ok.png");
-  bug_frames_ = engine.GetAssetManager().GetImage(
-      "enemy_anims_02_frames_ok.png");
-  target_frames_ = engine.GetAssetManager().GetImage(
-      "enemy_target_single_ok.png");
-  blast_frames_ = engine.GetAssetManager().GetImage(
-      "enemy_anims_blast_ok.png");
-  font_ = engine.GetAssetManager().GetFont("PixelCaps!.ttf");
+  skull_frames_ = engine.GetImageAsset("enemy_anims_01_frames_ok.png");
+  tank_frames_ = engine.GetImageAsset("enemy_anims_01_frames_ok.png");
+  bug_frames_ = engine.GetImageAsset("enemy_anims_02_frames_ok.png");
+  target_frames_ = engine.GetImageAsset("enemy_target_single_ok.png");
+  blast_frames_ = engine.GetImageAsset("enemy_anims_blast_ok.png");
+  font_ = engine.GetFontAsset("PixelCaps!.ttf");
   return true;
 }
 

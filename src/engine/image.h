@@ -1,7 +1,7 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
-#include "../../base/vecmath.h"
+#include "../base/vecmath.h"
 #include "asset.h"
 #include <stdint.h>
 
@@ -37,6 +37,9 @@ class Image : public Asset{
 
   Vector2 GetUV() const { return uv_; }
 
+  void SetImmutable() { immutable_ = true; }
+  bool IsImmutable() const { return immutable_; }
+
  private:
   uint8_t* buffer_;
   unsigned width_;
@@ -45,6 +48,7 @@ class Image : public Asset{
   unsigned original_height_;
   Format format_;
   Vector2 uv_ = {1, 1};
+  bool immutable_ = false;
 };
 
 }  // namespace eng

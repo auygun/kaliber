@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include "asset.h"
-#include "../../third_party/stb/stb_truetype.h"
+#include "../third_party/stb/stb_truetype.h"
 #include <string>
 
 namespace eng {

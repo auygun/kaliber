@@ -7,14 +7,13 @@
 #include "renderer/renderer.h"
 #include "renderer/shader.h"
 #include "image_quad.h"
-#include "asset_manager/asset_manager.h"
-#include "asset_manager/font.h"
 #include <deque>
 #include <unordered_map>
 
-
 namespace eng {
 
+class Image;
+class Font;
 class Game;
 class InputEvent;
 
@@ -36,13 +35,17 @@ class Engine : public Renderer::Delegate {
   Vector2 ToScale(const Vector2& vec);
   Vector2 ToPosition(const Vector2& vec);
 
+  // Returns immutable image that can be accessed between multiple threads
+  // without locking.
+  std::shared_ptr<const Image> GetImageAsset(const std::string& name);
+  std::shared_ptr<Font> GetFontAsset(const std::string& name);
+
   int AcquireTextureResource(std::shared_ptr<const Image> image);
   void ReturnTextureResource(int resource_id);
 
   void AddInputEvent(std::unique_ptr<InputEvent> event);
   std::unique_ptr<InputEvent> GetNextInputEvent();
 
-  AssetManager& GetAssetManager() { return asset_manager_; }
   Renderer& GetRenderer() { return renderer_; }
   Geometry& GetQuad() { return quad_; }
   Shader& GetPassThroughShader() { return pass_through_shader_; }
@@ -73,7 +76,8 @@ class Engine : public Renderer::Delegate {
   // TODO: Recycle resource ids.
   int last_texture_resource_id_ = 0;
 
-  AssetManager asset_manager_;
+  std::unordered_map<std::string, std::shared_ptr<const Image>> image_assets_;
+  std::unordered_map<std::string, std::shared_ptr<Font>> font_assets_;
 
   Renderer renderer_;
 

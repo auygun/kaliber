@@ -1,9 +1,8 @@
-#include "../../engine/asset_manager/image.h"
+#include "../../engine/image.h"
 #include "../../base/log.h"
 #include "texture.h"
 #include "render_command.h"
 #include "../engine.h"
-#include <cassert>
 
 namespace eng {
 
@@ -12,14 +11,20 @@ Texture::~Texture() {
 }
 
 void Texture::Create(std::shared_ptr<const Image> image) {
-  assert(image->IsImmutable());
+  if (!image->IsImmutable()) {
+    DLOG << "Cannot create texture from mutable image.";
+    return;
+  }
 
   Destroy();
   resource_id_ = Engine::Get().AcquireTextureResource(image);
 }
 
 void Texture::Update(std::shared_ptr<const Image> image) {
-  assert(image->IsImmutable());
+  if (!image->IsImmutable()) {
+    DLOG << "Cannot update texture from mutable image.";
+    return;
+  }
 
   if (resource_id_) {
     auto cmd = std::make_unique<CmdCreateTexture>();

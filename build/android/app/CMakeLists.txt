@@ -51,11 +51,10 @@ add_library(native-activity SHARED
     ../../../src/demo/sky_quad.cc
     ../../../src/engine/animatable.cc
     ../../../src/engine/animator.cc
-    ../../../src/engine/asset_manager/asset_manager.cc
-    ../../../src/engine/asset_manager/font.cc
-    ../../../src/engine/asset_manager/image.cc
     ../../../src/engine/engine.cc
+    ../../../src/engine/font.cc
     ../../../src/engine/image_quad.cc
+    ../../../src/engine/image.cc
     ../../../src/engine/renderer/geometry.cc
     ../../../src/engine/renderer/renderer_android.cc
     ../../../src/engine/renderer/renderer.cc

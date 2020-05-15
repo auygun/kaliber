@@ -1,7 +1,8 @@
 #include "engine.h"
 #include "../base/log.h"
 #include "../base/random.h"
-#include "asset_manager/image.h"
+#include "image.h"
+#include "font.h"
 #include "renderer/render_command.h"
 #include "game.h"
 #include "game_factory.h"
@@ -20,7 +21,7 @@ bool Engine::Init() {
 
   renderer_.SetDelegate(this);
 
-  system_font_ = GetAssetManager().GetFont("Roboto-Regular.ttf");
+  system_font_ = GetFontAsset("Roboto-Regular.ttf");
   if (!system_font_) {
     LOG << "Failed to create the font.";
     return false;
@@ -111,8 +112,38 @@ Vector2 Engine::ToPosition(const Vector2& vec) {
   return ToScale(vec) - GetScreenSize() / 2.0f;
 }
 
+std::shared_ptr<const Image> Engine::GetImageAsset(const std::string& name) {
+  auto it = image_assets_.find(name);
+  if (it != image_assets_.end())
+    return it->second;
+
+  auto image = std::make_shared<Image>();
+  if (!image->Load(name.c_str()))
+    return nullptr;
+  image->SetImmutable();
+
+  image_assets_[name] = image;
+  return image;
+}
+
+std::shared_ptr<Font> Engine::GetFontAsset(const std::string& name) {
+  auto it = font_assets_.find(name);
+  if (it != font_assets_.end())
+    return it->second;
+
+  auto font = std::make_shared<Font>();
+  if (!font->Create(name.c_str()))
+    return nullptr;
+
+  font_assets_[name] = font;
+  return font;
+}
+
 int Engine::AcquireTextureResource(std::shared_ptr<const Image> image) {
-  assert(image->IsImmutable());
+  if (!image->IsImmutable()) {
+    DLOG << "Cannot acquire texture resource from mutable image.";
+    return 0;
+  }
 
   int resource_id = 0;
   if (image->GetName().empty()) {

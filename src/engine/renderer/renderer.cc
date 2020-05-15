@@ -4,6 +4,7 @@
 #include <cstring>
 #include "../../base/log.h"
 #include "render_command.h"
+#include "../image.h"
 #include <algorithm>
 
 namespace {

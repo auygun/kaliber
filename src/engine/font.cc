@@ -1,10 +1,10 @@
 #include "font.h"
 #include <stdint.h>
-#include "../../base/file.h"
-#include "../../base/log.h"
+#include "../base/file.h"
+#include "../base/log.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
-#include "../../third_party/stb/stb_truetype.h"
+#include "../third_party/stb/stb_truetype.h"
 
 namespace eng {
 

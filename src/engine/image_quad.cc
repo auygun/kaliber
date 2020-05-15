@@ -1,7 +1,7 @@
 #include "image_quad.h"
 #include "../base/log.h"
-#include "../engine/asset_manager/image.h"
-#include "../engine/asset_manager/font.h"
+#include "../engine/image.h"
+#include "../engine/font.h"
 #include "engine.h"
 #include "../platform/platform.h"
 #include "renderer/geometry.h"
@@ -15,6 +15,11 @@ void ImageQuad::Create(std::shared_ptr<const Image> image,
                        int frame_width,
                        int frame_height) {
   assert(num_frames_[0] > 0 && num_frames_[1] > 0);
+
+  if (!image->IsImmutable()) {
+    DLOG << "Cannot create ImageQuad from mutable image.";
+    return;
+  }
 
   texture_.Update(image);
 

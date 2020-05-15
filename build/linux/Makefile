@@ -76,11 +76,10 @@ GLTEST_SRC := \
   $(SRC_ROOT)/demo/sky_quad.cc \
   $(SRC_ROOT)/engine/animatable.cc \
   $(SRC_ROOT)/engine/animator.cc \
-  $(SRC_ROOT)/engine/asset_manager/asset_manager.cc \
-  $(SRC_ROOT)/engine/asset_manager/font.cc \
-  $(SRC_ROOT)/engine/asset_manager/image.cc \
   $(SRC_ROOT)/engine/engine.cc \
+  $(SRC_ROOT)/engine/font.cc \
   $(SRC_ROOT)/engine/image_quad.cc \
+  $(SRC_ROOT)/engine/image.cc \
   $(SRC_ROOT)/engine/renderer/geometry.cc \
   $(SRC_ROOT)/engine/renderer/renderer_linux.cc \
   $(SRC_ROOT)/engine/renderer/renderer.cc \

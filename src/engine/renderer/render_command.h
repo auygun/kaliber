@@ -3,7 +3,6 @@
 
 #include "../../base/hash.h"
 #include "../../base/vecmath.h"
-#include "../../engine/asset_manager/image.h"
 #include <memory>
 #include <string>
 #include <array>
