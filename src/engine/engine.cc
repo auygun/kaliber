@@ -267,13 +267,13 @@ void Engine::PrintStats() {
   constexpr int width = 300;
   std::vector<std::string> lines;
   std::string line = "frames dropped: ";
-  line += std::to_string(eng::Engine::Get().GetRenderer().num_frames_dropped());
+  line += std::to_string(renderer_.num_frames_dropped());
   lines.push_back(line);
   line = "global queue: ";
-  line += std::to_string(eng::Engine::Get().GetRenderer().global_queue_size());
+  line += std::to_string(renderer_.global_queue_size());
   lines.push_back(line);
   line = "render queue: ";
-  line += std::to_string(eng::Engine::Get().GetRenderer().render_queue_size());
+  line += std::to_string(renderer_.render_queue_size());
   lines.push_back(line);
 
   constexpr int margin = 3;

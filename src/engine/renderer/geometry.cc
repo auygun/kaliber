@@ -1,6 +1,6 @@
 #include "../../base/log.h"
 #include "../renderer/renderer.h"
-// #include "../engine.h"
+#include "../engine.h"
 #include "geometry.h"
 #include "render_command.h"
 #include "../engine.h"

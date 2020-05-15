@@ -3,7 +3,6 @@
 
 #include "../../base/vecmath.h"
 #include "opengl.h"
-#include <map>
 #include <string>
 
 namespace eng {
