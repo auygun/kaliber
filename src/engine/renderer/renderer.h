@@ -19,6 +19,7 @@
 #define THREADED_RENDERING
 
 #ifdef THREADED_RENDERING
+#include <atomic>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -149,6 +150,8 @@ class Renderer {
   std::mutex mutex_;
   std::thread worker_thread_;
   bool terminate_worker_ = false;
+
+  std::atomic<bool> context_lost_ = false;
 #endif // THREADED_RENDERING
 
   // Stats.
@@ -181,7 +184,6 @@ class Renderer {
   void HandleCmdEnableBlend(RenderCommand* cmd);
   void HandleCmdClear(RenderCommand* cmd);
   void HandleCmdPresent(RenderCommand* cmd);
-  void HandleCmdContextLost(RenderCommand* cmd);
   void HandleCmdCreateTexture(RenderCommand* cmd);
   void HandleCmdDestoryTexture(RenderCommand* cmd);
   void HandleCmdActivateTexture(RenderCommand* cmd);

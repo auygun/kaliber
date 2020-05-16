@@ -143,6 +143,12 @@ void Renderer::TerminateWorker() {
 
 void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
 #ifdef THREADED_RENDERING
+  if (context_lost_) {
+    context_lost_.store(false);
+    context_lost_cb_();
+    return;
+  }
+
   if (cmd->global) {
     {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
@@ -152,6 +158,7 @@ void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
     global_queue_size_ = global_commands_.size();
     return;
   }
+
   bool new_frame = cmd->cmd_id == HHASH("CmdPresent");
   draw_commands_[1].push_back(std::move(cmd));
   if (new_frame) {
@@ -227,9 +234,6 @@ void Renderer::ProcessCommand(RenderCommand* cmd) {
   case HHASH("CmdPresent"):
     HandleCmdPresent(cmd);
     break;
-  case HHASH("CmdContextLost"):
-    HandleCmdContextLost(cmd);
-    break;
   case HHASH("CmdCreateTexture"):
     HandleCmdCreateTexture(cmd);
     break;
@@ -291,26 +295,6 @@ void Renderer::HandleCmdClear(RenderCommand* cmd) {
   auto *c = static_cast<CmdClear*>(cmd);
   glClearColor(c->rgba[0], c->rgba[1], c->rgba[2], c->rgba[3]);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
-void Renderer::HandleCmdContextLost(RenderCommand* cmd) {
-  for (auto& p : texture_map_)
-    glDeleteTextures(1, &(p.second));
-  texture_map_.clear();
-
-  for (auto& p : shader_map_)
-    glDeleteProgram(p.second.id);
-  shader_map_.clear();
-
-  for (auto& p : geometry_map_) {
-    if (p.second.indexBufferId)
-      glDeleteBuffers(1, &(p.second.indexBufferId));
-    if (p.second.vertexBufferId)
-      glDeleteBuffers(1, &(p.second.vertexBufferId));
-    if (p.second.vertexArrayId)
-      glDeleteVertexArrays(1, &(p.second.vertexArrayId));
-  }
-  geometry_map_.clear();
 }
 
 void Renderer::HandleCmdCreateTexture(RenderCommand* cmd) {
@@ -823,10 +807,34 @@ void Renderer::Present() {
 void Renderer::ContextLost() {
   LOG << "Context lost.";
 
-  auto cmd = std::make_unique<CmdContextLost>();
-  EnqueueCommand(std::move(cmd));
+  global_commands_.clear();
+  draw_commands_[0].clear();
+  draw_commands_[1].clear();
 
+  for (auto& p : texture_map_)
+    glDeleteTextures(1, &(p.second));
+  texture_map_.clear();
+
+  for (auto& p : shader_map_)
+    glDeleteProgram(p.second.id);
+  shader_map_.clear();
+
+  for (auto& p : geometry_map_) {
+    if (p.second.indexBufferId)
+      glDeleteBuffers(1, &(p.second.indexBufferId));
+    if (p.second.vertexBufferId)
+      glDeleteBuffers(1, &(p.second.vertexBufferId));
+    if (p.second.vertexArrayId)
+      glDeleteVertexArrays(1, &(p.second.vertexArrayId));
+  }
+  geometry_map_.clear();
+
+#ifdef THREADED_RENDERING
+  // Call context_lost_cb_ in the main thread.
+  context_lost_.store(true);
+#else
   context_lost_cb_();
+#endif // THREADED_RENDERING
 }
 
 void Renderer::LogVersion() {

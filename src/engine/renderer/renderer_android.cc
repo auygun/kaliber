@@ -30,7 +30,7 @@ bool Renderer::InitInternal() {
   } else {
     // initialize OpenGL ES and EGL
     if (EGL_SUCCESS == gl_context->Resume(window_)) {
-      ContextLost(); // TODO: Should be called from the main thread.
+      ContextLost();
     } else {
       return false;
     }
