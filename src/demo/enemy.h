@@ -93,6 +93,8 @@ class Enemy {
   Unit* GetTarget(DamageType damage_type);
 
   int GetScore(UnitType unit_type);
+
+  std::shared_ptr<eng::Image> GetScoreImage(const Unit& enemy);
 };
 
 #endif  // ENEMY_H

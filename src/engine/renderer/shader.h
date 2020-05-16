@@ -27,7 +27,7 @@ public:
   void SetUniform(const std::string &name, int i);
 
   void Invalidate() { resource_id_ = 0; }
-  bool IsValid() { return resource_id_ > 0; }
+  bool IsValid() const { return resource_id_ > 0; }
 
 private:
   int resource_id_ = 0;

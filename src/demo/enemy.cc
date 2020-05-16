@@ -49,6 +49,11 @@ void Enemy::ContextLost() {
     e.target.Create(target_frames_, {6, 2});
     e.blast.ContextLost();
     e.blast.Create(blast_frames_, {6, 2});
+    if (e.score.IsValid()) {
+      e.score.ContextLost();
+      auto image = GetScoreImage(e);
+      e.score.Create(image);
+    }
   }
 }
 
@@ -208,6 +213,10 @@ void Enemy::HitTarget(DamageType damage_type) {
     target->health_bar.SetVisible(false);
     target->score.SetVisible(true);
 
+    auto image = GetScoreImage(*target);
+    target->score.Create(image);
+    target->score.AutoScale();
+
     target->score_animator.Play(eng::Animator::kAllAnimations, false);
     target->movement_animator.Pause(eng::Animator::kMovement);
 
@@ -287,19 +296,6 @@ void Enemy::Spawn(UnitType unit_type,
   e.health_bar.PlaceToBottomOf(e.sprite);
   e.health_bar.SetColor({0.161f, 0.89f, 0.322f, 1});
 
-  auto image = std::make_shared<eng::Image>();
-  image->Create(e.sprite.frame_width(), e.sprite.frame_height());
-  image->Clear(score_bg_color);
-  std::string text = std::to_string(GetScore(e.unit_type));
-  int w, h;
-  font_->CalculateBoundingBox(text.c_str(), w, h);
-  int x = (image->GetOriginalWidth() - w) / 2;
-  int y = (image->GetOriginalHeight() - h) / 2;
-  font_->Print(x, y, text.c_str(), image->GetBuffer(), image->GetWidth());
-  image->SetImmutable();
-
-  e.score.Create(image);
-  e.score.AutoScale();
   e.score.SetColor({1, 1, 1, 1});
   e.score.SetOffset(spawn_pos);
 
@@ -370,4 +366,18 @@ Enemy::Unit* Enemy::GetTarget(DamageType damage_type) {
 int Enemy::GetScore(UnitType unit_type) {
   assert(unit_type > kUnitType_Invalid && unit_type < kUnitType_Max);
   return enemy_scores[unit_type];
+}
+
+std::shared_ptr<eng::Image> Enemy::GetScoreImage(const Unit& enemy) {
+  auto image = std::make_shared<eng::Image>();
+  image->Create(enemy.sprite.frame_width(), enemy.sprite.frame_height());
+  image->Clear(score_bg_color);
+  std::string text = std::to_string(GetScore(enemy.unit_type));
+  int w, h;
+  font_->CalculateBoundingBox(text.c_str(), w, h);
+  int x = (image->GetOriginalWidth() - w) / 2;
+  int y = (image->GetOriginalHeight() - h) / 2;
+  font_->Print(x, y, text.c_str(), image->GetBuffer(), image->GetWidth());
+  image->SetImmutable();
+  return image;
 }

@@ -40,8 +40,10 @@ class ImageQuad : public Animatable {
   void SetVisible(bool visible) { visible_ = visible; }
   bool IsVisible() const { return visible_; }
 
-  int frame_width() { return frame_width_; }
-  int frame_height() { return frame_height_; }
+  int frame_width() const { return frame_width_; }
+  int frame_height() const { return frame_height_; }
+
+  bool IsValid() const { return texture_.IsValid(); }
 
  private:
   Texture texture_;
