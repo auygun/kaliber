@@ -7,6 +7,8 @@
 // Save battery on mobile devices.
 #define USE_SLEEP
 
+namespace eng {
+
 Platform::InternalError Platform::internal_error;
 
 void Platform::Shutdown() {
@@ -62,3 +64,5 @@ void Platform::RunMainLoop() {
     frame_frac = accumulator / time_step;
   }
 }
+
+} // namespace eng

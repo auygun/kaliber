@@ -8,6 +8,8 @@
 
 #include <pthread.h>
 
+namespace eng {
+
 Platform::Platform() = default;
 Platform::~Platform() = default;
 
@@ -46,13 +48,15 @@ void Platform::Update() {
   }
 }
 
+} // namespace eng
+
 int main(int argc, char** argv) {
-  Platform platform;
+  eng::Platform platform;
   try {
     platform.Initialize();
     platform.RunMainLoop();
     platform.Shutdown();
-  } catch (Platform::InternalError& e) {
+  } catch (eng::Platform::InternalError& e) {
     return -1;
   }
   return 0;

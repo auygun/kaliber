@@ -18,6 +18,8 @@ namespace ndk_helper {
 } // namespace ndk_helper
 #endif
 
+namespace eng {
+
 class Platform {
  public:
   Platform();
@@ -60,5 +62,7 @@ class Platform {
   static void HandleCmd(android_app* app, int32_t cmd);
 #endif
 };
+
+} // namespace eng
 
 #endif  // PLATFORM_H

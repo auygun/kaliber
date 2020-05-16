@@ -49,6 +49,8 @@ int32_t getDensityDpi(android_app* app) {
 
 }  // namespace
 
+namespace eng {
+
 Platform::Platform() = default;
 Platform::~Platform() = default;
 
@@ -238,12 +240,14 @@ void Platform::Update() {
   }
 }
 
+} // namespace eng
+
 void android_main(android_app* app) {
-  Platform platform;
+  eng::Platform platform;
   try {
     platform.Initialize(app);
     platform.RunMainLoop();
     platform.Shutdown();
-  } catch (Platform::InternalError& e) {
+  } catch (eng::Platform::InternalError& e) {
   }
 }

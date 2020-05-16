@@ -10,14 +10,13 @@
 #include <deque>
 #include <unordered_map>
 
-class Platform;
-
 namespace eng {
 
 class Image;
 class Font;
 class Game;
 class InputEvent;
+class Platform;
 
 class Engine : public Renderer::Delegate {
  public:
