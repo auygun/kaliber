@@ -3,6 +3,7 @@
 
 #include "../../base/hash.h"
 #include "../../base/vecmath.h"
+#include "types.h"
 #include <memory>
 #include <string>
 #include <array>
@@ -75,7 +76,7 @@ RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdCreateGeometry, true)
   int id;
-  unsigned int primitive;
+  Primitive primitive;
   std::string vertex_description;
   int num_vertices;
   const void* vertices;

@@ -2,7 +2,6 @@
 #define SHADER_H
 
 #include "../../base/vecmath.h"
-#include "opengl.h"
 #include <string>
 
 namespace eng {

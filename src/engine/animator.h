@@ -2,8 +2,8 @@
 #define ANIMATOR_H
 
 #include "../base/vecmath.h"
+#include "../base/callback.h"
 #include <vector>
-#include <functional>
 
 namespace eng {
 
@@ -20,8 +20,6 @@ class Animator {
     kTimer = 16,
     kAllAnimations = kMovement | kRotation | kBlending | kFrames
   };
-
-  using Callback = std::function<void()>;
 
   Animator() = default;
   ~Animator() = default;

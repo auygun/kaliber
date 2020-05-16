@@ -8,6 +8,7 @@
 #endif
 
 #include "../../base/vecmath.h"
+#include "../../base/callback.h"
 #include <memory>
 #include <unordered_set>
 #include <unordered_map>
@@ -36,18 +37,13 @@ class Image;
 
 class Renderer {
  public:
-  class Delegate {
-   public:
-    virtual void ContextLost() = 0;
-  };
-
   Renderer();
   ~Renderer();
 
   Renderer(const Renderer&) = delete;
   Renderer& operator=(const Renderer&) = delete;
 
-  void SetDelegate(Delegate* delegate);
+  void SetContextLostCB(Callback cb);
 
 #if defined(__ANDROID__)
   bool Init(ANativeWindow* window);
@@ -129,7 +125,7 @@ class Renderer {
     std::unordered_map<std::string, GLuint> uniforms;
   };
 
-  Delegate* delegate_ = nullptr;
+  Callback context_lost_cb_;
 
   TextureCompression texture_compression_;
   bool vertex_array_objects_ = false;

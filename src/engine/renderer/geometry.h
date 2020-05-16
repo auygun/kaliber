@@ -1,6 +1,7 @@
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
 
+#include "types.h"
 #include <string>
 
 namespace eng {
@@ -13,7 +14,7 @@ public:
   Geometry(const Geometry&) = delete;
   Geometry& operator=(const Geometry&) = delete;
 
-  void Create(unsigned int primitive,
+  void Create(Primitive primitive,
               const std::string& vertex_description,
               int num_vertices,
               const void* vertices,

@@ -3,7 +3,6 @@
 
 #include <memory>
 #include "../base/vecmath.h"
-#include "renderer/renderer.h"
 #include "renderer/geometry.h"
 #include "renderer/shader.h"
 #include "image_quad.h"
@@ -16,10 +15,11 @@ class Image;
 class Font;
 class Game;
 class InputEvent;
-// class Renderer;
+class Renderer;
+struct RenderCommand;
 class Platform;
 
-class Engine : public Renderer::Delegate {
+class Engine {
  public:
   static Engine& Get();
 
@@ -48,20 +48,20 @@ class Engine : public Renderer::Delegate {
   void AddInputEvent(std::unique_ptr<InputEvent> event);
   std::unique_ptr<InputEvent> GetNextInputEvent();
 
-  Renderer& GetRenderer() { return *renderer_; }
+  void EnqueueRenderCommand(std::unique_ptr<RenderCommand> cmd);
+
   Geometry& GetQuad() { return quad_; }
   Shader& GetPassThroughShader() { return pass_through_shader_; }
   Shader& GetSolidShader() { return solid_shader_; }
+
   std::shared_ptr<eng::Font> GetSystemFont() { return system_font_; }
 
   Game* GetGame() { return game_.get(); }
 
-  int GetScreenWidth() const { return renderer_->screen_width(); }
-  int GetScreenHeight() const { return renderer_->screen_height(); }
+  int GetScreenWidth() const;
+  int GetScreenHeight() const;
 
-  const  Matrix4x4& GetProjectionMarix() const {
-    return renderer_->projection();
-  }
+  const  Matrix4x4& GetProjectionMarix() const;
 
   int GetDeviceDpi() const;
 
@@ -102,7 +102,7 @@ class Engine : public Renderer::Delegate {
   // TODO: Move to InputQueue class.
   std::deque<std::unique_ptr<InputEvent>> input_queue_;
 
-  void ContextLost() override;
+  void ContextLost();
 
   bool CreateRenderResources();
 

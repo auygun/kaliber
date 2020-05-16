@@ -1,6 +1,6 @@
+#include "texture.h"
 #include "../../engine/image.h"
 #include "../../base/log.h"
-#include "texture.h"
 #include "render_command.h"
 #include "../engine.h"
 
@@ -30,7 +30,7 @@ void Texture::Update(std::shared_ptr<const Image> image) {
     auto cmd = std::make_unique<CmdCreateTexture>();
     cmd->id = resource_id_;
     cmd->image = image;
-    Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
+    Engine::Get().EnqueueRenderCommand(std::move(cmd));
   } else {
     Create(image);
   }
@@ -47,7 +47,7 @@ void Texture::Activate() {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdActivateTexture>();
     cmd->id = resource_id_;
-    Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
+    Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }
 

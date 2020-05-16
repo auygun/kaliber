@@ -11,7 +11,10 @@ namespace {
 
 // Used to parse the vertex layout,
 // e.g. "p3f;c4b" for "position 3 floats, color 4 bytes".
-const char kLayoutDelimiter[] = ";/ \t";
+constexpr char kLayoutDelimiter[] = ";/ \t";
+
+constexpr GLenum kGlPrimitive[kPrimitive_Max] = {GL_TRIANGLES,
+                                                 GL_TRIANGLE_STRIP};
 
 GLuint GetVertexSize(const std::string &vertexDescription) {
   GLuint size = 0;
@@ -70,8 +73,8 @@ Renderer::~Renderer() {
   TerminateWorker();
 }
 
-void Renderer::SetDelegate(Delegate* delegate) {
-  delegate_ = delegate;
+void Renderer::SetContextLostCB(Callback cb) {
+  context_lost_cb_ = std::move(cb);
 }
 
 bool Renderer::InitCommon() {
@@ -435,7 +438,7 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
   geometry_map_[c->id] = {
     c->num_vertices,
     c->num_indices,
-    c->primitive,
+    kGlPrimitive[c->primitive],
     indexType,
     vertexLayout,
     vertexSize,
@@ -823,7 +826,7 @@ void Renderer::ContextLost() {
   auto cmd = std::make_unique<CmdContextLost>();
   EnqueueCommand(std::move(cmd));
 
-  delegate_->ContextLost();
+  context_lost_cb_();
 }
 
 void Renderer::LogVersion() {

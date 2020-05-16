@@ -19,7 +19,7 @@ bool SkyQuad::Create() {
     -0.5f,  0.5f,
      0.5f,  0.5f
   };
-  quad_.Create(GL_TRIANGLE_STRIP, vertex_description, 4, vertices);
+  quad_.Create(kPrimitive_TriangleStrip, vertex_description, 4, vertices);
 
   scale_ = eng::Engine::Get().GetScreenSize();
   nebula_color_ = {0.962f, 0.308f, 0.112f};

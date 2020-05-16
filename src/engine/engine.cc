@@ -4,7 +4,7 @@
 #include "platform/platform.h"
 #include "image.h"
 #include "font.h"
-// #include "renderer/renderer.h"
+#include "renderer/renderer.h"
 #include "renderer/render_command.h"
 #include "game.h"
 #include "game_factory.h"
@@ -24,7 +24,7 @@ bool Engine::Init(Platform* platform) {
   platform_ = platform;
 
   renderer_ = platform->GetRenderer();
-  renderer_->SetDelegate(this);
+  renderer_->SetContextLostCB(std::bind(&Engine::ContextLost, this));
 
   system_font_ = GetFontAsset("Roboto-Regular.ttf");
   if (!system_font_) {
@@ -168,7 +168,7 @@ int Engine::AcquireTextureResource(std::shared_ptr<const Image> image) {
   auto cmd = std::make_unique<CmdCreateTexture>();
   cmd->id = resource_id;
   cmd->image = image;
-  renderer_.EnqueueCommand(std::move(cmd));
+  renderer_->EnqueueCommand(std::move(cmd));
   return resource_id;
 }
 
@@ -184,7 +184,7 @@ void Engine::ReturnTextureResource(int resource_id) {
   }
   auto cmd = std::make_unique<CmdDestoryTexture>();
   cmd->id = resource_id;
-  renderer_.EnqueueCommand(std::move(cmd));
+  renderer_->EnqueueCommand(std::move(cmd));
 }
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
@@ -198,6 +198,22 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
     input_queue_.pop_front();
   }
   return event;
+}
+
+void Engine::EnqueueRenderCommand(std::unique_ptr<RenderCommand> cmd) {
+  renderer_->EnqueueCommand(std::move(cmd));
+}
+
+int Engine::GetScreenWidth() const {
+  return renderer_->screen_width();
+}
+
+int Engine::GetScreenHeight() const {
+  return renderer_->screen_height();
+}
+
+const  Matrix4x4& Engine::GetProjectionMarix() const {
+  return renderer_->projection();
 }
 
 int Engine::GetDeviceDpi() const {
@@ -245,7 +261,7 @@ bool Engine::CreateRenderResources() {
     -0.5f,  0.5f, 0.0f, 0.0f,
      0.5f,  0.5f, 1.0f, 0.0f
   };
-  quad_.Create(GL_TRIANGLE_STRIP, vertex_description, 4, vertices);
+  quad_.Create(kPrimitive_TriangleStrip, vertex_description, 4, vertices);
 
   return true;
 }
@@ -263,7 +279,7 @@ void Engine::KillUnusedResources(float delta_time) {
 
       auto cmd = std::make_unique<CmdDestoryTexture>();
       cmd->id = it->second.resource_id;
-      renderer_.EnqueueCommand(std::move(cmd));
+      renderer_->EnqueueCommand(std::move(cmd));
 
       it = texture_resources_.erase(it);
     }

@@ -1,10 +1,8 @@
+#include "shader.h"
 #include "../../base/file.h"
 #include "../../base/log.h"
-#include "shader.h"
 #include "render_command.h"
 #include "../engine.h"
-#include <stdlib.h>
-#include <string>
 #include <cstring>
 #include <memory>
 
@@ -42,7 +40,7 @@ bool Shader::Create(const std::string& name, const std::string& vertex_descripti
   cmd->fragment_source = std::move(fragmentSource);
   cmd->vertex_source = std::move(vertexSource);
   cmd->vertex_description = vertex_description;
-  Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
+  Engine::Get().EnqueueRenderCommand(std::move(cmd));
 
   return true;
 }
@@ -51,7 +49,7 @@ void Shader::Destroy() {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdDestroyShader>();
     cmd->id = resource_id_;
-    Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
+    Engine::Get().EnqueueRenderCommand(std::move(cmd));
     resource_id_ = 0;
   }
 }
@@ -60,7 +58,7 @@ void Shader::Activate() {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdActivateShader>();
     cmd->id = resource_id_;
-    Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
+    Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }
 
@@ -70,7 +68,7 @@ void Shader::SetUniform(const std::string &name, const Vector2 &v) {
     cmd->id = resource_id_;
     cmd->name = name;
     cmd->v = v;
-    Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
+    Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }
 
@@ -80,7 +78,7 @@ void Shader::SetUniform(const std::string &name, const Vector3 &v) {
     cmd->id = resource_id_;
     cmd->name = name;
     cmd->v = v;
-    Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
+    Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }
 
@@ -90,7 +88,7 @@ void Shader::SetUniform(const std::string &name, const Vector4 &v) {
     cmd->id = resource_id_;
     cmd->name = name;
     cmd->v = v;
-    Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
+    Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }
 
@@ -100,7 +98,7 @@ void Shader::SetUniform(const std::string &name, const Matrix4x4& m) {
     cmd->id = resource_id_;
     cmd->name = name;
     cmd->m = m;
-    Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
+    Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }
 
@@ -110,7 +108,7 @@ void Shader::SetUniform(const std::string &name, float f) {
     cmd->id = resource_id_;
     cmd->name = name;
     cmd->f = f;
-    Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
+    Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }
 
@@ -120,7 +118,7 @@ void Shader::SetUniform(const std::string &name, int i) {
     cmd->id = resource_id_;
     cmd->name = name;
     cmd->i = i;
-    Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
+    Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }
 

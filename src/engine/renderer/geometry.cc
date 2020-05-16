@@ -1,9 +1,7 @@
-#include "../../base/log.h"
-#include "../renderer/renderer.h"
-#include "../engine.h"
 #include "geometry.h"
-#include "render_command.h"
+#include "../../base/log.h"
 #include "../engine.h"
+#include "render_command.h"
 
 namespace eng {
 
@@ -13,7 +11,7 @@ Geometry::~Geometry() {
   Destroy();
 }
 
-void Geometry::Create(unsigned int primitive,
+void Geometry::Create(Primitive primitive,
                       const std::string& vertex_description,
                       int num_vertices,
                       const void* vertices,
@@ -32,14 +30,14 @@ void Geometry::Create(unsigned int primitive,
   cmd->index_description = index_description;
   cmd->num_indices = num_indices;
   cmd->indices = indices;
-  Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
+  Engine::Get().EnqueueRenderCommand(std::move(cmd));
 }
 
 void Geometry::Destroy() {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdDestroyGeometry>();
     cmd->id = resource_id_;
-    Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
+    Engine::Get().EnqueueRenderCommand(std::move(cmd));
     resource_id_ = 0;
   }
 }
@@ -48,7 +46,7 @@ void Geometry::Draw() {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdDrawGeometry>();
     cmd->id = resource_id_;
-    Engine::Get().GetRenderer().EnqueueCommand(std::move(cmd));
+    Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }
 
