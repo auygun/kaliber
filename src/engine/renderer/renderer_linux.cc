@@ -72,33 +72,7 @@ bool Renderer::InitInternal() {
     return false;
   }
 
-  // TODO: Move to platform independend function
-
-  LogVersion();
-  LOG << "Screen size: " << screen_width_ << ", " << screen_height_;
-
-  std::unordered_set<std::string> extensions = SetupExtensions();
-
-  if (extensions.find("GL_OES_vertex_array_object") != extensions.end()) {
-    LOG << "Supports Vertex Array Objects";
-    vertex_array_objects_ = true;
-  }
-
-  glViewport(0, 0, screen_width_, screen_height_);
-
-  // The orthogonal viewport is (-1.0 .. 1.0) for the short edge of the screen.
-  // It's calculated from aspect ratio for the long endge.
-  if (screen_width_ > screen_height_) {
-    float screen_ratio = (float)screen_width_ / (float)screen_height_;
-    LOG << "screen_ratio: " << screen_ratio;
-    projection_ = Ortho(-screen_ratio, screen_ratio, -1.0f, 1.0f);
-  } else {
-    float screen_ratio = (float)screen_height_ / (float)screen_width_;
-    LOG << "screen_ratio: " << screen_ratio;
-    projection_ = Ortho(-1.0, 1.0, -screen_ratio, screen_ratio);
-  }
-
-  return true;
+  return InitCommon();
 }
 
 void Renderer::DestroyWindow() {

@@ -170,6 +170,7 @@ class Renderer {
 #endif
 
   bool InitInternal();
+  bool InitCommon();
   void ShutdownInternal();
 
   bool StartWorker();
