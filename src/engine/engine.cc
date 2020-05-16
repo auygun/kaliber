@@ -62,7 +62,7 @@ void Engine::Update(float delta_time) {
   game_->Update(delta_time);
   if (stats_.IsVisible())
     PrintStats();
-  renderer_->KillUnusedResources(delta_time);
+  KillUnusedResources(delta_time);
 }
 
 void Engine::Draw(float frame_frac) {
@@ -144,6 +144,49 @@ std::shared_ptr<Font> Engine::GetFontAsset(const std::string& name) {
   return font;
 }
 
+int Engine::AcquireTextureResource(std::shared_ptr<const Image> image) {
+  if (!image->IsImmutable()) {
+    DLOG << "Cannot acquire texture resource from mutable image.";
+    return 0;
+  }
+
+  int resource_id = 0;
+  if (image->GetName().empty()) {
+    resource_id = ++last_texture_resource_id_;
+  } else {
+    auto it = texture_resources_.find(image->GetName());
+    if (it != texture_resources_.end()) {
+      ++(it->second.ref_count);
+      return it->second.resource_id;
+    }
+    resource_id = ++last_texture_resource_id_;
+    texture_resources_[image->GetName()] = {resource_id, 1};
+    DLOG << "AcquireTextureResource - Create! asset: " << image->GetName()
+         << ", resource_id: " << resource_id;
+  }
+
+  auto cmd = std::make_unique<CmdCreateTexture>();
+  cmd->id = resource_id;
+  cmd->image = image;
+  renderer_.EnqueueCommand(std::move(cmd));
+  return resource_id;
+}
+
+void Engine::ReturnTextureResource(int resource_id) {
+  auto it = std::find_if(texture_resources_.begin(), texture_resources_.end(),
+      [resource_id](auto& p){ return p.second.resource_id == resource_id; });
+  if (it != texture_resources_.end()) {
+    assert(it->second.ref_count > 0);
+    if (--(it->second.ref_count) > 0)
+      return;
+    it->second.time_to_die_ = 5;
+    return;
+  }
+  auto cmd = std::make_unique<CmdDestoryTexture>();
+  cmd->id = resource_id;
+  renderer_.EnqueueCommand(std::move(cmd));
+}
+
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
   input_queue_.push_back(std::move(event));
 }
@@ -166,6 +209,9 @@ const std::string& Engine::GetRootPath() const {
 }
 
 void Engine::ContextLost() {
+  texture_resources_.clear();
+  last_texture_resource_id_ = 0;
+
   pass_through_shader_.Invalidate();
   solid_shader_.Invalidate();
   quad_.Invalidate();
@@ -202,6 +248,26 @@ bool Engine::CreateRenderResources() {
   quad_.Create(GL_TRIANGLE_STRIP, vertex_description, 4, vertices);
 
   return true;
+}
+
+void Engine::KillUnusedResources(float delta_time) {
+  for (auto it = texture_resources_.begin(); it != texture_resources_.end();
+      ++it) {
+    if (it->second.ref_count > 0)
+      continue;
+
+    it->second.time_to_die_ -= delta_time;
+    if (it->second.time_to_die_ <= 0.0f) {
+      DLOG << "KillUnusedResources - Destroy! resource_id: "<<
+          it->second.resource_id;
+
+      auto cmd = std::make_unique<CmdDestoryTexture>();
+      cmd->id = it->second.resource_id;
+      renderer_.EnqueueCommand(std::move(cmd));
+
+      it = texture_resources_.erase(it);
+    }
+  }
 }
 
 void Engine::ShowStats(bool show) {
