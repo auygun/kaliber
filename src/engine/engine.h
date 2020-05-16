@@ -21,6 +21,9 @@ class Platform;
 
 class Engine {
  public:
+  Engine();
+  ~Engine();
+
   static Engine& Get();
 
   bool Init(Platform* platform);
@@ -53,6 +56,9 @@ class Engine {
   Geometry& GetQuad() { return quad_; }
   Shader& GetPassThroughShader() { return pass_through_shader_; }
   Shader& GetSolidShader() { return solid_shader_; }
+
+  // Returns quad vertex description.
+  const std::string& GetVertexDescription() { return vertex_description; }
 
   std::shared_ptr<eng::Font> GetSystemFont() { return system_font_; }
 
@@ -92,6 +98,8 @@ class Engine {
   Geometry quad_;
   Shader pass_through_shader_;
   Shader solid_shader_;
+
+  const std::string vertex_description;
 
   std::shared_ptr<eng::Font> system_font_;
 

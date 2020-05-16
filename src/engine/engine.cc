@@ -13,6 +13,10 @@
 
 namespace eng {
 
+Engine::Engine() : vertex_description("p2f;t2f") {}
+
+Engine::~Engine() = default;
+
 Engine& Engine::Get() {
   static Engine engine;
   return engine;
@@ -240,7 +244,6 @@ void Engine::ContextLost() {
 
 bool Engine::CreateRenderResources() {
   // Create the shader we can reuse for texture rendering.
-  const char* vertex_description = "p2f;t2f";
   if (!pass_through_shader_.Create("shaders/pass_through",
       vertex_description)) {
     LOG << "Could not create pass through shader.";

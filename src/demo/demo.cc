@@ -51,6 +51,8 @@ void Demo::Update(float delta_time) {
     }
   }
 
+  sky_.Translate({0, delta_time * -0.04f});
+
   player_.Update(delta_time);
   enemy_.Update(delta_time);
 

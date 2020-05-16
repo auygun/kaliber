@@ -1,4 +1,5 @@
 attribute vec2 in_position;
+attribute vec2 in_tex_coord_0;
 
 uniform vec2 scale;
 uniform mat4 projection;
