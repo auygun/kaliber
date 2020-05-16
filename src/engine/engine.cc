@@ -4,6 +4,7 @@
 #include "platform/platform.h"
 #include "image.h"
 #include "font.h"
+// #include "renderer/renderer.h"
 #include "renderer/render_command.h"
 #include "game.h"
 #include "game_factory.h"
@@ -22,7 +23,8 @@ bool Engine::Init(Platform* platform) {
 
   platform_ = platform;
 
-  renderer_.SetDelegate(this);
+  renderer_ = platform->GetRenderer();
+  renderer_->SetDelegate(this);
 
   system_font_ = GetFontAsset("Roboto-Regular.ttf");
   if (!system_font_) {
@@ -60,12 +62,12 @@ void Engine::Update(float delta_time) {
   game_->Update(delta_time);
   if (stats_.IsVisible())
     PrintStats();
-  renderer_.KillUnusedResources(delta_time);
+  renderer_->KillUnusedResources(delta_time);
 }
 
 void Engine::Draw(float frame_frac) {
   Clear();
-  renderer_.EnableBlend();
+  renderer_->EnableBlend();
 
   game_->Draw(frame_frac);
 
@@ -83,15 +85,15 @@ void Engine::Clear() {
   if (grey > 1.0f)
     grey = 0.0f;
 #endif
-  renderer_.Clear({grey, grey, grey, 1.0f});
+  renderer_->Clear({grey, grey, grey, 1.0f});
 }
 
 void Engine::Present() {
-  renderer_.Present();
+  renderer_->Present();
 }
 
 void Engine::TrimMemory() {
-  renderer_.TrimMemory();
+  renderer_->TrimMemory();
 }
 
 // TODO: do once during initialization.
@@ -212,13 +214,13 @@ void Engine::PrintStats() {
   constexpr int width = 300;
   std::vector<std::string> lines;
   std::string line = "frames dropped: ";
-  line += std::to_string(renderer_.num_frames_dropped());
+  line += std::to_string(renderer_->num_frames_dropped());
   lines.push_back(line);
   line = "global queue: ";
-  line += std::to_string(renderer_.global_queue_size());
+  line += std::to_string(renderer_->global_queue_size());
   lines.push_back(line);
   line = "render queue: ";
-  line += std::to_string(renderer_.render_queue_size());
+  line += std::to_string(renderer_->render_queue_size());
   lines.push_back(line);
 
   constexpr int margin = 3;

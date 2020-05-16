@@ -1,6 +1,7 @@
 #include "platform.h"
 #include "../../base/log.h"
 #include "../engine.h"
+#include "../renderer/renderer.h"
 #include <math.h>
 #include <thread>
 
@@ -11,9 +12,10 @@ namespace eng {
 
 Platform::InternalError Platform::internal_error;
 
+
 void Platform::Shutdown() {
   LOG << "Shutting down platform.";
-  eng::Engine::Get().GetRenderer().Shutdown();
+  renderer_->Shutdown();
 }
 
 void Platform::RunMainLoop() {
