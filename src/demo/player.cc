@@ -56,13 +56,13 @@ void Player::Update(float delta_time) {
 }
 
 void Player::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
-  if (event->GetEventType() == eng::InputEvent::kDragStart)
-    DragStart(event->GetEventVector(0));
-  else if (event->GetEventType() == eng::InputEvent::kDrag)
-    Drag(event->GetEventVector(0));
-  else if (event->GetEventType() == eng::InputEvent::kDragEnd)
+  if (event->GetType() == eng::InputEvent::kDragStart)
+    DragStart(event->GetVector(0));
+  else if (event->GetType() == eng::InputEvent::kDrag)
+    Drag(event->GetVector(0));
+  else if (event->GetType() == eng::InputEvent::kDragEnd)
     DragEnd();
-  else if (event->GetEventType() == eng::InputEvent::kDragCancel)
+  else if (event->GetType() == eng::InputEvent::kDragCancel)
     DragCancel();
 }
 

@@ -4,6 +4,7 @@
 #include <math.h>
 #include <thread>
 
+// Save battery on mobile devices.
 #define USE_SLEEP
 
 Platform::InternalError Platform::internal_error;
@@ -31,8 +32,8 @@ void Platform::RunMainLoop() {
   for (;;) {
     eng::Engine::Get().Draw(frame_frac);
 
-#ifdef USE_SLEEP
     // Accumulate time.
+#ifdef USE_SLEEP
     while (accumulator < time_step) {
       timer_.Update();
       accumulator += timer_.GetSecondsPassed();

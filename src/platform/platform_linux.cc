@@ -1,5 +1,6 @@
 #include "../base/log.h"
 #include "../engine/engine.h"
+#include "../engine/input_event.h"
 #include "../engine/renderer/renderer.h"
 #include "platform.h"
 #include <X11/Xlib.h>
@@ -33,9 +34,11 @@ void Platform::Update() {
   XEvent e;
   XNextEvent(display, &e);
   if (e.type == KeyPress) {
-    if (e.xkey.keycode == XKeysymToKeycode(display, XK_Y) &&
-        !(e.xkey.state & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask)))
-      DLOG << "Y pressed!!! " << e.xkey.state;
+    KeySym key = XLookupKeysym(&e.xkey, 0);
+    auto input_event = std::make_unique<eng::InputEvent>(
+        eng::InputEvent::kKeyPress, key);
+    eng::Engine::Get().AddInputEvent(std::move(input_event));
+    // TODO: e.xkey.state & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask))
   } else if (e.type == ClientMessage) {
     // TODO: Should check here for other client message types. However the only
     // protocol registered above is WM_DELETE_WINDOW for now.

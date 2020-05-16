@@ -41,11 +41,13 @@ void Demo::Update(float delta_time) {
 
   while (std::unique_ptr<eng::InputEvent> event = engine.GetNextInputEvent()) {
     if (event) {
-      if (event->GetEventType() == eng::InputEvent::kDragStart ||
-          event->GetEventType() == eng::InputEvent::kDrag ||
-          event->GetEventType() == eng::InputEvent::kDragEnd ||
-          event->GetEventType() == eng::InputEvent::kDragCancel)
+      if (event->GetType() == eng::InputEvent::kDragStart ||
+          event->GetType() == eng::InputEvent::kDrag ||
+          event->GetType() == eng::InputEvent::kDragEnd ||
+          event->GetType() == eng::InputEvent::kDragCancel)
         player_.OnInputEvent(std::move(event));
+      else if (event->GetType() == eng::InputEvent::kKeyPress)
+        LOG << "Key press: " << std::string({event->GetKeyPress()});
     }
   }
 
