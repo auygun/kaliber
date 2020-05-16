@@ -1,7 +1,7 @@
-#include "../base/log.h"
-#include "../engine/engine.h"
-#include "../engine/input_event.h"
-#include "../engine/renderer/renderer.h"
+#include "../../base/log.h"
+#include "../engine.h"
+#include "../input_event.h"
+#include "../renderer/renderer.h"
 #include "platform.h"
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>

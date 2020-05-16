@@ -1,6 +1,6 @@
 #include "platform.h"
-#include "../base/log.h"
-#include "../engine/engine.h"
+#include "../../base/log.h"
+#include "../engine.h"
 #include <math.h>
 #include <thread>
 

@@ -1,7 +1,6 @@
 #if defined(__linux__)
 
 #include <string>
-#include "../platform/platform.h"
 #include "file.h"
 
 File::File() : file_(NULL) {}

@@ -1,7 +1,7 @@
 #include "engine.h"
 #include "../base/log.h"
 #include "../base/random.h"
-#include "../platform/platform.h"
+#include "platform/platform.h"
 #include "image.h"
 #include "font.h"
 #include "renderer/render_command.h"

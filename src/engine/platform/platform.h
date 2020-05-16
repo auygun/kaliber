@@ -1,8 +1,8 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#include "../base/vecmath.h"
-#include "../base/timer.h"
+#include "../../base/vecmath.h"
+#include "../../base/timer.h"
 #include <exception>
 #include <string>
 #include <memory>

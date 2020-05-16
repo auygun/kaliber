@@ -1,12 +1,12 @@
 #include <android_native_app_glue.h>
 #include <memory>
 #include <string>
-#include "../base/file.h"
-#include "../base/log.h"
-#include "../engine/engine.h"
-#include "../engine/input_event.h"
-#include "../engine/renderer/renderer.h"
-#include "../third_party/android/gestureDetector.h"
+#include "../../base/file.h"
+#include "../../base/log.h"
+#include "../engine.h"
+#include "../input_event.h"
+#include "../renderer/renderer.h"
+#include "../../third_party/android/gestureDetector.h"
 #include "platform.h"
 
 namespace {

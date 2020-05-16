@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <string>
-#include "../platform/platform.h"
 #include "file.h"
 #include "log.h"
 

@@ -55,14 +55,14 @@ add_library(native-activity SHARED
     ../../../src/engine/font.cc
     ../../../src/engine/image_quad.cc
     ../../../src/engine/image.cc
+    ../../../src/engine/platform/platform_android.cc
+    ../../../src/engine/platform/platform.cc
     ../../../src/engine/renderer/geometry.cc
     ../../../src/engine/renderer/renderer_android.cc
     ../../../src/engine/renderer/renderer.cc
     ../../../src/engine/renderer/shader.cc
     ../../../src/engine/renderer/texture.cc
     ../../../src/engine/solid_quad.cc
-    ../../../src/platform/platform_android.cc
-    ../../../src/platform/platform.cc
     ../../../src/third_party/android/gestureDetector.cpp
     ../../../src/third_party/android/gl3stub.c
     ../../../src/third_party/android/GLContext.cpp
