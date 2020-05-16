@@ -51,9 +51,10 @@ class Renderer {
 
 #if defined(__ANDROID__)
   bool Init(ANativeWindow* window);
+#elif defined(__linux__)
+  bool Init();
 #endif
 
-  bool Init();
   void Shutdown();
 
   void EnableBlend();
@@ -65,9 +66,8 @@ class Renderer {
   void TrimMemory();
 
   bool SupportsETC1() const { return texture_compression_.etc1; }
-  bool SupportsDXT1() const {
-    return texture_compression_.dxt1 || texture_compression_.s3tc;
-  }
+  bool SupportsDXT1() const { return texture_compression_.dxt1 ||
+                                     texture_compression_.s3tc; }
   bool SupportsDXT5() const { return texture_compression_.s3tc; }
   bool SupportsATC() const { return texture_compression_.atc; }
 

@@ -52,10 +52,6 @@ int32_t getDensityDpi(android_app* app) {
 Platform::Platform() = default;
 Platform::~Platform() = default;
 
-ANativeWindow* Platform::GetNativeWindow() {
-  return app_->window;
-}
-
 int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
   Platform* platform = reinterpret_cast<Platform*>(app->userData);
 
@@ -73,7 +69,7 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
       Vector2 v;
       platform->tap_detector_->GetPointer(v);
       v = eng::Engine::Get().ToPosition(v);
-      LOG << "Tap: " << v;
+      // DLOG << "Tap: " << v;
       auto input_event = std::make_unique<eng::InputEvent>(
           eng::InputEvent::kTap, v * Vector2(1, -1));
       eng::Engine::Get().AddInputEvent(std::move(input_event));
@@ -84,7 +80,7 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
         Vector2 v;
         platform->drag_detector_->GetPointer(v);
         v = eng::Engine::Get().ToPosition(v);
-        LOG << "drag-start: " << v;
+        // DLOG << "drag-start: " << v;
         auto input_event = std::make_unique<eng::InputEvent>(
             eng::InputEvent::kDragStart, v * Vector2(1, -1));
         eng::Engine::Get().AddInputEvent(std::move(input_event));
@@ -92,12 +88,12 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
         Vector2 v;
         platform->drag_detector_->GetPointer(v);
         v = eng::Engine::Get().ToPosition(v);
-        LOG << "drag: " << v;
+        // DLOG << "drag: " << v;
         auto input_event = std::make_unique<eng::InputEvent>(
             eng::InputEvent::kDrag, v * Vector2(1, -1));
         eng::Engine::Get().AddInputEvent(std::move(input_event));
       } else if (drag_state & ndk_helper::GESTURE_STATE_END) {
-        LOG << "drag-end!";
+        // DLOG << "drag-end!";
         auto input_event = std::make_unique<eng::InputEvent>(
             eng::InputEvent::kDragEnd);
         eng::Engine::Get().AddInputEvent(std::move(input_event));
@@ -113,7 +109,7 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
         platform->pinch_detector_->GetPointers(v1, v2);
         v1 = eng::Engine::Get().ToPosition(v1);
         v2 = eng::Engine::Get().ToPosition(v2);
-        LOG << "pinch-start: " << v1 << " " << v2;
+        // DLOG << "pinch-start: " << v1 << " " << v2;
         auto input_event = std::make_unique<eng::InputEvent>(
             eng::InputEvent::kPinchStart, v1 * Vector2(1, -1),
             v2 * Vector2(1, -1));
@@ -126,7 +122,7 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
         platform->pinch_detector_->GetPointers(v1, v2);
         v1 = eng::Engine::Get().ToPosition(v1);
         v2 = eng::Engine::Get().ToPosition(v2);
-        LOG << "pinch: " << v1 << " " << v2;
+        // DLOG << "pinch: " << v1 << " " << v2;
         auto input_event = std::make_unique<eng::InputEvent>(
             eng::InputEvent::kPinch, v1 * Vector2(1, -1),
             v2 * Vector2(1, -1));
@@ -222,11 +218,6 @@ void Platform::Initialize(android_app* app) {
   app->onInputEvent = Platform::HandleInput;
 
   Update();
-}
-
-void Platform::Shutdown() {
-  LOG << "Shutting down platform.";
-  eng::Engine::Get().GetRenderer().Shutdown();
 }
 
 void Platform::Update() {

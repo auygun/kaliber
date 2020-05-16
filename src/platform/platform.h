@@ -9,7 +9,6 @@
 
 #if defined(__ANDROID__)
 struct android_app;
-struct ANativeWindow;
 struct AInputEvent;
 
 namespace ndk_helper {
@@ -39,10 +38,6 @@ class Platform {
   int GetDeviceDpi() const { return device_dpi_; }
 
   const std::string& GetRootPath() const { return root_path_; }
-
-#if defined(__ANDROID__)
-  ANativeWindow* GetNativeWindow();
-#endif
 
   static class InternalError : public std::exception {
   } internal_error;

@@ -12,11 +12,6 @@ bool Renderer::Init(ANativeWindow* window) {
   return StartWorker();
 }
 
-bool Renderer::Init() {
-  // Unreachable code.
-  assert(false);
-}
-
 void Renderer::Shutdown() {
   TerminateWorker();
 }
@@ -35,7 +30,7 @@ bool Renderer::InitInternal() {
   } else {
     // initialize OpenGL ES and EGL
     if (EGL_SUCCESS == gl_context->Resume(window_)) {
-      ContextLost();
+      ContextLost(); // TODO: Should be called from the main thread.
     } else {
       return false;
     }

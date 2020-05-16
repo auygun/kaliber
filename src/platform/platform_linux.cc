@@ -26,10 +26,6 @@ void Platform::Initialize() {
   XSetWMProtocols(display, window, &WM_DELETE_WINDOW, 1);
 }
 
-void Platform::Shutdown() {
-  eng::Engine::Get().GetRenderer().Shutdown();
-}
-
 void Platform::Update() {
   Display* display = eng::Engine::Get().GetRenderer().display();
   if (!XPending(display))

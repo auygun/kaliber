@@ -8,6 +8,11 @@
 
 Platform::InternalError Platform::internal_error;
 
+void Platform::Shutdown() {
+  LOG << "Shutting down platform.";
+  eng::Engine::Get().GetRenderer().Shutdown();
+}
+
 void Platform::RunMainLoop() {
   if (!eng::Engine::Get().Init(this)) {
     printf("Failed to initialize the engine.\n");
