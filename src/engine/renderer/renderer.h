@@ -65,6 +65,16 @@ class Renderer {
 
   void TrimMemory();
 
+  int AcquireTextureResource(std::shared_ptr<const Image> image);
+  void ReturnTextureResource(int resource_id);
+  void KillUnusedResources(float delta_time);
+
+  void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
+
+  int screen_width() const { return screen_width_; }
+  int screen_height() const { return screen_height_; }
+  const Matrix4x4& projection() const { return projection_; }
+
   bool SupportsETC1() const { return texture_compression_.etc1; }
   bool SupportsDXT1() const { return texture_compression_.dxt1 ||
                                      texture_compression_.s3tc; }
@@ -72,12 +82,6 @@ class Renderer {
   bool SupportsATC() const { return texture_compression_.atc; }
 
   bool SupportsVAO() const { return vertex_array_objects_; }
-
-  void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
-
-  int screen_width() const { return screen_width_; }
-  int screen_height() const { return screen_height_; }
-  const Matrix4x4& projection() const { return projection_; }
 
   size_t num_frames_dropped() { return num_frames_dropped_; }
   size_t global_queue_size() { return global_queue_size_; }
@@ -129,6 +133,12 @@ class Renderer {
     std::unordered_map<std::string, GLuint> uniforms;
   };
 
+  struct TextureResource {
+    int resource_id = 0;
+    int ref_count = 0;
+    float time_to_die_ = 0.0f;
+  };
+
   Delegate* delegate_ = nullptr;
 
   TextureCompression texture_compression_;
@@ -141,6 +151,10 @@ class Renderer {
   std::unordered_map<int, GLuint> texture_map_;
   std::unordered_map<int, Geometry> geometry_map_;
   std::unordered_map<int, Shader> shader_map_;
+
+  std::unordered_map<std::string, TextureResource> texture_resources_;
+  // TODO: Recycle resource ids.
+  int last_texture_resource_id_ = 0;
 
 #ifdef THREADED_RENDERING
   // Global commands are independent from frames and guaranteed to be processed.

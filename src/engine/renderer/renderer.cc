@@ -138,6 +138,69 @@ void Renderer::TerminateWorker() {
 #endif // THREADED_RENDERING
 }
 
+int Renderer::AcquireTextureResource(std::shared_ptr<const Image> image) {
+  if (!image->IsImmutable()) {
+    DLOG << "Cannot acquire texture resource from mutable image.";
+    return 0;
+  }
+
+  int resource_id = 0;
+  if (image->GetName().empty()) {
+    resource_id = ++last_texture_resource_id_;
+  } else {
+    auto it = texture_resources_.find(image->GetName());
+    if (it != texture_resources_.end()) {
+      ++(it->second.ref_count);
+      return it->second.resource_id;
+    }
+    resource_id = ++last_texture_resource_id_;
+    texture_resources_[image->GetName()] = {resource_id, 1};
+    DLOG << "AcquireTextureResource - Create! asset: " << image->GetName()
+         << ", resource_id: " << resource_id;
+  }
+
+  auto cmd = std::make_unique<CmdCreateTexture>();
+  cmd->id = resource_id;
+  cmd->image = image;
+  EnqueueCommand(std::move(cmd));
+  return resource_id;
+}
+
+void Renderer::ReturnTextureResource(int resource_id) {
+  auto it = std::find_if(texture_resources_.begin(), texture_resources_.end(),
+      [resource_id](auto& p){ return p.second.resource_id == resource_id; });
+  if (it != texture_resources_.end()) {
+    assert(it->second.ref_count > 0);
+    if (--(it->second.ref_count) > 0)
+      return;
+    it->second.time_to_die_ = 5;
+    return;
+  }
+  auto cmd = std::make_unique<CmdDestoryTexture>();
+  cmd->id = resource_id;
+  EnqueueCommand(std::move(cmd));
+}
+
+void Renderer::KillUnusedResources(float delta_time) {
+  for (auto it = texture_resources_.begin(); it != texture_resources_.end();
+      ++it) {
+    if (it->second.ref_count > 0)
+      continue;
+
+    it->second.time_to_die_ -= delta_time;
+    if (it->second.time_to_die_ <= 0.0f) {
+      DLOG << "KillUnusedResources - Destroy! resource_id: "<<
+          it->second.resource_id;
+
+      auto cmd = std::make_unique<CmdDestoryTexture>();
+      cmd->id = it->second.resource_id;
+      EnqueueCommand(std::move(cmd));
+
+      it = texture_resources_.erase(it);
+    }
+  }
+}
+
 void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
 #ifdef THREADED_RENDERING
   if (cmd->global) {
@@ -819,6 +882,9 @@ void Renderer::Present() {
 
 void Renderer::ContextLost() {
   LOG << "Context lost.";
+
+  texture_resources_.clear();
+  last_texture_resource_id_ = 0;
 
   auto cmd = std::make_unique<CmdContextLost>();
   EnqueueCommand(std::move(cmd));

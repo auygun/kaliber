@@ -17,7 +17,7 @@ void Texture::Create(std::shared_ptr<const Image> image) {
   }
 
   Destroy();
-  resource_id_ = Engine::Get().AcquireTextureResource(image);
+  resource_id_ = Engine::Get().GetRenderer().AcquireTextureResource(image);
 }
 
 void Texture::Update(std::shared_ptr<const Image> image) {
@@ -38,7 +38,7 @@ void Texture::Update(std::shared_ptr<const Image> image) {
 
 void Texture::Destroy() {
   if (resource_id_) {
-    Engine::Get().ReturnTextureResource(resource_id_);
+    Engine::Get().GetRenderer().ReturnTextureResource(resource_id_);
     resource_id_ = 0;
   }
 }
