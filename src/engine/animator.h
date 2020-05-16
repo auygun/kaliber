@@ -80,25 +80,35 @@ class Animator {
   float movement_speed_ = 0;
   float movement_time_ = 0;
   Callback movement_cb_;
+  Callback pending_movement_cb_;
+  bool movement_in_cb_ = false;
 
   float rotation_target_ = 0;
   float rotation_speed_ = 0;
   float rotation_time_ = 0;
   Callback rotation_cb_;
+  Callback pending_rotation_cb_;
+  bool rotation_in_cb_ = false;
 
   Vector4 blending_target_ = {0, 0, 0, 0};
   float blending_speed_ = 0;
   float blending_time_ = 0;
   Callback blending_cb_;
+  Callback pending_blending_cb_;
+  bool blending_in_cb_ = false;
 
   int frame_count_ = 0;
   float frame_speed_ = 0;
   float frame_time_ = 0;
   Callback frame_cb_;
+  Callback pending_frame_cb_;
+  bool frame_in_cb_ = false;
 
   float timer_speed_ = 0;
   float timer_time_ = 0;
   Callback timer_cb_;
+  Callback pending_timer_cb_;
+  bool timer_in_cb_ = false;
 
   void UpdateMovement(float delta_time);
   void UpdateRotation(float delta_time);

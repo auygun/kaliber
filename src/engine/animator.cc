@@ -41,16 +41,36 @@ void Animator::Stop(int animation) {
 }
 
 void Animator::SetEndCallback(int animation, Callback cb) {
-  if ((animation & kMovement) != 0)
-    movement_cb_ = cb;
-  if ((animation & kRotation) != 0)
-    rotation_cb_ = cb;
-  if ((animation & kBlending) != 0)
-    blending_cb_ = cb;
-  if ((animation & kFrames) != 0)
-    frame_cb_ = cb;
-  if ((animation & kTimer) != 0)
-    timer_cb_ = cb;
+  if ((animation & kMovement) != 0) {
+    if (movement_in_cb_)
+      pending_movement_cb_ = std::move(cb);
+    else
+      movement_cb_ = std::move(cb);
+  }
+  if ((animation & kRotation) != 0) {
+    if (rotation_in_cb_)
+      pending_rotation_cb_ = std::move(cb);
+    else
+      rotation_cb_ = std::move(cb);
+  }
+  if ((animation & kBlending) != 0) {
+    if (blending_in_cb_)
+      pending_blending_cb_ = std::move(cb);
+    else
+      blending_cb_ = std::move(cb);
+  }
+  if ((animation & kFrames) != 0) {
+    if (frame_in_cb_)
+      pending_frame_cb_ = std::move(cb);
+    else
+      frame_cb_ = std::move(cb);
+  }
+  if ((animation & kTimer) != 0) {
+    if (timer_in_cb_)
+      pending_timer_cb_ = std::move(cb);
+    else
+      timer_cb_ = std::move(cb);
+  }
 }
 
 void Animator::SetMovement(Vector2 direction, float speed) {
@@ -125,8 +145,13 @@ void Animator::UpdateMovement(float delta_time) {
   if ((loop_flags_ & kMovement) == 0 && movement_time_ == 1.0f) {
     movement_time_ = 0;
     play_flags_ &= ~kMovement;
-    if (movement_cb_)
+    if (movement_cb_) {
+      movement_in_cb_ = true;
       movement_cb_();
+      movement_in_cb_ = false;
+      if (pending_movement_cb_)
+        movement_cb_ = std::move(pending_movement_cb_);
+    }
     return;
   }
 
@@ -141,8 +166,13 @@ void Animator::UpdateRotation(float delta_time) {
   if ((loop_flags_ & kRotation) == 0 && rotation_time_ == 1.0f) {
     rotation_time_ = 0;
     play_flags_ &= ~kRotation;
-    if (rotation_cb_)
+    if (rotation_cb_) {
+      rotation_in_cb_ = true;
       rotation_cb_();
+      rotation_in_cb_ = false;
+      if (pending_rotation_cb_)
+        rotation_cb_ = std::move(pending_rotation_cb_);
+    }
     return;
   }
 
@@ -157,8 +187,13 @@ void Animator::UpdateBlending(float delta_time) {
   if ((loop_flags_ & kBlending) == 0 && blending_time_ == 1.0f) {
     blending_time_ = 0;
     play_flags_ &= ~kBlending;
-    if (blending_cb_)
+    if (blending_cb_) {
+      blending_in_cb_ = true;
       blending_cb_();
+      blending_in_cb_ = false;
+      if (pending_blending_cb_)
+        blending_cb_ = std::move(pending_blending_cb_);
+    }
     return;
   }
 
@@ -173,8 +208,13 @@ void Animator::UpdateFrame(float delta_time) {
   if ((loop_flags_ & kFrames) == 0 && frame_time_ == 1.0f) {
     frame_time_ = 0;
     play_flags_ &= ~kFrames;
-    if (frame_cb_)
+    if (frame_cb_) {
+      frame_in_cb_ = true;
       frame_cb_();
+      frame_in_cb_ = false;
+      if (pending_frame_cb_)
+        frame_cb_ = std::move(pending_frame_cb_);
+    }
     return;
   } else if ((loop_flags_ & kFrames) != 0 && frame_time_ == 1.0f) {
     frame_time_ = 0;
@@ -189,8 +229,13 @@ void Animator::UpdateTimer(float delta_time) {
   if (timer_time_ == 1.0f) {
     timer_time_ = 0;
     play_flags_ &= ~kTimer;
-    if (timer_cb_)
+    if (timer_cb_) {
+      timer_in_cb_ = true;
       timer_cb_();
+      timer_in_cb_ = false;
+      if (pending_timer_cb_)
+        timer_cb_ = std::move(pending_timer_cb_);
+    }
     return;
   }
 
