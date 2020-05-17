@@ -4,7 +4,7 @@
 #include <string.h>
 #include <string>
 #include <cassert>
-#include "../base/file.h"
+#include "asset_loader.h"
 #include "../base/log.h"
 #include "../base/misc.h"
 
@@ -79,7 +79,7 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
   full_path += file_name;
 
   int file_size = 0;
-  std::unique_ptr<char[]> file_buffer = File::ReadWholeFile(full_path.c_str(),
+  std::unique_ptr<char[]> file_buffer = AssetLoader::ReadWholeFile(full_path.c_str(),
       Engine::Get().GetRootPath().c_str(), &file_size);
   if (!file_buffer) {
     LOG << "Failed to read file: " << file_name;

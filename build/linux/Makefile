@@ -64,8 +64,6 @@ objs_from_src_in = $(call objs_from_src, $(shell find $(1) -name "*.cc" -o -name
 ifneq ($(filter gltest,$(APPS)),)
 
 GLTEST_SRC := \
-  $(SRC_ROOT)/base/file_linux.cc \
-  $(SRC_ROOT)/base/file.cc \
   $(SRC_ROOT)/base/log.cc \
   $(SRC_ROOT)/base/random.cc \
   $(SRC_ROOT)/base/timer.cc \
@@ -76,6 +74,8 @@ GLTEST_SRC := \
   $(SRC_ROOT)/demo/sky_quad.cc \
   $(SRC_ROOT)/engine/animatable.cc \
   $(SRC_ROOT)/engine/animator.cc \
+  $(SRC_ROOT)/engine/asset_loader_linux.cc \
+  $(SRC_ROOT)/engine/asset_loader.cc \
   $(SRC_ROOT)/engine/engine.cc \
   $(SRC_ROOT)/engine/font.cc \
   $(SRC_ROOT)/engine/image_quad.cc \
