@@ -1,7 +1,6 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
-#include "../base/vecmath.h"
 #include "asset.h"
 #include <stdint.h>
 
@@ -20,14 +19,14 @@ class Image : public Asset{
 
   bool Load(const char* file_name, bool convertPow2 = true);
 
-  unsigned GetWidth() const { return width_; }
-  unsigned GetHeight() const { return height_; }
-  unsigned GetOriginalWidth() const { return original_width_; }
-  unsigned GetOriginalHeight() const { return original_height_; }
+  int GetWidth() const { return width_; }
+  int GetHeight() const { return height_; }
+  int GetOriginalWidth() const { return original_width_; }
+  int GetOriginalHeight() const { return original_height_; }
   Format GetFormat() const { return format_; }
   bool IsCompressed() const { return format_ > kRGBA32; }
 
-  unsigned GetSize() const;
+  int GetSize() const;
 
   const uint8_t* GetBuffer() const { return buffer_; }
   uint8_t* GetBuffer();
@@ -35,20 +34,13 @@ class Image : public Asset{
   void Clear(const float* rgba);
   void Gradient();
 
-  Vector2 GetUV() const { return uv_; }
-
-  void SetImmutable() { immutable_ = true; }
-  bool IsImmutable() const { return immutable_; }
-
  private:
   uint8_t* buffer_;
-  unsigned width_;
-  unsigned height_;
-  unsigned original_width_;
-  unsigned original_height_;
+  int width_;
+  int height_;
+  int original_width_;
+  int original_height_;
   Format format_;
-  Vector2 uv_ = {1, 1};
-  bool immutable_ = false;
 };
 
 }  // namespace eng

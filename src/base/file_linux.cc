@@ -23,12 +23,12 @@ bool File::Close() {
   return result;
 }
 
-unsigned File::GetSize() {
-  unsigned size = 0;
+int File::GetSize() {
+  int size = 0;
 
   if (file_) {
     if (!fseek(file_, 0, SEEK_END)) {
-      size = (unsigned)ftell(file_);
+      size = ftell(file_);
       rewind(file_);
     }
   }
@@ -36,9 +36,9 @@ unsigned File::GetSize() {
   return size;
 }
 
-unsigned File::Read(char* data, unsigned size) {
+int File::Read(char* data, int size) {
   if (file_)
-    return (unsigned)fread(data, 1, size, file_);
+    return fread(data, 1, size, file_);
 
   return 0;
 }

@@ -21,9 +21,9 @@ bool File::Open(const char* file_name, const char* root_path) {
     }
 
     // Try to find the file.
-    std::string fullName = "assets/";
-    fullName += file_name;
-    if (UNZ_OK != unzLocateFile(archive_, fullName.c_str(), 1)) {
+    std::string full_name = "assets/";
+    full_name += file_name;
+    if (UNZ_OK != unzLocateFile(archive_, full_name.c_str(), 1)) {
       LOG << "Failed to locate file in zip archive: " << file_name;
       break;
     }
@@ -63,11 +63,11 @@ bool File::Close() {
   return true;
 }
 
-unsigned File::GetSize() {
+int File::GetSize() {
   return uncompressed_size_;
 }
 
-unsigned File::Read(char* data, unsigned size) {
+int File::Read(char* data, int size) {
   // Uncompress data into the buffer.
   int result = unzReadCurrentFile(archive_, data, size);
   return result < size ? 0 : result;

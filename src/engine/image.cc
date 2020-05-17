@@ -18,14 +18,20 @@
 namespace eng {
 
 Image::Image()
-    : buffer_(NULL), width_(0), height_(0), format_(kRGBA32) {}
+    : buffer_(nullptr), width_(0), height_(0), format_(kRGBA32) {}
 
 Image::~Image() {
+  immutable_ = false;
   Destroy();
 }
 
 bool Image::Create(unsigned w, unsigned h) {
-  assert(!IsImmutable());
+  if (IsImmutable()) {
+    LOG << "Error: Image is immutable. Failed to create.";
+    return false;
+  }
+
+  Destroy();
 
   width_ = w;
   height_ = h;
@@ -36,13 +42,24 @@ bool Image::Create(unsigned w, unsigned h) {
 }
 
 void Image::Destroy() {
-  assert(!IsImmutable());
+  if (IsImmutable()) {
+    LOG << "Error: Image is immutable. Failed to destroy.";
+    return;
+  }
 
-  AlignedFree(buffer_);
+  if (buffer_) {
+    AlignedFree(buffer_);
+    buffer_ = nullptr;
+  }
 }
 
 void Image::Copy(const Image& image) {
-  assert(!IsImmutable());
+  if (IsImmutable()) {
+    LOG << "Error: Image is immutable. Failed to copy.";
+    return;
+  }
+
+  Destroy();
 
   if (image.buffer_) {
     unsigned size = image.GetSize();
@@ -54,56 +71,60 @@ void Image::Copy(const Image& image) {
   original_width_ = image.original_width_;
   original_height_ = image.original_height_;
   format_ = image.format_;
-  uv_ = image.uv_;
 }
 
 bool Image::Load(const char* file_name, bool convert_pow2) {
-  assert(!IsImmutable());
+  if (IsImmutable()) {
+    LOG << "Error: Image is immutable. Failed to load.";
+    return false;;
+  }
+
+  Destroy();
 
   SetName(file_name);
   
-  std::string fullPath = "images/";
-  fullPath += file_name;
+  std::string full_path = "images/";
+  full_path += file_name;
 
-  unsigned fileSize = 0;
-  char* fileBuffer = File::ReadWholeFile(fullPath.c_str(),
-      Engine::Get().GetRootPath().c_str(), &fileSize);
-  if (!fileBuffer) {
+  int file_size = 0;
+  char* file_buffer = File::ReadWholeFile(full_path.c_str(),
+      Engine::Get().GetRootPath().c_str(), &file_size);
+  if (!file_buffer) {
     LOG << "Failed to read file: " << file_name;
     return false;
   }
 
   int w, h, c;
-  buffer_ = (uint8_t*)stbi_load_from_memory((const stbi_uc*)fileBuffer,
-                                            fileSize, &w, &h, &c, 0);
+  buffer_ = (uint8_t*)stbi_load_from_memory((const stbi_uc*)file_buffer,
+                                            file_size, &w, &h, &c, 0);
   if (!buffer_) {
     LOG << "Failed to load image file: " << file_name;
     return false;
   }
 
-  uint8_t* convertedBuffer = NULL;
+  uint8_t* converted_buffer = NULL;
   switch (c) {
     case 1:
       // LOG("Converting image from 1 to 4 channels.\n");
       // Assume it's an intensity, duplicate it to RGB and fill A with opaque.
-      convertedBuffer = (uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t));
-      for (unsigned i = 0; i < w * h; ++i) {
-        convertedBuffer[i * 4 + 0] = buffer_[i];
-        convertedBuffer[i * 4 + 1] = buffer_[i];
-        convertedBuffer[i * 4 + 2] = buffer_[i];
-        convertedBuffer[i * 4 + 3] = 255;
+      converted_buffer = (uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t));
+      for (int i = 0; i < w * h; ++i) {
+        converted_buffer[i * 4 + 0] = buffer_[i];
+        converted_buffer[i * 4 + 1] = buffer_[i];
+        converted_buffer[i * 4 + 2] = buffer_[i];
+        converted_buffer[i * 4 + 3] = 255;
       }
       break;
 
     case 3:
       // LOG("Converting image from 3 to 4 channels.\n");
       // Add an opaque channel.
-      convertedBuffer = (uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t));
-      for (unsigned i = 0; i < w * h; ++i) {
-        convertedBuffer[i * 4 + 0] = buffer_[i * 3 + 0];
-        convertedBuffer[i * 4 + 1] = buffer_[i * 3 + 1];
-        convertedBuffer[i * 4 + 2] = buffer_[i * 3 + 2];
-        convertedBuffer[i * 4 + 3] = 255;
+      converted_buffer = (uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t));
+      for (int i = 0; i < w * h; ++i) {
+        converted_buffer[i * 4 + 0] = buffer_[i * 3 + 0];
+        converted_buffer[i * 4 + 1] = buffer_[i * 3 + 1];
+        converted_buffer[i * 4 + 2] = buffer_[i * 3 + 2];
+        converted_buffer[i * 4 + 3] = 255;
       }
       break;
 
@@ -117,71 +138,68 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
       return false;
   }
 
-  if (convertedBuffer) {
+  if (converted_buffer) {
     AlignedFree(buffer_);
-    buffer_ = convertedBuffer;
+    buffer_ = converted_buffer;
   }
 
-  original_width_ = width_ = (unsigned)w;
-  original_height_ = height_ = (unsigned)h;
+  original_width_ = width_ = (int)w;
+  original_height_ = height_ = (int)h;
 
   // Create a bigger canvas if needed to satisfy the pow2 dimension requirement.
   if (convert_pow2) {
-    unsigned newWidth = RoundUpToPow2(width_);
-    unsigned newHeight = RoundUpToPow2(height_);
-    if ((newWidth != width_) || (newHeight != height_)) {
+    int new_width = RoundUpToPow2(width_);
+    int new_height = RoundUpToPow2(height_);
+    if ((new_width != width_) || (new_height != height_)) {
       LOG << "Converting image " << file_name << " from ("
-          << width_ << ", " << height_ << ") to (" << newWidth << ", " << newHeight << ")";
+          << width_ << ", " << height_ << ") to (" << new_width << ", " << new_height << ")";
 
-      unsigned biggerSize = newWidth * newHeight * 4 * sizeof(uint8_t);
-      uint8_t* biggerBuffer = (uint8_t*)AlignedAlloc(biggerSize);
+      int bigger_size = new_width * new_height * 4 * sizeof(uint8_t);
+      uint8_t* bigger_buffer = (uint8_t*)AlignedAlloc(bigger_size);
 
       // Fill it with black.
-      memset(biggerBuffer, 0, biggerSize);
+      memset(bigger_buffer, 0, bigger_size);
 
       // Copy over the old bitmap.
 #if 0
       // Centered in the new bitmap.
-      int offsetX = (newWidth - width_) / 2;
-      int offsetY = (newHeight - height_) / 2;
-      for (unsigned y = 0; y < height_; ++y)
-        memcpy(biggerBuffer + (offsetX + (y + offsetY) * newWidth) * 4,
+      int offset_x = (new_width - width_) / 2;
+      int offset_y = (new_height - height_) / 2;
+      for (int y = 0; y < height_; ++y)
+        memcpy(bigger_buffer + (offset_x + (y + offset_y) * new_width) * 4,
                buffer_ + y * width_ * 4, width_ * 4);
 #else
-      for (unsigned y = 0; y < height_; ++y)
-        memcpy(biggerBuffer + (y * newWidth) * 4,
+      for (int y = 0; y < height_; ++y)
+        memcpy(bigger_buffer + (y * new_width) * 4,
                buffer_ + y * width_ * 4, width_ * 4);
 #endif
 
-      // Store the texture coordinate scaling.
-      uv_ = {width_ / (float)newWidth, height_ / (float)newHeight};
-
       // Swap the buffers and dimensions.
       AlignedFree(buffer_);
-      buffer_ = biggerBuffer;
-      width_ = newWidth;
-      height_ = newHeight;
+      buffer_ = bigger_buffer;
+      width_ = new_width;
+      height_ = new_height;
     }
   }
 
 #if 0  // Fill the alpha channel with transparent gradient alpha for testing
-  uint8_t   *modifyBuf = buffer;
-  for( int j = 0; j < height; ++j, modifyBuf += width * 4)
+  uint8_t* modifyBuf = buffer;
+  for (int j = 0; j < height; ++j, modifyBuf += width * 4)
   {
-    for( int i = 0; i < width; ++i)
+    for (int i = 0; i < width; ++i)
     {
       float dist = sqrt(float(i*i + j*j));
-      float alpha = (((dist > 0.0f ? dist : 0.0f) / sqrt((float)(width*width + height*height))) * 255.0f);
+      float alpha = (((dist > 0.0f ? dist : 0.0f) / sqrt((float)(width * width + height * height))) * 255.0f);
       modifyBuf[i * 4 + 3] = (unsigned char)alpha;
     }
   }
 #endif
 
-  delete[] fileBuffer;
+  delete[] file_buffer;
   return !!buffer_;
 }
 
-unsigned Image::GetSize() const {
+int Image::GetSize() const {
   switch (format_) {
     case kRGBA32:
       return width_ * height_ * 4;
@@ -199,20 +217,26 @@ unsigned Image::GetSize() const {
 }
 
 uint8_t* Image::GetBuffer() {
-  assert(!IsImmutable());
+  if (IsImmutable()) {
+    LOG << "Error: Image is immutable. Failed to return writable buffer.";
+    return nullptr;
+  }
 
   return buffer_;
 }
 
 void Image::Clear(const float* rgba) {
-  assert(!IsImmutable());
+  if (IsImmutable()) {
+    LOG << "Error: Image is immutable. Failed to clear.";
+    return;
+  }
 
   // Quantize the color to target resolution.
   uint8_t r = (uint8_t)(rgba[0] * 255.0f), g = (uint8_t)(rgba[1] * 255.0f),
           b = (uint8_t)(rgba[2] * 255.0f), a = (uint8_t)(rgba[3] * 255.0f);
 
   // Fill out the first line manually.
-  for (unsigned w = 0; w < width_; ++w) {
+  for (int w = 0; w < width_; ++w) {
     buffer_[w * 4 + 0] = r;
     buffer_[w * 4 + 1] = g;
     buffer_[w * 4 + 2] = b;
@@ -220,15 +244,18 @@ void Image::Clear(const float* rgba) {
   }
 
   // Copy the first line to the rest of them.
-  for (unsigned h = 1; h < height_; ++h)
+  for (int h = 1; h < height_; ++h)
     memcpy(buffer_ + h * width_ * 4, buffer_, width_ * 4);
 }
 
 void Image::Gradient() {
-  assert(!IsImmutable());
+  if (IsImmutable()) {
+    LOG << "Error: Image is immutable. Failed to apply gradient.";
+    return;
+  }
 
   // Fill out the first line manually.
-  for (unsigned x = 0; x < width_; ++x) {
+  for (int x = 0; x < width_; ++x) {
     uint8_t intensity = x > 255 ? 255 : x;
     buffer_[x * 4 + 0] = intensity;
     buffer_[x * 4 + 1] = intensity;
@@ -237,7 +264,7 @@ void Image::Gradient() {
   }
 
   // Copy the first line to the rest of them.
-  for (unsigned h = 1; h < height_; ++h)
+  for (int h = 1; h < height_; ++h)
     memcpy(buffer_ + h * width_ * 4, buffer_, width_ * 4);
 }
 

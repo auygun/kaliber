@@ -7,12 +7,14 @@
 #include "renderer/shader.h"
 #include "image_quad.h"
 #include <deque>
+#include <utility>
 #include <unordered_map>
 
 namespace eng {
 
 class Image;
 class Font;
+class ShaderCode;
 class Game;
 class InputEvent;
 class Renderer;
@@ -40,9 +42,10 @@ class Engine {
   Vector2 ToScale(const Vector2& vec);
   Vector2 ToPosition(const Vector2& vec);
 
-  // Returns immutable image that can be accessed between multiple threads
-  // without locking.
+  // Asset management. Image and shader assest are immutable and can be accessed
+  // between multiple threads without locking.
   std::shared_ptr<const Image> GetImageAsset(const std::string& name);
+  std::shared_ptr<const ShaderCode> GetShaderAsset(const std::string& name);
   std::shared_ptr<Font> GetFontAsset(const std::string& name);
 
   int AcquireTextureResource(std::shared_ptr<const Image> image);
@@ -88,7 +91,8 @@ class Engine {
   // TODO: Recycle resource ids.
   int last_texture_resource_id_ = 0;
 
-  std::unordered_map<std::string, std::shared_ptr<const Image>> image_assets_;
+  std::unordered_map<std::string, std::shared_ptr<Image>> image_assets_;
+  std::unordered_map<std::string, std::shared_ptr<ShaderCode>> shader_assets_;
   std::unordered_map<std::string, std::shared_ptr<Font>> font_assets_;
 
   Platform* platform_ = nullptr;

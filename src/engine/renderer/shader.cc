@@ -3,8 +3,8 @@
 #include "../../base/log.h"
 #include "render_command.h"
 #include "../engine.h"
+#include "../shader_code.h"
 #include <cstring>
-#include <memory>
 
 namespace eng {
 
@@ -14,31 +14,19 @@ Shader::~Shader() {
   Destroy();
 }
 
-bool Shader::Create(const std::string& name, const std::string& vertex_description) {
+bool Shader::Create(std::shared_ptr<const ShaderCode> code,
+                    const std::string& vertex_description) {
+  if (!code->IsImmutable()) {
+    DLOG << "Cannot create shader from mutable code.";
+    return false;
+  }
+
   Destroy();
-
-  std::unique_ptr<char[]> vertexSource;
-  std::unique_ptr<char[]> fragmentSource;
-
-  std::string vertexFileName = name;
-  vertexFileName += "_vertex.glsl";
-  vertexSource.reset(File::ReadWholeFile(vertexFileName.c_str(),
-      Engine::Get().GetRootPath().c_str(), NULL, true));
-  if (!vertexSource)
-    return false;
-
-  std::string fragmentFileName = name;
-  fragmentFileName += "_fragment.glsl";
-  fragmentSource.reset(File::ReadWholeFile(fragmentFileName.c_str(),
-      Engine::Get().GetRootPath().c_str(), NULL, true));
-  if (!fragmentSource)
-    return false;
 
   auto cmd = std::make_unique<CmdCreateShader>();
   resource_id_ = ++last_id;
   cmd->id = resource_id_;
-  cmd->fragment_source = std::move(fragmentSource);
-  cmd->vertex_source = std::move(vertexSource);
+  cmd->code = code;
   cmd->vertex_description = vertex_description;
   Engine::Get().EnqueueRenderCommand(std::move(cmd));
 

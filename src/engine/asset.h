@@ -13,8 +13,12 @@ class Asset {
   void SetName(const std::string& name) { name_ = name; }
   const std::string& GetName() const { return name_; }
 
- private:
+  void SetImmutable() { immutable_ = true; }
+  bool IsImmutable() const { return immutable_; }
+
+ protected:
   std::string name_;
+  bool immutable_ = false;
 };
 
 }  // namespace eng

@@ -11,21 +11,21 @@ namespace eng {
 class Font : public Asset {
  public:
   Font();
-  ~Font();
+  ~Font() override;
 
   bool Create(const std::string& font_name);
   void Destroy();
 
-  void CalculateBoundingBox(const char* text, int& width, int& height);
+  void CalculateBoundingBox(const char* text, int& width, int& height) const;
   void CalculateBoundingBox(const char* text,
                             int& x0,
                             int& y0,
                             int& x1,
-                            int& y1);
+                            int& y1) const;
 
-  void Print(int x, int y, const char* text, uint8_t* buffer, unsigned width);
+  void Print(int x, int y, const char* text, uint8_t* buffer, int width);
 
-  int GetLineHeight() { return line_height_; }
+  int GetLineHeight() const { return line_height_; }
 
  private:
   enum Constants {

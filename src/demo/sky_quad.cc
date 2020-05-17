@@ -2,17 +2,20 @@
 #include "../base/log.h"
 #include "../base/random.h"
 #include "../engine/engine.h"
+#include "../engine/shader_code.h"
 #include "../engine/renderer/geometry.h"
 #include <cassert>
 
 bool SkyQuad::Create() {
-  if (!shader_.Create("shaders/sky",
-                      eng::Engine::Get().GetVertexDescription())) {
+  eng::Engine& engine = eng::Engine::Get();
+
+  auto sky_code = engine.GetShaderAsset("sky");
+  if (!shader_.Create(sky_code, engine.GetVertexDescription())) {
     LOG << "Could not create sky shader.";
     return false;
   }
 
-  scale_ = eng::Engine::Get().GetScreenSize();
+  scale_ = engine.GetScreenSize();
   nebula_color_ = {0.962f, 0.308f, 0.112f};
 
   return true;

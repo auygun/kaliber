@@ -9,22 +9,23 @@
 
 namespace eng {
 
-Font::Font() : glyph_cache_(NULL) {}
+Font::Font() : glyph_cache_(nullptr) {}
 
 Font::~Font() {
+  immutable_ = false;
   Destroy();
 }
 
 bool Font::Create(const std::string& font_name) {
   Destroy();
 
-  std::string fullPath = "fonts/";
-  fullPath += font_name;
+  std::string full_path = "fonts/";
+  full_path += font_name;
 
   // Read the font file.
-  unsigned bufferSize = 0;
-  char* buffer = File::ReadWholeFile(fullPath.c_str(),
-      Engine::Get().GetRootPath().c_str(), &bufferSize);
+  int buffer_size = 0;
+  char* buffer = File::ReadWholeFile(full_path.c_str(),
+      Engine::Get().GetRootPath().c_str(), &buffer_size);
   if (!buffer) {
     LOG << "Failed to read font file.";
     return false;
@@ -64,8 +65,10 @@ bool Font::Create(const std::string& font_name) {
 }
 
 void Font::Destroy() {
-  delete[] glyph_cache_;
-  glyph_cache_ = NULL;
+  if (glyph_cache_) {
+    delete[] glyph_cache_;
+    glyph_cache_ = NULL;
+  }
 }
 
 static void StretchBlit_I8_to_RGBA32(int dst_x0,
@@ -124,7 +127,7 @@ void Font::CalculateBoundingBox(const char* text,
                                  int& x0,
                                  int& y0,
                                  int& x1,
-                                 int& y1) {
+                                 int& y1) const {
   x0 = 0;
   y0 = 0;
   x1 = 0;
@@ -154,7 +157,9 @@ void Font::CalculateBoundingBox(const char* text,
   }
 }
 
-void Font::CalculateBoundingBox(const char* text, int& width, int& height) {
+void Font::CalculateBoundingBox(const char* text,
+                                int& width,
+                                int& height) const {
   int x0, y0, x1, y1;
   CalculateBoundingBox(text, x0, y0, x1, y1);
   width = x1 - x0;
@@ -166,7 +171,7 @@ void Font::Print(int x,
                   int y,
                   const char* text,
                   uint8_t* buffer,
-                  unsigned width) {
+                  int width) {
   // LOG("Font::Print() = %s\n", text);
 
   float fx = (float)x, fy = (float)y + (float)vertical_shift_;

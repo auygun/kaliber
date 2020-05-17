@@ -3,6 +3,7 @@
 #include "../base/random.h"
 #include "platform/platform.h"
 #include "image.h"
+#include "shader_code.h"
 #include "font.h"
 #include "renderer/renderer.h"
 #include "renderer/render_command.h"
@@ -135,6 +136,20 @@ std::shared_ptr<const Image> Engine::GetImageAsset(const std::string& name) {
   return image;
 }
 
+std::shared_ptr<const ShaderCode> Engine::GetShaderAsset(const std::string& name) {
+  auto it = shader_assets_.find(name);
+  if (it != shader_assets_.end())
+    return it->second;
+
+  auto shader_code = std::make_shared<ShaderCode>();
+  if (!shader_code->Load(name.c_str()))
+    return nullptr;
+  shader_code->SetImmutable();
+
+  shader_assets_[name] = shader_code;
+  return shader_code;
+}
+
 std::shared_ptr<Font> Engine::GetFontAsset(const std::string& name) {
   auto it = font_assets_.find(name);
   if (it != font_assets_.end())
@@ -244,14 +259,15 @@ void Engine::ContextLost() {
 
 bool Engine::CreateRenderResources() {
   // Create the shader we can reuse for texture rendering.
-  if (!pass_through_shader_.Create("shaders/pass_through",
-      vertex_description)) {
+  auto pts_code = GetShaderAsset("pass_through");
+  if (!pass_through_shader_.Create(pts_code, vertex_description)) {
     LOG << "Could not create pass through shader.";
     return false;
   }
 
   // Create the shader we can reuse for solid rendering.
-  if (!solid_shader_.Create("shaders/solid", vertex_description)) {
+  auto ss_code = GetShaderAsset("solid");
+  if (!solid_shader_.Create(ss_code, vertex_description)) {
     LOG << "Could not create solid pass through shader.";
     return false;
   }

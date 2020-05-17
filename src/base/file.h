@@ -7,6 +7,7 @@
 #elif defined(__linux__)
 #include <stdio.h>
 #endif
+#include <memory>
 
 class File {
  public:
@@ -16,19 +17,19 @@ class File {
   bool Open(const char* file_name, const char* root_path);
   bool Close();
 
-  unsigned GetSize();
+  int GetSize();
 
-  unsigned Read(char* data, unsigned size);
+  int Read(char* data, int size);
 
   static char* ReadWholeFile(const char* file_name,
                              const char* root_path,
-                             unsigned* length = 0,
+                             int* length = 0,
                              bool null_terminate = false);
 
  private:
 #if defined(__ANDROID__)
   unzFile archive_;
-  unsigned uncompressed_size_;
+  int uncompressed_size_;
 #elif defined(__linux)
   FILE* file_;
 #endif
