@@ -221,8 +221,6 @@ void Player::SetupWeapons() {
 }
 
 void Player::UpdateTarget() {
-  assert(active_weapon_ != kDamageType_Invalid);
-
   if (IsFiring(active_weapon_))
     return;
 
@@ -247,7 +245,8 @@ void Player::DragStart(const Vector2& pos) {
 }
 
 void Player::Drag(const Vector2& pos) {
-  assert(active_weapon_ != kDamageType_Invalid);
+  if (active_weapon_ == kDamageType_Invalid)
+    return;
 
   drag_end_ = pos;
   drag_sign_[active_weapon_].SetOffset(drag_end_);
@@ -264,7 +263,8 @@ void Player::Drag(const Vector2& pos) {
 }
 
 void Player::DragEnd() {
-  assert(active_weapon_ != kDamageType_Invalid);
+  if (active_weapon_ == kDamageType_Invalid)
+    return;
 
   DamageType type = active_weapon_;
   active_weapon_ = kDamageType_Invalid;
@@ -291,7 +291,8 @@ void Player::DragEnd() {
 }
 
 void Player::DragCancel() {
-  assert(active_weapon_ != kDamageType_Invalid);
+  if (active_weapon_ == kDamageType_Invalid)
+    return;
 
   DamageType type = active_weapon_;
   active_weapon_ = kDamageType_Invalid;
