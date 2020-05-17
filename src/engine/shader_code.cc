@@ -1,6 +1,6 @@
 #include "shader_code.h"
 #include "engine.h"
-#include "asset_loader.h"
+#include "../base/asset_loader.h"
 #include "../base/log.h"
 
 namespace eng {

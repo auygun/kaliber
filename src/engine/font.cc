@@ -1,7 +1,7 @@
 #include "font.h"
 #include "engine.h"
 #include <stdint.h>
-#include "asset_loader.h"
+#include "../base/asset_loader.h"
 #include "../base/log.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION

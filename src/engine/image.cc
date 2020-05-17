@@ -4,7 +4,7 @@
 #include <string.h>
 #include <string>
 #include <cassert>
-#include "asset_loader.h"
+#include "../base/asset_loader.h"
 #include "../base/log.h"
 #include "../base/misc.h"
 

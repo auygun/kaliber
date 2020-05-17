@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <string>
 #include "asset_loader.h"
-#include "../base/log.h"
+#include "log.h"
 
 AssetLoader::AssetLoader() = default;
 

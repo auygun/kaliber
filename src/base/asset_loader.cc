@@ -1,5 +1,5 @@
 #include "asset_loader.h"
-#include "../base/log.h"
+#include "log.h"
 
 std::unique_ptr<char[]> AssetLoader::ReadWholeFile(const char* file_name,
                                                    const char* root_path,

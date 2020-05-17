@@ -8,7 +8,7 @@
 #include <stdio.h>
 #endif
 #include <memory>
-#include "../base/file.h"
+#include "file.h"
 
 class AssetLoader {
  public:
