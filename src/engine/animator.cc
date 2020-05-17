@@ -42,34 +42,44 @@ void Animator::Stop(int animation) {
 
 void Animator::SetEndCallback(int animation, Callback cb) {
   if ((animation & kMovement) != 0) {
-    if (movement_in_cb_)
-      pending_movement_cb_ = std::move(cb);
-    else
+    if (inside_cb_ == kMovement) {
+      has_pending_cb_ = true;
+      pending_cb_ = std::move(cb);
+    } else {
       movement_cb_ = std::move(cb);
+    }
   }
   if ((animation & kRotation) != 0) {
-    if (rotation_in_cb_)
-      pending_rotation_cb_ = std::move(cb);
-    else
+    if (inside_cb_ == kRotation) {
+      has_pending_cb_ = true;
+      pending_cb_ = std::move(cb);
+    } else {
       rotation_cb_ = std::move(cb);
+    }
   }
   if ((animation & kBlending) != 0) {
-    if (blending_in_cb_)
-      pending_blending_cb_ = std::move(cb);
-    else
+    if (inside_cb_ == kBlending) {
+      has_pending_cb_ = true;
+      pending_cb_ = std::move(cb);
+    } else {
       blending_cb_ = std::move(cb);
+    }
   }
   if ((animation & kFrames) != 0) {
-    if (frame_in_cb_)
-      pending_frame_cb_ = std::move(cb);
-    else
+    if (inside_cb_ == kFrames) {
+      has_pending_cb_ = true;
+      pending_cb_ = std::move(cb);
+    } else {
       frame_cb_ = std::move(cb);
+    }
   }
   if ((animation & kTimer) != 0) {
-    if (timer_in_cb_)
-      pending_timer_cb_ = std::move(cb);
-    else
+    if (inside_cb_ == kTimer) {
+      has_pending_cb_ = true;
+      pending_cb_ = std::move(cb);
+    } else {
       timer_cb_ = std::move(cb);
+    }
   }
 }
 
@@ -146,11 +156,13 @@ void Animator::UpdateMovement(float delta_time) {
     movement_time_ = 0;
     play_flags_ &= ~kMovement;
     if (movement_cb_) {
-      movement_in_cb_ = true;
+      inside_cb_ = kMovement;
       movement_cb_();
-      movement_in_cb_ = false;
-      if (pending_movement_cb_)
-        movement_cb_ = std::move(pending_movement_cb_);
+      inside_cb_ = kNone;
+      if (has_pending_cb_) {
+        has_pending_cb_ = false;
+        movement_cb_ = std::move(pending_cb_);
+      }
     }
     return;
   }
@@ -167,11 +179,13 @@ void Animator::UpdateRotation(float delta_time) {
     rotation_time_ = 0;
     play_flags_ &= ~kRotation;
     if (rotation_cb_) {
-      rotation_in_cb_ = true;
+      inside_cb_ = kRotation;
       rotation_cb_();
-      rotation_in_cb_ = false;
-      if (pending_rotation_cb_)
-        rotation_cb_ = std::move(pending_rotation_cb_);
+      inside_cb_ = kNone;
+      if (has_pending_cb_) {
+        has_pending_cb_ = false;
+        rotation_cb_ = std::move(pending_cb_);
+      }
     }
     return;
   }
@@ -188,11 +202,13 @@ void Animator::UpdateBlending(float delta_time) {
     blending_time_ = 0;
     play_flags_ &= ~kBlending;
     if (blending_cb_) {
-      blending_in_cb_ = true;
+      inside_cb_ = kBlending;
       blending_cb_();
-      blending_in_cb_ = false;
-      if (pending_blending_cb_)
-        blending_cb_ = std::move(pending_blending_cb_);
+      inside_cb_ = kNone;
+      if (has_pending_cb_) {
+        has_pending_cb_ = false;
+        blending_cb_ = std::move(pending_cb_);
+      }
     }
     return;
   }
@@ -209,11 +225,13 @@ void Animator::UpdateFrame(float delta_time) {
     frame_time_ = 0;
     play_flags_ &= ~kFrames;
     if (frame_cb_) {
-      frame_in_cb_ = true;
+      inside_cb_ = kFrames;
       frame_cb_();
-      frame_in_cb_ = false;
-      if (pending_frame_cb_)
-        frame_cb_ = std::move(pending_frame_cb_);
+      inside_cb_ = kNone;
+      if (has_pending_cb_) {
+        has_pending_cb_ = false;
+        frame_cb_ = std::move(pending_cb_);
+      }
     }
     return;
   } else if ((loop_flags_ & kFrames) != 0 && frame_time_ == 1.0f) {
@@ -230,11 +248,13 @@ void Animator::UpdateTimer(float delta_time) {
     timer_time_ = 0;
     play_flags_ &= ~kTimer;
     if (timer_cb_) {
-      timer_in_cb_ = true;
+      inside_cb_ = kTimer;
       timer_cb_();
-      timer_in_cb_ = false;
-      if (pending_timer_cb_)
-        timer_cb_ = std::move(pending_timer_cb_);
+      inside_cb_ = kNone;
+      if (has_pending_cb_) {
+        has_pending_cb_ = false;
+        timer_cb_ = std::move(pending_cb_);
+      }
     }
     return;
   }
