@@ -31,7 +31,7 @@ bool Engine::Init(Platform* platform) {
   renderer_ = platform->GetRenderer();
   renderer_->SetContextLostCB(std::bind(&Engine::ContextLost, this));
 
-  system_font_ = GetFontAsset("Roboto-Regular.ttf");
+  system_font_ = GetFontAsset("engine/Roboto-Regular.ttf");
   if (!system_font_) {
     LOG << "Failed to create the font.";
     return false;
@@ -259,14 +259,14 @@ void Engine::ContextLost() {
 
 bool Engine::CreateRenderResources() {
   // Create the shader we can reuse for texture rendering.
-  auto pts_code = GetShaderAsset("pass_through");
+  auto pts_code = GetShaderAsset("engine/pass_through");
   if (!pass_through_shader_.Create(pts_code, vertex_description)) {
     LOG << "Could not create pass through shader.";
     return false;
   }
 
   // Create the shader we can reuse for solid rendering.
-  auto ss_code = GetShaderAsset("solid");
+  auto ss_code = GetShaderAsset("engine/solid");
   if (!solid_shader_.Create(ss_code, vertex_description)) {
     LOG << "Could not create solid pass through shader.";
     return false;
