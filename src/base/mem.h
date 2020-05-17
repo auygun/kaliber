@@ -1,12 +1,31 @@
 #ifndef MEM_H
 #define MEM_H
 
-#include <assert.h>
-#include <stdlib.h>
+#include <cassert>
+#include <cstdlib>
+#include <memory>
 
 #if defined(__ANDROID__)
 #include <malloc.h>
 #endif
+
+#define ALIGN_MEM(alignment) __attribute__((aligned(alignment)))
+
+namespace internal {
+
+struct ScopedAlignedFree {
+  inline void operator()(void* x) const {
+    if (x)
+      free(x);
+  }
+};
+
+} // namespace internal
+
+template <typename T>
+struct AlignedMem {
+  using Scopped = std::unique_ptr<T, internal::ScopedAlignedFree>;
+};
 
 inline void* AlignedAlloc(size_t size) {
   const size_t kAlignment = 16;
@@ -23,8 +42,6 @@ inline void* AlignedAlloc(size_t size) {
   return ptr;
 }
 
-#define AlignedFree(mem) free(mem)
-
-#define ALIGN_MEM(alignment) __attribute__((aligned(alignment)))
+inline void AlignedFree(void* mem) { free(mem); }
 
 #endif  // MEM_H

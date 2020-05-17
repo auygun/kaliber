@@ -6,7 +6,6 @@
 #include <cassert>
 #include "../base/file.h"
 #include "../base/log.h"
-#include "../base/mem.h"
 #include "../base/misc.h"
 
 // This 3rd party library is written in C and uses malloc, which means that we
@@ -17,13 +16,9 @@
 
 namespace eng {
 
-Image::Image()
-    : buffer_(nullptr), width_(0), height_(0), format_(kRGBA32) {}
+Image::Image() = default;
 
-Image::~Image() {
-  immutable_ = false;
-  Destroy();
-}
+Image::~Image() = default;
 
 bool Image::Create(unsigned w, unsigned h) {
   if (IsImmutable()) {
@@ -37,7 +32,7 @@ bool Image::Create(unsigned w, unsigned h) {
   height_ = h;
   original_width_ = w;
   original_height_ = h;
-  buffer_ = (uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t));
+  buffer_.reset((uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t)));
   return !!buffer_;
 }
 
@@ -47,10 +42,7 @@ void Image::Destroy() {
     return;
   }
 
-  if (buffer_) {
-    AlignedFree(buffer_);
-    buffer_ = nullptr;
-  }
+  buffer_.reset();
 }
 
 void Image::Copy(const Image& image) {
@@ -63,8 +55,8 @@ void Image::Copy(const Image& image) {
 
   if (image.buffer_) {
     unsigned size = image.GetSize();
-    buffer_ = (uint8_t*)AlignedAlloc(size);
-    memcpy(buffer_, image.buffer_, size);
+    buffer_.reset((uint8_t*)AlignedAlloc(size));
+    memcpy(buffer_.get(), image.buffer_.get(), size);
   }
   width_ = image.width_;
   height_ = image.height_;
@@ -87,7 +79,7 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
   full_path += file_name;
 
   int file_size = 0;
-  char* file_buffer = File::ReadWholeFile(full_path.c_str(),
+  std::unique_ptr<char[]> file_buffer = File::ReadWholeFile(full_path.c_str(),
       Engine::Get().GetRootPath().c_str(), &file_size);
   if (!file_buffer) {
     LOG << "Failed to read file: " << file_name;
@@ -95,8 +87,8 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
   }
 
   int w, h, c;
-  buffer_ = (uint8_t*)stbi_load_from_memory((const stbi_uc*)file_buffer,
-                                            file_size, &w, &h, &c, 0);
+  buffer_.reset((uint8_t*)stbi_load_from_memory((const stbi_uc*)file_buffer.get(),
+                                                file_size, &w, &h, &c, 0));
   if (!buffer_) {
     LOG << "Failed to load image file: " << file_name;
     return false;
@@ -139,8 +131,7 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
   }
 
   if (converted_buffer) {
-    AlignedFree(buffer_);
-    buffer_ = converted_buffer;
+    buffer_.reset(converted_buffer);
   }
 
   original_width_ = width_ = (int)w;
@@ -167,16 +158,15 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
       int offset_y = (new_height - height_) / 2;
       for (int y = 0; y < height_; ++y)
         memcpy(bigger_buffer + (offset_x + (y + offset_y) * new_width) * 4,
-               buffer_ + y * width_ * 4, width_ * 4);
+               buffer_.get() + y * width_ * 4, width_ * 4);
 #else
       for (int y = 0; y < height_; ++y)
         memcpy(bigger_buffer + (y * new_width) * 4,
-               buffer_ + y * width_ * 4, width_ * 4);
+               buffer_.get() + y * width_ * 4, width_ * 4);
 #endif
 
       // Swap the buffers and dimensions.
-      AlignedFree(buffer_);
-      buffer_ = bigger_buffer;
+      buffer_.reset(bigger_buffer);
       width_ = new_width;
       height_ = new_height;
     }
@@ -195,7 +185,6 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
   }
 #endif
 
-  delete[] file_buffer;
   return !!buffer_;
 }
 
@@ -222,7 +211,7 @@ uint8_t* Image::GetBuffer() {
     return nullptr;
   }
 
-  return buffer_;
+  return buffer_.get();
 }
 
 void Image::Clear(const float* rgba) {
@@ -237,15 +226,15 @@ void Image::Clear(const float* rgba) {
 
   // Fill out the first line manually.
   for (int w = 0; w < width_; ++w) {
-    buffer_[w * 4 + 0] = r;
-    buffer_[w * 4 + 1] = g;
-    buffer_[w * 4 + 2] = b;
-    buffer_[w * 4 + 3] = a;
+    buffer_.get()[w * 4 + 0] = r;
+    buffer_.get()[w * 4 + 1] = g;
+    buffer_.get()[w * 4 + 2] = b;
+    buffer_.get()[w * 4 + 3] = a;
   }
 
   // Copy the first line to the rest of them.
   for (int h = 1; h < height_; ++h)
-    memcpy(buffer_ + h * width_ * 4, buffer_, width_ * 4);
+    memcpy(buffer_.get() + h * width_ * 4, buffer_.get(), width_ * 4);
 }
 
 void Image::Gradient() {
@@ -257,15 +246,15 @@ void Image::Gradient() {
   // Fill out the first line manually.
   for (int x = 0; x < width_; ++x) {
     uint8_t intensity = x > 255 ? 255 : x;
-    buffer_[x * 4 + 0] = intensity;
-    buffer_[x * 4 + 1] = intensity;
-    buffer_[x * 4 + 2] = intensity;
-    buffer_[x * 4 + 3] = 255;
+    buffer_.get()[x * 4 + 0] = intensity;
+    buffer_.get()[x * 4 + 1] = intensity;
+    buffer_.get()[x * 4 + 2] = intensity;
+    buffer_.get()[x * 4 + 3] = 255;
   }
 
   // Copy the first line to the rest of them.
   for (int h = 1; h < height_; ++h)
-    memcpy(buffer_ + h * width_ * 4, buffer_, width_ * 4);
+    memcpy(buffer_.get() + h * width_ * 4, buffer_.get(), width_ * 4);
 }
 
 }  // namespace eng

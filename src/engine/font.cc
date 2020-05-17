@@ -9,12 +9,9 @@
 
 namespace eng {
 
-Font::Font() : glyph_cache_(nullptr) {}
+Font::Font() = default;
 
-Font::~Font() {
-  immutable_ = false;
-  Destroy();
-}
+Font::~Font() = default;
 
 bool Font::Create(const std::string& font_name) {
   Destroy();
@@ -24,7 +21,7 @@ bool Font::Create(const std::string& font_name) {
 
   // Read the font file.
   int buffer_size = 0;
-  char* buffer = File::ReadWholeFile(full_path.c_str(),
+  std::unique_ptr<char[]> buffer = File::ReadWholeFile(full_path.c_str(),
       Engine::Get().GetRootPath().c_str(), &buffer_size);
   if (!buffer) {
     LOG << "Failed to read font file.";
@@ -36,7 +33,7 @@ bool Font::Create(const std::string& font_name) {
     // Allocate a cache bitmap for the glyphs.
     // This is one 8 bit channel intensity data.
     // It's tighly packed.
-    glyph_cache_ = new uint8_t[kGlyphSize * kGlyphSize];
+    glyph_cache_ = std::make_unique<uint8_t[]>(kGlyphSize * kGlyphSize);
     if (!glyph_cache_) {
       LOG << "Failed to allocate glyph cache.";
       break;
@@ -44,8 +41,8 @@ bool Font::Create(const std::string& font_name) {
 
     // Rasterize glyphs and pack them into the cache.
     const float kFontHeight = 32.0f;
-    if (stbtt_BakeFontBitmap((unsigned char*)buffer, 0, kFontHeight,
-                             glyph_cache_, kGlyphSize, kGlyphSize, kFirstChar,
+    if (stbtt_BakeFontBitmap((unsigned char*)buffer.get(), 0, kFontHeight,
+                             glyph_cache_.get(), kGlyphSize, kGlyphSize, kFirstChar,
                              kNumChars, glyph_info_) <= 0) {
       LOG << "Failed to bake the glyph cache: " << result;
       break;
@@ -53,8 +50,6 @@ bool Font::Create(const std::string& font_name) {
 
     result = true;
   } while (0);
-
-  delete[] buffer;
 
   int x0, y0, x1, y1;
   CalculateBoundingBox("Ilfgjy", x0, y0, x1, y1);
@@ -65,10 +60,8 @@ bool Font::Create(const std::string& font_name) {
 }
 
 void Font::Destroy() {
-  if (glyph_cache_) {
-    delete[] glyph_cache_;
-    glyph_cache_ = NULL;
-  }
+  if (glyph_cache_)
+    glyph_cache_.reset();
 }
 
 static void StretchBlit_I8_to_RGBA32(int dst_x0,
@@ -190,7 +183,7 @@ void Font::Print(int x,
           iu1 = (int)(q.s1 * kGlyphSize), iv1 = (int)(q.t1 * kGlyphSize);
 
       StretchBlit_I8_to_RGBA32(ix0, iy0, ix1, iy1, iu0, iv0, iu1, iv1, buffer,
-                               width, glyph_cache_, kGlyphSize);
+                               width, glyph_cache_.get(), kGlyphSize);
 
       ++text;
     }

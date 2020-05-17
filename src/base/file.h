@@ -9,29 +9,43 @@
 #endif
 #include <memory>
 
+namespace internal {
+
+struct ScopedFILECloser {
+  inline void operator()(FILE* x) const {
+    if (x)
+      fclose(x);
+  }
+};
+
+} // namespace internal
+
+// Automatically closes file.
+using ScopedFILE = std::unique_ptr<FILE, internal::ScopedFILECloser>;
+
 class File {
  public:
   File();
   ~File();
 
   bool Open(const char* file_name, const char* root_path);
-  bool Close();
+  void Close();
 
   int GetSize();
 
   int Read(char* data, int size);
 
-  static char* ReadWholeFile(const char* file_name,
-                             const char* root_path,
-                             int* length = 0,
-                             bool null_terminate = false);
+  static std::unique_ptr<char[]> ReadWholeFile(const char* file_name,
+                                               const char* root_path,
+                                               int* length = 0,
+                                               bool null_terminate = false);
 
  private:
 #if defined(__ANDROID__)
-  unzFile archive_;
-  int uncompressed_size_;
+  unzFile archive_ = 0;
+  int uncompressed_size_ = 0;
 #elif defined(__linux)
-  FILE* file_;
+  ScopedFILE file_;
 #endif
 };
 

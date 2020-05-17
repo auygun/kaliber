@@ -1,11 +1,9 @@
-#if defined(__ANDROID__)
-
 #include <assert.h>
 #include <string>
 #include "file.h"
 #include "log.h"
 
-File::File() : archive_(0), uncompressed_size_(0) {}
+File::File() = default;
 
 File::~File() {
   Close();
@@ -50,7 +48,7 @@ bool File::Open(const char* file_name, const char* root_path) {
   return false;
 }
 
-bool File::Close() {
+void File::Close() {
   if (archive_) {
     // This could potentially be called without having opened a file, but that
     // should be a harmless nop.
@@ -59,8 +57,6 @@ bool File::Close() {
     unzClose(archive_);
     archive_ = 0;
   }
-
-  return true;
 }
 
 int File::GetSize() {
@@ -72,5 +68,3 @@ int File::Read(char* data, int size) {
   int result = unzReadCurrentFile(archive_, data, size);
   return result < size ? 0 : result;
 }
-
-#endif  // __ANDROID__

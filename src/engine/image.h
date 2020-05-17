@@ -2,6 +2,7 @@
 #define IMAGE_H
 
 #include "asset.h"
+#include "../base/mem.h"
 #include <stdint.h>
 
 namespace eng {
@@ -28,19 +29,19 @@ class Image : public Asset{
 
   int GetSize() const;
 
-  const uint8_t* GetBuffer() const { return buffer_; }
+  const uint8_t* GetBuffer() const { return buffer_.get(); }
   uint8_t* GetBuffer();
 
   void Clear(const float* rgba);
   void Gradient();
 
  private:
-  uint8_t* buffer_;
-  int width_;
-  int height_;
-  int original_width_;
-  int original_height_;
-  Format format_;
+  AlignedMem<uint8_t[]>::Scopped buffer_;
+  int width_ = 0;
+  int height_ = 0;
+  int original_width_ = 0;
+  int original_height_ = 0;
+  Format format_ = kRGBA32;
 };
 
 }  // namespace eng

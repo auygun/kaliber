@@ -5,6 +5,7 @@
 #include "asset.h"
 #include "../third_party/stb/stb_truetype.h"
 #include <string>
+#include <memory>
 
 namespace eng {
 
@@ -34,11 +35,11 @@ class Font : public Asset {
     kNumChars = 96    // Covers almost all ASCII chars.
   };
 
-  uint8_t* glyph_cache_;                   // Image data.
+  std::unique_ptr<uint8_t[]> glyph_cache_; // Image data.
   stbtt_bakedchar glyph_info_[kNumChars];  // Coordinates and advance.
 
-  int line_height_;
-  int vertical_shift_;
+  int line_height_ = 0;
+  int vertical_shift_ = 0;
 };
 
 }  // namespace eng
