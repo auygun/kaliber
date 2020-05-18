@@ -3,7 +3,6 @@
 
 #include "../../base/hash.h"
 #include "../../base/vecmath.h"
-#include "types.h"
 #include <memory>
 #include <string>
 #include <array>
@@ -12,6 +11,7 @@ namespace eng {
 
 class Image;
 class ShaderSource;
+class Mesh;
 
 // Global render commands are guaranteed to be processed. Others commands are
 // frame specific and can be discared by the renderer.
@@ -74,13 +74,7 @@ RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdCreateGeometry, true)
   int id;
-  Primitive primitive;
-  std::string vertex_description;
-  int num_vertices;
-  const void* vertices;
-  unsigned int index_description;
-  int num_indices;
-  const void *indices;
+  std::shared_ptr<const Mesh> mesh;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdDestroyGeometry, true)

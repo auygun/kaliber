@@ -5,6 +5,7 @@
 #include "image.h"
 #include "shader_source.h"
 #include "font.h"
+#include "mesh.h"
 #include "renderer/renderer.h"
 #include "renderer/render_command.h"
 #include "game.h"
@@ -14,8 +15,6 @@
 
 using base::Vector2;
 using base::Matrix4x4;
-
-static const char vertex_description[] = "p2f;t2f";
 
 namespace eng {
 
@@ -234,10 +233,6 @@ void Engine::EnqueueRenderCommand(std::unique_ptr<RenderCommand> cmd) {
   renderer_->EnqueueCommand(std::move(cmd));
 }
 
-const char* Engine::GetVertexDescription() const {
-  return vertex_description;
-}
-
 int Engine::GetScreenWidth() const {
   return renderer_->screen_width();
 }
@@ -273,13 +268,22 @@ void Engine::ContextLost() {
 }
 
 bool Engine::CreateRenderResources() {
+  // Create the quad geometry we can reuse for all sprites.
+  auto quad_mesh = std::make_shared<Mesh>();
+  if (!quad_mesh->Load("engine/quad.mesh")) {
+    LOG << "Could not create quad mesh.";
+    return false;
+  }
+  // quad_mesh->Create(Mesh::kTriangleStrip, vertex_description, 4, vertices);
+  quad_.Create(quad_mesh);
+
   // Create the shader we can reuse for texture rendering.
   auto pts_code = GetShaderAsset("engine/pass_through");
   if (!pts_code) {
     LOG << "Could not create pass through shader.";
     return false;
   }
-  pass_through_shader_.Create(pts_code, vertex_description);
+  pass_through_shader_.Create(pts_code, quad_.vertex_description());
 
   // Create the shader we can reuse for solid rendering.
   auto ss_code = GetShaderAsset("engine/solid");
@@ -287,17 +291,7 @@ bool Engine::CreateRenderResources() {
     LOG << "Could not create solid shader.";
     return false;
   }
-  solid_shader_.Create(ss_code, vertex_description);
-
-  // Create the quad geometry we can reuse for all sprites.
-  // This creates a normalized unit sized quad.
-  static const float vertices[] = {
-    -0.5f, -0.5f, 0.0f, 1.0f,
-     0.5f, -0.5f, 1.0f, 1.0f,
-    -0.5f,  0.5f, 0.0f, 0.0f,
-     0.5f,  0.5f, 1.0f, 0.0f
-  };
-  quad_.Create(kPrimitive_TriangleStrip, vertex_description, 4, vertices);
+  solid_shader_.Create(ss_code, quad_.vertex_description());
 
   return true;
 }

@@ -6,63 +6,17 @@
 #include "render_command.h"
 #include "../image.h"
 #include "../shader_source.h"
+#include "../mesh.h"
 #include <algorithm>
 
 namespace {
 
-// Used to parse the vertex layout,
-// e.g. "p3f;c4b" for "position 3 floats, color 4 bytes".
-constexpr char kLayoutDelimiter[] = ";/ \t";
+constexpr GLenum kGlPrimitive[eng::Mesh::kPrimitive_Max] = {GL_TRIANGLES,
+                                                            GL_TRIANGLE_STRIP};
 
-constexpr GLenum kGlPrimitive[kPrimitive_Max] = {GL_TRIANGLES,
-                                                 GL_TRIANGLE_STRIP};
-
-GLuint GetVertexSize(const std::string &vertex_description) {
-  GLuint size = 0;
-
-  // Parse the description.
-  char buffer[32];
-  strcpy(buffer, vertex_description.c_str());
-  char *token = strtok(buffer, kLayoutDelimiter);
-
-  // Parse each encountered attribute.
-  while (token) {
-    // Don't care about the kind of attribute here.
-    // Ignore(token[0]);
-
-    // There can be between 1 and 4 elements in an attribute.
-    size_t num_elements = token[1] - '1' + 1;
-    if (num_elements < 1 || num_elements > 4)
-      return 0;
-
-    // The data type is needed, the most common ones are supported.
-    size_t type_size;
-    switch (token[2]) {
-    case 'b': type_size = sizeof(GLbyte);    break;
-    case 'f': type_size = sizeof(GLfloat);   break;
-    case 'i': type_size = sizeof(GLint);     break;
-    case 's': type_size = sizeof(GLshort);   break;
-    case 'u': type_size = sizeof(GLuint);    break;
-    case 'w': type_size = sizeof(GLushort);  break;
-    default:  return 0;
-    }
-
-    size += num_elements * type_size;
-
-    token = strtok(NULL, kLayoutDelimiter);
-  }
-
-  return size;
-}
-
-unsigned GetIndexSize(GLenum type) {
-  switch (type) {
-  case GL_UNSIGNED_BYTE:  return sizeof(GLbyte);
-  case GL_UNSIGNED_SHORT: return sizeof(GLushort);
-  case GL_UNSIGNED_INT:   return sizeof(GLuint);
-  default:                return 0;
-  }
-}
+constexpr GLenum kGlDataType[eng::Mesh::kDataType_Max] = {GL_UNSIGNED_BYTE,
+                                                          GL_UNSIGNED_SHORT,
+                                                          GL_UNSIGNED_INT};
 
 } // namespace
 
@@ -370,7 +324,7 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
     return;
 
   // Verify that we have a valid layout and get the total byte size per vertex.
-  GLuint vertex_size = GetVertexSize(c->vertex_description);
+  GLuint vertex_size = c->mesh->GetVertexSize();
   if (!vertex_size) {
     LOG << "Invalid vertex layout";
     return;
@@ -386,25 +340,24 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
   GLuint vertex_buffer_id = 0;
   glGenBuffers(1, &vertex_buffer_id);
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id);
-  glBufferData(GL_ARRAY_BUFFER, c->num_vertices * vertex_size, c->vertices,
-               GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, c->mesh->num_vertices() * vertex_size,
+               c->mesh->vertices(), GL_STATIC_DRAW);
 
   // Make sure the vertex format is understood and the attribute pointers are
   // set up.
   std::vector<Geometry::Element> vertex_layout;
-  if (!SetupVertexLayout(c->vertex_description, vertex_size, SupportsVAO(), vertex_layout))
+  if (!SetupVertexLayout(c->mesh->vertex_description(), vertex_size,
+                         SupportsVAO(), vertex_layout))
     return;
 
   // Create the index buffer and upload the data.
   GLuint index_buffer_id = 0;
-  GLenum index_type = GL_NONE;
-  if (c->indices) {
-    // it->second.index_type = c->index_description;
-    index_type = c->index_description;
+  if (c->mesh->indices()) {
     glGenBuffers(1, &index_buffer_id);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_id);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, c->num_indices * GetIndexSize(index_type),
-                 c->indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 c->mesh->num_indices() * c->mesh->GetIndexSize(),
+                 c->mesh->indices(), GL_STATIC_DRAW);
   }
 
   if (vertex_array_id) {
@@ -417,10 +370,10 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
   }
 
   geometry_map_[c->id] = {
-    c->num_vertices,
-    c->num_indices,
-    kGlPrimitive[c->primitive],
-    index_type,
+    c->mesh->num_vertices(),
+    c->mesh->num_indices(),
+    kGlPrimitive[c->mesh->primitive()],
+    kGlDataType[c->mesh->index_description()],
     vertex_layout,
     vertex_size,
     vertex_array_id,
@@ -613,7 +566,7 @@ bool Renderer::SetupVertexLayout(const std::string &vertex_description,
   // Parse the layout.
   char buffer[32];
   strcpy(buffer, vertex_description.c_str());
-  char *token = strtok(buffer, kLayoutDelimiter);
+  char *token = strtok(buffer, Mesh::kLayoutDelimiter);
 
   // Parse each encountered attribute.
   while (token) {
@@ -664,7 +617,7 @@ bool Renderer::SetupVertexLayout(const std::string &vertex_description,
     // Move on to the next attribute.
     ++attribute_index;
     vertex_offset += num_elements * type_size;
-    token = strtok(NULL, kLayoutDelimiter);
+    token = strtok(NULL, Mesh::kLayoutDelimiter);
   }
 
   return true;
@@ -703,7 +656,7 @@ bool Renderer::BindAttributeLocation(GLuint id, const std::string &vertex_descri
   // Parse the description.
   char buffer[32];
   strcpy(buffer, vertex_description.c_str());
-  char *token = strtok(buffer, kLayoutDelimiter);
+  char *token = strtok(buffer, Mesh::kLayoutDelimiter);
 
   char tex_coord_buffer[32];
 
@@ -728,7 +681,7 @@ bool Renderer::BindAttributeLocation(GLuint id, const std::string &vertex_descri
       return false;
     }
 
-    token = strtok(NULL, kLayoutDelimiter);
+    token = strtok(NULL, Mesh::kLayoutDelimiter);
   }
 
   // We need at least one position attribute.

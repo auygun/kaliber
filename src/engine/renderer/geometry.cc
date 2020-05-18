@@ -1,6 +1,7 @@
 #include "geometry.h"
 #include "../../base/log.h"
 #include "../engine.h"
+#include "../mesh.h"
 #include "render_command.h"
 
 namespace eng {
@@ -11,25 +12,15 @@ Geometry::~Geometry() {
   Destroy();
 }
 
-void Geometry::Create(Primitive primitive,
-                      const std::string& vertex_description,
-                      int num_vertices,
-                      const void* vertices,
-                      unsigned int index_description,
-                      int num_indices,
-                      const void* indices) {
+void Geometry::Create(std::shared_ptr<const Mesh> mesh) {
   Destroy();
+
+  vertex_description_ = mesh->vertex_description();
 
   auto cmd = std::make_unique<CmdCreateGeometry>();
   resource_id_ = ++last_id;
   cmd->id = resource_id_;
-  cmd->primitive = primitive;
-  cmd->vertex_description = vertex_description;
-  cmd->num_vertices = num_vertices;
-  cmd->vertices = vertices;
-  cmd->index_description = index_description;
-  cmd->num_indices = num_indices;
-  cmd->indices = indices;
+  cmd->mesh = mesh;
   Engine::Get().EnqueueRenderCommand(std::move(cmd));
 }
 
@@ -39,6 +30,7 @@ void Geometry::Destroy() {
     cmd->id = resource_id_;
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
     resource_id_ = 0;
+
   }
 }
 

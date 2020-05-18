@@ -80,6 +80,7 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/font.cc \
   $(SRC_ROOT)/engine/image_quad.cc \
   $(SRC_ROOT)/engine/image.cc \
+  $(SRC_ROOT)/engine/mesh.cc \
   $(SRC_ROOT)/engine/platform/platform_linux.cc \
   $(SRC_ROOT)/engine/platform/platform.cc \
   $(SRC_ROOT)/engine/renderer/geometry.cc \
@@ -90,6 +91,7 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/shader_source.cc \
   $(SRC_ROOT)/engine/solid_quad.cc \
   $(SRC_ROOT)/third_party/glew/glew.c \
+  $(SRC_ROOT)/third_party/json11/json11.cc \
   $(SRC_ROOT)/third_party/minizip/ioapi.c \
   $(SRC_ROOT)/third_party/minizip/unzip.c
 

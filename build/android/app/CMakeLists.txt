@@ -55,6 +55,7 @@ add_library(native-activity SHARED
     ../../../src/engine/font.cc
     ../../../src/engine/image_quad.cc
     ../../../src/engine/image.cc
+    ../../../src/engine/mesh.cc
     ../../../src/engine/platform/platform_android.cc
     ../../../src/engine/platform/platform.cc
     ../../../src/engine/renderer/geometry.cc
@@ -67,6 +68,7 @@ add_library(native-activity SHARED
     ../../../src/third_party/android/gestureDetector.cpp
     ../../../src/third_party/android/gl3stub.c
     ../../../src/third_party/android/GLContext.cpp
+    ../../../src/third_party/json11/json11.cc
     ../../../src/third_party/minizip/ioapi.c
     ../../../src/third_party/minizip/unzip.c
 )

@@ -71,9 +71,6 @@ class Engine {
   Shader& GetPassThroughShader() { return pass_through_shader_; }
   Shader& GetSolidShader() { return solid_shader_; }
 
-  // Returns the vertex description of quad_.
-  const char* GetVertexDescription() const;
-
   std::shared_ptr<eng::Font> GetSystemFont() { return system_font_; }
 
   Game* GetGame() { return game_.get(); }

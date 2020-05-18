@@ -1,10 +1,12 @@
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
 
-#include "types.h"
+#include <memory>
 #include <string>
 
 namespace eng {
+
+class Mesh;
 
 class Geometry {
 public:
@@ -14,13 +16,7 @@ public:
   Geometry(const Geometry&) = delete;
   Geometry& operator=(const Geometry&) = delete;
 
-  void Create(Primitive primitive,
-              const std::string& vertex_description,
-              int num_vertices,
-              const void* vertices,
-              unsigned int index_description = 0,
-              int num_indices = 0,
-              const void* indices = NULL);
+  void Create(std::shared_ptr<const Mesh> mesh);
   void Destroy();
 
   void Draw();
@@ -28,9 +24,12 @@ public:
   void Invalidate() { resource_id_ = 0; }
   bool IsValid() const { return resource_id_ > 0; }
 
+  const std::string& vertex_description() const { return vertex_description_; }
+
 private:
   int resource_id_ = 0;
   static int last_id;
+  std::string vertex_description_;
 };
 
 } // namespace eng
