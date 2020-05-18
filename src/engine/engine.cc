@@ -133,8 +133,15 @@ std::shared_ptr<const Image> Engine::GetImageAsset(const std::string& name) {
     return it->second;
 
   auto image = std::make_shared<Image>();
-  if (!image->Load(name.c_str()))
-    return nullptr;
+  if (!image->Load(name.c_str())) {
+    auto it = image_assets_.find("unknown_image_asset");
+    if (it != image_assets_.end())
+      return it->second;
+
+    image->Create(128, 128);
+    image->Clear({0, 0, 0, 1});
+    image->SetName("unknown_image_asset");
+  }
   image->SetImmutable();
 
   image_assets_[name] = image;
@@ -169,10 +176,7 @@ std::shared_ptr<Font> Engine::GetFontAsset(const std::string& name) {
 }
 
 int Engine::AcquireTextureResource(std::shared_ptr<const Image> image) {
-  if (!image->IsImmutable()) {
-    DLOG << "Cannot acquire texture resource from mutable image.";
-    return 0;
-  }
+  assert(image->IsImmutable());
 
   int resource_id = 0;
   if (image->GetName().empty()) {
@@ -269,17 +273,19 @@ void Engine::ContextLost() {
 bool Engine::CreateRenderResources() {
   // Create the shader we can reuse for texture rendering.
   auto pts_code = GetShaderAsset("engine/pass_through");
-  if (!pass_through_shader_.Create(pts_code, vertex_description)) {
+  if (!pts_code) {
     LOG << "Could not create pass through shader.";
     return false;
   }
+  pass_through_shader_.Create(pts_code, vertex_description);
 
   // Create the shader we can reuse for solid rendering.
   auto ss_code = GetShaderAsset("engine/solid");
-  if (!solid_shader_.Create(ss_code, vertex_description)) {
-    LOG << "Could not create solid pass through shader.";
+  if (!ss_code) {
+    LOG << "Could not create solid shader.";
     return false;
   }
+  solid_shader_.Create(ss_code, vertex_description);
 
   // Create the quad geometry we can reuse for all sprites.
   // This creates a normalized unit sized quad.
@@ -340,8 +346,7 @@ void Engine::PrintStats() {
 
   auto image = std::make_shared<Image>();
   image->Create(image_width, image_height);
-  float c[4] = {1, 1, 1, 0.08f};
-  image->Clear(c);
+  image->Clear({1, 1, 1, 0.08f});
 
   int y = margin;
   for (auto& text : lines) {

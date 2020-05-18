@@ -4,6 +4,7 @@
 #include "asset.h"
 #include "../base/mem.h"
 #include <stdint.h>
+#include <array>
 
 namespace eng {
 
@@ -35,7 +36,7 @@ class Image : public Asset{
   const uint8_t* GetBuffer() const { return buffer_.get(); }
   uint8_t* GetBuffer();
 
-  void Clear(const float* rgba);
+  void Clear(std::array<float, 4> rgba);
   void Gradient();
 
  private:

@@ -17,7 +17,7 @@ public:
   Shader(const Shader&) = delete;
   Shader& operator=(const Shader&) = delete;
 
-  bool Create(std::shared_ptr<const ShaderCode> code,
+  void Create(std::shared_ptr<const ShaderCode> code,
               const std::string& vertex_description);
   void Destroy();
   void Activate();

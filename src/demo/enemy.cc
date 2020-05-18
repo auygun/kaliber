@@ -23,8 +23,6 @@ constexpr int enemy_frame_speed = 12;
 
 constexpr int enemy_scores[] = {100, 150, 200};
 
-constexpr float score_bg_color[4] = {1, 1, 1, 0};
-
 } // namespace
 
 bool Enemy::Initialize() {
@@ -35,6 +33,10 @@ bool Enemy::Initialize() {
   target_frames_ = engine.GetImageAsset("enemy_target_single_ok.png");
   blast_frames_ = engine.GetImageAsset("enemy_anims_blast_ok.png");
   font_ = engine.GetFontAsset("PixelCaps!.ttf");
+  if (!font_) {
+    LOG << "Failed to create the font.";
+    return false;
+  }
   return true;
 }
 
@@ -373,7 +375,7 @@ int Enemy::GetScore(UnitType unit_type) {
 std::shared_ptr<eng::Image> Enemy::GetScoreImage(const Unit& enemy) {
   auto image = std::make_shared<eng::Image>();
   image->Create(enemy.sprite.frame_width(), enemy.sprite.frame_height());
-  image->Clear(score_bg_color);
+  image->Clear({1, 1, 1, 0});
   std::string text = std::to_string(GetScore(enemy.unit_type));
   int w, h;
   font_->CalculateBoundingBox(text.c_str(), w, h);

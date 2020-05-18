@@ -5,6 +5,7 @@
 #include "../engine.h"
 #include "../shader_code.h"
 #include <cstring>
+#include <cassert>
 
 using base::Vector2;
 using base::Vector3;
@@ -19,12 +20,9 @@ Shader::~Shader() {
   Destroy();
 }
 
-bool Shader::Create(std::shared_ptr<const ShaderCode> code,
+void Shader::Create(std::shared_ptr<const ShaderCode> code,
                     const std::string& vertex_description) {
-  if (!code->IsImmutable()) {
-    DLOG << "Cannot create shader from mutable code.";
-    return false;
-  }
+  assert(code->IsImmutable());
 
   Destroy();
 
@@ -34,8 +32,6 @@ bool Shader::Create(std::shared_ptr<const ShaderCode> code,
   cmd->code = code;
   cmd->vertex_description = vertex_description;
   Engine::Get().EnqueueRenderCommand(std::move(cmd));
-
-  return true;
 }
 
 void Shader::Destroy() {

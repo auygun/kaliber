@@ -16,7 +16,10 @@ DECLARE_GAME(Demo)
 DECLARE_GAME_END
 
 bool Demo::Initialize() {
-  sky_.Create();
+  if (!sky_.Create()) {
+    LOG << "Could not create the sky.";
+    return false;
+  }
 
   if (!enemy_.Initialize()) {
     LOG << "Failed to create the enemy.";

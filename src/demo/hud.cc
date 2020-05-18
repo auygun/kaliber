@@ -12,7 +12,6 @@ namespace {
 
 constexpr float horizontal_margin = 0.07f;
 constexpr float vertical_margin = 0.025f;
-constexpr float bg_color[4] = {1, 1, 1, 0};
 const Vector4 progress_bar_color[2] = {{0.256f, 0.434f, 0.72f,  1},
                                        {0.905f, 0.493f, 0.194f, 1}};
 
@@ -133,6 +132,6 @@ void Hud::Print(int i, const std::string& text) {
 std::shared_ptr<eng::Image> Hud::CreateImage() {
   auto image = std::make_shared<eng::Image>();
   image->Create(max_text_width_, font_->GetLineHeight());
-  image->Clear(bg_color);
+  image->Clear({1, 1, 1, 0});
   return image;
 }

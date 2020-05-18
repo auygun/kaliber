@@ -225,7 +225,7 @@ uint8_t* Image::GetBuffer() {
   return buffer_.get();
 }
 
-void Image::Clear(const float* rgba) {
+void Image::Clear(std::array<float, 4> rgba) {
   if (IsImmutable()) {
     LOG << "Error: Image is immutable. Failed to clear.";
     return;

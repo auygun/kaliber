@@ -20,7 +20,7 @@ void Platform::Shutdown() {
 
 void Platform::RunMainLoop() {
   if (!eng::Engine::Get().Init(this)) {
-    printf("Failed to initialize the engine.\n");
+    LOG << "Failed to initialize the engine.";
     throw internal_error;
   }
 

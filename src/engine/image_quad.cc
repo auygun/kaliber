@@ -16,11 +16,7 @@ void ImageQuad::Create(std::shared_ptr<const Image> image,
                        int frame_width,
                        int frame_height) {
   assert(num_frames_[0] > 0 && num_frames_[1] > 0);
-
-  if (!image->IsImmutable()) {
-    DLOG << "Cannot create ImageQuad from mutable image.";
-    return;
-  }
+  assert(image->IsImmutable());
 
   texture_.Update(image);
 

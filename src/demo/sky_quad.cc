@@ -10,10 +10,9 @@ bool SkyQuad::Create() {
   eng::Engine& engine = eng::Engine::Get();
 
   auto sky_code = engine.GetShaderAsset("sky");
-  if (!shader_.Create(sky_code, engine.GetVertexDescription())) {
-    LOG << "Could not create sky shader.";
+  if (!sky_code)
     return false;
-  }
+  shader_.Create(sky_code, engine.GetVertexDescription());
 
   scale_ = engine.GetScreenSize();
   nebula_color_ = {0.962f, 0.308f, 0.112f};
