@@ -103,20 +103,20 @@ class Renderer {
 
   struct Geometry {
     struct Element {
-      GLsizei numElements;
+      GLsizei num_elements;
       GLenum type;
-      size_t vertexOffset;
+      size_t vertex_offset;
     };
 
-    int numVertices;
-    int numIndices;
+    int num_vertices;
+    int num_indices;
     GLenum primitive;
-    GLenum indexType;
-    std::vector<Element> vertexLayout;
-    GLuint vertexSize;
-    GLuint vertexArrayId;
-    GLuint vertexBufferId;
-    GLuint indexBufferId;
+    GLenum index_type;
+    std::vector<Element> vertex_layout;
+    GLuint vertex_size;
+    GLuint vertex_array_id;
+    GLuint vertex_buffer_id;
+    GLuint index_buffer_id;
   };
 
   struct Shader {
@@ -198,10 +198,10 @@ class Renderer {
   void HandleCmdSetUniformFloat(RenderCommand* cmd);
   void HandleCmdSetUniformInt(RenderCommand* cmd);
 
-  bool SetupVertexLayout(const std::string &vertexDescription, GLuint vertexSize,
-                         bool useVAO, std::vector<Geometry::Element> &vertexLayout);
+  bool SetupVertexLayout(const std::string &vertex_description, GLuint vertex_size,
+                         bool use_vao, std::vector<Geometry::Element> &vertex_layout);
   GLuint CreateShader(const char *source, GLenum type);
-  bool BindAttributeLocation(GLuint id, const std::string &vertexDescription);
+  bool BindAttributeLocation(GLuint id, const std::string &vertex_description);
   GLint GetUniformLocation(GLuint id, const std::string &name, std::unordered_map<std::string, GLuint> &uniforms);
   std::unordered_set<std::string> SetupExtensions();
 

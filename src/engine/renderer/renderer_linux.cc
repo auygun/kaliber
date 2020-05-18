@@ -1,5 +1,3 @@
-#if defined(__linux__)
-
 #include <X11/Xutil.h>
 #include "../../base/log.h"
 #include "../../third_party/glew/glew.h"
@@ -98,5 +96,3 @@ void Renderer::HandleCmdPresent(RenderCommand* cmd) {
 void Renderer::TrimMemory() {}
 
 }  // namespace eng
-
-#endif

@@ -17,12 +17,12 @@ constexpr char kLayoutDelimiter[] = ";/ \t";
 constexpr GLenum kGlPrimitive[kPrimitive_Max] = {GL_TRIANGLES,
                                                  GL_TRIANGLE_STRIP};
 
-GLuint GetVertexSize(const std::string &vertexDescription) {
+GLuint GetVertexSize(const std::string &vertex_description) {
   GLuint size = 0;
 
   // Parse the description.
   char buffer[32];
-  strcpy(buffer, vertexDescription.c_str());
+  strcpy(buffer, vertex_description.c_str());
   char *token = strtok(buffer, kLayoutDelimiter);
 
   // Parse each encountered attribute.
@@ -31,23 +31,23 @@ GLuint GetVertexSize(const std::string &vertexDescription) {
     // Ignore(token[0]);
 
     // There can be between 1 and 4 elements in an attribute.
-    size_t numElements = token[1] - '1' + 1;
-    if (numElements < 1 || numElements > 4)
+    size_t num_elements = token[1] - '1' + 1;
+    if (num_elements < 1 || num_elements > 4)
       return 0;
 
     // The data type is needed, the most common ones are supported.
-    size_t typeSize;
+    size_t type_size;
     switch (token[2]) {
-    case 'b': typeSize = sizeof(GLbyte);    break;
-    case 'f': typeSize = sizeof(GLfloat);   break;
-    case 'i': typeSize = sizeof(GLint);     break;
-    case 's': typeSize = sizeof(GLshort);   break;
-    case 'u': typeSize = sizeof(GLuint);    break;
-    case 'w': typeSize = sizeof(GLushort);  break;
+    case 'b': type_size = sizeof(GLbyte);    break;
+    case 'f': type_size = sizeof(GLfloat);   break;
+    case 'i': type_size = sizeof(GLint);     break;
+    case 's': type_size = sizeof(GLshort);   break;
+    case 'u': type_size = sizeof(GLuint);    break;
+    case 'w': type_size = sizeof(GLushort);  break;
     default:  return 0;
     }
 
-    size += numElements * typeSize;
+    size += num_elements * type_size;
 
     token = strtok(NULL, kLayoutDelimiter);
   }
@@ -370,44 +370,44 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
     return;
 
   // Verify that we have a valid layout and get the total byte size per vertex.
-  GLuint vertexSize = GetVertexSize(c->vertex_description);
-  if (!vertexSize) {
+  GLuint vertex_size = GetVertexSize(c->vertex_description);
+  if (!vertex_size) {
     LOG << "Invalid vertex layout";
     return;
   }
 
-  GLuint vertexArrayId = 0;
+  GLuint vertex_array_id = 0;
   if (SupportsVAO()) {
-    glGenVertexArrays(1, &vertexArrayId);
-    glBindVertexArray(vertexArrayId);
+    glGenVertexArrays(1, &vertex_array_id);
+    glBindVertexArray(vertex_array_id);
   }
 
   // Create the vertex buffer and upload the data.
-  GLuint vertexBufferId = 0;
-  glGenBuffers(1, &vertexBufferId);
-  glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
-  glBufferData(GL_ARRAY_BUFFER, c->num_vertices * vertexSize, c->vertices,
+  GLuint vertex_buffer_id = 0;
+  glGenBuffers(1, &vertex_buffer_id);
+  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id);
+  glBufferData(GL_ARRAY_BUFFER, c->num_vertices * vertex_size, c->vertices,
                GL_STATIC_DRAW);
 
   // Make sure the vertex format is understood and the attribute pointers are
   // set up.
-  std::vector<Geometry::Element> vertexLayout;
-  if (!SetupVertexLayout(c->vertex_description, vertexSize, SupportsVAO(), vertexLayout))
+  std::vector<Geometry::Element> vertex_layout;
+  if (!SetupVertexLayout(c->vertex_description, vertex_size, SupportsVAO(), vertex_layout))
     return;
 
   // Create the index buffer and upload the data.
-  GLuint indexBufferId = 0;
-  GLenum indexType = GL_NONE;
+  GLuint index_buffer_id = 0;
+  GLenum index_type = GL_NONE;
   if (c->indices) {
-    // it->second.indexType = c->index_description;
-    indexType = c->index_description;
-    glGenBuffers(1, &indexBufferId);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, c->num_indices * GetIndexSize(indexType),
+    // it->second.index_type = c->index_description;
+    index_type = c->index_description;
+    glGenBuffers(1, &index_buffer_id);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_id);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, c->num_indices * GetIndexSize(index_type),
                  c->indices, GL_STATIC_DRAW);
   }
 
-  if (vertexArrayId) {
+  if (vertex_array_id) {
     // De-activate the buffer again and we're done.
     glBindVertexArray(0);
   } else {
@@ -420,12 +420,12 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
     c->num_vertices,
     c->num_indices,
     kGlPrimitive[c->primitive],
-    indexType,
-    vertexLayout,
-    vertexSize,
-    vertexArrayId,
-    vertexBufferId,
-    indexBufferId
+    index_type,
+    vertex_layout,
+    vertex_size,
+    vertex_array_id,
+    vertex_buffer_id,
+    index_buffer_id
   };
 }
 
@@ -435,12 +435,12 @@ void Renderer::HandleCmdDestroyGeometry(RenderCommand* cmd) {
   if (it == geometry_map_.end())
     return;
 
-  if (it->second.indexBufferId)
-    glDeleteBuffers(1, &(it->second.indexBufferId));
-  if (it->second.vertexBufferId)
-    glDeleteBuffers(1, &(it->second.vertexBufferId));
-  if (it->second.vertexArrayId)
-    glDeleteVertexArrays(1, &(it->second.vertexArrayId));
+  if (it->second.index_buffer_id)
+    glDeleteBuffers(1, &(it->second.index_buffer_id));
+  if (it->second.vertex_buffer_id)
+    glDeleteBuffers(1, &(it->second.vertex_buffer_id));
+  if (it->second.vertex_array_id)
+    glDeleteVertexArrays(1, &(it->second.vertex_array_id));
   geometry_map_.erase(it);}
 
 void Renderer::HandleCmdDrawGeometry(RenderCommand* cmd) {
@@ -450,35 +450,35 @@ void Renderer::HandleCmdDrawGeometry(RenderCommand* cmd) {
     return;
 
   // Set up the vertex data.
-  if (it->second.vertexArrayId)
-    glBindVertexArray(it->second.vertexArrayId);
+  if (it->second.vertex_array_id)
+    glBindVertexArray(it->second.vertex_array_id);
   else {
-    glBindBuffer(GL_ARRAY_BUFFER, it->second.vertexBufferId);
-    for (GLuint attributeIndex = 0; attributeIndex < (GLuint)it->second.vertexLayout.size();
-         ++attributeIndex) {
-      Geometry::Element &e = it->second.vertexLayout[attributeIndex];
-      glEnableVertexAttribArray(attributeIndex);
-      glVertexAttribPointer(attributeIndex, e.numElements, e.type, GL_FALSE,
-                            it->second.vertexSize, (const GLvoid *)e.vertexOffset);
+    glBindBuffer(GL_ARRAY_BUFFER, it->second.vertex_buffer_id);
+    for (GLuint attribute_index = 0; attribute_index < (GLuint)it->second.vertex_layout.size();
+         ++attribute_index) {
+      Geometry::Element &e = it->second.vertex_layout[attribute_index];
+      glEnableVertexAttribArray(attribute_index);
+      glVertexAttribPointer(attribute_index, e.num_elements, e.type, GL_FALSE,
+                            it->second.vertex_size, (const GLvoid *)e.vertex_offset);
     }
 
-    if (it->second.numIndices > 0)
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, it->second.indexBufferId);
+    if (it->second.num_indices > 0)
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, it->second.index_buffer_id);
   }
 
   // Draw the primitive.
-  if (it->second.numIndices > 0)
-    glDrawElements(it->second.primitive, it->second.numIndices, it->second.indexType, NULL);
+  if (it->second.num_indices > 0)
+    glDrawElements(it->second.primitive, it->second.num_indices, it->second.index_type, NULL);
   else
-    glDrawArrays(it->second.primitive, 0, it->second.numVertices);
+    glDrawArrays(it->second.primitive, 0, it->second.num_vertices);
 
   // Clean up states.
-  if (it->second.vertexArrayId)
+  if (it->second.vertex_array_id)
     glBindVertexArray(0);
   else {
-    for (GLuint attributeIndex = 0; attributeIndex < (GLuint)it->second.vertexLayout.size();
-         ++attributeIndex)
-      glDisableVertexAttribArray(attributeIndex);
+    for (GLuint attribute_index = 0; attribute_index < (GLuint)it->second.vertex_layout.size();
+         ++attribute_index)
+      glDisableVertexAttribArray(attribute_index);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -491,18 +491,18 @@ void Renderer::HandleCmdCreateShader(RenderCommand* cmd) {
   if (it != shader_map_.end())
     return;
 
-  GLuint vertexShader = CreateShader(c->code->GetVertexCode(), GL_VERTEX_SHADER);
-  if (!vertexShader)
+  GLuint vertex_shader = CreateShader(c->code->GetVertexCode(), GL_VERTEX_SHADER);
+  if (!vertex_shader)
     return;
 
-  GLuint fragmentShader = CreateShader(c->code->GetFragmentCode(), GL_FRAGMENT_SHADER);
-  if (!fragmentShader)
+  GLuint fragment_shader = CreateShader(c->code->GetFragmentCode(), GL_FRAGMENT_SHADER);
+  if (!fragment_shader)
     return;
 
   GLuint id = glCreateProgram();
   if (id) {
-    glAttachShader(id, vertexShader);
-    glAttachShader(id, fragmentShader);
+    glAttachShader(id, vertex_shader);
+    glAttachShader(id, fragment_shader);
     if (!BindAttributeLocation(id, c->vertex_description))
       return;
 
@@ -604,15 +604,15 @@ void Renderer::HandleCmdSetUniformInt(RenderCommand* cmd) {
   }
 }
 
-bool Renderer::SetupVertexLayout(const std::string &vertexDescription,
-                                 GLuint vertexSize, bool useVAO,
-                                 std::vector<Geometry::Element> &vertexLayout) {
-  GLuint attributeIndex = 0;
-  size_t vertexOffset = 0;
+bool Renderer::SetupVertexLayout(const std::string &vertex_description,
+                                 GLuint vertex_size, bool use_vao,
+                                 std::vector<Geometry::Element> &vertex_layout) {
+  GLuint attribute_index = 0;
+  size_t vertex_offset = 0;
 
   // Parse the layout.
   char buffer[32];
-  strcpy(buffer, vertexDescription.c_str());
+  strcpy(buffer, vertex_description.c_str());
   char *token = strtok(buffer, kLayoutDelimiter);
 
   // Parse each encountered attribute.
@@ -622,48 +622,48 @@ bool Renderer::SetupVertexLayout(const std::string &vertexDescription,
       return false;
 
     // There's a limitation of 16 attributes in OpenGL ES 2.0
-    if (attributeIndex >= 16)
+    if (attribute_index >= 16)
       return false;
 
     // Don't care about the kind of attribute here.
     // Ignore(token[0]);
 
     // There can be between 1 and 4 elements in an attribute.
-    GLsizei numElements = token[1] - '1' + 1;
-    if (numElements < 1 || numElements > 4)
+    GLsizei num_elements = token[1] - '1' + 1;
+    if (num_elements < 1 || num_elements > 4)
       return false;
 
     // The data type is needed, the most common ones are supported.
     GLenum type;
-    size_t typeSize;
+    size_t type_size;
     switch (token[2]) {
-    case 'b': type = GL_UNSIGNED_BYTE;  typeSize = sizeof(GLbyte);    break;
-    case 'f': type = GL_FLOAT;          typeSize = sizeof(GLfloat);   break;
-    case 'i': type = GL_INT;            typeSize = sizeof(GLint);     break;
-    case 's': type = GL_SHORT;          typeSize = sizeof(GLshort);   break;
-    case 'u': type = GL_UNSIGNED_INT;   typeSize = sizeof(GLuint);    break;
-    case 'w': type = GL_UNSIGNED_SHORT; typeSize = sizeof(GLushort);  break;
+    case 'b': type = GL_UNSIGNED_BYTE;  type_size = sizeof(GLbyte);    break;
+    case 'f': type = GL_FLOAT;          type_size = sizeof(GLfloat);   break;
+    case 'i': type = GL_INT;            type_size = sizeof(GLint);     break;
+    case 's': type = GL_SHORT;          type_size = sizeof(GLshort);   break;
+    case 'u': type = GL_UNSIGNED_INT;   type_size = sizeof(GLuint);    break;
+    case 'w': type = GL_UNSIGNED_SHORT; type_size = sizeof(GLushort);  break;
     default:  return false;
     }
 
     // We got all we need to define this attribute.
-    if (useVAO) {
+    if (use_vao) {
       // This will be saved into the vertex array object.
-      glEnableVertexAttribArray(attributeIndex);
-      glVertexAttribPointer(attributeIndex, numElements, type, GL_FALSE,
-                            vertexSize, (const GLvoid *)vertexOffset);
+      glEnableVertexAttribArray(attribute_index);
+      glVertexAttribPointer(attribute_index, num_elements, type, GL_FALSE,
+                            vertex_size, (const GLvoid *)vertex_offset);
     } else {
       // Need to keep this information for when rendering.
       Geometry::Element element;
-      element.numElements   = numElements;
+      element.num_elements   = num_elements;
       element.type          = type;
-      element.vertexOffset  = vertexOffset;
-      vertexLayout.push_back(element);
+      element.vertex_offset  = vertex_offset;
+      vertex_layout.push_back(element);
     }
 
     // Move on to the next attribute.
-    ++attributeIndex;
-    vertexOffset += numElements * typeSize;
+    ++attribute_index;
+    vertex_offset += num_elements * type_size;
     token = strtok(NULL, kLayoutDelimiter);
   }
 
@@ -696,16 +696,16 @@ GLuint Renderer::CreateShader(const char *source, GLenum type) {
   return shader;
 }
 
-bool Renderer::BindAttributeLocation(GLuint id, const std::string &vertexDescription) {
-  int current = 0,
-      texCoord = 0;
+bool Renderer::BindAttributeLocation(GLuint id, const std::string &vertex_description) {
+  int current = 0;
+  int tex_coord = 0;
 
   // Parse the description.
   char buffer[32];
-  strcpy(buffer, vertexDescription.c_str());
+  strcpy(buffer, vertex_description.c_str());
   char *token = strtok(buffer, kLayoutDelimiter);
 
-  char texCoordBuffer[32];
+  char tex_coord_buffer[32];
 
   // Parse each encountered attribute.
   while (token) {
@@ -719,8 +719,8 @@ bool Renderer::BindAttributeLocation(GLuint id, const std::string &vertexDescrip
     case 'p': glBindAttribLocation(id, current++, "inPosition");  break;
 
     case 't':
-      sprintf(texCoordBuffer, "inTexCoord%d", texCoord++);
-      glBindAttribLocation(id, current++, texCoordBuffer);
+      sprintf(tex_coord_buffer, "inTexCoord%d", tex_coord++);
+      glBindAttribLocation(id, current++, tex_coord_buffer);
       break;
 
     default:
@@ -806,12 +806,12 @@ void Renderer::ContextLost() {
   shader_map_.clear();
 
   for (auto& p : geometry_map_) {
-    if (p.second.indexBufferId)
-      glDeleteBuffers(1, &(p.second.indexBufferId));
-    if (p.second.vertexBufferId)
-      glDeleteBuffers(1, &(p.second.vertexBufferId));
-    if (p.second.vertexArrayId)
-      glDeleteVertexArrays(1, &(p.second.vertexArrayId));
+    if (p.second.index_buffer_id)
+      glDeleteBuffers(1, &(p.second.index_buffer_id));
+    if (p.second.vertex_buffer_id)
+      glDeleteBuffers(1, &(p.second.vertex_buffer_id));
+    if (p.second.vertex_array_id)
+      glDeleteVertexArrays(1, &(p.second.vertex_array_id));
   }
   geometry_map_.clear();
 
