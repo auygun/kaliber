@@ -45,10 +45,6 @@ bool Engine::Init(Platform* platform) {
   }
 
   system_font_ = GetFontAsset("engine/Roboto-Regular.ttf");
-  if (!system_font_) {
-    LOG << "Failed to create the font.";
-    return false;
-  }
 
   if (!CreateRenderResources())
     return false;
@@ -135,12 +131,13 @@ std::shared_ptr<const Image> Engine::GetImageAsset(const std::string& name) {
   auto image = std::make_shared<Image>();
   if (!image->Load(name.c_str())) {
     auto it = image_assets_.find("unknown_image_asset");
-    if (it != image_assets_.end())
-      return it->second;
-
-    image->Create(128, 128);
-    image->Clear({0, 0, 0, 1});
-    image->SetName("unknown_image_asset");
+    if (it != image_assets_.end()) {
+      image = it->second;
+    } else {
+      image->Create(8, 8);
+      image->Clear({0, 0, 0, 1});
+      image->SetName("unknown_image_asset");
+    }
   }
   image->SetImmutable();
 
@@ -168,8 +165,13 @@ std::shared_ptr<Font> Engine::GetFontAsset(const std::string& name) {
     return it->second;
 
   auto font = std::make_shared<Font>();
-  if (!font->Create(name.c_str()))
-    return nullptr;
+  if (!font->Create(name.c_str())) {
+    auto it = font_assets_.find("null_font_asset");
+    if (it != font_assets_.end())
+      font = it->second;
+    else
+      font->SetName("null_font_asset");
+  }
 
   font_assets_[name] = font;
   return font;

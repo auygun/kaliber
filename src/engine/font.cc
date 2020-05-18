@@ -45,6 +45,7 @@ bool Font::Create(const std::string& font_name) {
                              glyph_cache_.get(), kGlyphSize, kGlyphSize, kFirstChar,
                              kNumChars, glyph_info_) <= 0) {
       LOG << "Failed to bake the glyph cache: " << result;
+      glyph_cache_.reset();
       break;
     }
 
@@ -126,6 +127,9 @@ void Font::CalculateBoundingBox(const char* text,
   x1 = 0;
   y1 = 0;
 
+  if (!glyph_cache_)
+    return;
+
   float x = 0, y = 0;
 
   while (*text) {
@@ -166,6 +170,9 @@ void Font::Print(int x,
                   uint8_t* buffer,
                   int width) {
   // LOG("Font::Print() = %s\n", text);
+
+  if (!glyph_cache_)
+    return;
 
   float fx = (float)x, fy = (float)y + (float)vertical_shift_;
 

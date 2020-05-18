@@ -45,10 +45,18 @@ class Engine {
   base::Vector2 ToScale(const base::Vector2& vec);
   base::Vector2 ToPosition(const base::Vector2& vec);
 
-  // Asset management. Image and shader assest are immutable and can be accessed
-  // between multiple threads without locking.
+  // Returns immutable Image asset that can be accessed between multiple threads
+  // without locking. Returns the placeholder image if no image was found with
+  // the given name. Never returns nullptr.
   std::shared_ptr<const Image> GetImageAsset(const std::string& name);
+
+  // Returns immutable ShaderCode asset that can be accessed between multiple
+  // threads without locking. Returns nullptr if no shader was found with the
+  // given name.
   std::shared_ptr<const ShaderCode> GetShaderAsset(const std::string& name);
+
+  // Returns Font asset. Returns unitialized font if no font was founf with the
+  // given name. Never returns nullptr.
   std::shared_ptr<Font> GetFontAsset(const std::string& name);
 
   int AcquireTextureResource(std::shared_ptr<const Image> image);

@@ -28,6 +28,8 @@ class Font : public Asset {
 
   int GetLineHeight() const { return line_height_; }
 
+  bool IsValid() const { return !!glyph_cache_; }
+
  private:
   enum Constants {
     kGlyphSize = 512,

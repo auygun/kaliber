@@ -33,10 +33,6 @@ bool Enemy::Initialize() {
   target_frames_ = engine.GetImageAsset("enemy_target_single_ok.png");
   blast_frames_ = engine.GetImageAsset("enemy_anims_blast_ok.png");
   font_ = engine.GetFontAsset("PixelCaps!.ttf");
-  if (!font_) {
-    LOG << "Failed to create the font.";
-    return false;
-  }
   return true;
 }
 

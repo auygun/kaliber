@@ -138,6 +138,7 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
     default:
       LOG << "Image had unsuitable number of color components: " << c << " " <<
           file_name;
+      buffer_.reset();
       return false;
   }
 

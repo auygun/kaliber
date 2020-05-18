@@ -36,6 +36,8 @@ class Image : public Asset{
   const uint8_t* GetBuffer() const { return buffer_.get(); }
   uint8_t* GetBuffer();
 
+  bool IsValid() const { return !!buffer_; }
+
   void Clear(std::array<float, 4> rgba);
   void Gradient();
 
