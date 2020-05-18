@@ -82,7 +82,8 @@ void Engine::Update(float delta_time) {
 
 void Engine::Draw(float frame_frac) {
   Clear();
-  renderer_->EnableBlend();
+  auto cmd = std::make_unique<CmdEableBlend>();
+  renderer_->EnqueueCommand(std::make_unique<CmdEableBlend>());
 
   game_->Draw(frame_frac);
 
@@ -100,7 +101,9 @@ void Engine::Clear() {
   if (grey > 1.0f)
     grey = 0.0f;
 #endif
-  renderer_->Clear({grey, grey, grey, 1.0f});
+  auto cmd = std::make_unique<CmdClear>();
+  cmd->rgba = {grey, grey, grey, 1.0f};
+  renderer_->EnqueueCommand(std::move(cmd));
 }
 
 void Engine::Present() {

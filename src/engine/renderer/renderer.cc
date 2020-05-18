@@ -345,7 +345,6 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     texture_map_[c->id] = gl_id;
   }
-  // TODO: error handling.
 }
 
 void Renderer::HandleCmdDestoryTexture(RenderCommand* cmd) {
@@ -355,7 +354,6 @@ void Renderer::HandleCmdDestoryTexture(RenderCommand* cmd) {
     glDeleteTextures(1, &(it->second));
     texture_map_.erase(it);
   }
-  // TODO: error handling
 }
 
 void Renderer::HandleCmdActivateTexture(RenderCommand* cmd) {
@@ -363,20 +361,19 @@ void Renderer::HandleCmdActivateTexture(RenderCommand* cmd) {
   auto it = texture_map_.find(c->id);
   if (it != texture_map_.end())
     glBindTexture(GL_TEXTURE_2D, it->second);
-  // TODO: error handling
 }
 
 void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
   auto *c = static_cast<CmdCreateGeometry*>(cmd);
   auto it = geometry_map_.find(c->id);
   if (it != geometry_map_.end())
-    return; // TODO: error handling
+    return;
 
   // Verify that we have a valid layout and get the total byte size per vertex.
   GLuint vertexSize = GetVertexSize(c->vertex_description);
   if (!vertexSize) {
     LOG << "Invalid vertex layout";
-    return;  // TODO: error handling
+    return;
   }
 
   GLuint vertexArrayId = 0;
@@ -396,7 +393,7 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
   // set up.
   std::vector<Geometry::Element> vertexLayout;
   if (!SetupVertexLayout(c->vertex_description, vertexSize, SupportsVAO(), vertexLayout))
-    return; // TODO: Error handling
+    return;
 
   // Create the index buffer and upload the data.
   GLuint indexBufferId = 0;
@@ -436,7 +433,7 @@ void Renderer::HandleCmdDestroyGeometry(RenderCommand* cmd) {
   auto *c = static_cast<CmdDestroyGeometry*>(cmd);
   auto it = geometry_map_.find(c->id);
   if (it == geometry_map_.end())
-    return; // TODO: error handling
+    return;
 
   if (it->second.indexBufferId)
     glDeleteBuffers(1, &(it->second.indexBufferId));
@@ -450,7 +447,7 @@ void Renderer::HandleCmdDrawGeometry(RenderCommand* cmd) {
   auto *c = static_cast<CmdDrawGeometry*>(cmd);
   auto it = geometry_map_.find(c->id);
   if (it == geometry_map_.end())
-    return; // TODO: error handling
+    return;
 
   // Set up the vertex data.
   if (it->second.vertexArrayId)
@@ -492,22 +489,22 @@ void Renderer::HandleCmdCreateShader(RenderCommand* cmd) {
   auto *c = static_cast<CmdCreateShader*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end())
-    return; // TODO: Error handling.
+    return;
 
   GLuint vertexShader = CreateShader(c->code->GetVertexCode(), GL_VERTEX_SHADER);
   if (!vertexShader)
-    return; // TODO: Error handling.
+    return;
 
   GLuint fragmentShader = CreateShader(c->code->GetFragmentCode(), GL_FRAGMENT_SHADER);
   if (!fragmentShader)
-    return; // TODO: Error handling.
+    return;
 
   GLuint id = glCreateProgram();
   if (id) {
     glAttachShader(id, vertexShader);
     glAttachShader(id, fragmentShader);
     if (!BindAttributeLocation(id, c->vertex_description))
-      return; // TODO: Error handling.
+      return;
 
     glLinkProgram(id);
     GLint linkStatus = GL_FALSE;
@@ -524,7 +521,7 @@ void Renderer::HandleCmdCreateShader(RenderCommand* cmd) {
         }
       }
       glDeleteProgram(id);
-      return; // TODO: Error handling.
+      return;
     }
   }
 
@@ -786,17 +783,6 @@ std::unordered_set<std::string> Renderer::SetupExtensions() {
     texture_compression_.atc = true;
 
   return extensions;
-}
-
-void Renderer::EnableBlend() {
-  auto cmd = std::make_unique<CmdEableBlend>();
-  EnqueueCommand(std::move(cmd));
-}
-
-void Renderer::Clear(const std::array<float, 4>& rgba) {
-  auto cmd = std::make_unique<CmdClear>();
-  cmd->rgba = rgba;
-  EnqueueCommand(std::move(cmd));
 }
 
 void Renderer::Present() {
