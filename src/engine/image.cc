@@ -1,8 +1,6 @@
 #include "image.h"
 #include "engine.h"
 #include <stdlib.h>
-#include <string.h>
-#include <string>
 #include <cassert>
 #include "../base/asset_file.h"
 #include "../base/log.h"
@@ -76,7 +74,7 @@ void Image::Copy(const Image& other) {
   format_ = other.format_;
 }
 
-bool Image::Load(const char* file_name, bool convert_pow2) {
+bool Image::Load(const std::string& file_name, bool convert_pow2) {
   if (IsImmutable()) {
     LOG << "Error: Image is immutable. Failed to load.";
     return false;;
@@ -86,12 +84,9 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
 
   SetName(file_name);
   
-  std::string full_path = "images/";
-  full_path += file_name;
-
   int file_size = 0;
   std::unique_ptr<char[]> file_buffer = base::AssetFile::ReadWholeFile(
-      full_path.c_str(), Engine::Get().GetRootPath().c_str(), &file_size);
+      file_name.c_str(), Engine::Get().GetRootPath().c_str(), &file_size);
   if (!file_buffer) {
     LOG << "Failed to read file: " << file_name;
     return false;

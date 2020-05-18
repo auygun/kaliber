@@ -5,6 +5,7 @@
 #include "../base/mem.h"
 #include <stdint.h>
 #include <array>
+#include <string>
 
 namespace eng {
 
@@ -22,7 +23,7 @@ class Image : public Asset{
   void Destroy();
   void Copy(const Image& other);
 
-  bool Load(const char* file_name, bool convertPow2 = true);
+  bool Load(const std::string& file_name, bool convertPow2 = true);
 
   int GetWidth() const { return width_; }
   int GetHeight() const { return height_; }

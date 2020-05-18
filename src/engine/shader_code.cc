@@ -11,16 +11,14 @@ bool ShaderCode::Load(const std::string& name) {
     return false;;
   }
 
-  std::string vertex_file_name = "shaders/";
-  vertex_file_name += name;
+  std::string vertex_file_name = name;
   vertex_file_name += "_vertex.glsl";
   vertex_code_ = base::AssetFile::ReadWholeFile(vertex_file_name.c_str(),
       Engine::Get().GetRootPath().c_str(), NULL, true);
   if (!vertex_code_)
     return false;
 
-  std::string fragment_file_name = "shaders/";
-  fragment_file_name += name;
+  std::string fragment_file_name = name;
   fragment_file_name += "_fragment.glsl";
   fragment_code_ = base::AssetFile::ReadWholeFile(fragment_file_name.c_str(),
       Engine::Get().GetRootPath().c_str(), NULL, true);
