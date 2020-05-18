@@ -165,7 +165,7 @@ std::shared_ptr<Font> Engine::GetFontAsset(const std::string& name) {
     return it->second;
 
   auto font = std::make_shared<Font>();
-  if (!font->Create(name.c_str())) {
+  if (!font->Load(name.c_str())) {
     auto it = font_assets_.find("null_font_asset");
     if (it != font_assets_.end())
       font = it->second;

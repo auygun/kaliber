@@ -13,7 +13,7 @@ Font::Font() = default;
 
 Font::~Font() = default;
 
-bool Font::Create(const std::string& file_name) {
+bool Font::Load(const std::string& file_name) {
   Destroy();
 
   // Read the font file.

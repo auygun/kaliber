@@ -9,7 +9,7 @@
 
 namespace eng {
 
-class Image : public Asset{
+class Image : public Asset {
  public:
   enum Format { kRGBA32, kDXT1, kDXT5, kETC1, kATC };
 
@@ -19,7 +19,7 @@ class Image : public Asset{
 
   Image& operator=(const Image& other);
 
-  bool Create(int width, int height);
+  void Create(int width, int height);
   void Destroy();
   void Copy(const Image& other);
 
@@ -51,6 +51,6 @@ class Image : public Asset{
   Format format_ = kRGBA32;
 };
 
-}  // namespace eng
+} // namespace eng
 
 #endif  // IMAGE_H
