@@ -20,7 +20,16 @@ Image::Image() = default;
 
 Image::~Image() = default;
 
-bool Image::Create(unsigned w, unsigned h) {
+Image::Image(const Image& other) {
+  Copy(other);
+}
+
+Image& Image::operator=(const Image& other) {
+  Copy(other);
+  return *this;
+}
+
+bool Image::Create(int w, int h) {
   if (IsImmutable()) {
     LOG << "Error: Image is immutable. Failed to create.";
     return false;
@@ -45,7 +54,7 @@ void Image::Destroy() {
   buffer_.reset();
 }
 
-void Image::Copy(const Image& image) {
+void Image::Copy(const Image& other) {
   if (IsImmutable()) {
     LOG << "Error: Image is immutable. Failed to copy.";
     return;
@@ -53,16 +62,16 @@ void Image::Copy(const Image& image) {
 
   Destroy();
 
-  if (image.buffer_) {
-    unsigned size = image.GetSize();
+  if (other.buffer_) {
+    int size = other.GetSize();
     buffer_.reset((uint8_t*)AlignedAlloc(size));
-    memcpy(buffer_.get(), image.buffer_.get(), size);
+    memcpy(buffer_.get(), other.buffer_.get(), size);
   }
-  width_ = image.width_;
-  height_ = image.height_;
-  original_width_ = image.original_width_;
-  original_height_ = image.original_height_;
-  format_ = image.format_;
+  width_ = other.width_;
+  height_ = other.height_;
+  original_width_ = other.original_width_;
+  original_height_ = other.original_height_;
+  format_ = other.format_;
 }
 
 bool Image::Load(const char* file_name, bool convert_pow2) {

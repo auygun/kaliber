@@ -19,9 +19,6 @@ class ImageQuad : public Animatable {
   ImageQuad() = default;
   ~ImageQuad() override = default;
 
-  ImageQuad(const ImageQuad&) = delete;
-  ImageQuad& operator=(const ImageQuad&) = delete;
-
   void Create(std::shared_ptr<const Image> image,
               std::array<int, 2> num_frames = {1, 1},
               int frame_width = 0,

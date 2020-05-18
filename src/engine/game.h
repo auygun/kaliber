@@ -5,7 +5,11 @@ namespace eng {
 
 class Game {
  public:
+  Game() = default;
   virtual ~Game() = default;
+
+  Game(const Game&) = delete;
+  Game& operator=(const Game&) = delete;
 
   virtual bool Initialize() = 0;
 

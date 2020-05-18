@@ -10,9 +10,6 @@ class Animatable {
   Animatable() = default;
   virtual ~Animatable() = default;
 
-  Animatable(const Animatable&) = delete;
-  Animatable& operator=(const Animatable&) = delete;
-
   void Translate(const Vector2& offset);
   void Scale(const Vector2& scale);
   void Scale(float scale);

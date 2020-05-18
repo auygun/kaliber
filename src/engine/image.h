@@ -12,11 +12,14 @@ class Image : public Asset{
   enum Format { kRGBA32, kDXT1, kDXT5, kETC1, kATC };
 
   Image();
+  Image(const Image& other);
   ~Image() override;
 
-  bool Create(unsigned width, unsigned height);
+  Image& operator=(const Image& other);
+
+  bool Create(int width, int height);
   void Destroy();
-  void Copy(const Image& image);
+  void Copy(const Image& other);
 
   bool Load(const char* file_name, bool convertPow2 = true);
 

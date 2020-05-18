@@ -26,6 +26,9 @@ class Platform {
   Platform();
   ~Platform();
 
+  Platform(const Platform&) = delete;
+  Platform& operator=(const Platform&) = delete;
+
 #if defined(__ANDROID__)
   void Initialize(android_app* app);
 #elif defined(__linux__)

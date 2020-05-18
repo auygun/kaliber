@@ -18,9 +18,6 @@ class SolidQuad : public Animatable {
   SolidQuad() = default;
   ~SolidQuad() override = default;
 
-  SolidQuad(const SolidQuad&) = delete;
-  SolidQuad& operator=(const SolidQuad&) = delete;
-
   // Shape interface.
   void SetFrame(size_t frame) override {}
   size_t GetFrame() override { return 0; }
