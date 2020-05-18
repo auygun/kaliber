@@ -12,9 +12,11 @@
 #include "input_event.h"
 #include <algorithm>
 
+static const char vertex_description[] = "p2f;t2f";
+
 namespace eng {
 
-Engine::Engine() : vertex_description("p2f;t2f") {}
+Engine::Engine() = default;
 
 Engine::~Engine() = default;
 
@@ -30,6 +32,14 @@ bool Engine::Init(Platform* platform) {
 
   renderer_ = platform->GetRenderer();
   renderer_->SetContextLostCB(std::bind(&Engine::ContextLost, this));
+
+  if (GetScreenWidth() > GetScreenHeight()) {
+    float ratio = (float)GetScreenWidth() / (float)GetScreenHeight();
+    screen_size_ = {ratio * 2.0f, 2.0f};
+  } else {
+    float ratio = (float)GetScreenHeight() / (float)GetScreenWidth();
+    screen_size_ = {2.0f, ratio * 2.0f};
+  }
 
   system_font_ = GetFontAsset("engine/Roboto-Regular.ttf");
   if (!system_font_) {
@@ -99,17 +109,6 @@ void Engine::Present() {
 
 void Engine::TrimMemory() {
   renderer_->TrimMemory();
-}
-
-// TODO: do once during initialization.
-Vector2 Engine::GetScreenSize() {
-  if (GetScreenWidth() > GetScreenHeight()) {
-    float ratio = (float)GetScreenWidth() / (float)GetScreenHeight();
-    return Vector2(ratio * 2.0f, 2.0f);
-  } else {
-    float ratio = (float)GetScreenHeight() / (float)GetScreenWidth();
-    return Vector2(2.0f, ratio * 2.0f);
-  }
 }
 
 Vector2 Engine::ToScale(const Vector2& vec) {
@@ -221,6 +220,10 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
 
 void Engine::EnqueueRenderCommand(std::unique_ptr<RenderCommand> cmd) {
   renderer_->EnqueueCommand(std::move(cmd));
+}
+
+const char* Engine::GetVertexDescription() const {
+  return vertex_description;
 }
 
 int Engine::GetScreenWidth() const {

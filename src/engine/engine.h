@@ -37,7 +37,7 @@ class Engine {
 
   void TrimMemory();
 
-  Vector2 GetScreenSize();
+  Vector2 GetScreenSize() const { return screen_size_;};
 
   Vector2 ToScale(const Vector2& vec);
   Vector2 ToPosition(const Vector2& vec);
@@ -60,8 +60,8 @@ class Engine {
   Shader& GetPassThroughShader() { return pass_through_shader_; }
   Shader& GetSolidShader() { return solid_shader_; }
 
-  // Returns quad vertex description.
-  const std::string& GetVertexDescription() { return vertex_description; }
+  // Returns the vertex description of quad_.
+  const char* GetVertexDescription() const;
 
   std::shared_ptr<eng::Font> GetSystemFont() { return system_font_; }
 
@@ -103,7 +103,7 @@ class Engine {
   Shader pass_through_shader_;
   Shader solid_shader_;
 
-  const std::string vertex_description;
+  Vector2 screen_size_ = {0, 0};
 
   std::shared_ptr<eng::Font> system_font_;
 
