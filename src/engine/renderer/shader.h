@@ -7,7 +7,7 @@
 
 namespace eng {
 
-class ShaderCode;;
+class ShaderSource;;
 
 class Shader {
 public:
@@ -17,7 +17,7 @@ public:
   Shader(const Shader&) = delete;
   Shader& operator=(const Shader&) = delete;
 
-  void Create(std::shared_ptr<const ShaderCode> code,
+  void Create(std::shared_ptr<const ShaderSource> source,
               const std::string& vertex_description);
   void Destroy();
   void Activate();

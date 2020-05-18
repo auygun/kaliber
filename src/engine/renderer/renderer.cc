@@ -5,7 +5,7 @@
 #include "../../base/log.h"
 #include "render_command.h"
 #include "../image.h"
-#include "../shader_code.h"
+#include "../shader_source.h"
 #include <algorithm>
 
 namespace {
@@ -491,11 +491,11 @@ void Renderer::HandleCmdCreateShader(RenderCommand* cmd) {
   if (it != shader_map_.end())
     return;
 
-  GLuint vertex_shader = CreateShader(c->code->GetVertexCode(), GL_VERTEX_SHADER);
+  GLuint vertex_shader = CreateShader(c->source->GetVertexSource(), GL_VERTEX_SHADER);
   if (!vertex_shader)
     return;
 
-  GLuint fragment_shader = CreateShader(c->code->GetFragmentCode(), GL_FRAGMENT_SHADER);
+  GLuint fragment_shader = CreateShader(c->source->GetFragmentSource(), GL_FRAGMENT_SHADER);
   if (!fragment_shader)
     return;
 

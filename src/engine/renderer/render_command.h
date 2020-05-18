@@ -11,7 +11,7 @@
 namespace eng {
 
 class Image;
-class ShaderCode;
+class ShaderSource;
 
 // Global render commands are guaranteed to be processed. Others commands are
 // frame specific and can be discared by the renderer.
@@ -93,7 +93,7 @@ RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdCreateShader, true)
   int id;
-  std::shared_ptr<const ShaderCode> code;
+  std::shared_ptr<const ShaderSource> source;
   std::string vertex_description;
 RENDER_COMMAND_END
 

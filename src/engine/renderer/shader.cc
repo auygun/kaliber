@@ -3,7 +3,7 @@
 #include "../../base/log.h"
 #include "render_command.h"
 #include "../engine.h"
-#include "../shader_code.h"
+#include "../shader_source.h"
 #include <cstring>
 #include <cassert>
 
@@ -20,16 +20,16 @@ Shader::~Shader() {
   Destroy();
 }
 
-void Shader::Create(std::shared_ptr<const ShaderCode> code,
+void Shader::Create(std::shared_ptr<const ShaderSource> source,
                     const std::string& vertex_description) {
-  assert(code->IsImmutable());
+  assert(source->IsImmutable());
 
   Destroy();
 
   auto cmd = std::make_unique<CmdCreateShader>();
   resource_id_ = ++last_id;
   cmd->id = resource_id_;
-  cmd->code = code;
+  cmd->source = source;
   cmd->vertex_description = vertex_description;
   Engine::Get().EnqueueRenderCommand(std::move(cmd));
 }

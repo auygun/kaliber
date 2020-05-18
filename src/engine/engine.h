@@ -14,7 +14,7 @@ namespace eng {
 
 class Image;
 class Font;
-class ShaderCode;
+class ShaderSource;
 class Game;
 class InputEvent;
 class Renderer;
@@ -50,10 +50,10 @@ class Engine {
   // the given name. Never returns nullptr.
   std::shared_ptr<const Image> GetImageAsset(const std::string& name);
 
-  // Returns immutable ShaderCode asset that can be accessed between multiple
+  // Returns immutable ShaderSource asset that can be accessed between multiple
   // threads without locking. Returns nullptr if no shader was found with the
   // given name.
-  std::shared_ptr<const ShaderCode> GetShaderAsset(const std::string& name);
+  std::shared_ptr<const ShaderSource> GetShaderAsset(const std::string& name);
 
   // Returns Font asset. Returns unitialized font if no font was founf with the
   // given name. Never returns nullptr.
@@ -103,7 +103,7 @@ class Engine {
   int last_texture_resource_id_ = 0;
 
   std::unordered_map<std::string, std::shared_ptr<Image>> image_assets_;
-  std::unordered_map<std::string, std::shared_ptr<ShaderCode>> shader_assets_;
+  std::unordered_map<std::string, std::shared_ptr<ShaderSource>> shader_source_assets_;
   std::unordered_map<std::string, std::shared_ptr<Font>> font_assets_;
 
   Platform* platform_ = nullptr;

@@ -1,28 +1,28 @@
-#include "shader_code.h"
+#include "shader_source.h"
 #include "engine.h"
 #include "../base/asset_file.h"
 #include "../base/log.h"
 
 namespace eng {
 
-bool ShaderCode::Load(const std::string& name) {
+bool ShaderSource::Load(const std::string& name) {
   if (IsImmutable()) {
-    LOG << "Error: ShaderCode is immutable. Failed to load.";
+    LOG << "Error: ShaderSource is immutable. Failed to load.";
     return false;;
   }
 
   std::string vertex_file_name = name;
   vertex_file_name += "_vertex.glsl";
-  vertex_code_ = base::AssetFile::ReadWholeFile(vertex_file_name.c_str(),
+  vertex_source_ = base::AssetFile::ReadWholeFile(vertex_file_name.c_str(),
       Engine::Get().GetRootPath().c_str(), NULL, true);
-  if (!vertex_code_)
+  if (!vertex_source_)
     return false;
 
   std::string fragment_file_name = name;
   fragment_file_name += "_fragment.glsl";
-  fragment_code_ = base::AssetFile::ReadWholeFile(fragment_file_name.c_str(),
+  fragment_source_ = base::AssetFile::ReadWholeFile(fragment_file_name.c_str(),
       Engine::Get().GetRootPath().c_str(), NULL, true);
-  if (!fragment_code_)
+  if (!fragment_source_)
     return false;
 
   return true;

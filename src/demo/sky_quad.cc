@@ -2,7 +2,7 @@
 #include "../base/log.h"
 #include "../base/random.h"
 #include "../engine/engine.h"
-#include "../engine/shader_code.h"
+#include "../engine/shader_source.h"
 #include "../engine/renderer/geometry.h"
 #include <cassert>
 

@@ -3,7 +3,7 @@
 #include "../base/random.h"
 #include "platform/platform.h"
 #include "image.h"
-#include "shader_code.h"
+#include "shader_source.h"
 #include "font.h"
 #include "renderer/renderer.h"
 #include "renderer/render_command.h"
@@ -145,18 +145,18 @@ std::shared_ptr<const Image> Engine::GetImageAsset(const std::string& name) {
   return image;
 }
 
-std::shared_ptr<const ShaderCode> Engine::GetShaderAsset(const std::string& name) {
-  auto it = shader_assets_.find(name);
-  if (it != shader_assets_.end())
+std::shared_ptr<const ShaderSource> Engine::GetShaderAsset(const std::string& name) {
+  auto it = shader_source_assets_.find(name);
+  if (it != shader_source_assets_.end())
     return it->second;
 
-  auto shader_code = std::make_shared<ShaderCode>();
-  if (!shader_code->Load(name.c_str()))
+  auto shader_source = std::make_shared<ShaderSource>();
+  if (!shader_source->Load(name.c_str()))
     return nullptr;
-  shader_code->SetImmutable();
+  shader_source->SetImmutable();
 
-  shader_assets_[name] = shader_code;
-  return shader_code;
+  shader_source_assets_[name] = shader_source;
+  return shader_source;
 }
 
 std::shared_ptr<Font> Engine::GetFontAsset(const std::string& name) {
