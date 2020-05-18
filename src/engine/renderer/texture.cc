@@ -27,7 +27,7 @@ void Texture::Update(std::shared_ptr<const Image> image) {
   }
 
   if (resource_id_) {
-    auto cmd = std::make_unique<CmdCreateTexture>();
+    auto cmd = std::make_unique<CmdUpdateTexture>();
     cmd->id = resource_id_;
     cmd->image = image;
     Engine::Get().EnqueueRenderCommand(std::move(cmd));

@@ -111,7 +111,6 @@ class Engine {
 
   float seconds_accumulated_ = 0.0f;
 
-  // TODO: Move to InputQueue class.
   std::deque<std::unique_ptr<InputEvent>> input_queue_;
 
   void ContextLost();

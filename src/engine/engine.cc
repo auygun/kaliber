@@ -183,7 +183,7 @@ int Engine::AcquireTextureResource(std::shared_ptr<const Image> image) {
          << ", resource_id: " << resource_id;
   }
 
-  auto cmd = std::make_unique<CmdCreateTexture>();
+  auto cmd = std::make_unique<CmdUpdateTexture>();
   cmd->id = resource_id;
   cmd->image = image;
   renderer_->EnqueueCommand(std::move(cmd));

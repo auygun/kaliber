@@ -235,8 +235,8 @@ void Renderer::ProcessCommand(RenderCommand* cmd) {
   case HHASH("CmdPresent"):
     HandleCmdPresent(cmd);
     break;
-  case HHASH("CmdCreateTexture"):
-    HandleCmdCreateTexture(cmd);
+  case HHASH("CmdUpdateTexture"):
+    HandleCmdUpdateTexture(cmd);
     break;
   case HHASH("CmdDestoryTexture"):
     HandleCmdDestoryTexture(cmd);
@@ -298,8 +298,8 @@ void Renderer::HandleCmdClear(RenderCommand* cmd) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Renderer::HandleCmdCreateTexture(RenderCommand* cmd) {
-  auto *c = static_cast<CmdCreateTexture*>(cmd);
+void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
+  auto *c = static_cast<CmdUpdateTexture*>(cmd);
   auto it = texture_map_.find(c->id);
   bool new_texture = it == texture_map_.end();
 
@@ -311,7 +311,6 @@ void Renderer::HandleCmdCreateTexture(RenderCommand* cmd) {
   else
     gl_id = it->second;
 
-  // TODO: move to a separate update function.
   glBindTexture(GL_TEXTURE_2D, gl_id);
   if (c->image->IsCompressed()) {
     GLenum format;
