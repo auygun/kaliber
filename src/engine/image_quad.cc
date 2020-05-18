@@ -7,6 +7,8 @@
 #include "renderer/shader.h"
 #include <cassert>
 
+using base::Vector2;
+
 namespace eng {
 
 void ImageQuad::Create(std::shared_ptr<const Image> image,

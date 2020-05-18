@@ -14,7 +14,11 @@ struct ScopedFILECloser {
 
 } // namespace internal
 
+namespace base {
+
 // Automatically closes file.
 using ScopedFILE = std::unique_ptr<FILE, internal::ScopedFILECloser>;
+
+} // namespace base
 
 #endif  // FILE_H

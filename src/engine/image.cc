@@ -14,6 +14,8 @@
 #define STBI_NO_STDIO
 #include "../third_party/stb/stb_image.h"
 
+using base::AlignedAlloc;
+
 namespace eng {
 
 Image::Image() = default;
@@ -88,8 +90,8 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
   full_path += file_name;
 
   int file_size = 0;
-  std::unique_ptr<char[]> file_buffer = AssetFile::ReadWholeFile(full_path.c_str(),
-      Engine::Get().GetRootPath().c_str(), &file_size);
+  std::unique_ptr<char[]> file_buffer = base::AssetFile::ReadWholeFile(
+      full_path.c_str(), Engine::Get().GetRootPath().c_str(), &file_size);
   if (!file_buffer) {
     LOG << "Failed to read file: " << file_name;
     return false;
@@ -148,8 +150,8 @@ bool Image::Load(const char* file_name, bool convert_pow2) {
 
   // Create a bigger canvas if needed to satisfy the pow2 dimension requirement.
   if (convert_pow2) {
-    int new_width = RoundUpToPow2(width_);
-    int new_height = RoundUpToPow2(height_);
+    int new_width = base::RoundUpToPow2(width_);
+    int new_height = base::RoundUpToPow2(height_);
     if ((new_width != width_) || (new_height != height_)) {
       LOG << "Converting image " << file_name << " from ("
           << width_ << ", " << height_ << ") to (" << new_width << ", " << new_height << ")";

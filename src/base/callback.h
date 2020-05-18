@@ -3,6 +3,10 @@
 
 #include <functional>
 
+namespace base {
+
 using Callback = std::function<void()>;
+
+} // namespace base
 
 #endif  // CALLBACK_H

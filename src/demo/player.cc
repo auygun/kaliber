@@ -8,6 +8,8 @@
 #include <memory>
 #include <cassert>
 
+using base::Vector2;
+
 namespace {
 
 constexpr int wepon_warmup_frame[] = {1, 9};

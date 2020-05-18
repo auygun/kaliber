@@ -74,7 +74,7 @@ Renderer::~Renderer() {
   TerminateWorker();
 }
 
-void Renderer::SetContextLostCB(Callback cb) {
+void Renderer::SetContextLostCB(base::Callback cb) {
   context_lost_cb_ = std::move(cb);
 }
 
@@ -96,11 +96,11 @@ bool Renderer::InitCommon() {
   if (screen_width_ > screen_height_) {
     float screen_ratio = (float)screen_width_ / (float)screen_height_;
     LOG << "screen_ratio: " << screen_ratio;
-    projection_ = Ortho(-screen_ratio, screen_ratio, -1.0f, 1.0f);
+    projection_ = base::Ortho(-screen_ratio, screen_ratio, -1.0f, 1.0f);
   } else {
     float screen_ratio = (float)screen_height_ / (float)screen_width_;
     LOG << "screen_ratio: " << screen_ratio;
-    projection_ = Ortho(-1.0, 1.0, -screen_ratio, screen_ratio);
+    projection_ = base::Ortho(-1.0, 1.0, -screen_ratio, screen_ratio);
   }
 
   return true;

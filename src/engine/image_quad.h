@@ -44,7 +44,7 @@ class ImageQuad : public Animatable {
 
  private:
   Texture texture_;
-  Vector2 tex_scale_ = {1, 1};
+  base::Vector2 tex_scale_ = {1, 1};
 
   size_t current_frame_ = 0;
   std::array<int, 2> num_frames_ = {1, 1}; // horizontal, vertical
@@ -53,7 +53,7 @@ class ImageQuad : public Animatable {
 
   bool visible_ = false;
 
-  Vector2 GetUVOffset(int frame);
+  base::Vector2 GetUVOffset(int frame);
 };
 
 }  // namespace eng

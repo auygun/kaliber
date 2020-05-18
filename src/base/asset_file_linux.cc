@@ -1,6 +1,8 @@
 #include <string>
 #include "asset_file.h"
 
+namespace base {
+
 AssetFile::AssetFile() = default;
 
 AssetFile::~AssetFile() = default;
@@ -35,3 +37,5 @@ int AssetFile::Read(char* data, int size) {
 
   return 0;
 }
+
+} // namespace base

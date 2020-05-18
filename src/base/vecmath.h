@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <cmath>
 
+namespace base {
+
 struct Vector2 {
   float x, y;
 
@@ -146,5 +148,7 @@ inline bool Intersection(Vector2 center, Vector2 size, Vector2 origin, Vector2 d
 
   return tmax >= tmin;
 }
+
+} // namespace base
 
 #endif  // VEC_MATH_H

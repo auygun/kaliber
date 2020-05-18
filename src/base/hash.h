@@ -3,7 +3,9 @@
 
 #include <stddef.h>
 
-#define HHASH(x) HornerHash(31, x)
+#define HHASH(x) base::HornerHash(31, x)
+
+namespace base {
 
 // Compile time string hashing function.
 template <size_t N>
@@ -13,5 +15,7 @@ constexpr inline size_t HornerHash(size_t prime,
   return (Len <= 1) ?
     str[0] : (prime * HornerHash(prime, str, Len - 1) + str[Len - 1]);
 }
+
+} // namespace base
 
 #endif // HASH_H

@@ -6,6 +6,11 @@
 #include "../shader_code.h"
 #include <cstring>
 
+using base::Vector2;
+using base::Vector3;
+using base::Vector4;
+using base::Matrix4x4;
+
 namespace eng {
 
 int Shader::last_id = 0;

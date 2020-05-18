@@ -5,6 +5,8 @@
 
 #define CRASH *((int*)nullptr) = 0;
 
+namespace base {
+
 // ToDo: x86 has the bsr instruction.
 inline int GetHighestBitPos(int value) {
   return (0xFFFF0000 & value ? value &= 0xFFFF0000, 1 : 0) * 0x10 +
@@ -54,5 +56,7 @@ inline Vector4 Blend(Vector4 c1, Vector4 c2, float t) {
                  BlendColorChannel(c1.z, c2.z, t),
                  BlendAlphaChannel(c1.w, c2.w, t));
 }
+
+} // namespace base
 
 #endif  // MISC_H

@@ -1,6 +1,8 @@
 #include "asset_file.h"
 #include "log.h"
 
+namespace base {
+
 std::unique_ptr<char[]> AssetFile::ReadWholeFile(const char* file_name,
                                                    const char* root_path,
                                                    int* length,
@@ -33,3 +35,5 @@ std::unique_ptr<char[]> AssetFile::ReadWholeFile(const char* file_name,
 
   return buffer;
 }
+
+} // namespace base

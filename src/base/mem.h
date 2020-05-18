@@ -22,9 +22,11 @@ struct ScopedAlignedFree {
 
 } // namespace internal
 
+namespace base {
+
 template <typename T>
 struct AlignedMem {
-  using Scopped = std::unique_ptr<T, internal::ScopedAlignedFree>;
+  using ScoppedPtr = std::unique_ptr<T, internal::ScopedAlignedFree>;
 };
 
 inline void* AlignedAlloc(size_t size) {
@@ -43,5 +45,7 @@ inline void* AlignedAlloc(size_t size) {
 }
 
 inline void AlignedFree(void* mem) { free(mem); }
+
+} // namespace base
 
 #endif  // MEM_H

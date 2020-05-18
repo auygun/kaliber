@@ -44,7 +44,7 @@ class Renderer {
   Renderer(const Renderer&) = delete;
   Renderer& operator=(const Renderer&) = delete;
 
-  void SetContextLostCB(Callback cb);
+  void SetContextLostCB(base::Callback cb);
 
 #if defined(__ANDROID__)
   bool Init(ANativeWindow* window);
@@ -72,7 +72,7 @@ class Renderer {
 
   int screen_width() const { return screen_width_; }
   int screen_height() const { return screen_height_; }
-  const Matrix4x4& projection() const { return projection_; }
+  const base::Matrix4x4& projection() const { return projection_; }
 
   size_t num_frames_dropped() { return num_frames_dropped_; }
   size_t global_queue_size() { return global_queue_size_; }
@@ -124,14 +124,14 @@ class Renderer {
     std::unordered_map<std::string, GLuint> uniforms;
   };
 
-  Callback context_lost_cb_;
+  base::Callback context_lost_cb_;
 
   TextureCompression texture_compression_;
   bool vertex_array_objects_ = false;
 
   int screen_width_ = 0;
   int screen_height_ = 0;
-  Matrix4x4 projection_;
+  base::Matrix4x4 projection_;
 
   std::unordered_map<int, GLuint> texture_map_;
   std::unordered_map<int, Geometry> geometry_map_;

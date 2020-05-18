@@ -25,8 +25,8 @@ class Player {
 
   void Draw(float frame_frac);
 
-  Vector2 GetWeaponPos(DamageType type) const;
-  Vector2 GetWeaponScale() const;
+  base::Vector2 GetWeaponPos(DamageType type) const;
+  base::Vector2 GetWeaponScale() const;
 
  private:
   eng::ImageQuad drag_sign_[2];
@@ -41,26 +41,26 @@ class Player {
 
   DamageType active_weapon_ = kDamageType_Invalid;
 
-  Vector2 drag_start_ = {0, 0};
-  Vector2 drag_end_ = {0, 0};
+  base::Vector2 drag_start_ = {0, 0};
+  base::Vector2 drag_end_ = {0, 0};
   bool drag_valid_ = false;
 
-  DamageType GetWeaponType(const Vector2& pos);
+  DamageType GetWeaponType(const base::Vector2& pos);
 
   void SetBeamLength(DamageType type, float len);
 
   void WarmupWeapon(DamageType type);
   void CooldownWeapon(DamageType type);
 
-  void Fire(DamageType type, Vector2 target_point);
+  void Fire(DamageType type, base::Vector2 target_point);
   bool IsFiring(DamageType type);
 
   void SetupWeapons();
 
   void UpdateTarget();
 
-  void DragStart(const Vector2& pos);
-  void Drag(const Vector2& pos);
+  void DragStart(const base::Vector2& pos);
+  void Drag(const base::Vector2& pos);
   void DragEnd();
   void DragCancel();
   bool ValidateDrag();

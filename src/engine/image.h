@@ -39,7 +39,7 @@ class Image : public Asset{
   void Gradient();
 
  private:
-  AlignedMem<uint8_t[]>::Scopped buffer_;
+  base::AlignedMem<uint8_t[]>::ScoppedPtr buffer_;
   int width_ = 0;
   int height_ = 0;
   int original_width_ = 0;

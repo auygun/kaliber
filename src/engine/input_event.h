@@ -24,21 +24,21 @@ class InputEvent {
 
   InputEvent(Type type)
       : type_(type) {}
-  InputEvent(Type type, const Vector2& vec1)
+  InputEvent(Type type, const base::Vector2& vec1)
       : type_(type), vec_{vec1, {0, 0}} {}
-  InputEvent(Type type, const Vector2& vec1, const Vector2& vec2)
+  InputEvent(Type type, const base::Vector2& vec1, const base::Vector2& vec2)
       : type_(type), vec_{vec1, vec2} {}
   InputEvent(Type type, char key)
       : type_(type), key_(key) {}
   ~InputEvent() = default;
 
   Type GetType() { return type_; }
-  Vector2 GetVector(size_t i) { assert(i < 2); return vec_[i]; }
+  base::Vector2 GetVector(size_t i) { assert(i < 2); return vec_[i]; }
   char GetKeyPress() { return key_; }
 
  private:
   Type type_ = kInvalid;
-  Vector2 vec_[2] = {{0, 0}, {0, 0}};
+  base::Vector2 vec_[2] = {{0, 0}, {0, 0}};
   char key_ = 0;
 };
 

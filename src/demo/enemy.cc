@@ -9,6 +9,8 @@
 #include <limits>
 #include <cassert>
 
+using base::Vector2;
+
 namespace {
 
 constexpr int enemy_frame_start[][3] = {{ 0, 50,  -1},
@@ -64,17 +66,17 @@ void Enemy::Update(float delta_time) {
   if (seconds_since_last_spawn_ >= 1) {
     seconds_since_last_spawn_ = 0;
 
-    UnitType unit_type = (RandomInt() % 12) == 0 ? kUnitType_Tank :
-        ((RandomInt() % 5) == 0 ? kUnitType_Bug : kUnitType_Skull);
+    UnitType unit_type = (base::RandomInt() % 12) == 0 ? kUnitType_Tank :
+        ((base::RandomInt() % 5) == 0 ? kUnitType_Bug : kUnitType_Skull);
     DamageType damage_type = unit_type == kUnitType_Tank ? kDamageType_Any :
-        (DamageType)(RandomInt() % kDamageType_Any);
+        (DamageType)(base::RandomInt() % kDamageType_Any);
 
     Vector2 s = engine.GetScreenSize();
-    float col = (float)(RandomInt() % 4);
+    float col = (float)(base::RandomInt() % 4);
     float x = (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2;
     Vector2 pos = {x, s.y / 2};
     float speed = unit_type == kUnitType_Tank ? 0.1f :
-        ((RandomInt() % 4) == 0 ? 0.65f : 0.4f);
+        ((base::RandomInt() % 4) == 0 ? 0.65f : 0.4f);
 
     Spawn(unit_type, damage_type, pos, speed);
   }
@@ -142,7 +144,7 @@ void Enemy::SelectTarget(DamageType damage_type,
     if (e.targetted_by_weapon_ == damage_type)
       current_enemy = &e;
 
-    if (!Intersection(e.sprite.GetOffset(), e.sprite.GetScale() * 1.2f,
+    if (!base::Intersection(e.sprite.GetOffset(), e.sprite.GetScale() * 1.2f,
         weapon_pos, beam_dir))
       continue;
 

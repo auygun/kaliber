@@ -108,25 +108,25 @@ RENDER_COMMAND_END
 RENDER_COMMAND_BEGIN(CmdSetUniformVec2, false)
   int id;
   std::string name;
-  Vector2 v;
+  base::Vector2 v;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformVec3, false)
   int id;
   std::string name;
-  Vector3 v;
+  base::Vector3 v;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformVec4, false)
   int id;
   std::string name;
-  Vector4 v;
+  base::Vector4 v;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformMat4, false)
   int id;
   std::string name;
-  Matrix4x4 m;
+  base::Matrix4x4 m;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformInt, false)

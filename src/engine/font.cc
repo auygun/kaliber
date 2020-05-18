@@ -21,8 +21,8 @@ bool Font::Create(const std::string& font_name) {
 
   // Read the font file.
   int buffer_size = 0;
-  std::unique_ptr<char[]> buffer = AssetFile::ReadWholeFile(full_path.c_str(),
-      Engine::Get().GetRootPath().c_str(), &buffer_size);
+  std::unique_ptr<char[]> buffer = base::AssetFile::ReadWholeFile(
+      full_path.c_str(), Engine::Get().GetRootPath().c_str(), &buffer_size);
   if (!buffer) {
     LOG << "Failed to read font file.";
     return false;

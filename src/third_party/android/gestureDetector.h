@@ -80,7 +80,7 @@ class TapDetector : public GestureDetector {
   TapDetector();
   virtual ~TapDetector() {}
   virtual GESTURE_STATE Detect(const AInputEvent* motion_event);
-  void GetPointer(Vector2& v) { v.x = down_x_; v.y = down_y_; }
+  void GetPointer(base::Vector2& v) { v.x = down_x_; v.y = down_y_; }
 };
 
 /******************************************************************
@@ -100,7 +100,7 @@ class DoubletapDetector : public GestureDetector {
   virtual ~DoubletapDetector() {}
   virtual GESTURE_STATE Detect(const AInputEvent* motion_event);
   virtual void SetConfiguration(AConfiguration* config);
-  void GetPointer(Vector2& v) { v.x = last_tap_x_; v.y = last_tap_y_; }
+  void GetPointer(base::Vector2& v) { v.x = last_tap_x_; v.y = last_tap_y_; }
 };
 
 /******************************************************************
@@ -120,7 +120,7 @@ class PinchDetector : public GestureDetector {
   PinchDetector() {}
   virtual ~PinchDetector() {}
   virtual GESTURE_STATE Detect(const AInputEvent* event);
-  bool GetPointers(Vector2& v1, Vector2& v2);
+  bool GetPointers(base::Vector2& v1, base::Vector2& v2);
 };
 
 /******************************************************************
@@ -138,7 +138,7 @@ class DragDetector : public GestureDetector {
   DragDetector() : event_(nullptr) {}
   virtual ~DragDetector() {}
   virtual GESTURE_STATE Detect(const AInputEvent* event);
-  bool GetPointer(Vector2& v);
+  bool GetPointer(base::Vector2& v);
 };
 
 }  // namespace ndkHelper

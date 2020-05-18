@@ -1,6 +1,8 @@
 #include "random.h"
 #include <stdlib.h>
 
+namespace base {
+
 void RandomInit() {
   srand(42);
 }
@@ -17,3 +19,5 @@ unsigned RandomUnsigned() {
 int RandomInt() {
   return (int)rand();
 }
+
+} // namespace base

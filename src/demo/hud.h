@@ -35,7 +35,7 @@ class Hud {
   eng::ImageQuad text_[2];
 
   eng::Animator hud_animator_;
-  Callback hud_animator_cb_;
+  base::Callback hud_animator_cb_;
 
   std::shared_ptr<eng::Font> font_;
   int max_text_width_ = 0;

@@ -9,6 +9,8 @@
 #include "../../third_party/android/gestureDetector.h"
 #include "platform.h"
 
+using base::Vector2;
+
 namespace {
 
 std::string GetApkPath(ANativeActivity* activity) {

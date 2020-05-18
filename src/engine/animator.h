@@ -34,12 +34,12 @@ class Animator {
 
   // Set callback for the given animations. It's called for each animation once
   // it ends. Not that it's not called for looping animations.
-  void SetEndCallback(int animation, Callback cb);
+  void SetEndCallback(int animation, base::Callback cb);
 
   // Set movement animation parameters. Movement animations is relative.
   // Distance is calculated from the magnitude of direction vector. Speed is in
   // units per second.
-  void SetMovement(Vector2 direction, float speed);
+  void SetMovement(base::Vector2 direction, float speed);
 
   // Set rotation animation parameters. Rotation animation is relative. Target
   // is in radians. Speed is in units per second.
@@ -48,7 +48,7 @@ class Animator {
   // Set color blending animation parameters. Color blending animation is
   // absolute. The absolute start colors are obtained from the attached
   // animatables. Speed is in seconds.
-  void SetBlending(Vector4 target, float speed);
+  void SetBlending(base::Vector4 target, float speed);
 
   // Set frame playback animation parameters. Frame animation is absolute. The
   // absolute start frames are obtained from the attached animatables. Plays
@@ -67,9 +67,9 @@ class Animator {
  private:
   struct Element {
     Animatable* animatable;
-    Vector2 movement_last_offset = {0, 0};
+    base::Vector2 movement_last_offset = {0, 0};
     float rotation_last_theta = 0;
-    Vector4 blending_start = {0, 0, 0, 0};
+    base::Vector4 blending_start = {0, 0, 0, 0};
     int frame_start_ = 0;
   };
 
@@ -77,33 +77,33 @@ class Animator {
   unsigned int loop_flags_ = 0;
   std::vector<Element> elements_;
 
-  Vector2 movement_direction_ = {0, 0};
+  base::Vector2 movement_direction_ = {0, 0};
   float movement_speed_ = 0;
   float movement_time_ = 0;
-  Callback movement_cb_;
+  base::Callback movement_cb_;
 
   float rotation_target_ = 0;
   float rotation_speed_ = 0;
   float rotation_time_ = 0;
-  Callback rotation_cb_;
+  base::Callback rotation_cb_;
 
-  Vector4 blending_target_ = {0, 0, 0, 0};
+  base::Vector4 blending_target_ = {0, 0, 0, 0};
   float blending_speed_ = 0;
   float blending_time_ = 0;
-  Callback blending_cb_;
+  base::Callback blending_cb_;
 
   int frame_count_ = 0;
   float frame_speed_ = 0;
   float frame_time_ = 0;
-  Callback frame_cb_;
+  base::Callback frame_cb_;
 
   float timer_speed_ = 0;
   float timer_time_ = 0;
-  Callback timer_cb_;
+  base::Callback timer_cb_;
 
   // State used to set new callback during a callback.
   bool has_pending_cb_ = false;
-  Callback pending_cb_;
+  base::Callback pending_cb_;
   Flags inside_cb_ = kNone;
 
   void UpdateMovement(float delta_time);

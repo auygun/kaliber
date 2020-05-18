@@ -40,10 +40,10 @@ class Engine {
 
   void TrimMemory();
 
-  Vector2 GetScreenSize() const { return screen_size_;};
+  base::Vector2 GetScreenSize() const { return screen_size_;};
 
-  Vector2 ToScale(const Vector2& vec);
-  Vector2 ToPosition(const Vector2& vec);
+  base::Vector2 ToScale(const base::Vector2& vec);
+  base::Vector2 ToPosition(const base::Vector2& vec);
 
   // Asset management. Image and shader assest are immutable and can be accessed
   // between multiple threads without locking.
@@ -73,7 +73,7 @@ class Engine {
   int GetScreenWidth() const;
   int GetScreenHeight() const;
 
-  const  Matrix4x4& GetProjectionMarix() const;
+  const  base::Matrix4x4& GetProjectionMarix() const;
 
   int GetDeviceDpi() const;
 
@@ -106,7 +106,7 @@ class Engine {
   Shader pass_through_shader_;
   Shader solid_shader_;
 
-  Vector2 screen_size_ = {0, 0};
+  base::Vector2 screen_size_ = {0, 0};
 
   std::shared_ptr<eng::Font> system_font_;
 

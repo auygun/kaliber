@@ -10,6 +10,8 @@
 #include <memory>
 #include "file.h"
 
+namespace base {
+
 class AssetFile {
  public:
   AssetFile();
@@ -35,5 +37,7 @@ class AssetFile {
   ScopedFILE file_;
 #endif
 };
+
+} // namespace base
 
 #endif  // ASSET_FILE_H

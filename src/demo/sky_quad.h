@@ -26,13 +26,13 @@ class SkyQuad {
   void Draw();
   void ContextLost();
 
-  void Translate(Vector2 offset) { sky_offset_ += offset; }
+  void Translate(base::Vector2 offset) { sky_offset_ += offset; }
 
  private:
   eng::Shader shader_;
-  Vector2 sky_offset_ = {0, 0};
-  Vector3 nebula_color_ = {0, 0, 0};
-  Vector2 scale_ = {1, 1};
+  base::Vector2 sky_offset_ = {0, 0};
+  base::Vector3 nebula_color_ = {0, 0, 0};
+  base::Vector2 scale_ = {1, 1};
 };
 
 #endif  // SKY_QUAD_H

@@ -12,6 +12,9 @@
 #include "input_event.h"
 #include <algorithm>
 
+using base::Vector2;
+using base::Matrix4x4;
+
 static const char vertex_description[] = "p2f;t2f";
 
 namespace eng {
@@ -26,7 +29,7 @@ Engine& Engine::Get() {
 }
 
 bool Engine::Init(Platform* platform) {
-  RandomInit();
+  base::RandomInit();
 
   platform_ = platform;
 

@@ -1,5 +1,7 @@
 #include "timer.h"
 
+namespace base {
+
 Timer::Timer() {
   Reset();
 }
@@ -22,3 +24,5 @@ void Timer::Update() {
 
   seconds_accumulated_ += seconds_passed_;
 }
+
+} // namespace base

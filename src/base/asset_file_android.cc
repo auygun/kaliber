@@ -3,6 +3,8 @@
 #include "asset_file.h"
 #include "log.h"
 
+namespace base {
+
 AssetFile::AssetFile() = default;
 
 AssetFile::~AssetFile() {
@@ -68,3 +70,5 @@ int AssetFile::Read(char* data, int size) {
   int result = unzReadCurrentFile(archive_, data, size);
   return result < size ? 0 : result;
 }
+
+} // namespace base

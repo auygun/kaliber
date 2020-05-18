@@ -5,6 +5,9 @@
 #include "../engine/image.h"
 #include "../engine/font.h"
 
+using base::Vector2;
+using base::Vector4;
+
 namespace {
 
 constexpr float horizontal_margin = 0.07f;

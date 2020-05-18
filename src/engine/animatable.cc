@@ -1,6 +1,8 @@
 #include "animatable.h"
 #include <cmath>
 
+using base::Vector2;
+
 namespace eng {
 
 void Animatable::Translate(const Vector2& offset) {

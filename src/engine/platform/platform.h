@@ -51,7 +51,7 @@ class Platform {
   } internal_error;
 
  private:
-  Timer timer_;
+  base::Timer timer_;
 
   int device_dpi_ = 200;
   std::string root_path_;

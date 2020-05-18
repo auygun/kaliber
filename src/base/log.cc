@@ -6,6 +6,8 @@
 #include <stdio.h>
 #endif
 
+namespace base {
+
 // This is never instantiated, it's just used for EAT_STREAM_PARAMETERS to have
 // an object of the correct type on the LHS of the unused part of the ternary
 // operator.
@@ -29,3 +31,5 @@ Log::~Log() {
   printf("[%s:%d] %s", filename.c_str(), line_, text.c_str());
 #endif
 }
+
+} // namespace base

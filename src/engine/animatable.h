@@ -10,22 +10,22 @@ class Animatable {
   Animatable() = default;
   virtual ~Animatable() = default;
 
-  void Translate(const Vector2& offset);
-  void Scale(const Vector2& scale);
+  void Translate(const base::Vector2& offset);
+  void Scale(const base::Vector2& scale);
   void Scale(float scale);
   void Rotate(float angle);
 
-  void SetOffset(const Vector2& offset) { offset_ = offset; }
-  void SetScale(const Vector2& scale) { scale_ = scale; }
-  void SetPivot(const Vector2& pivot) { pivot_ = pivot; }
+  void SetOffset(const base::Vector2& offset) { offset_ = offset; }
+  void SetScale(const base::Vector2& scale) { scale_ = scale; }
+  void SetPivot(const base::Vector2& pivot) { pivot_ = pivot; }
   void SetTheta(float theta);
-  void SetColor(const Vector4& color) { color_ = color; }
+  void SetColor(const base::Vector4& color) { color_ = color; }
 
-  Vector2 GetOffset() const { return offset_; }
-  Vector2 GetScale() const { return scale_; }
-  Vector2 GetPivot() const { return pivot_; }
+  base::Vector2 GetOffset() const { return offset_; }
+  base::Vector2 GetScale() const { return scale_; }
+  base::Vector2 GetPivot() const { return pivot_; }
   float GetTheta() const { return theta_; }
-  Vector4 GetColor() const { return color_; }
+  base::Vector4 GetColor() const { return color_; }
 
   // Pure virtuals for frame animation support.
   virtual void SetFrame(size_t frame) = 0;
@@ -49,12 +49,12 @@ class Animatable {
   }
 
  protected:
-  Vector2 offset_ = {0, 0};
-  Vector2 scale_ = {1, 1};
-  Vector2 pivot_ = {0, 0};
-  Vector2 rotation_ = {0, 1};
+  base::Vector2 offset_ = {0, 0};
+  base::Vector2 scale_ = {1, 1};
+  base::Vector2 pivot_ = {0, 0};
+  base::Vector2 rotation_ = {0, 1};
   float theta_ = 0;
-  Vector4 color_ = {1, 1, 1, 1};
+  base::Vector4 color_ = {1, 1, 1, 1};
 };
 
 }  // namespace eng

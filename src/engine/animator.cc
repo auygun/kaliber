@@ -4,6 +4,9 @@
 #include "animatable.h"
 #include <cmath>
 
+using base::Vector2;
+using base::Vector4;
+
 namespace eng {
 
 void Animator::Attach(Animatable *animatable) {
@@ -40,7 +43,7 @@ void Animator::Stop(int animation) {
   play_flags_ &= ~animation;
 }
 
-void Animator::SetEndCallback(int animation, Callback cb) {
+void Animator::SetEndCallback(int animation, base::Callback cb) {
   if ((animation & kMovement) != 0) {
     if (inside_cb_ == kMovement) {
       has_pending_cb_ = true;
@@ -126,25 +129,25 @@ void Animator::Update(float delta_time) {
 
   for (auto& a : elements_) {
     if (play_flags_ & kMovement) {
-      Vector2 offset = Lerp({0, 0}, movement_direction_, movement_time_);
+      Vector2 offset = base::Lerp({0, 0}, movement_direction_, movement_time_);
       a.animatable->Translate(offset - a.movement_last_offset);
       a.movement_last_offset = offset;
     }
 
     if (play_flags_ & kRotation) {
-      float theta = Lerp(0.0f, rotation_target_, rotation_time_);
+      float theta = base::Lerp(0.0f, rotation_target_, rotation_time_);
       a.animatable->Rotate(theta - a.rotation_last_theta);
       a.rotation_last_theta = theta;
     }
 
     if (play_flags_ & kBlending) {
-      Vector4 r = Blend(a.blending_start, blending_target_, blending_time_);
+      Vector4 r = base::Blend(a.blending_start, blending_target_, blending_time_);
       a.animatable->SetColor(r);
     }
 
     if (play_flags_ & kFrames) {
       int target = a.frame_start_ + frame_count_;
-      int r = Lerp(a.frame_start_, target, frame_time_);
+      int r = base::Lerp(a.frame_start_, target, frame_time_);
       if (r < target)
         a.animatable->SetFrame(r);
     }

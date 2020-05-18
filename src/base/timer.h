@@ -3,6 +3,8 @@
 
 #include <sys/time.h>
 
+namespace base {
+
 class Timer {
  public:
   Timer();
@@ -21,5 +23,7 @@ class Timer {
 
   timeval last_time_;
 };
+
+} // namespace base
 
 #endif  // TIMER_H

@@ -6,15 +6,17 @@
 
 #define EAT_STREAM_PARAMETERS \
   true ? (void)0              \
-       : Log::Voidify() & (*Log::swallow_stream)
+       : base::Log::Voidify() & (*base::Log::swallow_stream)
 
-#define LOG Log(__FILE__, __LINE__)
+#define LOG base::Log(__FILE__, __LINE__)
 
 #ifdef _DEBUG
-#define DLOG Log(__FILE__, __LINE__)
+#define DLOG base::Log(__FILE__, __LINE__)
 #else
 #define DLOG EAT_STREAM_PARAMETERS
 #endif
+
+namespace base {
 
 class Log {
  public:
@@ -55,5 +57,7 @@ class Log {
   const int line_;
   std::ostringstream stream_;
 };
+
+} // namespace base
 
 #endif  // LOG_H
