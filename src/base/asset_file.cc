@@ -1,11 +1,11 @@
-#include "asset_loader.h"
+#include "asset_file.h"
 #include "log.h"
 
-std::unique_ptr<char[]> AssetLoader::ReadWholeFile(const char* file_name,
+std::unique_ptr<char[]> AssetFile::ReadWholeFile(const char* file_name,
                                                    const char* root_path,
                                                    int* length,
                                                    bool null_terminate) {
-  AssetLoader file;
+  AssetFile file;
   if (!file.Open(file_name, root_path))
     return nullptr;
 

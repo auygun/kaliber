@@ -1,15 +1,15 @@
 #include <assert.h>
 #include <string>
-#include "asset_loader.h"
+#include "asset_file.h"
 #include "log.h"
 
-AssetLoader::AssetLoader() = default;
+AssetFile::AssetFile() = default;
 
-AssetLoader::~AssetLoader() {
+AssetFile::~AssetFile() {
   Close();
 }
 
-bool AssetLoader::Open(const char* file_name, const char* root_path) {
+bool AssetFile::Open(const char* file_name, const char* root_path) {
   do {
     // Try to open the zip archive.
     archive_ = unzOpen(root_path);
@@ -48,7 +48,7 @@ bool AssetLoader::Open(const char* file_name, const char* root_path) {
   return false;
 }
 
-void AssetLoader::Close() {
+void AssetFile::Close() {
   if (archive_) {
     // This could potentially be called without having opened a file, but that
     // should be a harmless nop.
@@ -59,11 +59,11 @@ void AssetLoader::Close() {
   }
 }
 
-int AssetLoader::GetSize() {
+int AssetFile::GetSize() {
   return uncompressed_size_;
 }
 
-int AssetLoader::Read(char* data, int size) {
+int AssetFile::Read(char* data, int size) {
   // Uncompress data into the buffer.
   int result = unzReadCurrentFile(archive_, data, size);
   return result < size ? 0 : result;

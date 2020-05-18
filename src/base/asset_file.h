@@ -1,5 +1,5 @@
-#ifndef ASSET_LOADER_H
-#define ASSET_LOADER_H
+#ifndef ASSET_FILE_H
+#define ASSET_FILE_H
 
 #if defined(__ANDROID__)
 #include <zlib.h>
@@ -10,10 +10,10 @@
 #include <memory>
 #include "file.h"
 
-class AssetLoader {
+class AssetFile {
  public:
-  AssetLoader();
-  ~AssetLoader();
+  AssetFile();
+  ~AssetFile();
 
   bool Open(const char* file_name, const char* root_path);
   void Close();
@@ -36,4 +36,4 @@ class AssetLoader {
 #endif
 };
 
-#endif  // ASSET_LOADER_H
+#endif  // ASSET_FILE_H

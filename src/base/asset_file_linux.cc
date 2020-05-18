@@ -1,22 +1,22 @@
 #include <string>
-#include "asset_loader.h"
+#include "asset_file.h"
 
-AssetLoader::AssetLoader() = default;
+AssetFile::AssetFile() = default;
 
-AssetLoader::~AssetLoader() = default;
+AssetFile::~AssetFile() = default;
 
-bool AssetLoader::Open(const char* file_name, const char* root_path) {
+bool AssetFile::Open(const char* file_name, const char* root_path) {
   std::string full_path = root_path;
   full_path += file_name;
   file_.reset(fopen(full_path.c_str(), "rb"));
   return !!file_;
 }
 
-void AssetLoader::Close() {
+void AssetFile::Close() {
   file_.reset();
 }
 
-int AssetLoader::GetSize() {
+int AssetFile::GetSize() {
   int size = 0;
 
   if (file_) {
@@ -29,7 +29,7 @@ int AssetLoader::GetSize() {
   return size;
 }
 
-int AssetLoader::Read(char* data, int size) {
+int AssetFile::Read(char* data, int size) {
   if (file_)
     return fread(data, 1, size, file_.get());
 
