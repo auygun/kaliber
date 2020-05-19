@@ -43,7 +43,7 @@ bool Engine::Init(Platform* platform) {
     screen_size_ = {2.0f, ratio * 2.0f};
   }
 
-  system_font_ = GetFontAsset("engine/Roboto-Regular.ttf");
+  system_font_ = GetFontAsset("engine/RobotoMono-Regular.ttf");
   if (!system_font_) {
     // Do not fail. Just create a null-font.
     auto font = std::make_shared<Font>();
