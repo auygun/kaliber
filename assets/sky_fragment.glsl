@@ -68,7 +68,7 @@ void main() {
   nebula_coord.x *= resolution.x / resolution.y;
   nebula_coord.y += sky_offset.y * 0.7;
   float c = 0.35 * noise(nebula_coord * 3.0) - 0.05;
-  result += nebula_color * c;
+  result += nebula_color * floor(c * 60.0) / 60.0;
 
   vec2 star_coord = gl_FragCoord.xy / resolution.y;
   result += stars(star_coord + sky_offset.xy, 8.0, 0.05, 1.0) * vec3(0.97, 0.74, 0.74);
