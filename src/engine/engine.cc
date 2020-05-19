@@ -122,6 +122,20 @@ Vector2 Engine::ToPosition(const Vector2& vec) {
   return ToScale(vec) - GetScreenSize() / 2.0f;
 }
 
+std::shared_ptr<const Mesh> Engine::GetMeshAsset(const std::string& name) {
+  auto it = mesh_assets_.find(name);
+  if (it != mesh_assets_.end())
+    return it->second;
+
+  auto mesh = std::make_shared<Mesh>();
+  if (!mesh->Load(name.c_str()))
+    return nullptr;
+  mesh->SetImmutable();
+
+  mesh_assets_[name] = mesh;
+  return mesh;
+}
+
 std::shared_ptr<const Image> Engine::GetImageAsset(const std::string& name) {
   auto it = image_assets_.find(name);
   if (it != image_assets_.end())
@@ -269,12 +283,11 @@ void Engine::ContextLost() {
 
 bool Engine::CreateRenderResources() {
   // Create the quad geometry we can reuse for all sprites.
-  auto quad_mesh = std::make_shared<Mesh>();
-  if (!quad_mesh->Load("engine/quad.mesh")) {
+  auto quad_mesh = GetMeshAsset("engine/quad.mesh");
+  if (!quad_mesh) {
     LOG << "Could not create quad mesh.";
     return false;
   }
-  // quad_mesh->Create(Mesh::kTriangleStrip, vertex_description, 4, vertices);
   quad_.Create(quad_mesh);
 
   // Create the shader we can reuse for texture rendering.

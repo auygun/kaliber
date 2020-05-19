@@ -12,6 +12,7 @@
 
 namespace eng {
 
+class Mesh;
 class Image;
 class Font;
 class ShaderSource;
@@ -45,18 +46,22 @@ class Engine {
   base::Vector2 ToScale(const base::Vector2& vec);
   base::Vector2 ToPosition(const base::Vector2& vec);
 
+  // Returns immutable Mesh asset that can be accessed between multiple threads
+  // without locking. Returns nullptr if no asset was found with the given name.
+  std::shared_ptr<const Mesh> GetMeshAsset(const std::string& name);
+
   // Returns immutable Image asset that can be accessed between multiple threads
-  // without locking. Returns the placeholder image if no image was found with
+  // without locking. Returns the placeholder image if no asset was found with
   // the given name. Never returns nullptr.
   std::shared_ptr<const Image> GetImageAsset(const std::string& name);
 
   // Returns immutable ShaderSource asset that can be accessed between multiple
-  // threads without locking. Returns nullptr if no shader was found with the
+  // threads without locking. Returns nullptr if no asset was found with the
   // given name.
   std::shared_ptr<const ShaderSource> GetShaderAsset(const std::string& name);
 
-  // Returns Font asset. Returns unitialized font if no font was founf with the
-  // given name. Never returns nullptr.
+  // Returns Font asset. Returns null-font if no asset was founf with the given
+  // name. Never returns nullptr.
   std::shared_ptr<Font> GetFontAsset(const std::string& name);
 
   int AcquireTextureResource(std::shared_ptr<const Image> image);
@@ -99,6 +104,8 @@ class Engine {
   // TODO: Recycle resource ids.
   int last_texture_resource_id_ = 0;
 
+  // Asset cache.
+  std::unordered_map<std::string, std::shared_ptr<Mesh>> mesh_assets_;
   std::unordered_map<std::string, std::shared_ptr<Image>> image_assets_;
   std::unordered_map<std::string, std::shared_ptr<ShaderSource>> shader_source_assets_;
   std::unordered_map<std::string, std::shared_ptr<Font>> font_assets_;
