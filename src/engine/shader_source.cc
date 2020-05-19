@@ -8,7 +8,7 @@ namespace eng {
 bool ShaderSource::Load(const std::string& name) {
   if (IsImmutable()) {
     LOG << "Error: ShaderSource is immutable. Failed to load.";
-    return false;;
+    return false;
   }
 
   std::string vertex_file_name = name;

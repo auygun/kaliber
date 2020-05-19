@@ -76,7 +76,7 @@ void Image::Copy(const Image& other) {
 bool Image::Load(const std::string& file_name, bool convert_pow2) {
   if (IsImmutable()) {
     LOG << "Error: Image is immutable. Failed to load.";
-    return false;;
+    return false;
   }
 
   Destroy();

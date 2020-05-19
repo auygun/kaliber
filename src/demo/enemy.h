@@ -78,7 +78,7 @@ class Enemy {
   std::shared_ptr<const eng::Image> target_frames_;
   std::shared_ptr<const eng::Image> blast_frames_;
 
-  std::shared_ptr<eng::Font> font_;
+  std::shared_ptr<const eng::Font> font_;
 
   std::list<Unit> enemies_;
   float seconds_since_last_spawn_ = 0;

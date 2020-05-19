@@ -61,9 +61,10 @@ class Engine {
   // given name.
   std::shared_ptr<const ShaderSource> GetShaderAsset(const std::string& name);
 
-  // Returns Font asset. Returns null-font if no asset was founf with the given
+  // Returns immutable Font asset that can be accessed between multiple threads
+  // without locking. Returns null-font if no asset was founf with the given
   // name. Never returns nullptr.
-  std::shared_ptr<Font> GetFontAsset(const std::string& name);
+  std::shared_ptr<const Font> GetFontAsset(const std::string& name);
 
   int AcquireTextureResource(std::shared_ptr<const Image> image);
   void ReturnTextureResource(int resource_id);
@@ -77,7 +78,7 @@ class Engine {
   Shader& GetPassThroughShader() { return pass_through_shader_; }
   Shader& GetSolidShader() { return solid_shader_; }
 
-  std::shared_ptr<eng::Font> GetSystemFont() { return system_font_; }
+  std::shared_ptr<const eng::Font> GetSystemFont() { return system_font_; }
 
   Game* GetGame() { return game_.get(); }
 
@@ -121,7 +122,7 @@ class Engine {
 
   base::Vector2 screen_size_ = {0, 0};
 
-  std::shared_ptr<eng::Font> system_font_;
+  std::shared_ptr<const eng::Font> system_font_;
 
   ImageQuad stats_;
 

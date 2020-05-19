@@ -14,6 +14,11 @@ Font::Font() = default;
 Font::~Font() = default;
 
 bool Font::Load(const std::string& file_name) {
+  if (IsImmutable()) {
+    LOG << "Error: Font is immutable. Failed to load.";
+    return false;
+  }
+
   Destroy();
 
   SetName(file_name);
@@ -60,6 +65,11 @@ bool Font::Load(const std::string& file_name) {
 }
 
 void Font::Destroy() {
+  if (IsImmutable()) {
+    LOG << "Error: Font is immutable. Failed to destory.";
+    return ;
+  }
+
   if (glyph_cache_)
     glyph_cache_.reset();
 }
@@ -167,7 +177,7 @@ void Font::Print(int x,
                   int y,
                   const char* text,
                   uint8_t* buffer,
-                  int width) {
+                  int width) const {
   // LOG("Font::Print() = %s\n", text);
 
   if (!glyph_cache_)

@@ -37,7 +37,7 @@ class Hud {
   eng::Animator hud_animator_;
   base::Callback hud_animator_cb_;
 
-  std::shared_ptr<eng::Font> font_;
+  std::shared_ptr<const eng::Font> font_;
   int max_text_width_ = 0;
 
   int last_score_ = 0;

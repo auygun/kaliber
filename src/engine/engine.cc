@@ -194,7 +194,7 @@ std::shared_ptr<const ShaderSource> Engine::GetShaderAsset(const std::string& na
   return shader_source;
 }
 
-std::shared_ptr<Font> Engine::GetFontAsset(const std::string& name) {
+std::shared_ptr<const Font> Engine::GetFontAsset(const std::string& name) {
   auto it = font_assets_.find(name);
   if (it != font_assets_.end()) {
     LOG << "Returning cached font " << name;
@@ -210,6 +210,7 @@ std::shared_ptr<Font> Engine::GetFontAsset(const std::string& name) {
     else
       font->SetName("null_font_asset");
   }
+  font->SetImmutable();
 
   font_assets_[font->GetName()] = font;
   return font;
