@@ -21,10 +21,10 @@ Mesh::~Mesh() = default;
 
 bool Mesh::Create(Primitive primitive,
                   const std::string& vertex_description,
-                  int num_vertices,
+                  size_t num_vertices,
                   const void* vertices,
                   DataType index_description,
-                  int num_indices,
+                  size_t num_indices,
                   const void* indices) {
   if (IsImmutable()) {
     LOG << "Error: Mesh is immutable. Failed to create.";
@@ -154,7 +154,7 @@ bool Mesh::Load(const std::string& file_name) {
   return true;
 }
 
-unsigned int Mesh::GetVertexSize() const {
+size_t Mesh::GetVertexSize() const {
   unsigned int size = 0;
   for (auto& attr : vertex_description_) {
     size += std::get<2>(attr) * std::get<3>(attr);
@@ -162,7 +162,7 @@ unsigned int Mesh::GetVertexSize() const {
   return size;
 }
 
-unsigned int Mesh::GetIndexSize() const {
+size_t Mesh::GetIndexSize() const {
   switch (index_description_) {
   case kDataType_Byte:
     return sizeof(char);

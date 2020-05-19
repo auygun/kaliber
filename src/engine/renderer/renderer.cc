@@ -378,8 +378,8 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
   }
 
   geometry_map_[c->id] = {
-    c->mesh->num_vertices(),
-    c->mesh->num_indices(),
+    (GLsizei)c->mesh->num_vertices(),
+    (GLsizei)c->mesh->num_indices(),
     kGlPrimitive[c->mesh->primitive()],
     kGlDataType[c->mesh->index_description()],
     vertex_layout,

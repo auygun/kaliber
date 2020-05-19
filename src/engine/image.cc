@@ -196,7 +196,7 @@ bool Image::Load(const std::string& file_name, bool convert_pow2) {
   return !!buffer_;
 }
 
-int Image::GetSize() const {
+size_t Image::GetSize() const {
   switch (format_) {
     case kRGBA32:
       return width_ * height_ * 4;

@@ -107,8 +107,8 @@ class Renderer {
       size_t vertex_offset;
     };
 
-    int num_vertices;
-    int num_indices;
+    GLsizei num_vertices;
+    GLsizei num_indices;
     GLenum primitive;
     GLenum index_type;
     std::vector<Element> vertex_layout;

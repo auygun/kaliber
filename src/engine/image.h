@@ -32,7 +32,7 @@ class Image : public Asset {
   Format GetFormat() const { return format_; }
   bool IsCompressed() const { return format_ > kRGBA32; }
 
-  int GetSize() const;
+  size_t GetSize() const;
 
   const uint8_t* GetBuffer() const { return buffer_.get(); }
   uint8_t* GetBuffer();
