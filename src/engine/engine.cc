@@ -124,44 +124,66 @@ Vector2 Engine::ToPosition(const Vector2& vec) {
 
 std::shared_ptr<const Mesh> Engine::GetMeshAsset(const std::string& name) {
   auto it = mesh_assets_.find(name);
-  if (it != mesh_assets_.end())
+  if (it != mesh_assets_.end()) {
+    LOG << "Returning cached mesh " << name;
     return it->second;
+  }
 
   auto mesh = std::make_shared<Mesh>();
-  if (!mesh->Load(name.c_str()))
-    return nullptr;
+  if (!mesh->Load(name.c_str())) {
+    LOG << "Cannot load " << name << ". Returning the default mesh.";
+    auto it = mesh_assets_.find("default_mesh_asset");
+    if (it != mesh_assets_.end()) {
+      return it->second;
+    } else {
+      static const char vertex_description[] = "p2f;t2f";
+      static const float vertices[] = {
+        -0.5f, -0.5f, 0.0f, 1.0f,
+         0.5f, -0.5f, 1.0f, 1.0f,
+        -0.5f,  0.5f, 0.0f, 0.0f,
+         0.5f,  0.5f, 1.0f, 0.0f
+      };
+      mesh->Create(Mesh::kTriangleStrip, vertex_description, 4, vertices);
+      mesh->SetName("default_mesh_asset");
+    }
+  }
   mesh->SetImmutable();
 
-  mesh_assets_[name] = mesh;
+  mesh_assets_[mesh->GetName()] = mesh;
   return mesh;
 }
 
 std::shared_ptr<const Image> Engine::GetImageAsset(const std::string& name) {
   auto it = image_assets_.find(name);
-  if (it != image_assets_.end())
+  if (it != image_assets_.end()) {
+    LOG << "Returning cached image " << name;
     return it->second;
+  }
 
   auto image = std::make_shared<Image>();
   if (!image->Load(name.c_str())) {
-    auto it = image_assets_.find("unknown_image_asset");
+    LOG << "Cannot load " << name << ". Returning the default image.";
+    auto it = image_assets_.find("default_image_asset");
     if (it != image_assets_.end()) {
-      image = it->second;
+      return it->second;
     } else {
       image->Create(8, 8);
       image->Clear({0, 0, 0, 1});
-      image->SetName("unknown_image_asset");
+      image->SetName("default_image_asset");
     }
   }
   image->SetImmutable();
 
-  image_assets_[name] = image;
+  image_assets_[image->GetName()] = image;
   return image;
 }
 
 std::shared_ptr<const ShaderSource> Engine::GetShaderAsset(const std::string& name) {
   auto it = shader_source_assets_.find(name);
-  if (it != shader_source_assets_.end())
+  if (it != shader_source_assets_.end()) {
+    LOG << "Returning shader source " << name;
     return it->second;
+  }
 
   auto shader_source = std::make_shared<ShaderSource>();
   if (!shader_source->Load(name.c_str()))
@@ -174,19 +196,22 @@ std::shared_ptr<const ShaderSource> Engine::GetShaderAsset(const std::string& na
 
 std::shared_ptr<Font> Engine::GetFontAsset(const std::string& name) {
   auto it = font_assets_.find(name);
-  if (it != font_assets_.end())
+  if (it != font_assets_.end()) {
+    LOG << "Returning cached font " << name;
     return it->second;
+  }
 
   auto font = std::make_shared<Font>();
   if (!font->Load(name.c_str())) {
+    LOG << "Cannot load " << name << ". Returning null font.";
     auto it = font_assets_.find("null_font_asset");
     if (it != font_assets_.end())
-      font = it->second;
+      return it->second;
     else
       font->SetName("null_font_asset");
   }
 
-  font_assets_[name] = font;
+  font_assets_[font->GetName()] = font;
   return font;
 }
 
@@ -291,20 +316,20 @@ bool Engine::CreateRenderResources() {
   quad_.Create(quad_mesh);
 
   // Create the shader we can reuse for texture rendering.
-  auto pts_code = GetShaderAsset("engine/pass_through");
-  if (!pts_code) {
+  auto pts_source = GetShaderAsset("engine/pass_through");
+  if (!pts_source) {
     LOG << "Could not create pass through shader.";
     return false;
   }
-  pass_through_shader_.Create(pts_code, quad_.vertex_description());
+  pass_through_shader_.Create(pts_source, quad_.vertex_description());
 
   // Create the shader we can reuse for solid rendering.
-  auto ss_code = GetShaderAsset("engine/solid");
-  if (!ss_code) {
+  auto ss_source = GetShaderAsset("engine/solid");
+  if (!ss_source) {
     LOG << "Could not create solid shader.";
     return false;
   }
-  solid_shader_.Create(ss_code, quad_.vertex_description());
+  solid_shader_.Create(ss_source, quad_.vertex_description());
 
   return true;
 }

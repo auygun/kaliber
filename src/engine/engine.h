@@ -47,7 +47,8 @@ class Engine {
   base::Vector2 ToPosition(const base::Vector2& vec);
 
   // Returns immutable Mesh asset that can be accessed between multiple threads
-  // without locking. Returns nullptr if no asset was found with the given name.
+  // without locking. Returns the default mesh if no asset was found with the
+  // given name. Never returns nullptr.
   std::shared_ptr<const Mesh> GetMeshAsset(const std::string& name);
 
   // Returns immutable Image asset that can be accessed between multiple threads

@@ -59,6 +59,8 @@ bool Mesh::Load(const std::string& file_name) {
     return false;
   }
 
+  SetName(file_name);
+
   std::unique_ptr<char[]> json_mesh = base::AssetFile::ReadWholeFile(
       file_name.c_str(), Engine::Get().GetRootPath().c_str(), NULL, true);
   if (!json_mesh) {

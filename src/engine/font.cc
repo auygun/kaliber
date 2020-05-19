@@ -16,6 +16,8 @@ Font::~Font() = default;
 bool Font::Load(const std::string& file_name) {
   Destroy();
 
+  SetName(file_name);
+
   // Read the font file.
   int buffer_size = 0;
   std::unique_ptr<char[]> buffer = base::AssetFile::ReadWholeFile(
