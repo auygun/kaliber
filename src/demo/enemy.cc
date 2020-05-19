@@ -33,7 +33,8 @@ bool Enemy::Initialize() {
   target_frames_ = engine.GetImageAsset("enemy_target_single_ok.png");
   blast_frames_ = engine.GetImageAsset("enemy_anims_blast_ok.png");
   font_ = engine.GetFontAsset("PixelCaps!.ttf");
-  return true;
+  return skull_frames_ && tank_frames_ && bug_frames_ && target_frames_ &&
+         blast_frames_ && font_;
 }
 
 void Enemy::ContextLost() {

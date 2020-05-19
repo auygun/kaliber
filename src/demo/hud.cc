@@ -21,6 +21,9 @@ bool Hud::Initialize() {
   eng::Engine& engine = eng::Engine::Get();
 
   font_ = engine.GetFontAsset("PixelCaps!.ttf");
+  if (!font_)
+    return false;
+
   int tmp;
   font_->CalculateBoundingBox("big_enough_text", max_text_width_, tmp);
 

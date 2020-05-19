@@ -55,7 +55,7 @@ class Player {
   void Fire(DamageType type, base::Vector2 target_point);
   bool IsFiring(DamageType type);
 
-  void SetupWeapons();
+  bool SetupWeapons();
 
   void UpdateTarget();
 

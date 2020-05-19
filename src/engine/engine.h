@@ -47,13 +47,11 @@ class Engine {
   base::Vector2 ToPosition(const base::Vector2& vec);
 
   // Returns immutable Mesh asset that can be accessed between multiple threads
-  // without locking. Returns the default mesh if no asset was found with the
-  // given name. Never returns nullptr.
+  // without locking. Returns nullptr if no asset was found with the given name.
   std::shared_ptr<const Mesh> GetMeshAsset(const std::string& name);
 
   // Returns immutable Image asset that can be accessed between multiple threads
-  // without locking. Returns the placeholder image if no asset was found with
-  // the given name. Never returns nullptr.
+  // without locking. Returns nullptr if no asset was found with the given name.
   std::shared_ptr<const Image> GetImageAsset(const std::string& name);
 
   // Returns immutable ShaderSource asset that can be accessed between multiple
@@ -62,8 +60,7 @@ class Engine {
   std::shared_ptr<const ShaderSource> GetShaderAsset(const std::string& name);
 
   // Returns immutable Font asset that can be accessed between multiple threads
-  // without locking. Returns the system font if no asset was founf with the
-  // given name. Never returns nullptr.
+  // without locking. Returns nullptr if no asset was found with the given name.
   std::shared_ptr<const Font> GetFontAsset(const std::string& name);
 
   int AcquireTextureResource(std::shared_ptr<const Image> image);

@@ -44,6 +44,12 @@ bool Engine::Init(Platform* platform) {
   }
 
   system_font_ = GetFontAsset("engine/Roboto-Regular.ttf");
+  if (!system_font_) {
+    // Do not fail. Just create a null-font.
+    auto font = std::make_shared<Font>();
+    font->SetImmutable();
+    system_font_ = font;
+  }
 
   if (!CreateRenderResources())
     return false;
@@ -129,66 +135,36 @@ Vector2 Engine::ToPosition(const Vector2& vec) {
 
 std::shared_ptr<const Mesh> Engine::GetMeshAsset(const std::string& name) {
   auto it = mesh_assets_.find(name);
-  if (it != mesh_assets_.end()) {
-    LOG << "Returning cached mesh " << name;
+  if (it != mesh_assets_.end())
     return it->second;
-  }
 
   auto mesh = std::make_shared<Mesh>();
-  if (!mesh->Load(name.c_str())) {
-    LOG << "Cannot load " << name << ". Returning the default mesh.";
-    auto it = mesh_assets_.find("default_mesh_asset");
-    if (it != mesh_assets_.end()) {
-      return it->second;
-    } else {
-      static const char vertex_description[] = "p2f;t2f";
-      static const float vertices[] = {
-        -0.5f, -0.5f, 0.0f, 1.0f,
-         0.5f, -0.5f, 1.0f, 1.0f,
-        -0.5f,  0.5f, 0.0f, 0.0f,
-         0.5f,  0.5f, 1.0f, 0.0f
-      };
-      mesh->Create(Mesh::kTriangleStrip, vertex_description, 4, vertices);
-      mesh->SetName("default_mesh_asset");
-    }
-  }
+  if (!mesh->Load(name.c_str()))
+    return nullptr;
   mesh->SetImmutable();
 
-  mesh_assets_[mesh->GetName()] = mesh;
+  mesh_assets_[name] = mesh;
   return mesh;
 }
 
 std::shared_ptr<const Image> Engine::GetImageAsset(const std::string& name) {
   auto it = image_assets_.find(name);
-  if (it != image_assets_.end()) {
-    LOG << "Returning cached image " << name;
+  if (it != image_assets_.end())
     return it->second;
-  }
 
   auto image = std::make_shared<Image>();
-  if (!image->Load(name.c_str())) {
-    LOG << "Cannot load " << name << ". Returning the default image.";
-    auto it = image_assets_.find("default_image_asset");
-    if (it != image_assets_.end()) {
-      return it->second;
-    } else {
-      image->Create(8, 8);
-      image->Clear({0, 0, 0, 1});
-      image->SetName("default_image_asset");
-    }
-  }
+  if (!image->Load(name.c_str()))
+    return nullptr;
   image->SetImmutable();
 
-  image_assets_[image->GetName()] = image;
+  image_assets_[name] = image;
   return image;
 }
 
 std::shared_ptr<const ShaderSource> Engine::GetShaderAsset(const std::string& name) {
   auto it = shader_source_assets_.find(name);
-  if (it != shader_source_assets_.end()) {
-    LOG << "Returning shader source " << name;
+  if (it != shader_source_assets_.end())
     return it->second;
-  }
 
   auto shader_source = std::make_shared<ShaderSource>();
   if (!shader_source->Load(name.c_str()))
@@ -201,24 +177,15 @@ std::shared_ptr<const ShaderSource> Engine::GetShaderAsset(const std::string& na
 
 std::shared_ptr<const Font> Engine::GetFontAsset(const std::string& name) {
   auto it = font_assets_.find(name);
-  if (it != font_assets_.end()) {
-    LOG << "Returning cached font " << name;
+  if (it != font_assets_.end())
     return it->second;
-  }
 
   auto font = std::make_shared<Font>();
-  if (!font->Load(name.c_str())) {
-    LOG << "Cannot load " << name << ". Returning the system font.";
-    if (system_font_) {
-      return system_font_;
-    } else {
-      font->SetImmutable();
-      return font;
-    }
-  }
+  if (!font->Load(name.c_str()))
+    return nullptr;
   font->SetImmutable();
 
-  font_assets_[font->GetName()] = font;
+  font_assets_[name] = font;
   return font;
 }
 

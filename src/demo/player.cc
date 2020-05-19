@@ -21,8 +21,7 @@ constexpr int wepon_anim_speed = 48;
 } // namespace
 
 bool Player::Initialize() {
-  SetupWeapons();
-  return true;
+  return SetupWeapons();
 }
 
 void Player::ContextLost() {
@@ -151,13 +150,15 @@ bool Player::IsFiring(DamageType type) {
       spark_animator_[type].IsPlaying(eng::Animator::kMovement);
 }
 
-void Player::SetupWeapons() {
+bool Player::SetupWeapons() {
   eng::Engine& engine = eng::Engine::Get();
 
   auto weapon_image =
       engine.GetImageAsset("enemy_anims_flare_ok.png");
   auto beam_image =
       engine.GetImageAsset("enemy_ray_ok.png");
+  if (!weapon_image || !beam_image)
+    return false;
 
   for (int i = 0; i < 2; ++i) {
     // Setup draw sign.
@@ -220,6 +221,7 @@ void Player::SetupWeapons() {
     beam_animator_[i].SetBlending({1, 1, 1, 0}, 0.16f);
     beam_animator_[i].Attach(&beam_[i]);
   }
+  return true;
 }
 
 void Player::UpdateTarget() {
