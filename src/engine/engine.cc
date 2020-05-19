@@ -109,7 +109,12 @@ void Engine::Present() {
 }
 
 void Engine::TrimMemory() {
-  renderer_->TrimMemory();
+  LOG << "Trimming memory.";
+  KillUnusedResources(5);
+  mesh_assets_.clear();
+  image_assets_.clear();
+  shader_source_assets_.clear();
+  font_assets_.clear();
 }
 
 Vector2 Engine::ToScale(const Vector2& vec) {

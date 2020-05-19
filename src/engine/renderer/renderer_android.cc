@@ -52,9 +52,5 @@ void Renderer::HandleCmdPresent(RenderCommand* cmd) {
   }
 }
 
-void Renderer::TrimMemory() {
-  LOG << "Trimming memor";
-  ndk_helper::GLContext::GetInstance()->Invalidate();
-}
 
 }  // namespace eng

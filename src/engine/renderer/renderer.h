@@ -58,8 +58,6 @@ class Renderer {
 
   void ContextLost();
 
-  void TrimMemory();
-
   bool SupportsETC1() const { return texture_compression_.etc1; }
   bool SupportsDXT1() const { return texture_compression_.dxt1 ||
                                      texture_compression_.s3tc; }

@@ -93,6 +93,4 @@ void Renderer::HandleCmdPresent(RenderCommand* cmd) {
     glXSwapBuffers(display_, window_);
 }
 
-void Renderer::TrimMemory() {}
-
 }  // namespace eng
