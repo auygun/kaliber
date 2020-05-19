@@ -2,7 +2,7 @@
 #define MESH_H
 
 #include "asset.h"
-#include <functional>
+#include "renderer/types.h"
 #include <memory>
 #include <string>
 
@@ -10,30 +10,16 @@ namespace eng {
 
 class Mesh : public Asset {
  public:
-  enum Primitive {
-    kTriangles,
-    kTriangleStrip,
-    kPrimitive_Max
-  };
-
-  enum DataType {
-    kInvalid,
-    kByte,
-    kUShort,
-    kUInt,
-    kDataType_Max
-  };
-
   static const char kLayoutDelimiter[];
 
   Mesh();
   ~Mesh() override;
 
-  void Create(Primitive primitive,
+  bool Create(Primitive primitive,
               const std::string& vertex_description,
               int num_vertices,
               const void* vertices,
-              DataType index_description = kInvalid,
+              DataType index_description = kDataType_Invalid,
               int num_indices = 0,
               const void* indices = nullptr);
 
@@ -42,12 +28,8 @@ class Mesh : public Asset {
   unsigned int GetVertexSize() const;
   unsigned int GetIndexSize() const;
 
-  // TODO: Move to a helper file.
-  bool ParseVertexDescription(
-      std::function<bool(char*, size_t, size_t)> cb) const;
-
   Primitive primitive() const { return primitive_; }
-  const std::string& vertex_description() const { return vertex_description_; }
+  const VertexDescripton& vertex_description() const { return vertex_description_; }
   int num_vertices() const { return num_vertices_; }
   DataType index_description() const { return index_description_; }
   int num_indices() const { return num_indices_; }
@@ -57,10 +39,10 @@ class Mesh : public Asset {
   bool IsValid() const { return !!vertices_.get(); }
 
  protected:
-  Primitive primitive_ = kTriangleStrip;
-  std::string vertex_description_;
+  Primitive primitive_ = kPrimitive_TriangleStrip;
+  VertexDescripton vertex_description_;
   int num_vertices_ = 0;
-  DataType index_description_ = kInvalid;
+  DataType index_description_ = kDataType_Invalid;
   int num_indices_ = 0;
   std::unique_ptr<char[]> vertices_;
   std::unique_ptr<char[]> indices_;

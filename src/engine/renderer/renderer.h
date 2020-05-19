@@ -9,6 +9,7 @@
 
 #include "../../base/vecmath.h"
 #include "../../base/callback.h"
+#include "types.h"
 #include <memory>
 #include <unordered_set>
 #include <unordered_map>
@@ -196,10 +197,12 @@ class Renderer {
   void HandleCmdSetUniformFloat(RenderCommand* cmd);
   void HandleCmdSetUniformInt(RenderCommand* cmd);
 
-  bool SetupVertexLayout(const std::string &vertex_description, GLuint vertex_size,
-                         bool use_vao, std::vector<Geometry::Element> &vertex_layout);
+  bool SetupVertexLayout(const VertexDescripton &vd,
+                         GLuint vertex_size,
+                         bool use_vao,
+                         std::vector<Geometry::Element> &vertex_layout);
   GLuint CreateShader(const char *source, GLenum type);
-  bool BindAttributeLocation(GLuint id, const std::string &vertex_description);
+  bool BindAttributeLocation(GLuint id, const VertexDescripton &vd);
   GLint GetUniformLocation(GLuint id, const std::string &name, std::unordered_map<std::string, GLuint> &uniforms);
   std::unordered_set<std::string> SetupExtensions();
 

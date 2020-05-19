@@ -1,6 +1,7 @@
 #ifndef RENDER_COMMAND_H
 #define RENDER_COMMAND_H
 
+#include "types.h"
 #include "../../base/hash.h"
 #include "../../base/vecmath.h"
 #include <memory>
@@ -88,7 +89,7 @@ RENDER_COMMAND_END
 RENDER_COMMAND_BEGIN(CmdCreateShader, true)
   int id;
   std::shared_ptr<const ShaderSource> source;
-  std::string vertex_description;
+  VertexDescripton vertex_description;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdDestroyShader, true)

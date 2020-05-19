@@ -11,12 +11,20 @@
 
 namespace {
 
-constexpr GLenum kGlPrimitive[eng::Mesh::kPrimitive_Max] = {GL_TRIANGLES,
-                                                            GL_TRIANGLE_STRIP};
+constexpr GLenum kGlPrimitive[eng::kPrimitive_Max] = {GL_TRIANGLES,
+                                                      GL_TRIANGLE_STRIP};
 
-constexpr GLenum kGlDataType[eng::Mesh::kDataType_Max] = {GL_UNSIGNED_BYTE,
-                                                          GL_UNSIGNED_SHORT,
-                                                          GL_UNSIGNED_INT};
+constexpr GLenum kGlDataType[eng::kDataType_Max] = {GL_UNSIGNED_BYTE,
+                                                    GL_FLOAT,
+                                                    GL_INT,
+                                                    GL_SHORT,
+                                                    GL_UNSIGNED_INT,
+                                                    GL_UNSIGNED_SHORT};
+
+const std::string kAttributeNames[eng::kAttribType_Max] = {"inColor",
+                                                           "inNormal",
+                                                           "inPosition",
+                                                           "inTexCoord"};
 
 } // namespace
 
@@ -557,47 +565,22 @@ void Renderer::HandleCmdSetUniformInt(RenderCommand* cmd) {
   }
 }
 
-bool Renderer::SetupVertexLayout(const std::string &vertex_description,
-                                 GLuint vertex_size, bool use_vao,
+bool Renderer::SetupVertexLayout(const VertexDescripton &vd,
+                                 GLuint vertex_size,
+                                 bool use_vao,
                                  std::vector<Geometry::Element> &vertex_layout) {
   GLuint attribute_index = 0;
   size_t vertex_offset = 0;
 
-  // Parse the layout.
-  char buffer[32];
-  strcpy(buffer, vertex_description.c_str());
-  char *token = strtok(buffer, Mesh::kLayoutDelimiter);
-
-  // Parse each encountered attribute.
-  while (token) {
-    // Check for invalid format.
-    if (strlen(token) != 3)
-      return false;
-
+  for (auto& attr : vd) {
     // There's a limitation of 16 attributes in OpenGL ES 2.0
     if (attribute_index >= 16)
       return false;
 
-    // Don't care about the kind of attribute here.
-    // Ignore(token[0]);
-
-    // There can be between 1 and 4 elements in an attribute.
-    GLsizei num_elements = token[1] - '1' + 1;
-    if (num_elements < 1 || num_elements > 4)
-      return false;
+    auto [attrib_type, data_type, num_elements, type_size] = attr;
 
     // The data type is needed, the most common ones are supported.
-    GLenum type;
-    size_t type_size;
-    switch (token[2]) {
-    case 'b': type = GL_UNSIGNED_BYTE;  type_size = sizeof(GLbyte);    break;
-    case 'f': type = GL_FLOAT;          type_size = sizeof(GLfloat);   break;
-    case 'i': type = GL_INT;            type_size = sizeof(GLint);     break;
-    case 's': type = GL_SHORT;          type_size = sizeof(GLshort);   break;
-    case 'u': type = GL_UNSIGNED_INT;   type_size = sizeof(GLuint);    break;
-    case 'w': type = GL_UNSIGNED_SHORT; type_size = sizeof(GLushort);  break;
-    default:  return false;
-    }
+    GLenum type = kGlDataType[data_type];
 
     // We got all we need to define this attribute.
     if (use_vao) {
@@ -608,18 +591,16 @@ bool Renderer::SetupVertexLayout(const std::string &vertex_description,
     } else {
       // Need to keep this information for when rendering.
       Geometry::Element element;
-      element.num_elements   = num_elements;
-      element.type          = type;
-      element.vertex_offset  = vertex_offset;
+      element.num_elements = num_elements;
+      element.type = type;
+      element.vertex_offset = vertex_offset;
       vertex_layout.push_back(element);
     }
 
     // Move on to the next attribute.
     ++attribute_index;
     vertex_offset += num_elements * type_size;
-    token = strtok(NULL, Mesh::kLayoutDelimiter);
   }
-
   return true;
 }
 
@@ -645,46 +626,20 @@ GLuint Renderer::CreateShader(const char *source, GLenum type) {
       }
     }
   }
-
   return shader;
 }
 
-bool Renderer::BindAttributeLocation(GLuint id, const std::string &vertex_description) {
+bool Renderer::BindAttributeLocation(GLuint id, const VertexDescripton &vd) {
   int current = 0;
   int tex_coord = 0;
 
-  // Parse the description.
-  char buffer[32];
-  strcpy(buffer, vertex_description.c_str());
-  char *token = strtok(buffer, Mesh::kLayoutDelimiter);
-
-  char tex_coord_buffer[32];
-
-  // Parse each encountered attribute.
-  while (token) {
-    // Check for invalid format.
-    if (strlen(token) != 3)
-      return false;
-
-    switch (token[0]) {
-    case 'c': glBindAttribLocation(id, current++, "inColor");     break;
-    case 'n': glBindAttribLocation(id, current++, "inNormal");    break;
-    case 'p': glBindAttribLocation(id, current++, "inPosition");  break;
-
-    case 't':
-      sprintf(tex_coord_buffer, "inTexCoord%d", tex_coord++);
-      glBindAttribLocation(id, current++, tex_coord_buffer);
-      break;
-
-    default:
-      LOG << "Unknown attribute: " << token;
-      return false;
-    }
-
-    token = strtok(NULL, Mesh::kLayoutDelimiter);
+  for (auto& attr : vd) {
+    AttribType attrib_type = std::get<0>(attr);
+    std::string attrib_name = kAttributeNames[attrib_type];
+    if (attrib_type == kAttribType_TexCoord)
+      attrib_name += std::to_string(tex_coord++);
+    glBindAttribLocation(id, current++, attrib_name.c_str());
   }
-
-  // We need at least one position attribute.
   return current > 0;
 }
 

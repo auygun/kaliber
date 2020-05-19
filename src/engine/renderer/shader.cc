@@ -21,7 +21,7 @@ Shader::~Shader() {
 }
 
 void Shader::Create(std::shared_ptr<const ShaderSource> source,
-                    const std::string& vertex_description) {
+                    const VertexDescripton& vd) {
   assert(source->IsImmutable());
 
   Destroy();
@@ -30,7 +30,7 @@ void Shader::Create(std::shared_ptr<const ShaderSource> source,
   resource_id_ = ++last_id;
   cmd->id = resource_id_;
   cmd->source = source;
-  cmd->vertex_description = vertex_description;
+  cmd->vertex_description = vd;
   Engine::Get().EnqueueRenderCommand(std::move(cmd));
 }
 

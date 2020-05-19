@@ -2,6 +2,7 @@
 #define SHADER_H
 
 #include "../../base/vecmath.h"
+#include "types.h"
 #include <string>
 #include <memory>
 
@@ -18,7 +19,7 @@ public:
   Shader& operator=(const Shader&) = delete;
 
   void Create(std::shared_ptr<const ShaderSource> source,
-              const std::string& vertex_description);
+              const VertexDescripton& vd);
   void Destroy();
   void Activate();
 

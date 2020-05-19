@@ -19,7 +19,7 @@ class Image : public Asset {
 
   Image& operator=(const Image& other);
 
-  void Create(int width, int height);
+  bool Create(int width, int height);
   void Destroy();
   void Copy(const Image& other);
 

@@ -29,10 +29,10 @@ Image& Image::operator=(const Image& other) {
   return *this;
 }
 
-void Image::Create(int w, int h) {
+bool Image::Create(int w, int h) {
   if (IsImmutable()) {
     LOG << "Error: Image is immutable. Failed to create.";
-    return;
+    return false;
   }
 
   Destroy();
@@ -42,6 +42,8 @@ void Image::Create(int w, int h) {
   original_width_ = w;
   original_height_ = h;
   buffer_.reset((uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t)));
+
+  return true;
 }
 
 void Image::Destroy() {
