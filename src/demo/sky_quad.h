@@ -23,7 +23,7 @@ class SkyQuad {
 
   bool Create();
 
-  void Draw();
+  void Draw(float frame_frac);
   void ContextLost();
 
   void Translate(base::Vector2 offset) { sky_offset_ += offset; }
@@ -31,6 +31,7 @@ class SkyQuad {
  private:
   eng::Shader shader_;
   base::Vector2 sky_offset_ = {0, 0};
+  base::Vector2 last_sky_offset_ = {0, 0};
   base::Vector3 nebula_color_ = {0, 0, 0};
   base::Vector2 scale_ = {1, 1};
 };
