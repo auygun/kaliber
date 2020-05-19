@@ -1,6 +1,7 @@
 #include "engine.h"
 #include "../base/log.h"
 #include "../base/random.h"
+#include "../base/worker.h"
 #include "platform/platform.h"
 #include "image.h"
 #include "shader_source.h"
@@ -356,12 +357,15 @@ void Engine::PrintStats() {
   image->Create(image_width, image_height);
   image->Clear({1, 1, 1, 0.08f});
 
+  base::Worker worker;
   int y = margin;
   for (auto& text : lines) {
-    system_font_->Print(margin, y + margin, text.c_str(), image->GetBuffer(),
-        image->GetWidth());
+    worker.Enqueue(std::bind(&Font::Print, system_font_, margin, y + margin,
+                             text.c_str(), image->GetBuffer(),
+                             image->GetWidth()));
     y += line_height + margin;
   }
+  worker.Join();
 
   image->SetImmutable();
   stats_.Create(image);

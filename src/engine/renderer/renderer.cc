@@ -116,8 +116,8 @@ void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
     {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
       global_commands_.push_back(std::move(cmd));
-      cv_.notify_one();
     }
+    cv_.notify_one();
     global_queue_size_ = global_commands_.size();
     return;
   }
@@ -129,8 +129,8 @@ void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
     {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
       draw_commands_[0].swap(draw_commands_[1]);
-      cv_.notify_one();
     }
+    cv_.notify_one();
     num_frames_dropped_ += draw_commands_[1].size() ? 1 : 0;
     draw_commands_[1].clear();
   }

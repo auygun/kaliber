@@ -69,6 +69,7 @@ GLTEST_SRC := \
   $(SRC_ROOT)/base/log.cc \
   $(SRC_ROOT)/base/random.cc \
   $(SRC_ROOT)/base/timer.cc \
+  $(SRC_ROOT)/base/worker.cc \
   $(SRC_ROOT)/demo/demo.cc \
   $(SRC_ROOT)/demo/enemy.cc \
   $(SRC_ROOT)/demo/hud.cc \
