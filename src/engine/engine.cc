@@ -203,12 +203,13 @@ std::shared_ptr<const Font> Engine::GetFontAsset(const std::string& name) {
 
   auto font = std::make_shared<Font>();
   if (!font->Load(name.c_str())) {
-    LOG << "Cannot load " << name << ". Returning null font.";
-    auto it = font_assets_.find("null_font_asset");
-    if (it != font_assets_.end())
-      return it->second;
-    else
-      font->SetName("null_font_asset");
+    LOG << "Cannot load " << name << ". Returning the system font.";
+    if (system_font_) {
+      return system_font_;
+    } else {
+      font->SetImmutable();
+      return font;
+    }
   }
   font->SetImmutable();
 

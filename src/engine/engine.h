@@ -62,8 +62,8 @@ class Engine {
   std::shared_ptr<const ShaderSource> GetShaderAsset(const std::string& name);
 
   // Returns immutable Font asset that can be accessed between multiple threads
-  // without locking. Returns null-font if no asset was founf with the given
-  // name. Never returns nullptr.
+  // without locking. Returns the system font if no asset was founf with the
+  // given name. Never returns nullptr.
   std::shared_ptr<const Font> GetFontAsset(const std::string& name);
 
   int AcquireTextureResource(std::shared_ptr<const Image> image);
