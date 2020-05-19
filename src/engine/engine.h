@@ -123,6 +123,9 @@ class Engine {
 
   ImageQuad stats_;
 
+  float fps_seconds_ = 0;
+  int fps_ = 0;
+
   float seconds_accumulated_ = 0.0f;
 
   std::deque<std::unique_ptr<InputEvent>> input_queue_;

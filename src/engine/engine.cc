@@ -66,7 +66,7 @@ bool Engine::Init(Platform* platform) {
     return false;
   }
 
-#if 0
+#if 1
   ShowStats(true);
 #endif
 
@@ -79,10 +79,19 @@ void Engine::Shutdown() {
 
 void Engine::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
+
   game_->Update(delta_time);
+
+  KillUnusedResources(delta_time);
+
+  fps_seconds_ += delta_time;
+  if (fps_seconds_ >= 1) {
+    fps_ = renderer_->GetAndResetFPS();
+    fps_seconds_ = 0;
+  }
+
   if (stats_.IsVisible())
     PrintStats();
-  KillUnusedResources(delta_time);
 }
 
 void Engine::Draw(float frame_frac) {
@@ -336,19 +345,18 @@ void Engine::ShowStats(bool show) {
 }
 
 void Engine::PrintStats() {
-  constexpr int width = 300;
+  constexpr int width = 200;
   std::vector<std::string> lines;
-  std::string line = "frames dropped: ";
-  line += std::to_string(renderer_->num_frames_dropped());
+  std::string line;
+  line = "fps: ";
+  line += std::to_string(fps_);
   lines.push_back(line);
-  line = "global queue: ";
-  line += std::to_string(renderer_->global_queue_size());
-  lines.push_back(line);
-  line = "render queue: ";
-  line += std::to_string(renderer_->render_queue_size());
+  line = "cmd: ";
+  line += std::to_string(renderer_->global_queue_size() +
+                         renderer_->render_queue_size());
   lines.push_back(line);
 
-  constexpr int margin = 3;
+  constexpr int margin = 5;
   int line_height = system_font_->GetLineHeight();
   int image_width = width + margin * 2;
   int image_height = (line_height + margin) * lines.size() + margin;
@@ -360,7 +368,7 @@ void Engine::PrintStats() {
   base::Worker worker;
   int y = margin;
   for (auto& text : lines) {
-    worker.Enqueue(std::bind(&Font::Print, system_font_, margin, y + margin,
+    worker.Enqueue(std::bind(&Font::Print, system_font_, margin, y,
                              text.c_str(), image->GetBuffer(),
                              image->GetWidth()));
     y += line_height + margin;
@@ -372,7 +380,7 @@ void Engine::PrintStats() {
   stats_.AutoScale();
 
   Vector2 pos = (GetScreenSize() / 2 - stats_.GetScale() / 2);
-  pos -= Vector2(0.02f, 0.1f);
+  pos -= Vector2(0.02f, 0.17f);
   stats_.SetOffset(pos * Vector2(-1, 1));
 }
 

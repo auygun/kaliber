@@ -131,7 +131,7 @@ void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
       draw_commands_[0].swap(draw_commands_[1]);
     }
     cv_.notify_one();
-    num_frames_dropped_ += draw_commands_[1].size() ? 1 : 0;
+    fps_ += draw_commands_[1].size() ? 0 : 1;
     draw_commands_[1].clear();
   }
 #else

@@ -73,7 +73,8 @@ class Renderer {
   int screen_height() const { return screen_height_; }
   const base::Matrix4x4& projection() const { return projection_; }
 
-  size_t num_frames_dropped() { return num_frames_dropped_; }
+  size_t GetAndResetFPS() { int ret = fps_; fps_ = 0; return ret; }
+
   size_t global_queue_size() { return global_queue_size_; }
   size_t render_queue_size() { return render_queue_size_; }
 
@@ -152,7 +153,7 @@ class Renderer {
 #endif // THREADED_RENDERING
 
   // Stats.
-  size_t num_frames_dropped_ = 0;
+  size_t fps_ = 0;
   size_t global_queue_size_ = 0;
   size_t render_queue_size_ = 0;
 
