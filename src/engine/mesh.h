@@ -25,6 +25,9 @@ class Mesh : public Asset {
 
   bool Load(const std::string& file_name);
 
+  const void* GetVertices() const { return (void*)vertices_.get(); }
+  const void* GetIndices() const { return (void*)indices_.get(); }
+
   unsigned int GetVertexSize() const;
   unsigned int GetIndexSize() const;
 
@@ -33,8 +36,6 @@ class Mesh : public Asset {
   int num_vertices() const { return num_vertices_; }
   DataType index_description() const { return index_description_; }
   int num_indices() const { return num_indices_; }
-  const void* vertices() const { return (void*)vertices_.get(); }
-  const void* indices() const { return (void*)indices_.get(); }
 
   bool IsValid() const { return !!vertices_.get(); }
 

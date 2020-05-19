@@ -349,7 +349,7 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
   glGenBuffers(1, &vertex_buffer_id);
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id);
   glBufferData(GL_ARRAY_BUFFER, c->mesh->num_vertices() * vertex_size,
-               c->mesh->vertices(), GL_STATIC_DRAW);
+               c->mesh->GetVertices(), GL_STATIC_DRAW);
 
   // Make sure the vertex format is understood and the attribute pointers are
   // set up.
@@ -360,12 +360,12 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
 
   // Create the index buffer and upload the data.
   GLuint index_buffer_id = 0;
-  if (c->mesh->indices()) {
+  if (c->mesh->GetIndices()) {
     glGenBuffers(1, &index_buffer_id);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_id);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                  c->mesh->num_indices() * c->mesh->GetIndexSize(),
-                 c->mesh->indices(), GL_STATIC_DRAW);
+                 c->mesh->GetIndices(), GL_STATIC_DRAW);
   }
 
   if (vertex_array_id) {
