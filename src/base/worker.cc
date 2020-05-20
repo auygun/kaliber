@@ -3,12 +3,20 @@
 
 namespace base {
 
+Worker::Worker(unsigned max_concurrency) : max_concurrency_(max_concurrency) {
+  if (max_concurrency_ > std::thread::hardware_concurrency() ||
+      max_concurrency_ == 0) {
+    max_concurrency_ = std::thread::hardware_concurrency();
+    if (max_concurrency_ == 0)
+      max_concurrency_ = 1;
+  }
+}
+Worker::~Worker() = default;
+
 void Worker::Enqueue(base::Callback task) {
   if (!active_) {
-    unsigned supported = std::thread::hardware_concurrency();
-    if (supported == 0)
-      supported = 1;
-    while (supported--)
+    unsigned concurrency = max_concurrency_;
+    while (concurrency--)
       threads_.emplace_back(&Worker::WorkerMain, this);
     active_ = true;
   }

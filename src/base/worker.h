@@ -13,14 +13,15 @@ namespace base {
 // Feed the worker tasks and they will be called on a thread from the pool.
 class Worker {
  public:
-  Worker() = default;
-  ~Worker() = default;
+  Worker(unsigned max_concurrency = 0);
+  ~Worker();
 
   void Enqueue(base::Callback task);
   void Join();
 
  private:
   bool active_ = false;
+  unsigned max_concurrency_ = 0;
 
   std::condition_variable cv_;
   std::mutex mutex_;

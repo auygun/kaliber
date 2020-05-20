@@ -395,7 +395,7 @@ void Engine::PrintStats() {
   image->Create(image_width, image_height);
   image->Clear({1, 1, 1, 0.08f});
 
-  base::Worker worker;
+  base::Worker worker(2);
   int y = margin;
   for (auto& text : lines) {
     worker.Enqueue(std::bind(&Font::Print, system_font_, margin, y,
