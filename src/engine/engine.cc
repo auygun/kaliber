@@ -17,6 +17,8 @@
 using base::Matrix4x4;
 using base::Vector2;
 
+static constexpr float kLifeTime = 30;
+
 namespace eng {
 
 Engine::Engine() : task_runner_(std::make_unique<base::TaskRunner>()) {}
@@ -121,7 +123,7 @@ void Engine::Clear() {
 
 void Engine::TrimMemory() {
   LOG << "Trimming memory.";
-  KillUnusedResources(5);
+  KillUnusedResources(kLifeTime);
   mesh_assets_.clear();
   image_assets_.clear();
   shader_source_assets_.clear();
@@ -227,7 +229,7 @@ void Engine::ReturnTextureResource(int resource_id) {
     assert(it->second.ref_count > 0);
     if (--(it->second.ref_count) > 0)
       return;
-    it->second.time_to_die_ = 5;
+    it->second.time_to_die_ = kLifeTime;
     return;
   }
   auto cmd = std::make_unique<CmdDestoryTexture>();
