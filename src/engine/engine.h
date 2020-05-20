@@ -146,7 +146,6 @@ class Engine {
   void Clear();
   void Present();
 
-  void ShowStats(bool show);
   void PrintStats();
 };
 

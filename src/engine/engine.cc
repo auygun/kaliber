@@ -68,9 +68,9 @@ bool Engine::Init(Platform* platform) {
     return false;
   }
 
-#if 1
-  ShowStats(true);
-#endif
+  Vector2 pos = (GetScreenSize() / 2 - stats_.GetScale() / 2);
+  pos -= Vector2(0.02f, 0.17f);
+  stats_.SetOffset(pos * Vector2(-1, 1));
 
   return true;
 }
@@ -247,11 +247,16 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
   if (event->GetType() == InputEvent::kTap) {
     Vector2 point = (GetScreenSize() / 2) * 0.9f;
     float dist = (point - event->GetVector(0)).Magnitude();
-    if (dist < 0.25f) {
+    if (dist <= 0.25f) {
       stats_.SetVisible(!stats_.IsVisible());
       // Consume event.
       return;
     }
+  }
+  if (event->GetType() == InputEvent::kDrag && stats_.IsVisible()) {
+    Vector2 offset = stats_.GetOffset() - event->GetVector(0);
+    if (offset.Magnitude() <= stats_.GetScale().y)
+      stats_.SetOffset(event->GetVector(0));
   }
 
   input_queue_.push_back(std::move(event));
@@ -357,12 +362,6 @@ void Engine::KillUnusedResources(float delta_time) {
   }
 }
 
-void Engine::ShowStats(bool show) {
-  stats_.SetVisible(show);
-  if (show)
-    PrintStats();
-}
-
 void Engine::PrintStats() {
   constexpr int width = 200;
   std::vector<std::string> lines;
@@ -397,10 +396,6 @@ void Engine::PrintStats() {
   image->SetImmutable();
   stats_.Create(image);
   stats_.AutoScale();
-
-  Vector2 pos = (GetScreenSize() / 2 - stats_.GetScale() / 2);
-  pos -= Vector2(0.02f, 0.17f);
-  stats_.SetOffset(pos * Vector2(-1, 1));
 }
 
 }  // namespace eng
