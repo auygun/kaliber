@@ -4,6 +4,7 @@
 #include <limits>
 
 #include "../base/log.h"
+#include "../base/collusion_test.h"
 #include "../engine/engine.h"
 #include "../engine/font.h"
 #include "../engine/image.h"

@@ -66,6 +66,7 @@ ifneq ($(filter gltest,$(APPS)),)
 GLTEST_SRC := \
   $(SRC_ROOT)/base/asset_file_linux.cc \
   $(SRC_ROOT)/base/asset_file.cc \
+  $(SRC_ROOT)/base/collusion_test.cc \
   $(SRC_ROOT)/base/log.cc \
   $(SRC_ROOT)/base/random_generator.cc \
   $(SRC_ROOT)/base/task_runner.cc \
