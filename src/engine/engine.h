@@ -144,7 +144,6 @@ class Engine {
   void KillUnusedResources(float delta_time);
 
   void Clear();
-  void Present();
 
   void PrintStats();
 };

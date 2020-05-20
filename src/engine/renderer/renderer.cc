@@ -687,11 +687,6 @@ std::unordered_set<std::string> Renderer::SetupExtensions() {
   return extensions;
 }
 
-void Renderer::Present() {
-  auto cmd = std::make_unique<CmdPresent>();
-  EnqueueCommand(std::move(cmd));
-}
-
 void Renderer::ContextLost() {
   LOG << "Context lost.";
 

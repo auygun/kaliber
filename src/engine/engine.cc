@@ -97,7 +97,6 @@ void Engine::Update(float delta_time) {
 
 void Engine::Draw(float frame_frac) {
   Clear();
-  auto cmd = std::make_unique<CmdEableBlend>();
   renderer_->EnqueueCommand(std::make_unique<CmdEableBlend>());
 
   game_->Draw(frame_frac);
@@ -105,7 +104,7 @@ void Engine::Draw(float frame_frac) {
   if (stats_.IsVisible())
     stats_.Draw();
 
-  Present();
+  renderer_->EnqueueCommand(std::make_unique<CmdPresent>());
 }
 
 void Engine::Clear() {
@@ -121,9 +120,6 @@ void Engine::Clear() {
   renderer_->EnqueueCommand(std::move(cmd));
 }
 
-void Engine::Present() {
-  renderer_->Present();
-}
 
 void Engine::TrimMemory() {
   LOG << "Trimming memory.";
@@ -262,6 +258,7 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
       if ((stats_.GetOffset() - event->GetVector(0)).Magnitude() <=
           stats_.GetScale().y)
         stats_.SetOffset(event->GetVector(0));
+      // TODO: Enqueue DragCancel so we can consume this event.
     }
     break;
   default:

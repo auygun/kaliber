@@ -54,8 +54,6 @@ class Renderer {
 
   void Shutdown();
 
-  void Present();
-
   void ContextLost();
 
   bool SupportsETC1() const { return texture_compression_.etc1; }
