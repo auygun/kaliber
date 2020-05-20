@@ -6,7 +6,7 @@
 #include <mutex>
 #include <thread>
 #include <vector>
-#include "callback.h"
+#include "closure.h"
 
 namespace base {
 
@@ -16,7 +16,7 @@ class Worker {
   Worker(unsigned max_concurrency = 0);
   ~Worker();
 
-  void Enqueue(base::Callback task);
+  void Enqueue(base::Closure task);
   void Join();
 
  private:
@@ -26,7 +26,7 @@ class Worker {
   std::condition_variable cv_;
   std::mutex mutex_;
   std::vector<std::thread> threads_;
-  std::deque<base::Callback> tasks_;
+  std::deque<base::Closure> tasks_;
   bool quit_when_idle_ = false;
 
   void WorkerMain();

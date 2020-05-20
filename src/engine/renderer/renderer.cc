@@ -33,7 +33,7 @@ Renderer::~Renderer() {
   TerminateWorker();
 }
 
-void Renderer::SetContextLostCB(base::Callback cb) {
+void Renderer::SetContextLostCB(base::Closure cb) {
   context_lost_cb_ = std::move(cb);
 }
 

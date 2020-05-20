@@ -42,7 +42,7 @@ void Animator::Stop(int animation) {
   play_flags_ &= ~animation;
 }
 
-void Animator::SetEndCallback(int animation, base::Callback cb) {
+void Animator::SetEndCallback(int animation, base::Closure cb) {
   if ((animation & kMovement) != 0) {
     if (inside_cb_ == kMovement) {
       has_pending_cb_ = true;

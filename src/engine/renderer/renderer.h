@@ -14,7 +14,7 @@
 #include "../../third_party/glew/glxew.h"
 #endif
 
-#include "../../base/callback.h"
+#include "../../base/closure.h"
 #include "../../base/vecmath.h"
 #include "types.h"
 
@@ -45,7 +45,7 @@ class Renderer {
   Renderer(const Renderer&) = delete;
   Renderer& operator=(const Renderer&) = delete;
 
-  void SetContextLostCB(base::Callback cb);
+  void SetContextLostCB(base::Closure cb);
 
 #if defined(__ANDROID__)
   bool Init(ANativeWindow* window);
@@ -127,7 +127,7 @@ class Renderer {
     std::unordered_map<std::string, GLuint> uniforms;
   };
 
-  base::Callback context_lost_cb_;
+  base::Closure context_lost_cb_;
 
   TextureCompression texture_compression_;
   bool vertex_array_objects_ = false;

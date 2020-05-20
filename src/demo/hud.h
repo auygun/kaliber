@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include "../base/callback.h"
+#include "../base/closure.h"
 #include "../engine/animator.h"
 #include "../engine/image_quad.h"
 #include "../engine/solid_quad.h"
@@ -37,7 +37,7 @@ class Hud {
   eng::ImageQuad text_[2];
 
   eng::Animator hud_animator_;
-  base::Callback hud_animator_cb_;
+  base::Closure hud_animator_cb_;
 
   std::shared_ptr<const eng::Font> font_;
   int max_text_width_ = 0;

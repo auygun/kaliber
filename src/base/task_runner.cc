@@ -2,14 +2,14 @@
 
 namespace base {
 
-void TaskRunner::Enqueue(base::Callback task) {
+void TaskRunner::Enqueue(base::Closure task) {
   std::unique_lock<std::mutex> scoped_lock(mutex_);
   main_thread_tasks_.emplace_back(std::move(task));
 }
 
 void TaskRunner::Run() {
   for (;;) {
-    base::Callback task;
+    base::Closure task;
     {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
       if (!main_thread_tasks_.empty()) {

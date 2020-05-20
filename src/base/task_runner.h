@@ -4,7 +4,7 @@
 #include <deque>
 #include <mutex>
 #include <thread>
-#include "callback.h"
+#include "closure.h"
 
 namespace base {
 
@@ -13,7 +13,7 @@ class TaskRunner {
   TaskRunner() = default;
   ~TaskRunner() = default;
 
-  void Enqueue(base::Callback cb);
+  void Enqueue(base::Closure cb);
   void Run();
 
   bool IsBoundToCurrentThread();
@@ -21,7 +21,7 @@ class TaskRunner {
  private:
   std::thread::id thread_id_ = std::this_thread::get_id();
   std::mutex mutex_;
-  std::deque<base::Callback> main_thread_tasks_;
+  std::deque<base::Closure> main_thread_tasks_;
 };
 
 }  // namespace base

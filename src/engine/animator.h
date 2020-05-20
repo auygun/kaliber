@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "../base/callback.h"
+#include "../base/closure.h"
 #include "../base/vecmath.h"
 
 namespace eng {
@@ -35,7 +35,7 @@ class Animator {
 
   // Set callback for the given animations. It's called for each animation once
   // it ends. Not that it's not called for looping animations.
-  void SetEndCallback(int animation, base::Callback cb);
+  void SetEndCallback(int animation, base::Closure cb);
 
   // Set movement animation parameters. Movement animations is relative.
   // Distance is calculated from the magnitude of direction vector. Speed is in
@@ -81,30 +81,30 @@ class Animator {
   base::Vector2 movement_direction_ = {0, 0};
   float movement_speed_ = 0;
   float movement_time_ = 0;
-  base::Callback movement_cb_;
+  base::Closure movement_cb_;
 
   float rotation_target_ = 0;
   float rotation_speed_ = 0;
   float rotation_time_ = 0;
-  base::Callback rotation_cb_;
+  base::Closure rotation_cb_;
 
   base::Vector4 blending_target_ = {0, 0, 0, 0};
   float blending_speed_ = 0;
   float blending_time_ = 0;
-  base::Callback blending_cb_;
+  base::Closure blending_cb_;
 
   int frame_count_ = 0;
   float frame_speed_ = 0;
   float frame_time_ = 0;
-  base::Callback frame_cb_;
+  base::Closure frame_cb_;
 
   float timer_speed_ = 0;
   float timer_time_ = 0;
-  base::Callback timer_cb_;
+  base::Closure timer_cb_;
 
   // State used to set new callback during a callback.
   bool has_pending_cb_ = false;
-  base::Callback pending_cb_;
+  base::Closure pending_cb_;
   Flags inside_cb_ = kNone;
 
   void UpdateMovement(float delta_time);
