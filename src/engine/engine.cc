@@ -240,6 +240,16 @@ void Engine::ReturnTextureResource(int resource_id) {
 }
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
+  if (event->GetType() == InputEvent::kTap) {
+    Vector2 point = (GetScreenSize() / 2) * 0.9f;
+    float dist = (point - event->GetVector(0)).Magnitude();
+    if (dist < 0.25f) {
+      stats_.SetVisible(!stats_.IsVisible());
+      // Consume event.
+      return;
+    }
+  }
+
   input_queue_.push_back(std::move(event));
 }
 
