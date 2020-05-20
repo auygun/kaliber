@@ -244,19 +244,31 @@ void Engine::ReturnTextureResource(int resource_id) {
 }
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
-  if (event->GetType() == InputEvent::kTap) {
-    Vector2 point = (GetScreenSize() / 2) * 0.9f;
-    float dist = (point - event->GetVector(0)).Magnitude();
-    if (dist <= 0.25f) {
+  switch (event->GetType()) {
+  case InputEvent::kTap:
+    if (((GetScreenSize() / 2) * 0.9f - event->GetVector(0)).Magnitude() <=
+        0.25f) {
       stats_.SetVisible(!stats_.IsVisible());
       // Consume event.
       return;
     }
-  }
-  if (event->GetType() == InputEvent::kDrag && stats_.IsVisible()) {
-    Vector2 offset = stats_.GetOffset() - event->GetVector(0);
-    if (offset.Magnitude() <= stats_.GetScale().y)
-      stats_.SetOffset(event->GetVector(0));
+    break;
+  case InputEvent::kKeyPress:
+    if (event->GetKeyPress() == 's') {
+      stats_.SetVisible(!stats_.IsVisible());
+      // Consume event.
+      return;
+    }
+    break;
+  case InputEvent::kDrag:
+    if (stats_.IsVisible()) {
+      if ((stats_.GetOffset() - event->GetVector(0)).Magnitude() <=
+          stats_.GetScale().y)
+        stats_.SetOffset(event->GetVector(0));
+    }
+    break;
+  default:
+    break;
   }
 
   input_queue_.push_back(std::move(event));
