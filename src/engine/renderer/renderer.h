@@ -39,11 +39,8 @@ class Image;
 
 class Renderer {
  public:
-  Renderer();
+  Renderer() = default;
   ~Renderer();
-
-  Renderer(const Renderer&) = delete;
-  Renderer& operator=(const Renderer&) = delete;
 
   void SetContextLostCB(base::Closure cb);
 
@@ -216,6 +213,9 @@ class Renderer {
   bool CreateWindow();
   void DestroyWindow();
 #endif
+
+  Renderer(const Renderer&) = delete;
+  Renderer& operator=(const Renderer&) = delete;
 };
 
 }  // namespace eng

@@ -12,9 +12,6 @@ class Texture {
   Texture() = default;
   ~Texture();
 
-  Texture(const Texture&) = delete;
-  Texture& operator=(const Texture&) = delete;
-
   void Create(std::shared_ptr<const Image> image);
   void Update(std::shared_ptr<const Image> image);
   void Destroy();
@@ -26,6 +23,9 @@ class Texture {
 
  private:
   int resource_id_ = 0;
+
+  Texture(const Texture&) = delete;
+  Texture& operator=(const Texture&) = delete;
 };
 
 }  // namespace eng

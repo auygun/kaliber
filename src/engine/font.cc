@@ -9,10 +9,6 @@
 
 namespace eng {
 
-Font::Font() = default;
-
-Font::~Font() = default;
-
 bool Font::Load(const std::string& file_name) {
   if (IsImmutable()) {
     LOG << "Error: Font is immutable. Failed to load.";

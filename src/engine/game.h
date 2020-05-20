@@ -8,9 +8,6 @@ class Game {
   Game() = default;
   virtual ~Game() = default;
 
-  Game(const Game&) = delete;
-  Game& operator=(const Game&) = delete;
-
   virtual bool Initialize() = 0;
 
   virtual void Update(float delta_time) = 0;
@@ -18,6 +15,10 @@ class Game {
   virtual void Draw(float frame_frac) = 0;
 
   virtual void ContextLost() = 0;
+
+ private:
+  Game(const Game&) = delete;
+  Game& operator=(const Game&) = delete;
 };
 
 }  // namespace eng

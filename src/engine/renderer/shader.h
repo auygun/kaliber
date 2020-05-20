@@ -15,9 +15,6 @@ class Shader {
   Shader() = default;
   ~Shader();
 
-  Shader(const Shader&) = delete;
-  Shader& operator=(const Shader&) = delete;
-
   void Create(std::shared_ptr<const ShaderSource> source,
               const VertexDescripton& vd);
   void Destroy();
@@ -36,6 +33,9 @@ class Shader {
  private:
   int resource_id_ = 0;
   static int last_id;
+
+  Shader(const Shader&) = delete;
+  Shader& operator=(const Shader&) = delete;
 };
 
 }  // namespace eng

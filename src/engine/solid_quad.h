@@ -12,7 +12,7 @@ class SolidQuad : public Animatable {
   SolidQuad() = default;
   ~SolidQuad() override = default;
 
-  // Shape interface.
+  // Animatable interface.
   void SetFrame(size_t frame) override {}
   size_t GetFrame() override { return 0; }
   size_t GetNumFrames() override { return 0; }

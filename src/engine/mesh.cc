@@ -16,9 +16,6 @@ namespace eng {
 // e.g. "p3f;c4b" for "position 3 floats, color 4 bytes".
 const char Mesh::kLayoutDelimiter[] = ";/ \t";
 
-Mesh::Mesh() = default;
-Mesh::~Mesh() = default;
-
 bool Mesh::Create(Primitive primitive,
                   const std::string& vertex_description,
                   size_t num_vertices,

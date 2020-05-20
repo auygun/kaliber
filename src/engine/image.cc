@@ -16,11 +16,11 @@ namespace eng {
 
 Image::Image() = default;
 
-Image::~Image() = default;
-
 Image::Image(const Image& other) {
   Copy(other);
 }
+
+Image::~Image() = default;
 
 Image& Image::operator=(const Image& other) {
   Copy(other);

@@ -24,7 +24,7 @@ class ImageQuad : public Animatable {
 
   void AutoScale();
 
-  // Shape interface.
+  // Animatable interface.
   void SetFrame(size_t frame) override;
   size_t GetFrame() override { return current_frame_; }
   size_t GetNumFrames() override;

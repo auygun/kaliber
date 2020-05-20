@@ -27,9 +27,6 @@ class Platform {
   Platform();
   ~Platform();
 
-  Platform(const Platform&) = delete;
-  Platform& operator=(const Platform&) = delete;
-
 #if defined(__ANDROID__)
   void Initialize(android_app* app);
 #elif defined(__linux__)
@@ -72,6 +69,9 @@ class Platform {
   static int32_t HandleInput(android_app* app, AInputEvent* event);
   static void HandleCmd(android_app* app, int32_t cmd);
 #endif
+
+  Platform(const Platform&) = delete;
+  Platform& operator=(const Platform&) = delete;
 };
 
 }  // namespace eng

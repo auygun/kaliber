@@ -22,6 +22,9 @@ class TaskRunner {
   std::thread::id thread_id_ = std::this_thread::get_id();
   std::mutex mutex_;
   std::deque<base::Closure> main_thread_tasks_;
+
+  TaskRunner(TaskRunner const&) = delete;
+  TaskRunner& operator=(TaskRunner const&) = delete;
 };
 
 }  // namespace base

@@ -11,6 +11,7 @@ Worker::Worker(unsigned max_concurrency) : max_concurrency_(max_concurrency) {
       max_concurrency_ = 1;
   }
 }
+
 Worker::~Worker() = default;
 
 void Worker::Enqueue(base::Closure task) {

@@ -12,8 +12,8 @@ namespace eng {
 
 class Font : public Asset {
  public:
-  Font();
-  ~Font() override;
+  Font() = default;
+  ~Font() override = default;
 
   bool Load(const std::string& file_name);
   void Destroy();

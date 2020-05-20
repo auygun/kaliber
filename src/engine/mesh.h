@@ -12,8 +12,8 @@ class Mesh : public Asset {
  public:
   static const char kLayoutDelimiter[];
 
-  Mesh();
-  ~Mesh() override;
+  Mesh() = default;
+  ~Mesh() override = default;
 
   bool Create(Primitive primitive,
               const std::string& vertex_description,

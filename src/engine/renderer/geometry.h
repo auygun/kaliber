@@ -14,9 +14,6 @@ class Geometry {
   Geometry() = default;
   ~Geometry();
 
-  Geometry(const Geometry&) = delete;
-  Geometry& operator=(const Geometry&) = delete;
-
   void Create(std::shared_ptr<const Mesh> mesh);
   void Destroy();
 
@@ -33,6 +30,9 @@ class Geometry {
   int resource_id_ = 0;
   static int last_id;
   VertexDescripton vertex_description_;
+
+  Geometry(const Geometry&) = delete;
+  Geometry& operator=(const Geometry&) = delete;
 };
 
 }  // namespace eng
