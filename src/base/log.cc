@@ -13,10 +13,7 @@ namespace base {
 // operator.
 Log* Log::swallow_stream;
 
-Log::Log(const char* file, int line)
-    : file_(file)
-    , line_(line) {
-}
+Log::Log(const char* file, int line) : file_(file), line_(line) {}
 
 Log::~Log() {
   stream_ << std::endl;
@@ -26,10 +23,11 @@ Log::~Log() {
   if (last_slash_pos != std::string::npos)
     filename = filename.substr(last_slash_pos + 1);
 #if defined(__ANDROID__)
-  __android_log_print(ANDROID_LOG_ERROR, "gltest", "[%s:%d] %s", filename.c_str(), line_, text.c_str());
+  __android_log_print(ANDROID_LOG_ERROR, "gltest", "[%s:%d] %s",
+                      filename.c_str(), line_, text.c_str());
 #else
   printf("[%s:%d] %s", filename.c_str(), line_, text.c_str());
 #endif
 }
 
-} // namespace base
+}  // namespace base

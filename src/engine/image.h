@@ -1,11 +1,11 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
-#include "asset.h"
-#include "../base/mem.h"
 #include <stdint.h>
 #include <array>
 #include <string>
+#include "../base/mem.h"
+#include "asset.h"
 
 namespace eng {
 
@@ -51,6 +51,6 @@ class Image : public Asset {
   Format format_ = kRGBA32;
 };
 
-} // namespace eng
+}  // namespace eng
 
 #endif  // IMAGE_H

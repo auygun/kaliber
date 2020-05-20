@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-#define DECLARE_GAME_BEGIN                                      \
+#define DECLARE_GAME_BEGIN                                   \
   std::vector<std::pair<std::string, eng::GameFactoryBase*>> \
       eng::GameFactoryBase::game_classes = {
 #define DECLARE_GAME(CLASS) {#CLASS, new eng::GameFactory<CLASS>()},

@@ -1,32 +1,27 @@
 #include "renderer.h"
-#include <sstream>
+#include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <sstream>
 #include "../../base/log.h"
-#include "render_command.h"
 #include "../image.h"
-#include "../shader_source.h"
 #include "../mesh.h"
-#include <algorithm>
+#include "../shader_source.h"
+#include "render_command.h"
 
 namespace {
 
 constexpr GLenum kGlPrimitive[eng::kPrimitive_Max] = {GL_TRIANGLES,
                                                       GL_TRIANGLE_STRIP};
 
-constexpr GLenum kGlDataType[eng::kDataType_Max] = {GL_UNSIGNED_BYTE,
-                                                    GL_FLOAT,
-                                                    GL_INT,
-                                                    GL_SHORT,
-                                                    GL_UNSIGNED_INT,
-                                                    GL_UNSIGNED_SHORT};
+constexpr GLenum kGlDataType[eng::kDataType_Max] = {
+    GL_UNSIGNED_BYTE, GL_FLOAT,        GL_INT,
+    GL_SHORT,         GL_UNSIGNED_INT, GL_UNSIGNED_SHORT};
 
-const std::string kAttributeNames[eng::kAttribType_Max] = {"inColor",
-                                                           "inNormal",
-                                                           "inPosition",
-                                                           "inTexCoord"};
+const std::string kAttributeNames[eng::kAttribType_Max] = {
+    "inColor", "inNormal", "inPosition", "inTexCoord"};
 
-} // namespace
+}  // namespace
 
 namespace eng {
 
@@ -84,7 +79,7 @@ bool Renderer::StartWorker() {
 #else
   LOG << "Single threaded rendering.";
   return InitInternal();
-#endif // THREADED_RENDERING
+#endif  // THREADED_RENDERING
 }
 
 void Renderer::TerminateWorker() {
@@ -101,7 +96,7 @@ void Renderer::TerminateWorker() {
   worker_thread_.join();
 #else
   ShutdownInternal();
-#endif // THREADED_RENDERING
+#endif  // THREADED_RENDERING
 }
 
 void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
@@ -130,7 +125,7 @@ void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
   }
 #else
   ProcessCommand(cmd.get());
-#endif // THREADED_RENDERING
+#endif  // THREADED_RENDERING
 }
 
 #ifdef THREADED_RENDERING
@@ -139,12 +134,12 @@ void Renderer::WorkerMain(std::promise<bool> promise) {
   promise.set_value(InitInternal());
 
   std::deque<std::unique_ptr<RenderCommand>> cq[2];
-  for(;;) {
+  for (;;) {
     {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
-      cv_.wait(scoped_lock, [&]()->bool {
+      cv_.wait(scoped_lock, [&]() -> bool {
         return !global_commands_.empty() || !draw_commands_[0].empty() ||
-            terminate_worker_;
+               terminate_worker_;
       });
       if (terminate_worker_) {
         ShutdownInternal();
@@ -174,74 +169,73 @@ void Renderer::WorkerMain(std::promise<bool> promise) {
   }
 }
 
-#endif // THREADED_RENDERING
+#endif  // THREADED_RENDERING
 
 void Renderer::ProcessCommand(RenderCommand* cmd) {
 #if 0
   LOG << "Processing command: " << cmd->cmd_name.c_str();
 #endif
 
-  switch(cmd->cmd_id) {
-  case HHASH("CmdEableBlend"):
-    HandleCmdEnableBlend(cmd);
-    break;
-  case HHASH("CmdClear"):
-    HandleCmdClear(cmd);
-    break;
-  case HHASH("CmdPresent"):
-    HandleCmdPresent(cmd);
-    break;
-  case HHASH("CmdUpdateTexture"):
-    HandleCmdUpdateTexture(cmd);
-    break;
-  case HHASH("CmdDestoryTexture"):
-    HandleCmdDestoryTexture(cmd);
-    break;
-  case HHASH("CmdActivateTexture"):
-    HandleCmdActivateTexture(cmd);
-    break;
-  case HHASH("CmdCreateGeometry"):
-    HandleCmdCreateGeometry(cmd);
-    break;
-  case HHASH("CmdDestroyGeometry"):
-    HandleCmdDestroyGeometry(cmd);
-    break;
-  case HHASH("CmdDrawGeometry"):
-    HandleCmdDrawGeometry(cmd);
-    break;
-  case HHASH("CmdCreateShader"):
-    HandleCmdCreateShader(cmd);
-    break;
-  case HHASH("CmdDestroyShader"):
-    HandleCmdDestroyShader(cmd);
-    break;
-  case HHASH("CmdActivateShader"):
-    HandleCmdActivateShader(cmd);
-    break;
-  case HHASH("CmdSetUniformVec2"):
-    HandleCmdSetUniformVec2(cmd);
-    break;
-  case HHASH("CmdSetUniformVec3"):
-    HandleCmdSetUniformVec3(cmd);
-    break;
-  case HHASH("CmdSetUniformVec4"):
-    HandleCmdSetUniformVec4(cmd);
-    break;
-  case HHASH("CmdSetUniformMat4"):
-    HandleCmdSetUniformMat4(cmd);
-    break;
-  case HHASH("CmdSetUniformFloat"):
-    HandleCmdSetUniformFloat(cmd);
-    break;
-  case HHASH("CmdSetUniformInt"):
-    HandleCmdSetUniformInt(cmd);
-    break;
-  default:
-    // assert(false);
-    break;
+  switch (cmd->cmd_id) {
+    case HHASH("CmdEableBlend"):
+      HandleCmdEnableBlend(cmd);
+      break;
+    case HHASH("CmdClear"):
+      HandleCmdClear(cmd);
+      break;
+    case HHASH("CmdPresent"):
+      HandleCmdPresent(cmd);
+      break;
+    case HHASH("CmdUpdateTexture"):
+      HandleCmdUpdateTexture(cmd);
+      break;
+    case HHASH("CmdDestoryTexture"):
+      HandleCmdDestoryTexture(cmd);
+      break;
+    case HHASH("CmdActivateTexture"):
+      HandleCmdActivateTexture(cmd);
+      break;
+    case HHASH("CmdCreateGeometry"):
+      HandleCmdCreateGeometry(cmd);
+      break;
+    case HHASH("CmdDestroyGeometry"):
+      HandleCmdDestroyGeometry(cmd);
+      break;
+    case HHASH("CmdDrawGeometry"):
+      HandleCmdDrawGeometry(cmd);
+      break;
+    case HHASH("CmdCreateShader"):
+      HandleCmdCreateShader(cmd);
+      break;
+    case HHASH("CmdDestroyShader"):
+      HandleCmdDestroyShader(cmd);
+      break;
+    case HHASH("CmdActivateShader"):
+      HandleCmdActivateShader(cmd);
+      break;
+    case HHASH("CmdSetUniformVec2"):
+      HandleCmdSetUniformVec2(cmd);
+      break;
+    case HHASH("CmdSetUniformVec3"):
+      HandleCmdSetUniformVec3(cmd);
+      break;
+    case HHASH("CmdSetUniformVec4"):
+      HandleCmdSetUniformVec4(cmd);
+      break;
+    case HHASH("CmdSetUniformMat4"):
+      HandleCmdSetUniformMat4(cmd);
+      break;
+    case HHASH("CmdSetUniformFloat"):
+      HandleCmdSetUniformFloat(cmd);
+      break;
+    case HHASH("CmdSetUniformInt"):
+      HandleCmdSetUniformInt(cmd);
+      break;
+    default:
+      // assert(false);
+      break;
   }
 }
-
 
 void Renderer::HandleCmdEnableBlend(RenderCommand* cmd) {
   glEnable(GL_BLEND);
@@ -249,13 +243,13 @@ void Renderer::HandleCmdEnableBlend(RenderCommand* cmd) {
 }
 
 void Renderer::HandleCmdClear(RenderCommand* cmd) {
-  auto *c = static_cast<CmdClear*>(cmd);
+  auto* c = static_cast<CmdClear*>(cmd);
   glClearColor(c->rgba[0], c->rgba[1], c->rgba[2], c->rgba[3]);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
-  auto *c = static_cast<CmdUpdateTexture*>(cmd);
+  auto* c = static_cast<CmdUpdateTexture*>(cmd);
   auto it = texture_map_.find(c->id);
   bool new_texture = it == texture_map_.end();
 
@@ -271,27 +265,36 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
   if (c->image->IsCompressed()) {
     GLenum format;
     switch (c->image->GetFormat()) {
-    case Image::kDXT1:  format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;    break;
-    case Image::kDXT5:  format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;   break;
-    case Image::kETC1:  format = GL_ETC1_RGB8_OES;                   break;
+      case Image::kDXT1:
+        format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+        break;
+      case Image::kDXT5:
+        format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+        break;
+      case Image::kETC1:
+        format = GL_ETC1_RGB8_OES;
+        break;
 #if defined(__ANDROID__)
-    case Image::kATC:   format = GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD; break;
+      case Image::kATC:
+        format = GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD;
+        break;
 #endif
-    default:
-      assert(false);
-      return;
+      default:
+        assert(false);
+        return;
     }
 
-    glCompressedTexImage2D(GL_TEXTURE_2D, 0, format,
-                           c->image->GetWidth(), c->image->GetHeight(), 0,
-                           c->image->GetSize(), c->image->GetBuffer());
+    glCompressedTexImage2D(GL_TEXTURE_2D, 0, format, c->image->GetWidth(),
+                           c->image->GetHeight(), 0, c->image->GetSize(),
+                           c->image->GetBuffer());
 
     GLenum err = glGetError();
     if (err != GL_NO_ERROR)
       LOG << "GL ERROR after glCompressedTexImage2D: " << (int)err;
   } else {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, c->image->GetWidth(), c->image->GetHeight(),
-                   0, GL_RGBA, GL_UNSIGNED_BYTE, c->image->GetBuffer());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, c->image->GetWidth(),
+                 c->image->GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                 c->image->GetBuffer());
   }
 
   if (new_texture) {
@@ -304,7 +307,7 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
 }
 
 void Renderer::HandleCmdDestoryTexture(RenderCommand* cmd) {
-  auto *c = static_cast<CmdDestoryTexture*>(cmd);
+  auto* c = static_cast<CmdDestoryTexture*>(cmd);
   auto it = texture_map_.find(c->id);
   if (it != texture_map_.end()) {
     glDeleteTextures(1, &(it->second));
@@ -313,14 +316,14 @@ void Renderer::HandleCmdDestoryTexture(RenderCommand* cmd) {
 }
 
 void Renderer::HandleCmdActivateTexture(RenderCommand* cmd) {
-  auto *c = static_cast<CmdActivateTexture*>(cmd);
+  auto* c = static_cast<CmdActivateTexture*>(cmd);
   auto it = texture_map_.find(c->id);
   if (it != texture_map_.end())
     glBindTexture(GL_TEXTURE_2D, it->second);
 }
 
 void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
-  auto *c = static_cast<CmdCreateGeometry*>(cmd);
+  auto* c = static_cast<CmdCreateGeometry*>(cmd);
   auto it = geometry_map_.find(c->id);
   if (it != geometry_map_.end())
     return;
@@ -371,21 +374,19 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
   }
 
-  geometry_map_[c->id] = {
-    (GLsizei)c->mesh->num_vertices(),
-    (GLsizei)c->mesh->num_indices(),
-    kGlPrimitive[c->mesh->primitive()],
-    kGlDataType[c->mesh->index_description()],
-    vertex_layout,
-    vertex_size,
-    vertex_array_id,
-    vertex_buffer_id,
-    index_buffer_id
-  };
+  geometry_map_[c->id] = {(GLsizei)c->mesh->num_vertices(),
+                          (GLsizei)c->mesh->num_indices(),
+                          kGlPrimitive[c->mesh->primitive()],
+                          kGlDataType[c->mesh->index_description()],
+                          vertex_layout,
+                          vertex_size,
+                          vertex_array_id,
+                          vertex_buffer_id,
+                          index_buffer_id};
 }
 
 void Renderer::HandleCmdDestroyGeometry(RenderCommand* cmd) {
-  auto *c = static_cast<CmdDestroyGeometry*>(cmd);
+  auto* c = static_cast<CmdDestroyGeometry*>(cmd);
   auto it = geometry_map_.find(c->id);
   if (it == geometry_map_.end())
     return;
@@ -396,10 +397,11 @@ void Renderer::HandleCmdDestroyGeometry(RenderCommand* cmd) {
     glDeleteBuffers(1, &(it->second.vertex_buffer_id));
   if (it->second.vertex_array_id)
     glDeleteVertexArrays(1, &(it->second.vertex_array_id));
-  geometry_map_.erase(it);}
+  geometry_map_.erase(it);
+}
 
 void Renderer::HandleCmdDrawGeometry(RenderCommand* cmd) {
-  auto *c = static_cast<CmdDrawGeometry*>(cmd);
+  auto* c = static_cast<CmdDrawGeometry*>(cmd);
   auto it = geometry_map_.find(c->id);
   if (it == geometry_map_.end())
     return;
@@ -409,12 +411,14 @@ void Renderer::HandleCmdDrawGeometry(RenderCommand* cmd) {
     glBindVertexArray(it->second.vertex_array_id);
   else {
     glBindBuffer(GL_ARRAY_BUFFER, it->second.vertex_buffer_id);
-    for (GLuint attribute_index = 0; attribute_index < (GLuint)it->second.vertex_layout.size();
+    for (GLuint attribute_index = 0;
+         attribute_index < (GLuint)it->second.vertex_layout.size();
          ++attribute_index) {
-      Geometry::Element &e = it->second.vertex_layout[attribute_index];
+      Geometry::Element& e = it->second.vertex_layout[attribute_index];
       glEnableVertexAttribArray(attribute_index);
       glVertexAttribPointer(attribute_index, e.num_elements, e.type, GL_FALSE,
-                            it->second.vertex_size, (const GLvoid *)e.vertex_offset);
+                            it->second.vertex_size,
+                            (const GLvoid*)e.vertex_offset);
     }
 
     if (it->second.num_indices > 0)
@@ -423,7 +427,8 @@ void Renderer::HandleCmdDrawGeometry(RenderCommand* cmd) {
 
   // Draw the primitive.
   if (it->second.num_indices > 0)
-    glDrawElements(it->second.primitive, it->second.num_indices, it->second.index_type, NULL);
+    glDrawElements(it->second.primitive, it->second.num_indices,
+                   it->second.index_type, NULL);
   else
     glDrawArrays(it->second.primitive, 0, it->second.num_vertices);
 
@@ -431,7 +436,8 @@ void Renderer::HandleCmdDrawGeometry(RenderCommand* cmd) {
   if (it->second.vertex_array_id)
     glBindVertexArray(0);
   else {
-    for (GLuint attribute_index = 0; attribute_index < (GLuint)it->second.vertex_layout.size();
+    for (GLuint attribute_index = 0;
+         attribute_index < (GLuint)it->second.vertex_layout.size();
          ++attribute_index)
       glDisableVertexAttribArray(attribute_index);
 
@@ -441,16 +447,18 @@ void Renderer::HandleCmdDrawGeometry(RenderCommand* cmd) {
 }
 
 void Renderer::HandleCmdCreateShader(RenderCommand* cmd) {
-  auto *c = static_cast<CmdCreateShader*>(cmd);
+  auto* c = static_cast<CmdCreateShader*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end())
     return;
 
-  GLuint vertex_shader = CreateShader(c->source->GetVertexSource(), GL_VERTEX_SHADER);
+  GLuint vertex_shader =
+      CreateShader(c->source->GetVertexSource(), GL_VERTEX_SHADER);
   if (!vertex_shader)
     return;
 
-  GLuint fragment_shader = CreateShader(c->source->GetFragmentSource(), GL_FRAGMENT_SHADER);
+  GLuint fragment_shader =
+      CreateShader(c->source->GetFragmentSource(), GL_FRAGMENT_SHADER);
   if (!fragment_shader)
     return;
 
@@ -468,10 +476,10 @@ void Renderer::HandleCmdCreateShader(RenderCommand* cmd) {
       GLint length = 0;
       glGetProgramiv(id, GL_INFO_LOG_LENGTH, &length);
       if (length > 0) {
-        char *buffer = (char *)malloc(length);
+        char* buffer = (char*)malloc(length);
         if (buffer) {
           glGetProgramInfoLog(id, length, NULL, buffer);
-          LOG << "Could not link program:\n" <<  buffer;
+          LOG << "Could not link program:\n" << buffer;
           free(buffer);
         }
       }
@@ -480,11 +488,11 @@ void Renderer::HandleCmdCreateShader(RenderCommand* cmd) {
     }
   }
 
-  shader_map_[c->id] = { id, {} };
+  shader_map_[c->id] = {id, {}};
 }
 
 void Renderer::HandleCmdDestroyShader(RenderCommand* cmd) {
-  auto *c = static_cast<CmdDestroyShader*>(cmd);
+  auto* c = static_cast<CmdDestroyShader*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end()) {
     glDeleteProgram(it->second.id);
@@ -493,76 +501,83 @@ void Renderer::HandleCmdDestroyShader(RenderCommand* cmd) {
 }
 
 void Renderer::HandleCmdActivateShader(RenderCommand* cmd) {
-  auto *c = static_cast<CmdActivateShader*>(cmd);
+  auto* c = static_cast<CmdActivateShader*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end())
     glUseProgram(it->second.id);
 }
 
 void Renderer::HandleCmdSetUniformVec2(RenderCommand* cmd) {
-  auto *c = static_cast<CmdSetUniformVec2*>(cmd);
+  auto* c = static_cast<CmdSetUniformVec2*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end()) {
-    GLint index = GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+    GLint index =
+        GetUniformLocation(it->second.id, c->name, it->second.uniforms);
     if (index >= 0)
       glUniform2fv(index, 1, c->v.GetData());
   }
 }
 
 void Renderer::HandleCmdSetUniformVec3(RenderCommand* cmd) {
-  auto *c = static_cast<CmdSetUniformVec3*>(cmd);
+  auto* c = static_cast<CmdSetUniformVec3*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end()) {
-    GLint index = GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+    GLint index =
+        GetUniformLocation(it->second.id, c->name, it->second.uniforms);
     if (index >= 0)
       glUniform3fv(index, 1, c->v.GetData());
   }
 }
 
 void Renderer::HandleCmdSetUniformVec4(RenderCommand* cmd) {
-  auto *c = static_cast<CmdSetUniformVec4*>(cmd);
+  auto* c = static_cast<CmdSetUniformVec4*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end()) {
-    GLint index = GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+    GLint index =
+        GetUniformLocation(it->second.id, c->name, it->second.uniforms);
     if (index >= 0)
       glUniform4fv(index, 1, c->v.GetData());
   }
 }
 
 void Renderer::HandleCmdSetUniformMat4(RenderCommand* cmd) {
-  auto *c = static_cast<CmdSetUniformMat4*>(cmd);
+  auto* c = static_cast<CmdSetUniformMat4*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end()) {
-    GLint index = GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+    GLint index =
+        GetUniformLocation(it->second.id, c->name, it->second.uniforms);
     if (index >= 0)
       glUniformMatrix4fv(index, 1, GL_FALSE, c->m.GetData());
   }
 }
 
 void Renderer::HandleCmdSetUniformFloat(RenderCommand* cmd) {
-  auto *c = static_cast<CmdSetUniformFloat*>(cmd);
+  auto* c = static_cast<CmdSetUniformFloat*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end()) {
-    GLint index = GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+    GLint index =
+        GetUniformLocation(it->second.id, c->name, it->second.uniforms);
     if (index >= 0)
       glUniform1f(index, c->f);
   }
 }
 
 void Renderer::HandleCmdSetUniformInt(RenderCommand* cmd) {
-  auto *c = static_cast<CmdSetUniformInt*>(cmd);
+  auto* c = static_cast<CmdSetUniformInt*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end()) {
-    GLint index = GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+    GLint index =
+        GetUniformLocation(it->second.id, c->name, it->second.uniforms);
     if (index >= 0)
       glUniform1i(index, c->i);
   }
 }
 
-bool Renderer::SetupVertexLayout(const VertexDescripton &vd,
-                                 GLuint vertex_size,
-                                 bool use_vao,
-                                 std::vector<Geometry::Element> &vertex_layout) {
+bool Renderer::SetupVertexLayout(
+    const VertexDescripton& vd,
+    GLuint vertex_size,
+    bool use_vao,
+    std::vector<Geometry::Element>& vertex_layout) {
   GLuint attribute_index = 0;
   size_t vertex_offset = 0;
 
@@ -581,7 +596,7 @@ bool Renderer::SetupVertexLayout(const VertexDescripton &vd,
       // This will be saved into the vertex array object.
       glEnableVertexAttribArray(attribute_index);
       glVertexAttribPointer(attribute_index, num_elements, type, GL_FALSE,
-                            vertex_size, (const GLvoid *)vertex_offset);
+                            vertex_size, (const GLvoid*)vertex_offset);
     } else {
       // Need to keep this information for when rendering.
       Geometry::Element element;
@@ -598,7 +613,7 @@ bool Renderer::SetupVertexLayout(const VertexDescripton &vd,
   return true;
 }
 
-GLuint Renderer::CreateShader(const char *source, GLenum type) {
+GLuint Renderer::CreateShader(const char* source, GLenum type) {
   GLuint shader = glCreateShader(type);
   if (shader) {
     glShaderSource(shader, 1, &source, NULL);
@@ -609,7 +624,7 @@ GLuint Renderer::CreateShader(const char *source, GLenum type) {
       GLint length = 0;
       glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
       if (length) {
-        char *buffer = (char *)malloc(length);
+        char* buffer = (char*)malloc(length);
         if (buffer) {
           glGetShaderInfoLog(shader, length, NULL, buffer);
           LOG << "Could not compile shader " << type << ":\n" << buffer;
@@ -623,7 +638,7 @@ GLuint Renderer::CreateShader(const char *source, GLenum type) {
   return shader;
 }
 
-bool Renderer::BindAttributeLocation(GLuint id, const VertexDescripton &vd) {
+bool Renderer::BindAttributeLocation(GLuint id, const VertexDescripton& vd) {
   int current = 0;
   int tex_coord = 0;
 
@@ -637,7 +652,10 @@ bool Renderer::BindAttributeLocation(GLuint id, const VertexDescripton &vd) {
   return current > 0;
 }
 
-GLint Renderer::GetUniformLocation(GLuint id, const std::string &name, std::unordered_map<std::string, GLuint> &uniforms) {
+GLint Renderer::GetUniformLocation(
+    GLuint id,
+    const std::string& name,
+    std::unordered_map<std::string, GLuint>& uniforms) {
   // Check if we've encountered this uniform before.
   auto i = uniforms.find(name);
   GLint index;
@@ -650,7 +668,8 @@ GLint Renderer::GetUniformLocation(GLuint id, const std::string &name, std::unor
     if (index >= 0)
       uniforms[name] = index;
     else
-      LOG << "Cannot find uniform " << name.c_str() << " (shader: " << id << ")";
+      LOG << "Cannot find uniform " << name.c_str() << " (shader: " << id
+          << ")";
   }
   return index;
 }
@@ -694,7 +713,7 @@ void Renderer::ContextLost() {
   global_commands_.clear();
   draw_commands_[0].clear();
   draw_commands_[1].clear();
-#endif // THREADED_RENDERING
+#endif  // THREADED_RENDERING
 
   for (auto& p : texture_map_)
     glDeleteTextures(1, &(p.second));
@@ -722,8 +741,8 @@ void Renderer::LogVersion() {
   LOG << "  vendor:         " << (const char*)glGetString(GL_VENDOR);
   LOG << "  renderer:       " << (const char*)glGetString(GL_RENDERER);
   LOG << "  version:        " << (const char*)glGetString(GL_VERSION);
-  LOG << "  shader version: " <<
-      (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
+  LOG << "  shader version: "
+      << (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
 }
 
 }  // namespace eng

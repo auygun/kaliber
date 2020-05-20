@@ -4,10 +4,10 @@
 #include "../base/vecmath.h"
 #include "../engine/renderer/shader.h"
 
+#include <array>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include <array>
 
 namespace eng {
 class Image;

@@ -1,12 +1,12 @@
 #include "player.h"
-#include "demo.h"
-#include "../base/log.h"
-#include "../engine/image.h"
-#include "../engine/engine.h"
-#include "../engine/input_event.h"
 #include <math.h>
-#include <memory>
 #include <cassert>
+#include <memory>
+#include "../base/log.h"
+#include "../engine/engine.h"
+#include "../engine/image.h"
+#include "../engine/input_event.h"
+#include "demo.h"
 
 using base::Vector2;
 
@@ -18,7 +18,7 @@ constexpr int wepon_cooldown_frame[] = {5, 13};
 constexpr int wepon_cooldown_frame_count = 3;
 constexpr int wepon_anim_speed = 48;
 
-} // namespace
+}  // namespace
 
 bool Player::Initialize() {
   return SetupWeapons();
@@ -27,10 +27,8 @@ bool Player::Initialize() {
 void Player::ContextLost() {
   eng::Engine& engine = eng::Engine::Get();
 
-  auto weapon_image =
-      engine.GetImageAsset("enemy_anims_flare_ok.png");
-  auto beam_image =
-      engine.GetImageAsset("enemy_ray_ok.png");
+  auto weapon_image = engine.GetImageAsset("enemy_anims_flare_ok.png");
+  auto beam_image = engine.GetImageAsset("enemy_ray_ok.png");
 
   for (int i = 0; i < 2; ++i) {
     drag_sign_[i].ContextLost();
@@ -83,8 +81,8 @@ void Player::Draw(float frame_frac) {
 Vector2 Player::GetWeaponPos(DamageType type) const {
   eng::Engine& engine = eng::Engine::Get();
   return engine.GetScreenSize() /
-      Vector2(type == kDamageType_Green ? 4 : -4 , -2) +
-      Vector2(0, weapon_[type].GetScale().y / 2);
+             Vector2(type == kDamageType_Green ? 4 : -4, -2) +
+         Vector2(0, weapon_[type].GetScale().y / 2);
 }
 
 Vector2 Player::GetWeaponScale() const {
@@ -116,10 +114,10 @@ void Player::CooldownWeapon(DamageType type) {
 
 void Player::Fire(DamageType type, Vector2 target_point) {
   eng::Engine& engine = eng::Engine::Get();
-  Enemy &enemy = static_cast<Demo*>(engine.GetGame())->GetEnemy();
+  Enemy& enemy = static_cast<Demo*>(engine.GetGame())->GetEnemy();
 
   Vector2 dir = weapon_[type].GetOffset();
-      (enemy.HasTarget(type) ? enemy.GetTargetPos(type) : target_point);
+  (enemy.HasTarget(type) ? enemy.GetTargetPos(type) : target_point);
   if (enemy.HasTarget(type)) {
     dir -= enemy.GetTargetPos(type);
   } else {
@@ -132,7 +130,7 @@ void Player::Fire(DamageType type, Vector2 target_point) {
   SetBeamLength(type, len);
 
   dir.Normalize();
-  float cos_theta = dir.DotProduct(Vector2(1 ,0));
+  float cos_theta = dir.DotProduct(Vector2(1, 0));
   float theta = acos(cos_theta) + M_PI;
   beam_[type].SetTheta(theta);
   beam_spark_[type].SetTheta(theta);
@@ -141,22 +139,21 @@ void Player::Fire(DamageType type, Vector2 target_point) {
   beam_[type].SetVisible(true);
   beam_spark_[type].SetVisible(true);
 
-  spark_animator_[type].SetMovement(-dir * beam_[type].GetScale().x * 0.85f, 18);
+  spark_animator_[type].SetMovement(-dir * beam_[type].GetScale().x * 0.85f,
+                                    18);
   spark_animator_[type].Play(eng::Animator::kMovement, false);
 }
 
 bool Player::IsFiring(DamageType type) {
   return beam_animator_[type].IsPlaying(eng::Animator::kBlending) ||
-      spark_animator_[type].IsPlaying(eng::Animator::kMovement);
+         spark_animator_[type].IsPlaying(eng::Animator::kMovement);
 }
 
 bool Player::SetupWeapons() {
   eng::Engine& engine = eng::Engine::Get();
 
-  auto weapon_image =
-      engine.GetImageAsset("enemy_anims_flare_ok.png");
-  auto beam_image =
-      engine.GetImageAsset("enemy_ray_ok.png");
+  auto weapon_image = engine.GetImageAsset("enemy_anims_flare_ok.png");
+  auto beam_image = engine.GetImageAsset("enemy_ray_ok.png");
   if (!weapon_image || !beam_image)
     return false;
 
@@ -196,10 +193,11 @@ bool Player::SetupWeapons() {
 
     // Setup animators.
     weapon_[i].SetFrame(wepon_cooldown_frame[i]);
-    cooldown_animator_[i].SetFrames(wepon_cooldown_frame_count, wepon_anim_speed);
-    cooldown_animator_[i].SetEndCallback(eng::Animator::kFrames, [&, i]()->void {
-      weapon_[i].SetFrame(wepon_warmup_frame[i]);
-    });
+    cooldown_animator_[i].SetFrames(wepon_cooldown_frame_count,
+                                    wepon_anim_speed);
+    cooldown_animator_[i].SetEndCallback(
+        eng::Animator::kFrames,
+        [&, i]() -> void { weapon_[i].SetFrame(wepon_warmup_frame[i]); });
     cooldown_animator_[i].Attach(&weapon_[i]);
 
     weapon_[i].SetFrame(wepon_warmup_frame[i]);
@@ -208,16 +206,19 @@ bool Player::SetupWeapons() {
     warmup_animator_[i].Attach(&weapon_[i]);
     warmup_animator_[i].Play(eng::Animator::kRotation, true);
 
-    spark_animator_[i].SetEndCallback(eng::Animator::kMovement, [&, i]()->void {
-      beam_spark_[i].SetVisible(false);
-      beam_animator_[i].Play(eng::Animator::kBlending, false);
-      static_cast<Demo*>(engine.GetGame())->GetEnemy().HitTarget((DamageType)i);
-    });
+    spark_animator_[i].SetEndCallback(
+        eng::Animator::kMovement, [&, i]() -> void {
+          beam_spark_[i].SetVisible(false);
+          beam_animator_[i].Play(eng::Animator::kBlending, false);
+          static_cast<Demo*>(engine.GetGame())
+              ->GetEnemy()
+              .HitTarget((DamageType)i);
+        });
     spark_animator_[i].Attach(&beam_spark_[i]);
 
-    beam_animator_[i].SetEndCallback(eng::Animator::kBlending, [&, i]()->void {
-      beam_[i].SetVisible(false);
-    });
+    beam_animator_[i].SetEndCallback(
+        eng::Animator::kBlending,
+        [&, i]() -> void { beam_[i].SetVisible(false); });
     beam_animator_[i].SetBlending({1, 1, 1, 0}, 0.16f);
     beam_animator_[i].Attach(&beam_[i]);
   }
@@ -233,7 +234,8 @@ void Player::UpdateTarget() {
 
   if (drag_valid_) {
     game->GetEnemy().SelectTarget((DamageType)active_weapon_,
-        weapon_[active_weapon_].GetOffset(), drag_end_);
+                                  weapon_[active_weapon_].GetOffset(),
+                                  drag_end_);
   } else {
     game->GetEnemy().DeselectTarget((DamageType)active_weapon_);
   }
@@ -277,10 +279,10 @@ void Player::DragEnd() {
   if (drag_valid_ && !IsFiring(type)) {
     if (warmup_animator_[type].IsPlaying(eng::Animator::kFrames)) {
       Vector2 target_point = drag_end_;
-      warmup_animator_[type].SetEndCallback(eng::Animator::kFrames,
-          [&, type, target_point]()->void {
+      warmup_animator_[type].SetEndCallback(
+          eng::Animator::kFrames, [&, type, target_point]() -> void {
             warmup_animator_[type].SetEndCallback(eng::Animator::kFrames,
-                nullptr);
+                                                  nullptr);
             CooldownWeapon(type);
             Fire(type, target_point);
           });
@@ -304,10 +306,10 @@ void Player::DragCancel() {
 
   if (drag_valid_ && !IsFiring(type)) {
     if (warmup_animator_[type].IsPlaying(eng::Animator::kFrames)) {
-      warmup_animator_[type].SetEndCallback(eng::Animator::kFrames,
-          [&, type]()->void {
+      warmup_animator_[type].SetEndCallback(
+          eng::Animator::kFrames, [&, type]() -> void {
             warmup_animator_[type].SetEndCallback(eng::Animator::kFrames,
-                nullptr);
+                                                  nullptr);
             CooldownWeapon(type);
           });
     } else {
@@ -325,7 +327,7 @@ bool Player::ValidateDrag() {
   dir.Normalize();
   if (len < weapon_[active_weapon_].GetScale().y / 4)
     return false;
-  if (dir.DotProduct(Vector2(0 ,1)) < 0)
+  if (dir.DotProduct(Vector2(0, 1)) < 0)
     return false;
   return true;
 }

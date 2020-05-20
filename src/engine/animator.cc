@@ -1,15 +1,15 @@
 #include "animator.h"
+#include <cmath>
 #include "../base/log.h"
 #include "../base/misc.h"
 #include "animatable.h"
-#include <cmath>
 
 using base::Vector2;
 using base::Vector4;
 
 namespace eng {
 
-void Animator::Attach(Animatable *animatable) {
+void Animator::Attach(Animatable* animatable) {
   elements_.push_back({animatable,
                        {0, 0},
                        0,
@@ -141,7 +141,8 @@ void Animator::Update(float delta_time) {
     }
 
     if (play_flags_ & kBlending) {
-      Vector4 r = base::Blend(a.blending_start, blending_target_, blending_time_);
+      Vector4 r =
+          base::Blend(a.blending_start, blending_target_, blending_time_);
       a.animatable->SetColor(r);
     }
 

@@ -1,28 +1,26 @@
 #include "enemy.h"
-#include "demo.h"
-#include "../base/log.h"
-#include "../engine/image.h"
-#include "../engine/font.h"
-#include "../engine/engine.h"
-#include <memory>
-#include <limits>
 #include <cassert>
+#include <limits>
+#include <memory>
+#include "../base/log.h"
+#include "../engine/engine.h"
+#include "../engine/font.h"
+#include "../engine/image.h"
+#include "demo.h"
 
 using base::Vector2;
 
 namespace {
 
-constexpr int enemy_frame_start[][3] = {{ 0, 50,  -1},
-                                        {13, 33,  -1},
+constexpr int enemy_frame_start[][3] = {{0, 50, -1},
+                                        {13, 33, -1},
                                         {-1, -1, 100}};
-constexpr int enemy_frame_count[][3] = {{ 7,  7, -1},
-                                        { 6,  6, -1},
-                                        {-1, -1,  7}};
+constexpr int enemy_frame_count[][3] = {{7, 7, -1}, {6, 6, -1}, {-1, -1, 7}};
 constexpr int enemy_frame_speed = 12;
 
 constexpr int enemy_scores[] = {100, 150, 200};
 
-} // namespace
+}  // namespace
 
 bool Enemy::Initialize() {
   eng::Engine& engine = eng::Engine::Get();
@@ -43,7 +41,7 @@ void Enemy::ContextLost() {
       e.sprite.Create(skull_frames_, {10, 13}, 100, 100);
     else if (e.unit_type == kUnitType_Bug)
       e.sprite.Create(bug_frames_, {10, 4});
-    else // kUnitType_Tank
+    else  // kUnitType_Tank
       e.sprite.Create(tank_frames_, {10, 13}, 100, 100);
     e.target.ContextLost();
     e.target.Create(target_frames_, {6, 2});
@@ -64,22 +62,27 @@ void Enemy::Update(float delta_time) {
   if (seconds_since_last_spawn_ >= 1) {
     seconds_since_last_spawn_ = 0;
 
-    UnitType unit_type = (random_.GetUInt() % 12) == 0 ? kUnitType_Tank :
-        ((random_.GetUInt() % 5) == 0 ? kUnitType_Bug : kUnitType_Skull);
-    DamageType damage_type = unit_type == kUnitType_Tank ? kDamageType_Any :
-        (DamageType)(random_.GetUInt() % kDamageType_Any);
+    UnitType unit_type =
+        (random_.GetUInt() % 12) == 0
+            ? kUnitType_Tank
+            : ((random_.GetUInt() % 5) == 0 ? kUnitType_Bug : kUnitType_Skull);
+    DamageType damage_type =
+        unit_type == kUnitType_Tank
+            ? kDamageType_Any
+            : (DamageType)(random_.GetUInt() % kDamageType_Any);
 
     Vector2 s = engine.GetScreenSize();
     float col = (float)(random_.GetUInt() % 4);
     float x = (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2;
     Vector2 pos = {x, s.y / 2};
-    float speed = unit_type == kUnitType_Tank ? 0.1f :
-        ((random_.GetUInt() % 4) == 0 ? 0.65f : 0.4f);
+    float speed = unit_type == kUnitType_Tank
+                      ? 0.1f
+                      : ((random_.GetUInt() % 4) == 0 ? 0.65f : 0.4f);
 
     Spawn(unit_type, damage_type, pos, speed);
   }
 
-  for (auto it = enemies_.begin(); it != enemies_.end(); ++ it) {
+  for (auto it = enemies_.begin(); it != enemies_.end(); ++it) {
     if (it->marked_for_removal) {
       it = enemies_.erase(it);
       continue;
@@ -119,9 +122,10 @@ bool Enemy::HasTarget(DamageType damage_type) {
 Vector2 Enemy::GetTargetPos(DamageType damage_type) {
   assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
-  Unit *target = GetTarget(damage_type);
+  Unit* target = GetTarget(damage_type);
   if (target)
-    return target->sprite.GetOffset() - Vector2(0, target->sprite.GetScale().y / 2.5f);
+    return target->sprite.GetOffset() -
+           Vector2(0, target->sprite.GetScale().y / 2.5f);
   return {0, 0};
 }
 
@@ -143,7 +147,7 @@ void Enemy::SelectTarget(DamageType damage_type,
       current_enemy = &e;
 
     if (!base::Intersection(e.sprite.GetOffset(), e.sprite.GetScale() * 1.2f,
-        weapon_pos, beam_dir))
+                            weapon_pos, beam_dir))
       continue;
 
     Vector2 weapon_enemy_dir = e.sprite.GetOffset() - weapon_pos;
@@ -180,7 +184,7 @@ void Enemy::SelectTarget(DamageType damage_type,
 void Enemy::DeselectTarget(DamageType damage_type) {
   assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
-  Unit *target = GetTarget(damage_type);
+  Unit* target = GetTarget(damage_type);
   if (target) {
     target->targetted_by_weapon_ = kDamageType_Invalid;
     target->target.SetVisible(false);
@@ -191,7 +195,7 @@ void Enemy::DeselectTarget(DamageType damage_type) {
 void Enemy::HitTarget(DamageType damage_type) {
   assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
-  Unit *target = GetTarget(damage_type);
+  Unit* target = GetTarget(damage_type);
 
   if (target) {
     target->target.SetVisible(false);
@@ -199,7 +203,7 @@ void Enemy::HitTarget(DamageType damage_type) {
   }
 
   if (!target || (target->damage_type != kDamageType_Any &&
-      target->damage_type != damage_type))
+                  target->damage_type != damage_type))
     return;
 
   target->blast.SetVisible(true);
@@ -236,7 +240,7 @@ void Enemy::HitTarget(DamageType damage_type) {
     target->health_bar.SetVisible(true);
 
     target->health_animator.Stop(eng::Animator::kTimer |
-        eng::Animator::kBlending);
+                                 eng::Animator::kBlending);
     target->health_animator.Play(eng::Animator::kTimer, false);
   }
 }
@@ -262,18 +266,18 @@ void Enemy::Spawn(UnitType unit_type,
   } else if (unit_type == kUnitType_Bug) {
     e.total_health = e.hit_points = 2;
     e.sprite.Create(bug_frames_, {10, 4});
-  } else { // kUnitType_Tank
+  } else {  // kUnitType_Tank
     e.total_health = e.hit_points = 10;
     e.sprite.Create(tank_frames_, {10, 13}, 100, 100);
   }
   e.sprite.AutoScale();
   e.sprite.SetVisible(true);
-  Vector2 spawn_pos = pos + Vector2(0, e.sprite.GetScale().y /2);
+  Vector2 spawn_pos = pos + Vector2(0, e.sprite.GetScale().y / 2);
   e.sprite.SetOffset(spawn_pos);
 
   e.sprite.SetFrame(enemy_frame_start[unit_type][damage_type]);
   e.sprite_animator.SetFrames(enemy_frame_count[unit_type][damage_type],
-      enemy_frame_speed);
+                              enemy_frame_speed);
 
   e.sprite_animator.Attach(&e.sprite);
   e.sprite_animator.Play(eng::Animator::kFrames, true);
@@ -301,23 +305,22 @@ void Enemy::Spawn(UnitType unit_type,
 
   e.target_animator.Attach(&e.target);
 
-  e.blast_animator.SetEndCallback(eng::Animator::kFrames, [&]()->void {
-    e.blast.SetVisible(false);
-  });
+  e.blast_animator.SetEndCallback(eng::Animator::kFrames,
+                                  [&]() -> void { e.blast.SetVisible(false); });
   if (damage_type == kDamageType_Green) {
     e.blast.SetFrame(0);
     e.blast_animator.SetFrames(6, 28);
   } else {
     e.blast.SetFrame(6);
-    e.blast_animator.SetFrames(6 ,28);
+    e.blast_animator.SetFrames(6, 28);
   }
   e.blast_animator.Attach(&e.blast);
 
-  e.health_animator.SetEndCallback(eng::Animator::kTimer, [&]()->void {
+  e.health_animator.SetEndCallback(eng::Animator::kTimer, [&]() -> void {
     e.health_animator.SetBlending({1, 1, 1, 0}, 0.5f);
     e.health_animator.Play(eng::Animator::kBlending, false);
   });
-  e.health_animator.SetEndCallback(eng::Animator::kBlending, [&]()->void {
+  e.health_animator.SetEndCallback(eng::Animator::kBlending, [&]() -> void {
     e.health_base.SetVisible(false);
     e.health_bar.SetVisible(false);
   });
@@ -327,18 +330,18 @@ void Enemy::Spawn(UnitType unit_type,
 
   e.score_animator.SetMovement({0, 2}, 1.0f);
   e.score_animator.SetBlending({1, 1, 1, 0}, 0.7f);
-  e.score_animator.SetEndCallback(eng::Animator::kBlending, [&]()->void {
+  e.score_animator.SetEndCallback(eng::Animator::kBlending, [&]() -> void {
     e.score_animator.Stop(eng::Animator::kAllAnimations);
     e.score.SetVisible(false);
     e.marked_for_removal = true;
   });
   e.score_animator.Attach(&e.score);
 
-  float max_distance = engine.GetScreenSize().y -
-      game->GetPlayer().GetWeaponScale().y;
+  float max_distance =
+      engine.GetScreenSize().y - game->GetPlayer().GetWeaponScale().y;
 
   e.movement_animator.SetMovement({0, -max_distance}, speed);
-  e.movement_animator.SetEndCallback(eng::Animator::kMovement, [&]()->void {
+  e.movement_animator.SetEndCallback(eng::Animator::kMovement, [&]() -> void {
     e.sprite_animator.Stop(eng::Animator::kAllAnimations);
     e.sprite.SetVisible(false);
     e.target.SetVisible(false);
@@ -357,7 +360,7 @@ void Enemy::Spawn(UnitType unit_type,
 Enemy::Unit* Enemy::GetTarget(DamageType damage_type) {
   for (auto& e : enemies_) {
     if (e.targetted_by_weapon_ == damage_type && e.hit_points > 0 &&
-       !e.marked_for_removal)
+        !e.marked_for_removal)
       return &e;
   }
   return nullptr;

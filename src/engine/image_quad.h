@@ -2,13 +2,13 @@
 #define IMAGE_QUAD_H
 
 #include "../base/vecmath.h"
-#include "renderer/texture.h"
 #include "animatable.h"
+#include "renderer/texture.h"
 
+#include <array>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include <array>
 
 namespace eng {
 
@@ -47,7 +47,7 @@ class ImageQuad : public Animatable {
   base::Vector2 tex_scale_ = {1, 1};
 
   size_t current_frame_ = 0;
-  std::array<int, 2> num_frames_ = {1, 1}; // horizontal, vertical
+  std::array<int, 2> num_frames_ = {1, 1};  // horizontal, vertical
   int frame_width_ = 0;
   int frame_height_ = 0;
 

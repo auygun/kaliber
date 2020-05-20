@@ -1,9 +1,9 @@
 #ifndef SHADER_CODE_H
 #define SHADER_CODE_H
 
-#include "asset.h"
-#include <string>
 #include <memory>
+#include <string>
+#include "asset.h"
 
 namespace eng {
 

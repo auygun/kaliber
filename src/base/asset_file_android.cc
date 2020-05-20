@@ -11,7 +11,8 @@ AssetFile::~AssetFile() {
   Close();
 }
 
-bool AssetFile::Open(const std::string& file_name, const std::string& root_path) {
+bool AssetFile::Open(const std::string& file_name,
+                     const std::string& root_path) {
   do {
     // Try to open the zip archive.
     archive_ = unzOpen(root_path.c_str());
@@ -70,4 +71,4 @@ int AssetFile::Read(char* data, int size) {
   return result < size ? 0 : result;
 }
 
-} // namespace base
+}  // namespace base

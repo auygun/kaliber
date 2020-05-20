@@ -25,6 +25,6 @@ class RandomGenerator {
   void Initialize(unsigned seed);
 };
 
-} // namespace base
+}  // namespace base
 
 #endif  // RANDOM_GENERATOR_H

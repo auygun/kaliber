@@ -27,4 +27,4 @@ bool TaskRunner::IsBoundToCurrentThread() {
   return thread_id_ == std::this_thread::get_id();
 }
 
-} // namespace base
+}  // namespace base

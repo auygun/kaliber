@@ -7,25 +7,25 @@
 #include "../../third_party/glew/glxew.h"
 #endif
 
-#include "../../base/vecmath.h"
-#include "../../base/callback.h"
-#include "types.h"
-#include <memory>
-#include <unordered_set>
-#include <unordered_map>
-#include <string>
 #include <array>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
+#include "../../base/callback.h"
+#include "../../base/vecmath.h"
+#include "types.h"
 
 #define THREADED_RENDERING
 
 #ifdef THREADED_RENDERING
-#include <thread>
-#include <mutex>
 #include <condition_variable>
-#include <future>
 #include <deque>
-#endif // THREADED_RENDERING
+#include <future>
+#include <mutex>
+#include <thread>
+#endif  // THREADED_RENDERING
 
 #if defined(__ANDROID__)
 struct ANativeWindow;
@@ -57,8 +57,9 @@ class Renderer {
   void ContextLost();
 
   bool SupportsETC1() const { return texture_compression_.etc1; }
-  bool SupportsDXT1() const { return texture_compression_.dxt1 ||
-                                     texture_compression_.s3tc; }
+  bool SupportsDXT1() const {
+    return texture_compression_.dxt1 || texture_compression_.s3tc;
+  }
   bool SupportsDXT5() const { return texture_compression_.s3tc; }
   bool SupportsATC() const { return texture_compression_.atc; }
 
@@ -70,7 +71,11 @@ class Renderer {
   int screen_height() const { return screen_height_; }
   const base::Matrix4x4& projection() const { return projection_; }
 
-  size_t GetAndResetFPS() { int ret = fps_; fps_ = 0; return ret; }
+  size_t GetAndResetFPS() {
+    int ret = fps_;
+    fps_ = 0;
+    return ret;
+  }
 
   size_t global_queue_size() { return global_queue_size_; }
   size_t render_queue_size() { return render_queue_size_; }
@@ -145,7 +150,7 @@ class Renderer {
   std::mutex mutex_;
   std::thread worker_thread_;
   bool terminate_worker_ = false;
-#endif // THREADED_RENDERING
+#endif  // THREADED_RENDERING
 
   // Stats.
   size_t fps_ = 0;
@@ -153,7 +158,7 @@ class Renderer {
   size_t render_queue_size_ = 0;
 
 #if defined(__ANDROID__)
-  ANativeWindow *window_;
+  ANativeWindow* window_;
 #elif defined(__linux__)
   Display* display_ = NULL;
   Window window_ = 0;
@@ -170,7 +175,7 @@ class Renderer {
 
 #ifdef THREADED_RENDERING
   void WorkerMain(std::promise<bool> promise);
-#endif // THREADED_RENDERING
+#endif  // THREADED_RENDERING
 
   void ProcessCommand(RenderCommand* cmd);
 
@@ -193,13 +198,15 @@ class Renderer {
   void HandleCmdSetUniformFloat(RenderCommand* cmd);
   void HandleCmdSetUniformInt(RenderCommand* cmd);
 
-  bool SetupVertexLayout(const VertexDescripton &vd,
+  bool SetupVertexLayout(const VertexDescripton& vd,
                          GLuint vertex_size,
                          bool use_vao,
-                         std::vector<Geometry::Element> &vertex_layout);
-  GLuint CreateShader(const char *source, GLenum type);
-  bool BindAttributeLocation(GLuint id, const VertexDescripton &vd);
-  GLint GetUniformLocation(GLuint id, const std::string &name, std::unordered_map<std::string, GLuint> &uniforms);
+                         std::vector<Geometry::Element>& vertex_layout);
+  GLuint CreateShader(const char* source, GLenum type);
+  bool BindAttributeLocation(GLuint id, const VertexDescripton& vd);
+  GLint GetUniformLocation(GLuint id,
+                           const std::string& name,
+                           std::unordered_map<std::string, GLuint>& uniforms);
   std::unordered_set<std::string> SetupExtensions();
 
   void LogVersion();

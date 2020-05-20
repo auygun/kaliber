@@ -1,9 +1,9 @@
 #ifndef ANIMATOR_H
 #define ANIMATOR_H
 
-#include "../base/vecmath.h"
-#include "../base/callback.h"
 #include <vector>
+#include "../base/callback.h"
+#include "../base/vecmath.h"
 
 namespace eng {
 
@@ -26,7 +26,7 @@ class Animator {
   ~Animator() = default;
 
   // Attached the given animatable to this animator and sets the start values.
-  void Attach(Animatable *animatable);
+  void Attach(Animatable* animatable);
 
   void Play(int animation, bool loop);
   void Pause(int animation);

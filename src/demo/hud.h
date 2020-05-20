@@ -1,16 +1,16 @@
 #ifndef HUD_H
 #define HUD_H
 
+#include <memory>
+#include <string>
+#include "../engine/animator.h"
 #include "../engine/image_quad.h"
 #include "../engine/solid_quad.h"
-#include "../engine/animator.h"
-#include <string>
-#include <memory>
 
 namespace eng {
 class Image;
 class Font;
-} // namespace eng
+}  // namespace eng
 
 class Hud {
  public:

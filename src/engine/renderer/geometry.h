@@ -1,16 +1,16 @@
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
 
-#include "types.h"
 #include <memory>
 #include <string>
+#include "types.h"
 
 namespace eng {
 
 class Mesh;
 
 class Geometry {
-public:
+ public:
   Geometry() = default;
   ~Geometry();
 
@@ -29,12 +29,12 @@ public:
     return vertex_description_;
   }
 
-private:
+ private:
   int resource_id_ = 0;
   static int last_id;
   VertexDescripton vertex_description_;
 };
 
-} // namespace eng
+}  // namespace eng
 
-#endif // GEOMETRY_H
+#endif  // GEOMETRY_H

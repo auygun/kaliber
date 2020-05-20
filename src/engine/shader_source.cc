@@ -1,7 +1,7 @@
 #include "shader_source.h"
-#include "engine.h"
 #include "../base/asset_file.h"
 #include "../base/log.h"
+#include "engine.h"
 
 namespace eng {
 
@@ -13,8 +13,9 @@ bool ShaderSource::Load(const std::string& name) {
 
   std::string vertex_file_name = name;
   vertex_file_name += "_vertex.glsl";
-  vertex_source_ = base::AssetFile::ReadWholeFile(vertex_file_name.c_str(),
-      Engine::Get().GetRootPath().c_str(), NULL, true);
+  vertex_source_ = base::AssetFile::ReadWholeFile(
+      vertex_file_name.c_str(), Engine::Get().GetRootPath().c_str(), NULL,
+      true);
   if (!vertex_source_) {
     LOG << "Failed to read file: " << vertex_file_name;
     return false;
@@ -22,8 +23,9 @@ bool ShaderSource::Load(const std::string& name) {
 
   std::string fragment_file_name = name;
   fragment_file_name += "_fragment.glsl";
-  fragment_source_ = base::AssetFile::ReadWholeFile(fragment_file_name.c_str(),
-      Engine::Get().GetRootPath().c_str(), NULL, true);
+  fragment_source_ = base::AssetFile::ReadWholeFile(
+      fragment_file_name.c_str(), Engine::Get().GetRootPath().c_str(), NULL,
+      true);
   if (!fragment_source_) {
     LOG << "Failed to read file: " << fragment_file_name;
     return false;

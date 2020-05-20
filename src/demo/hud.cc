@@ -2,8 +2,8 @@
 #include "../base/log.h"
 #include "../base/vecmath.h"
 #include "../engine/engine.h"
-#include "../engine/image.h"
 #include "../engine/font.h"
+#include "../engine/image.h"
 
 using base::Vector2;
 using base::Vector4;
@@ -12,10 +12,10 @@ namespace {
 
 constexpr float horizontal_margin = 0.07f;
 constexpr float vertical_margin = 0.025f;
-const Vector4 progress_bar_color[2] = {{0.256f, 0.434f, 0.72f,  1},
+const Vector4 progress_bar_color[2] = {{0.256f, 0.434f, 0.72f, 1},
                                        {0.905f, 0.493f, 0.194f, 1}};
 
-} // namespcae
+}  // namespace
 
 bool Hud::Initialize() {
   eng::Engine& engine = eng::Engine::Get();
@@ -52,7 +52,7 @@ bool Hud::Initialize() {
     text_[i].Translate(pos * Vector2(i ? 1 : -1, 1));
   }
 
-  hud_animator_cb_ = [&]()->void {
+  hud_animator_cb_ = [&]() -> void {
     hud_animator_.SetEndCallback(eng::Animator::kBlending, nullptr);
     hud_animator_.SetBlending({0.895f, 0.692f, 0.24f, 1}, 0.2f);
     hud_animator_.Play(eng::Animator::kBlending, false);

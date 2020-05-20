@@ -3,10 +3,10 @@
 #include <string>
 #include "../../base/file.h"
 #include "../../base/log.h"
+#include "../../third_party/android/gestureDetector.h"
 #include "../engine.h"
 #include "../input_event.h"
 #include "../renderer/renderer.h"
-#include "../../third_party/android/gestureDetector.h"
 #include "platform.h"
 
 using base::Vector2;
@@ -62,8 +62,10 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
   if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
     ndk_helper::GESTURE_STATE tap_state =
         platform->tap_detector_->Detect(event);
-    ndk_helper::GESTURE_STATE drag_state = platform->drag_detector_->Detect(event);
-    ndk_helper::GESTURE_STATE pinch_state = platform->pinch_detector_->Detect(event);
+    ndk_helper::GESTURE_STATE drag_state =
+        platform->drag_detector_->Detect(event);
+    ndk_helper::GESTURE_STATE pinch_state =
+        platform->pinch_detector_->Detect(event);
 
     // Tap detector has a priority over other detectors
     if (tap_state == ndk_helper::GESTURE_STATE_ACTION) {
@@ -74,8 +76,8 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
       platform->tap_detector_->GetPointer(v);
       v = Engine::Get().ToPosition(v);
       // DLOG << "Tap: " << v;
-      auto input_event = std::make_unique<InputEvent>(
-          InputEvent::kTap, v * Vector2(1, -1));
+      auto input_event =
+          std::make_unique<InputEvent>(InputEvent::kTap, v * Vector2(1, -1));
       Engine::Get().AddInputEvent(std::move(input_event));
     } else {
       // Handle drag state
@@ -85,21 +87,20 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
         platform->drag_detector_->GetPointer(v);
         v = Engine::Get().ToPosition(v);
         // DLOG << "drag-start: " << v;
-        auto input_event = std::make_unique<InputEvent>(
-            InputEvent::kDragStart, v * Vector2(1, -1));
+        auto input_event = std::make_unique<InputEvent>(InputEvent::kDragStart,
+                                                        v * Vector2(1, -1));
         Engine::Get().AddInputEvent(std::move(input_event));
       } else if (drag_state & ndk_helper::GESTURE_STATE_MOVE) {
         Vector2 v;
         platform->drag_detector_->GetPointer(v);
         v = Engine::Get().ToPosition(v);
         // DLOG << "drag: " << v;
-        auto input_event = std::make_unique<InputEvent>(
-            InputEvent::kDrag, v * Vector2(1, -1));
+        auto input_event =
+            std::make_unique<InputEvent>(InputEvent::kDrag, v * Vector2(1, -1));
         Engine::Get().AddInputEvent(std::move(input_event));
       } else if (drag_state & ndk_helper::GESTURE_STATE_END) {
         // DLOG << "drag-end!";
-        auto input_event = std::make_unique<InputEvent>(
-            InputEvent::kDragEnd);
+        auto input_event = std::make_unique<InputEvent>(InputEvent::kDragEnd);
         Engine::Get().AddInputEvent(std::move(input_event));
       }
 
@@ -115,8 +116,7 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
         v2 = Engine::Get().ToPosition(v2);
         // DLOG << "pinch-start: " << v1 << " " << v2;
         auto input_event = std::make_unique<InputEvent>(
-            InputEvent::kPinchStart, v1 * Vector2(1, -1),
-            v2 * Vector2(1, -1));
+            InputEvent::kPinchStart, v1 * Vector2(1, -1), v2 * Vector2(1, -1));
         Engine::Get().AddInputEvent(std::move(input_event));
       } else if (pinch_state & ndk_helper::GESTURE_STATE_MOVE) {
         // Multi touch
@@ -128,8 +128,7 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
         v2 = Engine::Get().ToPosition(v2);
         // DLOG << "pinch: " << v1 << " " << v2;
         auto input_event = std::make_unique<InputEvent>(
-            InputEvent::kPinch, v1 * Vector2(1, -1),
-            v2 * Vector2(1, -1));
+            InputEvent::kPinch, v1 * Vector2(1, -1), v2 * Vector2(1, -1));
         Engine::Get().AddInputEvent(std::move(input_event));
       }
     }
@@ -175,7 +174,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
           }
         }
       }
-    break;
+      break;
 
     case APP_CMD_STOP:
       DLOG << "APP_CMD_STOP";
@@ -244,7 +243,7 @@ void Platform::Update() {
   }
 }
 
-} // namespace eng
+}  // namespace eng
 
 void android_main(android_app* app) {
   eng::Platform platform;

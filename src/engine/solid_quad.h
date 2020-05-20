@@ -4,10 +4,10 @@
 #include "../base/vecmath.h"
 #include "animatable.h"
 
+#include <array>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include <array>
 
 namespace eng {
 
@@ -28,7 +28,7 @@ class SolidQuad : public Animatable {
   void SetVisible(bool visible) { visible_ = visible; }
   bool IsVisible() const { return visible_; }
 
-private:
+ private:
   bool visible_ = false;
 };
 

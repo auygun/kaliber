@@ -1,9 +1,9 @@
 #include "texture.h"
-#include "../../engine/image.h"
-#include "../../base/log.h"
-#include "render_command.h"
-#include "../engine.h"
 #include <cassert>
+#include "../../base/log.h"
+#include "../../engine/image.h"
+#include "../engine.h"
+#include "render_command.h"
 
 namespace eng {
 
@@ -46,4 +46,4 @@ void Texture::Activate() {
   }
 }
 
-} // namespace eng
+}  // namespace eng

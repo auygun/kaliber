@@ -1,15 +1,15 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include <deque>
 #include <memory>
+#include <unordered_map>
+#include <utility>
 #include "../base/callback.h"
 #include "../base/vecmath.h"
+#include "image_quad.h"
 #include "renderer/geometry.h"
 #include "renderer/shader.h"
-#include "image_quad.h"
-#include <deque>
-#include <utility>
-#include <unordered_map>
 
 namespace base {
 class TaskRunner;
@@ -46,7 +46,7 @@ class Engine {
 
   void TrimMemory();
 
-  base::Vector2 GetScreenSize() const { return screen_size_;};
+  base::Vector2 GetScreenSize() const { return screen_size_; }
 
   base::Vector2 ToScale(const base::Vector2& vec);
   base::Vector2 ToPosition(const base::Vector2& vec);
@@ -87,7 +87,7 @@ class Engine {
   int GetScreenWidth() const;
   int GetScreenHeight() const;
 
-  const  base::Matrix4x4& GetProjectionMarix() const;
+  const base::Matrix4x4& GetProjectionMarix() const;
 
   int GetDeviceDpi() const;
 
@@ -111,7 +111,8 @@ class Engine {
   // Asset cache.
   std::unordered_map<std::string, std::shared_ptr<Mesh>> mesh_assets_;
   std::unordered_map<std::string, std::shared_ptr<Image>> image_assets_;
-  std::unordered_map<std::string, std::shared_ptr<ShaderSource>> shader_source_assets_;
+  std::unordered_map<std::string, std::shared_ptr<ShaderSource>>
+      shader_source_assets_;
   std::unordered_map<std::string, std::shared_ptr<Font>> font_assets_;
 
   Platform* platform_ = nullptr;

@@ -1,10 +1,10 @@
 #include "image.h"
-#include "engine.h"
 #include <stdlib.h>
 #include <cassert>
 #include "../base/asset_file.h"
 #include "../base/log.h"
 #include "../base/misc.h"
+#include "engine.h"
 
 // This 3rd party library is written in C and uses malloc, which means that we
 // have to do the same.
@@ -84,7 +84,7 @@ bool Image::Load(const std::string& file_name, bool convert_pow2) {
   Destroy();
 
   SetName(file_name);
-  
+
   int file_size = 0;
   std::unique_ptr<char[]> file_buffer = base::AssetFile::ReadWholeFile(
       file_name.c_str(), Engine::Get().GetRootPath().c_str(), &file_size);
@@ -94,8 +94,8 @@ bool Image::Load(const std::string& file_name, bool convert_pow2) {
   }
 
   int w, h, c;
-  buffer_.reset((uint8_t*)stbi_load_from_memory((const stbi_uc*)file_buffer.get(),
-                                                file_size, &w, &h, &c, 0));
+  buffer_.reset((uint8_t*)stbi_load_from_memory(
+      (const stbi_uc*)file_buffer.get(), file_size, &w, &h, &c, 0));
   if (!buffer_) {
     LOG << "Failed to load image file: " << file_name;
     return false;
@@ -132,8 +132,8 @@ bool Image::Load(const std::string& file_name, bool convert_pow2) {
 
     case 2:
     default:
-      LOG << "Image had unsuitable number of color components: " << c << " " <<
-          file_name;
+      LOG << "Image had unsuitable number of color components: " << c << " "
+          << file_name;
       buffer_.reset();
       return false;
   }
@@ -150,8 +150,8 @@ bool Image::Load(const std::string& file_name, bool convert_pow2) {
     int new_width = base::RoundUpToPow2(width_);
     int new_height = base::RoundUpToPow2(height_);
     if ((new_width != width_) || (new_height != height_)) {
-      LOG << "Converting image " << file_name << " from ("
-          << width_ << ", " << height_ << ") to (" << new_width << ", " << new_height << ")";
+      LOG << "Converting image " << file_name << " from (" << width_ << ", "
+          << height_ << ") to (" << new_width << ", " << new_height << ")";
 
       int bigger_size = new_width * new_height * 4 * sizeof(uint8_t);
       uint8_t* bigger_buffer = (uint8_t*)AlignedAlloc(bigger_size);

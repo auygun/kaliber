@@ -20,7 +20,7 @@ struct ScopedAlignedFree {
   }
 };
 
-} // namespace internal
+}  // namespace internal
 
 namespace base {
 
@@ -44,8 +44,10 @@ inline void* AlignedAlloc(size_t size) {
   return ptr;
 }
 
-inline void AlignedFree(void* mem) { free(mem); }
+inline void AlignedFree(void* mem) {
+  free(mem);
+}
 
-} // namespace base
+}  // namespace base
 
 #endif  // MEM_H

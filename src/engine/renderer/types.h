@@ -2,8 +2,8 @@
 #define TYPES_H
 
 #include <string>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 namespace eng {
 
@@ -42,6 +42,6 @@ using VertexDescripton =
 
 bool ParseVertexDescription(std::string vd_str, VertexDescripton& out);
 
-} // namespace eng
+}  // namespace eng
 
-#endif // TYPES_H
+#endif  // TYPES_H

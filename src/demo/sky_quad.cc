@@ -1,10 +1,10 @@
 #include "sky_quad.h"
+#include <cassert>
 #include "../base/log.h"
 #include "../base/misc.h"
 #include "../engine/engine.h"
-#include "../engine/shader_source.h"
 #include "../engine/renderer/geometry.h"
-#include <cassert>
+#include "../engine/shader_source.h"
 
 using base::Vector2;
 

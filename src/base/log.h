@@ -1,12 +1,11 @@
 #ifndef LOG_H
 #define LOG_H
 
-#include "vecmath.h"
 #include <sstream>
+#include "vecmath.h"
 
 #define EAT_STREAM_PARAMETERS \
-  true ? (void)0              \
-       : base::Log::Voidify() & (*base::Log::swallow_stream)
+  true ? (void)0 : base::Log::Voidify() & (*base::Log::swallow_stream)
 
 #define LOG base::Log(__FILE__, __LINE__)
 
@@ -25,28 +24,28 @@ class Log {
     Voidify() = default;
     // This has to be an operator with a precedence lower than << but
     // higher than ?:
-    void operator&(Log&) { }
+    void operator&(Log&) {}
   };
 
   Log(const char* file, int line);
   ~Log();
 
-  template<typename T>
+  template <typename T>
   Log& operator<<(const T& arg) {
     stream_ << arg;
     return *this;
   }
 
-  template<>
+  template <>
   Log& operator<<<Vector2>(const Vector2& arg) {
     stream_ << "(" << arg.x << ", " << arg.y << ")";
     return *this;
   }
 
-  template<>
+  template <>
   Log& operator<<<Vector4>(const Vector4& arg) {
-    stream_ << "(" << arg.x << ", " << arg.y << ", " << arg.z << ", " <<
-        arg.w << ")";
+    stream_ << "(" << arg.x << ", " << arg.y << ", " << arg.z << ", " << arg.w
+            << ")";
     return *this;
   }
 
@@ -58,6 +57,6 @@ class Log {
   std::ostringstream stream_;
 };
 
-} // namespace base
+}  // namespace base
 
 #endif  // LOG_H

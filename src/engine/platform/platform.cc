@@ -1,9 +1,9 @@
 #include "platform.h"
+#include <math.h>
+#include <thread>
 #include "../../base/log.h"
 #include "../engine.h"
 #include "../renderer/renderer.h"
-#include <math.h>
-#include <thread>
 
 // Save battery on mobile devices.
 #define USE_SLEEP
@@ -11,7 +11,6 @@
 namespace eng {
 
 Platform::InternalError Platform::internal_error;
-
 
 void Platform::Shutdown() {
   LOG << "Shutting down platform.";
@@ -43,13 +42,14 @@ void Platform::RunMainLoop() {
       accumulator += timer_.GetSecondsPassed();
       if (time_step - accumulator > epsilon) {
         float sleep_time = time_step - accumulator - epsilon;
-        std::this_thread::sleep_for(std::chrono::microseconds((int)(sleep_time * 1000000.0f)));
+        std::this_thread::sleep_for(
+            std::chrono::microseconds((int)(sleep_time * 1000000.0f)));
       }
     };
 #else
     timer_.Update();
     accumulator += timer_.GetSecondsPassed();
-#endif // USE_SLEEP
+#endif  // USE_SLEEP
 
     // Subdivide the frame time.
     while (accumulator >= time_step) {
@@ -67,4 +67,4 @@ void Platform::RunMainLoop() {
   }
 }
 
-} // namespace eng
+}  // namespace eng

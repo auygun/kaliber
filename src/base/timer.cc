@@ -25,4 +25,4 @@ void Timer::Update() {
   seconds_accumulated_ += seconds_passed_;
 }
 
-} // namespace base
+}  // namespace base

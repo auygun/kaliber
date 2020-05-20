@@ -1,8 +1,8 @@
 #include "font.h"
-#include "engine.h"
 #include <stdint.h>
 #include "../base/asset_file.h"
 #include "../base/log.h"
+#include "engine.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "../third_party/stb/stb_truetype.h"
@@ -46,8 +46,8 @@ bool Font::Load(const std::string& file_name) {
     // Rasterize glyphs and pack them into the cache.
     const float kFontHeight = 32.0f;
     if (stbtt_BakeFontBitmap((unsigned char*)buffer.get(), 0, kFontHeight,
-                             glyph_cache_.get(), kGlyphSize, kGlyphSize, kFirstChar,
-                             kNumChars, glyph_info_) <= 0) {
+                             glyph_cache_.get(), kGlyphSize, kGlyphSize,
+                             kFirstChar, kNumChars, glyph_info_) <= 0) {
       LOG << "Failed to bake the glyph cache: " << result;
       glyph_cache_.reset();
       break;
@@ -67,7 +67,7 @@ bool Font::Load(const std::string& file_name) {
 void Font::Destroy() {
   if (IsImmutable()) {
     LOG << "Error: Font is immutable. Failed to destory.";
-    return ;
+    return;
   }
 
   if (glyph_cache_)
@@ -149,8 +149,8 @@ void Font::CalculateBoundingBox(const std::string& text,
   while (*ptr) {
     if (*ptr >= kFirstChar /*&& *ptr < (kFirstChar + kNumChars)*/) {
       stbtt_aligned_quad q;
-      stbtt_GetBakedQuad(glyph_info_, kGlyphSize, kGlyphSize,
-                         *ptr - kFirstChar, &x, &y, &q, 1);
+      stbtt_GetBakedQuad(glyph_info_, kGlyphSize, kGlyphSize, *ptr - kFirstChar,
+                         &x, &y, &q, 1);
 
       int ix0 = (int)q.x0, iy0 = (int)q.y0, ix1 = (int)q.x1, iy1 = (int)q.y1;
 
@@ -194,8 +194,8 @@ void Font::Print(int x,
   while (*ptr) {
     if (*ptr >= kFirstChar /*&& *ptr < (kFirstChar + kNumChars)*/) {
       stbtt_aligned_quad q;
-      stbtt_GetBakedQuad(glyph_info_, kGlyphSize, kGlyphSize,
-                         *ptr - kFirstChar, &fx, &fy, &q, 1);
+      stbtt_GetBakedQuad(glyph_info_, kGlyphSize, kGlyphSize, *ptr - kFirstChar,
+                         &fx, &fy, &q, 1);
 
       // LOG("-- glyph --\nxy = (%f %f) .. (%f %f)\nuv = (%f %f) .. (%f %f)\n",
       //     q.x0, q.y0, q.x1, q.y1, q.s0, q.t0, q.s1, q.t1);

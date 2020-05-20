@@ -1,12 +1,12 @@
 #ifndef WORKER_H
 #define WORKER_H
 
-#include "callback.h"
 #include <condition_variable>
 #include <deque>
 #include <mutex>
 #include <thread>
 #include <vector>
+#include "callback.h"
 
 namespace base {
 
@@ -30,11 +30,11 @@ class Worker {
   bool quit_when_idle_ = false;
 
   void WorkerMain();
-  
+
   Worker(Worker const&) = delete;
   Worker& operator=(Worker const&) = delete;
 };
 
-} // namespace eng
+}  // namespace base
 
-#endif // WORKER_H
+#endif  // WORKER_H

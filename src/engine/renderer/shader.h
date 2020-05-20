@@ -1,17 +1,18 @@
 #ifndef SHADER_H
 #define SHADER_H
 
+#include <memory>
+#include <string>
 #include "../../base/vecmath.h"
 #include "types.h"
-#include <string>
-#include <memory>
 
 namespace eng {
 
-class ShaderSource;;
+class ShaderSource;
+;
 
 class Shader {
-public:
+ public:
   Shader() = default;
   ~Shader();
 
@@ -23,21 +24,21 @@ public:
   void Destroy();
   void Activate();
 
-  void SetUniform(const std::string &name, const base::Vector2 &v);
-  void SetUniform(const std::string &name, const base::Vector3 &v);
-  void SetUniform(const std::string &name, const base::Vector4 &v);
-  void SetUniform(const std::string &name, const base::Matrix4x4& m);
-  void SetUniform(const std::string &name, float f);
-  void SetUniform(const std::string &name, int i);
+  void SetUniform(const std::string& name, const base::Vector2& v);
+  void SetUniform(const std::string& name, const base::Vector3& v);
+  void SetUniform(const std::string& name, const base::Vector4& v);
+  void SetUniform(const std::string& name, const base::Matrix4x4& m);
+  void SetUniform(const std::string& name, float f);
+  void SetUniform(const std::string& name, int i);
 
   void Invalidate() { resource_id_ = 0; }
   bool IsValid() const { return resource_id_ > 0; }
 
-private:
+ private:
   int resource_id_ = 0;
   static int last_id;
 };
 
-} // namespace eng
+}  // namespace eng
 
-#endif // SHADER_H
+#endif  // SHADER_H

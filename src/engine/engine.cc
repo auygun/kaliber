@@ -1,26 +1,25 @@
 #include "engine.h"
+#include <algorithm>
 #include "../base/log.h"
 #include "../base/task_runner.h"
 #include "../base/worker.h"
-#include "platform/platform.h"
-#include "image.h"
-#include "shader_source.h"
 #include "font.h"
-#include "mesh.h"
-#include "renderer/renderer.h"
-#include "renderer/render_command.h"
 #include "game.h"
 #include "game_factory.h"
+#include "image.h"
 #include "input_event.h"
-#include <algorithm>
+#include "mesh.h"
+#include "platform/platform.h"
+#include "renderer/render_command.h"
+#include "renderer/renderer.h"
+#include "shader_source.h"
 
-using base::Vector2;
 using base::Matrix4x4;
+using base::Vector2;
 
 namespace eng {
 
-Engine::Engine() : task_runner_(std::make_unique<base::TaskRunner>()) {
-}
+Engine::Engine() : task_runner_(std::make_unique<base::TaskRunner>()) {}
 
 Engine::~Engine() = default;
 
@@ -120,7 +119,6 @@ void Engine::Clear() {
   renderer_->EnqueueCommand(std::move(cmd));
 }
 
-
 void Engine::TrimMemory() {
   LOG << "Trimming memory.";
   KillUnusedResources(5);
@@ -132,8 +130,7 @@ void Engine::TrimMemory() {
 
 Vector2 Engine::ToScale(const Vector2& vec) {
   return GetScreenSize() * vec /
-      Vector2((float)GetScreenWidth(),
-              (float)GetScreenHeight());
+         Vector2((float)GetScreenWidth(), (float)GetScreenHeight());
 }
 
 Vector2 Engine::ToPosition(const Vector2& vec) {
@@ -168,7 +165,8 @@ std::shared_ptr<const Image> Engine::GetImageAsset(const std::string& name) {
   return image;
 }
 
-std::shared_ptr<const ShaderSource> Engine::GetShaderAsset(const std::string& name) {
+std::shared_ptr<const ShaderSource> Engine::GetShaderAsset(
+    const std::string& name) {
   auto it = shader_source_assets_.find(name);
   if (it != shader_source_assets_.end())
     return it->second;
@@ -222,8 +220,9 @@ int Engine::AcquireTextureResource(std::shared_ptr<const Image> image) {
 }
 
 void Engine::ReturnTextureResource(int resource_id) {
-  auto it = std::find_if(texture_resources_.begin(), texture_resources_.end(),
-      [resource_id](auto& p){ return p.second.resource_id == resource_id; });
+  auto it = std::find_if(
+      texture_resources_.begin(), texture_resources_.end(),
+      [resource_id](auto& p) { return p.second.resource_id == resource_id; });
   if (it != texture_resources_.end()) {
     assert(it->second.ref_count > 0);
     if (--(it->second.ref_count) > 0)
@@ -238,31 +237,31 @@ void Engine::ReturnTextureResource(int resource_id) {
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
   switch (event->GetType()) {
-  case InputEvent::kTap:
-    if (((GetScreenSize() / 2) * 0.9f - event->GetVector(0)).Magnitude() <=
-        0.25f) {
-      stats_.SetVisible(!stats_.IsVisible());
-      // Consume event.
-      return;
-    }
-    break;
-  case InputEvent::kKeyPress:
-    if (event->GetKeyPress() == 's') {
-      stats_.SetVisible(!stats_.IsVisible());
-      // Consume event.
-      return;
-    }
-    break;
-  case InputEvent::kDrag:
-    if (stats_.IsVisible()) {
-      if ((stats_.GetOffset() - event->GetVector(0)).Magnitude() <=
-          stats_.GetScale().y)
-        stats_.SetOffset(event->GetVector(0));
-      // TODO: Enqueue DragCancel so we can consume this event.
-    }
-    break;
-  default:
-    break;
+    case InputEvent::kTap:
+      if (((GetScreenSize() / 2) * 0.9f - event->GetVector(0)).Magnitude() <=
+          0.25f) {
+        stats_.SetVisible(!stats_.IsVisible());
+        // Consume event.
+        return;
+      }
+      break;
+    case InputEvent::kKeyPress:
+      if (event->GetKeyPress() == 's') {
+        stats_.SetVisible(!stats_.IsVisible());
+        // Consume event.
+        return;
+      }
+      break;
+    case InputEvent::kDrag:
+      if (stats_.IsVisible()) {
+        if ((stats_.GetOffset() - event->GetVector(0)).Magnitude() <=
+            stats_.GetScale().y)
+          stats_.SetOffset(event->GetVector(0));
+        // TODO: Enqueue DragCancel so we can consume this event.
+      }
+      break;
+    default:
+      break;
   }
 
   input_queue_.push_back(std::move(event));
@@ -289,7 +288,7 @@ int Engine::GetScreenHeight() const {
   return renderer_->screen_height();
 }
 
-const  Matrix4x4& Engine::GetProjectionMarix() const {
+const Matrix4x4& Engine::GetProjectionMarix() const {
   return renderer_->projection();
 }
 
@@ -350,14 +349,14 @@ bool Engine::CreateRenderResources() {
 
 void Engine::KillUnusedResources(float delta_time) {
   for (auto it = texture_resources_.begin(); it != texture_resources_.end();
-      ++it) {
+       ++it) {
     if (it->second.ref_count > 0)
       continue;
 
     it->second.time_to_die_ -= delta_time;
     if (it->second.time_to_die_ <= 0.0f) {
-      DLOG << "KillUnusedResources - Destroy! resource_id: "<<
-          it->second.resource_id;
+      DLOG << "KillUnusedResources - Destroy! resource_id: "
+           << it->second.resource_id;
 
       auto cmd = std::make_unique<CmdDestoryTexture>();
       cmd->id = it->second.resource_id;

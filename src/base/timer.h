@@ -24,6 +24,6 @@ class Timer {
   timeval last_time_;
 };
 
-} // namespace base
+}  // namespace base
 
 #endif  // TIMER_H

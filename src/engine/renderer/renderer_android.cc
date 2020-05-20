@@ -52,5 +52,4 @@ void Renderer::HandleCmdPresent(RenderCommand* cmd) {
   }
 }
 
-
 }  // namespace eng

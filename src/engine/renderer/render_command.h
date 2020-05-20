@@ -1,12 +1,12 @@
 #ifndef RENDER_COMMAND_H
 #define RENDER_COMMAND_H
 
-#include "types.h"
-#include "../../base/hash.h"
-#include "../../base/vecmath.h"
+#include <array>
 #include <memory>
 #include <string>
-#include <array>
+#include "../../base/hash.h"
+#include "../../base/vecmath.h"
+#include "types.h"
 
 namespace eng {
 
@@ -18,14 +18,14 @@ class Mesh;
 // frame specific and can be discared by the renderer.
 
 #ifdef _DEBUG
-#define RENDER_COMMAND_BEGIN(NAME, GLOBAL) \
-  struct NAME : RenderCommand { \
+#define RENDER_COMMAND_BEGIN(NAME, GLOBAL)            \
+  struct NAME : RenderCommand {                       \
     static constexpr CommandId CMD_ID = HHASH(#NAME); \
     NAME() : RenderCommand(CMD_ID, GLOBAL, #NAME) {}
 #define RENDER_COMMAND_END };
 #else
-#define RENDER_COMMAND_BEGIN(NAME, GLOBAL) \
-  struct NAME : RenderCommand { \
+#define RENDER_COMMAND_BEGIN(NAME, GLOBAL)            \
+  struct NAME : RenderCommand {                       \
     static constexpr CommandId CMD_ID = HHASH(#NAME); \
     NAME() : RenderCommand(CMD_ID, GLOBAL) {}
 #define RENDER_COMMAND_END };
@@ -39,8 +39,7 @@ struct RenderCommand {
   RenderCommand(CommandId id, bool g, const char* name)
       : cmd_id(id), global(g), cmd_name(name) {}
 #else
-  RenderCommand(CommandId id, bool g)
-      : cmd_id(id), global(g) {}
+  RenderCommand(CommandId id, bool g) : cmd_id(id), global(g) {}
 #endif
 
   const CommandId cmd_id = INVALID_CMD_ID;
@@ -136,6 +135,6 @@ RENDER_COMMAND_BEGIN(CmdSetUniformFloat, false)
   float f;
 RENDER_COMMAND_END
 
-} // namespace eng
+}  // namespace eng
 
-#endif // RENDER_COMMAND_H
+#endif  // RENDER_COMMAND_H

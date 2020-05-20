@@ -1,20 +1,20 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#include "../../base/timer.h"
 #include <exception>
-#include <string>
 #include <memory>
+#include <string>
+#include "../../base/timer.h"
 
 #if defined(__ANDROID__)
 struct android_app;
 struct AInputEvent;
 
 namespace ndk_helper {
-  class TapDetector;
-  class PinchDetector;
-  class DragDetector;
-} // namespace ndk_helper
+class TapDetector;
+class PinchDetector;
+class DragDetector;
+}  // namespace ndk_helper
 #endif
 
 namespace eng {
@@ -73,6 +73,6 @@ class Platform {
 #endif
 };
 
-} // namespace eng
+}  // namespace eng
 
 #endif  // PLATFORM_H

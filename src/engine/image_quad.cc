@@ -1,11 +1,11 @@
 #include "image_quad.h"
+#include <cassert>
 #include "../base/log.h"
-#include "../engine/image.h"
 #include "../engine/font.h"
+#include "../engine/image.h"
 #include "engine.h"
 #include "renderer/geometry.h"
 #include "renderer/shader.h"
-#include <cassert>
 
 using base::Vector2;
 
@@ -30,10 +30,8 @@ void ImageQuad::Create(std::shared_ptr<const Image> image,
   else
     frame_height_ = image->GetOriginalHeight() / num_frames[1];
 
-  tex_scale_ = {
-    (float)frame_width_ / (float)image->GetWidth(),
-    (float)frame_height_ / (float)image->GetHeight()
-  };
+  tex_scale_ = {(float)frame_width_ / (float)image->GetWidth(),
+                (float)frame_height_ / (float)image->GetHeight()};
   num_frames_ = std::move(num_frames);
 }
 

@@ -1,10 +1,10 @@
 #ifndef TASK_RUNNER_H
 #define TASK_RUNNER_H
 
-#include "callback.h"
+#include <deque>
 #include <mutex>
 #include <thread>
-#include <deque>
+#include "callback.h"
 
 namespace base {
 
@@ -24,6 +24,6 @@ class TaskRunner {
   std::deque<base::Callback> main_thread_tasks_;
 };
 
-} // namespace base
+}  // namespace base
 
 #endif  // TASK_RUNNER_H

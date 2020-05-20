@@ -1,7 +1,7 @@
 #include "solid_quad.h"
+#include "engine.h"
 #include "renderer/geometry.h"
 #include "renderer/shader.h"
-#include "engine.h"
 
 namespace eng {
 

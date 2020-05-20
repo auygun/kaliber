@@ -39,6 +39,6 @@ class AssetFile {
 #endif
 };
 
-} // namespace base
+}  // namespace base
 
 #endif  // ASSET_FILE_H

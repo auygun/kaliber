@@ -1,15 +1,15 @@
 #ifndef DEMO_H
 #define DEMO_H
 
-#include <vector>
 #include <memory>
-#include "enemy.h"
-#include "player.h"
-#include "hud.h"
-#include "sky_quad.h"
+#include <vector>
+#include "../engine/animator.h"
 #include "../engine/game.h"
 #include "../engine/image_quad.h"
-#include "../engine/animator.h"
+#include "enemy.h"
+#include "hud.h"
+#include "player.h"
+#include "sky_quad.h"
 
 class Demo : public eng::Game {
  public:

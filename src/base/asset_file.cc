@@ -16,12 +16,14 @@ std::unique_ptr<char[]> AssetFile::ReadWholeFile(const std::string& file_name,
     return nullptr;
 
   // Allocate a new buffer and add space for a null terminator.
-  std::unique_ptr<char[]> buffer = std::make_unique<char[]>(size + (null_terminate ? 1 : 0));
+  std::unique_ptr<char[]> buffer =
+      std::make_unique<char[]>(size + (null_terminate ? 1 : 0));
 
   // Read all of it.
   int bytesRead = file.Read(buffer.get(), size);
   if (!bytesRead) {
-    LOG << "Failed to read a buffer of size: " << size << " from file " << file_name;
+    LOG << "Failed to read a buffer of size: " << size << " from file "
+        << file_name;
     return nullptr;
   }
 
@@ -36,4 +38,4 @@ std::unique_ptr<char[]> AssetFile::ReadWholeFile(const std::string& file_name,
   return buffer;
 }
 
-} // namespace base
+}  // namespace base

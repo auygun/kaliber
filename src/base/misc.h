@@ -33,11 +33,13 @@ inline int RoundUpToPow2(int val) {
 }
 
 // Round a float to int.
-inline int Round(float f)  { return int(f + 0.5f); }
+inline int Round(float f) {
+  return int(f + 0.5f);
+}
 
 // Linearly interpolate between a and b, by fraction t.
 template <class T>
-inline T Lerp(const T &a, const T &b, float t) {
+inline T Lerp(const T& a, const T& b, float t) {
   return a + (b - a) * t;
 }
 
@@ -51,12 +53,11 @@ inline float BlendAlphaChannel(float a1, float a2, float t) {
 
 // Blend colors between a and b, by fraction t.
 inline Vector4 Blend(Vector4 c1, Vector4 c2, float t) {
-  return Vector4(BlendColorChannel(c1.x, c2.x, t),
-                 BlendColorChannel(c1.y, c2.y, t),
-                 BlendColorChannel(c1.z, c2.z, t),
-                 BlendAlphaChannel(c1.w, c2.w, t));
+  return Vector4(
+      BlendColorChannel(c1.x, c2.x, t), BlendColorChannel(c1.y, c2.y, t),
+      BlendColorChannel(c1.z, c2.z, t), BlendAlphaChannel(c1.w, c2.w, t));
 }
 
-} // namespace base
+}  // namespace base
 
 #endif  // MISC_H

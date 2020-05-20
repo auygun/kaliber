@@ -30,7 +30,6 @@ void Geometry::Destroy() {
     cmd->id = resource_id_;
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
     resource_id_ = 0;
-
   }
 }
 
@@ -42,4 +41,4 @@ void Geometry::Draw() {
   }
 }
 
-} // namespace eng
+}  // namespace eng

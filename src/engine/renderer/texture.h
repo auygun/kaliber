@@ -8,7 +8,7 @@ namespace eng {
 class Image;
 
 class Texture {
-public:
+ public:
   Texture() = default;
   ~Texture();
 
@@ -24,10 +24,10 @@ public:
   void Invalidate() { resource_id_ = 0; }
   bool IsValid() const { return resource_id_ > 0; }
 
-private:
+ private:
   int resource_id_ = 0;
 };
 
-} // namespace eng
+}  // namespace eng
 
-#endif // TEXTURE_H
+#endif  // TEXTURE_H

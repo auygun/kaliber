@@ -14,7 +14,12 @@ struct Vector2 {
 
   float Magnitude() { return sqrt(x * x + y * y); }
 
-  Vector2 Normalize() { float m = Magnitude(); x /= m; y /= m; return *this; }
+  Vector2 Normalize() {
+    float m = Magnitude();
+    x /= m;
+    y /= m;
+    return *this;
+  }
 
   float DotProduct(const Vector2& v) { return x * v.x + y * v.y; }
 
@@ -22,17 +27,41 @@ struct Vector2 {
 
   Vector2 operator-() { return Vector2(x * -1.0f, y * -1.0f); }
 
-  Vector2 operator+=(const Vector2& v) { x += v.x; y += v.y; return *this; }
+  Vector2 operator+=(const Vector2& v) {
+    x += v.x;
+    y += v.y;
+    return *this;
+  }
 
-  Vector2 operator-=(const Vector2& v) { x -= v.x; y -= v.y; return *this; }
+  Vector2 operator-=(const Vector2& v) {
+    x -= v.x;
+    y -= v.y;
+    return *this;
+  }
 
-  Vector2 operator*=(const Vector2& v) { x *= v.x; y *= v.y; return *this; }
+  Vector2 operator*=(const Vector2& v) {
+    x *= v.x;
+    y *= v.y;
+    return *this;
+  }
 
-  Vector2 operator*=(float s) { x *= s; y *= s; return *this; }
+  Vector2 operator*=(float s) {
+    x *= s;
+    y *= s;
+    return *this;
+  }
 
-  Vector2 operator/=(const Vector2& v) { x /= v.x; y /= v.y; return *this; }
+  Vector2 operator/=(const Vector2& v) {
+    x /= v.x;
+    y /= v.y;
+    return *this;
+  }
 
-  Vector2 operator/=(float s) { x /= s; y /= s; return *this; }
+  Vector2 operator/=(float s) {
+    x /= s;
+    y /= s;
+    return *this;
+  }
 
   const float* GetData() const { return &x; }
 };
@@ -86,9 +115,16 @@ struct Vector4 {
   float x, y, z, w;
 
   Vector4() {}
-  Vector4(float _x, float _y, float _z, float _w) : x(_x), y(_y), z(_z), w(_w) {}
+  Vector4(float _x, float _y, float _z, float _w)
+      : x(_x), y(_y), z(_z), w(_w) {}
 
-  Vector4 operator+=(const Vector4& v) { x += v.x; y += v.y; z += v.z; w += v.w; return *this; }
+  Vector4 operator+=(const Vector4& v) {
+    x += v.x;
+    y += v.y;
+    z += v.z;
+    w += v.w;
+    return *this;
+  }
 
   const float* GetData() const { return &x; }
 };
@@ -106,10 +142,8 @@ struct Matrix4x4 {
 
   Matrix4x4() {}
   Matrix4x4(float s)
-    : c{Vector4(s, 0, 0, 0),
-        Vector4(0, s, 0, 0),
-        Vector4(0, 0, s, 0),
-        Vector4(0, 0, 0, s)} {}
+      : c{Vector4(s, 0, 0, 0), Vector4(0, s, 0, 0), Vector4(0, 0, s, 0),
+          Vector4(0, 0, 0, s)} {}
 
   const float* GetData() const { return &c[0].x; }
 };
@@ -118,30 +152,33 @@ inline Matrix4x4 Ortho(float left, float right, float bottom, float top) {
   Matrix4x4 m(1);
   m.c[0].x = 2.0f / (right - left);
   m.c[1].y = 2.0f / (top - bottom);
-  m.c[2].z = - 1.0f;
-  m.c[3].x = - (right + left) / (right - left);
-  m.c[3].y = - (top + bottom) / (top - bottom);
+  m.c[2].z = -1.0f;
+  m.c[3].x = -(right + left) / (right - left);
+  m.c[3].y = -(top + bottom) / (top - bottom);
   return m;
 }
 
 // Ray-AABB intersection test.
 // center, size: Center and size of the box.
 // origin, dir: Origin and direction of the ray.
-inline bool Intersection(Vector2 center, Vector2 size, Vector2 origin, Vector2 dir) {
+inline bool Intersection(Vector2 center,
+                         Vector2 size,
+                         Vector2 origin,
+                         Vector2 dir) {
   Vector2 min = center - size / 2;
   Vector2 max = center + size / 2;
 
   float r_dir_inv_x = 1.0f / dir.x;
   float r_dir_inv_y = 1.0f / dir.y;
 
-  float tx1 = (min.x - origin.x)*r_dir_inv_x;
-  float tx2 = (max.x - origin.x)*r_dir_inv_x;
+  float tx1 = (min.x - origin.x) * r_dir_inv_x;
+  float tx2 = (max.x - origin.x) * r_dir_inv_x;
 
   float tmin = std::min(tx1, tx2);
   float tmax = std::max(tx1, tx2);
 
-  float ty1 = (min.y - origin.y)*r_dir_inv_y;
-  float ty2 = (max.y - origin.y)*r_dir_inv_y;
+  float ty1 = (min.y - origin.y) * r_dir_inv_y;
+  float ty2 = (max.y - origin.y) * r_dir_inv_y;
 
   tmin = std::max(tmin, std::min(ty1, ty2));
   tmax = std::min(tmax, std::max(ty1, ty2));
@@ -149,6 +186,6 @@ inline bool Intersection(Vector2 center, Vector2 size, Vector2 origin, Vector2 d
   return tmax >= tmin;
 }
 
-} // namespace base
+}  // namespace base
 
 #endif  // VEC_MATH_H

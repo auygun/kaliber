@@ -2,13 +2,13 @@
 #define PLAYER_H
 
 #include "../base/vecmath.h"
-#include "damage_type.h"
-#include "../engine/image_quad.h"
 #include "../engine/animator.h"
+#include "../engine/image_quad.h"
+#include "damage_type.h"
 
 namespace eng {
 class InputEvent;
-} //  namespace eng
+}  //  namespace eng
 
 class Player {
  public:

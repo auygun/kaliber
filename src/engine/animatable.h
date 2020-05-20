@@ -41,11 +41,11 @@ class Animatable {
   }
 
   void PlaceToTopOf(const Animatable& s) {
-    Translate({0 ,s.GetScale().y / 2.0f + GetScale().y / 2.0f});
+    Translate({0, s.GetScale().y / 2.0f + GetScale().y / 2.0f});
   }
 
   void PlaceToBottomOf(const Animatable& s) {
-    Translate({0 ,s.GetScale().y / -2.0f + GetScale().y / -2.0f});
+    Translate({0, s.GetScale().y / -2.0f + GetScale().y / -2.0f});
   }
 
  protected:

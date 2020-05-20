@@ -7,7 +7,8 @@ AssetFile::AssetFile() = default;
 
 AssetFile::~AssetFile() = default;
 
-bool AssetFile::Open(const std::string& file_name, const std::string& root_path) {
+bool AssetFile::Open(const std::string& file_name,
+                     const std::string& root_path) {
   std::string full_path = root_path + file_name;
   file_.reset(fopen(full_path.c_str(), "rb"));
   return !!file_;
@@ -37,4 +38,4 @@ int AssetFile::Read(char* data, int size) {
   return 0;
 }
 
-} // namespace base
+}  // namespace base

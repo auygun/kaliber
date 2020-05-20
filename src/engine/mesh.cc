@@ -1,12 +1,12 @@
 #include "mesh.h"
-#include "engine.h"
+#include <string.h>
+#include <array>
+#include <cassert>
+#include <utility>
 #include "../base/asset_file.h"
 #include "../base/log.h"
 #include "../third_party/json11/json11.h"
-#include <cassert>
-#include <string.h>
-#include <array>
-#include <utility>
+#include "engine.h"
 
 using json11::Json;
 
@@ -93,19 +93,22 @@ bool Mesh::Load(const std::string& file_name) {
 
   num_vertices_ = json["num_vertices"].int_value();
 
-  if (!ParseVertexDescription(json["vertex_description"].string_value(), vertex_description_)) {
+  if (!ParseVertexDescription(json["vertex_description"].string_value(),
+                              vertex_description_)) {
     LOG << "Failed to parse vertex description.";
     return false;
   }
 
   size_t array_size = 0;
-  for (auto& attr : vertex_description_) { array_size += std::get<2>(attr); }
+  for (auto& attr : vertex_description_) {
+    array_size += std::get<2>(attr);
+  }
   array_size *= num_vertices_;
 
   const Json::array& vertices = json["vertices"].array_items();
   if (vertices.size() != array_size) {
-    LOG << "Failed to load mesh. Vertex array size: " << vertices.size() <<
-        ", expected " << array_size;
+    LOG << "Failed to load mesh. Vertex array size: " << vertices.size()
+        << ", expected " << array_size;
     return false;
   }
 
@@ -124,27 +127,27 @@ bool Mesh::Load(const std::string& file_name) {
       auto [attrib_type, data_type, num_elements, type_size] = attr;
       while (num_elements--) {
         switch (data_type) {
-        case kDataType_Byte:
-          *((unsigned char*)dst) = (unsigned char)it->int_value();
-          break;
-        case kDataType_Float:
-          *((float*)dst) = (float)it->number_value();
-          break;
-        case kDataType_Int:
-          *((int*)dst) = it->int_value();
-          break;
-        case kDataType_Short:
-          *((short*)dst) = (short)it->int_value();
-          break;
-        case kDataType_UInt:
-          *((unsigned int*)dst) = (unsigned int)it->number_value();
-          break;
-        case kDataType_UShort:
-          *((unsigned short*)dst) = (unsigned short)it->int_value();
-          break;
-        default:
-          assert(false);
-          return false;
+          case kDataType_Byte:
+            *((unsigned char*)dst) = (unsigned char)it->int_value();
+            break;
+          case kDataType_Float:
+            *((float*)dst) = (float)it->number_value();
+            break;
+          case kDataType_Int:
+            *((int*)dst) = it->int_value();
+            break;
+          case kDataType_Short:
+            *((short*)dst) = (short)it->int_value();
+            break;
+          case kDataType_UInt:
+            *((unsigned int*)dst) = (unsigned int)it->number_value();
+            break;
+          case kDataType_UShort:
+            *((unsigned short*)dst) = (unsigned short)it->int_value();
+            break;
+          default:
+            assert(false);
+            return false;
         }
         dst += type_size;
         ++it;
@@ -164,15 +167,15 @@ size_t Mesh::GetVertexSize() const {
 
 size_t Mesh::GetIndexSize() const {
   switch (index_description_) {
-  case kDataType_Byte:
-    return sizeof(char);
-  case kDataType_UShort:
-    return sizeof(unsigned short);
-  case kDataType_UInt:
-    return sizeof(unsigned int);
-  default:
-    return 0;
+    case kDataType_Byte:
+      return sizeof(char);
+    case kDataType_UShort:
+      return sizeof(unsigned short);
+    case kDataType_UInt:
+      return sizeof(unsigned int);
+    default:
+      return 0;
   }
 }
 
-} // namespace eng
+}  // namespace eng

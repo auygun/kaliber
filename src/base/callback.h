@@ -7,6 +7,6 @@ namespace base {
 
 using Callback = std::function<void()>;
 
-} // namespace base
+}  // namespace base
 
 #endif  // CALLBACK_H

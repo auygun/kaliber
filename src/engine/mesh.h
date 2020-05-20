@@ -1,10 +1,10 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include "asset.h"
-#include "renderer/types.h"
 #include <memory>
 #include <string>
+#include "asset.h"
+#include "renderer/types.h"
 
 namespace eng {
 
@@ -32,7 +32,9 @@ class Mesh : public Asset {
   size_t GetIndexSize() const;
 
   Primitive primitive() const { return primitive_; }
-  const VertexDescripton& vertex_description() const { return vertex_description_; }
+  const VertexDescripton& vertex_description() const {
+    return vertex_description_;
+  }
   size_t num_vertices() const { return num_vertices_; }
   DataType index_description() const { return index_description_; }
   size_t num_indices() const { return num_indices_; }
@@ -49,6 +51,6 @@ class Mesh : public Asset {
   std::unique_ptr<char[]> indices_;
 };
 
-} // namespace eng
+}  // namespace eng
 
-#endif // MESH_H
+#endif  // MESH_H

@@ -1,16 +1,16 @@
 #include "shader.h"
+#include <cassert>
+#include <cstring>
 #include "../../base/file.h"
 #include "../../base/log.h"
-#include "render_command.h"
 #include "../engine.h"
 #include "../shader_source.h"
-#include <cstring>
-#include <cassert>
+#include "render_command.h"
 
+using base::Matrix4x4;
 using base::Vector2;
 using base::Vector3;
 using base::Vector4;
-using base::Matrix4x4;
 
 namespace eng {
 
@@ -51,7 +51,7 @@ void Shader::Activate() {
   }
 }
 
-void Shader::SetUniform(const std::string &name, const Vector2 &v) {
+void Shader::SetUniform(const std::string& name, const Vector2& v) {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdSetUniformVec2>();
     cmd->id = resource_id_;
@@ -61,7 +61,7 @@ void Shader::SetUniform(const std::string &name, const Vector2 &v) {
   }
 }
 
-void Shader::SetUniform(const std::string &name, const Vector3 &v) {
+void Shader::SetUniform(const std::string& name, const Vector3& v) {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdSetUniformVec3>();
     cmd->id = resource_id_;
@@ -71,7 +71,7 @@ void Shader::SetUniform(const std::string &name, const Vector3 &v) {
   }
 }
 
-void Shader::SetUniform(const std::string &name, const Vector4 &v) {
+void Shader::SetUniform(const std::string& name, const Vector4& v) {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdSetUniformVec4>();
     cmd->id = resource_id_;
@@ -81,7 +81,7 @@ void Shader::SetUniform(const std::string &name, const Vector4 &v) {
   }
 }
 
-void Shader::SetUniform(const std::string &name, const Matrix4x4& m) {
+void Shader::SetUniform(const std::string& name, const Matrix4x4& m) {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdSetUniformMat4>();
     cmd->id = resource_id_;
@@ -91,7 +91,7 @@ void Shader::SetUniform(const std::string &name, const Matrix4x4& m) {
   }
 }
 
-void Shader::SetUniform(const std::string &name, float f) {
+void Shader::SetUniform(const std::string& name, float f) {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdSetUniformFloat>();
     cmd->id = resource_id_;
@@ -101,7 +101,7 @@ void Shader::SetUniform(const std::string &name, float f) {
   }
 }
 
-void Shader::SetUniform(const std::string &name, int i) {
+void Shader::SetUniform(const std::string& name, int i) {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdSetUniformInt>();
     cmd->id = resource_id_;
@@ -111,4 +111,4 @@ void Shader::SetUniform(const std::string &name, int i) {
   }
 }
 
-} // namespace eng
+}  // namespace eng
