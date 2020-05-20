@@ -3,10 +3,10 @@
 
 namespace base {
 
-std::unique_ptr<char[]> AssetFile::ReadWholeFile(const char* file_name,
-                                                   const char* root_path,
-                                                   int* length,
-                                                   bool null_terminate) {
+std::unique_ptr<char[]> AssetFile::ReadWholeFile(const std::string& file_name,
+                                                 const std::string& root_path,
+                                                 int* length,
+                                                 bool null_terminate) {
   AssetFile file;
   if (!file.Open(file_name, root_path))
     return nullptr;

@@ -11,18 +11,17 @@ AssetFile::~AssetFile() {
   Close();
 }
 
-bool AssetFile::Open(const char* file_name, const char* root_path) {
+bool AssetFile::Open(const std::string& file_name, const std::string& root_path) {
   do {
     // Try to open the zip archive.
-    archive_ = unzOpen(root_path);
+    archive_ = unzOpen(root_path.c_str());
     if (!archive_) {
       LOG << "Failed to open zip file: " << root_path;
       break;
     }
 
     // Try to find the file.
-    std::string full_name = "assets/";
-    full_name += file_name;
+    std::string full_name = "assets/" + file_name;
     if (UNZ_OK != unzLocateFile(archive_, full_name.c_str(), 1)) {
       LOG << "Failed to locate file in zip archive: " << file_name;
       break;

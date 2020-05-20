@@ -17,14 +17,20 @@ class Font : public Asset {
   bool Load(const std::string& file_name);
   void Destroy();
 
-  void CalculateBoundingBox(const char* text, int& width, int& height) const;
-  void CalculateBoundingBox(const char* text,
+  void CalculateBoundingBox(const std::string& text,
+                            int& width,
+                            int& height) const;
+  void CalculateBoundingBox(const std::string& text,
                             int& x0,
                             int& y0,
                             int& x1,
                             int& y1) const;
 
-  void Print(int x, int y, const char* text, uint8_t* buffer, int width) const;
+  void Print(int x,
+             int y,
+             const std::string& text,
+             uint8_t* buffer,
+             int width) const;
 
   int GetLineHeight() const { return line_height_; }
 

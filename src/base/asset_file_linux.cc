@@ -7,9 +7,8 @@ AssetFile::AssetFile() = default;
 
 AssetFile::~AssetFile() = default;
 
-bool AssetFile::Open(const char* file_name, const char* root_path) {
-  std::string full_path = root_path;
-  full_path += file_name;
+bool AssetFile::Open(const std::string& file_name, const std::string& root_path) {
+  std::string full_path = root_path + file_name;
   file_.reset(fopen(full_path.c_str(), "rb"));
   return !!file_;
 }

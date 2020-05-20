@@ -1,6 +1,7 @@
 #ifndef ASSET_FILE_H
 #define ASSET_FILE_H
 
+#include "file.h"
 #if defined(__ANDROID__)
 #include <zlib.h>
 #include "../third_party/minizip/unzip.h"
@@ -8,7 +9,7 @@
 #include <stdio.h>
 #endif
 #include <memory>
-#include "file.h"
+#include <string>
 
 namespace base {
 
@@ -17,15 +18,15 @@ class AssetFile {
   AssetFile();
   ~AssetFile();
 
-  bool Open(const char* file_name, const char* root_path);
+  bool Open(const std::string& file_name, const std::string& root_path);
   void Close();
 
   int GetSize();
 
   int Read(char* data, int size);
 
-  static std::unique_ptr<char[]> ReadWholeFile(const char* file_name,
-                                               const char* root_path,
+  static std::unique_ptr<char[]> ReadWholeFile(const std::string& file_name,
+                                               const std::string& root_path,
                                                int* length = 0,
                                                bool null_terminate = false);
 

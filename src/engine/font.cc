@@ -130,11 +130,11 @@ static void StretchBlit_I8_to_RGBA32(int dst_x0,
   }
 }
 
-void Font::CalculateBoundingBox(const char* text,
-                                 int& x0,
-                                 int& y0,
-                                 int& x1,
-                                 int& y1) const {
+void Font::CalculateBoundingBox(const std::string& text,
+                                int& x0,
+                                int& y0,
+                                int& x1,
+                                int& y1) const {
   x0 = 0;
   y0 = 0;
   x1 = 0;
@@ -145,11 +145,12 @@ void Font::CalculateBoundingBox(const char* text,
 
   float x = 0, y = 0;
 
-  while (*text) {
-    if (*text >= kFirstChar /*&& *text < (kFirstChar + kNumChars)*/) {
+  const char* ptr = text.c_str();
+  while (*ptr) {
+    if (*ptr >= kFirstChar /*&& *ptr < (kFirstChar + kNumChars)*/) {
       stbtt_aligned_quad q;
       stbtt_GetBakedQuad(glyph_info_, kGlyphSize, kGlyphSize,
-                         *text - kFirstChar, &x, &y, &q, 1);
+                         *ptr - kFirstChar, &x, &y, &q, 1);
 
       int ix0 = (int)q.x0, iy0 = (int)q.y0, ix1 = (int)q.x1, iy1 = (int)q.y1;
 
@@ -162,12 +163,12 @@ void Font::CalculateBoundingBox(const char* text,
       if (iy1 > y1)
         y1 = iy1;
 
-      ++text;
+      ++ptr;
     }
   }
 }
 
-void Font::CalculateBoundingBox(const char* text,
+void Font::CalculateBoundingBox(const std::string& text,
                                 int& width,
                                 int& height) const {
   int x0, y0, x1, y1;
@@ -178,10 +179,10 @@ void Font::CalculateBoundingBox(const char* text,
 }
 
 void Font::Print(int x,
-                  int y,
-                  const char* text,
-                  uint8_t* buffer,
-                  int width) const {
+                 int y,
+                 const std::string& text,
+                 uint8_t* buffer,
+                 int width) const {
   // LOG("Font::Print() = %s\n", text);
 
   if (!glyph_cache_)
@@ -189,11 +190,12 @@ void Font::Print(int x,
 
   float fx = (float)x, fy = (float)y + (float)vertical_shift_;
 
-  while (*text) {
-    if (*text >= kFirstChar /*&& *text < (kFirstChar + kNumChars)*/) {
+  const char* ptr = text.c_str();
+  while (*ptr) {
+    if (*ptr >= kFirstChar /*&& *ptr < (kFirstChar + kNumChars)*/) {
       stbtt_aligned_quad q;
       stbtt_GetBakedQuad(glyph_info_, kGlyphSize, kGlyphSize,
-                         *text - kFirstChar, &fx, &fy, &q, 1);
+                         *ptr - kFirstChar, &fx, &fy, &q, 1);
 
       // LOG("-- glyph --\nxy = (%f %f) .. (%f %f)\nuv = (%f %f) .. (%f %f)\n",
       //     q.x0, q.y0, q.x1, q.y1, q.s0, q.t0, q.s1, q.t1);
@@ -205,7 +207,7 @@ void Font::Print(int x,
       StretchBlit_I8_to_RGBA32(ix0, iy0, ix1, iy1, iu0, iv0, iu1, iv1, buffer,
                                width, glyph_cache_.get(), kGlyphSize);
 
-      ++text;
+      ++ptr;
     }
   }
 }
