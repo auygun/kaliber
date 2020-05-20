@@ -1,6 +1,5 @@
 #include "engine.h"
 #include "../base/log.h"
-#include "../base/random.h"
 #include "../base/task_runner.h"
 #include "../base/worker.h"
 #include "platform/platform.h"
@@ -31,8 +30,6 @@ Engine& Engine::Get() {
 }
 
 bool Engine::Init(Platform* platform) {
-  base::RandomInit();
-
   platform_ = platform;
 
   renderer_ = platform->GetRenderer();

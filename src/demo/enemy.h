@@ -2,6 +2,7 @@
 #define ENEMY_H
 
 #include "damage_type.h"
+#include "../base/random_generator.h"
 #include "../engine/image_quad.h"
 #include "../engine/solid_quad.h"
 #include "../engine/animator.h"
@@ -84,6 +85,8 @@ class Enemy {
   float seconds_since_last_spawn_ = 0;
 
   int num_enemies_killed_ = 0;
+
+  base::RandomGenerator random_;
 
   void Spawn(UnitType unit_type,
              DamageType damage_type,

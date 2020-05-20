@@ -42,7 +42,7 @@ add_library(native-activity SHARED
     ../../../src/base/asset_file_android.cc
     ../../../src/base/asset_file.cc
     ../../../src/base/log.cc
-    ../../../src/base/random.cc
+    ../../../src/base/random_generator.cc
     ../../../src/base/task_runner.cc
     ../../../src/base/timer.cc
     ../../../src/base/worker.cc

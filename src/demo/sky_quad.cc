@@ -1,7 +1,6 @@
 #include "sky_quad.h"
 #include "../base/log.h"
 #include "../base/misc.h"
-#include "../base/random.h"
 #include "../engine/engine.h"
 #include "../engine/shader_source.h"
 #include "../engine/renderer/geometry.h"
