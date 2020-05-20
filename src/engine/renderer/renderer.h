@@ -39,7 +39,7 @@ class Image;
 
 class Renderer {
  public:
-  Renderer() = default;
+  Renderer();
   ~Renderer();
 
   void SetContextLostCB(base::Closure cb);

@@ -27,6 +27,8 @@ const std::string kAttributeNames[eng::kAttribType_Max] = {
 
 namespace eng {
 
+Renderer::Renderer() = default;
+
 Renderer::~Renderer() {
   TerminateWorker();
 }
