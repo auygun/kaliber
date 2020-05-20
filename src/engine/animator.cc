@@ -1,6 +1,5 @@
 #include "animator.h"
-#include <cmath>
-#include "../base/log.h"
+
 #include "../base/misc.h"
 #include "animatable.h"
 

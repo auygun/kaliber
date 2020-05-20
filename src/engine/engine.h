@@ -4,8 +4,7 @@
 #include <deque>
 #include <memory>
 #include <unordered_map>
-#include <utility>
-#include "../base/callback.h"
+
 #include "../base/vecmath.h"
 #include "image_quad.h"
 #include "renderer/geometry.h"

@@ -1,5 +1,5 @@
 #include "font.h"
-#include <stdint.h>
+
 #include "../base/asset_file.h"
 #include "../base/log.h"
 #include "engine.h"

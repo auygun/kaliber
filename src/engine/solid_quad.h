@@ -1,13 +1,7 @@
 #ifndef SOLID_QUAD_H
 #define SOLID_QUAD_H
 
-#include "../base/vecmath.h"
 #include "animatable.h"
-
-#include <array>
-#include <memory>
-#include <string>
-#include <vector>
 
 namespace eng {
 

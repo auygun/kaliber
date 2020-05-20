@@ -1,13 +1,14 @@
+#include "platform.h"
+
 #include <android_native_app_glue.h>
-#include <memory>
 #include <string>
+
 #include "../../base/file.h"
 #include "../../base/log.h"
 #include "../../third_party/android/gestureDetector.h"
 #include "../engine.h"
 #include "../input_event.h"
 #include "../renderer/renderer.h"
-#include "platform.h"
 
 using base::Vector2;
 

@@ -1,8 +1,7 @@
 #include "shader.h"
+
 #include <cassert>
-#include <cstring>
-#include "../../base/file.h"
-#include "../../base/log.h"
+
 #include "../engine.h"
 #include "../shader_source.h"
 #include "render_command.h"

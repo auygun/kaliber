@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <array>
 #include <string>
+
 #include "../base/mem.h"
 #include "asset.h"
 

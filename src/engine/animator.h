@@ -2,6 +2,7 @@
 #define ANIMATOR_H
 
 #include <vector>
+
 #include "../base/callback.h"
 #include "../base/vecmath.h"
 

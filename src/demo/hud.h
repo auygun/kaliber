@@ -3,6 +3,8 @@
 
 #include <memory>
 #include <string>
+
+#include "../base/callback.h"
 #include "../engine/animator.h"
 #include "../engine/image_quad.h"
 #include "../engine/solid_quad.h"

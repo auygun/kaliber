@@ -1,4 +1,5 @@
 #include "animatable.h"
+
 #include <cmath>
 
 using base::Vector2;

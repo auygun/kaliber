@@ -1,6 +1,8 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
+#include <memory>
+
 #include "../base/vecmath.h"
 #include "../engine/animator.h"
 #include "../engine/image_quad.h"

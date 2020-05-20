@@ -1,8 +1,8 @@
 #include "mesh.h"
+
 #include <string.h>
-#include <array>
 #include <cassert>
-#include <utility>
+
 #include "../base/asset_file.h"
 #include "../base/log.h"
 #include "../third_party/json11/json11.h"

@@ -1,5 +1,5 @@
 #include "geometry.h"
-#include "../../base/log.h"
+
 #include "../engine.h"
 #include "../mesh.h"
 #include "render_command.h"

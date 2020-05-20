@@ -1,6 +1,7 @@
 #include "platform.h"
-#include <math.h>
+
 #include <thread>
+
 #include "../../base/log.h"
 #include "../engine.h"
 #include "../renderer/renderer.h"

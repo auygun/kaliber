@@ -3,16 +3,13 @@
 
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #define DECLARE_GAME_BEGIN                                   \
   std::vector<std::pair<std::string, eng::GameFactoryBase*>> \
       eng::GameFactoryBase::game_classes = {
 #define DECLARE_GAME(CLASS) {#CLASS, new eng::GameFactory<CLASS>()},
-#define DECLARE_GAME_END \
-  }                      \
-  ;
+#define DECLARE_GAME_END };
 
 namespace eng {
 

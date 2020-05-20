@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <memory>
 #include <string>
+
 #include "../third_party/stb/stb_truetype.h"
 #include "asset.h"
 

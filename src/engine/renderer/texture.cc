@@ -1,6 +1,7 @@
 #include "texture.h"
+
 #include <cassert>
-#include "../../base/log.h"
+
 #include "../../engine/image.h"
 #include "../engine.h"
 #include "render_command.h"

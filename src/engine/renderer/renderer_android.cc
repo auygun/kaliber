@@ -1,9 +1,8 @@
-#include <android/native_window.h>
-#include <cassert>
-#include <sstream>
-#include "../../base/log.h"
-#include "../../third_party/android/GLContext.h"
 #include "renderer.h"
+
+#include <android/native_window.h>
+
+#include "../../third_party/android/GLContext.h"
 
 namespace eng {
 

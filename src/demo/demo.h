@@ -1,11 +1,7 @@
 #ifndef DEMO_H
 #define DEMO_H
 
-#include <memory>
-#include <vector>
-#include "../engine/animator.h"
 #include "../engine/game.h"
-#include "../engine/image_quad.h"
 #include "enemy.h"
 #include "hud.h"
 #include "player.h"

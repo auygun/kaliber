@@ -4,6 +4,7 @@
 #include <exception>
 #include <memory>
 #include <string>
+
 #include "../../base/timer.h"
 
 #if defined(__ANDROID__)

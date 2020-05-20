@@ -1,14 +1,10 @@
 #include "demo.h"
-#include <math.h>
-#include <stdio.h>
-#include <set>
-#include <sstream>
+
 #include <string>
-#include <vector>
+
 #include "../base/log.h"
 #include "../engine/engine.h"
 #include "../engine/game_factory.h"
-#include "../engine/image.h"
 #include "../engine/input_event.h"
 
 DECLARE_GAME_BEGIN

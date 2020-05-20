@@ -1,7 +1,7 @@
 #include "image_quad.h"
+
 #include <cassert>
-#include "../base/log.h"
-#include "../engine/font.h"
+
 #include "../engine/image.h"
 #include "engine.h"
 #include "renderer/geometry.h"

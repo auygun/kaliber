@@ -1,5 +1,7 @@
 #include "types.h"
+
 #include <string.h>
+
 #include "../../base/log.h"
 
 namespace {

@@ -1,11 +1,13 @@
+#include "platform.h"
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+
 #include "../../base/log.h"
 #include "../../base/vecmath.h"
 #include "../engine.h"
 #include "../input_event.h"
 #include "../renderer/renderer.h"
-#include "platform.h"
 
 using base::Vector2;
 

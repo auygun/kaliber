@@ -1,6 +1,5 @@
 #include "image.h"
-#include <stdlib.h>
-#include <cassert>
+
 #include "../base/asset_file.h"
 #include "../base/log.h"
 #include "../base/misc.h"
@@ -8,7 +7,6 @@
 
 // This 3rd party library is written in C and uses malloc, which means that we
 // have to do the same.
-
 #define STBI_NO_STDIO
 #include "../third_party/stb/stb_image.h"
 

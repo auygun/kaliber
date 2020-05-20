@@ -1,8 +1,10 @@
 #include "renderer.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <sstream>
+
 #include "../../base/log.h"
 #include "../image.h"
 #include "../mesh.h"

@@ -9,7 +9,6 @@
 namespace eng {
 
 class ShaderSource;
-;
 
 class Shader {
  public:

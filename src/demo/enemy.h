@@ -3,6 +3,7 @@
 
 #include <list>
 #include <memory>
+
 #include "../base/random_generator.h"
 #include "../engine/animator.h"
 #include "../engine/image_quad.h"

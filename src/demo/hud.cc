@@ -1,4 +1,5 @@
 #include "hud.h"
+
 #include "../base/log.h"
 #include "../base/vecmath.h"
 #include "../engine/engine.h"

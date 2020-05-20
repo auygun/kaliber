@@ -1,7 +1,8 @@
 #include "enemy.h"
+
 #include <cassert>
 #include <limits>
-#include <memory>
+
 #include "../base/log.h"
 #include "../engine/engine.h"
 #include "../engine/font.h"

@@ -1,7 +1,7 @@
 #include "player.h"
-#include <math.h>
+
 #include <cassert>
-#include <memory>
+
 #include "../base/log.h"
 #include "../engine/engine.h"
 #include "../engine/image.h"
