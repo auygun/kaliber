@@ -64,21 +64,21 @@ void Enemy::Update(float delta_time) {
     seconds_since_last_spawn_ = 0;
 
     UnitType unit_type =
-        (random_.GetUInt() % 12) == 0
+        (random_.GetInt() % 12) == 0
             ? kUnitType_Tank
-            : ((random_.GetUInt() % 5) == 0 ? kUnitType_Bug : kUnitType_Skull);
+            : ((random_.GetInt() % 5) == 0 ? kUnitType_Bug : kUnitType_Skull);
     DamageType damage_type =
         unit_type == kUnitType_Tank
             ? kDamageType_Any
-            : (DamageType)(random_.GetUInt() % kDamageType_Any);
+            : (DamageType)(random_.GetInt() % kDamageType_Any);
 
     Vector2 s = engine.GetScreenSize();
-    float col = (float)(random_.GetUInt() % 4);
+    float col = (float)(random_.GetInt() % 4);
     float x = (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2;
     Vector2 pos = {x, s.y / 2};
     float speed = unit_type == kUnitType_Tank
                       ? 0.1f
-                      : ((random_.GetUInt() % 4) == 0 ? 0.65f : 0.4f);
+                      : ((random_.GetInt() % 4) == 0 ? 0.65f : 0.4f);
 
     Spawn(unit_type, damage_type, pos, speed);
   }
