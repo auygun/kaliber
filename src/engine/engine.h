@@ -2,6 +2,7 @@
 #define ENGINE_H
 
 #include <memory>
+#include "../base/callback.h"
 #include "../base/vecmath.h"
 #include "renderer/geometry.h"
 #include "renderer/shader.h"
@@ -9,6 +10,10 @@
 #include <deque>
 #include <utility>
 #include <unordered_map>
+
+namespace base {
+class TaskRunner;
+}  // namespace base
 
 namespace eng {
 
@@ -129,6 +134,8 @@ class Engine {
   float seconds_accumulated_ = 0.0f;
 
   std::deque<std::unique_ptr<InputEvent>> input_queue_;
+
+  std::unique_ptr<base::TaskRunner> task_runner_;
 
   void ContextLost();
 

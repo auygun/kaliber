@@ -1,6 +1,7 @@
 #include "engine.h"
 #include "../base/log.h"
 #include "../base/random.h"
+#include "../base/task_runner.h"
 #include "../base/worker.h"
 #include "platform/platform.h"
 #include "image.h"
@@ -19,7 +20,8 @@ using base::Matrix4x4;
 
 namespace eng {
 
-Engine::Engine() = default;
+Engine::Engine() : task_runner_(std::make_unique<base::TaskRunner>()) {
+}
 
 Engine::~Engine() = default;
 
@@ -79,6 +81,8 @@ void Engine::Shutdown() {
 
 void Engine::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
+
+  task_runner_->Run();
 
   game_->Update(delta_time);
 
@@ -287,6 +291,11 @@ const std::string& Engine::GetRootPath() const {
 }
 
 void Engine::ContextLost() {
+  if (!task_runner_->IsBoundToCurrentThread()) {
+    task_runner_->Enqueue(std::bind(&Engine::ContextLost, this));
+    return;
+  }
+
   texture_resources_.clear();
   last_texture_resource_id_ = 0;
 

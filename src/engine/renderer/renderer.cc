@@ -106,12 +106,6 @@ void Renderer::TerminateWorker() {
 
 void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
 #ifdef THREADED_RENDERING
-  if (context_lost_) {
-    context_lost_.store(false);
-    context_lost_cb_();
-    return;
-  }
-
   if (cmd->global) {
     {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
@@ -701,9 +695,11 @@ void Renderer::Present() {
 void Renderer::ContextLost() {
   LOG << "Context lost.";
 
+#ifdef THREADED_RENDERING
   global_commands_.clear();
   draw_commands_[0].clear();
   draw_commands_[1].clear();
+#endif // THREADED_RENDERING
 
   for (auto& p : texture_map_)
     glDeleteTextures(1, &(p.second));
@@ -723,12 +719,7 @@ void Renderer::ContextLost() {
   }
   geometry_map_.clear();
 
-#ifdef THREADED_RENDERING
-  // Call context_lost_cb_ in the main thread.
-  context_lost_.store(true);
-#else
   context_lost_cb_();
-#endif // THREADED_RENDERING
 }
 
 void Renderer::LogVersion() {
