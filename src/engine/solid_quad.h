@@ -5,8 +5,6 @@
 
 namespace eng {
 
-class Image;
-
 class SolidQuad : public Animatable {
  public:
   SolidQuad() = default;
