@@ -46,6 +46,7 @@ add_library(native-activity SHARED
     ../../../src/base/random_generator.cc
     ../../../src/base/task_runner.cc
     ../../../src/base/timer.cc
+    ../../../src/base/vecmath.cc
     ../../../src/base/worker.cc
     ../../../src/demo/demo.cc
     ../../../src/demo/enemy.cc

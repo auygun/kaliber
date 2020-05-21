@@ -71,6 +71,7 @@ GLTEST_SRC := \
   $(SRC_ROOT)/base/random_generator.cc \
   $(SRC_ROOT)/base/task_runner.cc \
   $(SRC_ROOT)/base/timer.cc \
+  $(SRC_ROOT)/base/vecmath.cc \
   $(SRC_ROOT)/base/worker.cc \
   $(SRC_ROOT)/demo/demo.cc \
   $(SRC_ROOT)/demo/enemy.cc \
