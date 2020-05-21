@@ -9,4 +9,12 @@ enum DamageType {
   kDamageType_Max
 };
 
+enum EnemyType {
+  kEnemyType_Invalid = -1,
+  kEnemyType_Skull,
+  kEnemyType_Bug,
+  kEnemyType_Tank,
+  kEnemyType_Max
+};
+
 #endif  // DAMAGE_TYPE_H

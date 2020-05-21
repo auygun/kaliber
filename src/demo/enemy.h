@@ -42,16 +42,8 @@ class Enemy {
   int num_enemies_killed() { return num_enemies_killed_; }
 
  private:
-  enum UnitType {
-    kUnitType_Invalid = -1,
-    kUnitType_Skull,
-    kUnitType_Bug,
-    kUnitType_Tank,
-    kUnitType_Max
-  };
-
-  struct Unit {
-    UnitType unit_type = kUnitType_Invalid;
+  struct EnemyUnit {
+    EnemyType enemy_type = kEnemyType_Invalid;
     DamageType damage_type = kDamageType_Invalid;
 
     bool marked_for_removal = false;
@@ -82,23 +74,31 @@ class Enemy {
 
   std::shared_ptr<const eng::Font> font_;
 
-  std::list<Unit> enemies_;
-  float seconds_since_last_spawn_ = 0;
+  std::list<EnemyUnit> enemies_;
 
   int num_enemies_killed_ = 0;
 
+  float seconds_since_last_spawn_[kEnemyType_Max] = {0, 0, 0};
+  float seconds_to_next_spawn_[kEnemyType_Max] = {0, 0, 0};
+  int last_spawn_col_ = 0;
+
   base::RandomGenerator random_;
 
-  void Spawn(UnitType unit_type,
+  bool GetNextSpawnInfo(EnemyType& enemy_type,
+                        DamageType& damage_type,
+                        base::Vector2& pos,
+                        float& speed);
+
+  void Spawn(EnemyType enemy_type,
              DamageType damage_type,
              const base::Vector2& pos,
              float speed);
 
-  Unit* GetTarget(DamageType damage_type);
+  EnemyUnit* GetTarget(DamageType damage_type);
 
-  int GetScore(UnitType unit_type);
+  int GetScore(EnemyType enemy_type);
 
-  std::shared_ptr<eng::Image> GetScoreImage(const Unit& enemy);
+  std::shared_ptr<eng::Image> GetScoreImage(const EnemyUnit& enemy);
 };
 
 #endif  // ENEMY_H

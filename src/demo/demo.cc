@@ -11,6 +11,12 @@ DECLARE_GAME_BEGIN
 DECLARE_GAME(Demo)
 DECLARE_GAME_END
 
+namespace {
+
+constexpr int kNumEnemiesPerWave[kMaxWaves] = { 20, 40, 100, 150, 200 };
+
+}  // namespace
+
 bool Demo::Initialize() {
   if (!sky_.Create()) {
     LOG << "Could not create the sky.";
@@ -63,14 +69,15 @@ void Demo::Update(float delta_time) {
 
   if (enemy_.num_enemies_killed() != last_num_enemies_killed_) {
     last_num_enemies_killed_ = enemy_.num_enemies_killed();
-    int enemies_remaining_ = 100 - last_num_enemies_killed_;
+    int enemies_remaining_ =
+        kNumEnemiesPerWave[wave_] - last_num_enemies_killed_;
     float progress = 1;
-    if (enemies_remaining_ <= 0) {
+    if (enemies_remaining_ <= 0 && (wave_ + 1) < kMaxWaves) {
       enemy_.ResetNumEnemiesKilled();
       last_num_enemies_killed_ = 0;
-      hud_.PrintWave(++wave_);
+      hud_.PrintWave(++wave_ + 1);
     } else {
-      progress = enemies_remaining_ / 100.0f;
+      progress = (float)enemies_remaining_ / (float)kNumEnemiesPerWave[wave_];
     }
     hud_.SetProgress(progress);
   }
