@@ -72,7 +72,7 @@ add_library(native-activity SHARED
     ../../../src/third_party/android/gestureDetector.cpp
     ../../../src/third_party/android/gl3stub.c
     ../../../src/third_party/android/GLContext.cpp
-    ../../../src/third_party/json11/json11.cc
+    ../../../src/third_party/jsoncpp/jsoncpp.cc
     ../../../src/third_party/minizip/ioapi.c
     ../../../src/third_party/minizip/unzip.c
 )

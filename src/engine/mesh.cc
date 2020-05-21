@@ -5,10 +5,8 @@
 
 #include "../base/asset_file.h"
 #include "../base/log.h"
-#include "../third_party/json11/json11.h"
+#include "../third_party/jsoncpp/json.h"
 #include "engine.h"
-
-using json11::Json;
 
 namespace eng {
 
@@ -64,21 +62,24 @@ bool Mesh::Load(const std::string& file_name) {
 
   SetName(file_name);
 
+  int size = 0;
   std::unique_ptr<char[]> json_mesh = base::AssetFile::ReadWholeFile(
-      file_name.c_str(), Engine::Get().GetRootPath().c_str(), NULL, true);
+      file_name.c_str(), Engine::Get().GetRootPath().c_str(), &size, true);
   if (!json_mesh) {
     LOG << "Failed to read file: " << file_name;
     return false;
   }
 
   std::string err;
-  const auto json = Json::parse(json_mesh.get(), err, json11::COMMENTS);
-  if (!err.empty()) {
+  Json::Value root;
+  Json::CharReaderBuilder builder;
+  const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+  if (!reader->parse(json_mesh.get(), json_mesh.get() + size, &root, &err)) {
     LOG << "Failed to load mesh. Json parser error: " << err;
     return false;
   }
 
-  const std::string& primitive_str = json["primitive"].string_value();
+  const std::string& primitive_str = root["primitive"].asString();
   if (primitive_str == "Triangles") {
     primitive_ = kPrimitive_Triangles;
   } else if (primitive_str == "TriangleStrip") {
@@ -88,9 +89,9 @@ bool Mesh::Load(const std::string& file_name) {
     return false;
   }
 
-  num_vertices_ = json["num_vertices"].int_value();
+  num_vertices_ = root["num_vertices"].asUInt();
 
-  if (!ParseVertexDescription(json["vertex_description"].string_value(),
+  if (!ParseVertexDescription(root["vertex_description"].asString(),
                               vertex_description_)) {
     LOG << "Failed to parse vertex description.";
     return false;
@@ -102,7 +103,7 @@ bool Mesh::Load(const std::string& file_name) {
   }
   array_size *= num_vertices_;
 
-  const Json::array& vertices = json["vertices"].array_items();
+  const Json::Value vertices = root["vertices"];
   if (vertices.size() != array_size) {
     LOG << "Failed to load mesh. Vertex array size: " << vertices.size()
         << ", expected " << array_size;
@@ -118,36 +119,36 @@ bool Mesh::Load(const std::string& file_name) {
   vertices_ = std::make_unique<char[]>(vertex_buffer_size);
 
   char* dst = vertices_.get();
-  auto it = vertices.begin();
-  while (it != vertices.end()) {
+  int i = 0;
+  while (i < vertices.size()) {
     for (auto& attr : vertex_description_) {
       auto [attrib_type, data_type, num_elements, type_size] = attr;
       while (num_elements--) {
         switch (data_type) {
           case kDataType_Byte:
-            *((unsigned char*)dst) = (unsigned char)it->int_value();
+            *((unsigned char*)dst) = (unsigned char)vertices[i].asUInt();
             break;
           case kDataType_Float:
-            *((float*)dst) = (float)it->number_value();
+            *((float*)dst) = (float)vertices[i].asFloat();
             break;
           case kDataType_Int:
-            *((int*)dst) = it->int_value();
+            *((int*)dst) = vertices[i].asInt();
             break;
           case kDataType_Short:
-            *((short*)dst) = (short)it->int_value();
+            *((short*)dst) = (short)vertices[i].asInt();
             break;
           case kDataType_UInt:
-            *((unsigned int*)dst) = (unsigned int)it->number_value();
+            *((unsigned int*)dst) = vertices[i].asUInt();
             break;
           case kDataType_UShort:
-            *((unsigned short*)dst) = (unsigned short)it->int_value();
+            *((unsigned short*)dst) = (unsigned short)vertices[i].asUInt();
             break;
           default:
             assert(false);
             return false;
         }
         dst += type_size;
-        ++it;
+        ++i;
       }
     }
   }
