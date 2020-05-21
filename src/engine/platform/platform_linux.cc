@@ -17,7 +17,7 @@ Platform::Platform() = default;
 Platform::~Platform() = default;
 
 void Platform::Initialize() {
-  root_path_ = "../../assets/";
+  root_path_ = "../../";
   LOG << "Root path: " << root_path_.c_str();
 
   renderer_ = std::make_unique<Renderer>();
