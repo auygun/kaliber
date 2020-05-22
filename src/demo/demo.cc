@@ -13,8 +13,6 @@ DECLARE_GAME_END
 
 namespace {
 
-constexpr int kNumEnemiesPerWave[kMaxWaves] = { 20, 40, 100, 150, 200 };
-
 }  // namespace
 
 bool Demo::Initialize() {
@@ -58,9 +56,6 @@ void Demo::Update(float delta_time) {
 
   sky_.Translate({0, delta_time * -0.04f});
 
-  player_.Update(delta_time);
-  enemy_.Update(delta_time);
-
   if (add_score_ > 0) {
     score_ += add_score_;
     add_score_ = 0;
@@ -69,19 +64,28 @@ void Demo::Update(float delta_time) {
 
   if (enemy_.num_enemies_killed() != last_num_enemies_killed_) {
     last_num_enemies_killed_ = enemy_.num_enemies_killed();
-    int enemies_remaining_ =
-        kNumEnemiesPerWave[wave_] - last_num_enemies_killed_;
+    int enemies_remaining = total_enemies_ - last_num_enemies_killed_;
+
     float progress = 1;
-    if (enemies_remaining_ <= 0 && (wave_ + 1) < kMaxWaves) {
-      enemy_.ResetNumEnemiesKilled();
+    if (enemies_remaining <= 0) {
       last_num_enemies_killed_ = 0;
-      hud_.PrintWave(++wave_ + 1);
+
+      ++wave_;
+      float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;
+      total_enemies_ = (int)(6 * factor);
+      LOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
+
+      enemy_.OnWaveChange(wave_);
+
+      hud_.PrintWave(wave_);
     } else {
-      progress = (float)enemies_remaining_ / (float)kNumEnemiesPerWave[wave_];
+      progress = (float)enemies_remaining / (float)total_enemies_; //kNumEnemiesPerWave[wave_];
     }
     hud_.SetProgress(progress);
   }
 
+  player_.Update(delta_time);
+  enemy_.Update(delta_time);
   hud_.Update(delta_time);
 }
 

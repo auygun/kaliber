@@ -1,6 +1,7 @@
 #ifndef ENEMY_H
 #define ENEMY_H
 
+#include <array>
 #include <list>
 #include <memory>
 
@@ -37,7 +38,7 @@ class Enemy {
   void DeselectTarget(DamageType damage_type);
   void HitTarget(DamageType damage_type);
 
-  void ResetNumEnemiesKilled() { num_enemies_killed_ = 0; }
+  void OnWaveChange(int wave);
 
   int num_enemies_killed() { return num_enemies_killed_; }
 
@@ -78,16 +79,19 @@ class Enemy {
 
   int num_enemies_killed_ = 0;
 
-  float seconds_since_last_spawn_[kEnemyType_Max] = {0, 0, 0};
-  float seconds_to_next_spawn_[kEnemyType_Max] = {0, 0, 0};
+  std::array<float, kEnemyType_Max> seconds_since_last_spawn_ = {0, 0, 0};
+  std::array<float, kEnemyType_Max> seconds_to_next_spawn_ = {0, 0, 0};
+
+  float spawn_factor_ = 0;
+  float spawn_factor_interpolator_ = 0;
+
   int last_spawn_col_ = 0;
 
   base::RandomGenerator random_;
 
-  bool GetNextSpawnInfo(EnemyType& enemy_type,
-                        DamageType& damage_type,
-                        base::Vector2& pos,
-                        float& speed);
+  void TakeDamage(EnemyUnit* target ,int damage);
+
+  void SpawnNextEnemy();
 
   void Spawn(EnemyType enemy_type,
              DamageType damage_type,

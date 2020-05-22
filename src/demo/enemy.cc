@@ -21,14 +21,10 @@ constexpr int enemy_frame_start[][3] = {{0, 50, -1},
 constexpr int enemy_frame_count[][3] = {{7, 7, -1}, {6, 6, -1}, {-1, -1, 7}};
 constexpr int enemy_frame_speed = 12;
 
-constexpr int enemy_scores[] = {100, 150, 200};
+constexpr int enemy_scores[] = {100, 150, 300};
 
-constexpr float kSpawnPeriod[kMaxWaves][kEnemyType_Max][2] = {
-  {{1, 1.5f}, {-1, -1}, {-1, -1}},
-  {{1, 1.5f}, {10, 20}, {-1, -1}},
-  {{0.5f, 1}, {5, 10},  {-1, -1}},
-  {{1, 1.5f}, {5, 10},  {20, 30}},
-  {{1, 1.5f}, {3, 8},   {15, 25}}
+constexpr float kSpawnPeriod[kEnemyType_Max][2] = {
+  {2, 5}, {15, 25}, {110, 130}
 };
 
 }  // namespace
@@ -68,15 +64,16 @@ void Enemy::ContextLost() {
 }
 
 void Enemy::Update(float delta_time) {
+  if (spawn_factor_interpolator_ < 1) {
+    spawn_factor_interpolator_ += delta_time * 0.1f;
+    if (spawn_factor_interpolator_ > 1)
+      spawn_factor_interpolator_ = 1;
+  }
+
   for (int i = 0; i < kEnemyType_Max; ++i)
     seconds_since_last_spawn_[i] += delta_time;
 
-  EnemyType etype;
-  DamageType dtype;
-  base::Vector2 pos;
-  float speed;
-  if (GetNextSpawnInfo(etype, dtype, pos, speed))
-    Spawn(etype, dtype, pos, speed);
+  SpawnNextEnemy();
 
   for (auto it = enemies_.begin(); it != enemies_.end(); ++it) {
     if (it->marked_for_removal) {
@@ -202,10 +199,30 @@ void Enemy::HitTarget(DamageType damage_type) {
                   target->damage_type != damage_type))
     return;
 
+  TakeDamage(target, 1);
+}
+
+void Enemy::OnWaveChange(int wave) {
+  for (auto& e : enemies_) {
+    if (!e.marked_for_removal && e.hit_points > 0)
+      TakeDamage(&e, 100);
+  }
+  num_enemies_killed_ = 0;
+  seconds_since_last_spawn_ = {0, 0, 0};
+  seconds_to_next_spawn_ = {0, 0, 0};
+  spawn_factor_ = 1 / (log10(0.25f * (wave + 4) + 1.468f) * 6);
+  spawn_factor_interpolator_ = 0;
+}
+
+void Enemy::TakeDamage(EnemyUnit* target ,int damage) {
+  assert(!target->marked_for_removal);
+  assert(target->hit_points > 0);
+
   target->blast.SetVisible(true);
   target->blast_animator.Play(eng::Animator::kFrames, false);
 
-  if (--target->hit_points <= 0) {
+  target->hit_points -= damage;
+  if (target->hit_points <= 0) {
     ++num_enemies_killed_;
 
     target->sprite.SetVisible(false);
@@ -241,50 +258,42 @@ void Enemy::HitTarget(DamageType damage_type) {
   }
 }
 
-bool Enemy::GetNextSpawnInfo(EnemyType& enemy_type,
-                             DamageType& damage_type,
-                             base::Vector2& pos,
-                             float& speed) {
+void Enemy::SpawnNextEnemy() {
   eng::Engine& engine = eng::Engine::Get();
-  Demo* game = static_cast<Demo*>(engine.GetGame());
 
-  int wave = game->wave();
-  enemy_type = kEnemyType_Invalid;
+  float factor = Lerp(1.0f, spawn_factor_, spawn_factor_interpolator_);
+  EnemyType enemy_type = kEnemyType_Invalid;
 
   for (int i = 0; i < kEnemyType_Max; ++i) {
-    if (kSpawnPeriod[wave][i][0] < 0)
-      continue;
-
-    if (seconds_since_last_spawn_[i] >= seconds_to_next_spawn_[i] ||
-        seconds_since_last_spawn_[i] == 0) {
-      if (seconds_since_last_spawn_[i] > 0)
+    if (seconds_since_last_spawn_[i] >= seconds_to_next_spawn_[i]) {
+      if (seconds_to_next_spawn_[i] > 0)
         enemy_type = (EnemyType)i;
 
       seconds_since_last_spawn_[i] = 0;
-      seconds_to_next_spawn_[i] = Lerp(kSpawnPeriod[wave][i][0],
-          kSpawnPeriod[wave][i][1], random_.GetFloat());
+      seconds_to_next_spawn_[i] = Lerp(kSpawnPeriod[i][0]  * factor,
+          kSpawnPeriod[i][1]  * factor, random_.GetFloat());
       break;
     }
   }
 
   if (enemy_type == kEnemyType_Invalid)
-    return false;
+    return;
 
-  damage_type = enemy_type == kEnemyType_Tank
+  DamageType damage_type = enemy_type == kEnemyType_Tank
                     ? kDamageType_Any
-                    : (DamageType)(random_.GetInt() % kDamageType_Any);
+                    : (DamageType)(random_.GetInt() % 2);
 
   Vector2 s = engine.GetScreenSize();
   int col;
   while ((col = random_.GetInt() % 4) == last_spawn_col_);
   last_spawn_col_ = col;
   float x = (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2;
-  pos = {x, s.y / 2};
-  speed = enemy_type == kEnemyType_Tank
+  Vector2 pos = {x, s.y / 2};
+  float speed = enemy_type == kEnemyType_Tank
               ? 0.1f
               : ((random_.GetInt() % 4) == 0 ? 0.65f : 0.4f);
 
-  return true;
+  Spawn(enemy_type, damage_type, pos, speed);
 }
 
 void Enemy::Spawn(EnemyType enemy_type,
@@ -293,8 +302,6 @@ void Enemy::Spawn(EnemyType enemy_type,
                   float speed) {
   assert(enemy_type > kEnemyType_Invalid && enemy_type < kEnemyType_Max);
   assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Max);
-  assert(enemy_type == kEnemyType_Tank && damage_type == kDamageType_Any ||
-         enemy_type != kEnemyType_Tank && damage_type != kDamageType_Any);
 
   eng::Engine& engine = eng::Engine::Get();
   Demo* game = static_cast<Demo*>(engine.GetGame());

@@ -7,8 +7,6 @@
 #include "player.h"
 #include "sky_quad.h"
 
-constexpr int kMaxWaves = 5;
-
 class Demo : public eng::Game {
  public:
   Demo() = default;
@@ -41,7 +39,8 @@ class Demo : public eng::Game {
 
   int wave_ = 0;
 
-  int last_num_enemies_killed_ = 0;
+  int last_num_enemies_killed_ = -1;
+  int total_enemies_ = 0;
 };
 
 #endif  // DEMO_H
