@@ -1,6 +1,7 @@
 #ifndef DEMO_H
 #define DEMO_H
 
+#include "../base/closure.h"
 #include "../engine/game.h"
 #include "enemy.h"
 #include "hud.h"
@@ -41,6 +42,15 @@ class Demo : public eng::Game {
 
   int last_num_enemies_killed_ = -1;
   int total_enemies_ = 0;
+
+  int waiting_for_next_wave_ = false;
+
+  float delyaed_work_timer_ = 0;
+  base::Closure delayed_work_cb_;
+
+  void UpdateWaveProgress();
+
+  void SetDelayedWork(float seconds, base::Closure cb);
 };
 
 #endif  // DEMO_H

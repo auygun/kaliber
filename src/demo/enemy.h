@@ -36,11 +36,15 @@ class Enemy {
                     const base::Vector2& weapon_pos,
                     const base::Vector2& target_pos);
   void DeselectTarget(DamageType damage_type);
+
   void HitTarget(DamageType damage_type);
 
+  void OnWaveFinished();
   void OnWaveChange(int wave);
 
-  int num_enemies_killed() { return num_enemies_killed_; }
+  int num_enemies_killed_in_current_wave() {
+    return num_enemies_killed_in_current_wave_;
+  }
 
  private:
   struct EnemyUnit {
@@ -77,13 +81,15 @@ class Enemy {
 
   std::list<EnemyUnit> enemies_;
 
-  int num_enemies_killed_ = 0;
+  int num_enemies_killed_in_current_wave_ = 0;
 
   std::array<float, kEnemyType_Max> seconds_since_last_spawn_ = {0, 0, 0};
   std::array<float, kEnemyType_Max> seconds_to_next_spawn_ = {0, 0, 0};
 
   float spawn_factor_ = 0;
   float spawn_factor_interpolator_ = 0;
+
+  bool waiting_for_next_wave_ = false;
 
   int last_spawn_col_ = 0;
 

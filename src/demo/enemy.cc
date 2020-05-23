@@ -12,6 +12,7 @@
 #include "demo.h"
 
 using namespace base;
+using namespace eng;
 
 namespace {
 
@@ -64,16 +65,18 @@ void Enemy::ContextLost() {
 }
 
 void Enemy::Update(float delta_time) {
-  if (spawn_factor_interpolator_ < 1) {
-    spawn_factor_interpolator_ += delta_time * 0.1f;
-    if (spawn_factor_interpolator_ > 1)
-      spawn_factor_interpolator_ = 1;
+  if (!waiting_for_next_wave_) {
+    if (spawn_factor_interpolator_ < 1) {
+      spawn_factor_interpolator_ += delta_time * 0.1f;
+      if (spawn_factor_interpolator_ > 1)
+        spawn_factor_interpolator_ = 1;
+    }
+
+    for (int i = 0; i < kEnemyType_Max; ++i)
+      seconds_since_last_spawn_[i] += delta_time;
+
+    SpawnNextEnemy();
   }
-
-  for (int i = 0; i < kEnemyType_Max; ++i)
-    seconds_since_last_spawn_[i] += delta_time;
-
-  SpawnNextEnemy();
 
   for (auto it = enemies_.begin(); it != enemies_.end(); ++it) {
     if (it->marked_for_removal) {
@@ -127,6 +130,9 @@ void Enemy::SelectTarget(DamageType damage_type,
                          const Vector2& target_pos) {
   assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
+  if (waiting_for_next_wave_)
+    return;
+
   EnemyUnit* current_enemy = nullptr;
   EnemyUnit* best_enemy = nullptr;
 
@@ -175,18 +181,25 @@ void Enemy::SelectTarget(DamageType damage_type,
 }
 
 void Enemy::DeselectTarget(DamageType damage_type) {
-  assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
+  assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Max);
 
-  EnemyUnit* target = GetTarget(damage_type);
-  if (target) {
-    target->targetted_by_weapon_ = kDamageType_Invalid;
-    target->target.SetVisible(false);
-    target->target_animator.Stop(eng::Animator::kAllAnimations);
+  for (int i = kDamageType_Green; i < kDamageType_Any; ++i) {
+    if (damage_type != kDamageType_Any && damage_type != (DamageType)i)
+      continue;
+    EnemyUnit* target = GetTarget(damage_type);
+    if (target) {
+      target->targetted_by_weapon_ = kDamageType_Invalid;
+      target->target.SetVisible(false);
+      target->target_animator.Stop(eng::Animator::kAllAnimations);
+    }
   }
 }
 
 void Enemy::HitTarget(DamageType damage_type) {
   assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
+
+  if (waiting_for_next_wave_)
+    return;
 
   EnemyUnit* target = GetTarget(damage_type);
 
@@ -202,16 +215,26 @@ void Enemy::HitTarget(DamageType damage_type) {
   TakeDamage(target, 1);
 }
 
+void Enemy::OnWaveFinished() {
+  for (auto& e : enemies_) {
+    if (!e.marked_for_removal && e.hit_points > 0)
+      e.movement_animator.Pause(Animator::kMovement);
+  }
+  DeselectTarget(kDamageType_Any);
+  waiting_for_next_wave_ = true;
+}
+
 void Enemy::OnWaveChange(int wave) {
   for (auto& e : enemies_) {
     if (!e.marked_for_removal && e.hit_points > 0)
       TakeDamage(&e, 100);
   }
-  num_enemies_killed_ = 0;
+  num_enemies_killed_in_current_wave_ = 0;
   seconds_since_last_spawn_ = {0, 0, 0};
   seconds_to_next_spawn_ = {0, 0, 0};
   spawn_factor_ = 1 / (log10(0.25f * (wave + 4) + 1.468f) * 6);
   spawn_factor_interpolator_ = 0;
+  waiting_for_next_wave_ = false;
 }
 
 void Enemy::TakeDamage(EnemyUnit* target ,int damage) {
@@ -223,7 +246,8 @@ void Enemy::TakeDamage(EnemyUnit* target ,int damage) {
 
   target->hit_points -= damage;
   if (target->hit_points <= 0) {
-    ++num_enemies_killed_;
+    if (!waiting_for_next_wave_)
+      ++num_enemies_killed_in_current_wave_;
 
     target->sprite.SetVisible(false);
     target->health_base.SetVisible(false);

@@ -54,6 +54,14 @@ void Demo::Update(float delta_time) {
     }
   }
 
+  if (delyaed_work_timer_ > 0) {
+    delyaed_work_timer_ -= delta_time;
+    if (delyaed_work_timer_ <= 0) {
+      delayed_work_cb_();
+      delayed_work_cb_ = nullptr;
+    }
+  }
+
   sky_.Translate({0, delta_time * -0.04f});
 
   if (add_score_ > 0) {
@@ -62,27 +70,7 @@ void Demo::Update(float delta_time) {
     hud_.PrintScore(score_, true);
   }
 
-  if (enemy_.num_enemies_killed() != last_num_enemies_killed_) {
-    last_num_enemies_killed_ = enemy_.num_enemies_killed();
-    int enemies_remaining = total_enemies_ - last_num_enemies_killed_;
-
-    float progress = 1;
-    if (enemies_remaining <= 0) {
-      last_num_enemies_killed_ = 0;
-
-      ++wave_;
-      float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;
-      total_enemies_ = (int)(6 * factor);
-      LOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
-
-      enemy_.OnWaveChange(wave_);
-
-      hud_.PrintWave(wave_);
-    } else {
-      progress = (float)enemies_remaining / (float)total_enemies_; //kNumEnemiesPerWave[wave_];
-    }
-    hud_.SetProgress(progress);
-  }
+  UpdateWaveProgress();
 
   player_.Update(delta_time);
   enemy_.Update(delta_time);
@@ -106,4 +94,41 @@ void Demo::ContextLost() {
 
 void Demo::AddScore(int score) {
   add_score_ += score;
+}
+
+void Demo::UpdateWaveProgress() {
+  if (waiting_for_next_wave_)
+    return;
+
+  if (enemy_.num_enemies_killed_in_current_wave() != last_num_enemies_killed_) {
+    last_num_enemies_killed_ = enemy_.num_enemies_killed_in_current_wave();
+    int enemies_remaining = total_enemies_ - last_num_enemies_killed_;
+
+    float progress = 1;
+    if (enemies_remaining <= 0) {
+      last_num_enemies_killed_ = 0;
+      waiting_for_next_wave_ = true;
+
+      ++wave_;
+      float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;
+      total_enemies_ = (int)(6 * factor);
+      DLOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
+
+      enemy_.OnWaveFinished();
+      SetDelayedWork(2, [&]() -> void {
+        hud_.PrintWave(wave_);
+        enemy_.OnWaveChange(wave_);
+        waiting_for_next_wave_ = false;
+      });
+    } else {
+      progress = (float)enemies_remaining / (float)total_enemies_; //kNumEnemiesPerWave[wave_];
+    }
+    hud_.SetProgress(progress);
+  }
+}
+
+void Demo::SetDelayedWork(float seconds, base::Closure cb) {
+  assert(delayed_work_cb_ == nullptr);
+  delayed_work_cb_ = std::move(cb);
+  delyaed_work_timer_ = seconds;
 }
