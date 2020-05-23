@@ -54,6 +54,8 @@ void Demo::Update(float delta_time) {
           event->GetType() == eng::InputEvent::kDragEnd ||
           event->GetType() == eng::InputEvent::kDragCancel)
         player_.OnInputEvent(std::move(event));
+      else if (event->GetType() == eng::InputEvent::kTap)
+        menu_.OnInputEvent(std::move(event));
       else if (event->GetType() == eng::InputEvent::kKeyPress)
         LOG << "Key press: " << std::string({event->GetKeyPress()});
     }

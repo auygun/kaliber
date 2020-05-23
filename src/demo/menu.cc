@@ -4,6 +4,7 @@
 #include <cmath>
 #include <vector>
 
+#include "../base/collusion_test.h"
 #include "../base/log.h"
 #include "../base/misc.h"
 #include "../base/vecmath.h"
@@ -11,6 +12,7 @@
 #include "../engine/engine.h"
 #include "../engine/font.h"
 #include "../engine/image.h"
+#include "../engine/input_event.h"
 
 using namespace base;
 using namespace eng;
@@ -24,6 +26,10 @@ constexpr char kMenuOptions[Menu::kOptions_Max][10] = {"continue",
 
 constexpr float kMenuOptionSpace = 1.5f;
 
+const Vector4 kColorNormal = {1, 1, 1, 1};
+const Vector4 kColorHighlight = {5, 5, 5, 1};
+constexpr float kBlendingSpeed = 0.12f;
+
 }  // namespace
 
 bool Menu::Initialize() {
@@ -33,14 +39,20 @@ bool Menu::Initialize() {
   if (!font_)
     return false;
 
-  int tmp;
-  font_->CalculateBoundingBox("big_enough_text", max_text_width_, tmp);
+  max_text_width_ = -1;
+  for (int i = 0; i < kOptions_Max; ++i) {
+    int width, height;
+    font_->CalculateBoundingBox(kMenuOptions[i], width, height);
+    if (width > max_text_width_)
+      max_text_width_ = width;
+  }
 
   auto image = CreateImage();
 
   for (int i = 0; i < kOptions_Max; ++i) {
     items_[i].text.Create(image, {1, 4});
     items_[i].text.AutoScale();
+    items_[i].text.SetColor(kColorNormal);
     items_[i].text.SetVisible(true);
     items_[i].text.SetFrame(i);
 
@@ -49,12 +61,36 @@ bool Menu::Initialize() {
                   (items_[i].text.GetScale() + space / 2) *
                   Vector2(0, kOptions_Max / 2) - space * i;
     items_[i].text.SetOffset(pos * Vector2(0, 1));
+
+    items_[i].text_animator_cb_ = [&, i]() -> void {
+      items_[i].text_animator.SetEndCallback(Animator::kBlending, nullptr);
+      items_[i].text_animator.SetBlending(kColorNormal, kBlendingSpeed);
+      items_[i].text_animator.Play(Animator::kBlending, false);
+    };
+    items_[i].text_animator.Attach(&items_[i].text);
   }
 
   return true;
 }
 
 void Menu::Update(float delta_time) {
+  for (int i = 0; i < kOptions_Max; ++i)
+    items_[i].text_animator.Update(delta_time);
+}
+
+void Menu::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
+  if (event->GetType() != eng::InputEvent::kTap)
+    return;
+
+  for (int i = 0; i < kOptions_Max; ++i) {
+    if (Intersection(items_[i].text.GetOffset(),
+                     items_[i].text.GetScale() * Vector2(1.2f, 2),
+                     event->GetVector(0))) {
+      items_[i].text_animator.SetEndCallback(Animator::kBlending, items_[i].text_animator_cb_);
+      items_[i].text_animator.SetBlending(kColorHighlight, kBlendingSpeed);
+      items_[i].text_animator.Play(Animator::kBlending, false);
+    }
+  }
 }
 
 void Menu::Draw() {
@@ -64,7 +100,7 @@ void Menu::Draw() {
 
 void Menu::ContextLost() {
   auto image = CreateImage();
-  for (int i = 0; i < 2; ++i) {
+  for (int i = 0; i < kOptions_Max; ++i) {
     items_[i].text.ContextLost();
     items_[i].text.Create(image, {1, 4});
   }
@@ -76,8 +112,8 @@ std::shared_ptr<eng::Image> Menu::CreateImage() {
   image->Create(max_text_width_, line_height * kOptions_Max);
 
   // Fill the area of each menu item with gradient.
-  Vector4 c1 = {0, 1, 0, 0};
-  Vector4 c2 = {0, 0, 1, 0};
+  Vector4 c1 = {.2f, .9f, .2f, 0};
+  Vector4 c2 = {.2f, .2f, .9f, 0};
   uint8_t* buffer = image->GetBuffer();
   for (int h = 0; h < image->GetHeight(); ++h) {
     Vector4 c = Blend(c1, c2, fmod(h, line_height) / (float)line_height);

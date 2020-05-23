@@ -5,7 +5,23 @@
 
 namespace base {
 
-bool Intersection(Vector2 center, Vector2 size, Vector2 origin, Vector2 dir) {
+bool Intersection(const Vector2& center,
+                  const Vector2& size,
+                  const Vector2& point) {
+  float dx = point.x - center.x;
+  float px = size.x / 2 - abs(dx);
+  if (px <= 0)
+    return false;
+
+  float dy = point.y - center.y;
+  float py = size.y / 2 - abs(dy);
+  return py > 0;
+}
+
+bool Intersection(const Vector2& center,
+                  const Vector2& size,
+                  const Vector2& origin,
+                  const Vector2& dir) {
   Vector2 min = center - size / 2;
   Vector2 max = center + size / 2;
 

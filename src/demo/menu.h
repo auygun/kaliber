@@ -9,6 +9,7 @@
 
 namespace eng {
 class Image;
+class InputEvent;
 class Font;
 }  // namespace eng
 
@@ -29,6 +30,8 @@ class Menu {
 
   void Update(float delta_time);
 
+  void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
+
   void Draw();
 
   void ContextLost();
@@ -36,7 +39,8 @@ class Menu {
  private:
   struct Item {
     eng::ImageQuad text;
-    eng::Animator text_animator[3];
+    eng::Animator text_animator;
+    base::Closure text_animator_cb_;
     bool enabled = true;
   };
 

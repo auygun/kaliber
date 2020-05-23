@@ -43,46 +43,20 @@ void Animator::Stop(int animation) {
 }
 
 void Animator::SetEndCallback(int animation, base::Closure cb) {
-  if ((animation & kMovement) != 0) {
-    if (inside_cb_ == kMovement) {
-      has_pending_cb_ = true;
-      pending_cb_ = std::move(cb);
-    } else {
+  if (inside_cb_ != kNone) {
+    has_pending_cb_ = true;
+    pending_cb_ = std::move(cb);
+  }
+  if ((animation & kMovement) != 0 && inside_cb_ != kMovement)
       movement_cb_ = std::move(cb);
-    }
-  }
-  if ((animation & kRotation) != 0) {
-    if (inside_cb_ == kRotation) {
-      has_pending_cb_ = true;
-      pending_cb_ = std::move(cb);
-    } else {
+  if ((animation & kRotation) != 0 && inside_cb_ != kRotation)
       rotation_cb_ = std::move(cb);
-    }
-  }
-  if ((animation & kBlending) != 0) {
-    if (inside_cb_ == kBlending) {
-      has_pending_cb_ = true;
-      pending_cb_ = std::move(cb);
-    } else {
+  if ((animation & kBlending) != 0 && inside_cb_ != kBlending)
       blending_cb_ = std::move(cb);
-    }
-  }
-  if ((animation & kFrames) != 0) {
-    if (inside_cb_ == kFrames) {
-      has_pending_cb_ = true;
-      pending_cb_ = std::move(cb);
-    } else {
+  if ((animation & kFrames) != 0 && inside_cb_ != kFrames)
       frame_cb_ = std::move(cb);
-    }
-  }
-  if ((animation & kTimer) != 0) {
-    if (inside_cb_ == kTimer) {
-      has_pending_cb_ = true;
-      pending_cb_ = std::move(cb);
-    } else {
+  if ((animation & kTimer) != 0 && inside_cb_ != kTimer)
       timer_cb_ = std::move(cb);
-    }
-  }
 }
 
 void Animator::SetMovement(Vector2 direction, float speed) {
