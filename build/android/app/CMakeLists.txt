@@ -51,6 +51,7 @@ add_library(native-activity SHARED
     ../../../src/demo/demo.cc
     ../../../src/demo/enemy.cc
     ../../../src/demo/hud.cc
+    ../../../src/demo/menu.cc
     ../../../src/demo/player.cc
     ../../../src/demo/sky_quad.cc
     ../../../src/engine/animatable.cc

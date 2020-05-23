@@ -36,6 +36,11 @@ bool Demo::Initialize() {
     return false;
   }
 
+  if (!menu_.Initialize()) {
+    LOG << "Failed to create the menu.";
+    return false;
+  }
+
   return true;
 }
 
@@ -74,6 +79,7 @@ void Demo::Update(float delta_time) {
   player_.Update(delta_time);
   enemy_.Update(delta_time);
   hud_.Update(delta_time);
+  menu_.Update(delta_time);
   sky_.Update(delta_time);
 }
 
@@ -82,14 +88,15 @@ void Demo::Draw(float frame_frac) {
   player_.Draw(frame_frac);
   enemy_.Draw(frame_frac);
   hud_.Draw();
+  menu_.Draw();
 }
 
 void Demo::ContextLost() {
   enemy_.ContextLost();
   player_.ContextLost();
   hud_.ContextLost();
+  menu_.ContextLost();
   sky_.ContextLost();
-  sky_.Create();
 }
 
 void Demo::AddScore(int score) {

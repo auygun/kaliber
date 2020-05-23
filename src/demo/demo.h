@@ -5,6 +5,7 @@
 #include "../engine/game.h"
 #include "enemy.h"
 #include "hud.h"
+#include "menu.h"
 #include "player.h"
 #include "sky_quad.h"
 
@@ -32,6 +33,7 @@ class Demo : public eng::Game {
   Player player_;
   Enemy enemy_;
   Hud hud_;
+  Menu menu_;
 
   SkyQuad sky_;
 

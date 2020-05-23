@@ -52,7 +52,7 @@ inline float BlendAlphaChannel(float a1, float a2, float t) {
 }
 
 // Blend colors between a and b, by fraction t.
-inline Vector4 Blend(Vector4 c1, Vector4 c2, float t) {
+inline Vector4 Blend(const Vector4& c1, const Vector4& c2, float t) {
   return Vector4(
       BlendColorChannel(c1.x, c2.x, t), BlendColorChannel(c1.y, c2.y, t),
       BlendColorChannel(c1.z, c2.z, t), BlendAlphaChannel(c1.w, c2.w, t));

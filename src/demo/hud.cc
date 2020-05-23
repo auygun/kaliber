@@ -6,8 +6,7 @@
 #include "../engine/font.h"
 #include "../engine/image.h"
 
-using base::Vector2;
-using base::Vector4;
+using namespace base;
 
 namespace {
 
