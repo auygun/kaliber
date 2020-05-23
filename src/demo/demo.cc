@@ -104,9 +104,9 @@ void Demo::UpdateWaveProgress() {
     last_num_enemies_killed_ = enemy_.num_enemies_killed_in_current_wave();
     int enemies_remaining = total_enemies_ - last_num_enemies_killed_;
 
-    float progress = 1;
     if (enemies_remaining <= 0) {
       waiting_for_next_wave_ = true;
+      hud_.SetProgress(0);
 
       enemy_.OnWaveFinished();
 
@@ -119,6 +119,7 @@ void Demo::UpdateWaveProgress() {
 
         ++wave_;
         hud_.PrintWave(wave_);
+        hud_.SetProgress(1);
 
         float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;
         total_enemies_ = (int)(6 * factor);
@@ -130,9 +131,8 @@ void Demo::UpdateWaveProgress() {
         waiting_for_next_wave_ = false;
       });
     } else {
-      progress = (float)enemies_remaining / (float)total_enemies_; //kNumEnemiesPerWave[wave_];
+      hud_.SetProgress((float)enemies_remaining / (float)total_enemies_);
     }
-    hud_.SetProgress(progress);
   }
 }
 

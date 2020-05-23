@@ -47,7 +47,6 @@ bool Hud::Initialize() {
     progress_bar_[i].Scale(scale);
     progress_bar_[i].Translate(pos * Vector2(0, 1));
     progress_bar_[i].SetColor(progress_bar_color[i]);
-    progress_bar_[i].SetVisible(true);
 
     pos -= progress_bar_[i].GetScale() * Vector2(0, 4);
     text_[i].Translate(pos * Vector2(i ? 1 : -1, 1));
@@ -60,10 +59,6 @@ bool Hud::Initialize() {
   };
   hud_animator_.Attach(&text_[0]);
 
-  PrintScore(0, false);
-  PrintWave(1);
-  SetProgress(1);
-
   return true;
 }
 
@@ -73,8 +68,10 @@ void Hud::Update(float delta_time) {
 
 void Hud::Draw() {
   for (int i = 0; i < 2; ++i) {
-    progress_bar_[i].Draw();
-    text_[i].Draw();
+    if (progress_bar_[i].IsVisible())
+      progress_bar_[i].Draw();
+    if (text_[i].IsVisible())
+      text_[i].Draw();
   }
 }
 
@@ -102,6 +99,11 @@ void Hud::PrintWave(int wave) {
   std::string text = "wave ";
   text += std::to_string(wave);
   Print(1, text.c_str());
+
+  if (!progress_bar_[0].IsVisible()) {
+    progress_bar_[0].SetVisible(true);
+    progress_bar_[1].SetVisible(true);
+  }
 }
 
 void Hud::SetProgress(float progress) {
