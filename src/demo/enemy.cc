@@ -224,7 +224,7 @@ void Enemy::OnWaveFinished() {
   waiting_for_next_wave_ = true;
 }
 
-void Enemy::OnWaveChange(int wave) {
+void Enemy::OnWaveStarted(int wave) {
   for (auto& e : enemies_) {
     if (!e.marked_for_removal && e.hit_points > 0)
       TakeDamage(&e, 100);
@@ -416,7 +416,6 @@ void Enemy::Spawn(EnemyType enemy_type,
 
   e.movement_animator.SetMovement({0, -max_distance}, speed);
   e.movement_animator.SetEndCallback(Animator::kMovement, [&]() -> void {
-    e.sprite_animator.Stop(Animator::kAllAnimations);
     e.sprite.SetVisible(false);
     e.target.SetVisible(false);
     e.blast.SetVisible(false);

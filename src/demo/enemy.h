@@ -39,7 +39,7 @@ class Enemy {
   void HitTarget(DamageType damage_type);
 
   void OnWaveFinished();
-  void OnWaveChange(int wave);
+  void OnWaveStarted(int wave);
 
   int num_enemies_killed_in_current_wave() {
     return num_enemies_killed_in_current_wave_;

@@ -57,8 +57,9 @@ void Demo::Update(float delta_time) {
   if (delyaed_work_timer_ > 0) {
     delyaed_work_timer_ -= delta_time;
     if (delyaed_work_timer_ <= 0) {
-      delayed_work_cb_();
+      base::Closure cb =  delayed_work_cb_;
       delayed_work_cb_ = nullptr;
+      cb();
     }
   }
 
@@ -105,23 +106,27 @@ void Demo::UpdateWaveProgress() {
 
     float progress = 1;
     if (enemies_remaining <= 0) {
-      last_num_enemies_killed_ = 0;
       waiting_for_next_wave_ = true;
 
-      ++wave_;
-      float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;
-      total_enemies_ = (int)(6 * factor);
-      DLOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
-
       enemy_.OnWaveFinished();
-      SetDelayedWork(2, [&]() -> void {
+
+      SetDelayedWork(1, [&]() -> void {
         RandomGenerator& rnd = eng::Engine::Get().GetRandomGenerator();
         Vector4 c = {std::clamp(rnd.GetFloat(), 0.3f, 0.95f),
                      std::clamp(rnd.GetFloat(), 0.2f, 0.9f),
                      std::clamp(rnd.GetFloat(), 0.1f, 0.8f), 1};
         sky_.SwitchColor(c);
+
+        ++wave_;
         hud_.PrintWave(wave_);
-        enemy_.OnWaveChange(wave_);
+
+        float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;
+        total_enemies_ = (int)(6 * factor);
+        last_num_enemies_killed_ = 0;
+        DLOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
+
+        enemy_.OnWaveStarted(wave_);
+
         waiting_for_next_wave_ = false;
       });
     } else {
