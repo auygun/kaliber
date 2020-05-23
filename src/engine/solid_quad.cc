@@ -7,6 +7,9 @@
 namespace eng {
 
 void SolidQuad::Draw() {
+  if (!IsVisible())
+    return;
+
   Geometry& quad = Engine::Get().GetQuad();
   Shader& shader = Engine::Get().GetSolidShader();
 

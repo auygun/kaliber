@@ -50,6 +50,9 @@ size_t ImageQuad::GetNumFrames() {
 }
 
 void ImageQuad::Draw() {
+  if (!IsVisible())
+    return;
+
   texture_.Activate();
 
   Geometry& quad = Engine::Get().GetQuad();

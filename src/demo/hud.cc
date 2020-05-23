@@ -68,10 +68,8 @@ void Hud::Update(float delta_time) {
 
 void Hud::Draw() {
   for (int i = 0; i < 2; ++i) {
-    if (progress_bar_[i].IsVisible())
-      progress_bar_[i].Draw();
-    if (text_[i].IsVisible())
-      text_[i].Draw();
+    progress_bar_[i].Draw();
+    text_[i].Draw();
   }
 }
 

@@ -67,14 +67,10 @@ void Player::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
 
 void Player::Draw(float frame_frac) {
   for (int i = 0; i < 2; ++i) {
-    if (drag_sign_[i].IsVisible())
-      drag_sign_[i].Draw();
-    if (weapon_[i].IsVisible())
-      weapon_[i].Draw();
-    if (beam_[i].IsVisible())
-      beam_[i].Draw();
-    if (beam_spark_[i].IsVisible())
-      beam_spark_[i].Draw();
+    drag_sign_[i].Draw();
+    weapon_[i].Draw();
+    beam_[i].Draw();
+    beam_spark_[i].Draw();
   }
 }
 

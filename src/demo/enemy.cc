@@ -94,18 +94,12 @@ void Enemy::Update(float delta_time) {
 
 void Enemy::Draw(float frame_frac) {
   for (auto& e : enemies_) {
-    if (e.sprite.IsVisible())
-      e.sprite.Draw();
-    if (e.target.IsVisible())
-      e.target.Draw();
-    if (e.blast.IsVisible())
-      e.blast.Draw();
-    if (e.health_base.IsVisible())
-      e.health_base.Draw();
-    if (e.health_bar.IsVisible())
-      e.health_bar.Draw();
-    if (e.score.IsVisible())
-      e.score.Draw();
+    e.sprite.Draw();
+    e.target.Draw();
+    e.blast.Draw();
+    e.health_base.Draw();
+    e.health_bar.Draw();
+    e.score.Draw();
   }
 }
 
