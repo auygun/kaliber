@@ -5,7 +5,6 @@
 #include <list>
 #include <memory>
 
-#include "../base/random_generator.h"
 #include "../engine/animator.h"
 #include "../engine/image_quad.h"
 #include "../engine/solid_quad.h"
@@ -92,8 +91,6 @@ class Enemy {
   bool waiting_for_next_wave_ = false;
 
   int last_spawn_col_ = 0;
-
-  base::RandomGenerator random_;
 
   void TakeDamage(EnemyUnit* target ,int damage);
 

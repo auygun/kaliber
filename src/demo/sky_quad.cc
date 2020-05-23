@@ -5,7 +5,8 @@
 #include "../engine/engine.h"
 #include "../engine/shader_source.h"
 
-using base::Vector2;
+using namespace base;
+using namespace eng;
 
 bool SkyQuad::Create() {
   eng::Engine& engine = eng::Engine::Get();
@@ -16,9 +17,15 @@ bool SkyQuad::Create() {
   shader_.Create(sky_source, engine.GetQuad().vertex_description());
 
   scale_ = engine.GetScreenSize();
-  nebula_color_ = {0.962f, 0.308f, 0.112f};
+
+  color_animator_.Attach(this);
 
   return true;
+}
+
+void SkyQuad::Update(float delta_time) {
+  sky_offset_ += {0, delta_time * -0.04f};
+  color_animator_.Update(delta_time);
 }
 
 void SkyQuad::Draw(float frame_frac) {
@@ -28,7 +35,8 @@ void SkyQuad::Draw(float frame_frac) {
   shader_.SetUniform("scale", scale_);
   shader_.SetUniform("projection", eng::Engine::Get().GetProjectionMarix());
   shader_.SetUniform("sky_offset", sky_offset);
-  shader_.SetUniform("nebula_color", nebula_color_);
+  shader_.SetUniform("nebula_color",
+      {nebula_color_.x, nebula_color_.y, nebula_color_.z});
 
   eng::Engine::Get().GetQuad().Draw();
   last_sky_offset_ = sky_offset_;
@@ -36,4 +44,9 @@ void SkyQuad::Draw(float frame_frac) {
 
 void SkyQuad::ContextLost() {
   shader_.Invalidate();
+}
+
+void SkyQuad::SwitchColor(const Vector4& color) {
+  color_animator_.SetBlending(color, 5);
+  color_animator_.Play(Animator::kBlending, false);
 }

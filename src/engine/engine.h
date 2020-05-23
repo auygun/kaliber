@@ -5,6 +5,7 @@
 #include <memory>
 #include <unordered_map>
 
+#include "../base/random_generator.h"
 #include "../base/vecmath.h"
 #include "image_quad.h"
 #include "renderer/geometry.h"
@@ -78,6 +79,8 @@ class Engine {
 
   std::shared_ptr<const eng::Font> GetSystemFont() { return system_font_; }
 
+  base::RandomGenerator& GetRandomGenerator() { return random_; }
+
   Game* GetGame() { return game_.get(); }
 
   int GetScreenWidth() const;
@@ -133,6 +136,8 @@ class Engine {
   std::deque<std::unique_ptr<InputEvent>> input_queue_;
 
   std::unique_ptr<base::TaskRunner> task_runner_;
+
+  base::RandomGenerator random_;
 
   void ContextLost();
 

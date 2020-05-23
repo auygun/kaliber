@@ -28,6 +28,8 @@ class ImageQuad : public Animatable {
   void SetFrame(size_t frame) override;
   size_t GetFrame() override { return current_frame_; }
   size_t GetNumFrames() override;
+  void SetColor(const base::Vector4& color) override { color_ = color; }
+  base::Vector4 GetColor() const override { return color_; }
 
   void Draw();
   void ContextLost();
@@ -48,6 +50,8 @@ class ImageQuad : public Animatable {
   std::array<int, 2> num_frames_ = {1, 1};  // horizontal, vertical
   int frame_width_ = 0;
   int frame_height_ = 0;
+
+  base::Vector4 color_ = {1, 1, 1, 1};
 
   bool visible_ = false;
 

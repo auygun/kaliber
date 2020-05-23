@@ -31,7 +31,7 @@ constexpr float kSpawnPeriod[kEnemyType_Max][2] = {
 }  // namespace
 
 bool Enemy::Initialize() {
-  eng::Engine& engine = eng::Engine::Get();
+  Engine& engine = Engine::Get();
   skull_frames_ = engine.GetImageAsset("enemy_anims_01_frames_ok.png");
   tank_frames_ = engine.GetImageAsset("enemy_anims_01_frames_ok.png");
   bug_frames_ = engine.GetImageAsset("enemy_anims_02_frames_ok.png");
@@ -163,7 +163,7 @@ void Enemy::SelectTarget(DamageType damage_type,
   if (current_enemy) {
     current_enemy->targetted_by_weapon_ = kDamageType_Invalid;
     current_enemy->target.SetVisible(false);
-    current_enemy->target_animator.Stop(eng::Animator::kAllAnimations);
+    current_enemy->target_animator.Stop(Animator::kAllAnimations);
   }
 
   if (best_enemy) {
@@ -176,7 +176,7 @@ void Enemy::SelectTarget(DamageType damage_type,
       best_enemy->target.SetFrame(6);
       best_enemy->target_animator.SetFrames(6, 28);
     }
-    best_enemy->target_animator.Play(eng::Animator::kFrames, false);
+    best_enemy->target_animator.Play(Animator::kFrames, false);
   }
 }
 
@@ -190,7 +190,7 @@ void Enemy::DeselectTarget(DamageType damage_type) {
     if (target) {
       target->targetted_by_weapon_ = kDamageType_Invalid;
       target->target.SetVisible(false);
-      target->target_animator.Stop(eng::Animator::kAllAnimations);
+      target->target_animator.Stop(Animator::kAllAnimations);
     }
   }
 }
@@ -205,7 +205,7 @@ void Enemy::HitTarget(DamageType damage_type) {
 
   if (target) {
     target->target.SetVisible(false);
-    target->target_animator.Stop(eng::Animator::kAllAnimations);
+    target->target_animator.Stop(Animator::kAllAnimations);
   }
 
   if (!target || (target->damage_type != kDamageType_Any &&
@@ -242,7 +242,7 @@ void Enemy::TakeDamage(EnemyUnit* target ,int damage) {
   assert(target->hit_points > 0);
 
   target->blast.SetVisible(true);
-  target->blast_animator.Play(eng::Animator::kFrames, false);
+  target->blast_animator.Play(Animator::kFrames, false);
 
   target->hit_points -= damage;
   if (target->hit_points <= 0) {
@@ -258,10 +258,10 @@ void Enemy::TakeDamage(EnemyUnit* target ,int damage) {
     target->score.Create(image);
     target->score.AutoScale();
 
-    target->score_animator.Play(eng::Animator::kAllAnimations, false);
-    target->movement_animator.Pause(eng::Animator::kMovement);
+    target->score_animator.Play(Animator::kAllAnimations, false);
+    target->movement_animator.Pause(Animator::kMovement);
 
-    eng::Engine& engine = eng::Engine::Get();
+    Engine& engine = Engine::Get();
     Demo* game = static_cast<Demo*>(engine.GetGame());
     game->AddScore(GetScore(target->enemy_type));
   } else {
@@ -276,14 +276,15 @@ void Enemy::TakeDamage(EnemyUnit* target ,int damage) {
     target->health_base.SetVisible(true);
     target->health_bar.SetVisible(true);
 
-    target->health_animator.Stop(eng::Animator::kTimer |
-                                 eng::Animator::kBlending);
-    target->health_animator.Play(eng::Animator::kTimer, false);
+    target->health_animator.Stop(Animator::kTimer |
+                                 Animator::kBlending);
+    target->health_animator.Play(Animator::kTimer, false);
   }
 }
 
 void Enemy::SpawnNextEnemy() {
-  eng::Engine& engine = eng::Engine::Get();
+  Engine& engine = Engine::Get();
+  RandomGenerator& rnd = engine.GetRandomGenerator();
 
   float factor = Lerp(1.0f, spawn_factor_, spawn_factor_interpolator_);
   EnemyType enemy_type = kEnemyType_Invalid;
@@ -295,7 +296,7 @@ void Enemy::SpawnNextEnemy() {
 
       seconds_since_last_spawn_[i] = 0;
       seconds_to_next_spawn_[i] = Lerp(kSpawnPeriod[i][0]  * factor,
-          kSpawnPeriod[i][1]  * factor, random_.GetFloat());
+          kSpawnPeriod[i][1]  * factor, rnd.GetFloat());
       break;
     }
   }
@@ -305,17 +306,17 @@ void Enemy::SpawnNextEnemy() {
 
   DamageType damage_type = enemy_type == kEnemyType_Tank
                     ? kDamageType_Any
-                    : (DamageType)(random_.GetInt() % 2);
+                    : (DamageType)(rnd.GetInt() % 2);
 
   Vector2 s = engine.GetScreenSize();
   int col;
-  while ((col = random_.GetInt() % 4) == last_spawn_col_);
+  while ((col = rnd.GetInt() % 4) == last_spawn_col_);
   last_spawn_col_ = col;
   float x = (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2;
   Vector2 pos = {x, s.y / 2};
   float speed = enemy_type == kEnemyType_Tank
               ? 0.1f
-              : ((random_.GetInt() % 4) == 0 ? 0.65f : 0.4f);
+              : ((rnd.GetInt() % 4) == 0 ? 0.65f : 0.4f);
 
   Spawn(enemy_type, damage_type, pos, speed);
 }
@@ -327,7 +328,7 @@ void Enemy::Spawn(EnemyType enemy_type,
   assert(enemy_type > kEnemyType_Invalid && enemy_type < kEnemyType_Max);
   assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Max);
 
-  eng::Engine& engine = eng::Engine::Get();
+  Engine& engine = Engine::Get();
   Demo* game = static_cast<Demo*>(engine.GetGame());
 
   auto& e = enemies_.emplace_back();
@@ -353,7 +354,7 @@ void Enemy::Spawn(EnemyType enemy_type,
                               enemy_frame_speed);
 
   e.sprite_animator.Attach(&e.sprite);
-  e.sprite_animator.Play(eng::Animator::kFrames, true);
+  e.sprite_animator.Play(Animator::kFrames, true);
 
   e.target.Create(target_frames_, {6, 2});
   e.target.AutoScale();
@@ -378,7 +379,7 @@ void Enemy::Spawn(EnemyType enemy_type,
 
   e.target_animator.Attach(&e.target);
 
-  e.blast_animator.SetEndCallback(eng::Animator::kFrames,
+  e.blast_animator.SetEndCallback(Animator::kFrames,
                                   [&]() -> void { e.blast.SetVisible(false); });
   if (damage_type == kDamageType_Green) {
     e.blast.SetFrame(0);
@@ -389,11 +390,11 @@ void Enemy::Spawn(EnemyType enemy_type,
   }
   e.blast_animator.Attach(&e.blast);
 
-  e.health_animator.SetEndCallback(eng::Animator::kTimer, [&]() -> void {
+  e.health_animator.SetEndCallback(Animator::kTimer, [&]() -> void {
     e.health_animator.SetBlending({1, 1, 1, 0}, 0.5f);
-    e.health_animator.Play(eng::Animator::kBlending, false);
+    e.health_animator.Play(Animator::kBlending, false);
   });
-  e.health_animator.SetEndCallback(eng::Animator::kBlending, [&]() -> void {
+  e.health_animator.SetEndCallback(Animator::kBlending, [&]() -> void {
     e.health_base.SetVisible(false);
     e.health_bar.SetVisible(false);
   });
@@ -403,8 +404,8 @@ void Enemy::Spawn(EnemyType enemy_type,
 
   e.score_animator.SetMovement({0, 2}, 1.0f);
   e.score_animator.SetBlending({1, 1, 1, 0}, 0.7f);
-  e.score_animator.SetEndCallback(eng::Animator::kBlending, [&]() -> void {
-    e.score_animator.Stop(eng::Animator::kAllAnimations);
+  e.score_animator.SetEndCallback(Animator::kBlending, [&]() -> void {
+    e.score_animator.Stop(Animator::kAllAnimations);
     e.score.SetVisible(false);
     e.marked_for_removal = true;
   });
@@ -414,8 +415,8 @@ void Enemy::Spawn(EnemyType enemy_type,
       engine.GetScreenSize().y - game->GetPlayer().GetWeaponScale().y;
 
   e.movement_animator.SetMovement({0, -max_distance}, speed);
-  e.movement_animator.SetEndCallback(eng::Animator::kMovement, [&]() -> void {
-    e.sprite_animator.Stop(eng::Animator::kAllAnimations);
+  e.movement_animator.SetEndCallback(Animator::kMovement, [&]() -> void {
+    e.sprite_animator.Stop(Animator::kAllAnimations);
     e.sprite.SetVisible(false);
     e.target.SetVisible(false);
     e.blast.SetVisible(false);
@@ -427,7 +428,7 @@ void Enemy::Spawn(EnemyType enemy_type,
   e.movement_animator.Attach(&e.health_base);
   e.movement_animator.Attach(&e.health_bar);
   e.movement_animator.Attach(&e.score);
-  e.movement_animator.Play(eng::Animator::kMovement, false);
+  e.movement_animator.Play(Animator::kMovement, false);
 }
 
 Enemy::EnemyUnit* Enemy::GetTarget(DamageType damage_type) {
@@ -444,8 +445,8 @@ int Enemy::GetScore(EnemyType enemy_type) {
   return enemy_scores[enemy_type];
 }
 
-std::shared_ptr<eng::Image> Enemy::GetScoreImage(const EnemyUnit& enemy) {
-  auto image = std::make_shared<eng::Image>();
+std::shared_ptr<Image> Enemy::GetScoreImage(const EnemyUnit& enemy) {
+  auto image = std::make_shared<Image>();
   image->Create(enemy.sprite.frame_width(), enemy.sprite.frame_height());
   image->Clear({1, 1, 1, 0});
   std::string text = std::to_string(GetScore(enemy.enemy_type));

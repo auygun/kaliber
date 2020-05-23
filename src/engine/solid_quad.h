@@ -14,6 +14,8 @@ class SolidQuad : public Animatable {
   void SetFrame(size_t frame) override {}
   size_t GetFrame() override { return 0; }
   size_t GetNumFrames() override { return 0; }
+  void SetColor(const base::Vector4& color) override { color_ = color; }
+  base::Vector4 GetColor() const override { return color_; }
 
   void Draw();
 
@@ -21,6 +23,8 @@ class SolidQuad : public Animatable {
   bool IsVisible() const { return visible_; }
 
  private:
+  base::Vector4 color_ = {1, 1, 1, 1};
+
   bool visible_ = false;
 };
 

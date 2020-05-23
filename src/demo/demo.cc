@@ -1,7 +1,9 @@
 #include "demo.h"
 
+#include <algorithm>
 #include <string>
 
+#include "../base/random_generator.h"
 #include "../base/log.h"
 #include "../engine/engine.h"
 #include "../engine/game_factory.h"
@@ -11,9 +13,7 @@ DECLARE_GAME_BEGIN
 DECLARE_GAME(Demo)
 DECLARE_GAME_END
 
-namespace {
-
-}  // namespace
+using namespace base;
 
 bool Demo::Initialize() {
   if (!sky_.Create()) {
@@ -62,8 +62,6 @@ void Demo::Update(float delta_time) {
     }
   }
 
-  sky_.Translate({0, delta_time * -0.04f});
-
   if (add_score_ > 0) {
     score_ += add_score_;
     add_score_ = 0;
@@ -75,6 +73,7 @@ void Demo::Update(float delta_time) {
   player_.Update(delta_time);
   enemy_.Update(delta_time);
   hud_.Update(delta_time);
+  sky_.Update(delta_time);
 }
 
 void Demo::Draw(float frame_frac) {
@@ -116,6 +115,11 @@ void Demo::UpdateWaveProgress() {
 
       enemy_.OnWaveFinished();
       SetDelayedWork(2, [&]() -> void {
+        RandomGenerator& rnd = eng::Engine::Get().GetRandomGenerator();
+        Vector4 c = {std::clamp(rnd.GetFloat(), 0.3f, 0.95f),
+                     std::clamp(rnd.GetFloat(), 0.2f, 0.9f),
+                     std::clamp(rnd.GetFloat(), 0.1f, 0.8f), 1};
+        sky_.SwitchColor(c);
         hud_.PrintWave(wave_);
         enemy_.OnWaveChange(wave_);
         waiting_for_next_wave_ = false;

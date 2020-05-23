@@ -19,18 +19,19 @@ class Animatable {
   void SetScale(const base::Vector2& scale) { scale_ = scale; }
   void SetPivot(const base::Vector2& pivot) { pivot_ = pivot; }
   void SetTheta(float theta);
-  void SetColor(const base::Vector4& color) { color_ = color; }
 
   base::Vector2 GetOffset() const { return offset_; }
   base::Vector2 GetScale() const { return scale_; }
   base::Vector2 GetPivot() const { return pivot_; }
   float GetTheta() const { return theta_; }
-  base::Vector4 GetColor() const { return color_; }
 
   // Pure virtuals for frame animation support.
   virtual void SetFrame(size_t frame) = 0;
   virtual size_t GetFrame() = 0;
   virtual size_t GetNumFrames() = 0;
+
+  virtual void SetColor(const base::Vector4& color) = 0;
+  virtual base::Vector4 GetColor() const = 0;
 
   void PlaceToLeftOf(const Animatable& s) {
     Translate({s.GetScale().x / -2.0f + GetScale().x / -2.0f, 0});
@@ -54,7 +55,6 @@ class Animatable {
   base::Vector2 pivot_ = {0, 0};
   base::Vector2 rotation_ = {0, 1};
   float theta_ = 0;
-  base::Vector4 color_ = {1, 1, 1, 1};
 };
 
 }  // namespace eng

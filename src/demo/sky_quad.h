@@ -2,6 +2,8 @@
 #define SKY_QUAD_H
 
 #include "../base/vecmath.h"
+#include "../engine/animatable.h"
+#include "../engine/animator.h"
 #include "../engine/renderer/shader.h"
 
 #include <array>
@@ -13,7 +15,7 @@ namespace eng {
 class Image;
 }  // namespace eng
 
-class SkyQuad {
+class SkyQuad : public eng::Animatable{
  public:
   SkyQuad() = default;
   ~SkyQuad() = default;
@@ -23,17 +25,29 @@ class SkyQuad {
 
   bool Create();
 
+  void Update(float delta_time);
+
+  // Animatable interface.
+  void SetFrame(size_t frame) override {}
+  size_t GetFrame() override { return 0; }
+  size_t GetNumFrames() override { return 0; }
+  void SetColor(const base::Vector4& color) override { nebula_color_ = color; }
+  base::Vector4 GetColor() const override { return nebula_color_; }
+
   void Draw(float frame_frac);
   void ContextLost();
 
-  void Translate(base::Vector2 offset) { sky_offset_ += offset; }
+  void SwitchColor(const base::Vector4& color);
 
  private:
   eng::Shader shader_;
+
   base::Vector2 sky_offset_ = {0, 0};
   base::Vector2 last_sky_offset_ = {0, 0};
-  base::Vector3 nebula_color_ = {0, 0, 0};
+  base::Vector4 nebula_color_ = {0, 0, 0, 1};
   base::Vector2 scale_ = {1, 1};
+
+  eng::Animator color_animator_;
 };
 
 #endif  // SKY_QUAD_H
