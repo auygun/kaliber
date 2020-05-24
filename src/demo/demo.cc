@@ -52,9 +52,7 @@ void Demo::Update(float delta_time) {
   eng::Engine& engine = eng::Engine::Get();
 
   while (std::unique_ptr<eng::InputEvent> event = engine.GetNextInputEvent()) {
-    if (event->GetType() == InputEvent::kNavigateBack)
-      EnterMenuState();
-    else if (state_ == kMenu)
+    if (state_ == kMenu)
       menu_.OnInputEvent(std::move(event));
     else
       player_.OnInputEvent(std::move(event));
@@ -126,6 +124,19 @@ void Demo::MenuOptionSelected(Menu::Option option) {
   }
 }
 
+void Demo::EnterMenuState() {
+  if (state_ == kMenu)
+    return;
+  menu_.FadeIn();
+  state_ = kMenu;
+}
+
+void Demo::EnterGameState() {
+  if (state_ == kGame)
+    return;
+  state_ = kGame;
+}
+
 void Demo::UpdateGameProgress() {
   if (waiting_for_next_wave_)
     return;
@@ -166,20 +177,6 @@ void Demo::UpdateGameProgress() {
     }
   }
 }
-
-void Demo::EnterMenuState() {
-  if (state_ == kMenu)
-    return;
-  menu_.FadeIn();
-  state_ = kMenu;
-}
-
-void Demo::EnterGameState() {
-  if (state_ == kGame)
-    return;
-  state_ = kGame;
-}
-
 
 void Demo::Continue() {
   EnterGameState();

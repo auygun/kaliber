@@ -26,6 +26,9 @@ class Demo : public eng::Game {
 
   void MenuOptionSelected(Menu::Option option);
 
+  void EnterMenuState();
+  void EnterGameState();
+
   Player& GetPlayer() { return player_; }
   Enemy& GetEnemy() { return enemy_; }
 
@@ -62,9 +65,6 @@ class Demo : public eng::Game {
   base::Closure delayed_work_cb_;
 
   void UpdateGameProgress();
-
-  void EnterMenuState();
-  void EnterGameState();
 
   void Continue();
   void StartNewGame();

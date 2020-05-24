@@ -66,6 +66,8 @@ class Player {
   void DragEnd();
   void DragCancel();
   bool ValidateDrag();
+
+  void NavigateBack();
 };
 
 #endif  // PLAYER_H

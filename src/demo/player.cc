@@ -8,7 +8,8 @@
 #include "../engine/input_event.h"
 #include "demo.h"
 
-using base::Vector2;
+using namespace base;
+using namespace eng;
 
 namespace {
 
@@ -55,7 +56,9 @@ void Player::Update(float delta_time) {
 }
 
 void Player::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
-  if (event->GetType() == eng::InputEvent::kDragStart)
+  if (event->GetType() == InputEvent::kNavigateBack)
+    NavigateBack();
+  else if (event->GetType() == eng::InputEvent::kDragStart)
     DragStart(event->GetVector(0));
   else if (event->GetType() == eng::InputEvent::kDrag)
     Drag(event->GetVector(0));
@@ -326,4 +329,10 @@ bool Player::ValidateDrag() {
   if (dir.DotProduct(Vector2(0, 1)) < 0)
     return false;
   return true;
+}
+
+void Player::NavigateBack() {
+  DragCancel();
+  eng::Engine& engine = eng::Engine::Get();
+  static_cast<Demo*>(engine.GetGame())->EnterMenuState();
 }
