@@ -76,12 +76,8 @@ void Demo::Update(float delta_time) {
   hud_.Update(delta_time);
   menu_.Update(delta_time);
 
-  if (state_ == kGame) {
-      UpdateGameProgress();
-      sky_.Update(delta_time);
-      player_.Update(delta_time);
-      enemy_.Update(delta_time);
-  }
+  if (state_ == kGame)
+      UpdateGameState(delta_time);
 }
 
 void Demo::Draw(float frame_frac) {
@@ -137,7 +133,11 @@ void Demo::EnterGameState() {
   state_ = kGame;
 }
 
-void Demo::UpdateGameProgress() {
+void Demo::UpdateGameState(float delta_time) {
+  sky_.Update(delta_time);
+  player_.Update(delta_time);
+  enemy_.Update(delta_time);
+
   if (waiting_for_next_wave_)
     return;
 

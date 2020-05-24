@@ -64,7 +64,7 @@ class Demo : public eng::Game {
   float delayed_work_timer_ = 0;
   base::Closure delayed_work_cb_;
 
-  void UpdateGameProgress();
+  void UpdateGameState(float delta_time);
 
   void Continue();
   void StartNewGame();
