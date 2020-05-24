@@ -33,12 +33,13 @@ class Demo : public eng::Game {
 
  private:
   enum State {
+    kState_Invalid = -1,
     kMenu,
     kGame,
     kState_Max
   };
 
-  State state_ = kMenu;
+  State state_ = kState_Invalid;
 
   Player player_;
   Enemy enemy_;
@@ -61,6 +62,9 @@ class Demo : public eng::Game {
   base::Closure delayed_work_cb_;
 
   void UpdateGameProgress();
+
+  void EnterMenuState();
+  void EnterGameState();
 
   void Continue();
   void StartNewGame();

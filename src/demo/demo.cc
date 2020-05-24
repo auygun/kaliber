@@ -14,6 +14,7 @@ DECLARE_GAME(Demo)
 DECLARE_GAME_END
 
 using namespace base;
+using namespace eng;
 
 bool Demo::Initialize() {
   if (!sky_.Create()) {
@@ -41,7 +42,8 @@ bool Demo::Initialize() {
     LOG << "Failed to create the menu.";
     return false;
   }
-  menu_.FadeIn();
+
+  EnterMenuState();
 
   return true;
 }
@@ -50,7 +52,9 @@ void Demo::Update(float delta_time) {
   eng::Engine& engine = eng::Engine::Get();
 
   while (std::unique_ptr<eng::InputEvent> event = engine.GetNextInputEvent()) {
-    if (state_ == kMenu)
+    if (event->GetType() == InputEvent::kNavigateBack)
+      EnterMenuState();
+    else if (state_ == kMenu)
       menu_.OnInputEvent(std::move(event));
     else
       player_.OnInputEvent(std::move(event));
@@ -144,6 +148,7 @@ void Demo::UpdateGameProgress() {
         sky_.SwitchColor(c);
 
         ++wave_;
+        hud_.PrintScore(score_, false);
         hud_.PrintWave(wave_);
         hud_.SetProgress(1);
 
@@ -162,8 +167,22 @@ void Demo::UpdateGameProgress() {
   }
 }
 
-void Demo::Continue() {
+void Demo::EnterMenuState() {
+  if (state_ == kMenu)
+    return;
+  menu_.FadeIn();
+  state_ = kMenu;
+}
+
+void Demo::EnterGameState() {
+  if (state_ == kGame)
+    return;
   state_ = kGame;
+}
+
+
+void Demo::Continue() {
+  EnterGameState();
 }
 
 void Demo::StartNewGame() {
@@ -175,7 +194,7 @@ void Demo::StartNewGame() {
   waiting_for_next_wave_ = false;
   delayed_work_timer_ = 0;
   delayed_work_cb_ = nullptr;
-  state_ = kGame;
+  EnterGameState();
 }
 
 void Demo::SetDelayedWork(float seconds, base::Closure cb) {

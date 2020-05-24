@@ -220,8 +220,12 @@ void Enemy::OnWaveFinished() {
 
 void Enemy::OnWaveStarted(int wave) {
   for (auto& e : enemies_) {
-    if (!e.marked_for_removal && e.hit_points > 0)
-      TakeDamage(&e, 100);
+    if (!e.marked_for_removal && e.hit_points > 0) {
+      if (wave == 1)
+        e.marked_for_removal = true;
+      else
+        TakeDamage(&e, 100);
+    }
   }
   num_enemies_killed_in_current_wave_ = 0;
   seconds_since_last_spawn_ = {0, 0, 0};

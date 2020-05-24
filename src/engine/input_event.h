@@ -18,6 +18,7 @@ class InputEvent {
     kDragCancel,
     kPinchStart,
     kPinch,
+    kNavigateBack,
     kKeyPress,
     kType_Max  // Not a type.
   };

@@ -58,7 +58,7 @@ bool Menu::Initialize(Callback item_selected_cb) {
   for (int i = 0; i < kOption_Max; ++i) {
     items_[i].text.Create(image, {1, 4});
     items_[i].text.AutoScale();
-    items_[i].text.SetColor(kColorNormal);
+    items_[i].text.SetColor(kColorFadeOut);
     items_[i].text.SetVisible(true);
     items_[i].text.SetFrame(i);
 
