@@ -57,10 +57,13 @@ class Demo : public eng::Game {
 
   int waiting_for_next_wave_ = false;
 
-  float delyaed_work_timer_ = 0;
+  float delayed_work_timer_ = 0;
   base::Closure delayed_work_cb_;
 
-  void UpdateWaveProgress();
+  void UpdateGameProgress();
+
+  void Continue();
+  void StartNewGame();
 
   void SetDelayedWork(float seconds, base::Closure cb);
 };

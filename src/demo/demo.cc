@@ -41,6 +41,7 @@ bool Demo::Initialize() {
     LOG << "Failed to create the menu.";
     return false;
   }
+  menu_.FadeIn();
 
   return true;
 }
@@ -55,9 +56,9 @@ void Demo::Update(float delta_time) {
       player_.OnInputEvent(std::move(event));
   }
 
-  if (delyaed_work_timer_ > 0) {
-    delyaed_work_timer_ -= delta_time;
-    if (delyaed_work_timer_ <= 0) {
+  if (delayed_work_timer_ > 0) {
+    delayed_work_timer_ -= delta_time;
+    if (delayed_work_timer_ <= 0) {
       base::Closure cb =  delayed_work_cb_;
       delayed_work_cb_ = nullptr;
       cb();
@@ -71,11 +72,10 @@ void Demo::Update(float delta_time) {
   }
 
   hud_.Update(delta_time);
+  menu_.Update(delta_time);
 
-  if (state_ == kMenu) {
-      menu_.Update(delta_time);
-  } else {
-      UpdateWaveProgress();
+  if (state_ == kGame) {
+      UpdateGameProgress();
       sky_.Update(delta_time);
       player_.Update(delta_time);
       enemy_.Update(delta_time);
@@ -104,9 +104,25 @@ void Demo::AddScore(int score) {
 
 void Demo::MenuOptionSelected(Menu::Option option) {
   LOG << "menu option: " << option;
+  switch (option) {
+    case Menu::kContinue:
+      menu_.FadeOut();
+      Continue();
+      break;
+    case Menu::kNewGame:
+      menu_.FadeOut();
+      StartNewGame();
+      break;
+    case Menu::kCredits:
+      break;
+    case Menu::kExit:
+      break;
+    default:
+      assert(false);
+  }
 }
 
-void Demo::UpdateWaveProgress() {
+void Demo::UpdateGameProgress() {
   if (waiting_for_next_wave_)
     return;
 
@@ -146,8 +162,24 @@ void Demo::UpdateWaveProgress() {
   }
 }
 
+void Demo::Continue() {
+  state_ = kGame;
+}
+
+void Demo::StartNewGame() {
+  score_ = 0;
+  add_score_ = 0;
+  wave_ = 0;
+  last_num_enemies_killed_ = -1;
+  total_enemies_ = 0;
+  waiting_for_next_wave_ = false;
+  delayed_work_timer_ = 0;
+  delayed_work_cb_ = nullptr;
+  state_ = kGame;
+}
+
 void Demo::SetDelayedWork(float seconds, base::Closure cb) {
   assert(delayed_work_cb_ == nullptr);
   delayed_work_cb_ = std::move(cb);
-  delyaed_work_timer_ = seconds;
+  delayed_work_timer_ = seconds;
 }

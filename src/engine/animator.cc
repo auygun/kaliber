@@ -43,7 +43,7 @@ void Animator::Stop(int animation) {
 }
 
 void Animator::SetEndCallback(int animation, base::Closure cb) {
-  if (inside_cb_ != kNone) {
+  if ((inside_cb_ & animation) != 0) {
     has_pending_cb_ = true;
     pending_cb_ = std::move(cb);
   }

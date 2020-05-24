@@ -24,11 +24,15 @@ constexpr char kMenuOption[Menu::kOption_Max][10] = {"continue",
                                                      "credits",
                                                      "exit"};
 
-constexpr float kMenuOptionpace = 1.5f;
+constexpr float kMenuOptionSpace = 1.5f;
 
 const Vector4 kColorNormal = {1, 1, 1, 1};
 const Vector4 kColorHighlight = {5, 5, 5, 1};
 constexpr float kBlendingSpeed = 0.12f;
+
+const Vector4 kColorFadeIn = {1, 1, 1, 1};
+const Vector4 kColorFadeOut = {1, 1, 1, 0};
+constexpr float kFadeSpeed = 0.2f;
 
 }  // namespace
 
@@ -58,14 +62,20 @@ bool Menu::Initialize(Callback item_selected_cb) {
     items_[i].text.SetVisible(true);
     items_[i].text.SetFrame(i);
 
-    Vector2 space = {0, items_[i].text.GetScale().y * kMenuOptionpace};
+    Vector2 space = {0, items_[i].text.GetScale().y * kMenuOptionSpace};
     Vector2 pos = items_[i].text.GetScale() * -i +
                   (items_[i].text.GetScale() + space / 2) *
                   Vector2(0, kOption_Max / 2) - space * i;
     items_[i].text.SetOffset(pos * Vector2(0, 1));
 
-    items_[i].text_animator_cb_ = [&, i]() -> void {
-      items_[i].text_animator.SetEndCallback(Animator::kBlending, nullptr);
+    items_[i].select_item_cb_ = [&, i]() -> void {
+      items_[i].text_animator.SetEndCallback(Animator::kBlending,
+          [&, i]() -> void {
+            items_[i].text_animator.SetEndCallback(Animator::kBlending,
+                                                   nullptr);
+            fading_ = false;
+            item_selected_cb_((Option)i);
+          });
       items_[i].text_animator.SetBlending(kColorNormal, kBlendingSpeed);
       items_[i].text_animator.Play(Animator::kBlending, false);
     };
@@ -81,17 +91,18 @@ void Menu::Update(float delta_time) {
 }
 
 void Menu::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
-  if (event->GetType() != eng::InputEvent::kTap)
+  if (event->GetType() != eng::InputEvent::kTap || fading_)
     return;
 
   for (int i = 0; i < kOption_Max; ++i) {
     if (Intersection(items_[i].text.GetOffset(),
                      items_[i].text.GetScale() * Vector2(1.2f, 2),
                      event->GetVector(0))) {
-      items_[i].text_animator.SetEndCallback(Animator::kBlending, items_[i].text_animator_cb_);
+      fading_ = true;
+      items_[i].text_animator.SetEndCallback(Animator::kBlending,
+                                             items_[i].select_item_cb_);
       items_[i].text_animator.SetBlending(kColorHighlight, kBlendingSpeed);
       items_[i].text_animator.Play(Animator::kBlending, false);
-      item_selected_cb_((Option)i);
     }
   }
 }
@@ -106,6 +117,32 @@ void Menu::ContextLost() {
   for (int i = 0; i < kOption_Max; ++i) {
     items_[i].text.ContextLost();
     items_[i].text.Create(image, {1, 4});
+  }
+}
+
+void Menu::FadeIn() {
+  fading_ = true;
+  for (int i = 0; i < kOption_Max; ++i) {
+    items_[i].text_animator.SetEndCallback(Animator::kBlending, [&, i]() -> void {
+          items_[i].text_animator.SetEndCallback(Animator::kBlending, nullptr);
+          fading_ = false;
+        });
+    items_[i].text_animator.SetBlending(kColorFadeIn, kFadeSpeed);
+    items_[i].text_animator.Play(Animator::kBlending, false);
+    items_[i].text.SetVisible(true);
+  }
+}
+
+void Menu::FadeOut() {
+  fading_ = true;
+  for (int i = 0; i < kOption_Max; ++i) {
+    items_[i].text_animator.SetEndCallback(Animator::kBlending, [&, i]() -> void {
+          items_[i].text_animator.SetEndCallback(Animator::kBlending, nullptr);
+          items_[i].text.SetVisible(false);
+          fading_ = false;
+        });
+    items_[i].text_animator.SetBlending(kColorFadeOut, kFadeSpeed);
+    items_[i].text_animator.Play(Animator::kBlending, false);
   }
 }
 

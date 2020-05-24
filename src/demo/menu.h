@@ -38,11 +38,14 @@ class Menu {
 
   void ContextLost();
 
+  void FadeIn();
+  void FadeOut();
+
  private:
   struct Item {
     eng::ImageQuad text;
     eng::Animator text_animator;
-    base::Closure text_animator_cb_;
+    base::Closure select_item_cb_;
     bool enabled = true;
   };
 
@@ -52,6 +55,8 @@ class Menu {
   int max_text_width_ = 0;
 
   Callback item_selected_cb_;
+
+  bool fading_ = false;
 
   std::shared_ptr<eng::Image> CreateImage();
 };
