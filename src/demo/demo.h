@@ -24,12 +24,22 @@ class Demo : public eng::Game {
 
   void AddScore(int score);
 
+  void MenuOptionSelected(Menu::Option option);
+
   Player& GetPlayer() { return player_; }
   Enemy& GetEnemy() { return enemy_; }
 
   int wave() { return wave_; }
 
  private:
+  enum State {
+    kMenu,
+    kGame,
+    kState_Max
+  };
+
+  State state_ = kMenu;
+
   Player player_;
   Enemy enemy_;
   Hud hud_;

@@ -36,7 +36,8 @@ bool Demo::Initialize() {
     return false;
   }
 
-  if (!menu_.Initialize()) {
+  if (!menu_.Initialize(std::bind(&Demo::MenuOptionSelected, this,
+                                  std::placeholders::_1))) {
     LOG << "Failed to create the menu.";
     return false;
   }
@@ -48,17 +49,10 @@ void Demo::Update(float delta_time) {
   eng::Engine& engine = eng::Engine::Get();
 
   while (std::unique_ptr<eng::InputEvent> event = engine.GetNextInputEvent()) {
-    if (event) {
-      if (event->GetType() == eng::InputEvent::kDragStart ||
-          event->GetType() == eng::InputEvent::kDrag ||
-          event->GetType() == eng::InputEvent::kDragEnd ||
-          event->GetType() == eng::InputEvent::kDragCancel)
-        player_.OnInputEvent(std::move(event));
-      else if (event->GetType() == eng::InputEvent::kTap)
-        menu_.OnInputEvent(std::move(event));
-      else if (event->GetType() == eng::InputEvent::kKeyPress)
-        LOG << "Key press: " << std::string({event->GetKeyPress()});
-    }
+    if (state_ == kMenu)
+      menu_.OnInputEvent(std::move(event));
+    else
+      player_.OnInputEvent(std::move(event));
   }
 
   if (delyaed_work_timer_ > 0) {
@@ -76,13 +70,16 @@ void Demo::Update(float delta_time) {
     hud_.PrintScore(score_, true);
   }
 
-  UpdateWaveProgress();
-
-  player_.Update(delta_time);
-  enemy_.Update(delta_time);
   hud_.Update(delta_time);
-  menu_.Update(delta_time);
-  sky_.Update(delta_time);
+
+  if (state_ == kMenu) {
+      menu_.Update(delta_time);
+  } else {
+      UpdateWaveProgress();
+      sky_.Update(delta_time);
+      player_.Update(delta_time);
+      enemy_.Update(delta_time);
+  }
 }
 
 void Demo::Draw(float frame_frac) {
@@ -103,6 +100,10 @@ void Demo::ContextLost() {
 
 void Demo::AddScore(int score) {
   add_score_ += score;
+}
+
+void Demo::MenuOptionSelected(Menu::Option option) {
+  LOG << "menu option: " << option;
 }
 
 void Demo::UpdateWaveProgress() {

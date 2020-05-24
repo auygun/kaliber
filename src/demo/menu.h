@@ -15,18 +15,20 @@ class Font;
 
 class Menu {
  public:
-  enum Options {
+  enum Option {
     kContinue,
     kNewGame,
     kCredits,
     kExit,
-    kOptions_Max,
+    kOption_Max,
   };
+
+  using Callback = std::function<void(Option)>;
 
   Menu() = default;
   ~Menu() = default;
 
-  bool Initialize();
+  bool Initialize(Callback item_selected_cb);
 
   void Update(float delta_time);
 
@@ -44,10 +46,12 @@ class Menu {
     bool enabled = true;
   };
 
-  Item items_[kOptions_Max];
+  Item items_[kOption_Max];
 
   std::shared_ptr<const eng::Font> font_;
   int max_text_width_ = 0;
+
+  Callback item_selected_cb_;
 
   std::shared_ptr<eng::Image> CreateImage();
 };
