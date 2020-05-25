@@ -127,7 +127,7 @@ void Animator::Update(float delta_time) {
                                 ? blending_interpolator_(blending_time_)
                                 : blending_time_;
       Vector4 r =
-          base::Blend(a.blending_start, blending_target_, interpolated_time);
+          base::Lerp(a.blending_start, blending_target_, interpolated_time);
       a.animatable->SetColor(r);
     }
 

@@ -175,7 +175,7 @@ std::shared_ptr<eng::Image> Menu::CreateImage() {
   Vector4 c2 = {.2f, .2f, .95f, 0};
   uint8_t* buffer = image->GetBuffer();
   for (int h = 0; h < image->GetHeight(); ++h) {
-    Vector4 c = Blend(c1, c2, fmod(h, line_height) / (float)line_height);
+    Vector4 c = Lerp(c1, c2, fmod(h, line_height) / (float)line_height);
     for (int x = 0; x < image->GetWidth(); ++x) {
       buffer[h * image->GetWidth() * 4 + x * 4 + 0] = c.x * 255;
       buffer[h * image->GetWidth() * 4 + x * 4 + 1] = c.y * 255;
