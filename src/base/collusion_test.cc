@@ -1,6 +1,7 @@
 #include "collusion_test.h"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 namespace base {
@@ -9,7 +10,7 @@ bool Intersection(const Vector2& center,
                   const Vector2& size,
                   const Vector2& point) {
   float dx = point.x - center.x;
-  float px = size.x / 2 - abs(dx);
+  float px = size.x / 2 - fabs(dx);
   if (px <= 0)
     return false;
 
