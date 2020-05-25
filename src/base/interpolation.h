@@ -30,11 +30,12 @@ inline float SmootherStep(float t) {
   return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
-// (t, -1, 2) will produce lineer interpolation.
-inline float CatmullRom(float t, float p0, float p1) {
+// Interpolating spline defined by four control points with the curve drawn only
+// from 0 to 1 (p1 to p2).
+inline float CatmullRom(float t, float p0, float p3) {
   return 0.5f * ((-p0 + 1) * t +
-                 (2 * p0 + 4 * 1 - p1) * t * t +
-                 (-p0 - 3 * 1 + p1) * t * t * t);
+                 (2 * p0 + 4 * 1 - p3) * t * t +
+                 (-p0 - 3 * 1 + p3) * t * t * t);
 }
 
 inline float Acceleration(float t) {
