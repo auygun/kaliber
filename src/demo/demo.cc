@@ -114,6 +114,7 @@ void Demo::MenuOptionSelected(Menu::Option option) {
     case Menu::kCredits:
       break;
     case Menu::kExit:
+      Engine::Get().Exit();
       break;
     default:
       assert(false);

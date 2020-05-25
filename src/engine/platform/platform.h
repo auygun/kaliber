@@ -39,6 +39,8 @@ class Platform {
 
   void RunMainLoop();
 
+  void Exit();
+
   Renderer* GetRenderer() { return renderer_.get(); }
 
   int GetDeviceDpi() const { return device_dpi_; }

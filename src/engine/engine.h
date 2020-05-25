@@ -43,6 +43,8 @@ class Engine {
 
   void TrimMemory();
 
+  void Exit();
+
   base::Vector2 GetScreenSize() const { return screen_size_; }
 
   base::Vector2 ToScale(const base::Vector2& vec);

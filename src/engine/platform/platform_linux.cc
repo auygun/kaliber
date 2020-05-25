@@ -88,6 +88,10 @@ void Platform::Update() {
   }
 }
 
+void Platform::Exit() {
+  should_exit_ = true;
+}
+
 }  // namespace eng
 
 int main(int argc, char** argv) {

@@ -2,6 +2,7 @@
 
 #include <android_native_app_glue.h>
 #include <string>
+#include <unistd.h>
 
 #include "../../base/file.h"
 #include "../../base/log.h"
@@ -245,12 +246,17 @@ void Platform::Update() {
     if (source != NULL)
       source->process(app_, source);
     if (app_->destroyRequested != 0) {
+      LOG << "App destroy requested.";
       should_exit_ = true;
       break;
     }
     if (has_focus_)
       break;
   }
+}
+
+void Platform::Exit() {
+  ANativeActivity_finish(app_->activity);
 }
 
 }  // namespace eng
@@ -263,4 +269,5 @@ void android_main(android_app* app) {
     platform.Shutdown();
   } catch (eng::Platform::InternalError& e) {
   }
+  _exit(0);
 }

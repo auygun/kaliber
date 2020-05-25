@@ -74,7 +74,6 @@ bool Engine::Init(Platform* platform) {
 }
 
 void Engine::Shutdown() {
-  game_.reset();
 }
 
 void Engine::Update(float delta_time) {
@@ -128,6 +127,10 @@ void Engine::TrimMemory() {
   image_assets_.clear();
   shader_source_assets_.clear();
   font_assets_.clear();
+}
+
+void Engine::Exit() {
+  platform_->Exit();
 }
 
 Vector2 Engine::ToScale(const Vector2& vec) {
