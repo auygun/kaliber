@@ -1,7 +1,7 @@
 #include "sky_quad.h"
 
+#include "../base/interpolation.h"
 #include "../base/log.h"
-#include "../base/misc.h"
 #include "../engine/engine.h"
 #include "../engine/shader_source.h"
 

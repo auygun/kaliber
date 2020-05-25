@@ -5,8 +5,8 @@
 #include <vector>
 
 #include "../base/collusion_test.h"
+#include "../base/interpolation.h"
 #include "../base/log.h"
-#include "../base/misc.h"
 #include "../base/vecmath.h"
 #include "../base/worker.h"
 #include "../engine/engine.h"
