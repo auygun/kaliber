@@ -96,7 +96,9 @@ void Engine::Update(float delta_time) {
 }
 
 void Engine::Draw(float frame_frac) {
-  Clear();
+  auto cmd = std::make_unique<CmdClear>();
+  cmd->rgba = {0, 0, 0, 1};
+  renderer_->EnqueueCommand(std::move(cmd));
   renderer_->EnqueueCommand(std::make_unique<CmdEableBlend>());
 
   game_->Draw(frame_frac);
@@ -107,17 +109,14 @@ void Engine::Draw(float frame_frac) {
   renderer_->EnqueueCommand(std::make_unique<CmdPresent>());
 }
 
-void Engine::Clear() {
-  static float grey = 0.0f;
-#if 0
-  // Pulsate the clear color to make it more visible if we see it.
-  grey += 0.01f;
-  if (grey > 1.0f)
-    grey = 0.0f;
-#endif
-  auto cmd = std::make_unique<CmdClear>();
-  cmd->rgba = {grey, grey, grey, 1.0f};
-  renderer_->EnqueueCommand(std::move(cmd));
+void Engine::LostFocus() {
+  if (game_)
+    game_->LostFocus();
+}
+
+void Engine::GainedFocus() {
+  if (game_)
+    game_->GainedFocus();
 }
 
 void Engine::TrimMemory() {

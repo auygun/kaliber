@@ -97,6 +97,13 @@ void Demo::ContextLost() {
   sky_.ContextLost();
 }
 
+void Demo::LostFocus() {
+  EnterMenuState();
+}
+
+void Demo::GainedFocus() {
+}
+
 void Demo::AddScore(int score) {
   add_score_ += score;
 }

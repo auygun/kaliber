@@ -16,6 +16,10 @@ class Game {
 
   virtual void ContextLost() = 0;
 
+  virtual void LostFocus() = 0;
+
+  virtual void GainedFocus() = 0;
+
  private:
   Game(const Game&) = delete;
   Game& operator=(const Game&) = delete;

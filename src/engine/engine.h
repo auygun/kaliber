@@ -41,6 +41,9 @@ class Engine {
   void Update(float delta_time);
   void Draw(float frame_frac);
 
+  void LostFocus();
+  void GainedFocus();
+
   void TrimMemory();
 
   void Exit();
@@ -146,8 +149,6 @@ class Engine {
   bool CreateRenderResources();
 
   void KillUnusedResources(float delta_time);
-
-  void Clear();
 
   void PrintStats();
 

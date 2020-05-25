@@ -168,7 +168,6 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
     case APP_CMD_TERM_WINDOW:
       DLOG << "APP_CMD_TERM_WINDOW";
       platform->renderer_->Shutdown();
-      platform->has_focus_ = false;
       break;
 
     case APP_CMD_CONFIG_CHANGED:
@@ -195,11 +194,13 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       DLOG << "APP_CMD_GAINED_FOCUS";
       platform->timer_.Reset();
       platform->has_focus_ = true;
+      Engine::Get().GainedFocus();
       break;
 
     case APP_CMD_LOST_FOCUS:
       DLOG << "APP_CMD_LOST_FOCUS";
       platform->has_focus_ = false;
+      Engine::Get().LostFocus();
       break;
 
     case APP_CMD_LOW_MEMORY:

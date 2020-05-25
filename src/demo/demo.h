@@ -22,6 +22,10 @@ class Demo : public eng::Game {
 
   void ContextLost() override;
 
+  void LostFocus() override;
+
+  void GainedFocus() override;
+
   void AddScore(int score);
 
   void EnterMenuState();
