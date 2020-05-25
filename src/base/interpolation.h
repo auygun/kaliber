@@ -12,18 +12,14 @@ inline T Lerp(const T& a, const T& b, float t) {
 }
 
 inline float BlendColorChannel(float c1, float c2, float t) {
-  return sqrt((1 - t) * c1 * c1 + t * c2 * c2);
-}
-
-inline float BlendAlphaChannel(float a1, float a2, float t) {
-  return (1 - t) * a1 + t * a2;
+  return sqrt(Lerp(c1 * c1, c2 * c2, t));
 }
 
 // Blend colors between a and b, by fraction t.
 inline Vector4 Blend(const Vector4& c1, const Vector4& c2, float t) {
   return Vector4(
       BlendColorChannel(c1.x, c2.x, t), BlendColorChannel(c1.y, c2.y, t),
-      BlendColorChannel(c1.z, c2.z, t), BlendAlphaChannel(c1.w, c2.w, t));
+      BlendColorChannel(c1.z, c2.z, t), Lerp(c1.w, c2.w, t));
 }
 
 inline float SmoothStep(float t) {
