@@ -15,7 +15,7 @@ bool Intersection(const Vector2& center,
     return false;
 
   float dy = point.y - center.y;
-  float py = size.y / 2 - abs(dy);
+  float py = size.y / 2 - fabs(dy);
   return py > 0;
 }
 
