@@ -60,7 +60,7 @@ void Demo::Update(float delta_time) {
   if (delayed_work_timer_ > 0) {
     delayed_work_timer_ -= delta_time;
     if (delayed_work_timer_ <= 0) {
-      base::Closure cb =  delayed_work_cb_;
+      base::Closure cb = std::move(delayed_work_cb_);
       delayed_work_cb_ = nullptr;
       cb();
     }
@@ -176,7 +176,7 @@ void Demo::UpdateGameState(float delta_time) {
 
         ++wave_;
         hud_.PrintScore(score_, false);
-        hud_.PrintWave(wave_);
+        hud_.PrintWave(wave_, true);
         hud_.SetProgress(1);
 
         float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;

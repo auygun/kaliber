@@ -49,20 +49,21 @@ bool Hud::Initialize() {
 
     pos -= progress_bar_[i].GetScale() * Vector2(0, 4);
     text_[i].Translate(pos * Vector2(i ? 1 : -1, 1));
-  }
 
-  hud_animator_cb_ = [&]() -> void {
-    hud_animator_.SetEndCallback(eng::Animator::kBlending, nullptr);
-    hud_animator_.SetBlending({0.895f, 0.692f, 0.24f, 1}, 0.2f);
-    hud_animator_.Play(eng::Animator::kBlending, false);
-  };
-  hud_animator_.Attach(&text_[0]);
+    hud_animator_cb_[i] = [&, i]() -> void {
+      hud_animator_[i].SetEndCallback(eng::Animator::kBlending, nullptr);
+      hud_animator_[i].SetBlending({0.895f, 0.692f, 0.24f, 1}, 0.2f);
+      hud_animator_[i].Play(eng::Animator::kBlending, false);
+    };
+    hud_animator_[i].Attach(&text_[i]);
+  }
 
   return true;
 }
 
 void Hud::Update(float delta_time) {
-  hud_animator_.Update(delta_time);
+  hud_animator_[0].Update(delta_time);
+  hud_animator_[1].Update(delta_time);
 }
 
 void Hud::Draw() {
@@ -76,7 +77,7 @@ void Hud::ContextLost() {
   for (int i = 0; i < 2; ++i)
     text_[i].ContextLost();
   PrintScore(last_score_, false);
-  PrintWave(last_wave_);
+  PrintWave(last_wave_, false);
   SetProgress(last_progress_);
 }
 
@@ -85,13 +86,13 @@ void Hud::PrintScore(int score, bool flash) {
   Print(0, std::to_string(score));
 
   if (flash) {
-    hud_animator_.SetEndCallback(eng::Animator::kBlending, hud_animator_cb_);
-    hud_animator_.SetBlending({1, 1, 1, 1}, 0.08f);
-    hud_animator_.Play(eng::Animator::kBlending, false);
+    hud_animator_[0].SetEndCallback(eng::Animator::kBlending, hud_animator_cb_[0]);
+    hud_animator_[0].SetBlending({1, 1, 1, 1}, 0.08f);
+    hud_animator_[0].Play(eng::Animator::kBlending, false);
   }
 }
 
-void Hud::PrintWave(int wave) {
+void Hud::PrintWave(int wave, bool flash) {
   last_wave_ = wave;
   std::string text = "wave ";
   text += std::to_string(wave);
@@ -100,6 +101,12 @@ void Hud::PrintWave(int wave) {
   if (!progress_bar_[0].IsVisible()) {
     progress_bar_[0].SetVisible(true);
     progress_bar_[1].SetVisible(true);
+  }
+
+  if (flash) {
+    hud_animator_[1].SetEndCallback(eng::Animator::kBlending, hud_animator_cb_[1]);
+    hud_animator_[1].SetBlending({1, 1, 1, 1}, 0.08f);
+    hud_animator_[1].Play(eng::Animator::kBlending, false);
   }
 }
 

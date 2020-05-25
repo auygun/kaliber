@@ -28,7 +28,7 @@ class Hud {
   void ContextLost();
 
   void PrintScore(int score, bool flash);
-  void PrintWave(int wave);
+  void PrintWave(int wave, bool flash);
 
   void SetProgress(float progress);
 
@@ -36,8 +36,8 @@ class Hud {
   eng::SolidQuad progress_bar_[2];
   eng::ImageQuad text_[2];
 
-  eng::Animator hud_animator_;
-  base::Closure hud_animator_cb_;
+  eng::Animator hud_animator_[2];
+  base::Closure hud_animator_cb_[2];
 
   std::shared_ptr<const eng::Font> font_;
   int max_text_width_ = 0;
