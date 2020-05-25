@@ -1,10 +1,9 @@
 #include "animator.h"
 
-#include "../base/misc.h"
+#include "../base/interpolation.h"
 #include "animatable.h"
 
-using base::Vector2;
-using base::Vector4;
+using namespace base;
 
 namespace eng {
 
@@ -59,29 +58,33 @@ void Animator::SetEndCallback(int animation, base::Closure cb) {
       timer_cb_ = std::move(cb);
 }
 
-void Animator::SetMovement(Vector2 direction, float speed) {
+void Animator::SetMovement(Vector2 direction, float speed, Interpolator interpolator) {
   movement_direction_ = direction;
   float len = direction.Magnitude();
   movement_speed_ = speed / len;
+  movement_interpolator_ = std::move(interpolator);
 }
 
-void Animator::SetRotation(float trget, float speed) {
+void Animator::SetRotation(float trget, float speed, Interpolator interpolator) {
   rotation_target_ = trget;
   rotation_speed_ = speed / trget;
+  rotation_interpolator_ = std::move(interpolator);
 }
 
-void Animator::SetBlending(Vector4 target, float speed) {
+void Animator::SetBlending(Vector4 target, float speed, Interpolator interpolator) {
   blending_target_ = target;
   blending_speed_ = 1.0f / speed;
   for (auto& a : elements_)
     a.blending_start = a.animatable->GetColor();
+  blending_interpolator_ = std::move(interpolator);
 }
 
-void Animator::SetFrames(int count, int speed) {
+void Animator::SetFrames(int count, int speed, Interpolator interpolator) {
   frame_count_ = count;
   frame_speed_ = (float)speed / (float)count;
   for (auto& a : elements_)
     a.frame_start_ = a.animatable->GetFrame();
+  frame_interpolator_ = std::move(interpolator);
 }
 
 void Animator::SetTimer(float seconds) {
@@ -102,26 +105,38 @@ void Animator::Update(float delta_time) {
 
   for (auto& a : elements_) {
     if (play_flags_ & kMovement) {
-      Vector2 offset = base::Lerp({0, 0}, movement_direction_, movement_time_);
+      float interpolated_time = movement_interpolator_
+                                ? movement_interpolator_(movement_time_)
+                                : movement_time_;
+      Vector2 offset = base::Lerp({0, 0}, movement_direction_, interpolated_time);
       a.animatable->Translate(offset - a.movement_last_offset);
       a.movement_last_offset = offset;
     }
 
     if (play_flags_ & kRotation) {
-      float theta = base::Lerp(0.0f, rotation_target_, rotation_time_);
+      float interpolated_time = rotation_interpolator_
+                                ? rotation_interpolator_(rotation_time_)
+                                : rotation_time_;
+      float theta = base::Lerp(0.0f, rotation_target_, interpolated_time);
       a.animatable->Rotate(theta - a.rotation_last_theta);
       a.rotation_last_theta = theta;
     }
 
     if (play_flags_ & kBlending) {
+      float interpolated_time = blending_interpolator_
+                                ? blending_interpolator_(blending_time_)
+                                : blending_time_;
       Vector4 r =
-          base::Blend(a.blending_start, blending_target_, blending_time_);
+          base::Blend(a.blending_start, blending_target_, interpolated_time);
       a.animatable->SetColor(r);
     }
 
     if (play_flags_ & kFrames) {
+      float interpolated_time = frame_interpolator_
+                                ? frame_interpolator_(frame_time_)
+                                : frame_time_;
       int target = a.frame_start_ + frame_count_;
-      int r = base::Lerp(a.frame_start_, target, frame_time_);
+      int r = base::Lerp(a.frame_start_, target, interpolated_time);
       if (r < target)
         a.animatable->SetFrame(r);
     }
@@ -145,10 +160,8 @@ void Animator::UpdateMovement(float delta_time) {
   }
 
   movement_time_ += movement_speed_ * delta_time;
-  if ((loop_flags_ & kMovement) == 0 && movement_time_ > 1)
-    movement_time_ = 1;
-  else
-    movement_time_ = fmod(movement_time_, 1.0f);
+  if (movement_time_ > 1)
+    movement_time_ = (loop_flags_ & kMovement) == 0 ? 1 : fmod(movement_time_, 1.0f);
 }
 
 void Animator::UpdateRotation(float delta_time) {
@@ -168,10 +181,8 @@ void Animator::UpdateRotation(float delta_time) {
   }
 
   rotation_time_ += rotation_speed_ * delta_time;
-  if ((loop_flags_ & kRotation) == 0 && rotation_time_ > 1)
-    rotation_time_ = 1;
-  else
-    rotation_time_ = fmod(rotation_time_, 1.0f);
+  if (rotation_time_ > 1)
+    rotation_time_ = (loop_flags_ & kRotation) == 0 ? 1 : fmod(rotation_time_, 1.0f);
 }
 
 void Animator::UpdateBlending(float delta_time) {
@@ -191,10 +202,8 @@ void Animator::UpdateBlending(float delta_time) {
   }
 
   blending_time_ += blending_speed_ * delta_time;
-  if ((loop_flags_ & kBlending) == 0 && blending_time_ > 1)
-    blending_time_ = 1;
-  else
-    blending_time_ = fmod(blending_time_, 1.0f);
+  if (blending_time_ > 1)
+    blending_time_ = (loop_flags_ & kBlending) == 0 ? 1 : fmod(blending_time_, 1.0f);
 }
 
 void Animator::UpdateFrame(float delta_time) {

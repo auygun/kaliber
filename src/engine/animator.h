@@ -23,6 +23,8 @@ class Animator {
     kAllAnimations = kMovement | kRotation | kBlending | kFrames
   };
 
+  using Interpolator = std::function<float(float)>;
+
   Animator() = default;
   ~Animator() = default;
 
@@ -40,21 +42,29 @@ class Animator {
   // Set movement animation parameters. Movement animations is relative.
   // Distance is calculated from the magnitude of direction vector. Speed is in
   // units per second.
-  void SetMovement(base::Vector2 direction, float speed);
+  void SetMovement(base::Vector2 direction,
+                   float speed,
+                   Interpolator interpolator = nullptr);
 
   // Set rotation animation parameters. Rotation animation is relative. Target
   // is in radians. Speed is in units per second.
-  void SetRotation(float target, float speed);
+  void SetRotation(float target,
+                   float speed,
+                   Interpolator interpolator = nullptr);
 
   // Set color blending animation parameters. Color blending animation is
   // absolute. The absolute start colors are obtained from the attached
   // animatables. Speed is in seconds.
-  void SetBlending(base::Vector4 target, float speed);
+  void SetBlending(base::Vector4 target,
+                   float speed,
+                   Interpolator interpolator = nullptr);
 
   // Set frame playback animation parameters. Frame animation is absolute. The
   // absolute start frames are obtained from the attached animatables. Plays
   // count number of frames. Speed is in frames per second.
-  void SetFrames(int count, int speed);
+  void SetFrames(int count,
+                 int speed,
+                 Interpolator interpolator = nullptr);
 
   // Set Timer parameters. Timer doesn't play any animation. Usefull for
   // triggering a callback after the given seconds passed. Loop parameter is
@@ -81,21 +91,25 @@ class Animator {
   base::Vector2 movement_direction_ = {0, 0};
   float movement_speed_ = 0;
   float movement_time_ = 0;
+  Interpolator movement_interpolator_;
   base::Closure movement_cb_;
 
   float rotation_target_ = 0;
   float rotation_speed_ = 0;
   float rotation_time_ = 0;
+  Interpolator rotation_interpolator_;
   base::Closure rotation_cb_;
 
   base::Vector4 blending_target_ = {0, 0, 0, 0};
   float blending_speed_ = 0;
   float blending_time_ = 0;
+  Interpolator blending_interpolator_;
   base::Closure blending_cb_;
 
   int frame_count_ = 0;
   float frame_speed_ = 0;
   float frame_time_ = 0;
+  Interpolator frame_interpolator_;
   base::Closure frame_cb_;
 
   float timer_speed_ = 0;
