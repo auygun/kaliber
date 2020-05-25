@@ -104,6 +104,12 @@ void Demo::AddScore(int score) {
 void Demo::EnterMenuState() {
   if (state_ == kMenu)
     return;
+  if (wave_ == 0) {
+    menu_.SetOptionEnabled(Menu::kContinue, false);
+  } else {
+    menu_.SetOptionEnabled(Menu::kContinue, true);
+    menu_.SetOptionEnabled(Menu::kNewGame, false);
+  }
   menu_.Show();
   state_ = kMenu;
 }

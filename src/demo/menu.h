@@ -40,6 +40,8 @@ class Menu {
 
   void ContextLost();
 
+  void SetOptionEnabled(Option o, bool enable);
+
   void Show();
   void Hide();
 
@@ -50,6 +52,7 @@ class Menu {
     eng::ImageQuad text;
     eng::Animator text_animator;
     base::Closure select_item_cb_;
+    bool hide = false;
   };
 
   Item items_[kOption_Max];

@@ -20,7 +20,7 @@ using namespace eng;
 namespace {
 
 constexpr char kMenuOption[Menu::kOption_Max][10] = {"continue",
-                                                     "new game",
+                                                     "start",
                                                      "credits",
                                                      "exit"};
 
@@ -56,14 +56,8 @@ bool Menu::Initialize() {
     items_[i].text.Create(image, {1, 4});
     items_[i].text.AutoScale();
     items_[i].text.SetColor(kColorFadeOut);
-    items_[i].text.SetVisible(true);
+    items_[i].text.SetVisible(false);
     items_[i].text.SetFrame(i);
-
-    Vector2 space = {0, items_[i].text.GetScale().y * kMenuOptionSpace};
-    Vector2 pos = items_[i].text.GetScale() * -i +
-                  (items_[i].text.GetScale() + space / 2) *
-                  Vector2(0, kOption_Max / 2) - space * i;
-    items_[i].text.SetOffset(pos * Vector2(0, 1));
 
     items_[i].select_item_cb_ = [&, i]() -> void {
       items_[i].text_animator.SetEndCallback(Animator::kBlending,
@@ -78,13 +72,18 @@ bool Menu::Initialize() {
     };
     items_[i].text_animator.Attach(&items_[i].text);
   }
+  // Get the item positions calculated.
+  SetOptionEnabled(kContinue, true);
 
   return true;
 }
 
 void Menu::Update(float delta_time) {
-  for (int i = 0; i < kOption_Max; ++i)
+  for (int i = 0; i < kOption_Max; ++i) {
+    if (items_[i].hide)
+      continue;
     items_[i].text_animator.Update(delta_time);
+  }
 }
 
 void Menu::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
@@ -92,6 +91,8 @@ void Menu::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
     return;
 
   for (int i = 0; i < kOption_Max; ++i) {
+    if (items_[i].hide)
+      continue;
     if (Intersection(items_[i].text.GetOffset(),
                      items_[i].text.GetScale() * Vector2(1.2f, 2),
                      event->GetVector(0))) {
@@ -117,9 +118,27 @@ void Menu::ContextLost() {
   }
 }
 
+void Menu::SetOptionEnabled(Option o, bool enable) {
+  int y = 0;
+  for (int i = 0; i < kOption_Max; ++i) {
+    if (i == o)
+      items_[i].hide = !enable;
+    if (!items_[i].hide) {
+      Vector2 space = {0, items_[i].text.GetScale().y * kMenuOptionSpace};
+      Vector2 pos = items_[i].text.GetScale() * -y +
+                    (items_[i].text.GetScale() + space / 2) *
+                    Vector2(0, (kOption_Max - 1) / 2) - space * y;
+      ++y;
+      items_[i].text.SetOffset(pos * Vector2(0, 1));
+    }
+  }
+}
+
 void Menu::Show() {
   fading_ = true;
   for (int i = 0; i < kOption_Max; ++i) {
+    if (items_[i].hide)
+      continue;
     items_[i].text_animator.SetEndCallback(Animator::kBlending, [&, i]() -> void {
           items_[i].text_animator.SetEndCallback(Animator::kBlending, nullptr);
           fading_ = false;
@@ -134,6 +153,8 @@ void Menu::Hide() {
   fading_ = true;
   selected_option_ = kOption_Invalid;
   for (int i = 0; i < kOption_Max; ++i) {
+    if (items_[i].hide)
+      continue;
     items_[i].text_animator.SetEndCallback(Animator::kBlending, [&, i]() -> void {
           items_[i].text_animator.SetEndCallback(Animator::kBlending, nullptr);
           items_[i].text.SetVisible(false);
