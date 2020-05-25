@@ -30,20 +30,17 @@ const Vector4 kColorNormal = {1, 1, 1, 1};
 const Vector4 kColorHighlight = {5, 5, 5, 1};
 constexpr float kBlendingSpeed = 0.12f;
 
-const Vector4 kColorFadeIn = {1, 1, 1, 1};
 const Vector4 kColorFadeOut = {1, 1, 1, 0};
 constexpr float kFadeSpeed = 0.2f;
 
 }  // namespace
 
-bool Menu::Initialize(Callback item_selected_cb) {
+bool Menu::Initialize() {
   eng::Engine& engine = eng::Engine::Get();
 
   font_ = engine.GetFontAsset("PixelCaps!.ttf");
   if (!font_)
     return false;
-
-  item_selected_cb_ = std::move(item_selected_cb);
 
   max_text_width_ = -1;
   for (int i = 0; i < kOption_Max; ++i) {
@@ -74,7 +71,7 @@ bool Menu::Initialize(Callback item_selected_cb) {
             items_[i].text_animator.SetEndCallback(Animator::kBlending,
                                                    nullptr);
             fading_ = false;
-            item_selected_cb_((Option)i);
+            selected_option_ = (Option)i;
           });
       items_[i].text_animator.SetBlending(kColorNormal, kBlendingSpeed);
       items_[i].text_animator.Play(Animator::kBlending, false);
@@ -120,21 +117,22 @@ void Menu::ContextLost() {
   }
 }
 
-void Menu::FadeIn() {
+void Menu::Show() {
   fading_ = true;
   for (int i = 0; i < kOption_Max; ++i) {
     items_[i].text_animator.SetEndCallback(Animator::kBlending, [&, i]() -> void {
           items_[i].text_animator.SetEndCallback(Animator::kBlending, nullptr);
           fading_ = false;
         });
-    items_[i].text_animator.SetBlending(kColorFadeIn, kFadeSpeed);
+    items_[i].text_animator.SetBlending(kColorNormal, kFadeSpeed);
     items_[i].text_animator.Play(Animator::kBlending, false);
     items_[i].text.SetVisible(true);
   }
 }
 
-void Menu::FadeOut() {
+void Menu::Hide() {
   fading_ = true;
+  selected_option_ = kOption_Invalid;
   for (int i = 0; i < kOption_Max; ++i) {
     items_[i].text_animator.SetEndCallback(Animator::kBlending, [&, i]() -> void {
           items_[i].text_animator.SetEndCallback(Animator::kBlending, nullptr);
@@ -152,8 +150,8 @@ std::shared_ptr<eng::Image> Menu::CreateImage() {
   image->Create(max_text_width_, line_height * kOption_Max);
 
   // Fill the area of each menu item with gradient.
-  Vector4 c1 = {.2f, .9f, .2f, 0};
-  Vector4 c2 = {.2f, .2f, .9f, 0};
+  Vector4 c1 = {.2f, .95f, .2f, 0};
+  Vector4 c2 = {.2f, .2f, .95f, 0};
   uint8_t* buffer = image->GetBuffer();
   for (int h = 0; h < image->GetHeight(); ++h) {
     Vector4 c = Blend(c1, c2, fmod(h, line_height) / (float)line_height);

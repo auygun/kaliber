@@ -24,8 +24,6 @@ class Demo : public eng::Game {
 
   void AddScore(int score);
 
-  void MenuOptionSelected(Menu::Option option);
-
   void EnterMenuState();
   void EnterGameState();
 
@@ -64,6 +62,7 @@ class Demo : public eng::Game {
   float delayed_work_timer_ = 0;
   base::Closure delayed_work_cb_;
 
+  void UpdateMenuState(float delta_time);
   void UpdateGameState(float delta_time);
 
   void Continue();

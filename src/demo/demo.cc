@@ -37,8 +37,7 @@ bool Demo::Initialize() {
     return false;
   }
 
-  if (!menu_.Initialize(std::bind(&Demo::MenuOptionSelected, this,
-                                  std::placeholders::_1))) {
+  if (!menu_.Initialize()) {
     LOG << "Failed to create the menu.";
     return false;
   }
@@ -76,7 +75,9 @@ void Demo::Update(float delta_time) {
   hud_.Update(delta_time);
   menu_.Update(delta_time);
 
-  if (state_ == kGame)
+  if (state_ == kMenu)
+      UpdateMenuState(delta_time);
+  else
       UpdateGameState(delta_time);
 }
 
@@ -100,15 +101,29 @@ void Demo::AddScore(int score) {
   add_score_ += score;
 }
 
-void Demo::MenuOptionSelected(Menu::Option option) {
-  LOG << "menu option: " << option;
-  switch (option) {
+void Demo::EnterMenuState() {
+  if (state_ == kMenu)
+    return;
+  menu_.Show();
+  state_ = kMenu;
+}
+
+void Demo::EnterGameState() {
+  if (state_ == kGame)
+    return;
+  state_ = kGame;
+}
+
+void Demo::UpdateMenuState(float delta_time) {
+  switch (menu_.selected_option()) {
+    case Menu::kOption_Invalid:
+      break;
     case Menu::kContinue:
-      menu_.FadeOut();
+      menu_.Hide();
       Continue();
       break;
     case Menu::kNewGame:
-      menu_.FadeOut();
+      menu_.Hide();
       StartNewGame();
       break;
     case Menu::kCredits:
@@ -119,19 +134,6 @@ void Demo::MenuOptionSelected(Menu::Option option) {
     default:
       assert(false);
   }
-}
-
-void Demo::EnterMenuState() {
-  if (state_ == kMenu)
-    return;
-  menu_.FadeIn();
-  state_ = kMenu;
-}
-
-void Demo::EnterGameState() {
-  if (state_ == kGame)
-    return;
-  state_ = kGame;
 }
 
 void Demo::UpdateGameState(float delta_time) {

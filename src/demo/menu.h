@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+#include "../base/closure.h"
 #include "../engine/animator.h"
 #include "../engine/image_quad.h"
 
@@ -16,6 +17,7 @@ class Font;
 class Menu {
  public:
   enum Option {
+    kOption_Invalid = -1,
     kContinue,
     kNewGame,
     kCredits,
@@ -28,7 +30,7 @@ class Menu {
   Menu() = default;
   ~Menu() = default;
 
-  bool Initialize(Callback item_selected_cb);
+  bool Initialize();
 
   void Update(float delta_time);
 
@@ -38,15 +40,16 @@ class Menu {
 
   void ContextLost();
 
-  void FadeIn();
-  void FadeOut();
+  void Show();
+  void Hide();
+
+  Option selected_option() const { return selected_option_; }
 
  private:
   struct Item {
     eng::ImageQuad text;
     eng::Animator text_animator;
     base::Closure select_item_cb_;
-    bool enabled = true;
   };
 
   Item items_[kOption_Max];
@@ -54,7 +57,7 @@ class Menu {
   std::shared_ptr<const eng::Font> font_;
   int max_text_width_ = 0;
 
-  Callback item_selected_cb_;
+  Option selected_option_ = kOption_Invalid;
 
   bool fading_ = false;
 
