@@ -58,6 +58,29 @@ inline Vector4 Blend(const Vector4& c1, const Vector4& c2, float t) {
       BlendColorChannel(c1.z, c2.z, t), BlendAlphaChannel(c1.w, c2.w, t));
 }
 
+inline float SmoothStep(float t) {
+  return t * t * (3 - 2 * t);
+}
+
+inline float SmootherStep(float t) {
+  return t * t * t * (t * (t * 6 - 15) + 10);
+}
+
+// (t, -1, 2) will produce lineer interpolation.
+inline float CatmullRom(float t, float p0, float p1) {
+  return 0.5f * ((-p0 + 1) * t +
+                 (2 * p0 + 4 * 1 - p1) * t * t +
+                 (-p0 - 3 * 1 + p1) * t * t * t);
+}
+
+inline float Acceleration(float t) {
+  return t * t;
+}
+
+inline float Decelleration(float t) {
+  return 1 - (1 - t) * (1 - t);
+}
+
 }  // namespace base
 
 #endif  // MISC_H
