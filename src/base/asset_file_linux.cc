@@ -31,7 +31,7 @@ int AssetFile::GetSize() {
   return size;
 }
 
-int AssetFile::Read(char* data, int size) {
+int AssetFile::Read(char* data, size_t size) {
   if (file_)
     return fread(data, 1, size, file_.get());
 

@@ -1,6 +1,6 @@
 #include "types.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "../../base/log.h"
 

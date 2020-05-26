@@ -47,12 +47,15 @@ class Platform {
 
   const std::string& GetRootPath() const { return root_path_; }
 
+  bool mobile_device() const { return mobile_device_; }
+
   static class InternalError : public std::exception {
   } internal_error;
 
  private:
   base::Timer timer_;
 
+  bool mobile_device_ = false;
   int device_dpi_ = 200;
   std::string root_path_;
 

@@ -5,7 +5,7 @@ namespace base {
 
 std::unique_ptr<char[]> AssetFile::ReadWholeFile(const std::string& file_name,
                                                  const std::string& root_path,
-                                                 int* length,
+                                                 size_t* length,
                                                  bool null_terminate) {
   AssetFile file;
   if (!file.Open(file_name, root_path))

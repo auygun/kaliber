@@ -62,9 +62,10 @@ bool Mesh::Load(const std::string& file_name) {
 
   SetName(file_name);
 
-  int size = 0;
+  size_t buffer_size = 0;
   std::unique_ptr<char[]> json_mesh = base::AssetFile::ReadWholeFile(
-      file_name.c_str(), Engine::Get().GetRootPath().c_str(), &size, true);
+      file_name.c_str(), Engine::Get().GetRootPath().c_str(), &buffer_size,
+      true);
   if (!json_mesh) {
     LOG << "Failed to read file: " << file_name;
     return false;
@@ -74,7 +75,8 @@ bool Mesh::Load(const std::string& file_name) {
   Json::Value root;
   Json::CharReaderBuilder builder;
   const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-  if (!reader->parse(json_mesh.get(), json_mesh.get() + size, &root, &err)) {
+  if (!reader->parse(json_mesh.get(), json_mesh.get() + buffer_size, &root,
+      &err)) {
     LOG << "Failed to load mesh. Json parser error: " << err;
     return false;
   }

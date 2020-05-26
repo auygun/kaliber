@@ -97,6 +97,8 @@ class Engine {
 
   const std::string& GetRootPath() const;
 
+  bool IsMobile() const;
+
   float seconds_accumulated() const { return seconds_accumulated_; }
 
  private:

@@ -224,6 +224,8 @@ void Platform::Initialize(android_app* app) {
   drag_detector_->SetConfiguration(app_->config);
   pinch_detector_->SetConfiguration(app_->config);
 
+  mobile_device_ = true;
+
   root_path_ = GetApkPath(app->activity);
   LOG << "Root path: " << root_path_.c_str();
 

@@ -83,9 +83,9 @@ bool Image::Load(const std::string& file_name, bool convert_pow2) {
 
   SetName(file_name);
 
-  int file_size = 0;
+  size_t buffer_size = 0;
   std::unique_ptr<char[]> file_buffer = base::AssetFile::ReadWholeFile(
-      file_name.c_str(), Engine::Get().GetRootPath().c_str(), &file_size);
+      file_name.c_str(), Engine::Get().GetRootPath().c_str(), &buffer_size);
   if (!file_buffer) {
     LOG << "Failed to read file: " << file_name;
     return false;
@@ -93,7 +93,7 @@ bool Image::Load(const std::string& file_name, bool convert_pow2) {
 
   int w, h, c;
   buffer_.reset((uint8_t*)stbi_load_from_memory(
-      (const stbi_uc*)file_buffer.get(), file_size, &w, &h, &c, 0));
+      (const stbi_uc*)file_buffer.get(), buffer_size, &w, &h, &c, 0));
   if (!buffer_) {
     LOG << "Failed to load image file: " << file_name;
     return false;

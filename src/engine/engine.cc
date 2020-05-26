@@ -304,6 +304,10 @@ const std::string& Engine::GetRootPath() const {
   return platform_->GetRootPath();
 }
 
+bool Engine::IsMobile() const {
+  return platform_->mobile_device();
+}
+
 void Engine::ContextLost() {
   if (!task_runner_->IsBoundToCurrentThread()) {
     task_runner_->Enqueue(std::bind(&Engine::ContextLost, this));

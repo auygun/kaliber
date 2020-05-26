@@ -23,17 +23,17 @@ class AssetFile {
 
   int GetSize();
 
-  int Read(char* data, int size);
+  int Read(char* data, size_t size);
 
   static std::unique_ptr<char[]> ReadWholeFile(const std::string& file_name,
                                                const std::string& root_path,
-                                               int* length = 0,
+                                               size_t* length = 0,
                                                bool null_terminate = false);
 
  private:
 #if defined(__ANDROID__)
   unzFile archive_ = 0;
-  int uncompressed_size_ = 0;
+  size_t uncompressed_size_ = 0;
 #elif defined(__linux)
   ScopedFILE file_;
 #endif

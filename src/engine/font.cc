@@ -20,7 +20,7 @@ bool Font::Load(const std::string& file_name) {
   SetName(file_name);
 
   // Read the font file.
-  int buffer_size = 0;
+  size_t buffer_size = 0;
   std::unique_ptr<char[]> buffer = base::AssetFile::ReadWholeFile(
       file_name.c_str(), Engine::Get().GetRootPath().c_str(), &buffer_size);
   if (!buffer) {

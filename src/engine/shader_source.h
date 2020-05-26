@@ -20,6 +20,8 @@ class ShaderSource : public Asset {
  private:
   std::unique_ptr<char[]> vertex_source_;
   std::unique_ptr<char[]> fragment_source_;
+
+  std::unique_ptr<char[]> Preprocess(char* source, size_t length);
 };
 
 }  // namespace eng
