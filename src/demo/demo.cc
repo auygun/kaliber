@@ -173,12 +173,12 @@ void Demo::UpdateGameState(float delta_time) {
         int dominant_channel = rnd.GetInt() % 3;
         float weights[3] = {0 ,0 ,0};
         weights[dominant_channel] = 1;
-        Vector4 c = {Lerp(0.80f, 0.95f, rnd.GetFloat()) * weights[0],
-                     Lerp(0.80f, 0.95f, rnd.GetFloat()) * weights[1],
-                     Lerp(0.80f, 0.95f, rnd.GetFloat()) * weights[2], 1};
-        c += {Lerp(0.1f, 0.8f, rnd.GetFloat()) * (1 - weights[0]),
-              Lerp(0.1f, 0.8f, rnd.GetFloat()) * (1 - weights[1]),
-              Lerp(0.1f, 0.8f, rnd.GetFloat()) * (1 - weights[2]), 1};
+        Vector4 c = {Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[0],
+                     Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[1],
+                     Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[2], 1};
+        c += {Lerp(0.1f, 0.4f, rnd.GetFloat()) * (1 - weights[0]),
+              Lerp(0.1f, 0.4f, rnd.GetFloat()) * (1 - weights[1]),
+              Lerp(0.1f, 0.4f, rnd.GetFloat()) * (1 - weights[2]), 1};
         sky_.SwitchColor(c);
 
         ++wave_;

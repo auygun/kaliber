@@ -2,6 +2,7 @@
 
 #include "../base/interpolation.h"
 #include "../base/log.h"
+#include "../base/random_generator.h"
 #include "../engine/engine.h"
 #include "../engine/shader_source.h"
 
@@ -19,6 +20,9 @@ bool SkyQuad::Create() {
   scale_ = engine.GetScreenSize();
 
   color_animator_.Attach(this);
+
+  RandomGenerator& rnd = eng::Engine::Get().GetRandomGenerator();
+  sky_offset_ = {0, Lerp(0.0f, 10.0f, rnd.GetFloat())};
 
   return true;
 }
