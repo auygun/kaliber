@@ -5,13 +5,11 @@ const vec2 resolution = vec2(2000.0, 2000.0);
 uniform vec2 sky_offset;
 uniform vec3 nebula_color;
 
-float random (in vec2 st) {
+float random(in vec2 st) {
   return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
 }
 
-// Based on Morgan McGuire @morgan3d
-// https://www.shadertoy.com/view/4dS3Wd
-float noise (in vec2 st) {
+float noise(in vec2 st) {
   vec2 i = floor(st);
   vec2 f = fract(st);
 
@@ -39,26 +37,33 @@ float rand(vec2 p)
   return fract(sin(dot(p.xy ,vec2(54.90898, 18.233))) * 4337.5453);
 }
 
-// https://www.shadertoy.com/view/4djGRh
 float stars(in vec2 x, float numCells, float size, float br)
 {
   vec2 n = x * numCells;
   vec2 f = floor(n);
 
-  float d = 1.0e10;
-  for (int i = -1; i <= 1; ++i)
-  {
-    for (int j = -1; j <= 1; ++j)
-    {
-      vec2 g = f + vec2(float(i), float(j));
-      g = n - g - rand2(mod(g, numCells)) + rand(g);
-      // Control size
-      g *= 1.0 / (numCells * size);
-      d = min(d, dot(g, g));
-    }
-  }
+  float e = 1.0e10;
+  vec2 a = f;
+  a = n - a - rand2(mod(a, numCells)) + rand(a);
+  a *= 1.0 / (numCells * size);
+  e = min(e, dot(a, a));
 
-  return br * (smoothstep(0.95, 1.0, (1.0 - sqrt(d))));
+  vec2 b = f + vec2(1.0, 0.0);
+  b = n - b - rand2(mod(b, numCells)) + rand(b);
+  b *= 1.0 / (numCells * size);
+  e = min(e, dot(b, b));
+
+  vec2 c = f + vec2(0.0, 1.0);
+  c = n - c - rand2(mod(c, numCells)) + rand(c);
+  c *= 1.0 / (numCells * size);
+  e = min(e, dot(c, c));
+
+  vec2 d = f + vec2(1.0, 1.0);
+  d = n - d - rand2(mod(d, numCells)) + rand(d);
+  d *= 1.0 / (numCells * size);
+  e = min(e, dot(d, d));
+
+  return br * (smoothstep(0.95, 1.0, (1.0 - sqrt(e))));
 }
 
 void main() {
