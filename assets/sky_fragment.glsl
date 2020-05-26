@@ -1,11 +1,11 @@
-precision highp float;
+precision mediump float;
 
 const float resolution = 2000.0;
 
-uniform vec2 sky_offset;
+uniform highp vec2 sky_offset;
 uniform vec3 nebula_color;
 
-float random(vec2 p)
+float random(highp vec2 p)
 {
   return fract(sin(dot(p.xy ,vec2(54.90898, 18.233))) * 4337.5453);
 }
@@ -62,7 +62,7 @@ float stars(in vec2 x, float numCells, float size, float br)
 }
 
 void main() {
-  vec2 sky_coord = gl_FragCoord.xy / resolution;
+  highp vec2 sky_coord = gl_FragCoord.xy / resolution;
   vec3 result = vec3(0.);
 
   float c = 0.35 * nebula((sky_coord + sky_offset.xy * 0.7) * 3.0) - 0.05;
