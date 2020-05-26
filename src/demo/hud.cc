@@ -54,7 +54,7 @@ bool Hud::Initialize() {
     hud_animator_cb_[i] = [&, i]() -> void {
       hud_animator_[i].SetEndCallback(eng::Animator::kBlending, nullptr);
       hud_animator_[i].SetBlending({0.895f, 0.692f, 0.24f, 1}, 2,
-          std::bind(Deceleration, std::placeholders::_1));
+          std::bind(Acceleration, std::placeholders::_1, -1));
       hud_animator_[i].Play(eng::Animator::kBlending, false);
     };
     hud_animator_[i].Attach(&text_[i]);
@@ -90,7 +90,7 @@ void Hud::PrintScore(int score, bool flash) {
   if (flash) {
     hud_animator_[0].SetEndCallback(eng::Animator::kBlending, hud_animator_cb_[0]);
     hud_animator_[0].SetBlending({1, 1, 1, 1}, 0.1f,
-        std::bind(Acceleration, std::placeholders::_1));
+        std::bind(Acceleration, std::placeholders::_1, 1));
     hud_animator_[0].Play(eng::Animator::kBlending, false);
   }
 }

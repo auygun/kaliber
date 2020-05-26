@@ -1,6 +1,7 @@
 #include "enemy.h"
 
 #include <cassert>
+#include <functional>
 #include <limits>
 
 #include "../base/interpolation.h"
@@ -412,7 +413,8 @@ void Enemy::Spawn(EnemyType enemy_type,
   float max_distance =
       engine.GetScreenSize().y - game->GetPlayer().GetWeaponScale().y;
 
-  e.movement_animator.SetMovement({0, -max_distance}, speed);
+  e.movement_animator.SetMovement({0, -max_distance}, speed,
+      std::bind(Acceleration, std::placeholders::_1, -0.15f));
   e.movement_animator.SetEndCallback(Animator::kMovement, [&]() -> void {
     e.sprite.SetVisible(false);
     e.target.SetVisible(false);

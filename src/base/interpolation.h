@@ -27,12 +27,8 @@ inline float CatmullRom(float t, float p0, float p3) {
                  (-p0 - 3 * 1 + p3) * t * t * t);
 }
 
-inline float Acceleration(float t) {
-  return t * t;
-}
-
-inline float Deceleration(float t) {
-  return 1 - (1 - t) * (1 - t);
+inline float Acceleration(float t, float w) {
+  return w * t * t + (1 - w) * t;
 }
 
 }  // namespace base
