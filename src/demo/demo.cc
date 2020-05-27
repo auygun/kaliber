@@ -142,6 +142,7 @@ void Demo::EnterCreditsState() {
 void Demo::EnterGameState() {
   if (state_ == kGame)
     return;
+  hud_.Show();
   state_ = kGame;
 }
 
@@ -183,7 +184,7 @@ void Demo::UpdateGameState(float delta_time) {
 
     if (enemies_remaining <= 0) {
       waiting_for_next_wave_ = true;
-      hud_.SetProgress(0);
+      hud_.SetProgress(wave_ > 0 ? 0 : 1);
 
       enemy_.OnWaveFinished();
 
@@ -201,7 +202,7 @@ void Demo::UpdateGameState(float delta_time) {
         sky_.SwitchColor(c);
 
         ++wave_;
-        hud_.PrintScore(score_, false);
+        hud_.PrintScore(score_, true);
         hud_.PrintWave(wave_, true);
         hud_.SetProgress(1);
 
