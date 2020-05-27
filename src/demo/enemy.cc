@@ -26,8 +26,19 @@ constexpr int enemy_frame_speed = 12;
 constexpr int enemy_scores[] = {100, 150, 300};
 
 constexpr float kSpawnPeriod[kEnemyType_Max][2] = {
-  {2, 5}, {15, 25}, {110, 130}
-};
+  {2, 5}, {15, 25}, {110, 130}};
+
+void SetupFadeOutAnim(Animator& animator, float delay) {
+  animator.SetEndCallback(Animator::kTimer, [&]() -> void {
+        animator.SetBlending({1, 1, 1, 0}, 0.5f,
+            std::bind(Acceleration, std::placeholders::_1, -1));
+        animator.Play(Animator::kBlending, false);
+      });
+  animator.SetEndCallback(Animator::kBlending, [&]() -> void {
+        animator.SetVisible(false);
+      });
+  animator.SetTimer(delay);
+}
 
 }  // namespace
 
@@ -257,7 +268,7 @@ void Enemy::TakeDamage(EnemyUnit* target ,int damage) {
     target->score.Create(image);
     target->score.AutoScale();
 
-    target->score_animator.Play(Animator::kAllAnimations, false);
+    target->score_animator.Play(Animator::kTimer | Animator::kMovement, false);
     target->movement_animator.Pause(Animator::kMovement);
 
     Engine& engine = Engine::Get();
@@ -389,23 +400,13 @@ void Enemy::Spawn(EnemyType enemy_type,
   }
   e.blast_animator.Attach(&e.blast);
 
-  e.health_animator.SetEndCallback(Animator::kTimer, [&]() -> void {
-    e.health_animator.SetBlending({1, 1, 1, 0}, 0.5f);
-    e.health_animator.Play(Animator::kBlending, false);
-  });
-  e.health_animator.SetEndCallback(Animator::kBlending, [&]() -> void {
-    e.health_base.SetVisible(false);
-    e.health_bar.SetVisible(false);
-  });
-  e.health_animator.SetTimer(1.0f);
+  SetupFadeOutAnim(e.health_animator, 1);
   e.health_animator.Attach(&e.health_base);
   e.health_animator.Attach(&e.health_bar);
 
+  SetupFadeOutAnim(e.score_animator, 0.2f);
   e.score_animator.SetMovement({0, engine.GetScreenSize().y / 2}, 2.0f);
-  e.score_animator.SetBlending({1, 1, 1, 0}, 0.8f);
-  e.score_animator.SetEndCallback(Animator::kBlending, [&]() -> void {
-    e.score_animator.Stop(Animator::kAllAnimations);
-    e.score.SetVisible(false);
+  e.score_animator.SetEndCallback(Animator::kMovement, [&]() -> void {
     e.marked_for_removal = true;
   });
   e.score_animator.Attach(&e.score);
