@@ -23,8 +23,7 @@ constexpr char kCreditsLines[kNumCreditsLines][15] = {"Credits",
                                                       "Graphics:",
                                                       "Erkan Erturk"};
 
-const Vector4 kColorNormal = {0.1f, 0.35f, 0.80f, 1};
-const Vector4 kColorFadeOut = {0.1f, 0.35f, 0.80f, 0};
+const Vector4 kTextColor = {0.3f, 0.55f, 1.0f, 1};
 constexpr float kFadeSpeed = 0.2f;
 
 }  // namespace
@@ -49,7 +48,7 @@ bool Credits::Initialize() {
 
   text_.Create(image);
   text_.AutoScale();
-  text_.SetColor(kColorFadeOut);
+  text_.SetColor(kTextColor * Vector4(1, 1, 1, 0));
 
   text_animator_.Attach(&text_);
   return true;
@@ -82,7 +81,7 @@ void Credits::Show() {
   text_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
         text_animator_.SetEndCallback(Animator::kBlending, nullptr);
       });
-  text_animator_.SetBlending(kColorNormal, kFadeSpeed);
+  text_animator_.SetBlending(kTextColor, kFadeSpeed);
   text_animator_.Play(Animator::kBlending, false);
   text_.SetVisible(true);
 }
@@ -92,7 +91,7 @@ void Credits::Hide() {
         text_animator_.SetEndCallback(Animator::kBlending, nullptr);
         text_.SetVisible(false);
       });
-  text_animator_.SetBlending(kColorFadeOut, kFadeSpeed);
+  text_animator_.SetBlending(kTextColor * Vector4(1, 1, 1, 0), kFadeSpeed);
   text_animator_.Play(Animator::kBlending, false);
 }
 
