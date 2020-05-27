@@ -34,9 +34,6 @@ class ImageQuad : public Animatable {
   void Draw();
   void ContextLost();
 
-  void SetVisible(bool visible) { visible_ = visible; }
-  bool IsVisible() const { return visible_; }
-
   int frame_width() const { return frame_width_; }
   int frame_height() const { return frame_height_; }
 
@@ -52,8 +49,6 @@ class ImageQuad : public Animatable {
   int frame_height_ = 0;
 
   base::Vector4 color_ = {1, 1, 1, 1};
-
-  bool visible_ = false;
 
   base::Vector2 GetUVOffset(int frame);
 };

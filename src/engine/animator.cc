@@ -91,6 +91,11 @@ void Animator::SetTimer(float duration) {
   timer_speed_ = 1.0f / duration;
 }
 
+void Animator::SetVisible(bool visible) {
+  for (auto& a : elements_)
+    a.animatable->SetVisible(visible);
+}
+
 void Animator::Update(float delta_time) {
   if (play_flags_ & kMovement)
     UpdateMovement(delta_time);

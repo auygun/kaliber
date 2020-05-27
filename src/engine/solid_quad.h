@@ -19,13 +19,8 @@ class SolidQuad : public Animatable {
 
   void Draw();
 
-  void SetVisible(bool visible) { visible_ = visible; }
-  bool IsVisible() const { return visible_; }
-
  private:
   base::Vector4 color_ = {1, 1, 1, 1};
-
-  bool visible_ = false;
 };
 
 }  // namespace eng

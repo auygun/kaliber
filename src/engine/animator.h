@@ -71,6 +71,9 @@ class Animator {
   // ignored when played.
   void SetTimer(float duration);
 
+  // Set visibility of all attached animatables.
+  void SetVisible(bool visible);
+
   void Update(float delta_time);
 
   bool IsPlaying(int animation) const { return play_flags_ & animation; }
