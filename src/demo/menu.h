@@ -25,8 +25,6 @@ class Menu {
     kOption_Max,
   };
 
-  using Callback = std::function<void(Option)>;
-
   Menu() = default;
   ~Menu() = default;
 

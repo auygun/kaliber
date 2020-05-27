@@ -3,6 +3,7 @@
 
 #include "../base/closure.h"
 #include "../engine/game.h"
+#include "credits.h"
 #include "enemy.h"
 #include "hud.h"
 #include "menu.h"
@@ -29,6 +30,7 @@ class Demo : public eng::Game {
   void AddScore(int score);
 
   void EnterMenuState();
+  void EnterCreditsState();
   void EnterGameState();
 
   Player& GetPlayer() { return player_; }
@@ -41,6 +43,7 @@ class Demo : public eng::Game {
     kState_Invalid = -1,
     kMenu,
     kGame,
+    kCredits,
     kState_Max
   };
 
@@ -50,6 +53,7 @@ class Demo : public eng::Game {
   Enemy enemy_;
   Hud hud_;
   Menu menu_;
+  Credits credits_;
 
   SkyQuad sky_;
 

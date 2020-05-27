@@ -48,6 +48,7 @@ add_library(native-activity SHARED
     ../../../src/base/timer.cc
     ../../../src/base/vecmath.cc
     ../../../src/base/worker.cc
+    ../../../src/demo/credits.cc
     ../../../src/demo/demo.cc
     ../../../src/demo/enemy.cc
     ../../../src/demo/hud.cc

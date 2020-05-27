@@ -43,6 +43,11 @@ bool Demo::Initialize() {
     return false;
   }
 
+  if (!credits_.Initialize()) {
+    LOG << "Failed to create the credits.";
+    return false;
+  }
+
   EnterMenuState();
 
   return true;
@@ -54,6 +59,8 @@ void Demo::Update(float delta_time) {
   while (std::unique_ptr<eng::InputEvent> event = engine.GetNextInputEvent()) {
     if (state_ == kMenu)
       menu_.OnInputEvent(std::move(event));
+    else if (state_ == kCredits)
+      credits_.OnInputEvent(std::move(event));
     else
       player_.OnInputEvent(std::move(event));
   }
@@ -75,10 +82,11 @@ void Demo::Update(float delta_time) {
 
   hud_.Update(delta_time);
   menu_.Update(delta_time);
+  credits_.Update(delta_time);
 
   if (state_ == kMenu)
       UpdateMenuState(delta_time);
-  else
+  else if (state_ == kGame)
       UpdateGameState(delta_time);
 }
 
@@ -88,6 +96,7 @@ void Demo::Draw(float frame_frac) {
   enemy_.Draw(frame_frac);
   hud_.Draw();
   menu_.Draw();
+  credits_.Draw();
 }
 
 void Demo::ContextLost() {
@@ -95,6 +104,7 @@ void Demo::ContextLost() {
   player_.ContextLost();
   hud_.ContextLost();
   menu_.ContextLost();
+  credits_.ContextLost();
   sky_.ContextLost();
 }
 
@@ -122,6 +132,13 @@ void Demo::EnterMenuState() {
   state_ = kMenu;
 }
 
+void Demo::EnterCreditsState() {
+  if (state_ == kCredits)
+    return;
+  credits_.Show();
+  state_ = kCredits;
+}
+
 void Demo::EnterGameState() {
   if (state_ == kGame)
     return;
@@ -141,6 +158,8 @@ void Demo::UpdateMenuState(float delta_time) {
       StartNewGame();
       break;
     case Menu::kCredits:
+      menu_.Hide();
+      EnterCreditsState();
       break;
     case Menu::kExit:
       Engine::Get().Exit();
