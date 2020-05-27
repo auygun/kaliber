@@ -314,8 +314,8 @@ void Enemy::SpawnNextEnemy() {
   float x = (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2;
   Vector2 pos = {x, s.y / 2};
   float speed = enemy_type == kEnemyType_Tank
-              ? 0.1f
-              : ((rnd.GetInt() % 4) == 0 ? 0.65f : 0.4f);
+              ? 0.15f
+              : ((rnd.GetInt() % 4) == 0 ? 0.61f : 0.4f);
 
   Spawn(enemy_type, damage_type, pos, speed);
 }
@@ -411,7 +411,7 @@ void Enemy::Spawn(EnemyType enemy_type,
   e.score_animator.Attach(&e.score);
 
   float max_distance =
-      engine.GetScreenSize().y - game->GetPlayer().GetWeaponScale().y;
+      engine.GetScreenSize().y - game->GetPlayer().GetWeaponScale().y / 2;
 
   e.movement_animator.SetMovement({0, -max_distance}, speed,
       std::bind(Acceleration, std::placeholders::_1, -0.15f));
