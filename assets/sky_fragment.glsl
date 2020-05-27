@@ -6,7 +6,8 @@ uniform vec3 nebula_color;
 varying highp vec2 tex_coord_0;
 
 float random(highp vec2 p) {
-  return fract(sin(dot(p, vec2(54.90898, 18.233))) * 4337.5453);
+  highp float sd = sin(dot(p, vec2(54.90898, 18.233)));
+  return fract(sd * 4337.5453);
 }
 
 float nebula(in highp vec2 p) {
@@ -18,7 +19,7 @@ float nebula(in highp vec2 p) {
   float c = random(i + vec2(0.0, 1.0));
   float d = random(i + vec2(1.0, 1.0));
 
-  vec2 u = f * f * (3.0 - 2.0 * f);
+  vec2 u = smoothstep(0.0, 1.0, f);
 
   return mix(a, b, u.x) +
       (c - a)* u.y * (1.0 - u.x) +
@@ -29,21 +30,9 @@ float stars(in highp vec2 p, float num_cells, float size) {
   highp vec2 n = p * num_cells;
   highp vec2 i = floor(n);
 
-  vec2 a = i;
-  vec2 b = i + vec2(1.0, 0.0);
-  vec2 c = i + vec2(0.0, 1.0);
-  vec2 d = i + vec2(1.0, 1.0);
-
-  float w = 1.0 / (num_cells * size);
-  a = (n - a - random(a)) * w;
-  b = (n - b - random(b)) * w;
-  c = (n - c - random(c)) * w;
-  d = (n - d - random(d)) * w;
-
+  vec2 a = n - i - random(i);
+  a /= num_cells * size;
   float e = dot(a, a);
-  e = min(e, dot(b, b));
-  e = min(e, dot(c, c));
-  e = min(e, dot(d, d));
 
   return smoothstep(0.95, 1.0, (1.0 - sqrt(e)));
 }
