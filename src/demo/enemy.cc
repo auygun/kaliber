@@ -401,8 +401,8 @@ void Enemy::Spawn(EnemyType enemy_type,
   e.health_animator.Attach(&e.health_base);
   e.health_animator.Attach(&e.health_bar);
 
-  e.score_animator.SetMovement({0, 2}, 1.0f);
-  e.score_animator.SetBlending({1, 1, 1, 0}, 0.7f);
+  e.score_animator.SetMovement({0, engine.GetScreenSize().y / 2}, 2.0f);
+  e.score_animator.SetBlending({1, 1, 1, 0}, 0.8f);
   e.score_animator.SetEndCallback(Animator::kBlending, [&]() -> void {
     e.score_animator.Stop(Animator::kAllAnimations);
     e.score.SetVisible(false);
