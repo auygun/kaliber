@@ -2,10 +2,10 @@
 #define IMAGE_H
 
 #include <stdint.h>
-#include <array>
 #include <string>
 
 #include "../base/mem.h"
+#include "../base/vecmath.h"
 #include "asset.h"
 
 namespace eng {
@@ -40,8 +40,9 @@ class Image : public Asset {
 
   bool IsValid() const { return !!buffer_; }
 
-  void Clear(std::array<float, 4> rgba);
-  void Gradient();
+  void Clear(base::Vector4 rgba);
+  void GradientH();
+  void GradientV(const base::Vector4& c1, const base::Vector4& c2, int height);
 
  private:
   base::AlignedMem<uint8_t[]>::ScoppedPtr buffer_;

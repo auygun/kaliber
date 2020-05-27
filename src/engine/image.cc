@@ -1,6 +1,9 @@
 #include "image.h"
 
+#include <cmath>
+
 #include "../base/asset_file.h"
+#include "../base/interpolation.h"
 #include "../base/log.h"
 #include "../base/misc.h"
 #include "engine.h"
@@ -10,7 +13,7 @@
 #define STBI_NO_STDIO
 #include "../third_party/stb/stb_image.h"
 
-using base::AlignedAlloc;
+using namespace base;
 
 namespace eng {
 
@@ -84,7 +87,7 @@ bool Image::Load(const std::string& file_name, bool convert_pow2) {
   SetName(file_name);
 
   size_t buffer_size = 0;
-  std::unique_ptr<char[]> file_buffer = base::AssetFile::ReadWholeFile(
+  std::unique_ptr<char[]> file_buffer = AssetFile::ReadWholeFile(
       file_name.c_str(), Engine::Get().GetRootPath().c_str(), &buffer_size);
   if (!file_buffer) {
     LOG << "Failed to read file: " << file_name;
@@ -145,8 +148,8 @@ bool Image::Load(const std::string& file_name, bool convert_pow2) {
 
   // Create a bigger canvas if needed to satisfy the pow2 dimension requirement.
   if (convert_pow2) {
-    int new_width = base::RoundUpToPow2(width_);
-    int new_height = base::RoundUpToPow2(height_);
+    int new_width = RoundUpToPow2(width_);
+    int new_height = RoundUpToPow2(height_);
     if ((new_width != width_) || (new_height != height_)) {
       LOG << "Converting image " << file_name << " from (" << width_ << ", "
           << height_ << ") to (" << new_width << ", " << new_height << ")";
@@ -220,15 +223,15 @@ uint8_t* Image::GetBuffer() {
   return buffer_.get();
 }
 
-void Image::Clear(std::array<float, 4> rgba) {
+void Image::Clear(Vector4 rgba) {
   if (IsImmutable()) {
     LOG << "Error: Image is immutable. Failed to clear.";
     return;
   }
 
   // Quantize the color to target resolution.
-  uint8_t r = (uint8_t)(rgba[0] * 255.0f), g = (uint8_t)(rgba[1] * 255.0f),
-          b = (uint8_t)(rgba[2] * 255.0f), a = (uint8_t)(rgba[3] * 255.0f);
+  uint8_t r = (uint8_t)(rgba.x * 255.0f), g = (uint8_t)(rgba.y * 255.0f),
+          b = (uint8_t)(rgba.z * 255.0f), a = (uint8_t)(rgba.w * 255.0f);
 
   // Fill out the first line manually.
   for (int w = 0; w < width_; ++w) {
@@ -243,7 +246,7 @@ void Image::Clear(std::array<float, 4> rgba) {
     memcpy(buffer_.get() + h * width_ * 4, buffer_.get(), width_ * 4);
 }
 
-void Image::Gradient() {
+void Image::GradientH() {
   if (IsImmutable()) {
     LOG << "Error: Image is immutable. Failed to apply gradient.";
     return;
@@ -261,6 +264,24 @@ void Image::Gradient() {
   // Copy the first line to the rest of them.
   for (int h = 1; h < height_; ++h)
     memcpy(buffer_.get() + h * width_ * 4, buffer_.get(), width_ * 4);
+}
+
+void Image::GradientV(const Vector4& c1, const Vector4& c2, int height) {
+  if (IsImmutable()) {
+    LOG << "Error: Image is immutable. Failed to apply gradient.";
+    return;
+  }
+
+  // Fill each section with gradient.
+  for (int h = 0; h < height_; ++h) {
+    Vector4 c = Lerp(c1, c2, fmod(h, height) / (float)height);
+    for (int x = 0; x < width_; ++x) {
+      buffer_.get()[h * width_ * 4 + x * 4 + 0] = c.x * 255;
+      buffer_.get()[h * width_ * 4 + x * 4 + 1] = c.y * 255;
+      buffer_.get()[h * width_ * 4 + x * 4 + 2] = c.z * 255;
+      buffer_.get()[h * width_ * 4 + x * 4 + 3] = 0;
+    }
+  }
 }
 
 }  // namespace eng

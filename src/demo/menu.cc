@@ -171,18 +171,7 @@ std::shared_ptr<eng::Image> Menu::CreateImage() {
   image->Create(max_text_width_, line_height * kOption_Max);
 
   // Fill the area of each menu item with gradient.
-  Vector4 c1 = {1.0f, 1.0f, 1.0f, 0};
-  Vector4 c2 = {.0f, .0f, 1.0f, 0};
-  uint8_t* buffer = image->GetBuffer();
-  for (int h = 0; h < image->GetHeight(); ++h) {
-    Vector4 c = Lerp(c1, c2, fmod(h, line_height) / (float)line_height);
-    for (int x = 0; x < image->GetWidth(); ++x) {
-      buffer[h * image->GetWidth() * 4 + x * 4 + 0] = c.x * 255;
-      buffer[h * image->GetWidth() * 4 + x * 4 + 1] = c.y * 255;
-      buffer[h * image->GetWidth() * 4 + x * 4 + 2] = c.z * 255;
-      buffer[h * image->GetWidth() * 4 + x * 4 + 3] = 0;
-    }
-  }
+  image->GradientV({1.0f, 1.0f, 1.0f, 0}, {.0f, .0f, 1.0f, 0}, line_height);
 
   base::Worker worker(kOption_Max);
   for (int i = 0; i < kOption_Max; ++i) {
