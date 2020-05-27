@@ -314,8 +314,8 @@ void Enemy::SpawnNextEnemy() {
   float x = (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2;
   Vector2 pos = {x, s.y / 2};
   float speed = enemy_type == kEnemyType_Tank
-              ? 0.15f
-              : ((rnd.GetInt() % 4) == 0 ? 0.61f : 0.4f);
+              ? 36.0f
+              : ((rnd.GetInt() % 4) == 0 ? 6.0f : 10.0f);
 
   Spawn(enemy_type, damage_type, pos, speed);
 }

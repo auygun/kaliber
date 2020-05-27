@@ -1,6 +1,7 @@
 #include "animator.h"
 
 #include "../base/interpolation.h"
+#include "../base/log.h"
 #include "animatable.h"
 
 using namespace base;
@@ -58,37 +59,36 @@ void Animator::SetEndCallback(int animation, base::Closure cb) {
       timer_cb_ = std::move(cb);
 }
 
-void Animator::SetMovement(Vector2 direction, float speed, Interpolator interpolator) {
+void Animator::SetMovement(Vector2 direction, float duration, Interpolator interpolator) {
   movement_direction_ = direction;
-  float len = direction.Magnitude();
-  movement_speed_ = speed / len;
+  movement_speed_ = 1.0f / duration;
   movement_interpolator_ = std::move(interpolator);
 }
 
-void Animator::SetRotation(float trget, float speed, Interpolator interpolator) {
+void Animator::SetRotation(float trget, float duration, Interpolator interpolator) {
   rotation_target_ = trget;
-  rotation_speed_ = speed / trget;
+  rotation_speed_ = 1.0f / duration;
   rotation_interpolator_ = std::move(interpolator);
 }
 
-void Animator::SetBlending(Vector4 target, float speed, Interpolator interpolator) {
+void Animator::SetBlending(Vector4 target, float duration, Interpolator interpolator) {
   blending_target_ = target;
-  blending_speed_ = 1.0f / speed;
+  blending_speed_ = 1.0f / duration;
   for (auto& a : elements_)
     a.blending_start = a.animatable->GetColor();
   blending_interpolator_ = std::move(interpolator);
 }
 
-void Animator::SetFrames(int count, int speed, Interpolator interpolator) {
+void Animator::SetFrames(int count, int frames_per_second, Interpolator interpolator) {
   frame_count_ = count;
-  frame_speed_ = (float)speed / (float)count;
+  frame_speed_ = (float)frames_per_second / (float)count;
   for (auto& a : elements_)
     a.frame_start_ = a.animatable->GetFrame();
   frame_interpolator_ = std::move(interpolator);
 }
 
-void Animator::SetTimer(float seconds) {
-  timer_speed_ = 1.0f / seconds;
+void Animator::SetTimer(float duration) {
+  timer_speed_ = 1.0f / duration;
 }
 
 void Animator::Update(float delta_time) {

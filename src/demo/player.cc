@@ -138,8 +138,11 @@ void Player::Fire(DamageType type, Vector2 target_point) {
   beam_[type].SetVisible(true);
   beam_spark_[type].SetVisible(true);
 
-  spark_animator_[type].SetMovement(-dir * beam_[type].GetScale().x * 0.85f,
-                                    18);
+  float length = beam_[type].GetScale().x * 0.85f;
+  Vector2 movement = dir * -length;
+  // Convert from units per second to duration.
+  float speed = 1.0f / (18.0f / length);
+  spark_animator_[type].SetMovement(movement, speed);
   spark_animator_[type].Play(eng::Animator::kMovement, false);
 }
 
@@ -201,7 +204,7 @@ bool Player::SetupWeapons() {
 
     weapon_[i].SetFrame(wepon_warmup_frame[i]);
     warmup_animator_[i].SetFrames(wepon_warmup_frame_count, wepon_anim_speed);
-    warmup_animator_[i].SetRotation(M_PI * 2, 0.5f);
+    warmup_animator_[i].SetRotation(M_PI * 2, 8.0f);
     warmup_animator_[i].Attach(&weapon_[i]);
     warmup_animator_[i].Play(eng::Animator::kRotation, true);
 

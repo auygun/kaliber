@@ -39,37 +39,37 @@ class Animator {
   // it ends. Not that it's not called for looping animations.
   void SetEndCallback(int animation, base::Closure cb);
 
-  // Set movement animation parameters. Movement animations is relative.
-  // Distance is calculated from the magnitude of direction vector. Speed is in
-  // units per second.
+  // Set movement animation parameters. Movement is relative to the attached
+  // animatable's current position. Distance is calculated from the magnitude of
+  // direction vector. Duration is in seconds.
   void SetMovement(base::Vector2 direction,
-                   float speed,
+                   float duration,
                    Interpolator interpolator = nullptr);
 
-  // Set rotation animation parameters. Rotation animation is relative. Target
-  // is in radians. Speed is in units per second.
+  // Set rotation animation parameters. Rotation is relative to the attached
+  // animatable's current rotation. Duration is in seconds.
   void SetRotation(float target,
-                   float speed,
+                   float duration,
                    Interpolator interpolator = nullptr);
 
   // Set color blending animation parameters. Color blending animation is
   // absolute. The absolute start colors are obtained from the attached
-  // animatables. Speed is in seconds.
+  // animatables. Duration is in seconds.
   void SetBlending(base::Vector4 target,
-                   float speed,
+                   float duration,
                    Interpolator interpolator = nullptr);
 
   // Set frame playback animation parameters. Frame animation is absolute. The
   // absolute start frames are obtained from the attached animatables. Plays
-  // count number of frames. Speed is in frames per second.
+  // count number of frames.
   void SetFrames(int count,
-                 int speed,
+                 int frames_per_second,
                  Interpolator interpolator = nullptr);
 
   // Set Timer parameters. Timer doesn't play any animation. Usefull for
   // triggering a callback after the given seconds passed. Loop parameter is
   // ignored when played.
-  void SetTimer(float seconds);
+  void SetTimer(float duration);
 
   void Update(float delta_time);
 
