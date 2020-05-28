@@ -16,8 +16,17 @@ class TaskRunner;
 }  // namespace base
 
 namespace eng {
+
 class Asset;
-}  // namespace eng
+class Mesh;
+class Image;
+class Font;
+class ShaderSource;
+class Game;
+class InputEvent;
+class Renderer;
+struct RenderCommand;
+class Platform;
 
 namespace internal {
 
@@ -48,18 +57,6 @@ class AssetFactory : public AssetFactoryBase {
 
 }
 
-namespace eng {
-
-class Mesh;
-class Image;
-class Font;
-class ShaderSource;
-class Game;
-class InputEvent;
-class Renderer;
-struct RenderCommand;
-class Platform;
-
 class Engine {
  public:
   Engine();
@@ -81,9 +78,13 @@ class Engine {
 
   void Exit();
 
+  // Return screen size in viewport scale.
   base::Vector2 GetScreenSize() const { return screen_size_; }
 
+  // Convert size from pixels to viewport scale.
   base::Vector2 ToScale(const base::Vector2& vec);
+
+  // Convert position form pixels to viewport coordinates.
   base::Vector2 ToPosition(const base::Vector2& vec);
 
   // Returns immutable asset that can be accessed between multiple threads
@@ -94,6 +95,10 @@ class Engine {
     return std::dynamic_pointer_cast<T>(GetAssetInternal(factory));
   }
 
+  // Returns resource id of the texture for the given image. Creates a new
+  // texture if needed. Always creates a new texture for anonymous images (image
+  // without asset name). Texture resources are reference counted and must be
+  // returned by calling ReturnTextureResource.
   int AcquireTextureResource(std::shared_ptr<const Image> image);
   void ReturnTextureResource(int resource_id);
 
@@ -102,6 +107,7 @@ class Engine {
 
   void EnqueueRenderCommand(std::unique_ptr<RenderCommand> cmd);
 
+  // Access to the render resources.
   Geometry& GetQuad() { return quad_; }
   Shader& GetPassThroughShader() { return pass_through_shader_; }
   Shader& GetSolidShader() { return solid_shader_; }
@@ -112,6 +118,7 @@ class Engine {
 
   Game* GetGame() { return game_.get(); }
 
+  // Return screen width/height in pixels.
   int GetScreenWidth() const;
   int GetScreenHeight() const;
 
