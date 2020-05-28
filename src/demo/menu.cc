@@ -117,18 +117,28 @@ void Menu::ContextLost() {
 }
 
 void Menu::SetOptionEnabled(Option o, bool enable) {
-  int y = 0;
+  int first = -1, last = -1;
   for (int i = 0; i < kOption_Max; ++i) {
     if (i == o)
       items_[i].hide = !enable;
     if (!items_[i].hide) {
-      Vector2 space = {0, items_[i].text.GetScale().y * kMenuOptionSpace};
-      Vector2 pos = items_[i].text.GetScale() * -y +
-                    (items_[i].text.GetScale() + space / 2) *
-                    Vector2(0, (kOption_Max - 1) / 2) - space * y;
-      ++y;
-      items_[i].text.SetOffset(pos * Vector2(0, 1));
+      items_[i].text.SetOffset({0, 0});
+      if (last >= 0) {
+        items_[i].text.PlaceToBottomOf(items_[last].text);
+        items_[i].text.Translate(items_[last].text.GetOffset() * Vector2(0, 1));
+        items_[i].text.Translate({0, items_[last].text.GetScale().y * -kMenuOptionSpace});
+      }
+      if (first < 0)
+        first = i;
+      last = i;
     }
+  }
+
+  float center_offset_y =
+      (items_[first].text.GetOffset().y - items_[last].text.GetOffset().y) / 2;
+  for (int i = 0; i < kOption_Max; ++i) {
+    if (!items_[i].hide)
+      items_[i].text.Translate({0, center_offset_y});
   }
 }
 
