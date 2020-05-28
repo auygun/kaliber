@@ -177,7 +177,7 @@ std::shared_ptr<eng::Image> Menu::CreateImage() {
   for (int i = 0; i < kOption_Max; ++i) {
     int w, h;
     font_->CalculateBoundingBox(kMenuOption[i], w, h);
-    float x = (image->GetWidth() - w) / 2;
+    float x = (image->GetOriginalWidth() - w) / 2;
     float y = line_height * i;
     worker.Enqueue(std::bind(&Font::Print, font_, x, y,
                              kMenuOption[i], image->GetBuffer(),

@@ -142,7 +142,7 @@ void Hud::Print(int i, const std::string& text) {
   if (i == 1) {
     int w, h;
     font_->CalculateBoundingBox(text.c_str(), w, h);
-    x = image->GetWidth() - w;
+    x = image->GetOriginalWidth() - w;
   }
 
   font_->Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());

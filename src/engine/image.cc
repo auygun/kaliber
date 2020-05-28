@@ -38,10 +38,15 @@ bool Image::Create(int w, int h) {
 
   Destroy();
 
-  width_ = w;
-  height_ = h;
-  original_width_ = w;
-  original_height_ = h;
+  original_width_ = width_ = w;
+  original_height_ = height_ = h;
+
+  // Create a bigger canvas if needed to satisfy the pow2 dimension requirement.
+  if (!Engine::Get().SupportsNPOT()) {
+    width_ = RoundUpToPow2(width_);
+    height_ = RoundUpToPow2(height_);
+  }
+
   buffer_.reset((uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t)));
 
   return true;
@@ -143,8 +148,8 @@ bool Image::Load(const std::string& file_name) {
     buffer_.reset(converted_buffer);
   }
 
-  original_width_ = width_ = (int)w;
-  original_height_ = height_ = (int)h;
+  original_width_ = width_ = w;
+  original_height_ = height_ = h;
 
   // Create a bigger canvas if needed to satisfy the pow2 dimension requirement.
   if (!Engine::Get().SupportsNPOT()) {
