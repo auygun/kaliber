@@ -44,12 +44,12 @@ void SetupFadeOutAnim(Animator& animator, float delay) {
 
 bool Enemy::Initialize() {
   Engine& engine = Engine::Get();
-  skull_frames_ = engine.GetImageAsset("enemy_anims_01_frames_ok.png");
-  tank_frames_ = engine.GetImageAsset("enemy_anims_01_frames_ok.png");
-  bug_frames_ = engine.GetImageAsset("enemy_anims_02_frames_ok.png");
-  target_frames_ = engine.GetImageAsset("enemy_target_single_ok.png");
-  blast_frames_ = engine.GetImageAsset("enemy_anims_blast_ok.png");
-  font_ = engine.GetFontAsset("PixelCaps!.ttf");
+  skull_frames_ = engine.GetAsset<Image>("enemy_anims_01_frames_ok.png");
+  tank_frames_ = engine.GetAsset<Image>("enemy_anims_01_frames_ok.png");
+  bug_frames_ = engine.GetAsset<Image>("enemy_anims_02_frames_ok.png");
+  target_frames_ = engine.GetAsset<Image>("enemy_target_single_ok.png");
+  blast_frames_ = engine.GetAsset<Image>("enemy_anims_blast_ok.png");
+  font_ = engine.GetAsset<Font>("PixelCaps!.ttf");
 
   return skull_frames_ && tank_frames_ && bug_frames_ && target_frames_ &&
          blast_frames_ && font_;

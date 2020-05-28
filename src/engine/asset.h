@@ -10,6 +10,8 @@ class Asset {
   Asset() = default;
   virtual ~Asset() = default;
 
+  virtual bool Load(const std::string& file_name) = 0;
+
   void SetName(const std::string& name) { name_ = name; }
   const std::string& GetName() const { return name_; }
 

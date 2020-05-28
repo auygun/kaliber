@@ -26,7 +26,7 @@ bool ShaderSource::Load(const std::string& name) {
   size_t size = 0;
 
   std::string vertex_file_name = name;
-  vertex_file_name += "_vertex.glsl";
+  vertex_file_name += "_vertex";
   auto vertex_source = base::AssetFile::ReadWholeFile(
       vertex_file_name.c_str(), engine.GetRootPath().c_str(), &size,
       true);
@@ -39,7 +39,7 @@ bool ShaderSource::Load(const std::string& name) {
                                      : Preprocess(vertex_source.get(), size);
 
   std::string fragment_file_name = name;
-  fragment_file_name += "_fragment.glsl";
+  fragment_file_name += "_fragment";
   auto fragment_source = base::AssetFile::ReadWholeFile(
       fragment_file_name.c_str(), engine.GetRootPath().c_str(), &size,
       true);

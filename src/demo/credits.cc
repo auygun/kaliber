@@ -31,7 +31,7 @@ constexpr float kFadeSpeed = 0.2f;
 bool Credits::Initialize() {
   Engine& engine = Engine::Get();
 
-  font_ = engine.GetFontAsset("PixelCaps!.ttf");
+  font_ = engine.GetAsset<Font>("PixelCaps!.ttf");
   if (!font_)
     return false;
 

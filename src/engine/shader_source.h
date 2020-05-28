@@ -12,7 +12,7 @@ class ShaderSource : public Asset {
   ShaderSource() = default;
   ~ShaderSource() override = default;
 
-  bool Load(const std::string& name);
+  bool Load(const std::string& name) override;
 
   const char* GetVertexSource() const { return vertex_source_.get(); }
   const char* GetFragmentSource() const { return fragment_source_.get(); }

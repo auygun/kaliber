@@ -62,6 +62,7 @@ class Renderer {
   bool SupportsATC() const { return texture_compression_.atc; }
 
   bool SupportsVAO() const { return vertex_array_objects_; }
+  bool SupportsNPOT() const { return npot_; }
 
   void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
 
@@ -128,6 +129,7 @@ class Renderer {
 
   TextureCompression texture_compression_;
   bool vertex_array_objects_ = false;
+  bool npot_ = false;
 
   int screen_width_ = 0;
   int screen_height_ = 0;
@@ -206,8 +208,6 @@ class Renderer {
                            const std::string& name,
                            std::unordered_map<std::string, GLuint>& uniforms);
   std::unordered_set<std::string> SetupExtensions();
-
-  void LogVersion();
 
 #if defined(__linux__) && !defined(__ANDROID__)
   bool CreateWindow();

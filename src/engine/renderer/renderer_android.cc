@@ -38,6 +38,9 @@ bool Renderer::InitInternal() {
   screen_width_ = gl_context->GetScreenWidth();
   screen_height_ = gl_context->GetScreenHeight();
 
+  if (gl_context->GetGLVersion() >= 3)
+    npot_ = true;
+
   return InitCommon();
 }
 

@@ -38,15 +38,71 @@ void Renderer::SetContextLostCB(base::Closure cb) {
 }
 
 bool Renderer::InitCommon() {
-  LogVersion();
+  // Get information about the currently active context.
+  const char* renderer =
+      reinterpret_cast<const char*>(glGetString(GL_RENDERER));
+  const char* version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+
+  LOG << "OpenGL:";
+  LOG << "  vendor:         " << (const char*)glGetString(GL_VENDOR);
+  LOG << "  renderer:       " << renderer;
+  LOG << "  version:        " << version;
+  LOG << "  shader version: "
+      << (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
   LOG << "Screen size: " << screen_width_ << ", " << screen_height_;
 
-  std::unordered_set<std::string> extensions = SetupExtensions();
+  // Setup extensions.
+  std::stringstream stream((const char*)glGetString(GL_EXTENSIONS));
+  std::string token;
+  std::unordered_set<std::string> extensions;
+  while (std::getline(stream, token, ' '))
+    extensions.insert(token);
+
+#if 0
+  LOG << "  extensions:";
+  for (auto& ext : extensions)
+    LOG << "    " << ext.c_str());
+#endif
+
+  // Check for supported texture compression extensions.
+  if (extensions.find("GL_OES_compressed_ETC1_RGB8_texture") !=
+      extensions.end())
+    texture_compression_.etc1 = true;
+  if (extensions.find("GL_EXT_texture_compression_dxt1") != extensions.end())
+    texture_compression_.dxt1 = true;
+  if (extensions.find("GL_EXT_texture_compression_latc") != extensions.end())
+    texture_compression_.latc = true;
+  if (extensions.find("GL_EXT_texture_compression_s3tc") != extensions.end())
+    texture_compression_.s3tc = true;
+  if (extensions.find("GL_IMG_texture_compression_pvrtc") != extensions.end())
+    texture_compression_.pvrtc = true;
+  if (extensions.find("GL_AMD_compressed_ATC_texture") != extensions.end() ||
+      extensions.find("GL_ATI_texture_compression_atitc") != extensions.end())
+    texture_compression_.atc = true;
 
   if (extensions.find("GL_OES_vertex_array_object") != extensions.end()) {
-    LOG << "Supports Vertex Array Objects";
-    vertex_array_objects_ = true;
+      // This extension seems to be broken on older PowerVR drivers.
+      if (!strstr(renderer, "PowerVR SGX 53") &&
+          !strstr(renderer, "PowerVR SGX 54")) {
+        vertex_array_objects_ = true;
+      }
   }
+
+  if (extensions.count("GL_ARB_texture_non_power_of_two") ||
+      extensions.count("GL_OES_texture_npot")) {
+    npot_ = true;
+  }
+
+  if (vertex_array_objects_)
+    LOG << "Supports Vertex Array Objects.";
+  if (npot_)
+    LOG << "Supports NPOT.";
+
+  LOG << "TextureCompression:";
+  LOG << "  atc:   " << texture_compression_.atc;
+  LOG << "  dxt1:  " << texture_compression_.dxt1;
+  LOG << "  etc1:  " << texture_compression_.etc1;
+  LOG << "  s3tc:  " << texture_compression_.s3tc;
 
   glViewport(0, 0, screen_width_, screen_height_);
 
@@ -676,38 +732,6 @@ GLint Renderer::GetUniformLocation(
   return index;
 }
 
-std::unordered_set<std::string> Renderer::SetupExtensions() {
-  std::stringstream stream((const char*)glGetString(GL_EXTENSIONS));
-  std::string token;
-  std::unordered_set<std::string> extensions;
-  while (std::getline(stream, token, ' '))
-    extensions.insert(token);
-
-#if 0
-  LOG << "  extensions:";
-  for (auto& ext : extensions)
-    LOG << "    " << ext.c_str());
-#endif
-
-  // Check for supported texture compression extensions.
-  if (extensions.find("GL_OES_compressed_ETC1_RGB8_texture") !=
-      extensions.end())
-    texture_compression_.etc1 = true;
-  if (extensions.find("GL_EXT_texture_compression_dxt1") != extensions.end())
-    texture_compression_.dxt1 = true;
-  if (extensions.find("GL_EXT_texture_compression_latc") != extensions.end())
-    texture_compression_.latc = true;
-  if (extensions.find("GL_EXT_texture_compression_s3tc") != extensions.end())
-    texture_compression_.s3tc = true;
-  if (extensions.find("GL_IMG_texture_compression_pvrtc") != extensions.end())
-    texture_compression_.pvrtc = true;
-  if (extensions.find("GL_AMD_compressed_ATC_texture") != extensions.end() ||
-      extensions.find("GL_ATI_texture_compression_atitc") != extensions.end())
-    texture_compression_.atc = true;
-
-  return extensions;
-}
-
 void Renderer::ContextLost() {
   LOG << "Context lost.";
 
@@ -736,15 +760,6 @@ void Renderer::ContextLost() {
   geometry_map_.clear();
 
   context_lost_cb_();
-}
-
-void Renderer::LogVersion() {
-  LOG << "OpenGL:";
-  LOG << "  vendor:         " << (const char*)glGetString(GL_VENDOR);
-  LOG << "  renderer:       " << (const char*)glGetString(GL_RENDERER);
-  LOG << "  version:        " << (const char*)glGetString(GL_VERSION);
-  LOG << "  shader version: "
-      << (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
 }
 
 }  // namespace eng

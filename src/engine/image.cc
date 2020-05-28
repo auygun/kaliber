@@ -76,7 +76,7 @@ void Image::Copy(const Image& other) {
   format_ = other.format_;
 }
 
-bool Image::Load(const std::string& file_name, bool convert_pow2) {
+bool Image::Load(const std::string& file_name) {
   if (IsImmutable()) {
     LOG << "Error: Image is immutable. Failed to load.";
     return false;
@@ -147,7 +147,7 @@ bool Image::Load(const std::string& file_name, bool convert_pow2) {
   original_height_ = height_ = (int)h;
 
   // Create a bigger canvas if needed to satisfy the pow2 dimension requirement.
-  if (convert_pow2) {
+  if (!Engine::Get().SupportsNPOT()) {
     int new_width = RoundUpToPow2(width_);
     int new_height = RoundUpToPow2(height_);
     if ((new_width != width_) || (new_height != height_)) {

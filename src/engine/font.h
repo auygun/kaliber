@@ -15,7 +15,8 @@ class Font : public Asset {
   Font() = default;
   ~Font() override = default;
 
-  bool Load(const std::string& file_name);
+  bool Load(const std::string& file_name) override;
+
   void Destroy();
 
   void CalculateBoundingBox(const std::string& text,

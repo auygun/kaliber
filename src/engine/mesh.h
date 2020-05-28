@@ -23,7 +23,7 @@ class Mesh : public Asset {
               size_t num_indices = 0,
               const void* indices = nullptr);
 
-  bool Load(const std::string& file_name);
+  bool Load(const std::string& file_name) override;
 
   const void* GetVertices() const { return (void*)vertices_.get(); }
   const void* GetIndices() const { return (void*)indices_.get(); }

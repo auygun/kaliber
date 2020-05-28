@@ -44,7 +44,7 @@ bool Engine::Init(Platform* platform) {
     screen_size_ = {2.0f, ratio * 2.0f};
   }
 
-  system_font_ = GetFontAsset("engine/RobotoMono-Regular.ttf");
+  system_font_ = GetAsset<Font>("engine/RobotoMono-Regular.ttf");
   if (!system_font_) {
     // Do not fail. Just create a null-font.
     auto font = std::make_shared<Font>();
@@ -122,10 +122,7 @@ void Engine::GainedFocus() {
 void Engine::TrimMemory() {
   LOG << "Trimming memory.";
   KillUnusedResources(kLifeTime);
-  mesh_assets_.clear();
-  image_assets_.clear();
-  shader_source_assets_.clear();
-  font_assets_.clear();
+  assets_.clear();
 }
 
 void Engine::Exit() {
@@ -139,63 +136,6 @@ Vector2 Engine::ToScale(const Vector2& vec) {
 
 Vector2 Engine::ToPosition(const Vector2& vec) {
   return ToScale(vec) - GetScreenSize() / 2.0f;
-}
-
-std::shared_ptr<const Mesh> Engine::GetMeshAsset(const std::string& name) {
-  auto it = mesh_assets_.find(name);
-  if (it != mesh_assets_.end())
-    return it->second;
-
-  auto mesh = std::make_shared<Mesh>();
-  if (!mesh->Load(name.c_str()))
-    return nullptr;
-  mesh->SetImmutable();
-
-  mesh_assets_[name] = mesh;
-  return mesh;
-}
-
-std::shared_ptr<const Image> Engine::GetImageAsset(const std::string& name) {
-  auto it = image_assets_.find(name);
-  if (it != image_assets_.end())
-    return it->second;
-
-  auto image = std::make_shared<Image>();
-  if (!image->Load(name.c_str()))
-    return nullptr;
-  image->SetImmutable();
-
-  image_assets_[name] = image;
-  return image;
-}
-
-std::shared_ptr<const ShaderSource> Engine::GetShaderAsset(
-    const std::string& name) {
-  auto it = shader_source_assets_.find(name);
-  if (it != shader_source_assets_.end())
-    return it->second;
-
-  auto shader_source = std::make_shared<ShaderSource>();
-  if (!shader_source->Load(name.c_str()))
-    return nullptr;
-  shader_source->SetImmutable();
-
-  shader_source_assets_[name] = shader_source;
-  return shader_source;
-}
-
-std::shared_ptr<const Font> Engine::GetFontAsset(const std::string& name) {
-  auto it = font_assets_.find(name);
-  if (it != font_assets_.end())
-    return it->second;
-
-  auto font = std::make_shared<Font>();
-  if (!font->Load(name.c_str()))
-    return nullptr;
-  font->SetImmutable();
-
-  font_assets_[name] = font;
-  return font;
 }
 
 int Engine::AcquireTextureResource(std::shared_ptr<const Image> image) {
@@ -308,6 +248,25 @@ bool Engine::IsMobile() const {
   return platform_->mobile_device();
 }
 
+bool Engine::SupportsNPOT() const {
+  return renderer_->SupportsNPOT();
+}
+
+std::shared_ptr<Asset> Engine::GetAssetInternal(
+    internal::AssetFactoryBase& factory) {
+  auto it = assets_.find(factory.name());
+  if (it != assets_.end())
+    return it->second;
+
+  auto asset = factory.Create();
+  if (!asset->Load(factory.name().c_str()))
+    return nullptr;
+  asset->SetImmutable();
+
+  assets_[factory.name()] = asset;
+  return asset;
+}
+
 void Engine::ContextLost() {
   if (!task_runner_->IsBoundToCurrentThread()) {
     task_runner_->Enqueue(std::bind(&Engine::ContextLost, this));
@@ -329,7 +288,7 @@ void Engine::ContextLost() {
 
 bool Engine::CreateRenderResources() {
   // Create the quad geometry we can reuse for all sprites.
-  auto quad_mesh = GetMeshAsset("engine/quad.mesh");
+  auto quad_mesh = GetAsset<Mesh>("engine/quad.mesh");
   if (!quad_mesh) {
     LOG << "Could not create quad mesh.";
     return false;
@@ -337,7 +296,7 @@ bool Engine::CreateRenderResources() {
   quad_.Create(quad_mesh);
 
   // Create the shader we can reuse for texture rendering.
-  auto pts_source = GetShaderAsset("engine/pass_through");
+  auto pts_source = GetAsset<ShaderSource>("engine/pass_through.glsl");
   if (!pts_source) {
     LOG << "Could not create pass through shader.";
     return false;
@@ -345,7 +304,7 @@ bool Engine::CreateRenderResources() {
   pass_through_shader_.Create(pts_source, quad_.vertex_description());
 
   // Create the shader we can reuse for solid rendering.
-  auto ss_source = GetShaderAsset("engine/solid");
+  auto ss_source = GetAsset<ShaderSource>("engine/solid.glsl");
   if (!ss_source) {
     LOG << "Could not create solid shader.";
     return false;

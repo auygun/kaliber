@@ -16,6 +16,39 @@ class TaskRunner;
 }  // namespace base
 
 namespace eng {
+class Asset;
+}  // namespace eng
+
+namespace internal {
+
+class AssetFactoryBase {
+  public:
+  AssetFactoryBase(const std::string& name) : name_(name) {}
+  virtual ~AssetFactoryBase() = default;
+
+  virtual std::shared_ptr<eng::Asset> Create() = 0;
+
+  const std::string& name() { return name_; };
+
+  private:
+  std::string name_;
+};
+
+template <typename T>
+class AssetFactory : public AssetFactoryBase {
+  public:
+  ~AssetFactory() override = default;
+
+  AssetFactory(const std::string& name) : AssetFactoryBase(name) {}
+
+  std::shared_ptr<eng::Asset> Create() override {
+    return std::make_shared<T>();
+  }
+};
+
+}
+
+namespace eng {
 
 class Mesh;
 class Image;
@@ -53,22 +86,13 @@ class Engine {
   base::Vector2 ToScale(const base::Vector2& vec);
   base::Vector2 ToPosition(const base::Vector2& vec);
 
-  // Returns immutable Mesh asset that can be accessed between multiple threads
+  // Returns immutable asset that can be accessed between multiple threads
   // without locking. Returns nullptr if no asset was found with the given name.
-  std::shared_ptr<const Mesh> GetMeshAsset(const std::string& name);
-
-  // Returns immutable Image asset that can be accessed between multiple threads
-  // without locking. Returns nullptr if no asset was found with the given name.
-  std::shared_ptr<const Image> GetImageAsset(const std::string& name);
-
-  // Returns immutable ShaderSource asset that can be accessed between multiple
-  // threads without locking. Returns nullptr if no asset was found with the
-  // given name.
-  std::shared_ptr<const ShaderSource> GetShaderAsset(const std::string& name);
-
-  // Returns immutable Font asset that can be accessed between multiple threads
-  // without locking. Returns nullptr if no asset was found with the given name.
-  std::shared_ptr<const Font> GetFontAsset(const std::string& name);
+  template <typename T>
+  std::shared_ptr<const T> GetAsset(const std::string& name) {
+    internal::AssetFactory<T> factory(name);
+    return std::dynamic_pointer_cast<T>(GetAssetInternal(factory));
+  }
 
   int AcquireTextureResource(std::shared_ptr<const Image> image);
   void ReturnTextureResource(int resource_id);
@@ -99,6 +123,8 @@ class Engine {
 
   bool IsMobile() const;
 
+  bool SupportsNPOT() const;
+
   float seconds_accumulated() const { return seconds_accumulated_; }
 
  private:
@@ -115,11 +141,7 @@ class Engine {
   int last_texture_resource_id_ = 0;
 
   // Asset cache.
-  std::unordered_map<std::string, std::shared_ptr<Mesh>> mesh_assets_;
-  std::unordered_map<std::string, std::shared_ptr<Image>> image_assets_;
-  std::unordered_map<std::string, std::shared_ptr<ShaderSource>>
-      shader_source_assets_;
-  std::unordered_map<std::string, std::shared_ptr<Font>> font_assets_;
+  std::unordered_map<std::string, std::shared_ptr<Asset>> assets_;
 
   Platform* platform_ = nullptr;
 
@@ -145,6 +167,8 @@ class Engine {
   std::unique_ptr<base::TaskRunner> task_runner_;
 
   base::RandomGenerator random_;
+
+  std::shared_ptr<Asset> GetAssetInternal(internal::AssetFactoryBase& factory);
 
   void ContextLost();
 

@@ -28,8 +28,8 @@ bool Player::Initialize() {
 void Player::ContextLost() {
   eng::Engine& engine = eng::Engine::Get();
 
-  auto weapon_image = engine.GetImageAsset("enemy_anims_flare_ok.png");
-  auto beam_image = engine.GetImageAsset("enemy_ray_ok.png");
+  auto weapon_image = engine.GetAsset<Image>("enemy_anims_flare_ok.png");
+  auto beam_image = engine.GetAsset<Image>("enemy_ray_ok.png");
 
   for (int i = 0; i < 2; ++i) {
     drag_sign_[i].ContextLost();
@@ -154,8 +154,8 @@ bool Player::IsFiring(DamageType type) {
 bool Player::SetupWeapons() {
   eng::Engine& engine = eng::Engine::Get();
 
-  auto weapon_image = engine.GetImageAsset("enemy_anims_flare_ok.png");
-  auto beam_image = engine.GetImageAsset("enemy_ray_ok.png");
+  auto weapon_image = engine.GetAsset<Image>("enemy_anims_flare_ok.png");
+  auto beam_image = engine.GetAsset<Image>("enemy_ray_ok.png");
   if (!weapon_image || !beam_image)
     return false;
 

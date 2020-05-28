@@ -8,6 +8,7 @@
 #include "../engine/image.h"
 
 using namespace base;
+using namespace eng;
 
 namespace {
 
@@ -21,9 +22,9 @@ const Vector4 kTextColor = {0.895f, 0.692f, 0.24f, 1};
 }  // namespace
 
 bool Hud::Initialize() {
-  eng::Engine& engine = eng::Engine::Get();
+  Engine& engine = Engine::Get();
 
-  font_ = engine.GetFontAsset("PixelCaps!.ttf");
+  font_ = engine.GetAsset<Font>("PixelCaps!.ttf");
   if (!font_)
     return false;
 
@@ -55,10 +56,10 @@ bool Hud::Initialize() {
     progress_bar_animator_[i].Attach(&progress_bar_[i]);
 
     text_animator_cb_[i] = [&, i]() -> void {
-      text_animator_[i].SetEndCallback(eng::Animator::kBlending, nullptr);
+      text_animator_[i].SetEndCallback(Animator::kBlending, nullptr);
       text_animator_[i].SetBlending(kTextColor, 2,
           std::bind(Acceleration, std::placeholders::_1, -1));
-      text_animator_[i].Play(eng::Animator::kBlending, false);
+      text_animator_[i].Play(Animator::kBlending, false);
     };
     text_animator_[i].Attach(&text_[i]);
   }
@@ -96,7 +97,7 @@ void Hud::Show() {
     progress_bar_[i].SetVisible(true);
     text_[i].SetVisible(true);
     progress_bar_animator_[i].SetBlending(kPprogressBarColor[i], 0.3f);
-    progress_bar_animator_[i].Play(eng::Animator::kBlending, false);
+    progress_bar_animator_[i].Play(Animator::kBlending, false);
   }
 }
 
@@ -105,10 +106,10 @@ void Hud::PrintScore(int score, bool flash) {
   Print(0, std::to_string(score));
 
   if (flash) {
-    text_animator_[0].SetEndCallback(eng::Animator::kBlending, text_animator_cb_[0]);
+    text_animator_[0].SetEndCallback(Animator::kBlending, text_animator_cb_[0]);
     text_animator_[0].SetBlending({1, 1, 1, 1}, 0.1f,
         std::bind(Acceleration, std::placeholders::_1, 1));
-    text_animator_[0].Play(eng::Animator::kBlending, false);
+    text_animator_[0].Play(Animator::kBlending, false);
   }
 }
 
@@ -119,9 +120,9 @@ void Hud::PrintWave(int wave, bool flash) {
   Print(1, text.c_str());
 
   if (flash) {
-    text_animator_[1].SetEndCallback(eng::Animator::kBlending, text_animator_cb_[1]);
+    text_animator_[1].SetEndCallback(Animator::kBlending, text_animator_cb_[1]);
     text_animator_[1].SetBlending({1, 1, 1, 1}, 0.08f);
-    text_animator_[1].Play(eng::Animator::kBlending, false);
+    text_animator_[1].Play(Animator::kBlending, false);
   }
 }
 
@@ -150,8 +151,8 @@ void Hud::Print(int i, const std::string& text) {
   text_[i].Create(image);
 }
 
-std::shared_ptr<eng::Image> Hud::CreateImage() {
-  auto image = std::make_shared<eng::Image>();
+std::shared_ptr<Image> Hud::CreateImage() {
+  auto image = std::make_shared<Image>();
   image->Create(max_text_width_, font_->GetLineHeight());
   image->Clear({1, 1, 1, 0});
   return image;

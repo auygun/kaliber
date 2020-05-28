@@ -12,7 +12,7 @@ using namespace eng;
 bool SkyQuad::Create() {
   eng::Engine& engine = eng::Engine::Get();
 
-  auto sky_source = engine.GetShaderAsset("sky");
+  auto sky_source = engine.GetAsset<ShaderSource>("sky.glsl");
   if (!sky_source)
     return false;
   shader_.Create(sky_source, engine.GetQuad().vertex_description());
