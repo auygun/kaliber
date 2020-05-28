@@ -64,7 +64,6 @@ bool Menu::Initialize() {
           [&, i]() -> void {
             items_[i].text_animator.SetEndCallback(Animator::kBlending,
                                                    nullptr);
-            fading_ = false;
             selected_option_ = (Option)i;
           });
       items_[i].text_animator.SetBlending(kColorNormal, kBlendingSpeed);
@@ -87,7 +86,7 @@ void Menu::Update(float delta_time) {
 }
 
 void Menu::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
-  if (event->GetType() != eng::InputEvent::kTap || fading_)
+  if (event->GetType() != eng::InputEvent::kTap || IsAnimating())
     return;
 
   for (int i = 0; i < kOption_Max; ++i) {
@@ -96,7 +95,6 @@ void Menu::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
     if (Intersection(items_[i].text.GetOffset(),
                      items_[i].text.GetScale() * Vector2(1.2f, 2),
                      event->GetVector(0))) {
-      fading_ = true;
       items_[i].text_animator.SetEndCallback(Animator::kBlending,
                                              items_[i].select_item_cb_);
       items_[i].text_animator.SetBlending(kColorHighlight, kBlendingSpeed);
@@ -135,13 +133,11 @@ void Menu::SetOptionEnabled(Option o, bool enable) {
 }
 
 void Menu::Show() {
-  fading_ = true;
   for (int i = 0; i < kOption_Max; ++i) {
     if (items_[i].hide)
       continue;
     items_[i].text_animator.SetEndCallback(Animator::kBlending, [&, i]() -> void {
           items_[i].text_animator.SetEndCallback(Animator::kBlending, nullptr);
-          fading_ = false;
         });
     items_[i].text_animator.SetBlending(kColorNormal, kFadeSpeed);
     items_[i].text_animator.Play(Animator::kBlending, false);
@@ -150,7 +146,6 @@ void Menu::Show() {
 }
 
 void Menu::Hide() {
-  fading_ = true;
   selected_option_ = kOption_Invalid;
   for (int i = 0; i < kOption_Max; ++i) {
     if (items_[i].hide)
@@ -158,7 +153,6 @@ void Menu::Hide() {
     items_[i].text_animator.SetEndCallback(Animator::kBlending, [&, i]() -> void {
           items_[i].text_animator.SetEndCallback(Animator::kBlending, nullptr);
           items_[i].text.SetVisible(false);
-          fading_ = false;
         });
     items_[i].text_animator.SetBlending(kColorFadeOut, kFadeSpeed);
     items_[i].text_animator.Play(Animator::kBlending, false);
@@ -187,4 +181,12 @@ std::shared_ptr<eng::Image> Menu::CreateImage() {
 
   image->SetImmutable();
   return image;
+}
+
+bool Menu::IsAnimating() {
+  for (int i = 0; i < kOption_Max; ++i) {
+    if (items_[i].text_animator.IsPlaying(Animator::kBlending))
+      return true;
+  }
+  return false;
 }

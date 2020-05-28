@@ -60,9 +60,9 @@ class Menu {
 
   Option selected_option_ = kOption_Invalid;
 
-  bool fading_ = false;
-
   std::shared_ptr<eng::Image> CreateImage();
+
+  bool IsAnimating();
 };
 
 #endif  // MENU_H
