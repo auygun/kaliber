@@ -26,10 +26,10 @@ class Image : public Asset {
 
   bool Load(const std::string& file_name) override;
 
+  int GetCanvasWidth() const { return canvas_width_; }
+  int GetCanvasHeight() const { return canvas_height_; }
   int GetWidth() const { return width_; }
   int GetHeight() const { return height_; }
-  int GetOriginalWidth() const { return original_width_; }
-  int GetOriginalHeight() const { return original_height_; }
   Format GetFormat() const { return format_; }
   bool IsCompressed() const { return format_ > kRGBA32; }
 
@@ -46,10 +46,10 @@ class Image : public Asset {
 
  private:
   base::AlignedMem<uint8_t[]>::ScoppedPtr buffer_;
+  int canvas_width_ = 0;
+  int canvas_height_ = 0;
   int width_ = 0;
   int height_ = 0;
-  int original_width_ = 0;
-  int original_height_ = 0;
   Format format_ = kRGBA32;
 };
 

@@ -360,7 +360,7 @@ void Engine::PrintStats() {
   for (auto& text : lines) {
     worker.Enqueue(std::bind(&Font::Print, system_font_, margin, y,
                              text.c_str(), image->GetBuffer(),
-                             image->GetWidth()));
+                             image->GetCanvasWidth()));
     y += line_height + margin;
   }
   worker.Join();

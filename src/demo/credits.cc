@@ -110,10 +110,10 @@ std::shared_ptr<eng::Image> Credits::CreateImage() {
   for (int i = 0; i < kNumCreditsLines; ++i) {
     int w, h;
     font_->CalculateBoundingBox(kCreditsLines[i], w, h);
-    float x = (image->GetOriginalWidth() - w) / 2;
+    float x = (image->GetWidth() - w) / 2;
     worker.Enqueue(std::bind(&Font::Print, font_, x, y,
                              kCreditsLines[i], image->GetBuffer(),
-                             image->GetWidth()));
+                             image->GetCanvasWidth()));
     y += line_height + margin;
   }
   worker.Join();

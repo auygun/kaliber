@@ -142,10 +142,10 @@ void Hud::Print(int i, const std::string& text) {
   if (i == 1) {
     int w, h;
     font_->CalculateBoundingBox(text.c_str(), w, h);
-    x = image->GetOriginalWidth() - w;
+    x = image->GetWidth() - w;
   }
 
-  font_->Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
+  font_->Print(x, 0, text.c_str(), image->GetBuffer(), image->GetCanvasWidth());
   image->SetImmutable();
 
   text_[i].Create(image);

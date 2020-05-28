@@ -23,15 +23,15 @@ void ImageQuad::Create(std::shared_ptr<const Image> image,
   if (frame_width > 0)
     frame_width_ = frame_width;
   else
-    frame_width_ = image->GetOriginalWidth() / num_frames[0];
+    frame_width_ = image->GetWidth() / num_frames[0];
 
   if (frame_height > 0)
     frame_height_ = frame_height;
   else
-    frame_height_ = image->GetOriginalHeight() / num_frames[1];
+    frame_height_ = image->GetHeight() / num_frames[1];
 
-  tex_scale_ = {(float)frame_width_ / (float)image->GetWidth(),
-                (float)frame_height_ / (float)image->GetHeight()};
+  tex_scale_ = {(float)frame_width_ / (float)image->GetCanvasWidth(),
+                (float)frame_height_ / (float)image->GetCanvasHeight()};
   num_frames_ = std::move(num_frames);
 }
 

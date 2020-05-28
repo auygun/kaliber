@@ -440,9 +440,9 @@ std::shared_ptr<Image> Enemy::GetScoreImage(const EnemyUnit& enemy) {
   std::string text = std::to_string(GetScore(enemy.enemy_type));
   int w, h;
   font_->CalculateBoundingBox(text.c_str(), w, h);
-  int x = (image->GetOriginalWidth() - w) / 2;
-  int y = (image->GetOriginalHeight() - h) / 2;
-  font_->Print(x, y, text.c_str(), image->GetBuffer(), image->GetWidth());
+  int x = (image->GetWidth() - w) / 2;
+  int y = (image->GetHeight() - h) / 2;
+  font_->Print(x, y, text.c_str(), image->GetBuffer(), image->GetCanvasWidth());
   image->SetImmutable();
   return image;
 }
