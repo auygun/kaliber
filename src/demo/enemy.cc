@@ -139,7 +139,6 @@ void Enemy::SelectTarget(DamageType damage_type,
   if (waiting_for_next_wave_)
     return;
 
-  EnemyUnit* current_enemy = nullptr;
   EnemyUnit* best_enemy = nullptr;
 
   Vector2 beam_dir = (target_pos - weapon_pos).Normalize();
@@ -148,8 +147,11 @@ void Enemy::SelectTarget(DamageType damage_type,
     if (e.hit_points <= 0 || e.marked_for_removal)
       continue;
 
-    if (e.targetted_by_weapon_ == damage_type)
-      current_enemy = &e;
+    if (e.targetted_by_weapon_ == damage_type) {
+      e.targetted_by_weapon_ = kDamageType_Invalid;
+      e.target.SetVisible(false);
+      e.target_animator.Stop(Animator::kAllAnimations);
+    }
 
     if (!base::Intersection(e.sprite.GetOffset(), e.sprite.GetScale() * 1.2f,
                             weapon_pos, beam_dir))
@@ -161,15 +163,6 @@ void Enemy::SelectTarget(DamageType damage_type,
       closest_dist = enemy_weapon_dist;
       best_enemy = &e;
     }
-  }
-
-  if (best_enemy == current_enemy)
-    return;
-
-  if (current_enemy) {
-    current_enemy->targetted_by_weapon_ = kDamageType_Invalid;
-    current_enemy->target.SetVisible(false);
-    current_enemy->target_animator.Stop(Animator::kAllAnimations);
   }
 
   if (best_enemy) {
@@ -187,17 +180,13 @@ void Enemy::SelectTarget(DamageType damage_type,
 }
 
 void Enemy::DeselectTarget(DamageType damage_type) {
-  assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Max);
+  assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
-  for (int i = kDamageType_Green; i < kDamageType_Any; ++i) {
-    if (damage_type != kDamageType_Any && damage_type != (DamageType)i)
-      continue;
-    EnemyUnit* target = GetTarget(damage_type);
-    if (target) {
-      target->targetted_by_weapon_ = kDamageType_Invalid;
-      target->target.SetVisible(false);
-      target->target_animator.Stop(Animator::kAllAnimations);
-    }
+  EnemyUnit* target = GetTarget(damage_type);
+  if (target) {
+    target->targetted_by_weapon_ = kDamageType_Invalid;
+    target->target.SetVisible(false);
+    target->target_animator.Stop(Animator::kAllAnimations);
   }
 }
 
@@ -226,7 +215,6 @@ void Enemy::OnWaveFinished() {
     if (!e.marked_for_removal && e.hit_points > 0)
       e.movement_animator.Pause(Animator::kMovement);
   }
-  DeselectTarget(kDamageType_Any);
   waiting_for_next_wave_ = true;
 }
 
