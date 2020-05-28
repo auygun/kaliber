@@ -434,15 +434,13 @@ int Enemy::GetScore(EnemyType enemy_type) {
 }
 
 std::shared_ptr<Image> Enemy::GetScoreImage(const EnemyUnit& enemy) {
-  auto image = std::make_shared<Image>();
-  image->Create(enemy.sprite.frame_width(), enemy.sprite.frame_height());
-  image->Clear({1, 1, 1, 0});
   std::string text = std::to_string(GetScore(enemy.enemy_type));
-  int w, h;
-  font_->CalculateBoundingBox(text.c_str(), w, h);
-  int x = (image->GetWidth() - w) / 2;
-  int y = (image->GetHeight() - h) / 2;
-  font_->Print(x, y, text.c_str(), image->GetBuffer(), image->GetCanvasWidth());
+  int width, height;
+  font_->CalculateBoundingBox(text.c_str(), width, height);
+  auto image = std::make_shared<Image>();
+  image->Create(width, height);
+  image->Clear({1, 1, 1, 0});
+  font_->Print(0, 0, text.c_str(), image->GetBuffer(), image->GetCanvasWidth());
   image->SetImmutable();
   return image;
 }
