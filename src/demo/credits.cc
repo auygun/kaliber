@@ -14,14 +14,16 @@ using namespace eng;
 
 namespace {
 
-constexpr int kNumCreditsLines = 7;
-constexpr char kCreditsLines[kNumCreditsLines][15] = {"Credits",
-                                                      " ",
-                                                      "Code:",
-                                                      "Attila Uygun",
-                                                      " ",
-                                                      "Graphics:",
-                                                      "Erkan Erturk"};
+constexpr char kCreditsLines[Credits::kNumLines][15] = {"Credits",
+                                                        "Code:",
+                                                        "Attila Uygun",
+                                                        "Graphics:",
+                                                        "Erkan Erturk"};
+
+constexpr float kLineSpaces[Credits::kNumLines - 1] = {1.5f,
+                                                       0.5f,
+                                                       1.5f,
+                                                       0.5f};
 
 const Vector4 kTextColor = {0.3f, 0.55f, 1.0f, 1};
 constexpr float kFadeSpeed = 0.2f;
@@ -36,7 +38,7 @@ bool Credits::Initialize() {
     return false;
 
   max_text_width_ = -1;
-  for (int i = 0; i < kNumCreditsLines; ++i) {
+  for (int i = 0; i < kNumLines; ++i) {
     int width, height;
     font_->CalculateBoundingBox(kCreditsLines[i], width, height);
     if (width > max_text_width_)
@@ -44,13 +46,27 @@ bool Credits::Initialize() {
   }
 
   auto image = CreateImage();
-  image->SetImmutable();
 
-  text_.Create(image);
-  text_.AutoScale();
-  text_.SetColor(kTextColor * Vector4(1, 1, 1, 0));
+  for (int i = 0; i < kNumLines; ++i) {
+    text_[i].Create(image, {1, kNumLines});
+    text_[i].AutoScale();
+    text_[i].SetColor(kTextColor * Vector4(1, 1, 1, 0));
+    text_[i].SetFrame(i);
 
-  text_animator_.Attach(&text_);
+    if (i > 0) {
+      text_[i].PlaceToBottomOf(text_[i - 1]);
+      text_[i].Translate(text_[i - 1].GetOffset() * Vector2(0, 1));
+      text_[i].Translate({0, text_[i - 1].GetScale().y * -kLineSpaces[i - 1]});
+    }
+
+    text_animator_.Attach(&text_[i]);
+  }
+
+  float center_offset_y =
+      (text_[0].GetOffset().y - text_[kNumLines - 1].GetOffset().y) / 2;
+  for (int i = 0; i < kNumLines; ++i)
+    text_[i].Translate({0, center_offset_y});
+
   return true;
 }
 
@@ -69,12 +85,15 @@ void Credits::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
 }
 
 void Credits::Draw() {
-  text_.Draw();
+  for (int i = 0; i < kNumLines; ++i)
+    text_[i].Draw();
 }
 
 void Credits::ContextLost() {
-  text_.ContextLost();
-  text_.Create(CreateImage());
+  for (int i = 0; i < kNumLines; ++i) {
+    text_[i].ContextLost();
+    text_[i].Create(CreateImage(), {1, kNumLines});
+  }
 }
 
 void Credits::Show() {
@@ -83,38 +102,33 @@ void Credits::Show() {
       });
   text_animator_.SetBlending(kTextColor, kFadeSpeed);
   text_animator_.Play(Animator::kBlending, false);
-  text_.SetVisible(true);
+  text_animator_.SetVisible(true);
 }
 
 void Credits::Hide() {
   text_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
         text_animator_.SetEndCallback(Animator::kBlending, nullptr);
-        text_.SetVisible(false);
+        text_animator_.SetVisible(false);
       });
   text_animator_.SetBlending(kTextColor * Vector4(1, 1, 1, 0), kFadeSpeed);
   text_animator_.Play(Animator::kBlending, false);
 }
 
 std::shared_ptr<eng::Image> Credits::CreateImage() {
-  int margin = max_text_width_ / 10;
   int line_height = font_->GetLineHeight() + 1;
-  int image_width = max_text_width_ + margin * 2;
-  int image_height = (line_height + margin) * kNumCreditsLines + margin;
-
   auto image = std::make_shared<eng::Image>();
-  image->Create(image_width, image_height);
+  image->Create(max_text_width_, line_height * kNumLines);
   image->Clear({1, 1, 1, 0});
 
-  Worker worker(kNumCreditsLines);
-  int y = margin;
-  for (int i = 0; i < kNumCreditsLines; ++i) {
+  Worker worker(kNumLines);
+  for (int i = 0; i < kNumLines; ++i) {
     int w, h;
     font_->CalculateBoundingBox(kCreditsLines[i], w, h);
     float x = (image->GetWidth() - w) / 2;
+    float y = line_height * i;
     worker.Enqueue(std::bind(&Font::Print, font_, x, y,
                              kCreditsLines[i], image->GetBuffer(),
                              image->GetCanvasWidth()));
-    y += line_height + margin;
   }
   worker.Join();
 

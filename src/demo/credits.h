@@ -15,6 +15,8 @@ class Font;
 
 class Credits {
  public:
+  static constexpr int kNumLines = 5;
+
   Credits() = default;
   ~Credits() = default;
 
@@ -32,7 +34,7 @@ class Credits {
   void Hide();
 
  private:
-  eng::ImageQuad text_;
+  eng::ImageQuad text_[kNumLines];
   eng::Animator text_animator_;
 
   std::shared_ptr<const eng::Font> font_;
