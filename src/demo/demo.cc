@@ -54,9 +54,9 @@ bool Demo::Initialize() {
 }
 
 void Demo::Update(float delta_time) {
-  eng::Engine& engine = eng::Engine::Get();
+  Engine& engine = Engine::Get();
 
-  while (std::unique_ptr<eng::InputEvent> event = engine.GetNextInputEvent()) {
+  while (std::unique_ptr<InputEvent> event = engine.GetNextInputEvent()) {
     if (state_ == kMenu)
       menu_.OnInputEvent(std::move(event));
     else if (state_ == kCredits)
@@ -189,7 +189,7 @@ void Demo::UpdateGameState(float delta_time) {
       enemy_.OnWaveFinished();
 
       SetDelayedWork(1, [&]() -> void {
-        RandomGenerator& rnd = eng::Engine::Get().GetRandomGenerator();
+        RandomGenerator& rnd = Engine::Get().GetRandomGenerator();
         int dominant_channel = rnd.GetInt() % 3;
         float weights[3] = {0 ,0 ,0};
         weights[dominant_channel] = 1;

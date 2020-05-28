@@ -14,14 +14,13 @@
 #include "renderer/renderer.h"
 #include "shader_source.h"
 
-using base::Matrix4x4;
-using base::Vector2;
+using namespace base;
 
 static constexpr float kLifeTime = 30;
 
 namespace eng {
 
-Engine::Engine() : task_runner_(std::make_unique<base::TaskRunner>()) {}
+Engine::Engine() : task_runner_(std::make_unique<TaskRunner>()) {}
 
 Engine::~Engine() = default;
 
@@ -55,7 +54,7 @@ bool Engine::Init(Platform* platform) {
   if (!CreateRenderResources())
     return false;
 
-  game_ = eng::GameFactoryBase::CreateGame("");
+  game_ = GameFactoryBase::CreateGame("");
   if (!game_) {
     printf("No game found to run.\n");
     return false;
@@ -355,7 +354,7 @@ void Engine::PrintStats() {
   image->Create(image_width, image_height);
   image->Clear({1, 1, 1, 0.08f});
 
-  base::Worker worker(2);
+  Worker worker(2);
   int y = margin;
   for (auto& text : lines) {
     worker.Enqueue(std::bind(&Font::Print, system_font_, margin, y,

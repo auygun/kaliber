@@ -7,7 +7,7 @@
 #include "renderer/geometry.h"
 #include "renderer/shader.h"
 
-using base::Vector2;
+using namespace base;
 
 namespace eng {
 

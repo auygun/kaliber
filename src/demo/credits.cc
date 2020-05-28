@@ -74,8 +74,8 @@ void Credits::Update(float delta_time) {
   text_animator_.Update(delta_time);
 }
 
-void Credits::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
-  if ((event->GetType() == eng::InputEvent::kTap ||
+void Credits::OnInputEvent(std::unique_ptr<InputEvent> event) {
+  if ((event->GetType() == InputEvent::kTap ||
       event->GetType() == InputEvent::kNavigateBack) &&
       !text_animator_.IsPlaying(Animator::kBlending)) {
     Hide();
@@ -114,9 +114,9 @@ void Credits::Hide() {
   text_animator_.Play(Animator::kBlending, false);
 }
 
-std::shared_ptr<eng::Image> Credits::CreateImage() {
+std::shared_ptr<Image> Credits::CreateImage() {
   int line_height = font_->GetLineHeight() + 1;
-  auto image = std::make_shared<eng::Image>();
+  auto image = std::make_shared<Image>();
   image->Create(max_text_width_, line_height * kNumLines);
   image->Clear({1, 1, 1, 0});
 

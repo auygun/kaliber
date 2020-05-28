@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-using base::Vector2;
+using namespace base;
 
 namespace eng {
 

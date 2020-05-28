@@ -9,7 +9,7 @@
 #include "../input_event.h"
 #include "../renderer/renderer.h"
 
-using base::Vector2;
+using namespace base;
 
 namespace eng {
 

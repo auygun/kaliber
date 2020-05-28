@@ -36,7 +36,7 @@ constexpr float kFadeSpeed = 0.2f;
 }  // namespace
 
 bool Menu::Initialize() {
-  eng::Engine& engine = eng::Engine::Get();
+  Engine& engine = Engine::Get();
 
   font_ = engine.GetAsset<Font>("PixelCaps!.ttf");
   if (!font_)
@@ -85,8 +85,8 @@ void Menu::Update(float delta_time) {
   }
 }
 
-void Menu::OnInputEvent(std::unique_ptr<eng::InputEvent> event) {
-  if (event->GetType() != eng::InputEvent::kTap || IsAnimating())
+void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
+  if (event->GetType() != InputEvent::kTap || IsAnimating())
     return;
 
   for (int i = 0; i < kOption_Max; ++i) {
@@ -169,9 +169,9 @@ void Menu::Hide() {
   }
 }
 
-std::shared_ptr<eng::Image> Menu::CreateImage() {
+std::shared_ptr<Image> Menu::CreateImage() {
   int line_height = font_->GetLineHeight() + 1;
-  auto image = std::make_shared<eng::Image>();
+  auto image = std::make_shared<Image>();
   image->Create(max_text_width_, line_height * kOption_Max);
 
   // Fill the area of each menu item with gradient.

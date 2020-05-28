@@ -10,7 +10,7 @@ using namespace base;
 using namespace eng;
 
 bool SkyQuad::Create() {
-  eng::Engine& engine = eng::Engine::Get();
+  Engine& engine = Engine::Get();
 
   auto sky_source = engine.GetAsset<ShaderSource>("sky.glsl");
   if (!sky_source)
@@ -21,7 +21,7 @@ bool SkyQuad::Create() {
 
   color_animator_.Attach(this);
 
-  RandomGenerator& rnd = eng::Engine::Get().GetRandomGenerator();
+  RandomGenerator& rnd = Engine::Get().GetRandomGenerator();
   sky_offset_ = {0, Lerp(0.0f, 10.0f, rnd.GetFloat())};
 
   return true;
@@ -37,12 +37,12 @@ void SkyQuad::Draw(float frame_frac) {
 
   shader_.Activate();
   shader_.SetUniform("scale", scale_);
-  shader_.SetUniform("projection", eng::Engine::Get().GetProjectionMarix());
+  shader_.SetUniform("projection", Engine::Get().GetProjectionMarix());
   shader_.SetUniform("sky_offset", sky_offset);
   shader_.SetUniform("nebula_color",
       {nebula_color_.x, nebula_color_.y, nebula_color_.z});
 
-  eng::Engine::Get().GetQuad().Draw();
+  Engine::Get().GetQuad().Draw();
   last_sky_offset_ = sky_offset_;
 }
 

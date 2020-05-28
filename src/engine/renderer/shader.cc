@@ -6,10 +6,7 @@
 #include "../shader_source.h"
 #include "render_command.h"
 
-using base::Matrix4x4;
-using base::Vector2;
-using base::Vector3;
-using base::Vector4;
+using namespace base;
 
 namespace eng {
 
