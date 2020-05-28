@@ -7,6 +7,7 @@
 
 #include <array>
 #include <memory>
+#include <string>
 
 namespace eng {
 
@@ -16,6 +17,12 @@ class ImageQuad : public Animatable {
  public:
   ImageQuad() = default;
   ~ImageQuad() override = default;
+
+  bool Create(const std::string& name,
+              std::array<int, 2> num_frames,
+              int frame_width,
+              int frame_height,
+              const base::Vector2& tex_scale);
 
   void Create(std::shared_ptr<const Image> image,
               std::array<int, 2> num_frames = {1, 1},

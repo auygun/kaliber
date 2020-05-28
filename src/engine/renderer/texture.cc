@@ -12,11 +12,10 @@ Texture::~Texture() {
   Destroy();
 }
 
-void Texture::Create(std::shared_ptr<const Image> image) {
-  assert(image->IsImmutable());
-
+bool Texture::Create(const std::string &name) {
   Destroy();
-  resource_id_ = Engine::Get().AcquireTextureResource(image);
+  resource_id_ = Engine::Get().GetTextureResource(name);
+  return resource_id_ > 0;
 }
 
 void Texture::Update(std::shared_ptr<const Image> image) {
@@ -28,7 +27,8 @@ void Texture::Update(std::shared_ptr<const Image> image) {
     cmd->image = image;
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
   } else {
-    Create(image);
+    Destroy();
+    resource_id_ = Engine::Get().AcquireTextureResource(image);
   }
 }
 

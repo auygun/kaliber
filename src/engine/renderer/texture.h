@@ -2,6 +2,7 @@
 #define TEXTURE_H
 
 #include <memory>
+#include <string>
 
 namespace eng {
 
@@ -12,8 +13,12 @@ class Texture {
   Texture() = default;
   ~Texture();
 
-  void Create(std::shared_ptr<const Image> image);
+  // Use exsting resource. Returns false if no resource was found.
+  bool Create(const std::string &name);
+
+  // Update exsiting resource or create a new one if no resource was found.
   void Update(std::shared_ptr<const Image> image);
+
   void Destroy();
 
   void Activate();

@@ -4,7 +4,10 @@
 #include <array>
 #include <list>
 #include <memory>
+#include <tuple>
+#include <unordered_map>
 
+#include "../base/vecmath.h"
 #include "../engine/animator.h"
 #include "../engine/image_quad.h"
 #include "../engine/solid_quad.h"
@@ -92,6 +95,8 @@ class Enemy {
 
   int last_spawn_col_ = 0;
 
+  std::unordered_map<int, std::tuple<int, int, base::Vector2>> score_image_params_;
+
   void TakeDamage(EnemyUnit* target ,int damage);
 
   void SpawnNextEnemy();
@@ -105,7 +110,7 @@ class Enemy {
 
   int GetScore(EnemyType enemy_type);
 
-  std::shared_ptr<eng::Image> GetScoreImage(const EnemyUnit& enemy);
+  std::shared_ptr<eng::Image> GetScoreImage(int score);
 };
 
 #endif  // ENEMY_H

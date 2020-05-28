@@ -11,6 +11,22 @@ using namespace base;
 
 namespace eng {
 
+bool ImageQuad::Create(const std::string& name,
+                       std::array<int, 2> num_frames,
+                       int frame_width,
+                       int frame_height,
+                       const Vector2& tex_scale) {
+  if (!texture_.Create(name))
+    return false;
+
+  frame_width_ = frame_width;
+  frame_height_ = frame_height;
+  tex_scale_ = tex_scale;
+  num_frames_ = std::move(num_frames);
+
+  return true;
+}
+
 void ImageQuad::Create(std::shared_ptr<const Image> image,
                        std::array<int, 2> num_frames,
                        int frame_width,

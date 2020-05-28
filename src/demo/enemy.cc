@@ -70,7 +70,7 @@ void Enemy::ContextLost() {
     e.blast.Create(blast_frames_, {6, 2});
     if (e.score.IsValid()) {
       e.score.ContextLost();
-      auto image = GetScoreImage(e);
+      auto image = GetScoreImage(GetScore(e.enemy_type));
       e.score.Create(image);
     }
   }
@@ -252,10 +252,6 @@ void Enemy::TakeDamage(EnemyUnit* target ,int damage) {
     target->health_bar.SetVisible(false);
     target->score.SetVisible(true);
 
-    auto image = GetScoreImage(*target);
-    target->score.Create(image);
-    target->score.AutoScale();
-
     target->score_animator.Play(Animator::kTimer | Animator::kMovement, false);
     target->movement_animator.Pause(Animator::kMovement);
 
@@ -372,6 +368,15 @@ void Enemy::Spawn(EnemyType enemy_type,
   e.health_bar.PlaceToBottomOf(e.sprite);
   e.health_bar.SetColor({0.161f, 0.89f, 0.322f, 1});
 
+  int s = GetScore(e.enemy_type);
+  std::string resource_name = "enemy_score_";
+  resource_name += std::to_string(s);
+  auto [frame_width, frame_height, tex_scale] = score_image_params_[s];
+  if (!e.score.Create(resource_name, {1, 1}, frame_width, frame_height, tex_scale)) {
+    auto image = GetScoreImage(s);
+    e.score.Create(image);
+  }
+  e.score.AutoScale();
   e.score.SetColor({1, 1, 1, 1});
   e.score.SetOffset(spawn_pos);
 
@@ -433,14 +438,27 @@ int Enemy::GetScore(EnemyType enemy_type) {
   return enemy_scores[enemy_type];
 }
 
-std::shared_ptr<Image> Enemy::GetScoreImage(const EnemyUnit& enemy) {
-  std::string text = std::to_string(GetScore(enemy.enemy_type));
+std::shared_ptr<Image> Enemy::GetScoreImage(int score) {
+  std::string text = std::to_string(score);
   int width, height;
   font_->CalculateBoundingBox(text.c_str(), width, height);
+
   auto image = std::make_shared<Image>();
   image->Create(width, height);
   image->Clear({1, 1, 1, 0});
+
   font_->Print(0, 0, text.c_str(), image->GetBuffer(), image->GetCanvasWidth());
+
+  std::string resource_name = "enemy_score_";
+  resource_name += text;
+  image->SetName(resource_name);
+
   image->SetImmutable();
+
+  score_image_params_[score] = std::make_tuple(image->GetWidth(),
+      image->GetHeight(),
+      Vector2((float)image->GetWidth() / (float)image->GetCanvasWidth(),
+              (float)image->GetHeight() / (float)image->GetCanvasHeight()));
+
   return image;
 }
