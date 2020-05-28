@@ -37,6 +37,12 @@ class Log {
   }
 
   template <>
+  Log& operator<<<bool>(const bool& arg) {
+    stream_ << (arg ? "true" : "false");
+    return *this;
+  }
+
+  template <>
   Log& operator<<<Vector2>(const Vector2& arg) {
     stream_ << "(" << arg.x << ", " << arg.y << ")";
     return *this;
