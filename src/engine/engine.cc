@@ -137,6 +137,15 @@ Vector2 Engine::ToPosition(const Vector2& vec) {
   return ToScale(vec) - GetScreenSize() / 2.0f;
 }
 
+int Engine::GetTextureResource(const std::string& name) {
+  auto it = texture_resources_.find(name);
+  if (it != texture_resources_.end()) {
+    ++(it->second.ref_count);
+    return it->second.resource_id;
+  }
+  return 0;
+}
+
 int Engine::AcquireTextureResource(std::shared_ptr<const Image> image) {
   assert(image->IsImmutable());
 
@@ -170,7 +179,7 @@ void Engine::ReturnTextureResource(int resource_id) {
     assert(it->second.ref_count > 0);
     if (--(it->second.ref_count) > 0)
       return;
-    it->second.time_to_die_ = kLifeTime;
+    it->second.time_to_die = kLifeTime;
     return;
   }
   auto cmd = std::make_unique<CmdDestoryTexture>();
@@ -319,8 +328,8 @@ void Engine::KillUnusedResources(float delta_time) {
     if (it->second.ref_count > 0)
       continue;
 
-    it->second.time_to_die_ -= delta_time;
-    if (it->second.time_to_die_ <= 0.0f) {
+    it->second.time_to_die -= delta_time;
+    if (it->second.time_to_die <= 0.0f) {
       DLOG << "KillUnusedResources - Destroy! resource_id: "
            << it->second.resource_id;
 
