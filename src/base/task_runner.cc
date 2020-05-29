@@ -4,7 +4,7 @@ namespace base {
 
 void TaskRunner::Enqueue(base::Closure task) {
   std::unique_lock<std::mutex> scoped_lock(mutex_);
-  main_thread_tasks_.emplace_back(std::move(task));
+  thread_tasks_.emplace_back(std::move(task));
 }
 
 void TaskRunner::Run() {
@@ -12,9 +12,9 @@ void TaskRunner::Run() {
     base::Closure task;
     {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
-      if (!main_thread_tasks_.empty()) {
-        task.swap(main_thread_tasks_.front());
-        main_thread_tasks_.pop_front();
+      if (!thread_tasks_.empty()) {
+        task.swap(thread_tasks_.front());
+        thread_tasks_.pop_front();
       }
     }
     if (!task)

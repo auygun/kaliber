@@ -7,13 +7,10 @@
 
 #include "../base/random_generator.h"
 #include "../base/vecmath.h"
+#include "../base/task_runner.h"
 #include "image_quad.h"
 #include "renderer/geometry.h"
 #include "renderer/shader.h"
-
-namespace base {
-class TaskRunner;
-}  // namespace base
 
 namespace eng {
 
@@ -180,7 +177,7 @@ class Engine {
 
   std::deque<std::unique_ptr<InputEvent>> input_queue_;
 
-  std::unique_ptr<base::TaskRunner> task_runner_;
+  base::TaskRunner task_runner_;
 
   base::RandomGenerator random_;
 

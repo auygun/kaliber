@@ -1,7 +1,6 @@
 #include "engine.h"
 
 #include "../base/log.h"
-#include "../base/task_runner.h"
 #include "../base/worker.h"
 #include "font.h"
 #include "game.h"
@@ -20,7 +19,7 @@ static constexpr float kLifeTime = 30;
 
 namespace eng {
 
-Engine::Engine() : task_runner_(std::make_unique<TaskRunner>()) {}
+Engine::Engine() = default;
 
 Engine::~Engine() = default;
 
@@ -78,7 +77,7 @@ void Engine::Shutdown() {
 void Engine::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
 
-  task_runner_->Run();
+  task_runner_.Run();
 
   game_->Update(delta_time);
 
@@ -276,8 +275,8 @@ std::shared_ptr<Asset> Engine::GetAssetInternal(
 }
 
 void Engine::ContextLost() {
-  if (!task_runner_->IsBoundToCurrentThread()) {
-    task_runner_->Enqueue(std::bind(&Engine::ContextLost, this));
+  if (!task_runner_.IsBoundToCurrentThread()) {
+    task_runner_.Enqueue(std::bind(&Engine::ContextLost, this));
     return;
   }
 
