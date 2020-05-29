@@ -53,9 +53,9 @@ bool Font::Load(const std::string& file_name) {
   } while (0);
 
   int x0, y0, x1, y1;
-  CalculateBoundingBox("Ilfgjy", x0, y0, x1, y1);
+  CalculateBoundingBox("`IlfKgjy_{)", x0, y0, x1, y1);
   line_height_ = y1 - y0;
-  vertical_shift_ = -y0;
+  yoff_ = -y0;
 
   return result;
 }
@@ -184,7 +184,7 @@ void Font::Print(int x,
   if (!glyph_cache_)
     return;
 
-  float fx = (float)x, fy = (float)y + (float)vertical_shift_;
+  float fx = (float)x, fy = (float)y + (float)yoff_;
 
   const char* ptr = text.c_str();
   while (*ptr) {

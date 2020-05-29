@@ -49,7 +49,7 @@ class Font : public Asset {
   stbtt_bakedchar glyph_info_[kNumChars];   // Coordinates and advance.
 
   int line_height_ = 0;
-  int vertical_shift_ = 0;
+  int yoff_ = 0;
 };
 
 }  // namespace eng
