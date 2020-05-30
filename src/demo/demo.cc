@@ -4,8 +4,8 @@
 #include <string>
 
 #include "../base/interpolation.h"
-#include "../base/random_generator.h"
 #include "../base/log.h"
+#include "../base/random_generator.h"
 #include "../engine/engine.h"
 #include "../engine/game_factory.h"
 #include "../engine/input_event.h"
@@ -85,9 +85,9 @@ void Demo::Update(float delta_time) {
   credits_.Update(delta_time);
 
   if (state_ == kMenu)
-      UpdateMenuState(delta_time);
+    UpdateMenuState(delta_time);
   else if (state_ == kGame)
-      UpdateGameState(delta_time);
+    UpdateGameState(delta_time);
 }
 
 void Demo::Draw(float frame_frac) {
@@ -112,8 +112,7 @@ void Demo::LostFocus() {
   EnterMenuState();
 }
 
-void Demo::GainedFocus() {
-}
+void Demo::GainedFocus() {}
 
 void Demo::AddScore(int score) {
   add_score_ += score;
@@ -191,7 +190,7 @@ void Demo::UpdateGameState(float delta_time) {
       SetDelayedWork(1, [&]() -> void {
         RandomGenerator& rnd = Engine::Get().GetRandomGenerator();
         int dominant_channel = rnd.GetInt() % 3;
-        float weights[3] = {0 ,0 ,0};
+        float weights[3] = {0, 0, 0};
         weights[dominant_channel] = 1;
         Vector4 c = {Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[0],
                      Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[1],

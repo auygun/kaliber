@@ -87,7 +87,7 @@ class Enemy {
 
   int last_spawn_col_ = 0;
 
-  void TakeDamage(EnemyUnit* target ,int damage);
+  void TakeDamage(EnemyUnit* target, int damage);
 
   void SpawnNextEnemy();
 

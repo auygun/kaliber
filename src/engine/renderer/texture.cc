@@ -12,7 +12,7 @@ Texture::~Texture() {
   Destroy();
 }
 
-bool Texture::Create(const std::string &name) {
+bool Texture::Create(const std::string& name) {
   Destroy();
   resource_id_ = Engine::Get().GetTextureResource(name, width_, height_);
   return resource_id_ > 0;

@@ -81,11 +81,11 @@ bool Renderer::InitCommon() {
     texture_compression_.atc = true;
 
   if (extensions.find("GL_OES_vertex_array_object") != extensions.end()) {
-      // This extension seems to be broken on older PowerVR drivers.
-      if (!strstr(renderer, "PowerVR SGX 53") &&
-          !strstr(renderer, "PowerVR SGX 54")) {
-        vertex_array_objects_ = true;
-      }
+    // This extension seems to be broken on older PowerVR drivers.
+    if (!strstr(renderer, "PowerVR SGX 53") &&
+        !strstr(renderer, "PowerVR SGX 54")) {
+      vertex_array_objects_ = true;
+    }
   }
 
   if (extensions.count("GL_ARB_texture_non_power_of_two") ||

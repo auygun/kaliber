@@ -4,9 +4,9 @@
 #include <functional>
 #include <limits>
 
+#include "../base/collusion_test.h"
 #include "../base/interpolation.h"
 #include "../base/log.h"
-#include "../base/collusion_test.h"
 #include "../engine/engine.h"
 #include "../engine/font.h"
 #include "../engine/image.h"
@@ -25,18 +25,18 @@ constexpr int enemy_frame_speed = 12;
 
 constexpr int enemy_scores[] = {100, 150, 300};
 
-constexpr float kSpawnPeriod[kEnemyType_Max][2] = {
-  {2, 5}, {15, 25}, {110, 130}};
+constexpr float kSpawnPeriod[kEnemyType_Max][2] = {{2, 5},
+                                                   {15, 25},
+                                                   {110, 130}};
 
 void SetupFadeOutAnim(Animator& animator, float delay) {
   animator.SetEndCallback(Animator::kTimer, [&]() -> void {
-        animator.SetBlending({1, 1, 1, 0}, 0.5f,
-            std::bind(Acceleration, std::placeholders::_1, -1));
-        animator.Play(Animator::kBlending, false);
-      });
-  animator.SetEndCallback(Animator::kBlending, [&]() -> void {
-        animator.SetVisible(false);
-      });
+    animator.SetBlending({1, 1, 1, 0}, 0.5f,
+                         std::bind(Acceleration, std::placeholders::_1, -1));
+    animator.Play(Animator::kBlending, false);
+  });
+  animator.SetEndCallback(Animator::kBlending,
+                          [&]() -> void { animator.SetVisible(false); });
   animator.SetTimer(delay);
 }
 
@@ -243,7 +243,7 @@ void Enemy::OnWaveStarted(int wave) {
   waiting_for_next_wave_ = false;
 }
 
-void Enemy::TakeDamage(EnemyUnit* target ,int damage) {
+void Enemy::TakeDamage(EnemyUnit* target, int damage) {
   assert(!target->marked_for_removal);
   assert(target->hit_points > 0);
 
@@ -278,8 +278,7 @@ void Enemy::TakeDamage(EnemyUnit* target ,int damage) {
     target->health_base.SetVisible(true);
     target->health_bar.SetVisible(true);
 
-    target->health_animator.Stop(Animator::kTimer |
-                                 Animator::kBlending);
+    target->health_animator.Stop(Animator::kTimer | Animator::kBlending);
     target->health_animator.Play(Animator::kTimer, false);
   }
 }
@@ -297,8 +296,9 @@ void Enemy::SpawnNextEnemy() {
         enemy_type = (EnemyType)i;
 
       seconds_since_last_spawn_[i] = 0;
-      seconds_to_next_spawn_[i] = Lerp(kSpawnPeriod[i][0]  * factor,
-          kSpawnPeriod[i][1]  * factor, rnd.GetFloat());
+      seconds_to_next_spawn_[i] =
+          Lerp(kSpawnPeriod[i][0] * factor, kSpawnPeriod[i][1] * factor,
+               rnd.GetFloat());
       break;
     }
   }
@@ -307,18 +307,19 @@ void Enemy::SpawnNextEnemy() {
     return;
 
   DamageType damage_type = enemy_type == kEnemyType_Tank
-                    ? kDamageType_Any
-                    : (DamageType)(rnd.GetInt() % 2);
+                               ? kDamageType_Any
+                               : (DamageType)(rnd.GetInt() % 2);
 
   Vector2 s = engine.GetScreenSize();
   int col;
-  while ((col = rnd.GetInt() % 4) == last_spawn_col_);
+  while ((col = rnd.GetInt() % 4) == last_spawn_col_)
+    ;
   last_spawn_col_ = col;
   float x = (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2;
   Vector2 pos = {x, s.y / 2};
   float speed = enemy_type == kEnemyType_Tank
-              ? 36.0f
-              : ((rnd.GetInt() % 4) == 0 ? 6.0f : 10.0f);
+                    ? 36.0f
+                    : ((rnd.GetInt() % 4) == 0 ? 6.0f : 10.0f);
 
   Spawn(enemy_type, damage_type, pos, speed);
 }
@@ -406,15 +407,15 @@ void Enemy::Spawn(EnemyType enemy_type,
 
   SetupFadeOutAnim(e.score_animator, 0.2f);
   e.score_animator.SetMovement({0, engine.GetScreenSize().y / 2}, 2.0f);
-  e.score_animator.SetEndCallback(Animator::kMovement, [&]() -> void {
-    e.marked_for_removal = true;
-  });
+  e.score_animator.SetEndCallback(
+      Animator::kMovement, [&]() -> void { e.marked_for_removal = true; });
   e.score_animator.Attach(&e.score);
 
   float max_distance =
       engine.GetScreenSize().y - game->GetPlayer().GetWeaponScale().y / 2;
 
-  e.movement_animator.SetMovement({0, -max_distance}, speed,
+  e.movement_animator.SetMovement(
+      {0, -max_distance}, speed,
       std::bind(Acceleration, std::placeholders::_1, -0.15f));
   e.movement_animator.SetEndCallback(Animator::kMovement, [&]() -> void {
     e.sprite.SetVisible(false);

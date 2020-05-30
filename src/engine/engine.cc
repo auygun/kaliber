@@ -71,8 +71,7 @@ bool Engine::Init(Platform* platform) {
   return true;
 }
 
-void Engine::Shutdown() {
-}
+void Engine::Shutdown() {}
 
 void Engine::Update(float delta_time) {
   seconds_accumulated_ += delta_time;

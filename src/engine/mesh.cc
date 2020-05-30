@@ -76,7 +76,7 @@ bool Mesh::Load(const std::string& file_name) {
   Json::CharReaderBuilder builder;
   const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
   if (!reader->parse(json_mesh.get(), json_mesh.get() + buffer_size, &root,
-      &err)) {
+                     &err)) {
     LOG << "Failed to load mesh. Json parser error: " << err;
     return false;
   }

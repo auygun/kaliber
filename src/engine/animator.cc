@@ -48,30 +48,36 @@ void Animator::SetEndCallback(int animation, base::Closure cb) {
     pending_cb_ = std::move(cb);
   }
   if ((animation & kMovement) != 0 && inside_cb_ != kMovement)
-      movement_cb_ = std::move(cb);
+    movement_cb_ = std::move(cb);
   if ((animation & kRotation) != 0 && inside_cb_ != kRotation)
-      rotation_cb_ = std::move(cb);
+    rotation_cb_ = std::move(cb);
   if ((animation & kBlending) != 0 && inside_cb_ != kBlending)
-      blending_cb_ = std::move(cb);
+    blending_cb_ = std::move(cb);
   if ((animation & kFrames) != 0 && inside_cb_ != kFrames)
-      frame_cb_ = std::move(cb);
+    frame_cb_ = std::move(cb);
   if ((animation & kTimer) != 0 && inside_cb_ != kTimer)
-      timer_cb_ = std::move(cb);
+    timer_cb_ = std::move(cb);
 }
 
-void Animator::SetMovement(Vector2 direction, float duration, Interpolator interpolator) {
+void Animator::SetMovement(Vector2 direction,
+                           float duration,
+                           Interpolator interpolator) {
   movement_direction_ = direction;
   movement_speed_ = 1.0f / duration;
   movement_interpolator_ = std::move(interpolator);
 }
 
-void Animator::SetRotation(float trget, float duration, Interpolator interpolator) {
+void Animator::SetRotation(float trget,
+                           float duration,
+                           Interpolator interpolator) {
   rotation_target_ = trget;
   rotation_speed_ = 1.0f / duration;
   rotation_interpolator_ = std::move(interpolator);
 }
 
-void Animator::SetBlending(Vector4 target, float duration, Interpolator interpolator) {
+void Animator::SetBlending(Vector4 target,
+                           float duration,
+                           Interpolator interpolator) {
   blending_target_ = target;
   blending_speed_ = 1.0f / duration;
   for (auto& a : elements_)
@@ -79,7 +85,9 @@ void Animator::SetBlending(Vector4 target, float duration, Interpolator interpol
   blending_interpolator_ = std::move(interpolator);
 }
 
-void Animator::SetFrames(int count, int frames_per_second, Interpolator interpolator) {
+void Animator::SetFrames(int count,
+                         int frames_per_second,
+                         Interpolator interpolator) {
   frame_count_ = count;
   frame_speed_ = (float)frames_per_second / (float)count;
   for (auto& a : elements_)
@@ -111,17 +119,18 @@ void Animator::Update(float delta_time) {
   for (auto& a : elements_) {
     if (play_flags_ & kMovement) {
       float interpolated_time = movement_interpolator_
-                                ? movement_interpolator_(movement_time_)
-                                : movement_time_;
-      Vector2 offset = base::Lerp({0, 0}, movement_direction_, interpolated_time);
+                                    ? movement_interpolator_(movement_time_)
+                                    : movement_time_;
+      Vector2 offset =
+          base::Lerp({0, 0}, movement_direction_, interpolated_time);
       a.animatable->Translate(offset - a.movement_last_offset);
       a.movement_last_offset = offset;
     }
 
     if (play_flags_ & kRotation) {
       float interpolated_time = rotation_interpolator_
-                                ? rotation_interpolator_(rotation_time_)
-                                : rotation_time_;
+                                    ? rotation_interpolator_(rotation_time_)
+                                    : rotation_time_;
       float theta = base::Lerp(0.0f, rotation_target_, interpolated_time);
       a.animatable->Rotate(theta - a.rotation_last_theta);
       a.rotation_last_theta = theta;
@@ -129,17 +138,16 @@ void Animator::Update(float delta_time) {
 
     if (play_flags_ & kBlending) {
       float interpolated_time = blending_interpolator_
-                                ? blending_interpolator_(blending_time_)
-                                : blending_time_;
+                                    ? blending_interpolator_(blending_time_)
+                                    : blending_time_;
       Vector4 r =
           base::Lerp(a.blending_start, blending_target_, interpolated_time);
       a.animatable->SetColor(r);
     }
 
     if (play_flags_ & kFrames) {
-      float interpolated_time = frame_interpolator_
-                                ? frame_interpolator_(frame_time_)
-                                : frame_time_;
+      float interpolated_time =
+          frame_interpolator_ ? frame_interpolator_(frame_time_) : frame_time_;
       int target = a.frame_start_ + frame_count_;
       int r = base::Lerp(a.frame_start_, target, interpolated_time);
       if (r < target)
@@ -166,7 +174,8 @@ void Animator::UpdateMovement(float delta_time) {
 
   movement_time_ += movement_speed_ * delta_time;
   if (movement_time_ > 1)
-    movement_time_ = (loop_flags_ & kMovement) == 0 ? 1 : fmod(movement_time_, 1.0f);
+    movement_time_ =
+        (loop_flags_ & kMovement) == 0 ? 1 : fmod(movement_time_, 1.0f);
 }
 
 void Animator::UpdateRotation(float delta_time) {
@@ -187,7 +196,8 @@ void Animator::UpdateRotation(float delta_time) {
 
   rotation_time_ += rotation_speed_ * delta_time;
   if (rotation_time_ > 1)
-    rotation_time_ = (loop_flags_ & kRotation) == 0 ? 1 : fmod(rotation_time_, 1.0f);
+    rotation_time_ =
+        (loop_flags_ & kRotation) == 0 ? 1 : fmod(rotation_time_, 1.0f);
 }
 
 void Animator::UpdateBlending(float delta_time) {
@@ -208,7 +218,8 @@ void Animator::UpdateBlending(float delta_time) {
 
   blending_time_ += blending_speed_ * delta_time;
   if (blending_time_ > 1)
-    blending_time_ = (loop_flags_ & kBlending) == 0 ? 1 : fmod(blending_time_, 1.0f);
+    blending_time_ =
+        (loop_flags_ & kBlending) == 0 ? 1 : fmod(blending_time_, 1.0f);
 }
 
 void Animator::UpdateFrame(float delta_time) {

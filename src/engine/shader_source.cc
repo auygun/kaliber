@@ -21,15 +21,14 @@ bool ShaderSource::Load(const std::string& name) {
     return false;
   }
 
-  Engine &engine = Engine::Get();
+  Engine& engine = Engine::Get();
 
   size_t size = 0;
 
   std::string vertex_file_name = name;
   vertex_file_name += "_vertex";
   auto vertex_source = base::AssetFile::ReadWholeFile(
-      vertex_file_name.c_str(), engine.GetRootPath().c_str(), &size,
-      true);
+      vertex_file_name.c_str(), engine.GetRootPath().c_str(), &size, true);
   if (!vertex_source) {
     LOG << "Failed to read file: " << vertex_file_name;
     return false;
@@ -41,15 +40,15 @@ bool ShaderSource::Load(const std::string& name) {
   std::string fragment_file_name = name;
   fragment_file_name += "_fragment";
   auto fragment_source = base::AssetFile::ReadWholeFile(
-      fragment_file_name.c_str(), engine.GetRootPath().c_str(), &size,
-      true);
+      fragment_file_name.c_str(), engine.GetRootPath().c_str(), &size, true);
   if (!fragment_source) {
     LOG << "Failed to read file: " << fragment_file_name;
     return false;
   }
 
-  fragment_source_ = engine.IsMobile() ? std::move(fragment_source)
-                                     : Preprocess(fragment_source.get(), size);
+  fragment_source_ = engine.IsMobile()
+                         ? std::move(fragment_source)
+                         : Preprocess(fragment_source.get(), size);
 
   return true;
 }

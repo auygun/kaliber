@@ -1,8 +1,8 @@
 #include "platform.h"
 
 #include <android_native_app_glue.h>
-#include <string>
 #include <unistd.h>
+#include <string>
 
 #include "../../base/file.h"
 #include "../../base/log.h"
@@ -64,7 +64,8 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
   if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY &&
       AKeyEvent_getKeyCode(event) == AKEYCODE_BACK) {
     if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_UP) {
-      auto input_event = std::make_unique<InputEvent>(InputEvent::kNavigateBack);
+      auto input_event =
+          std::make_unique<InputEvent>(InputEvent::kNavigateBack);
       Engine::Get().AddInputEvent(std::move(input_event));
     }
     return 1;

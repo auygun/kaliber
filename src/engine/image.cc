@@ -200,7 +200,7 @@ void Image::ConvertToPow2() {
 #else
     for (int y = 0; y < height_; ++y)
       memcpy(bigger_buffer + (y * new_width) * 4,
-              buffer_.get() + y * width_ * 4, width_ * 4);
+             buffer_.get() + y * width_ * 4, width_ * 4);
 #endif
 
     // Swap the buffers and dimensions.

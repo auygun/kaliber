@@ -14,7 +14,7 @@ class Texture {
   ~Texture();
 
   // Use exsting resource. Returns false if no resource was found.
-  bool Create(const std::string &name);
+  bool Create(const std::string& name);
 
   // Update exsiting resource or create a new one if no resource was found.
   void Update(std::shared_ptr<const Image> image);

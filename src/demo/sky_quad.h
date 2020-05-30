@@ -15,7 +15,7 @@ namespace eng {
 class Image;
 }  // namespace eng
 
-class SkyQuad : public eng::Animatable{
+class SkyQuad : public eng::Animatable {
  public:
   SkyQuad();
   ~SkyQuad();

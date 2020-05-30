@@ -22,8 +22,7 @@ inline float SmootherStep(float t) {
 // Interpolating spline defined by four control points with the curve drawn only
 // from 0 to 1 which are p1 and p2 respectively.
 inline float CatmullRom(float t, float p0, float p3) {
-  return 0.5f * ((-p0 + 1) * t +
-                 (2 * p0 + 4 * 1 - p3) * t * t +
+  return 0.5f * ((-p0 + 1) * t + (2 * p0 + 4 * 1 - p3) * t * t +
                  (-p0 - 3 * 1 + p3) * t * t * t);
 }
 

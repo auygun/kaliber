@@ -197,9 +197,9 @@ bool Player::SetupWeapons() {
     weapon_[i].SetFrame(wepon_cooldown_frame[i]);
     cooldown_animator_[i].SetFrames(wepon_cooldown_frame_count,
                                     wepon_anim_speed);
-    cooldown_animator_[i].SetEndCallback(
-        Animator::kFrames,
-        [&, i]() -> void { weapon_[i].SetFrame(wepon_warmup_frame[i]); });
+    cooldown_animator_[i].SetEndCallback(Animator::kFrames, [&, i]() -> void {
+      weapon_[i].SetFrame(wepon_warmup_frame[i]);
+    });
     cooldown_animator_[i].Attach(&weapon_[i]);
 
     weapon_[i].SetFrame(wepon_warmup_frame[i]);
@@ -208,19 +208,15 @@ bool Player::SetupWeapons() {
     warmup_animator_[i].Attach(&weapon_[i]);
     warmup_animator_[i].Play(Animator::kRotation, true);
 
-    spark_animator_[i].SetEndCallback(
-        Animator::kMovement, [&, i]() -> void {
-          beam_spark_[i].SetVisible(false);
-          beam_animator_[i].Play(Animator::kBlending, false);
-          static_cast<Demo*>(engine.GetGame())
-              ->GetEnemy()
-              .HitTarget((DamageType)i);
-        });
+    spark_animator_[i].SetEndCallback(Animator::kMovement, [&, i]() -> void {
+      beam_spark_[i].SetVisible(false);
+      beam_animator_[i].Play(Animator::kBlending, false);
+      static_cast<Demo*>(engine.GetGame())->GetEnemy().HitTarget((DamageType)i);
+    });
     spark_animator_[i].Attach(&beam_spark_[i]);
 
     beam_animator_[i].SetEndCallback(
-        Animator::kBlending,
-        [&, i]() -> void { beam_[i].SetVisible(false); });
+        Animator::kBlending, [&, i]() -> void { beam_[i].SetVisible(false); });
     beam_animator_[i].SetBlending({1, 1, 1, 0}, 0.16f);
     beam_animator_[i].Attach(&beam_[i]);
   }
@@ -283,8 +279,7 @@ void Player::DragEnd() {
       Vector2 target_point = drag_end_;
       warmup_animator_[type].SetEndCallback(
           Animator::kFrames, [&, type, target_point]() -> void {
-            warmup_animator_[type].SetEndCallback(Animator::kFrames,
-                                                  nullptr);
+            warmup_animator_[type].SetEndCallback(Animator::kFrames, nullptr);
             CooldownWeapon(type);
             Fire(type, target_point);
           });
@@ -310,8 +305,7 @@ void Player::DragCancel() {
     if (warmup_animator_[type].IsPlaying(Animator::kFrames)) {
       warmup_animator_[type].SetEndCallback(
           Animator::kFrames, [&, type]() -> void {
-            warmup_animator_[type].SetEndCallback(Animator::kFrames,
-                                                  nullptr);
+            warmup_animator_[type].SetEndCallback(Animator::kFrames, nullptr);
             CooldownWeapon(type);
           });
     } else {

@@ -6,8 +6,8 @@
 #include <unordered_map>
 
 #include "../base/random_generator.h"
-#include "../base/vecmath.h"
 #include "../base/task_runner.h"
+#include "../base/vecmath.h"
 #include "image_quad.h"
 #include "renderer/geometry.h"
 #include "renderer/shader.h"
@@ -28,7 +28,7 @@ class Platform;
 namespace internal {
 
 class AssetFactoryBase {
-  public:
+ public:
   AssetFactoryBase(const std::string& name) : name_(name) {}
   virtual ~AssetFactoryBase() = default;
 
@@ -36,13 +36,13 @@ class AssetFactoryBase {
 
   const std::string& name() { return name_; };
 
-  private:
+ private:
   std::string name_;
 };
 
 template <typename T>
 class AssetFactory : public AssetFactoryBase {
-  public:
+ public:
   ~AssetFactory() override = default;
 
   AssetFactory(const std::string& name) : AssetFactoryBase(name) {}
@@ -52,7 +52,7 @@ class AssetFactory : public AssetFactoryBase {
   }
 };
 
-}
+}  // namespace internal
 
 class Engine {
  public:

@@ -19,10 +19,8 @@ using namespace eng;
 
 namespace {
 
-constexpr char kMenuOption[Menu::kOption_Max][10] = {"continue",
-                                                     "start",
-                                                     "credits",
-                                                     "exit"};
+constexpr char kMenuOption[Menu::kOption_Max][10] = {"continue", "start",
+                                                     "credits", "exit"};
 
 constexpr float kMenuOptionSpace = 1.5f;
 
@@ -61,8 +59,8 @@ bool Menu::Initialize() {
     items_[i].text.SetFrame(i);
 
     items_[i].select_item_cb_ = [&, i]() -> void {
-      items_[i].text_animator.SetEndCallback(Animator::kBlending,
-          [&, i]() -> void {
+      items_[i].text_animator.SetEndCallback(
+          Animator::kBlending, [&, i]() -> void {
             items_[i].text_animator.SetEndCallback(Animator::kBlending,
                                                    nullptr);
             selected_option_ = (Option)i;
@@ -127,7 +125,8 @@ void Menu::SetOptionEnabled(Option o, bool enable) {
       if (last >= 0) {
         items_[i].text.PlaceToBottomOf(items_[last].text);
         items_[i].text.Translate(items_[last].text.GetOffset() * Vector2(0, 1));
-        items_[i].text.Translate({0, items_[last].text.GetScale().y * -kMenuOptionSpace});
+        items_[i].text.Translate(
+            {0, items_[last].text.GetScale().y * -kMenuOptionSpace});
       }
       if (first < 0)
         first = i;
@@ -147,7 +146,8 @@ void Menu::Show() {
   for (int i = 0; i < kOption_Max; ++i) {
     if (items_[i].hide)
       continue;
-    items_[i].text_animator.SetEndCallback(Animator::kBlending, [&, i]() -> void {
+    items_[i].text_animator.SetEndCallback(
+        Animator::kBlending, [&, i]() -> void {
           items_[i].text_animator.SetEndCallback(Animator::kBlending, nullptr);
         });
     items_[i].text_animator.SetBlending(kColorNormal, kFadeSpeed);
@@ -161,7 +161,8 @@ void Menu::Hide() {
   for (int i = 0; i < kOption_Max; ++i) {
     if (items_[i].hide)
       continue;
-    items_[i].text_animator.SetEndCallback(Animator::kBlending, [&, i]() -> void {
+    items_[i].text_animator.SetEndCallback(
+        Animator::kBlending, [&, i]() -> void {
           items_[i].text_animator.SetEndCallback(Animator::kBlending, nullptr);
           items_[i].text.SetVisible(false);
         });
@@ -184,9 +185,8 @@ std::shared_ptr<Image> Menu::CreateImage() {
     font_->CalculateBoundingBox(kMenuOption[i], w, h);
     float x = (image->GetWidth() - w) / 2;
     float y = line_height * i;
-    worker.Enqueue(std::bind(&Font::Print, font_, x, y,
-                             kMenuOption[i], image->GetBuffer(),
-                             image->GetWidth()));
+    worker.Enqueue(std::bind(&Font::Print, font_, x, y, kMenuOption[i],
+                             image->GetBuffer(), image->GetWidth()));
   }
   worker.Join();
 

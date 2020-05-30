@@ -14,16 +14,10 @@ using namespace eng;
 
 namespace {
 
-constexpr char kCreditsLines[Credits::kNumLines][15] = {"Credits",
-                                                        "Code:",
-                                                        "Attila Uygun",
-                                                        "Graphics:",
-                                                        "Erkan Erturk"};
+constexpr char kCreditsLines[Credits::kNumLines][15] = {
+    "Credits", "Code:", "Attila Uygun", "Graphics:", "Erkan Erturk"};
 
-constexpr float kLineSpaces[Credits::kNumLines - 1] = {1.5f,
-                                                       0.5f,
-                                                       1.5f,
-                                                       0.5f};
+constexpr float kLineSpaces[Credits::kNumLines - 1] = {1.5f, 0.5f, 1.5f, 0.5f};
 
 const Vector4 kTextColor = {0.3f, 0.55f, 1.0f, 1};
 constexpr float kFadeSpeed = 0.2f;
@@ -76,7 +70,7 @@ void Credits::Update(float delta_time) {
 
 void Credits::OnInputEvent(std::unique_ptr<InputEvent> event) {
   if ((event->GetType() == InputEvent::kTap ||
-      event->GetType() == InputEvent::kNavigateBack) &&
+       event->GetType() == InputEvent::kNavigateBack) &&
       !text_animator_.IsPlaying(Animator::kBlending)) {
     Hide();
     Engine& engine = Engine::Get();
@@ -98,8 +92,8 @@ void Credits::ContextLost() {
 
 void Credits::Show() {
   text_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
-        text_animator_.SetEndCallback(Animator::kBlending, nullptr);
-      });
+    text_animator_.SetEndCallback(Animator::kBlending, nullptr);
+  });
   text_animator_.SetBlending(kTextColor, kFadeSpeed);
   text_animator_.Play(Animator::kBlending, false);
   text_animator_.SetVisible(true);
@@ -107,9 +101,9 @@ void Credits::Show() {
 
 void Credits::Hide() {
   text_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
-        text_animator_.SetEndCallback(Animator::kBlending, nullptr);
-        text_animator_.SetVisible(false);
-      });
+    text_animator_.SetEndCallback(Animator::kBlending, nullptr);
+    text_animator_.SetVisible(false);
+  });
   text_animator_.SetBlending(kTextColor * Vector4(1, 1, 1, 0), kFadeSpeed);
   text_animator_.Play(Animator::kBlending, false);
 }
@@ -126,9 +120,8 @@ std::shared_ptr<Image> Credits::CreateImage() {
     font_->CalculateBoundingBox(kCreditsLines[i], w, h);
     float x = (image->GetWidth() - w) / 2;
     float y = line_height * i;
-    worker.Enqueue(std::bind(&Font::Print, font_, x, y,
-                             kCreditsLines[i], image->GetBuffer(),
-                             image->GetWidth()));
+    worker.Enqueue(std::bind(&Font::Print, font_, x, y, kCreditsLines[i],
+                             image->GetBuffer(), image->GetWidth()));
   }
   worker.Join();
 
