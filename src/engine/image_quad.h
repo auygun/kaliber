@@ -18,12 +18,18 @@ class ImageQuad : public Animatable {
   ImageQuad() = default;
   ~ImageQuad() override = default;
 
-  bool Create(const std::string& name,
+  // Create from the given image. Creates a new texture or updates the existing
+  // one with the given image.
+  void Create(std::shared_ptr<const Image> image,
               std::array<int, 2> num_frames = {1, 1},
               int frame_width = 0,
               int frame_height = 0);
 
-  void Create(std::shared_ptr<const Image> image,
+  // Create from texture name. If no texture resource was found and load_asset
+  // is true and, tries to load an image asset with the same name. Returns true
+  // on success.
+  bool Create(const std::string& name,
+              bool load_asset,
               std::array<int, 2> num_frames = {1, 1},
               int frame_width = 0,
               int frame_height = 0);

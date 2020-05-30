@@ -71,12 +71,6 @@ class Enemy {
     eng::Animator score_animator;
   };
 
-  std::shared_ptr<const eng::Image> skull_frames_;
-  std::shared_ptr<const eng::Image> tank_frames_;
-  std::shared_ptr<const eng::Image> bug_frames_;
-  std::shared_ptr<const eng::Image> target_frames_;
-  std::shared_ptr<const eng::Image> blast_frames_;
-
   std::shared_ptr<const eng::Font> font_;
 
   std::list<EnemyUnit> enemies_;

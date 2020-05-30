@@ -44,30 +44,38 @@ void SetupFadeOutAnim(Animator& animator, float delay) {
 
 bool Enemy::Initialize() {
   Engine& engine = Engine::Get();
-  skull_frames_ = engine.GetAsset<Image>("enemy_anims_01_frames_ok.png");
-  tank_frames_ = engine.GetAsset<Image>("enemy_anims_01_frames_ok.png");
-  bug_frames_ = engine.GetAsset<Image>("enemy_anims_02_frames_ok.png");
-  target_frames_ = engine.GetAsset<Image>("enemy_target_single_ok.png");
-  blast_frames_ = engine.GetAsset<Image>("enemy_anims_blast_ok.png");
+
+  // Precache images.
+  auto skull_frames = engine.GetAsset<Image>("enemy_anims_01_frames_ok.png");
+  auto bug_frames = engine.GetAsset<Image>("enemy_anims_02_frames_ok.png");
+  auto target_frames = engine.GetAsset<Image>("enemy_target_single_ok.png");
+  auto blast_frames = engine.GetAsset<Image>("enemy_anims_blast_ok.png");
+
   font_ = engine.GetAsset<Font>("PixelCaps!.ttf");
 
-  return skull_frames_ && tank_frames_ && bug_frames_ && target_frames_ &&
-         blast_frames_ && font_;
+  return skull_frames && bug_frames && target_frames && blast_frames && font_;
 }
 
 void Enemy::ContextLost() {
+  Engine& engine = Engine::Get();
+
+  auto skull_frames = engine.GetAsset<Image>("enemy_anims_01_frames_ok.png");
+  auto bug_frames = engine.GetAsset<Image>("enemy_anims_02_frames_ok.png");
+  auto target_frames = engine.GetAsset<Image>("enemy_target_single_ok.png");
+  auto blast_frames = engine.GetAsset<Image>("enemy_anims_blast_ok.png");
+
   for (auto& e : enemies_) {
     e.sprite.ContextLost();
     if (e.enemy_type == kEnemyType_Skull)
-      e.sprite.Create(skull_frames_, {10, 13}, 100, 100);
+      e.sprite.Create(skull_frames, {10, 13}, 100, 100);
     else if (e.enemy_type == kEnemyType_Bug)
-      e.sprite.Create(bug_frames_, {10, 4});
+      e.sprite.Create(bug_frames, {10, 4});
     else  // kEnemyType_Tank
-      e.sprite.Create(tank_frames_, {10, 13}, 100, 100);
+      e.sprite.Create(skull_frames, {10, 13}, 100, 100);
     e.target.ContextLost();
-    e.target.Create(target_frames_, {6, 2});
+    e.target.Create(target_frames, {6, 2});
     e.blast.ContextLost();
-    e.blast.Create(blast_frames_, {6, 2});
+    e.blast.Create(blast_frames, {6, 2});
     if (e.score.IsValid()) {
       e.score.ContextLost();
       auto image = GetScoreImage(GetScore(e.enemy_type));
@@ -330,13 +338,13 @@ void Enemy::Spawn(EnemyType enemy_type,
   e.damage_type = damage_type;
   if (enemy_type == kEnemyType_Skull) {
     e.total_health = e.hit_points = 1;
-    e.sprite.Create(skull_frames_, {10, 13}, 100, 100);
+    e.sprite.Create("enemy_anims_01_frames_ok.png", true, {10, 13}, 100, 100);
   } else if (enemy_type == kEnemyType_Bug) {
     e.total_health = e.hit_points = 2;
-    e.sprite.Create(bug_frames_, {10, 4});
+    e.sprite.Create("enemy_anims_02_frames_ok.png", true, {10, 4});
   } else {  // kEnemyType_Tank
     e.total_health = e.hit_points = 6;
-    e.sprite.Create(tank_frames_, {10, 13}, 100, 100);
+    e.sprite.Create("enemy_anims_01_frames_ok.png", true, {10, 13}, 100, 100);
   }
   e.sprite.AutoScale();
   e.sprite.SetVisible(true);
@@ -350,11 +358,11 @@ void Enemy::Spawn(EnemyType enemy_type,
   e.sprite_animator.Attach(&e.sprite);
   e.sprite_animator.Play(Animator::kFrames, true);
 
-  e.target.Create(target_frames_, {6, 2});
+  e.target.Create("enemy_target_single_ok.png", true, {6, 2});
   e.target.AutoScale();
   e.target.SetOffset(spawn_pos);
 
-  e.blast.Create(blast_frames_, {6, 2});
+  e.blast.Create("enemy_anims_blast_ok.png", true, {6, 2});
   e.blast.AutoScale();
   e.blast.SetOffset(spawn_pos);
 
@@ -371,7 +379,7 @@ void Enemy::Spawn(EnemyType enemy_type,
   int s = GetScore(e.enemy_type);
   std::string resource_name = "enemy_score_";
   resource_name += std::to_string(s);
-  if (!e.score.Create(resource_name)) {
+  if (!e.score.Create(resource_name, false)) {
     auto image = GetScoreImage(s);
     e.score.Create(image);
   }
