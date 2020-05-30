@@ -17,8 +17,8 @@ class Image;
 
 class SkyQuad : public eng::Animatable{
  public:
-  SkyQuad() = default;
-  ~SkyQuad() = default;
+  SkyQuad();
+  ~SkyQuad();
 
   SkyQuad(const SkyQuad&) = delete;
   SkyQuad& operator=(const SkyQuad&) = delete;

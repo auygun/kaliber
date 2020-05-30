@@ -9,6 +9,12 @@
 using namespace base;
 using namespace eng;
 
+SkyQuad::SkyQuad()
+    : sky_offset_{0, Lerp(0.0f, 10.0f,
+                          Engine::Get().GetRandomGenerator().GetFloat())} {}
+
+SkyQuad::~SkyQuad() = default;
+
 bool SkyQuad::Create() {
   Engine& engine = Engine::Get();
 
@@ -20,9 +26,6 @@ bool SkyQuad::Create() {
   scale_ = engine.GetScreenSize();
 
   color_animator_.Attach(this);
-
-  RandomGenerator& rnd = Engine::Get().GetRandomGenerator();
-  sky_offset_ = {0, Lerp(0.0f, 10.0f, rnd.GetFloat())};
 
   return true;
 }
