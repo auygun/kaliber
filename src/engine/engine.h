@@ -95,7 +95,7 @@ class Engine {
   // Get resource id of the texture by name. Returns 0 if no texture was found.
   // Texture resources are reference counted and must be returned by calling
   // ReturnTextureResource.
-  int GetTextureResource(const std::string& name);
+  int GetTextureResource(const std::string& name, int& width, int& height);
 
   // Returns resource id of the texture for the given image. Creates a new
   // texture if needed. Always creates a new texture for anonymous images
@@ -142,6 +142,8 @@ class Engine {
   struct TextureResource {
     int resource_id = 0;
     int ref_count = 0;
+    int width = 0;
+    int height = 0;
     float time_to_die = 0.0f;
   };
 

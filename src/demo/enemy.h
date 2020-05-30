@@ -4,7 +4,6 @@
 #include <array>
 #include <list>
 #include <memory>
-#include <unordered_map>
 
 #include "../base/vecmath.h"
 #include "../engine/animator.h"
@@ -93,8 +92,6 @@ class Enemy {
   bool waiting_for_next_wave_ = false;
 
   int last_spawn_col_ = 0;
-
-  std::unordered_map<int, std::array<int, 2>> score_image_params_;
 
   void TakeDamage(EnemyUnit* target ,int damage);
 

@@ -19,10 +19,9 @@ class ImageQuad : public Animatable {
   ~ImageQuad() override = default;
 
   bool Create(const std::string& name,
-              std::array<int, 2> num_frames,
-              int frame_width,
-              int frame_height,
-              const base::Vector2& tex_scale);
+              std::array<int, 2> num_frames = {1, 1},
+              int frame_width = 0,
+              int frame_height = 0);
 
   void Create(std::shared_ptr<const Image> image,
               std::array<int, 2> num_frames = {1, 1},

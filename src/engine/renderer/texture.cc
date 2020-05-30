@@ -14,12 +14,15 @@ Texture::~Texture() {
 
 bool Texture::Create(const std::string &name) {
   Destroy();
-  resource_id_ = Engine::Get().GetTextureResource(name);
+  resource_id_ = Engine::Get().GetTextureResource(name, width_, height_);
   return resource_id_ > 0;
 }
 
 void Texture::Update(std::shared_ptr<const Image> image) {
   assert(image->IsImmutable());
+
+  width_ = image->GetWidth();
+  height_ = image->GetHeight();
 
   if (resource_id_) {
     auto cmd = std::make_unique<CmdUpdateTexture>();

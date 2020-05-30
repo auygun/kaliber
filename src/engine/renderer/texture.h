@@ -26,8 +26,13 @@ class Texture {
   void Invalidate() { resource_id_ = 0; }
   bool IsValid() const { return resource_id_ > 0; }
 
+  int GetWidth() const { return width_; }
+  int GetHeight() const { return height_; }
+
  private:
   int resource_id_ = 0;
+  int width_ = 0;
+  int height_ = 0;
 
   Texture(const Texture&) = delete;
   Texture& operator=(const Texture&) = delete;

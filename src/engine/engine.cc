@@ -136,10 +136,14 @@ Vector2 Engine::ToPosition(const Vector2& vec) {
   return ToScale(vec) - GetScreenSize() / 2.0f;
 }
 
-int Engine::GetTextureResource(const std::string& name) {
+int Engine::GetTextureResource(const std::string& name,
+                               int& width,
+                               int& height) {
   auto it = texture_resources_.find(name);
   if (it != texture_resources_.end()) {
     ++(it->second.ref_count);
+    width = it->second.width;
+    height = it->second.height;
     return it->second.resource_id;
   }
   return 0;
@@ -158,7 +162,8 @@ int Engine::AcquireTextureResource(std::shared_ptr<const Image> image) {
       return it->second.resource_id;
     }
     resource_id = ++last_texture_resource_id_;
-    texture_resources_[image->GetName()] = {resource_id, 1};
+    texture_resources_[image->GetName()] = {resource_id, 1, image->GetWidth(),
+                                            image->GetHeight()};
     DLOG << "AcquireTextureResource - Create! asset: " << image->GetName()
          << ", resource_id: " << resource_id;
   }

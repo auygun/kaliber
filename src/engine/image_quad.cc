@@ -14,14 +14,23 @@ namespace eng {
 bool ImageQuad::Create(const std::string& name,
                        std::array<int, 2> num_frames,
                        int frame_width,
-                       int frame_height,
-                       const Vector2& tex_scale) {
+                       int frame_height) {
   if (!texture_.Create(name))
     return false;
 
-  frame_width_ = frame_width;
-  frame_height_ = frame_height;
-  tex_scale_ = tex_scale;
+  if (frame_width > 0)
+    frame_width_ = frame_width;
+  else
+    frame_width_ = texture_.GetWidth() / num_frames[0];
+
+  if (frame_height > 0)
+    frame_height_ = frame_height;
+  else
+    frame_height_ = texture_.GetHeight() / num_frames[1];
+
+  tex_scale_ = {(float)frame_width_ / (float)texture_.GetWidth(),
+                (float)frame_height_ / (float)texture_.GetHeight()};
+
   num_frames_ = std::move(num_frames);
 
   return true;

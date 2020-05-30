@@ -371,8 +371,7 @@ void Enemy::Spawn(EnemyType enemy_type,
   int s = GetScore(e.enemy_type);
   std::string resource_name = "enemy_score_";
   resource_name += std::to_string(s);
-  auto [frame_width, frame_height] = score_image_params_[s];
-  if (!e.score.Create(resource_name, {1, 1}, frame_width, frame_height, {1, 1})) {
+  if (!e.score.Create(resource_name)) {
     auto image = GetScoreImage(s);
     e.score.Create(image);
   }
@@ -454,8 +453,6 @@ std::shared_ptr<Image> Enemy::GetScoreImage(int score) {
   image->SetName(resource_name);
 
   image->SetImmutable();
-
-  score_image_params_[score] = {image->GetWidth(), image->GetHeight()};
 
   return image;
 }
