@@ -4,7 +4,6 @@
 #include <array>
 #include <list>
 #include <memory>
-#include <tuple>
 #include <unordered_map>
 
 #include "../base/vecmath.h"
@@ -95,7 +94,7 @@ class Enemy {
 
   int last_spawn_col_ = 0;
 
-  std::unordered_map<int, std::tuple<int, int, base::Vector2>> score_image_params_;
+  std::unordered_map<int, std::array<int, 2>> score_image_params_;
 
   void TakeDamage(EnemyUnit* target ,int damage);
 

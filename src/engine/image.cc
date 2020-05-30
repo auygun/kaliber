@@ -38,14 +38,8 @@ bool Image::Create(int w, int h) {
 
   Destroy();
 
-  width_ = canvas_width_ = w;
-  height_ = canvas_height_ = h;
-
-  // Create a bigger canvas if needed to satisfy the pow2 dimension requirement.
-  if (!Engine::Get().SupportsNPOT()) {
-    canvas_width_ = RoundUpToPow2(canvas_width_);
-    canvas_height_ = RoundUpToPow2(canvas_height_);
-  }
+  width_ = w;
+  height_ = h;
 
   buffer_.reset((uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t)));
 
@@ -74,8 +68,6 @@ void Image::Copy(const Image& other) {
     buffer_.reset((uint8_t*)AlignedAlloc(size));
     memcpy(buffer_.get(), other.buffer_.get(), size);
   }
-  canvas_width_ = other.canvas_width_;
-  canvas_height_ = other.canvas_height_;
   width_ = other.width_;
   height_ = other.height_;
   format_ = other.format_;
@@ -148,43 +140,8 @@ bool Image::Load(const std::string& file_name) {
     buffer_.reset(converted_buffer);
   }
 
-  width_ = canvas_width_ = w;
-  height_ = canvas_height_ = h;
-
-  // Create a bigger canvas if needed to satisfy the pow2 dimension requirement.
-  if (!Engine::Get().SupportsNPOT()) {
-    int new_width = RoundUpToPow2(canvas_width_);
-    int new_height = RoundUpToPow2(canvas_height_);
-    if ((new_width != canvas_width_) || (new_height != canvas_height_)) {
-      LOG << "Converting image " << file_name << " from (" << canvas_width_ << ", "
-          << canvas_height_ << ") to (" << new_width << ", " << new_height << ")";
-
-      int bigger_size = new_width * new_height * 4 * sizeof(uint8_t);
-      uint8_t* bigger_buffer = (uint8_t*)AlignedAlloc(bigger_size);
-
-      // Fill it with black.
-      memset(bigger_buffer, 0, bigger_size);
-
-      // Copy over the old bitmap.
-#if 0
-      // Centered in the new bitmap.
-      int offset_x = (new_width - canvas_width_) / 2;
-      int offset_y = (new_height - canvas_height_) / 2;
-      for (int y = 0; y < canvas_height_; ++y)
-        memcpy(bigger_buffer + (offset_x + (y + offset_y) * new_width) * 4,
-               buffer_.get() + y * canvas_width_ * 4, canvas_width_ * 4);
-#else
-      for (int y = 0; y < canvas_height_; ++y)
-        memcpy(bigger_buffer + (y * new_width) * 4,
-               buffer_.get() + y * canvas_width_ * 4, canvas_width_ * 4);
-#endif
-
-      // Swap the buffers and dimensions.
-      buffer_.reset(bigger_buffer);
-      canvas_width_ = new_width;
-      canvas_height_ = new_height;
-    }
-  }
+  width_ = w;
+  height_ = h;
 
 #if 0  // Fill the alpha channel with transparent gradient alpha for testing
   uint8_t* modifyBuf = buffer;
@@ -205,17 +162,51 @@ bool Image::Load(const std::string& file_name) {
 size_t Image::GetSize() const {
   switch (format_) {
     case kRGBA32:
-      return canvas_width_ * canvas_height_ * 4;
+      return width_ * height_ * 4;
     case kDXT1:
-      return ((canvas_width_ + 3) / 4) * ((canvas_height_ + 3) / 4) * 8;
+      return ((width_ + 3) / 4) * ((height_ + 3) / 4) * 8;
     case kDXT5:
-      return ((canvas_width_ + 3) / 4) * ((canvas_height_ + 3) / 4) * 16;
+      return ((width_ + 3) / 4) * ((height_ + 3) / 4) * 16;
     case kATC:
-      return ((canvas_width_ + 3) / 4) * ((canvas_height_ + 3) / 4) * 16;
+      return ((width_ + 3) / 4) * ((height_ + 3) / 4) * 16;
     case kETC1:
-      return (canvas_width_ * canvas_height_ * 4) / 8;
+      return (width_ * height_ * 4) / 8;
     default:
       return 0;
+  }
+}
+
+void Image::ConvertToPow2() {
+  int new_width = RoundUpToPow2(width_);
+  int new_height = RoundUpToPow2(height_);
+  if ((new_width != width_) || (new_height != height_)) {
+    LOG << "Converting image " << GetName() << " from (" << width_ << ", "
+        << height_ << ") to (" << new_width << ", " << new_height << ")";
+
+    int bigger_size = new_width * new_height * 4 * sizeof(uint8_t);
+    uint8_t* bigger_buffer = (uint8_t*)AlignedAlloc(bigger_size);
+
+    // Fill it with black.
+    memset(bigger_buffer, 0, bigger_size);
+
+    // Copy over the old bitmap.
+#if 0
+    // Centered in the new bitmap.
+    int offset_x = (new_width - width_) / 2;
+    int offset_y = (new_height - height_) / 2;
+    for (int y = 0; y < height_; ++y)
+      memcpy(bigger_buffer + (offset_x + (y + offset_y) * new_width) * 4,
+              buffer_.get() + y * width_ * 4, width_ * 4);
+#else
+    for (int y = 0; y < height_; ++y)
+      memcpy(bigger_buffer + (y * new_width) * 4,
+              buffer_.get() + y * width_ * 4, width_ * 4);
+#endif
+
+    // Swap the buffers and dimensions.
+    buffer_.reset(bigger_buffer);
+    width_ = new_width;
+    height_ = new_height;
   }
 }
 
@@ -239,7 +230,7 @@ void Image::Clear(Vector4 rgba) {
           b = (uint8_t)(rgba.z * 255.0f), a = (uint8_t)(rgba.w * 255.0f);
 
   // Fill out the first line manually.
-  for (int w = 0; w < canvas_width_; ++w) {
+  for (int w = 0; w < width_; ++w) {
     buffer_.get()[w * 4 + 0] = r;
     buffer_.get()[w * 4 + 1] = g;
     buffer_.get()[w * 4 + 2] = b;
@@ -247,8 +238,8 @@ void Image::Clear(Vector4 rgba) {
   }
 
   // Copy the first line to the rest of them.
-  for (int h = 1; h < canvas_height_; ++h)
-    memcpy(buffer_.get() + h * canvas_width_ * 4, buffer_.get(), canvas_width_ * 4);
+  for (int h = 1; h < height_; ++h)
+    memcpy(buffer_.get() + h * width_ * 4, buffer_.get(), width_ * 4);
 }
 
 void Image::GradientH() {
@@ -258,7 +249,7 @@ void Image::GradientH() {
   }
 
   // Fill out the first line manually.
-  for (int x = 0; x < canvas_width_; ++x) {
+  for (int x = 0; x < width_; ++x) {
     uint8_t intensity = x > 255 ? 255 : x;
     buffer_.get()[x * 4 + 0] = intensity;
     buffer_.get()[x * 4 + 1] = intensity;
@@ -267,8 +258,8 @@ void Image::GradientH() {
   }
 
   // Copy the first line to the rest of them.
-  for (int h = 1; h < canvas_height_; ++h)
-    memcpy(buffer_.get() + h * canvas_width_ * 4, buffer_.get(), canvas_width_ * 4);
+  for (int h = 1; h < height_; ++h)
+    memcpy(buffer_.get() + h * width_ * 4, buffer_.get(), width_ * 4);
 }
 
 void Image::GradientV(const Vector4& c1, const Vector4& c2, int height) {
@@ -278,13 +269,13 @@ void Image::GradientV(const Vector4& c1, const Vector4& c2, int height) {
   }
 
   // Fill each section with gradient.
-  for (int h = 0; h < canvas_height_; ++h) {
+  for (int h = 0; h < height_; ++h) {
     Vector4 c = Lerp(c1, c2, fmod(h, height) / (float)height);
-    for (int x = 0; x < canvas_width_; ++x) {
-      buffer_.get()[h * canvas_width_ * 4 + x * 4 + 0] = c.x * 255;
-      buffer_.get()[h * canvas_width_ * 4 + x * 4 + 1] = c.y * 255;
-      buffer_.get()[h * canvas_width_ * 4 + x * 4 + 2] = c.z * 255;
-      buffer_.get()[h * canvas_width_ * 4 + x * 4 + 3] = 0;
+    for (int x = 0; x < width_; ++x) {
+      buffer_.get()[h * width_ * 4 + x * 4 + 0] = c.x * 255;
+      buffer_.get()[h * width_ * 4 + x * 4 + 1] = c.y * 255;
+      buffer_.get()[h * width_ * 4 + x * 4 + 2] = c.z * 255;
+      buffer_.get()[h * width_ * 4 + x * 4 + 3] = 0;
     }
   }
 }

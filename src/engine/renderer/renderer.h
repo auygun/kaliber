@@ -62,7 +62,6 @@ class Renderer {
   bool SupportsATC() const { return texture_compression_.atc; }
 
   bool SupportsVAO() const { return vertex_array_objects_; }
-  bool SupportsNPOT() const { return npot_; }
 
   void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
 

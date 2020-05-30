@@ -145,7 +145,7 @@ void Hud::Print(int i, const std::string& text) {
     x = image->GetWidth() - w;
   }
 
-  font_->Print(x, 0, text.c_str(), image->GetBuffer(), image->GetCanvasWidth());
+  font_->Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
   image->SetImmutable();
 
   text_[i].Create(image);

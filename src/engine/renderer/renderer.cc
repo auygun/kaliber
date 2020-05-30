@@ -93,10 +93,14 @@ bool Renderer::InitCommon() {
     npot_ = true;
   }
 
+  // Ancient hardware is not supported.
+  if (!npot_) {
+    LOG << "NPOT not supported.";
+    return false;
+  }
+
   if (vertex_array_objects_)
     LOG << "Supports Vertex Array Objects.";
-  if (npot_)
-    LOG << "Supports NPOT.";
 
   LOG << "TextureCompression:";
   LOG << "  atc:   " << texture_compression_.atc;
@@ -342,16 +346,16 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
         return;
     }
 
-    glCompressedTexImage2D(GL_TEXTURE_2D, 0, format, c->image->GetCanvasWidth(),
-                           c->image->GetCanvasHeight(), 0, c->image->GetSize(),
+    glCompressedTexImage2D(GL_TEXTURE_2D, 0, format, c->image->GetWidth(),
+                           c->image->GetHeight(), 0, c->image->GetSize(),
                            c->image->GetBuffer());
 
     GLenum err = glGetError();
     if (err != GL_NO_ERROR)
       LOG << "GL ERROR after glCompressedTexImage2D: " << (int)err;
   } else {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, c->image->GetCanvasWidth(),
-                 c->image->GetCanvasHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, c->image->GetWidth(),
+                 c->image->GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
                  c->image->GetBuffer());
   }
 

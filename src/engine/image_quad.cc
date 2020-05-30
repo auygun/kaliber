@@ -46,8 +46,8 @@ void ImageQuad::Create(std::shared_ptr<const Image> image,
   else
     frame_height_ = image->GetHeight() / num_frames[1];
 
-  tex_scale_ = {(float)frame_width_ / (float)image->GetCanvasWidth(),
-                (float)frame_height_ / (float)image->GetCanvasHeight()};
+  tex_scale_ = {(float)frame_width_ / (float)image->GetWidth(),
+                (float)frame_height_ / (float)image->GetHeight()};
   num_frames_ = std::move(num_frames);
 }
 

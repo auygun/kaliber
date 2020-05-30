@@ -186,7 +186,7 @@ std::shared_ptr<Image> Menu::CreateImage() {
     float y = line_height * i;
     worker.Enqueue(std::bind(&Font::Print, font_, x, y,
                              kMenuOption[i], image->GetBuffer(),
-                             image->GetCanvasWidth()));
+                             image->GetWidth()));
   }
   worker.Join();
 

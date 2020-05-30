@@ -128,7 +128,7 @@ std::shared_ptr<Image> Credits::CreateImage() {
     float y = line_height * i;
     worker.Enqueue(std::bind(&Font::Print, font_, x, y,
                              kCreditsLines[i], image->GetBuffer(),
-                             image->GetCanvasWidth()));
+                             image->GetWidth()));
   }
   worker.Join();
 

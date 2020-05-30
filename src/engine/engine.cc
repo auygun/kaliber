@@ -255,10 +255,6 @@ bool Engine::IsMobile() const {
   return platform_->mobile_device();
 }
 
-bool Engine::SupportsNPOT() const {
-  return renderer_->SupportsNPOT();
-}
-
 std::shared_ptr<Asset> Engine::GetAssetInternal(
     internal::AssetFactoryBase& factory) {
   auto it = assets_.find(factory.name());
@@ -367,7 +363,7 @@ void Engine::PrintStats() {
   for (auto& text : lines) {
     worker.Enqueue(std::bind(&Font::Print, system_font_, margin, y,
                              text.c_str(), image->GetBuffer(),
-                             image->GetCanvasWidth()));
+                             image->GetWidth()));
     y += line_height + margin;
   }
   worker.Join();

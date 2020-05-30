@@ -136,8 +136,6 @@ class Engine {
 
   bool IsMobile() const;
 
-  bool SupportsNPOT() const;
-
   float seconds_accumulated() const { return seconds_accumulated_; }
 
  private:
