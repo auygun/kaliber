@@ -21,6 +21,7 @@ class DragDetector;
 namespace eng {
 
 class Renderer;
+class Engine;
 
 class Platform {
  public:
@@ -63,6 +64,7 @@ class Platform {
   bool should_exit_ = false;
 
   std::unique_ptr<Renderer> renderer_;
+  std::unique_ptr<Engine> engine_;
 
 #if defined(__ANDROID__)
   android_app* app_ = nullptr;

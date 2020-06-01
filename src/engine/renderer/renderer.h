@@ -56,6 +56,7 @@ class Renderer {
   void ContextLost();
 
   std::shared_ptr<RenderResource> CreateResource(RenderResourceFactoryBase& factory);
+  void ReleaseResource(unsigned resource_id);
 
   bool SupportsETC1() const { return texture_compression_.etc1; }
   bool SupportsDXT1() const {
@@ -141,9 +142,7 @@ class Renderer {
   int screen_height_ = 0;
   base::Matrix4x4 projection_;
 
-  std::unordered_map<int, std::shared_ptr<TextureOpenGL>> texture_map_;
-  std::unordered_map<int, std::shared_ptr<GeometryOpenGL>> geometry_map_;
-  std::unordered_map<int, std::shared_ptr<ShaderOpenGL>> shader_map_;
+  std::unordered_map<unsigned, std::weak_ptr<RenderResource>> resources_;
 
 #ifdef THREADED_RENDERING
   // Global commands are independent from frames and guaranteed to be processed.
@@ -213,7 +212,6 @@ class Renderer {
   GLint GetUniformLocation(GLuint id,
                            const std::string& name,
                            std::unordered_map<std::string, GLuint>& uniforms);
-  std::unordered_set<std::string> SetupExtensions();
 
 #if defined(__linux__) && !defined(__ANDROID__)
   bool CreateWindow();

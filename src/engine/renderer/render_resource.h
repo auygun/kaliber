@@ -5,17 +5,13 @@
 
 namespace eng {
 
-class Asset;
-
 class RenderResource {
  public:
-  RenderResource() = default;
-  virtual ~RenderResource() = default;
+  RenderResource(unsigned resource_id);
+  virtual ~RenderResource();
 
-  int GetResourceId() const { return resource_id_; }
-
-  void Invalidate() { resource_id_ = 0; }
-  bool IsValid() const { return resource_id_ > 0; }
+  void Invalidate() { valid_ = false; }
+  bool IsValid() const { return valid_; }
 
   void SetImplData(std::shared_ptr<void> impl_data) {
     impl_data_ = impl_data;
@@ -23,8 +19,9 @@ class RenderResource {
   std::shared_ptr<void> GetImplData() { return impl_data_; }
 
  protected:
-  int resource_id_ = 0;
+  unsigned resource_id_ = 0;
   std::shared_ptr<void> impl_data_;  // For use in render thread only.
+  bool valid_ = false;
 
   RenderResource(const RenderResource&) = delete;
   RenderResource& operator=(const RenderResource&) = delete;
@@ -34,7 +31,7 @@ class RenderResourceFactoryBase {
  public:
   virtual ~RenderResourceFactoryBase() = default;
 
-  virtual std::shared_ptr<eng::RenderResource> Create() = 0;
+  virtual std::shared_ptr<eng::RenderResource> Create(unsigned id) = 0;
 };
 
 template <typename T>
@@ -42,8 +39,8 @@ class RenderResourceFactory : public RenderResourceFactoryBase {
  public:
   ~RenderResourceFactory() override = default;
 
-  std::shared_ptr<eng::RenderResource> Create() override {
-    return std::make_shared<T>();
+  std::shared_ptr<eng::RenderResource> Create(unsigned id) override {
+    return std::make_shared<T>(id);
   }
 };
 

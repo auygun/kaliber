@@ -61,12 +61,15 @@ Platform::~Platform() = default;
 int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
   Platform* platform = reinterpret_cast<Platform*>(app->userData);
 
+  if (!platform->engine_)
+    return 0;
+
   if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY &&
       AKeyEvent_getKeyCode(event) == AKEYCODE_BACK) {
     if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_UP) {
       auto input_event =
           std::make_unique<InputEvent>(InputEvent::kNavigateBack);
-      Engine::Get().AddInputEvent(std::move(input_event));
+      platform->engine_->AddInputEvent(std::move(input_event));
     }
     return 1;
   }
@@ -81,67 +84,67 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
 
     // Tap detector has a priority over other detectors
     if (tap_state == ndk_helper::GESTURE_STATE_ACTION) {
-      Engine::Get().AddInputEvent(
+      platform->engine_->AddInputEvent(
           std::make_unique<InputEvent>(InputEvent::kDragCancel));
       // Detect tap
       Vector2 v;
       platform->tap_detector_->GetPointer(v);
-      v = Engine::Get().ToPosition(v);
+      v = platform->engine_->ToPosition(v);
       // DLOG << "Tap: " << v;
       auto input_event =
           std::make_unique<InputEvent>(InputEvent::kTap, v * Vector2(1, -1));
-      Engine::Get().AddInputEvent(std::move(input_event));
+      platform->engine_->AddInputEvent(std::move(input_event));
     } else {
       // Handle drag state
       if (drag_state & ndk_helper::GESTURE_STATE_START) {
         // Otherwise, start dragging
         Vector2 v;
         platform->drag_detector_->GetPointer(v);
-        v = Engine::Get().ToPosition(v);
+        v = platform->engine_->ToPosition(v);
         // DLOG << "drag-start: " << v;
         auto input_event = std::make_unique<InputEvent>(InputEvent::kDragStart,
                                                         v * Vector2(1, -1));
-        Engine::Get().AddInputEvent(std::move(input_event));
+        platform->engine_->AddInputEvent(std::move(input_event));
       } else if (drag_state & ndk_helper::GESTURE_STATE_MOVE) {
         Vector2 v;
         platform->drag_detector_->GetPointer(v);
-        v = Engine::Get().ToPosition(v);
+        v = platform->engine_->ToPosition(v);
         // DLOG << "drag: " << v;
         auto input_event =
             std::make_unique<InputEvent>(InputEvent::kDrag, v * Vector2(1, -1));
-        Engine::Get().AddInputEvent(std::move(input_event));
+        platform->engine_->AddInputEvent(std::move(input_event));
       } else if (drag_state & ndk_helper::GESTURE_STATE_END) {
         // DLOG << "drag-end!";
         auto input_event = std::make_unique<InputEvent>(InputEvent::kDragEnd);
-        Engine::Get().AddInputEvent(std::move(input_event));
+        platform->engine_->AddInputEvent(std::move(input_event));
       }
 
       // Handle pinch state
       if (pinch_state & ndk_helper::GESTURE_STATE_START) {
-        Engine::Get().AddInputEvent(
+        platform->engine_->AddInputEvent(
             std::make_unique<InputEvent>(InputEvent::kDragCancel));
         // Start new pinch
         Vector2 v1;
         Vector2 v2;
         platform->pinch_detector_->GetPointers(v1, v2);
-        v1 = Engine::Get().ToPosition(v1);
-        v2 = Engine::Get().ToPosition(v2);
+        v1 = platform->engine_->ToPosition(v1);
+        v2 = platform->engine_->ToPosition(v2);
         // DLOG << "pinch-start: " << v1 << " " << v2;
         auto input_event = std::make_unique<InputEvent>(
             InputEvent::kPinchStart, v1 * Vector2(1, -1), v2 * Vector2(1, -1));
-        Engine::Get().AddInputEvent(std::move(input_event));
+        platform->engine_->AddInputEvent(std::move(input_event));
       } else if (pinch_state & ndk_helper::GESTURE_STATE_MOVE) {
         // Multi touch
         // Start new pinch
         Vector2 v1;
         Vector2 v2;
         platform->pinch_detector_->GetPointers(v1, v2);
-        v1 = Engine::Get().ToPosition(v1);
-        v2 = Engine::Get().ToPosition(v2);
+        v1 = platform->engine_->ToPosition(v1);
+        v2 = platform->engine_->ToPosition(v2);
         // DLOG << "pinch: " << v1 << " " << v2;
         auto input_event = std::make_unique<InputEvent>(
             InputEvent::kPinch, v1 * Vector2(1, -1), v2 * Vector2(1, -1));
-        Engine::Get().AddInputEvent(std::move(input_event));
+        platform->engine_->AddInputEvent(std::move(input_event));
       }
     }
     return 1;
@@ -195,18 +198,21 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       DLOG << "APP_CMD_GAINED_FOCUS";
       platform->timer_.Reset();
       platform->has_focus_ = true;
-      Engine::Get().GainedFocus();
+      if (platform->engine_)
+        platform->engine_->GainedFocus();
       break;
 
     case APP_CMD_LOST_FOCUS:
       DLOG << "APP_CMD_LOST_FOCUS";
       platform->has_focus_ = false;
-      Engine::Get().LostFocus();
+      if (platform->engine_)
+        platform->engine_->LostFocus();
       break;
 
     case APP_CMD_LOW_MEMORY:
       DLOG << "APP_CMD_LOW_MEMORY";
-      Engine::Get().TrimMemory();
+      if (platform->engine_)
+        platform->engine_->TrimMemory();
       break;
   }
 }

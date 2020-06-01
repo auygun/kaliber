@@ -14,7 +14,7 @@ class ShaderSource;
 
 class Shader : public RenderResource {
  public:
-  Shader() = default;
+  Shader(unsigned resource_id);
   ~Shader() override;
 
   void Create(std::shared_ptr<const ShaderSource> source,
@@ -28,9 +28,6 @@ class Shader : public RenderResource {
   void SetUniform(const std::string& name, const base::Matrix4x4& m);
   void SetUniform(const std::string& name, float f);
   void SetUniform(const std::string& name, int i);
-
- private:
-  static int last_id;
 };
 
 }  // namespace eng

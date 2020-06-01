@@ -10,7 +10,7 @@ using namespace base;
 
 namespace eng {
 
-int Shader::last_id = 0;
+Shader::Shader(unsigned resource_id) : RenderResource(resource_id) {}
 
 Shader::~Shader() {
   Destroy();
@@ -21,10 +21,9 @@ void Shader::Create(std::shared_ptr<const ShaderSource> source,
   assert(source->IsImmutable());
 
   Destroy();
+  valid_ = true;
 
   auto cmd = std::make_unique<CmdCreateShader>();
-  resource_id_ = ++last_id;
-  cmd->id = resource_id_;
   cmd->source = source;
   cmd->vertex_description = vd;
   cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
@@ -32,28 +31,25 @@ void Shader::Create(std::shared_ptr<const ShaderSource> source,
 }
 
 void Shader::Destroy() {
-  if (resource_id_) {
+  if (valid_) {
     auto cmd = std::make_unique<CmdDestroyShader>();
-    cmd->id = resource_id_;
     cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
-    resource_id_ = 0;
+    valid_ = false;
   }
 }
 
 void Shader::Activate() {
-  if (resource_id_) {
+  if (valid_) {
     auto cmd = std::make_unique<CmdActivateShader>();
-    cmd->id = resource_id_;
     cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }
 
 void Shader::SetUniform(const std::string& name, const Vector2& v) {
-  if (resource_id_) {
+  if (valid_) {
     auto cmd = std::make_unique<CmdSetUniformVec2>();
-    cmd->id = resource_id_;
     cmd->name = name;
     cmd->v = v;
     cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
@@ -62,9 +58,8 @@ void Shader::SetUniform(const std::string& name, const Vector2& v) {
 }
 
 void Shader::SetUniform(const std::string& name, const Vector3& v) {
-  if (resource_id_) {
+  if (valid_) {
     auto cmd = std::make_unique<CmdSetUniformVec3>();
-    cmd->id = resource_id_;
     cmd->name = name;
     cmd->v = v;
     cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
@@ -73,9 +68,8 @@ void Shader::SetUniform(const std::string& name, const Vector3& v) {
 }
 
 void Shader::SetUniform(const std::string& name, const Vector4& v) {
-  if (resource_id_) {
+  if (valid_) {
     auto cmd = std::make_unique<CmdSetUniformVec4>();
-    cmd->id = resource_id_;
     cmd->name = name;
     cmd->v = v;
     cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
@@ -84,9 +78,8 @@ void Shader::SetUniform(const std::string& name, const Vector4& v) {
 }
 
 void Shader::SetUniform(const std::string& name, const Matrix4x4& m) {
-  if (resource_id_) {
+  if (valid_) {
     auto cmd = std::make_unique<CmdSetUniformMat4>();
-    cmd->id = resource_id_;
     cmd->name = name;
     cmd->m = m;
     cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
@@ -95,9 +88,8 @@ void Shader::SetUniform(const std::string& name, const Matrix4x4& m) {
 }
 
 void Shader::SetUniform(const std::string& name, float f) {
-  if (resource_id_) {
+  if (valid_) {
     auto cmd = std::make_unique<CmdSetUniformFloat>();
-    cmd->id = resource_id_;
     cmd->name = name;
     cmd->f = f;
     cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
@@ -106,9 +98,8 @@ void Shader::SetUniform(const std::string& name, float f) {
 }
 
 void Shader::SetUniform(const std::string& name, int i) {
-  if (resource_id_) {
+  if (valid_) {
     auto cmd = std::make_unique<CmdSetUniformInt>();
-    cmd->id = resource_id_;
     cmd->name = name;
     cmd->i = i;
     cmd->impl_data = std::static_pointer_cast<void>(impl_data_);

@@ -19,7 +19,8 @@ void Platform::Shutdown() {
 }
 
 void Platform::RunMainLoop() {
-  if (!Engine::Get().Init(this)) {
+  engine_ = std::make_unique<Engine>(this, renderer_.get());
+  if (!engine_->Initialize()) {
     LOG << "Failed to initialize the engine.";
     throw internal_error;
   }
@@ -34,7 +35,7 @@ void Platform::RunMainLoop() {
   float frame_frac = 0.0f;
 
   for (;;) {
-    Engine::Get().Draw(frame_frac);
+    engine_->Draw(frame_frac);
 
     // Accumulate time.
 #ifdef USE_SLEEP
@@ -56,10 +57,11 @@ void Platform::RunMainLoop() {
     while (accumulator >= time_step) {
       Update();
       if (should_exit_) {
-        Engine::Get().Shutdown();
+        engine_->Shutdown();
+        engine_.reset();
         return;
       }
-      Engine::Get().Update(time_step * speed);
+      engine_->Update(time_step * speed);
       accumulator -= time_step;
     };
 

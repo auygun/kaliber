@@ -37,6 +37,9 @@ void Platform::Initialize() {
 }
 
 void Platform::Update() {
+  if (!engine_)
+    return;
+
   Display* display = renderer_->display();
   while (XPending(display)) {
     XEvent e;
@@ -46,27 +49,27 @@ void Platform::Update() {
         KeySym key = XLookupKeysym(&e.xkey, 0);
         auto input_event =
             std::make_unique<InputEvent>(InputEvent::kKeyPress, key);
-        Engine::Get().AddInputEvent(std::move(input_event));
+        engine_->AddInputEvent(std::move(input_event));
         // TODO: e.xkey.state & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask))
         break;
       }
       case MotionNotify: {
         Vector2 v(e.xmotion.x, e.xmotion.y);
-        v = Engine::Get().ToPosition(v);
+        v = engine_->ToPosition(v);
         // DLOG << "drag: " << v;
         auto input_event =
             std::make_unique<InputEvent>(InputEvent::kDrag, v * Vector2(1, -1));
-        Engine::Get().AddInputEvent(std::move(input_event));
+        engine_->AddInputEvent(std::move(input_event));
         break;
       }
       case ButtonPress: {
         if (e.xbutton.button == 1) {
           Vector2 v(e.xbutton.x, e.xbutton.y);
-          v = Engine::Get().ToPosition(v);
+          v = engine_->ToPosition(v);
           // DLOG << "drag-start: " << v;
           auto input_event = std::make_unique<InputEvent>(
               InputEvent::kDragStart, v * Vector2(1, -1));
-          Engine::Get().AddInputEvent(std::move(input_event));
+          engine_->AddInputEvent(std::move(input_event));
         }
         break;
       }
@@ -74,7 +77,7 @@ void Platform::Update() {
         if (e.xbutton.button == 1) {
           // DLOG << "drag-end!";
           auto input_event = std::make_unique<InputEvent>(InputEvent::kDragEnd);
-          Engine::Get().AddInputEvent(std::move(input_event));
+          engine_->AddInputEvent(std::move(input_event));
         }
         break;
       }

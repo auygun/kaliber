@@ -65,6 +65,7 @@ add_library(native-activity SHARED
     ../../../src/engine/platform/platform_android.cc
     ../../../src/engine/platform/platform.cc
     ../../../src/engine/renderer/geometry.cc
+    ../../../src/engine/renderer/render_resource.cc
     ../../../src/engine/renderer/renderer_android.cc
     ../../../src/engine/renderer/renderer.cc
     ../../../src/engine/renderer/shader.cc

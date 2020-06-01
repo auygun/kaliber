@@ -12,7 +12,7 @@ class Image;
 
 class Texture : public RenderResource {
  public:
-  Texture() = default;
+  Texture(unsigned resource_id);
   ~Texture() override;
 
   // Uploads image.
@@ -26,8 +26,6 @@ class Texture : public RenderResource {
   int GetHeight() const { return height_; }
 
  private:
-  static int last_id;
-
   int width_ = 0;
   int height_ = 0;
 };

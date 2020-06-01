@@ -60,91 +60,76 @@ RENDER_COMMAND_BEGIN(CmdPresent, false)
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdUpdateTexture, true)
-  int id;
   std::shared_ptr<const Image> image;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdDestoryTexture, true)
-  int id;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdActivateTexture, false)
-  int id;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdCreateGeometry, true)
-  int id;
   std::shared_ptr<const Mesh> mesh;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdDestroyGeometry, true)
-  int id;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdDrawGeometry, false)
-  int id;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdCreateShader, true)
-  int id;
   std::shared_ptr<const ShaderSource> source;
   VertexDescripton vertex_description;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdDestroyShader, true)
-  int id;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdActivateShader, false)
-  int id;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformVec2, false)
-  int id;
   std::string name;
   base::Vector2 v;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformVec3, false)
-  int id;
   std::string name;
   base::Vector3 v;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformVec4, false)
-  int id;
   std::string name;
   base::Vector4 v;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformMat4, false)
-  int id;
   std::string name;
   base::Matrix4x4 m;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformInt, false)
-  int id;
   std::string name;
   int i;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformFloat, false)
-  int id;
   std::string name;
   float f;
   std::shared_ptr<void> impl_data;

@@ -13,7 +13,7 @@ class Mesh;
 
 class Geometry : public RenderResource {
  public:
-  Geometry() = default;
+  Geometry(unsigned resource_id);
   ~Geometry() override;
 
   void Create(std::shared_ptr<const Mesh> mesh);
@@ -26,7 +26,6 @@ class Geometry : public RenderResource {
   }
 
  private:
-  static int last_id;
   VertexDescripton vertex_description_;
 };
 

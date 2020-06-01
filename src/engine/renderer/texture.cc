@@ -8,7 +8,7 @@
 
 namespace eng {
 
-int Texture::last_id = 0;
+Texture::Texture(unsigned resource_id) : RenderResource(resource_id) {}
 
 Texture::~Texture() {
   Destroy();
@@ -17,33 +17,28 @@ Texture::~Texture() {
 void Texture::Update(std::shared_ptr<const Image> image) {
   assert(image->IsImmutable());
 
-  if (resource_id_ == 0)
-    resource_id_ = ++last_id;
-
+  valid_ = true;
   width_ = image->GetWidth();
   height_ = image->GetHeight();
 
   auto cmd = std::make_unique<CmdUpdateTexture>();
-  cmd->id = resource_id_;
   cmd->image = image;
   cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
   Engine::Get().EnqueueRenderCommand(std::move(cmd));
 }
 
 void Texture::Destroy() {
-  if (resource_id_) {
+  if (valid_) {
     auto cmd = std::make_unique<CmdDestoryTexture>();
-    cmd->id = resource_id_;
     cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
-    resource_id_ = 0;
+    valid_ = false;
   }
 }
 
 void Texture::Activate() {
-  if (resource_id_) {
+  if (valid_) {
     auto cmd = std::make_unique<CmdActivateTexture>();
-    cmd->id = resource_id_;
     cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }

@@ -20,22 +20,26 @@ using namespace base;
 
 namespace eng {
 
-Engine::Engine()
-    : quad_(CreateRenderResource<Geometry>())
-    , pass_through_shader_(CreateRenderResource<Shader>())
-    , solid_shader_(CreateRenderResource<Shader>()) {}
+Engine* Engine::singleton = nullptr;
+
+Engine::Engine(Platform* platform, Renderer *renderer)
+    : platform_(platform)
+    , renderer_(renderer) {
+  assert(!singleton);
+  singleton = this;
+
+  quad_ = CreateRenderResource<Geometry>();
+  pass_through_shader_ = CreateRenderResource<Shader>();
+  solid_shader_ = CreateRenderResource<Shader>();
+}
 
 Engine::~Engine() = default;
 
 Engine& Engine::Get() {
-  static Engine engine;
-  return engine;
+  return *singleton;
 }
 
-bool Engine::Init(Platform* platform) {
-  platform_ = platform;
-
-  renderer_ = platform->GetRenderer();
+bool Engine::Initialize() {
   renderer_->SetContextLostCB(std::bind(&Engine::ContextLost, this));
 
   if (GetScreenWidth() > GetScreenHeight()) {
@@ -71,7 +75,9 @@ bool Engine::Init(Platform* platform) {
   return true;
 }
 
-void Engine::Shutdown() {}
+void Engine::Shutdown() {
+  LOG << "Shutting down engine.";
+}
 
 void Engine::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
@@ -130,6 +136,10 @@ Vector2 Engine::ToScale(const Vector2& vec) {
 
 Vector2 Engine::ToPosition(const Vector2& vec) {
   return ToScale(vec) - GetScreenSize() / 2.0f;
+}
+
+void Engine::ReleaseResource(unsigned resource_id) {
+  renderer_->ReleaseResource(resource_id);
 }
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
@@ -269,7 +279,7 @@ bool Engine::CreateRenderResources() {
 void Engine::SetSatsVisible(bool visible) {
   stats_.SetVisible(visible);
   if (visible)
-    stats_.Create(std::make_shared<Texture>());
+    stats_.Create(CreateRenderResource<Texture>());
   else
     stats_.Destory();
 }

@@ -54,12 +54,12 @@ class AssetFactory : public AssetFactoryBase {
 
 class Engine {
  public:
-  Engine();
+  Engine(Platform* platform, Renderer *renderer);
   ~Engine();
 
   static Engine& Get();
 
-  bool Init(Platform* platform);
+  bool Initialize();
 
   void Shutdown();
 
@@ -87,6 +87,8 @@ class Engine {
     RenderResourceFactory<T> factory;
     return std::dynamic_pointer_cast<T>(CreateRenderResourceInternal(factory));
   }
+
+  void ReleaseResource(unsigned resource_id);
 
   // Returns immutable asset that can be accessed between multiple threads
   // without locking. Returns nullptr if no asset was found with the given name.
@@ -127,6 +129,8 @@ class Engine {
   float seconds_accumulated() const { return seconds_accumulated_; }
 
  private:
+  static Engine* singleton;
+
   std::unique_ptr<Game> game_;
 
   // Asset cache.

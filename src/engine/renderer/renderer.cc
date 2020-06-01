@@ -165,7 +165,10 @@ void Renderer::TerminateWorker() {
 }
 
 std::shared_ptr<RenderResource> Renderer::CreateResource(RenderResourceFactoryBase& factory) {
-  auto resource = factory.Create();
+  static unsigned last_id = 0;
+
+  unsigned resource_id = ++last_id;
+  auto resource = factory.Create(resource_id);
 
   // Set implementation specific data. This data will be sent with render
   // commands to the render thread and sould not be used in any other thread.
@@ -178,7 +181,15 @@ std::shared_ptr<RenderResource> Renderer::CreateResource(RenderResourceFactoryBa
   else
     assert(false);
 
+  resources_[resource_id] = resource;
   return resource;
+}
+
+void Renderer::ReleaseResource(unsigned resource_id) {
+  auto it = resources_.find(resource_id);
+  LOG << __func__ << " " << (it != resources_.end());
+  if (it != resources_.end())
+    resources_.erase(it);
 }
 
 void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
@@ -386,19 +397,15 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     impl_data->id = gl_id;
-    texture_map_[c->id] = impl_data;
   }
 }
 
 void Renderer::HandleCmdDestoryTexture(RenderCommand* cmd) {
   auto* c = static_cast<CmdDestoryTexture*>(cmd);
-  auto it = texture_map_.find(c->id);
-  if (it != texture_map_.end()) {
-    glDeleteTextures(1, &(it->second->id));
-    texture_map_.erase(it);
-
-    std::shared_ptr<TextureOpenGL> impl_data =
-        std::static_pointer_cast<TextureOpenGL>(c->impl_data);
+  std::shared_ptr<TextureOpenGL> impl_data =
+      std::static_pointer_cast<TextureOpenGL>(c->impl_data);
+  if (impl_data->id > 0) {
+    glDeleteTextures(1, &(impl_data->id));
     *impl_data = TextureOpenGL();
   }
 }
@@ -472,24 +479,21 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
                 vertex_array_id,
                 vertex_buffer_id,
                 index_buffer_id};
-  geometry_map_[c->id] = impl_data;
 }
 
 void Renderer::HandleCmdDestroyGeometry(RenderCommand* cmd) {
   auto* c = static_cast<CmdDestroyGeometry*>(cmd);
-  auto it = geometry_map_.find(c->id);
-  if (it == geometry_map_.end())
+  auto impl_data = std::static_pointer_cast<GeometryOpenGL>(c->impl_data);
+  if (impl_data->vertex_buffer_id == 0)
     return;
 
-  if (it->second->index_buffer_id)
-    glDeleteBuffers(1, &(it->second->index_buffer_id));
-  if (it->second->vertex_buffer_id)
-    glDeleteBuffers(1, &(it->second->vertex_buffer_id));
-  if (it->second->vertex_array_id)
-    glDeleteVertexArrays(1, &(it->second->vertex_array_id));
-  geometry_map_.erase(it);
+  if (impl_data->index_buffer_id)
+    glDeleteBuffers(1, &(impl_data->index_buffer_id));
+  if (impl_data->vertex_buffer_id)
+    glDeleteBuffers(1, &(impl_data->vertex_buffer_id));
+  if (impl_data->vertex_array_id)
+    glDeleteVertexArrays(1, &(impl_data->vertex_array_id));
 
-  auto impl_data = std::static_pointer_cast<GeometryOpenGL>(c->impl_data);
   *impl_data = GeometryOpenGL();
 }
 
@@ -582,17 +586,13 @@ void Renderer::HandleCmdCreateShader(RenderCommand* cmd) {
   }
 
   *impl_data = {id, {}};
-  shader_map_[c->id] = impl_data;
 }
 
 void Renderer::HandleCmdDestroyShader(RenderCommand* cmd) {
   auto* c = static_cast<CmdDestroyShader*>(cmd);
-  auto it = shader_map_.find(c->id);
-  if (it != shader_map_.end()) {
-    glDeleteProgram(it->second->id);
-    shader_map_.erase(it);
-
-    auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  if (impl_data->id > 0) {
+    glDeleteProgram(impl_data->id);
     *impl_data = ShaderOpenGL();
   }
 }
@@ -780,28 +780,28 @@ void Renderer::ContextLost() {
   draw_commands_[1].clear();
 #endif  // THREADED_RENDERING
 
-  for (auto& p : texture_map_) {
-    glDeleteTextures(1, &(p.second->id));
-    *(p.second) = TextureOpenGL();
-  }
-  texture_map_.clear();
+  // for (auto& p : texture_map_) {
+  //   glDeleteTextures(1, &(p.second->id));
+  //   *(p.second) = TextureOpenGL();
+  // }
+  // texture_map_.clear();
 
-  for (auto& p : shader_map_) {
-    glDeleteProgram(p.second->id);
-    *(p.second) = ShaderOpenGL();
-  }
-  shader_map_.clear();
+  // for (auto& p : shader_map_) {
+  //   glDeleteProgram(p.second->id);
+  //   *(p.second) = ShaderOpenGL();
+  // }
+  // shader_map_.clear();
 
-  for (auto& p : geometry_map_) {
-    if (p.second->index_buffer_id)
-      glDeleteBuffers(1, &(p.second->index_buffer_id));
-    if (p.second->vertex_buffer_id)
-      glDeleteBuffers(1, &(p.second->vertex_buffer_id));
-    if (p.second->vertex_array_id)
-      glDeleteVertexArrays(1, &(p.second->vertex_array_id));
-    *(p.second) = GeometryOpenGL();
-  }
-  geometry_map_.clear();
+  // for (auto& p : geometry_map_) {
+  //   if (p.second->index_buffer_id)
+  //     glDeleteBuffers(1, &(p.second->index_buffer_id));
+  //   if (p.second->vertex_buffer_id)
+  //     glDeleteBuffers(1, &(p.second->vertex_buffer_id));
+  //   if (p.second->vertex_array_id)
+  //     glDeleteVertexArrays(1, &(p.second->vertex_array_id));
+  //   *(p.second) = GeometryOpenGL();
+  // }
+  // geometry_map_.clear();
 
   context_lost_cb_();
 }
