@@ -3,17 +3,19 @@
 
 #include <memory>
 #include <string>
+
 #include "../../base/vecmath.h"
+#include "render_resource.h"
 #include "types.h"
 
 namespace eng {
 
 class ShaderSource;
 
-class Shader {
+class Shader : public RenderResource {
  public:
   Shader() = default;
-  ~Shader();
+  ~Shader() override;
 
   void Create(std::shared_ptr<const ShaderSource> source,
               const VertexDescripton& vd);
@@ -27,11 +29,7 @@ class Shader {
   void SetUniform(const std::string& name, float f);
   void SetUniform(const std::string& name, int i);
 
-  void Invalidate() { resource_id_ = 0; }
-  bool IsValid() const { return resource_id_ > 0; }
-
  private:
-  int resource_id_ = 0;
   static int last_id;
 
   Shader(const Shader&) = delete;

@@ -3,31 +3,29 @@
 
 #include <memory>
 #include <string>
+
+#include "render_resource.h"
 #include "types.h"
 
 namespace eng {
 
 class Mesh;
 
-class Geometry {
+class Geometry : public RenderResource {
  public:
   Geometry() = default;
-  ~Geometry();
+  ~Geometry() override;
 
   void Create(std::shared_ptr<const Mesh> mesh);
   void Destroy();
 
   void Draw();
 
-  void Invalidate() { resource_id_ = 0; }
-  bool IsValid() const { return resource_id_ > 0; }
-
   const VertexDescripton& vertex_description() const {
     return vertex_description_;
   }
 
  private:
-  int resource_id_ = 0;
   static int last_id;
   VertexDescripton vertex_description_;
 

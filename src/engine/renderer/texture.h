@@ -4,14 +4,16 @@
 #include <memory>
 #include <string>
 
+#include "render_resource.h"
+
 namespace eng {
 
 class Image;
 
-class Texture {
+class Texture : public RenderResource {
  public:
   Texture() = default;
-  ~Texture();
+  ~Texture() override;
 
   // Uploads image.
   void Update(std::shared_ptr<const Image> image);
@@ -20,14 +22,10 @@ class Texture {
 
   void Activate();
 
-  void Invalidate() { resource_id_ = 0; }
-  bool IsValid() const { return resource_id_ > 0; }
-
   int GetWidth() const { return width_; }
   int GetHeight() const { return height_; }
 
  private:
-  int resource_id_ = 0;
   static int last_id;
 
   int width_ = 0;

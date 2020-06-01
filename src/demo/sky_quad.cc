@@ -5,12 +5,15 @@
 #include "../base/random_generator.h"
 #include "../engine/engine.h"
 #include "../engine/shader_source.h"
+#include "../engine/renderer/geometry.h"
+#include "../engine/renderer/shader.h"
 
 using namespace base;
 using namespace eng;
 
 SkyQuad::SkyQuad()
-    : sky_offset_{
+    : shader_(Engine::Get().CreateRenderResource<Shader>())
+    , sky_offset_{
           0,
           Lerp(0.0f, 10.0f, Engine::Get().GetRandomGenerator().GetFloat())} {}
 
@@ -22,7 +25,7 @@ bool SkyQuad::Create() {
   auto sky_source = engine.GetAsset<ShaderSource>("sky.glsl");
   if (!sky_source)
     return false;
-  shader_.Create(sky_source, engine.GetQuad().vertex_description());
+  shader_->Create(sky_source, engine.GetQuad()->vertex_description());
 
   scale_ = engine.GetScreenSize();
 
@@ -39,19 +42,19 @@ void SkyQuad::Update(float delta_time) {
 void SkyQuad::Draw(float frame_frac) {
   Vector2 sky_offset = Lerp(last_sky_offset_, sky_offset_, frame_frac);
 
-  shader_.Activate();
-  shader_.SetUniform("scale", scale_);
-  shader_.SetUniform("projection", Engine::Get().GetProjectionMarix());
-  shader_.SetUniform("sky_offset", sky_offset);
-  shader_.SetUniform("nebula_color",
+  shader_->Activate();
+  shader_->SetUniform("scale", scale_);
+  shader_->SetUniform("projection", Engine::Get().GetProjectionMarix());
+  shader_->SetUniform("sky_offset", sky_offset);
+  shader_->SetUniform("nebula_color",
                      {nebula_color_.x, nebula_color_.y, nebula_color_.z});
 
-  Engine::Get().GetQuad().Draw();
+  Engine::Get().GetQuad()->Draw();
   last_sky_offset_ = sky_offset_;
 }
 
 void SkyQuad::ContextLost() {
-  shader_.Invalidate();
+  shader_->Invalidate();
   Create();
 }
 

@@ -49,21 +49,21 @@ void ImageQuad::Draw() {
   Vector2 tex_scale = {GetFrameWidth() / texture_->GetWidth(),
                        GetFrameHeight() / texture_->GetHeight()};
 
-  Geometry& quad = Engine::Get().GetQuad();
-  Shader& shader = Engine::Get().GetPassThroughShader();
+  std::shared_ptr<Geometry> quad = Engine::Get().GetQuad();
+  std::shared_ptr<Shader> shader = Engine::Get().GetPassThroughShader();
 
-  shader.Activate();
-  shader.SetUniform("offset", offset_);
-  shader.SetUniform("scale", scale_);
-  shader.SetUniform("pivot", pivot_);
-  shader.SetUniform("rotation", rotation_);
-  shader.SetUniform("tex_offset", GetUVOffset(current_frame_));
-  shader.SetUniform("tex_scale", tex_scale);
-  shader.SetUniform("projection", Engine::Get().GetProjectionMarix());
-  shader.SetUniform("color", color_);
-  shader.SetUniform("texture", 0);
+  shader->Activate();
+  shader->SetUniform("offset", offset_);
+  shader->SetUniform("scale", scale_);
+  shader->SetUniform("pivot", pivot_);
+  shader->SetUniform("rotation", rotation_);
+  shader->SetUniform("tex_offset", GetUVOffset(current_frame_));
+  shader->SetUniform("tex_scale", tex_scale);
+  shader->SetUniform("projection", Engine::Get().GetProjectionMarix());
+  shader->SetUniform("color", color_);
+  shader->SetUniform("texture", 0);
 
-  quad.Draw();
+  quad->Draw();
 }
 
 float ImageQuad::GetFrameWidth() const {

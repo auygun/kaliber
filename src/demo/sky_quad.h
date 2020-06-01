@@ -4,7 +4,6 @@
 #include "../base/vecmath.h"
 #include "../engine/animatable.h"
 #include "../engine/animator.h"
-#include "../engine/renderer/shader.h"
 
 #include <array>
 #include <memory>
@@ -12,7 +11,7 @@
 #include <vector>
 
 namespace eng {
-class Image;
+class Shader;
 }  // namespace eng
 
 class SkyQuad : public eng::Animatable {
@@ -40,7 +39,7 @@ class SkyQuad : public eng::Animatable {
   void SwitchColor(const base::Vector4& color);
 
  private:
-  eng::Shader shader_;
+  std::shared_ptr<eng::Shader> shader_;
 
   base::Vector2 sky_offset_ = {0, 0};
   base::Vector2 last_sky_offset_ = {0, 0};

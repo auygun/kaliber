@@ -11,6 +11,8 @@
 #include "platform/platform.h"
 #include "renderer/render_command.h"
 #include "renderer/renderer.h"
+#include "renderer/geometry.h"
+#include "renderer/shader.h"
 #include "renderer/texture.h"
 #include "shader_source.h"
 
@@ -18,7 +20,10 @@ using namespace base;
 
 namespace eng {
 
-Engine::Engine() = default;
+Engine::Engine()
+    : quad_(CreateRenderResource<Geometry>())
+    , pass_through_shader_(CreateRenderResource<Shader>())
+    , solid_shader_(CreateRenderResource<Shader>()) {}
 
 Engine::~Engine() = default;
 
@@ -196,6 +201,11 @@ bool Engine::IsMobile() const {
   return platform_->mobile_device();
 }
 
+std::shared_ptr<RenderResource> Engine::CreateRenderResourceInternal(
+    RenderResourceFactoryBase& factory) {
+  return factory.Create();
+}
+
 std::shared_ptr<Asset> Engine::GetAssetInternal(
     internal::AssetFactoryBase& factory) {
   auto it = assets_.find(factory.name());
@@ -217,9 +227,9 @@ void Engine::ContextLost() {
     return;
   }
 
-  pass_through_shader_.Invalidate();
-  solid_shader_.Invalidate();
-  quad_.Invalidate();
+  pass_through_shader_->Invalidate();
+  solid_shader_->Invalidate();
+  quad_->Invalidate();
   CreateRenderResources();
 
   if (stats_.GetTexture())
@@ -235,7 +245,7 @@ bool Engine::CreateRenderResources() {
     LOG << "Could not create quad mesh.";
     return false;
   }
-  quad_.Create(quad_mesh);
+  quad_->Create(quad_mesh);
 
   // Create the shader we can reuse for texture rendering.
   auto pts_source = GetAsset<ShaderSource>("engine/pass_through.glsl");
@@ -243,7 +253,7 @@ bool Engine::CreateRenderResources() {
     LOG << "Could not create pass through shader.";
     return false;
   }
-  pass_through_shader_.Create(pts_source, quad_.vertex_description());
+  pass_through_shader_->Create(pts_source, quad_->vertex_description());
 
   // Create the shader we can reuse for solid rendering.
   auto ss_source = GetAsset<ShaderSource>("engine/solid.glsl");
@@ -251,7 +261,7 @@ bool Engine::CreateRenderResources() {
     LOG << "Could not create solid shader.";
     return false;
   }
-  solid_shader_.Create(ss_source, quad_.vertex_description());
+  solid_shader_->Create(ss_source, quad_->vertex_description());
 
   return true;
 }

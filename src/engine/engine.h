@@ -8,9 +8,8 @@
 #include "../base/random_generator.h"
 #include "../base/task_runner.h"
 #include "../base/vecmath.h"
+#include "renderer/render_resource.h"
 #include "image_quad.h"
-#include "renderer/geometry.h"
-#include "renderer/shader.h"
 
 namespace eng {
 
@@ -21,6 +20,8 @@ class InputEvent;
 class Renderer;
 struct RenderCommand;
 class Platform;
+class Geometry;
+class Shader;
 
 namespace internal {
 
@@ -81,6 +82,12 @@ class Engine {
   // Convert position form pixels to viewport coordinates.
   base::Vector2 ToPosition(const base::Vector2& vec);
 
+  template <typename T>
+  std::shared_ptr<T> CreateRenderResource() {
+    RenderResourceFactory<T> factory;
+    return std::dynamic_pointer_cast<T>(CreateRenderResourceInternal(factory));
+  }
+
   // Returns immutable asset that can be accessed between multiple threads
   // without locking. Returns nullptr if no asset was found with the given name.
   template <typename T>
@@ -95,9 +102,9 @@ class Engine {
   void EnqueueRenderCommand(std::unique_ptr<RenderCommand> cmd);
 
   // Access to the render resources.
-  Geometry& GetQuad() { return quad_; }
-  Shader& GetPassThroughShader() { return pass_through_shader_; }
-  Shader& GetSolidShader() { return solid_shader_; }
+  std::shared_ptr<Geometry> GetQuad() { return quad_; }
+  std::shared_ptr<Shader> GetPassThroughShader() { return pass_through_shader_; }
+  std::shared_ptr<Shader> GetSolidShader() { return solid_shader_; }
 
   std::shared_ptr<const eng::Font> GetSystemFont() { return system_font_; }
 
@@ -129,9 +136,9 @@ class Engine {
 
   Renderer* renderer_ = nullptr;
 
-  Geometry quad_;
-  Shader pass_through_shader_;
-  Shader solid_shader_;
+  std::shared_ptr<Geometry> quad_;
+  std::shared_ptr<Shader> pass_through_shader_;
+  std::shared_ptr<Shader> solid_shader_;
 
   base::Vector2 screen_size_ = {0, 0};
 
@@ -149,6 +156,9 @@ class Engine {
   base::TaskRunner task_runner_;
 
   base::RandomGenerator random_;
+
+  std::shared_ptr<RenderResource> CreateRenderResourceInternal(
+      RenderResourceFactoryBase& factory);
 
   std::shared_ptr<Asset> GetAssetInternal(internal::AssetFactoryBase& factory);
 
