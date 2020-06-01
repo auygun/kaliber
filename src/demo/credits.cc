@@ -25,7 +25,7 @@ constexpr float kFadeSpeed = 0.2f;
 
 }  // namespace
 
-Credits::Credits() : tex_(std::make_shared<Texture>()) {}
+Credits::Credits() = default;
 
 Credits::~Credits() = default;
 
@@ -44,27 +44,8 @@ bool Credits::Initialize() {
       max_text_width_ = width;
   }
 
-  tex_->Update(CreateImage());
-
-  for (int i = 0; i < kNumLines; ++i) {
-    text_[i].Create(tex_, {1, kNumLines});
-    text_[i].AutoScale();
-    text_[i].SetColor(kTextColor * Vector4(1, 1, 1, 0));
-    text_[i].SetFrame(i);
-
-    if (i > 0) {
-      text_[i].PlaceToBottomOf(text_[i - 1]);
-      text_[i].Translate(text_[i - 1].GetOffset() * Vector2(0, 1));
-      text_[i].Translate({0, text_[i - 1].GetScale().y * -kLineSpaces[i - 1]});
-    }
-
-    text_animator_.Attach(&text_[i]);
-  }
-
-  float center_offset_y =
-      (text_[0].GetOffset().y - text_[kNumLines - 1].GetOffset().y) / 2;
   for (int i = 0; i < kNumLines; ++i)
-    text_[i].Translate({0, center_offset_y});
+    text_animator_.Attach(&text_[i]);
 
   return true;
 }
@@ -89,11 +70,36 @@ void Credits::Draw() {
 }
 
 void Credits::ContextLost() {
-  tex_->Invalidate();
-  tex_->Update(CreateImage());
+  if (tex_) {
+    tex_->Invalidate();
+    tex_->Update(CreateImage());
+  }
 }
 
 void Credits::Show() {
+  tex_ = std::make_shared<Texture>();
+  tex_->Update(CreateImage());
+
+  for (int i = 0; i < kNumLines; ++i) {
+    text_[i].Create(tex_, {1, kNumLines});
+    text_[i].SetOffset({0, 0});
+    text_[i].SetScale({1, 1});
+    text_[i].AutoScale();
+    text_[i].SetColor(kTextColor * Vector4(1, 1, 1, 0));
+    text_[i].SetFrame(i);
+
+    if (i > 0) {
+      text_[i].PlaceToBottomOf(text_[i - 1]);
+      text_[i].Translate(text_[i - 1].GetOffset() * Vector2(0, 1));
+      text_[i].Translate({0, text_[i - 1].GetScale().y * -kLineSpaces[i - 1]});
+    }
+  }
+
+  float center_offset_y =
+      (text_[0].GetOffset().y - text_[kNumLines - 1].GetOffset().y) / 2;
+  for (int i = 0; i < kNumLines; ++i)
+    text_[i].Translate({0, center_offset_y});
+
   text_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
     text_animator_.SetEndCallback(Animator::kBlending, nullptr);
   });
@@ -104,6 +110,9 @@ void Credits::Show() {
 
 void Credits::Hide() {
   text_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
+    for (int i = 0; i < kNumLines; ++i)
+      text_[i].Destory();
+    tex_.reset();
     text_animator_.SetEndCallback(Animator::kBlending, nullptr);
     text_animator_.SetVisible(false);
   });

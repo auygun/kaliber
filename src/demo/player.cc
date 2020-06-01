@@ -69,9 +69,9 @@ void Player::OnInputEvent(std::unique_ptr<InputEvent> event) {
 void Player::Draw(float frame_frac) {
   for (int i = 0; i < 2; ++i) {
     drag_sign_[i].Draw();
-    weapon_[i].Draw();
     beam_[i].Draw();
     beam_spark_[i].Draw();
+    weapon_[i].Draw();
   }
 }
 

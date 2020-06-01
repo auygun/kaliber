@@ -109,7 +109,8 @@ void Demo::ContextLost() {
 }
 
 void Demo::LostFocus() {
-  EnterMenuState();
+  if (state_ == kGame)
+    EnterMenuState();
 }
 
 void Demo::GainedFocus() {}
