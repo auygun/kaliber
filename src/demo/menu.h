@@ -12,6 +12,7 @@ namespace eng {
 class Image;
 class InputEvent;
 class Font;
+class Texture;
 }  // namespace eng
 
 class Menu {
@@ -25,8 +26,8 @@ class Menu {
     kOption_Max,
   };
 
-  Menu() = default;
-  ~Menu() = default;
+  Menu();
+  ~Menu();
 
   bool Initialize();
 
@@ -52,6 +53,8 @@ class Menu {
     base::Closure select_item_cb_;
     bool hide = false;
   };
+
+  std::shared_ptr<eng::Texture> tex_;
 
   Item items_[kOption_Max];
 

@@ -13,6 +13,7 @@
 #include "../engine/font.h"
 #include "../engine/image.h"
 #include "../engine/input_event.h"
+#include "../engine/renderer/texture.h"
 
 using namespace base;
 using namespace eng;
@@ -33,6 +34,10 @@ constexpr float kFadeSpeed = 0.2f;
 
 }  // namespace
 
+Menu::Menu() : tex_(std::make_shared<Texture>()) {}
+
+Menu::~Menu() = default;
+
 bool Menu::Initialize() {
   Engine& engine = Engine::Get();
 
@@ -48,10 +53,10 @@ bool Menu::Initialize() {
       max_text_width_ = width;
   }
 
-  auto image = CreateImage();
+  tex_->Update(CreateImage());
 
   for (int i = 0; i < kOption_Max; ++i) {
-    items_[i].text.Create(image, {1, 4});
+    items_[i].text.Create(tex_, {1, 4});
     items_[i].text.AutoScale();
     items_[i].text.Scale(1.5f);
     items_[i].text.SetColor(kColorFadeOut);
@@ -108,11 +113,8 @@ void Menu::Draw() {
 }
 
 void Menu::ContextLost() {
-  auto image = CreateImage();
-  for (int i = 0; i < kOption_Max; ++i) {
-    items_[i].text.ContextLost();
-    items_[i].text.Create(image, {1, 4});
-  }
+  tex_->Invalidate();
+  tex_->Update(CreateImage());
 }
 
 void Menu::SetOptionEnabled(Option o, bool enable) {

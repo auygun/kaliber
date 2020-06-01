@@ -15,10 +15,7 @@
 namespace eng {
 
 class Asset;
-class Mesh;
-class Image;
 class Font;
-class ShaderSource;
 class Game;
 class InputEvent;
 class Renderer;
@@ -92,22 +89,6 @@ class Engine {
     return std::dynamic_pointer_cast<T>(GetAssetInternal(factory));
   }
 
-  // Get resource id of the texture by name. Returns 0 if no texture was found.
-  // Texture resources are reference counted and must be returned by calling
-  // ReturnTextureResource.
-  int GetTextureResource(const std::string& name, int& width, int& height);
-
-  // Returns resource id of the texture for the given image. Creates a new
-  // texture if needed. Always creates a new texture for anonymous images
-  // (images without asset name). Texture resources are reference counted and
-  // must be returned by calling ReturnTextureResource.
-  int AcquireTextureResource(std::shared_ptr<const Image> image);
-
-  // Decrease the reference counter for the given texture. Textures without any
-  // reference are kept alive for a while before being deleted. Anonymous
-  // textures (textures created without any asset name) are deleted right away.
-  void ReturnTextureResource(int resource_id);
-
   void AddInputEvent(std::unique_ptr<InputEvent> event);
   std::unique_ptr<InputEvent> GetNextInputEvent();
 
@@ -139,19 +120,7 @@ class Engine {
   float seconds_accumulated() const { return seconds_accumulated_; }
 
  private:
-  struct TextureResource {
-    int resource_id = 0;
-    int ref_count = 0;
-    int width = 0;
-    int height = 0;
-    float time_to_die = 0.0f;
-  };
-
   std::unique_ptr<Game> game_;
-
-  std::unordered_map<std::string, TextureResource> texture_resources_;
-  // TODO: Recycle resource ids.
-  int last_texture_resource_id_ = 0;
 
   // Asset cache.
   std::unordered_map<std::string, std::shared_ptr<Asset>> assets_;
@@ -189,6 +158,7 @@ class Engine {
 
   void KillUnusedResources(float delta_time);
 
+  void SetSatsVisible(bool visible);
   void PrintStats();
 
   Engine(const Engine&) = delete;

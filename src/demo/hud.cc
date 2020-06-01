@@ -6,6 +6,7 @@
 #include "../engine/engine.h"
 #include "../engine/font.h"
 #include "../engine/image.h"
+#include "../engine/renderer/texture.h"
 
 using namespace base;
 using namespace eng;
@@ -21,6 +22,13 @@ const Vector4 kTextColor = {0.895f, 0.692f, 0.24f, 1};
 
 }  // namespace
 
+Hud::Hud() {
+  text_[0].Create(std::make_shared<Texture>());
+  text_[1].Create(std::make_shared<Texture>());
+}
+
+Hud::~Hud() = default;
+
 bool Hud::Initialize() {
   Engine& engine = Engine::Get();
 
@@ -35,7 +43,7 @@ bool Hud::Initialize() {
   image->SetImmutable();
 
   for (int i = 0; i < 2; ++i) {
-    text_[i].Create(image);
+    text_[i].GetTexture()->Update(image);
     text_[i].AutoScale();
     text_[i].SetColor(kTextColor);
 
@@ -83,10 +91,9 @@ void Hud::Draw() {
 
 void Hud::ContextLost() {
   for (int i = 0; i < 2; ++i)
-    text_[i].ContextLost();
+    text_[i].GetTexture()->Invalidate();
   PrintScore(last_score_, false);
   PrintWave(last_wave_, false);
-  SetProgress(last_progress_);
 }
 
 void Hud::Show() {
@@ -148,7 +155,7 @@ void Hud::Print(int i, const std::string& text) {
   font_->Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
   image->SetImmutable();
 
-  text_[i].Create(image);
+  text_[i].GetTexture()->Update(image);
 }
 
 std::shared_ptr<Image> Hud::CreateImage() {

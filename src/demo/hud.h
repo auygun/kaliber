@@ -16,8 +16,8 @@ class Font;
 
 class Hud {
  public:
-  Hud() = default;
-  ~Hud() = default;
+  Hud();
+  ~Hud();
 
   bool Initialize();
 

@@ -11,14 +11,15 @@ namespace eng {
 class Image;
 class InputEvent;
 class Font;
+class Texture;
 }  // namespace eng
 
 class Credits {
  public:
   static constexpr int kNumLines = 5;
 
-  Credits() = default;
-  ~Credits() = default;
+  Credits();
+  ~Credits();
 
   bool Initialize();
 
@@ -34,6 +35,8 @@ class Credits {
   void Hide();
 
  private:
+  std::shared_ptr<eng::Texture> tex_;
+
   eng::ImageQuad text_[kNumLines];
   eng::Animator text_animator_;
 

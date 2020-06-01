@@ -10,6 +10,7 @@
 #include "../engine/engine.h"
 #include "../engine/font.h"
 #include "../engine/image.h"
+#include "../engine/renderer/texture.h"
 #include "demo.h"
 
 using namespace base;
@@ -42,46 +43,34 @@ void SetupFadeOutAnim(Animator& animator, float delay) {
 
 }  // namespace
 
+Enemy::Enemy()
+    : skull_tex_(std::make_shared<Texture>())
+    , bug_tex_(std::make_shared<Texture>())
+    , target_tex_(std::make_shared<Texture>())
+    , blast_tex_(std::make_shared<Texture>())
+    , score_tex_{std::make_shared<Texture>(),
+                 std::make_shared<Texture>(),
+                 std::make_shared<Texture>()} {}
+
+Enemy::~Enemy() = default;
+
 bool Enemy::Initialize() {
-  Engine& engine = Engine::Get();
+  font_ = Engine::Get().GetAsset<Font>("PixelCaps!.ttf");
+  if (!font_)
+    return false;
 
-  // Precache images.
-  auto skull_frames = engine.GetAsset<Image>("enemy_anims_01_frames_ok.png");
-  auto bug_frames = engine.GetAsset<Image>("enemy_anims_02_frames_ok.png");
-  auto target_frames = engine.GetAsset<Image>("enemy_target_single_ok.png");
-  auto blast_frames = engine.GetAsset<Image>("enemy_anims_blast_ok.png");
-
-  font_ = engine.GetAsset<Font>("PixelCaps!.ttf");
-
-  return skull_frames && bug_frames && target_frames && blast_frames && font_;
+  return CreateRenderResources();
 }
 
 void Enemy::ContextLost() {
-  Engine& engine = Engine::Get();
+  skull_tex_->Invalidate();
+  bug_tex_->Invalidate();
+  target_tex_->Invalidate();
+  blast_tex_->Invalidate();
+  for (int i = 0; i < kEnemyType_Max; ++i)
+    score_tex_[i]->Invalidate();
 
-  auto skull_frames = engine.GetAsset<Image>("enemy_anims_01_frames_ok.png");
-  auto bug_frames = engine.GetAsset<Image>("enemy_anims_02_frames_ok.png");
-  auto target_frames = engine.GetAsset<Image>("enemy_target_single_ok.png");
-  auto blast_frames = engine.GetAsset<Image>("enemy_anims_blast_ok.png");
-
-  for (auto& e : enemies_) {
-    e.sprite.ContextLost();
-    if (e.enemy_type == kEnemyType_Skull)
-      e.sprite.Create(skull_frames, {10, 13}, 100, 100);
-    else if (e.enemy_type == kEnemyType_Bug)
-      e.sprite.Create(bug_frames, {10, 4});
-    else  // kEnemyType_Tank
-      e.sprite.Create(skull_frames, {10, 13}, 100, 100);
-    e.target.ContextLost();
-    e.target.Create(target_frames, {6, 2});
-    e.blast.ContextLost();
-    e.blast.Create(blast_frames, {6, 2});
-    if (e.score.IsValid()) {
-      e.score.ContextLost();
-      auto image = GetScoreImage(GetScore(e.enemy_type));
-      e.score.Create(image);
-    }
-  }
+  CreateRenderResources();
 }
 
 void Enemy::Update(float delta_time) {
@@ -339,13 +328,13 @@ void Enemy::Spawn(EnemyType enemy_type,
   e.damage_type = damage_type;
   if (enemy_type == kEnemyType_Skull) {
     e.total_health = e.hit_points = 1;
-    e.sprite.Create("enemy_anims_01_frames_ok.png", true, {10, 13}, 100, 100);
+    e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
   } else if (enemy_type == kEnemyType_Bug) {
     e.total_health = e.hit_points = 2;
-    e.sprite.Create("enemy_anims_02_frames_ok.png", true, {10, 4});
+    e.sprite.Create(bug_tex_, {10, 4});
   } else {  // kEnemyType_Tank
     e.total_health = e.hit_points = 6;
-    e.sprite.Create("enemy_anims_01_frames_ok.png", true, {10, 13}, 100, 100);
+    e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
   }
   e.sprite.AutoScale();
   e.sprite.SetVisible(true);
@@ -359,11 +348,11 @@ void Enemy::Spawn(EnemyType enemy_type,
   e.sprite_animator.Attach(&e.sprite);
   e.sprite_animator.Play(Animator::kFrames, true);
 
-  e.target.Create("enemy_target_single_ok.png", true, {6, 2});
+  e.target.Create(target_tex_, {6, 2});
   e.target.AutoScale();
   e.target.SetOffset(spawn_pos);
 
-  e.blast.Create("enemy_anims_blast_ok.png", true, {6, 2});
+  e.blast.Create(blast_tex_, {6, 2});
   e.blast.AutoScale();
   e.blast.SetOffset(spawn_pos);
 
@@ -377,13 +366,7 @@ void Enemy::Spawn(EnemyType enemy_type,
   e.health_bar.PlaceToBottomOf(e.sprite);
   e.health_bar.SetColor({0.161f, 0.89f, 0.322f, 1});
 
-  int s = GetScore(e.enemy_type);
-  std::string resource_name = "enemy_score_";
-  resource_name += std::to_string(s);
-  if (!e.score.Create(resource_name, false)) {
-    auto image = GetScoreImage(s);
-    e.score.Create(image);
-  }
+  e.score.Create(score_tex_[e.enemy_type]);
   e.score.AutoScale();
   e.score.SetColor({1, 1, 1, 1});
   e.score.SetOffset(spawn_pos);
@@ -457,11 +440,27 @@ std::shared_ptr<Image> Enemy::GetScoreImage(int score) {
 
   font_->Print(0, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
 
-  std::string resource_name = "enemy_score_";
-  resource_name += text;
-  image->SetName(resource_name);
-
   image->SetImmutable();
-
   return image;
+}
+
+bool Enemy::CreateRenderResources() {
+  Engine& engine = Engine::Get();
+
+  auto skull_image = engine.GetAsset<Image>("enemy_anims_01_frames_ok.png");
+  auto bug_image = engine.GetAsset<Image>("enemy_anims_02_frames_ok.png");
+  auto target_image = engine.GetAsset<Image>("enemy_target_single_ok.png");
+  auto blast_image = engine.GetAsset<Image>("enemy_anims_blast_ok.png");
+  if (!skull_image || !bug_image || !target_image || !blast_image)
+    return false;
+
+  skull_tex_->Update(skull_image);
+  bug_tex_->Update(bug_image);
+  target_tex_->Update(target_image);
+  blast_tex_->Update(blast_image);
+
+  for (int i = 0; i < kEnemyType_Max; ++i)
+    score_tex_[i]->Update(GetScoreImage(GetScore((EnemyType)i)));
+
+  return true;
 }

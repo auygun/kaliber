@@ -21,26 +21,24 @@ constexpr int wepon_anim_speed = 48;
 
 }  // namespace
 
+Player::Player()
+    : weapon_tex_(std::make_shared<Texture>())
+    , beam_tex_(std::make_shared<Texture>()) {}
+
+Player::~Player() = default;
+
 bool Player::Initialize() {
-  return SetupWeapons();
+  if (!CreateRenderResources())
+    return false;
+  SetupWeapons();
+  return true;
 }
 
 void Player::ContextLost() {
-  Engine& engine = Engine::Get();
+  weapon_tex_->Invalidate();
+  beam_tex_->Invalidate();
 
-  auto weapon_image = engine.GetAsset<Image>("enemy_anims_flare_ok.png");
-  auto beam_image = engine.GetAsset<Image>("enemy_ray_ok.png");
-
-  for (int i = 0; i < 2; ++i) {
-    drag_sign_[i].ContextLost();
-    drag_sign_[i].Create(weapon_image, {8, 2});
-    weapon_[i].ContextLost();
-    weapon_[i].Create(weapon_image, {8, 2});
-    beam_[i].ContextLost();
-    beam_[i].Create(beam_image, {1, 2});
-    beam_spark_[i].ContextLost();
-    beam_spark_[i].Create(weapon_image, {8, 2});
-  }
+  CreateRenderResources();
 }
 
 void Player::Update(float delta_time) {
@@ -151,28 +149,21 @@ bool Player::IsFiring(DamageType type) {
          spark_animator_[type].IsPlaying(Animator::kMovement);
 }
 
-bool Player::SetupWeapons() {
-  Engine& engine = Engine::Get();
-
-  auto weapon_image = engine.GetAsset<Image>("enemy_anims_flare_ok.png");
-  auto beam_image = engine.GetAsset<Image>("enemy_ray_ok.png");
-  if (!weapon_image || !beam_image)
-    return false;
-
+void Player::SetupWeapons() {
   for (int i = 0; i < 2; ++i) {
     // Setup draw sign.
-    drag_sign_[i].Create(weapon_image, {8, 2});
+    drag_sign_[i].Create(weapon_tex_, {8, 2});
     drag_sign_[i].AutoScale();
     drag_sign_[i].SetFrame(i * 8);
 
     // Setup weapon.
-    weapon_[i].Create(weapon_image, {8, 2});
+    weapon_[i].Create(weapon_tex_, {8, 2});
     weapon_[i].AutoScale();
     weapon_[i].SetVisible(true);
     weapon_[i].SetFrame(wepon_warmup_frame[i]);
 
     // Setup beam.
-    beam_[i].Create(beam_image, {1, 2});
+    beam_[i].Create(beam_tex_, {1, 2});
     beam_[i].AutoScale();
     beam_[i].SetFrame(i);
     beam_[i].PlaceToRightOf(weapon_[i]);
@@ -180,7 +171,7 @@ bool Player::SetupWeapons() {
     beam_[i].SetPivot(beam_[i].GetOffset());
 
     // Setup beam spark.
-    beam_spark_[i].Create(weapon_image, {8, 2});
+    beam_spark_[i].Create(weapon_tex_, {8, 2});
     beam_spark_[i].AutoScale();
     beam_spark_[i].SetFrame(i * 8 + 1);
     beam_spark_[i].PlaceToRightOf(weapon_[i]);
@@ -211,7 +202,7 @@ bool Player::SetupWeapons() {
     spark_animator_[i].SetEndCallback(Animator::kMovement, [&, i]() -> void {
       beam_spark_[i].SetVisible(false);
       beam_animator_[i].Play(Animator::kBlending, false);
-      static_cast<Demo*>(engine.GetGame())->GetEnemy().HitTarget((DamageType)i);
+      static_cast<Demo*>(Engine::Get().GetGame())->GetEnemy().HitTarget((DamageType)i);
     });
     spark_animator_[i].Attach(&beam_spark_[i]);
 
@@ -220,7 +211,6 @@ bool Player::SetupWeapons() {
     beam_animator_[i].SetBlending({1, 1, 1, 0}, 0.16f);
     beam_animator_[i].Attach(&beam_[i]);
   }
-  return true;
 }
 
 void Player::UpdateTarget() {
@@ -332,4 +322,17 @@ void Player::NavigateBack() {
   DragCancel();
   Engine& engine = Engine::Get();
   static_cast<Demo*>(engine.GetGame())->EnterMenuState();
+}
+
+bool Player::CreateRenderResources() {
+  Engine& engine = Engine::Get();
+
+  auto weapon_image = engine.GetAsset<Image>("enemy_anims_flare_ok.png");
+  auto beam_image = engine.GetAsset<Image>("enemy_ray_ok.png");
+  if (!weapon_image || !beam_image)
+    return false;
+
+  weapon_tex_->Update(weapon_image);
+  beam_tex_->Update(beam_image);
+  return true;
 }

@@ -7,6 +7,7 @@
 #include "../engine/font.h"
 #include "../engine/image.h"
 #include "../engine/input_event.h"
+#include "../engine/renderer/texture.h"
 #include "demo.h"
 
 using namespace base;
@@ -24,6 +25,10 @@ constexpr float kFadeSpeed = 0.2f;
 
 }  // namespace
 
+Credits::Credits() : tex_(std::make_shared<Texture>()) {}
+
+Credits::~Credits() = default;
+
 bool Credits::Initialize() {
   Engine& engine = Engine::Get();
 
@@ -39,10 +44,10 @@ bool Credits::Initialize() {
       max_text_width_ = width;
   }
 
-  auto image = CreateImage();
+  tex_->Update(CreateImage());
 
   for (int i = 0; i < kNumLines; ++i) {
-    text_[i].Create(image, {1, kNumLines});
+    text_[i].Create(tex_, {1, kNumLines});
     text_[i].AutoScale();
     text_[i].SetColor(kTextColor * Vector4(1, 1, 1, 0));
     text_[i].SetFrame(i);
@@ -84,10 +89,8 @@ void Credits::Draw() {
 }
 
 void Credits::ContextLost() {
-  for (int i = 0; i < kNumLines; ++i) {
-    text_[i].ContextLost();
-    text_[i].Create(CreateImage(), {1, kNumLines});
-  }
+  tex_->Invalidate();
+  tex_->Update(CreateImage());
 }
 
 void Credits::Show() {

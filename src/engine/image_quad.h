@@ -3,36 +3,25 @@
 
 #include "../base/vecmath.h"
 #include "animatable.h"
-#include "renderer/texture.h"
 
 #include <array>
 #include <memory>
-#include <string>
 
 namespace eng {
 
-class Image;
+class Texture;
 
 class ImageQuad : public Animatable {
  public:
   ImageQuad() = default;
   ~ImageQuad() override = default;
 
-  // Create from the given image. Creates a new texture or updates the existing
-  // one with the given image.
-  void Create(std::shared_ptr<const Image> image,
+  void Create(std::shared_ptr<Texture> texture,
               std::array<int, 2> num_frames = {1, 1},
               int frame_width = 0,
               int frame_height = 0);
 
-  // Create from texture name. If no texture resource was found and load_asset
-  // is true and, tries to load an image asset with the same name. Returns true
-  // on success.
-  bool Create(const std::string& name,
-              bool load_asset,
-              std::array<int, 2> num_frames = {1, 1},
-              int frame_width = 0,
-              int frame_height = 0);
+  void Destory();
 
   void AutoScale();
 
@@ -44,16 +33,11 @@ class ImageQuad : public Animatable {
   base::Vector4 GetColor() const override { return color_; }
 
   void Draw();
-  void ContextLost();
 
-  int frame_width() const { return frame_width_; }
-  int frame_height() const { return frame_height_; }
-
-  bool IsValid() const { return texture_.IsValid(); }
+  std::shared_ptr<Texture> GetTexture() { return texture_; }
 
  private:
-  Texture texture_;
-  base::Vector2 tex_scale_ = {1, 1};
+  std::shared_ptr<Texture> texture_;
 
   size_t current_frame_ = 0;
   std::array<int, 2> num_frames_ = {1, 1};  // horizontal, vertical
@@ -62,7 +46,10 @@ class ImageQuad : public Animatable {
 
   base::Vector4 color_ = {1, 1, 1, 1};
 
-  base::Vector2 GetUVOffset(int frame);
+  float GetFrameWidth() const;
+  float GetFrameHeight() const;
+
+  base::Vector2 GetUVOffset(int frame) const;
 };
 
 }  // namespace eng

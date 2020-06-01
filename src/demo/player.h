@@ -6,6 +6,7 @@
 #include "../base/vecmath.h"
 #include "../engine/animator.h"
 #include "../engine/image_quad.h"
+#include "../engine/renderer/texture.h"
 #include "damage_type.h"
 
 namespace eng {
@@ -14,8 +15,8 @@ class InputEvent;
 
 class Player {
  public:
-  Player() = default;
-  ~Player() = default;
+  Player();
+  ~Player();
 
   bool Initialize();
 
@@ -31,6 +32,9 @@ class Player {
   base::Vector2 GetWeaponScale() const;
 
  private:
+  std::shared_ptr<eng::Texture> weapon_tex_;
+  std::shared_ptr<eng::Texture> beam_tex_;
+
   eng::ImageQuad drag_sign_[2];
   eng::ImageQuad weapon_[2];
   eng::ImageQuad beam_[2];
@@ -57,7 +61,7 @@ class Player {
   void Fire(DamageType type, base::Vector2 target_point);
   bool IsFiring(DamageType type);
 
-  bool SetupWeapons();
+  void SetupWeapons();
 
   void UpdateTarget();
 
@@ -68,6 +72,8 @@ class Player {
   bool ValidateDrag();
 
   void NavigateBack();
+
+  bool CreateRenderResources();
 };
 
 #endif  // PLAYER_H

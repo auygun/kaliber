@@ -11,11 +11,10 @@
 #include "platform/platform.h"
 #include "renderer/render_command.h"
 #include "renderer/renderer.h"
+#include "renderer/texture.h"
 #include "shader_source.h"
 
 using namespace base;
-
-static constexpr float kLifeTime = 30;
 
 namespace eng {
 
@@ -64,10 +63,6 @@ bool Engine::Init(Platform* platform) {
     return false;
   }
 
-  Vector2 pos = (GetScreenSize() / 2 - stats_.GetScale() / 2);
-  pos -= Vector2(0.02f, 0.17f);
-  stats_.SetOffset(pos * Vector2(-1, 1));
-
   return true;
 }
 
@@ -79,8 +74,6 @@ void Engine::Update(float delta_time) {
   task_runner_.Run();
 
   game_->Update(delta_time);
-
-  KillUnusedResources(delta_time);
 
   fps_seconds_ += delta_time;
   if (fps_seconds_ >= 1) {
@@ -118,7 +111,6 @@ void Engine::GainedFocus() {
 
 void Engine::TrimMemory() {
   LOG << "Trimming memory.";
-  KillUnusedResources(kLifeTime);
   assets_.clear();
 }
 
@@ -135,74 +127,19 @@ Vector2 Engine::ToPosition(const Vector2& vec) {
   return ToScale(vec) - GetScreenSize() / 2.0f;
 }
 
-int Engine::GetTextureResource(const std::string& name,
-                               int& width,
-                               int& height) {
-  auto it = texture_resources_.find(name);
-  if (it != texture_resources_.end()) {
-    ++(it->second.ref_count);
-    width = it->second.width;
-    height = it->second.height;
-    return it->second.resource_id;
-  }
-  return 0;
-}
-
-int Engine::AcquireTextureResource(std::shared_ptr<const Image> image) {
-  assert(image->IsImmutable());
-
-  int resource_id = 0;
-  if (image->GetName().empty()) {
-    resource_id = ++last_texture_resource_id_;
-  } else {
-    auto it = texture_resources_.find(image->GetName());
-    if (it != texture_resources_.end()) {
-      ++(it->second.ref_count);
-      return it->second.resource_id;
-    }
-    resource_id = ++last_texture_resource_id_;
-    texture_resources_[image->GetName()] = {resource_id, 1, image->GetWidth(),
-                                            image->GetHeight()};
-    DLOG << "AcquireTextureResource - Create! asset: " << image->GetName()
-         << ", resource_id: " << resource_id;
-  }
-
-  auto cmd = std::make_unique<CmdUpdateTexture>();
-  cmd->id = resource_id;
-  cmd->image = image;
-  renderer_->EnqueueCommand(std::move(cmd));
-  return resource_id;
-}
-
-void Engine::ReturnTextureResource(int resource_id) {
-  auto it = std::find_if(
-      texture_resources_.begin(), texture_resources_.end(),
-      [resource_id](auto& p) { return p.second.resource_id == resource_id; });
-  if (it != texture_resources_.end()) {
-    assert(it->second.ref_count > 0);
-    if (--(it->second.ref_count) > 0)
-      return;
-    it->second.time_to_die = kLifeTime;
-    return;
-  }
-  auto cmd = std::make_unique<CmdDestoryTexture>();
-  cmd->id = resource_id;
-  renderer_->EnqueueCommand(std::move(cmd));
-}
-
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
   switch (event->GetType()) {
     case InputEvent::kTap:
       if (((GetScreenSize() / 2) * 0.9f - event->GetVector(0)).Magnitude() <=
           0.25f) {
-        stats_.SetVisible(!stats_.IsVisible());
+        SetSatsVisible(!stats_.IsVisible());
         // Consume event.
         return;
       }
       break;
     case InputEvent::kKeyPress:
       if (event->GetKeyPress() == 's') {
-        stats_.SetVisible(!stats_.IsVisible());
+        SetSatsVisible(!stats_.IsVisible());
         // Consume event.
         return;
       }
@@ -280,15 +217,13 @@ void Engine::ContextLost() {
     return;
   }
 
-  texture_resources_.clear();
-  last_texture_resource_id_ = 0;
-
   pass_through_shader_.Invalidate();
   solid_shader_.Invalidate();
   quad_.Invalidate();
   CreateRenderResources();
 
-  stats_.ContextLost();
+  if (stats_.GetTexture())
+    stats_.GetTexture()->Invalidate();
 
   game_->ContextLost();
 }
@@ -321,24 +256,12 @@ bool Engine::CreateRenderResources() {
   return true;
 }
 
-void Engine::KillUnusedResources(float delta_time) {
-  for (auto it = texture_resources_.begin(); it != texture_resources_.end();
-       ++it) {
-    if (it->second.ref_count > 0)
-      continue;
-
-    it->second.time_to_die -= delta_time;
-    if (it->second.time_to_die <= 0.0f) {
-      DLOG << "KillUnusedResources - Destroy! resource_id: "
-           << it->second.resource_id;
-
-      auto cmd = std::make_unique<CmdDestoryTexture>();
-      cmd->id = it->second.resource_id;
-      renderer_->EnqueueCommand(std::move(cmd));
-
-      it = texture_resources_.erase(it);
-    }
-  }
+void Engine::SetSatsVisible(bool visible) {
+  stats_.SetVisible(visible);
+  if (visible)
+    stats_.Create(std::make_shared<Texture>());
+  else
+    stats_.Destory();
 }
 
 void Engine::PrintStats() {
@@ -373,7 +296,7 @@ void Engine::PrintStats() {
   worker.Join();
 
   image->SetImmutable();
-  stats_.Create(image);
+  stats_.GetTexture()->Update(image);
   stats_.AutoScale();
 }
 

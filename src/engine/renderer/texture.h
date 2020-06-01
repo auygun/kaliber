@@ -13,10 +13,7 @@ class Texture {
   Texture() = default;
   ~Texture();
 
-  // Use exsting resource. Returns false if no resource was found.
-  bool Create(const std::string& name);
-
-  // Update exsiting resource or create a new one if no resource was found.
+  // Uploads image.
   void Update(std::shared_ptr<const Image> image);
 
   void Destroy();
@@ -31,6 +28,8 @@ class Texture {
 
  private:
   int resource_id_ = 0;
+  static int last_id;
+
   int width_ = 0;
   int height_ = 0;
 

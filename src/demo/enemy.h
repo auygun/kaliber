@@ -14,12 +14,13 @@
 namespace eng {
 class Image;
 class Font;
+class Texture;
 }  // namespace eng
 
 class Enemy {
  public:
-  Enemy() = default;
-  ~Enemy() = default;
+  Enemy();
+  ~Enemy();
 
   bool Initialize();
 
@@ -71,6 +72,12 @@ class Enemy {
     eng::Animator score_animator;
   };
 
+  std::shared_ptr<eng::Texture> skull_tex_;
+  std::shared_ptr<eng::Texture> bug_tex_;
+  std::shared_ptr<eng::Texture> target_tex_;
+  std::shared_ptr<eng::Texture> blast_tex_;
+  std::shared_ptr<eng::Texture> score_tex_[kEnemyType_Max];
+
   std::shared_ptr<const eng::Font> font_;
 
   std::list<EnemyUnit> enemies_;
@@ -101,6 +108,8 @@ class Enemy {
   int GetScore(EnemyType enemy_type);
 
   std::shared_ptr<eng::Image> GetScoreImage(int score);
+
+  bool CreateRenderResources();
 };
 
 #endif  // ENEMY_H
