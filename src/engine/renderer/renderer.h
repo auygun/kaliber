@@ -8,16 +8,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "opengl.h"
-#if defined(__linux__) && !defined(__ANDROID__)
-#include <X11/Xlib.h>
-#include "../../third_party/glew/glxew.h"
-#endif
-
-#include "../../base/closure.h"
-#include "../../base/vecmath.h"
-#include "types.h"
-
 #define THREADED_RENDERING
 
 #ifdef THREADED_RENDERING
@@ -27,6 +17,17 @@
 #include <mutex>
 #include <thread>
 #endif  // THREADED_RENDERING
+
+#include "opengl.h"
+#if defined(__linux__) && !defined(__ANDROID__)
+#include <X11/Xlib.h>
+#include "../../third_party/glew/glxew.h"
+#endif
+
+#include "../../base/closure.h"
+#include "../../base/vecmath.h"
+#include "render_resource.h"
+#include "types.h"
 
 #if defined(__ANDROID__)
 struct ANativeWindow;
@@ -53,6 +54,8 @@ class Renderer {
   void Shutdown();
 
   void ContextLost();
+
+  std::shared_ptr<RenderResource> CreateResource(RenderResourceFactoryBase& factory);
 
   bool SupportsETC1() const { return texture_compression_.etc1; }
   bool SupportsDXT1() const {
@@ -101,27 +104,31 @@ class Renderer {
           atc(false) {}
   };
 
-  struct Geometry {
+  struct GeometryOpenGL {
     struct Element {
       GLsizei num_elements;
       GLenum type;
       size_t vertex_offset;
     };
 
-    GLsizei num_vertices;
-    GLsizei num_indices;
-    GLenum primitive;
-    GLenum index_type;
+    GLsizei num_vertices = 0;
+    GLsizei num_indices = 0;
+    GLenum primitive = 0;
+    GLenum index_type = 0;
     std::vector<Element> vertex_layout;
-    GLuint vertex_size;
-    GLuint vertex_array_id;
-    GLuint vertex_buffer_id;
-    GLuint index_buffer_id;
+    GLuint vertex_size = 0;
+    GLuint vertex_array_id = 0;
+    GLuint vertex_buffer_id = 0;
+    GLuint index_buffer_id = 0;
   };
 
-  struct Shader {
-    GLuint id;
+  struct ShaderOpenGL {
+    GLuint id = 0;
     std::unordered_map<std::string, GLuint> uniforms;
+  };
+
+  struct TextureOpenGL {
+    GLuint id = 0;
   };
 
   base::Closure context_lost_cb_;
@@ -134,9 +141,9 @@ class Renderer {
   int screen_height_ = 0;
   base::Matrix4x4 projection_;
 
-  std::unordered_map<int, GLuint> texture_map_;
-  std::unordered_map<int, Geometry> geometry_map_;
-  std::unordered_map<int, Shader> shader_map_;
+  std::unordered_map<int, std::shared_ptr<TextureOpenGL>> texture_map_;
+  std::unordered_map<int, std::shared_ptr<GeometryOpenGL>> geometry_map_;
+  std::unordered_map<int, std::shared_ptr<ShaderOpenGL>> shader_map_;
 
 #ifdef THREADED_RENDERING
   // Global commands are independent from frames and guaranteed to be processed.
@@ -200,7 +207,7 @@ class Renderer {
   bool SetupVertexLayout(const VertexDescripton& vd,
                          GLuint vertex_size,
                          bool use_vao,
-                         std::vector<Geometry::Element>& vertex_layout);
+                         std::vector<GeometryOpenGL::Element>& vertex_layout);
   GLuint CreateShader(const char* source, GLenum type);
   bool BindAttributeLocation(GLuint id, const VertexDescripton& vd);
   GLint GetUniformLocation(GLuint id,

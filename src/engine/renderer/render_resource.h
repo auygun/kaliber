@@ -17,8 +17,14 @@ class RenderResource {
   void Invalidate() { resource_id_ = 0; }
   bool IsValid() const { return resource_id_ > 0; }
 
+  void SetImplData(std::shared_ptr<void> impl_data) {
+    impl_data_ = impl_data;
+  }
+  std::shared_ptr<void> GetImplData() { return impl_data_; }
+
  protected:
   int resource_id_ = 0;
+  std::shared_ptr<void> impl_data_;  // For use in render thread only.
 
   RenderResource(const RenderResource&) = delete;
   RenderResource& operator=(const RenderResource&) = delete;
@@ -26,7 +32,6 @@ class RenderResource {
 
 class RenderResourceFactoryBase {
  public:
-  RenderResourceFactoryBase() = default;
   virtual ~RenderResourceFactoryBase() = default;
 
   virtual std::shared_ptr<eng::RenderResource> Create() = 0;
@@ -35,7 +40,6 @@ class RenderResourceFactoryBase {
 template <typename T>
 class RenderResourceFactory : public RenderResourceFactoryBase {
  public:
-  RenderResourceFactory() = default;
   ~RenderResourceFactory() override = default;
 
   std::shared_ptr<eng::RenderResource> Create() override {

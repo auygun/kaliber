@@ -22,8 +22,8 @@ constexpr int wepon_anim_speed = 48;
 }  // namespace
 
 Player::Player()
-    : weapon_tex_(std::make_shared<Texture>())
-    , beam_tex_(std::make_shared<Texture>()) {}
+    : weapon_tex_(Engine::Get().CreateRenderResource<Texture>())
+    , beam_tex_(Engine::Get().CreateRenderResource<Texture>()) {}
 
 Player::~Player() = default;
 

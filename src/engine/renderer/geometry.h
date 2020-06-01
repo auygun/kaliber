@@ -28,9 +28,6 @@ class Geometry : public RenderResource {
  private:
   static int last_id;
   VertexDescripton vertex_description_;
-
-  Geometry(const Geometry&) = delete;
-  Geometry& operator=(const Geometry&) = delete;
 };
 
 }  // namespace eng

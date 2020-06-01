@@ -44,13 +44,13 @@ void SetupFadeOutAnim(Animator& animator, float delay) {
 }  // namespace
 
 Enemy::Enemy()
-    : skull_tex_(std::make_shared<Texture>())
-    , bug_tex_(std::make_shared<Texture>())
-    , target_tex_(std::make_shared<Texture>())
-    , blast_tex_(std::make_shared<Texture>())
-    , score_tex_{std::make_shared<Texture>(),
-                 std::make_shared<Texture>(),
-                 std::make_shared<Texture>()} {}
+    : skull_tex_(Engine::Get().CreateRenderResource<Texture>())
+    , bug_tex_(Engine::Get().CreateRenderResource<Texture>())
+    , target_tex_(Engine::Get().CreateRenderResource<Texture>())
+    , blast_tex_(Engine::Get().CreateRenderResource<Texture>())
+    , score_tex_{Engine::Get().CreateRenderResource<Texture>(),
+                 Engine::Get().CreateRenderResource<Texture>(),
+                 Engine::Get().CreateRenderResource<Texture>()} {}
 
 Enemy::~Enemy() = default;
 

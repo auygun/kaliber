@@ -23,8 +23,8 @@ const Vector4 kTextColor = {0.895f, 0.692f, 0.24f, 1};
 }  // namespace
 
 Hud::Hud() {
-  text_[0].Create(std::make_shared<Texture>());
-  text_[1].Create(std::make_shared<Texture>());
+  text_[0].Create(Engine::Get().CreateRenderResource<Texture>());
+  text_[1].Create(Engine::Get().CreateRenderResource<Texture>());
 }
 
 Hud::~Hud() = default;

@@ -77,7 +77,7 @@ void Credits::ContextLost() {
 }
 
 void Credits::Show() {
-  tex_ = std::make_shared<Texture>();
+  tex_ = Engine::Get().CreateRenderResource<Texture>();
   tex_->Update(CreateImage());
 
   for (int i = 0; i < kNumLines; ++i) {

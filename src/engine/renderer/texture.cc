@@ -26,6 +26,7 @@ void Texture::Update(std::shared_ptr<const Image> image) {
   auto cmd = std::make_unique<CmdUpdateTexture>();
   cmd->id = resource_id_;
   cmd->image = image;
+  cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
   Engine::Get().EnqueueRenderCommand(std::move(cmd));
 }
 
@@ -33,6 +34,7 @@ void Texture::Destroy() {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdDestoryTexture>();
     cmd->id = resource_id_;
+    cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
     resource_id_ = 0;
   }
@@ -42,6 +44,7 @@ void Texture::Activate() {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdActivateTexture>();
     cmd->id = resource_id_;
+    cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }

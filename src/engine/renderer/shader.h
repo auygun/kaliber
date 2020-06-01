@@ -31,9 +31,6 @@ class Shader : public RenderResource {
 
  private:
   static int last_id;
-
-  Shader(const Shader&) = delete;
-  Shader& operator=(const Shader&) = delete;
 };
 
 }  // namespace eng

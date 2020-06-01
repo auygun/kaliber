@@ -30,9 +30,6 @@ class Texture : public RenderResource {
 
   int width_ = 0;
   int height_ = 0;
-
-  Texture(const Texture&) = delete;
-  Texture& operator=(const Texture&) = delete;
 };
 
 }  // namespace eng

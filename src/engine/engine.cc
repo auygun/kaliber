@@ -203,7 +203,7 @@ bool Engine::IsMobile() const {
 
 std::shared_ptr<RenderResource> Engine::CreateRenderResourceInternal(
     RenderResourceFactoryBase& factory) {
-  return factory.Create();
+  return renderer_->CreateResource(factory);
 }
 
 std::shared_ptr<Asset> Engine::GetAssetInternal(

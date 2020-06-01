@@ -27,6 +27,7 @@ void Shader::Create(std::shared_ptr<const ShaderSource> source,
   cmd->id = resource_id_;
   cmd->source = source;
   cmd->vertex_description = vd;
+  cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
   Engine::Get().EnqueueRenderCommand(std::move(cmd));
 }
 
@@ -34,6 +35,7 @@ void Shader::Destroy() {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdDestroyShader>();
     cmd->id = resource_id_;
+    cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
     resource_id_ = 0;
   }
@@ -43,6 +45,7 @@ void Shader::Activate() {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdActivateShader>();
     cmd->id = resource_id_;
+    cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }
@@ -53,6 +56,7 @@ void Shader::SetUniform(const std::string& name, const Vector2& v) {
     cmd->id = resource_id_;
     cmd->name = name;
     cmd->v = v;
+    cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }
@@ -63,6 +67,7 @@ void Shader::SetUniform(const std::string& name, const Vector3& v) {
     cmd->id = resource_id_;
     cmd->name = name;
     cmd->v = v;
+    cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }
@@ -73,6 +78,7 @@ void Shader::SetUniform(const std::string& name, const Vector4& v) {
     cmd->id = resource_id_;
     cmd->name = name;
     cmd->v = v;
+    cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }
@@ -83,6 +89,7 @@ void Shader::SetUniform(const std::string& name, const Matrix4x4& m) {
     cmd->id = resource_id_;
     cmd->name = name;
     cmd->m = m;
+    cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }
@@ -93,6 +100,7 @@ void Shader::SetUniform(const std::string& name, float f) {
     cmd->id = resource_id_;
     cmd->name = name;
     cmd->f = f;
+    cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }
@@ -103,6 +111,7 @@ void Shader::SetUniform(const std::string& name, int i) {
     cmd->id = resource_id_;
     cmd->name = name;
     cmd->i = i;
+    cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }

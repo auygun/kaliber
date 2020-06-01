@@ -34,7 +34,7 @@ constexpr float kFadeSpeed = 0.2f;
 
 }  // namespace
 
-Menu::Menu() : tex_(std::make_shared<Texture>()) {}
+Menu::Menu() : tex_(Engine::Get().CreateRenderResource<Texture>()) {}
 
 Menu::~Menu() = default;
 

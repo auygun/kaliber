@@ -21,6 +21,7 @@ void Geometry::Create(std::shared_ptr<const Mesh> mesh) {
   resource_id_ = ++last_id;
   cmd->id = resource_id_;
   cmd->mesh = mesh;
+  cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
   Engine::Get().EnqueueRenderCommand(std::move(cmd));
 }
 
@@ -28,6 +29,7 @@ void Geometry::Destroy() {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdDestroyGeometry>();
     cmd->id = resource_id_;
+    cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
     resource_id_ = 0;
   }
@@ -37,6 +39,7 @@ void Geometry::Draw() {
   if (resource_id_) {
     auto cmd = std::make_unique<CmdDrawGeometry>();
     cmd->id = resource_id_;
+    cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
     Engine::Get().EnqueueRenderCommand(std::move(cmd));
   }
 }

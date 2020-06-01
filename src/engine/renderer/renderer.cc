@@ -9,6 +9,9 @@
 #include "../image.h"
 #include "../mesh.h"
 #include "../shader_source.h"
+#include "geometry.h"
+#include "shader.h"
+#include "texture.h"
 #include "render_command.h"
 
 namespace {
@@ -159,6 +162,23 @@ void Renderer::TerminateWorker() {
 #else
   ShutdownInternal();
 #endif  // THREADED_RENDERING
+}
+
+std::shared_ptr<RenderResource> Renderer::CreateResource(RenderResourceFactoryBase& factory) {
+  auto resource = factory.Create();
+
+  // Set implementation specific data. This data will be sent with render
+  // commands to the render thread and sould not be used in any other thread.
+  if (std::dynamic_pointer_cast<Geometry>(resource))
+    resource->SetImplData(std::make_shared<GeometryOpenGL>());
+  else  if (std::dynamic_pointer_cast<Shader>(resource))
+    resource->SetImplData(std::make_shared<ShaderOpenGL>());
+  else  if (std::dynamic_pointer_cast<Texture>(resource))
+    resource->SetImplData(std::make_shared<TextureOpenGL>());
+  else
+    assert(false);
+
+  return resource;
 }
 
 void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
@@ -312,8 +332,8 @@ void Renderer::HandleCmdClear(RenderCommand* cmd) {
 
 void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
   auto* c = static_cast<CmdUpdateTexture*>(cmd);
-  auto it = texture_map_.find(c->id);
-  bool new_texture = it == texture_map_.end();
+  auto impl_data = std::static_pointer_cast<TextureOpenGL>(c->impl_data);
+  bool new_texture = impl_data->id == 0;
 
   assert(c->image->IsImmutable());
 
@@ -321,7 +341,7 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
   if (new_texture)
     glGenTextures(1, &gl_id);
   else
-    gl_id = it->second;
+    gl_id = impl_data->id;
 
   glBindTexture(GL_TEXTURE_2D, gl_id);
   if (c->image->IsCompressed()) {
@@ -364,7 +384,9 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    texture_map_[c->id] = gl_id;
+
+    impl_data->id = gl_id;
+    texture_map_[c->id] = impl_data;
   }
 }
 
@@ -372,22 +394,27 @@ void Renderer::HandleCmdDestoryTexture(RenderCommand* cmd) {
   auto* c = static_cast<CmdDestoryTexture*>(cmd);
   auto it = texture_map_.find(c->id);
   if (it != texture_map_.end()) {
-    glDeleteTextures(1, &(it->second));
+    glDeleteTextures(1, &(it->second->id));
     texture_map_.erase(it);
+
+    std::shared_ptr<TextureOpenGL> impl_data =
+        std::static_pointer_cast<TextureOpenGL>(c->impl_data);
+    *impl_data = TextureOpenGL();
   }
 }
 
 void Renderer::HandleCmdActivateTexture(RenderCommand* cmd) {
   auto* c = static_cast<CmdActivateTexture*>(cmd);
-  auto it = texture_map_.find(c->id);
-  if (it != texture_map_.end())
-    glBindTexture(GL_TEXTURE_2D, it->second);
+  std::shared_ptr<TextureOpenGL> impl_data =
+      std::static_pointer_cast<TextureOpenGL>(c->impl_data);
+  if (impl_data->id > 0)
+    glBindTexture(GL_TEXTURE_2D, impl_data->id);
 }
 
 void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
   auto* c = static_cast<CmdCreateGeometry*>(cmd);
-  auto it = geometry_map_.find(c->id);
-  if (it != geometry_map_.end())
+  auto impl_data = std::static_pointer_cast<GeometryOpenGL>(c->impl_data);
+  if (impl_data->vertex_buffer_id > 0)
     return;
 
   // Verify that we have a valid layout and get the total byte size per vertex.
@@ -412,7 +439,7 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
 
   // Make sure the vertex format is understood and the attribute pointers are
   // set up.
-  std::vector<Geometry::Element> vertex_layout;
+  std::vector<GeometryOpenGL::Element> vertex_layout;
   if (!SetupVertexLayout(c->mesh->vertex_description(), vertex_size,
                          SupportsVAO(), vertex_layout))
     return;
@@ -436,15 +463,16 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
   }
 
-  geometry_map_[c->id] = {(GLsizei)c->mesh->num_vertices(),
-                          (GLsizei)c->mesh->num_indices(),
-                          kGlPrimitive[c->mesh->primitive()],
-                          kGlDataType[c->mesh->index_description()],
-                          vertex_layout,
-                          vertex_size,
-                          vertex_array_id,
-                          vertex_buffer_id,
-                          index_buffer_id};
+  *impl_data = {(GLsizei)c->mesh->num_vertices(),
+                (GLsizei)c->mesh->num_indices(),
+                kGlPrimitive[c->mesh->primitive()],
+                kGlDataType[c->mesh->index_description()],
+                vertex_layout,
+                vertex_size,
+                vertex_array_id,
+                vertex_buffer_id,
+                index_buffer_id};
+  geometry_map_[c->id] = impl_data;
 }
 
 void Renderer::HandleCmdDestroyGeometry(RenderCommand* cmd) {
@@ -453,53 +481,56 @@ void Renderer::HandleCmdDestroyGeometry(RenderCommand* cmd) {
   if (it == geometry_map_.end())
     return;
 
-  if (it->second.index_buffer_id)
-    glDeleteBuffers(1, &(it->second.index_buffer_id));
-  if (it->second.vertex_buffer_id)
-    glDeleteBuffers(1, &(it->second.vertex_buffer_id));
-  if (it->second.vertex_array_id)
-    glDeleteVertexArrays(1, &(it->second.vertex_array_id));
+  if (it->second->index_buffer_id)
+    glDeleteBuffers(1, &(it->second->index_buffer_id));
+  if (it->second->vertex_buffer_id)
+    glDeleteBuffers(1, &(it->second->vertex_buffer_id));
+  if (it->second->vertex_array_id)
+    glDeleteVertexArrays(1, &(it->second->vertex_array_id));
   geometry_map_.erase(it);
+
+  auto impl_data = std::static_pointer_cast<GeometryOpenGL>(c->impl_data);
+  *impl_data = GeometryOpenGL();
 }
 
 void Renderer::HandleCmdDrawGeometry(RenderCommand* cmd) {
   auto* c = static_cast<CmdDrawGeometry*>(cmd);
-  auto it = geometry_map_.find(c->id);
-  if (it == geometry_map_.end())
+  auto impl_data = std::static_pointer_cast<GeometryOpenGL>(c->impl_data);
+  if (impl_data->vertex_buffer_id == 0)
     return;
 
   // Set up the vertex data.
-  if (it->second.vertex_array_id)
-    glBindVertexArray(it->second.vertex_array_id);
+  if (impl_data->vertex_array_id)
+    glBindVertexArray(impl_data->vertex_array_id);
   else {
-    glBindBuffer(GL_ARRAY_BUFFER, it->second.vertex_buffer_id);
+    glBindBuffer(GL_ARRAY_BUFFER, impl_data->vertex_buffer_id);
     for (GLuint attribute_index = 0;
-         attribute_index < (GLuint)it->second.vertex_layout.size();
+         attribute_index < (GLuint)impl_data->vertex_layout.size();
          ++attribute_index) {
-      Geometry::Element& e = it->second.vertex_layout[attribute_index];
+      GeometryOpenGL::Element& e = impl_data->vertex_layout[attribute_index];
       glEnableVertexAttribArray(attribute_index);
       glVertexAttribPointer(attribute_index, e.num_elements, e.type, GL_FALSE,
-                            it->second.vertex_size,
+                            impl_data->vertex_size,
                             (const GLvoid*)e.vertex_offset);
     }
 
-    if (it->second.num_indices > 0)
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, it->second.index_buffer_id);
+    if (impl_data->num_indices > 0)
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, impl_data->index_buffer_id);
   }
 
   // Draw the primitive.
-  if (it->second.num_indices > 0)
-    glDrawElements(it->second.primitive, it->second.num_indices,
-                   it->second.index_type, NULL);
+  if (impl_data->num_indices > 0)
+    glDrawElements(impl_data->primitive, impl_data->num_indices,
+                   impl_data->index_type, NULL);
   else
-    glDrawArrays(it->second.primitive, 0, it->second.num_vertices);
+    glDrawArrays(impl_data->primitive, 0, impl_data->num_vertices);
 
   // Clean up states.
-  if (it->second.vertex_array_id)
+  if (impl_data->vertex_array_id)
     glBindVertexArray(0);
   else {
     for (GLuint attribute_index = 0;
-         attribute_index < (GLuint)it->second.vertex_layout.size();
+         attribute_index < (GLuint)impl_data->vertex_layout.size();
          ++attribute_index)
       glDisableVertexAttribArray(attribute_index);
 
@@ -510,8 +541,8 @@ void Renderer::HandleCmdDrawGeometry(RenderCommand* cmd) {
 
 void Renderer::HandleCmdCreateShader(RenderCommand* cmd) {
   auto* c = static_cast<CmdCreateShader*>(cmd);
-  auto it = shader_map_.find(c->id);
-  if (it != shader_map_.end())
+  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  if (impl_data->id > 0)
     return;
 
   GLuint vertex_shader =
@@ -550,31 +581,35 @@ void Renderer::HandleCmdCreateShader(RenderCommand* cmd) {
     }
   }
 
-  shader_map_[c->id] = {id, {}};
+  *impl_data = {id, {}};
+  shader_map_[c->id] = impl_data;
 }
 
 void Renderer::HandleCmdDestroyShader(RenderCommand* cmd) {
   auto* c = static_cast<CmdDestroyShader*>(cmd);
   auto it = shader_map_.find(c->id);
   if (it != shader_map_.end()) {
-    glDeleteProgram(it->second.id);
+    glDeleteProgram(it->second->id);
     shader_map_.erase(it);
+
+    auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+    *impl_data = ShaderOpenGL();
   }
 }
 
 void Renderer::HandleCmdActivateShader(RenderCommand* cmd) {
   auto* c = static_cast<CmdActivateShader*>(cmd);
-  auto it = shader_map_.find(c->id);
-  if (it != shader_map_.end())
-    glUseProgram(it->second.id);
+  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  if (impl_data->id > 0)
+    glUseProgram(impl_data->id);
 }
 
 void Renderer::HandleCmdSetUniformVec2(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformVec2*>(cmd);
-  auto it = shader_map_.find(c->id);
-  if (it != shader_map_.end()) {
+  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  if (impl_data->id > 0) {
     GLint index =
-        GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+        GetUniformLocation(impl_data->id, c->name, impl_data->uniforms);
     if (index >= 0)
       glUniform2fv(index, 1, c->v.GetData());
   }
@@ -582,10 +617,10 @@ void Renderer::HandleCmdSetUniformVec2(RenderCommand* cmd) {
 
 void Renderer::HandleCmdSetUniformVec3(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformVec3*>(cmd);
-  auto it = shader_map_.find(c->id);
-  if (it != shader_map_.end()) {
+  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  if (impl_data->id > 0) {
     GLint index =
-        GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+        GetUniformLocation(impl_data->id, c->name, impl_data->uniforms);
     if (index >= 0)
       glUniform3fv(index, 1, c->v.GetData());
   }
@@ -593,10 +628,10 @@ void Renderer::HandleCmdSetUniformVec3(RenderCommand* cmd) {
 
 void Renderer::HandleCmdSetUniformVec4(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformVec4*>(cmd);
-  auto it = shader_map_.find(c->id);
-  if (it != shader_map_.end()) {
+  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  if (impl_data->id > 0) {
     GLint index =
-        GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+        GetUniformLocation(impl_data->id, c->name, impl_data->uniforms);
     if (index >= 0)
       glUniform4fv(index, 1, c->v.GetData());
   }
@@ -604,10 +639,10 @@ void Renderer::HandleCmdSetUniformVec4(RenderCommand* cmd) {
 
 void Renderer::HandleCmdSetUniformMat4(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformMat4*>(cmd);
-  auto it = shader_map_.find(c->id);
-  if (it != shader_map_.end()) {
+  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  if (impl_data->id > 0) {
     GLint index =
-        GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+        GetUniformLocation(impl_data->id, c->name, impl_data->uniforms);
     if (index >= 0)
       glUniformMatrix4fv(index, 1, GL_FALSE, c->m.GetData());
   }
@@ -615,10 +650,10 @@ void Renderer::HandleCmdSetUniformMat4(RenderCommand* cmd) {
 
 void Renderer::HandleCmdSetUniformFloat(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformFloat*>(cmd);
-  auto it = shader_map_.find(c->id);
-  if (it != shader_map_.end()) {
+  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  if (impl_data->id > 0) {
     GLint index =
-        GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+        GetUniformLocation(impl_data->id, c->name, impl_data->uniforms);
     if (index >= 0)
       glUniform1f(index, c->f);
   }
@@ -626,10 +661,10 @@ void Renderer::HandleCmdSetUniformFloat(RenderCommand* cmd) {
 
 void Renderer::HandleCmdSetUniformInt(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformInt*>(cmd);
-  auto it = shader_map_.find(c->id);
-  if (it != shader_map_.end()) {
+  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  if (impl_data->id > 0) {
     GLint index =
-        GetUniformLocation(it->second.id, c->name, it->second.uniforms);
+        GetUniformLocation(impl_data->id, c->name, impl_data->uniforms);
     if (index >= 0)
       glUniform1i(index, c->i);
   }
@@ -639,7 +674,7 @@ bool Renderer::SetupVertexLayout(
     const VertexDescripton& vd,
     GLuint vertex_size,
     bool use_vao,
-    std::vector<Geometry::Element>& vertex_layout) {
+    std::vector<GeometryOpenGL::Element>& vertex_layout) {
   GLuint attribute_index = 0;
   size_t vertex_offset = 0;
 
@@ -661,7 +696,7 @@ bool Renderer::SetupVertexLayout(
                             vertex_size, (const GLvoid*)vertex_offset);
     } else {
       // Need to keep this information for when rendering.
-      Geometry::Element element;
+      GeometryOpenGL::Element element;
       element.num_elements = num_elements;
       element.type = type;
       element.vertex_offset = vertex_offset;
@@ -745,21 +780,26 @@ void Renderer::ContextLost() {
   draw_commands_[1].clear();
 #endif  // THREADED_RENDERING
 
-  for (auto& p : texture_map_)
-    glDeleteTextures(1, &(p.second));
+  for (auto& p : texture_map_) {
+    glDeleteTextures(1, &(p.second->id));
+    *(p.second) = TextureOpenGL();
+  }
   texture_map_.clear();
 
-  for (auto& p : shader_map_)
-    glDeleteProgram(p.second.id);
+  for (auto& p : shader_map_) {
+    glDeleteProgram(p.second->id);
+    *(p.second) = ShaderOpenGL();
+  }
   shader_map_.clear();
 
   for (auto& p : geometry_map_) {
-    if (p.second.index_buffer_id)
-      glDeleteBuffers(1, &(p.second.index_buffer_id));
-    if (p.second.vertex_buffer_id)
-      glDeleteBuffers(1, &(p.second.vertex_buffer_id));
-    if (p.second.vertex_array_id)
-      glDeleteVertexArrays(1, &(p.second.vertex_array_id));
+    if (p.second->index_buffer_id)
+      glDeleteBuffers(1, &(p.second->index_buffer_id));
+    if (p.second->vertex_buffer_id)
+      glDeleteBuffers(1, &(p.second->vertex_buffer_id));
+    if (p.second->vertex_array_id)
+      glDeleteVertexArrays(1, &(p.second->vertex_array_id));
+    *(p.second) = GeometryOpenGL();
   }
   geometry_map_.clear();
 
