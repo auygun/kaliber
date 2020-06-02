@@ -50,6 +50,7 @@ class Demo : public eng::Game {
   Credits credits_;
 
   SkyQuad sky_;
+  int last_dominant_channel_ = -1;
 
   int score_ = 0;
   int add_score_ = 0;
