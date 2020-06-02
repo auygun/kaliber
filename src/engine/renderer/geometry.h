@@ -14,7 +14,9 @@ class Mesh;
 
 class Geometry : public RenderResource {
  public:
-  Geometry(unsigned resource_id, Renderer* renderer);
+  Geometry(unsigned resource_id,
+           std::shared_ptr<void> impl_data,
+           Renderer* renderer);
   ~Geometry() override;
 
   void Create(std::shared_ptr<const Mesh> mesh);

@@ -1,7 +1,10 @@
 #ifndef RENDER_RESOURCE_H
 #define RENDER_RESOURCE_H
 
+#include <array>
 #include <memory>
+#include <typeinfo>
+#include <typeindex>
 
 namespace eng {
 
@@ -9,14 +12,15 @@ class Renderer;
 
 class RenderResource {
  public:
-  RenderResource(unsigned resource_id, Renderer* renderer);
+  RenderResource(unsigned resource_id,
+                 std::shared_ptr<void> impl_data,
+                 Renderer* renderer);
   virtual ~RenderResource();
 
   virtual void Destroy() = 0;
 
   bool IsValid() const { return valid_; }
 
-  void SetImplData(std::shared_ptr<void> impl_data) { impl_data_ = impl_data; }
   std::shared_ptr<void> GetImplData() { return impl_data_; }
 
  protected:
@@ -32,20 +36,33 @@ class RenderResource {
 
 class RenderResourceFactoryBase {
  public:
+  RenderResourceFactoryBase(std::type_index resource_type)
+      : resource_type_(resource_type) {}
   virtual ~RenderResourceFactoryBase() = default;
 
-  virtual std::shared_ptr<eng::RenderResource> Create(unsigned id,
-                                                      Renderer* renderer) = 0;
+  virtual std::shared_ptr<eng::RenderResource> Create(
+      unsigned id,
+      std::shared_ptr<void> impl_data,
+      Renderer* renderer) = 0;
+
+  template <typename T>
+  bool IsTypeOf() const { return resource_type_ == std::type_index(typeid(T)); }
+
+  private:
+    std::type_index resource_type_;
 };
 
 template <typename T>
 class RenderResourceFactory : public RenderResourceFactoryBase {
  public:
+  RenderResourceFactory()
+      : RenderResourceFactoryBase(std::type_index(typeid(T))) {}
   ~RenderResourceFactory() override = default;
 
   std::shared_ptr<eng::RenderResource> Create(unsigned id,
+                                              std::shared_ptr<void> impl_data,
                                               Renderer* renderer) override {
-    return std::make_shared<T>(id, renderer);
+    return std::make_shared<T>(id, impl_data, renderer);
   }
 };
 

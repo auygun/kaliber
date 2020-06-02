@@ -10,8 +10,10 @@ using namespace base;
 
 namespace eng {
 
-Shader::Shader(unsigned resource_id, Renderer* renderer)
-    : RenderResource(resource_id, renderer) {}
+Shader::Shader(unsigned resource_id,
+               std::shared_ptr<void> impl_data,
+               Renderer* renderer)
+    : RenderResource(resource_id, impl_data, renderer) {}
 
 Shader::~Shader() {
   Destroy();

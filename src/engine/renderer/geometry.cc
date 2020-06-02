@@ -9,8 +9,10 @@
 
 namespace eng {
 
-Geometry::Geometry(unsigned resource_id, Renderer* renderer)
-    : RenderResource(resource_id, renderer) {}
+Geometry::Geometry(unsigned resource_id,
+                   std::shared_ptr<void> impl_data,
+                   Renderer* renderer)
+    : RenderResource(resource_id, impl_data, renderer) {}
 
 Geometry::~Geometry() {
   Destroy();

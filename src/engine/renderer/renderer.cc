@@ -157,20 +157,20 @@ std::shared_ptr<RenderResource> Renderer::CreateResource(
     RenderResourceFactoryBase& factory) {
   static unsigned last_id = 0;
 
-  unsigned resource_id = ++last_id;
-  auto resource = factory.Create(resource_id, this);
-
   // Set implementation specific data. This data will be sent with render
   // commands to the render thread and sould not be used in any other thread.
-  if (std::dynamic_pointer_cast<Geometry>(resource))
-    resource->SetImplData(std::make_shared<GeometryOpenGL>());
-  else if (std::dynamic_pointer_cast<Shader>(resource))
-    resource->SetImplData(std::make_shared<ShaderOpenGL>());
-  else if (std::dynamic_pointer_cast<Texture>(resource))
-    resource->SetImplData(std::make_shared<TextureOpenGL>());
+  std::shared_ptr<void> impl_data;
+  if (factory.IsTypeOf<Geometry>())
+    impl_data = std::make_shared<GeometryOpenGL>();
+  else if (factory.IsTypeOf<Shader>())
+    impl_data = std::make_shared<ShaderOpenGL>();
+  else if (factory.IsTypeOf<Texture>())
+    impl_data = std::make_shared<TextureOpenGL>();
   else
     assert(false);
 
+  unsigned resource_id = ++last_id;
+  auto resource = factory.Create(resource_id, impl_data, this);
   resources_[resource_id] = resource;
   return resource;
 }

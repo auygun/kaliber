@@ -8,8 +8,10 @@
 
 namespace eng {
 
-Texture::Texture(unsigned resource_id, Renderer* renderer)
-    : RenderResource(resource_id, renderer) {}
+Texture::Texture(unsigned resource_id,
+                 std::shared_ptr<void> impl_data,
+                 Renderer* renderer)
+    : RenderResource(resource_id, impl_data, renderer) {}
 
 Texture::~Texture() {
   Destroy();

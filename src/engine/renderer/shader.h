@@ -15,7 +15,9 @@ class ShaderSource;
 
 class Shader : public RenderResource {
  public:
-  Shader(unsigned resource_id, Renderer* renderer);
+  Shader(unsigned resource_id,
+         std::shared_ptr<void> impl_data,
+         Renderer* renderer);
   ~Shader() override;
 
   void Create(std::shared_ptr<const ShaderSource> source,

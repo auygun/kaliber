@@ -6,8 +6,10 @@
 
 namespace eng {
 
-RenderResource::RenderResource(unsigned resource_id, Renderer* renderer)
-    : resource_id_(resource_id), renderer_(renderer) {}
+RenderResource::RenderResource(unsigned resource_id,
+                               std::shared_ptr<void> impl_data,
+                               Renderer* renderer)
+    : resource_id_(resource_id), impl_data_(impl_data), renderer_(renderer) {}
 
 RenderResource::~RenderResource() {
   renderer_->ReleaseResource(resource_id_);
