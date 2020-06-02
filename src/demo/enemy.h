@@ -34,8 +34,8 @@ class Enemy {
   base::Vector2 GetTargetPos(DamageType damage_type);
 
   void SelectTarget(DamageType damage_type,
-                    const base::Vector2& weapon_pos,
-                    const base::Vector2& target_pos);
+                    const base::Vector2& origin,
+                    const base::Vector2& dir);
   void DeselectTarget(DamageType damage_type);
 
   void HitTarget(DamageType damage_type);

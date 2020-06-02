@@ -73,10 +73,9 @@ void Player::Draw(float frame_frac) {
 }
 
 Vector2 Player::GetWeaponPos(DamageType type) const {
-  Engine& engine = Engine::Get();
-  return engine.GetScreenSize() /
-             Vector2(type == kDamageType_Green ? 4 : -4, -2) +
-         Vector2(0, weapon_[type].GetScale().y / 2);
+  return Engine::Get().GetScreenSize() /
+             Vector2(type == kDamageType_Green ? 3.5f : -3.5f, -2) +
+         Vector2(0, weapon_[type].GetScale().y * 0.7f);
 }
 
 Vector2 Player::GetWeaponScale() const {
@@ -93,7 +92,7 @@ void Player::SetBeamLength(DamageType type, float len) {
   beam_[type].PlaceToRightOf(weapon_[type]);
   beam_[type].Translate(weapon_[type].GetScale() * Vector2(-0.5f, 0));
   beam_[type].SetPivot(beam_[type].GetOffset());
-  beam_[type].Translate(GetWeaponPos(type));
+  beam_[type].Translate(weapon_[type].GetOffset());
 }
 
 void Player::WarmupWeapon(DamageType type) {
@@ -106,19 +105,14 @@ void Player::CooldownWeapon(DamageType type) {
   cooldown_animator_[type].Play(Animator::kFrames, false);
 }
 
-void Player::Fire(DamageType type, Vector2 target_point) {
+void Player::Fire(DamageType type, Vector2 dir) {
   Engine& engine = Engine::Get();
   Enemy& enemy = static_cast<Demo*>(engine.GetGame())->GetEnemy();
 
-  Vector2 dir = weapon_[type].GetOffset();
-  (enemy.HasTarget(type) ? enemy.GetTargetPos(type) : target_point);
-  if (enemy.HasTarget(type)) {
-    dir -= enemy.GetTargetPos(type);
-  } else {
-    dir -= target_point;
-    dir.Normalize();
+  if (enemy.HasTarget(type))
+    dir = weapon_[type].GetOffset() - enemy.GetTargetPos(type);
+  else
     dir *= engine.GetScreenSize().y * 1.3f;
-  }
 
   float len = dir.Magnitude();
   SetBeamLength(type, len);
@@ -220,11 +214,11 @@ void Player::UpdateTarget() {
   Demo* game = static_cast<Demo*>(engine.GetGame());
 
   if (drag_valid_) {
-    game->GetEnemy().SelectTarget((DamageType)active_weapon_,
-                                  weapon_[active_weapon_].GetOffset(),
-                                  drag_end_);
+    Vector2 dir = (drag_end_ - drag_start_).Normalize();
+    game->GetEnemy().SelectTarget(active_weapon_,
+                                  drag_start_, dir);
   } else {
-    game->GetEnemy().DeselectTarget((DamageType)active_weapon_);
+    game->GetEnemy().DeselectTarget(active_weapon_);
   }
 }
 
@@ -259,22 +253,25 @@ void Player::DragEnd() {
   if (active_weapon_ == kDamageType_Invalid)
     return;
 
+  UpdateTarget();
+
   DamageType type = active_weapon_;
   active_weapon_ = kDamageType_Invalid;
   drag_sign_[type].SetVisible(false);
 
+  Vector2 fire_dir = (drag_start_ - drag_end_).Normalize();
+
   if (drag_valid_ && !IsFiring(type)) {
     if (warmup_animator_[type].IsPlaying(Animator::kFrames)) {
-      Vector2 target_point = drag_end_;
       warmup_animator_[type].SetEndCallback(
-          Animator::kFrames, [&, type, target_point]() -> void {
+          Animator::kFrames, [&, type, fire_dir]() -> void {
             warmup_animator_[type].SetEndCallback(Animator::kFrames, nullptr);
             CooldownWeapon(type);
-            Fire(type, target_point);
+            Fire(type, fire_dir);
           });
     } else {
       CooldownWeapon(type);
-      Fire(type, drag_end_);
+      Fire(type, fire_dir);
     }
   }
 

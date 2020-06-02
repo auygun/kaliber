@@ -122,8 +122,8 @@ Vector2 Enemy::GetTargetPos(DamageType damage_type) {
 }
 
 void Enemy::SelectTarget(DamageType damage_type,
-                         const Vector2& weapon_pos,
-                         const Vector2& target_pos) {
+                         const Vector2& origin,
+                         const Vector2& dir) {
   assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
   if (waiting_for_next_wave_)
@@ -131,7 +131,6 @@ void Enemy::SelectTarget(DamageType damage_type,
 
   EnemyUnit* best_enemy = nullptr;
 
-  Vector2 beam_dir = (target_pos - weapon_pos).Normalize();
   float closest_dist = std::numeric_limits<float>::max();
   for (auto& e : enemies_) {
     if (e.hit_points <= 0 || e.marked_for_removal)
@@ -144,10 +143,10 @@ void Enemy::SelectTarget(DamageType damage_type,
     }
 
     if (!base::Intersection(e.sprite.GetOffset(), e.sprite.GetScale() * 1.2f,
-                            weapon_pos, beam_dir))
+                            origin, dir))
       continue;
 
-    Vector2 weapon_enemy_dir = e.sprite.GetOffset() - weapon_pos;
+    Vector2 weapon_enemy_dir = e.sprite.GetOffset() - origin;
     float enemy_weapon_dist = weapon_enemy_dir.Magnitude();
     if (closest_dist > enemy_weapon_dist) {
       closest_dist = enemy_weapon_dist;

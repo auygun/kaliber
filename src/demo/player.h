@@ -58,7 +58,7 @@ class Player {
   void WarmupWeapon(DamageType type);
   void CooldownWeapon(DamageType type);
 
-  void Fire(DamageType type, base::Vector2 target_point);
+  void Fire(DamageType type, base::Vector2 dir);
   bool IsFiring(DamageType type);
 
   void SetupWeapons();
