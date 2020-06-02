@@ -9,11 +9,11 @@
 #include "../base/task_runner.h"
 #include "../base/vecmath.h"
 #include "renderer/render_resource.h"
+#include "asset.h"
 #include "image_quad.h"
 
 namespace eng {
 
-class Asset;
 class Font;
 class Game;
 class InputEvent;
@@ -22,35 +22,6 @@ struct RenderCommand;
 class Platform;
 class Geometry;
 class Shader;
-
-namespace internal {
-
-class AssetFactoryBase {
- public:
-  AssetFactoryBase(const std::string& name) : name_(name) {}
-  virtual ~AssetFactoryBase() = default;
-
-  virtual std::shared_ptr<eng::Asset> Create() = 0;
-
-  const std::string& name() { return name_; };
-
- private:
-  std::string name_;
-};
-
-template <typename T>
-class AssetFactory : public AssetFactoryBase {
- public:
-  ~AssetFactory() override = default;
-
-  AssetFactory(const std::string& name) : AssetFactoryBase(name) {}
-
-  std::shared_ptr<eng::Asset> Create() override {
-    return std::make_shared<T>();
-  }
-};
-
-}  // namespace internal
 
 class Engine {
  public:
@@ -92,7 +63,7 @@ class Engine {
   // without locking. Returns nullptr if no asset was found with the given name.
   template <typename T>
   std::shared_ptr<const T> GetAsset(const std::string& name) {
-    internal::AssetFactory<T> factory(name);
+    AssetFactory<T> factory(name);
     return std::dynamic_pointer_cast<T>(GetAssetInternal(factory));
   }
 
@@ -160,7 +131,7 @@ class Engine {
   std::shared_ptr<RenderResource> CreateRenderResourceInternal(
       RenderResourceFactoryBase& factory);
 
-  std::shared_ptr<Asset> GetAssetInternal(internal::AssetFactoryBase& factory);
+  std::shared_ptr<Asset> GetAssetInternal(AssetFactoryBase& factory);
 
   void ContextLost();
 

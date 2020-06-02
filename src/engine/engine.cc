@@ -208,8 +208,7 @@ std::shared_ptr<RenderResource> Engine::CreateRenderResourceInternal(
   return renderer_->CreateResource(factory);
 }
 
-std::shared_ptr<Asset> Engine::GetAssetInternal(
-    internal::AssetFactoryBase& factory) {
+std::shared_ptr<Asset> Engine::GetAssetInternal(AssetFactoryBase& factory) {
   auto it = assets_.find(factory.name());
   if (it != assets_.end())
     return it->second;

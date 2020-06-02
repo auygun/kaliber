@@ -23,6 +23,31 @@ class Asset {
   bool immutable_ = false;
 };
 
+class AssetFactoryBase {
+ public:
+  AssetFactoryBase(const std::string& name) : name_(name) {}
+  virtual ~AssetFactoryBase() = default;
+
+  virtual std::shared_ptr<eng::Asset> Create() = 0;
+
+  const std::string& name() { return name_; };
+
+ private:
+  std::string name_;
+};
+
+template <typename T>
+class AssetFactory : public AssetFactoryBase {
+ public:
+  ~AssetFactory() override = default;
+
+  AssetFactory(const std::string& name) : AssetFactoryBase(name) {}
+
+  std::shared_ptr<eng::Asset> Create() override {
+    return std::make_shared<T>();
+  }
+};
+
 }  // namespace eng
 
 #endif  // ASSET_H
