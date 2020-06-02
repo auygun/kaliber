@@ -15,8 +15,6 @@ bool Font::Load(const std::string& file_name) {
     return false;
   }
 
-  Destroy();
-
   SetName(file_name);
 
   // Read the font file.
@@ -58,16 +56,6 @@ bool Font::Load(const std::string& file_name) {
   yoff_ = -y0;
 
   return result;
-}
-
-void Font::Destroy() {
-  if (IsImmutable()) {
-    LOG << "Error: Font is immutable. Failed to destory.";
-    return;
-  }
-
-  if (glyph_cache_)
-    glyph_cache_.reset();
 }
 
 static void StretchBlit_I8_to_RGBA32(int dst_x0,

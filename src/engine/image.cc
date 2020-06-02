@@ -36,8 +36,6 @@ bool Image::Create(int w, int h) {
     return false;
   }
 
-  Destroy();
-
   width_ = w;
   height_ = h;
 
@@ -46,22 +44,11 @@ bool Image::Create(int w, int h) {
   return true;
 }
 
-void Image::Destroy() {
-  if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to destroy.";
-    return;
-  }
-
-  buffer_.reset();
-}
-
 void Image::Copy(const Image& other) {
   if (IsImmutable()) {
     LOG << "Error: Image is immutable. Failed to copy.";
     return;
   }
-
-  Destroy();
 
   if (other.buffer_) {
     int size = other.GetSize();
@@ -78,8 +65,6 @@ bool Image::Load(const std::string& file_name) {
     LOG << "Error: Image is immutable. Failed to load.";
     return false;
   }
-
-  Destroy();
 
   SetName(file_name);
 

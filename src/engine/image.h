@@ -21,9 +21,7 @@ class Image : public Asset {
   Image& operator=(const Image& other);
 
   bool Create(int width, int height);
-  void Destroy();
   void Copy(const Image& other);
-
   bool Load(const std::string& file_name) override;
 
   void ConvertToPow2();
