@@ -3,14 +3,15 @@
 #include <cassert>
 
 #include "../shader_source.h"
-#include "renderer.h"
 #include "render_command.h"
+#include "renderer.h"
 
 using namespace base;
 
 namespace eng {
 
-Shader::Shader(unsigned resource_id, Renderer *renderer) : RenderResource(resource_id, renderer) {}
+Shader::Shader(unsigned resource_id, Renderer* renderer)
+    : RenderResource(resource_id, renderer) {}
 
 Shader::~Shader() {
   Destroy();

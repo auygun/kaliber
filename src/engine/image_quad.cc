@@ -67,15 +67,13 @@ void ImageQuad::Draw() {
 }
 
 float ImageQuad::GetFrameWidth() const {
-  return frame_width_ > 0
-      ? (float)frame_width_
-      : texture_->GetWidth() / (float)num_frames_[0];
+  return frame_width_ > 0 ? (float)frame_width_
+                          : texture_->GetWidth() / (float)num_frames_[0];
 }
 
 float ImageQuad::GetFrameHeight() const {
-  return frame_height_ > 0
-      ? (float)frame_height_
-      : texture_->GetHeight() / (float)num_frames_[1];
+  return frame_height_ > 0 ? (float)frame_height_
+                           : texture_->GetHeight() / (float)num_frames_[1];
 }
 
 // Return the uv offset for the given frame.

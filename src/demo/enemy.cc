@@ -44,11 +44,11 @@ void SetupFadeOutAnim(Animator& animator, float delay) {
 }  // namespace
 
 Enemy::Enemy()
-    : skull_tex_(Engine::Get().CreateRenderResource<Texture>())
-    , bug_tex_(Engine::Get().CreateRenderResource<Texture>())
-    , target_tex_(Engine::Get().CreateRenderResource<Texture>())
-    , blast_tex_(Engine::Get().CreateRenderResource<Texture>())
-    , score_tex_{Engine::Get().CreateRenderResource<Texture>(),
+    : skull_tex_(Engine::Get().CreateRenderResource<Texture>()),
+      bug_tex_(Engine::Get().CreateRenderResource<Texture>()),
+      target_tex_(Engine::Get().CreateRenderResource<Texture>()),
+      blast_tex_(Engine::Get().CreateRenderResource<Texture>()),
+      score_tex_{Engine::Get().CreateRenderResource<Texture>(),
                  Engine::Get().CreateRenderResource<Texture>(),
                  Engine::Get().CreateRenderResource<Texture>()} {}
 

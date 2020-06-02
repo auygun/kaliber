@@ -9,9 +9,9 @@
 #include "input_event.h"
 #include "mesh.h"
 #include "platform/platform.h"
+#include "renderer/geometry.h"
 #include "renderer/render_command.h"
 #include "renderer/renderer.h"
-#include "renderer/geometry.h"
 #include "renderer/shader.h"
 #include "renderer/texture.h"
 #include "shader_source.h"
@@ -22,9 +22,8 @@ namespace eng {
 
 Engine* Engine::singleton = nullptr;
 
-Engine::Engine(Platform* platform, Renderer *renderer)
-    : platform_(platform)
-    , renderer_(renderer) {
+Engine::Engine(Platform* platform, Renderer* renderer)
+    : platform_(platform), renderer_(renderer) {
   assert(!singleton);
   singleton = this;
 

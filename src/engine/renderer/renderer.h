@@ -54,7 +54,8 @@ class Renderer {
 
   void ContextLost();
 
-  std::shared_ptr<RenderResource> CreateResource(RenderResourceFactoryBase& factory);
+  std::shared_ptr<RenderResource> CreateResource(
+      RenderResourceFactoryBase& factory);
   void ReleaseResource(unsigned resource_id);
 
   void DestroyAllResources();

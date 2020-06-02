@@ -22,8 +22,8 @@ constexpr int wepon_anim_speed = 48;
 }  // namespace
 
 Player::Player()
-    : weapon_tex_(Engine::Get().CreateRenderResource<Texture>())
-    , beam_tex_(Engine::Get().CreateRenderResource<Texture>()) {}
+    : weapon_tex_(Engine::Get().CreateRenderResource<Texture>()),
+      beam_tex_(Engine::Get().CreateRenderResource<Texture>()) {}
 
 Player::~Player() = default;
 
@@ -199,7 +199,9 @@ void Player::SetupWeapons() {
     spark_animator_[i].SetEndCallback(Animator::kMovement, [&, i]() -> void {
       beam_spark_[i].SetVisible(false);
       beam_animator_[i].Play(Animator::kBlending, false);
-      static_cast<Demo*>(Engine::Get().GetGame())->GetEnemy().HitTarget((DamageType)i);
+      static_cast<Demo*>(Engine::Get().GetGame())
+          ->GetEnemy()
+          .HitTarget((DamageType)i);
     });
     spark_animator_[i].Attach(&beam_spark_[i]);
 

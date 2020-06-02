@@ -8,9 +8,9 @@
 #include "../base/random_generator.h"
 #include "../base/task_runner.h"
 #include "../base/vecmath.h"
-#include "renderer/render_resource.h"
 #include "asset.h"
 #include "image_quad.h"
+#include "renderer/render_resource.h"
 
 namespace eng {
 
@@ -25,7 +25,7 @@ class Shader;
 
 class Engine {
  public:
-  Engine(Platform* platform, Renderer *renderer);
+  Engine(Platform* platform, Renderer* renderer);
   ~Engine();
 
   static Engine& Get();
@@ -69,7 +69,9 @@ class Engine {
 
   // Access to the render resources.
   std::shared_ptr<Geometry> GetQuad() { return quad_; }
-  std::shared_ptr<Shader> GetPassThroughShader() { return pass_through_shader_; }
+  std::shared_ptr<Shader> GetPassThroughShader() {
+    return pass_through_shader_;
+  }
   std::shared_ptr<Shader> GetSolidShader() { return solid_shader_; }
 
   std::shared_ptr<const eng::Font> GetSystemFont() { return system_font_; }

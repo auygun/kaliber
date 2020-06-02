@@ -4,12 +4,13 @@
 
 #include "../engine.h"
 #include "../mesh.h"
-#include "renderer.h"
 #include "render_command.h"
+#include "renderer.h"
 
 namespace eng {
 
-Geometry::Geometry(unsigned resource_id, Renderer *renderer) : RenderResource(resource_id, renderer) {}
+Geometry::Geometry(unsigned resource_id, Renderer* renderer)
+    : RenderResource(resource_id, renderer) {}
 
 Geometry::~Geometry() {
   Destroy();

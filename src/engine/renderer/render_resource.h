@@ -16,9 +16,7 @@ class RenderResource {
 
   bool IsValid() const { return valid_; }
 
-  void SetImplData(std::shared_ptr<void> impl_data) {
-    impl_data_ = impl_data;
-  }
+  void SetImplData(std::shared_ptr<void> impl_data) { impl_data_ = impl_data; }
   std::shared_ptr<void> GetImplData() { return impl_data_; }
 
  protected:
@@ -36,7 +34,8 @@ class RenderResourceFactoryBase {
  public:
   virtual ~RenderResourceFactoryBase() = default;
 
-  virtual std::shared_ptr<eng::RenderResource> Create(unsigned id, Renderer* renderer) = 0;
+  virtual std::shared_ptr<eng::RenderResource> Create(unsigned id,
+                                                      Renderer* renderer) = 0;
 };
 
 template <typename T>
@@ -44,7 +43,8 @@ class RenderResourceFactory : public RenderResourceFactoryBase {
  public:
   ~RenderResourceFactory() override = default;
 
-  std::shared_ptr<eng::RenderResource> Create(unsigned id, Renderer* renderer) override {
+  std::shared_ptr<eng::RenderResource> Create(unsigned id,
+                                              Renderer* renderer) override {
     return std::make_shared<T>(id, renderer);
   }
 };

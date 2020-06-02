@@ -11,9 +11,9 @@
 #include "../mesh.h"
 #include "../shader_source.h"
 #include "geometry.h"
+#include "render_command.h"
 #include "shader.h"
 #include "texture.h"
-#include "render_command.h"
 
 namespace {
 
@@ -153,7 +153,8 @@ void Renderer::TerminateWorker() {
 #endif  // THREADED_RENDERING
 }
 
-std::shared_ptr<RenderResource> Renderer::CreateResource(RenderResourceFactoryBase& factory) {
+std::shared_ptr<RenderResource> Renderer::CreateResource(
+    RenderResourceFactoryBase& factory) {
   static unsigned last_id = 0;
 
   unsigned resource_id = ++last_id;
@@ -163,9 +164,9 @@ std::shared_ptr<RenderResource> Renderer::CreateResource(RenderResourceFactoryBa
   // commands to the render thread and sould not be used in any other thread.
   if (std::dynamic_pointer_cast<Geometry>(resource))
     resource->SetImplData(std::make_shared<GeometryOpenGL>());
-  else  if (std::dynamic_pointer_cast<Shader>(resource))
+  else if (std::dynamic_pointer_cast<Shader>(resource))
     resource->SetImplData(std::make_shared<ShaderOpenGL>());
-  else  if (std::dynamic_pointer_cast<Texture>(resource))
+  else if (std::dynamic_pointer_cast<Texture>(resource))
     resource->SetImplData(std::make_shared<TextureOpenGL>());
   else
     assert(false);

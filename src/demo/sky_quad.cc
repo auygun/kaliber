@@ -4,18 +4,18 @@
 #include "../base/log.h"
 #include "../base/random_generator.h"
 #include "../engine/engine.h"
-#include "../engine/shader_source.h"
 #include "../engine/renderer/geometry.h"
 #include "../engine/renderer/shader.h"
+#include "../engine/shader_source.h"
 
 using namespace base;
 using namespace eng;
 
 SkyQuad::SkyQuad()
-    : shader_(Engine::Get().CreateRenderResource<Shader>())
-    , sky_offset_{
-          0,
-          Lerp(0.0f, 10.0f, Engine::Get().GetRandomGenerator().GetFloat())} {}
+    : shader_(Engine::Get().CreateRenderResource<Shader>()),
+      sky_offset_{
+          0, Lerp(0.0f, 10.0f, Engine::Get().GetRandomGenerator().GetFloat())} {
+}
 
 SkyQuad::~SkyQuad() = default;
 
@@ -47,7 +47,7 @@ void SkyQuad::Draw(float frame_frac) {
   shader_->SetUniform("projection", Engine::Get().GetProjectionMarix());
   shader_->SetUniform("sky_offset", sky_offset);
   shader_->SetUniform("nebula_color",
-                     {nebula_color_.x, nebula_color_.y, nebula_color_.z});
+                      {nebula_color_.x, nebula_color_.y, nebula_color_.z});
 
   Engine::Get().GetQuad()->Draw();
   last_sky_offset_ = sky_offset_;

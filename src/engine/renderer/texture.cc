@@ -3,12 +3,13 @@
 #include <cassert>
 
 #include "../../engine/image.h"
-#include "renderer.h"
 #include "render_command.h"
+#include "renderer.h"
 
 namespace eng {
 
-Texture::Texture(unsigned resource_id, Renderer *renderer) : RenderResource(resource_id, renderer) {}
+Texture::Texture(unsigned resource_id, Renderer* renderer)
+    : RenderResource(resource_id, renderer) {}
 
 Texture::~Texture() {
   Destroy();
