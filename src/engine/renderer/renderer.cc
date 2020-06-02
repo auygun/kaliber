@@ -191,7 +191,7 @@ void Renderer::ReleaseResource(unsigned resource_id) {
     resources_.erase(it);
 }
 
-void Renderer::InvalidateAllResources() {
+void Renderer::DestroyAllResources() {
   for (auto& r : resources_) {
     std::shared_ptr<RenderResource> r_ptr = r.second.lock();
     if (r_ptr)
@@ -332,7 +332,7 @@ void Renderer::ProcessCommand(RenderCommand* cmd) {
       HandleCmdSetUniformInt(cmd);
       break;
     default:
-      // assert(false);
+      assert(false);
       break;
   }
 }
@@ -403,7 +403,7 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    impl_data->id = gl_id;
+    *impl_data = {gl_id};
   }
 }
 
@@ -413,7 +413,7 @@ void Renderer::HandleCmdDestoryTexture(RenderCommand* cmd) {
       std::static_pointer_cast<TextureOpenGL>(c->impl_data);
   if (impl_data->id > 0) {
     glDeleteTextures(1, &(impl_data->id));
-    *impl_data = TextureOpenGL();
+    *impl_data = {};
   }
 }
 
@@ -501,7 +501,7 @@ void Renderer::HandleCmdDestroyGeometry(RenderCommand* cmd) {
   if (impl_data->vertex_array_id)
     glDeleteVertexArrays(1, &(impl_data->vertex_array_id));
 
-  *impl_data = GeometryOpenGL();
+  *impl_data = {};
 }
 
 void Renderer::HandleCmdDrawGeometry(RenderCommand* cmd) {
@@ -600,7 +600,7 @@ void Renderer::HandleCmdDestroyShader(RenderCommand* cmd) {
   auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
   if (impl_data->id > 0) {
     glDeleteProgram(impl_data->id);
-    *impl_data = ShaderOpenGL();
+    *impl_data = {};
   }
 }
 

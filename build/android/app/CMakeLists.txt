@@ -67,10 +67,10 @@ add_library(native-activity SHARED
     ../../../src/engine/renderer/geometry.cc
     ../../../src/engine/renderer/render_resource.cc
     ../../../src/engine/renderer/renderer_android.cc
+    ../../../src/engine/renderer/renderer_types.cc
     ../../../src/engine/renderer/renderer.cc
     ../../../src/engine/renderer/shader.cc
     ../../../src/engine/renderer/texture.cc
-    ../../../src/engine/renderer/types.cc
     ../../../src/engine/shader_source.cc
     ../../../src/engine/solid_quad.cc
     ../../../src/third_party/android/gestureDetector.cpp

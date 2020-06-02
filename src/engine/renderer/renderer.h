@@ -27,7 +27,7 @@
 #include "../../base/closure.h"
 #include "../../base/vecmath.h"
 #include "render_resource.h"
-#include "types.h"
+#include "renderer_types.h"
 
 #if defined(__ANDROID__)
 struct ANativeWindow;
@@ -58,7 +58,7 @@ class Renderer {
   std::shared_ptr<RenderResource> CreateResource(RenderResourceFactoryBase& factory);
   void ReleaseResource(unsigned resource_id);
 
-  void InvalidateAllResources();
+  void DestroyAllResources();
 
   bool SupportsETC1() const { return texture_compression_.etc1; }
   bool SupportsDXT1() const {

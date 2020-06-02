@@ -28,6 +28,8 @@ Engine::Engine(Platform* platform, Renderer *renderer)
   assert(!singleton);
   singleton = this;
 
+  renderer_->SetContextLostCB(std::bind(&Engine::ContextLost, this));
+
   quad_ = CreateRenderResource<Geometry>();
   pass_through_shader_ = CreateRenderResource<Shader>();
   solid_shader_ = CreateRenderResource<Shader>();
@@ -40,8 +42,6 @@ Engine& Engine::Get() {
 }
 
 bool Engine::Initialize() {
-  renderer_->SetContextLostCB(std::bind(&Engine::ContextLost, this));
-
   if (GetScreenWidth() > GetScreenHeight()) {
     float ratio = (float)GetScreenWidth() / (float)GetScreenHeight();
     screen_size_ = {ratio * 2.0f, 2.0f};
@@ -229,7 +229,7 @@ void Engine::ContextLost() {
     return;
   }
 
-  renderer_->InvalidateAllResources();
+  renderer_->DestroyAllResources();
 
   CreateRenderResources();
 

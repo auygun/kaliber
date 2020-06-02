@@ -5,7 +5,7 @@
 #include <string>
 
 #include "render_resource.h"
-#include "types.h"
+#include "renderer_types.h"
 
 namespace eng {
 

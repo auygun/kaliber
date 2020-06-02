@@ -6,7 +6,7 @@
 #include <string>
 #include "../../base/hash.h"
 #include "../../base/vecmath.h"
-#include "types.h"
+#include "renderer_types.h"
 
 namespace eng {
 

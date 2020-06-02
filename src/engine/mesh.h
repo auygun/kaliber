@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 #include "asset.h"
-#include "renderer/types.h"
+#include "renderer/renderer_types.h"
 
 namespace eng {
 
