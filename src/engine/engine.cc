@@ -42,12 +42,18 @@ Engine& Engine::Get() {
 }
 
 bool Engine::Initialize() {
+  // The orthogonal viewport is (-1.0 .. 1.0) for the short edge of the screen.
+  // For the long endge, it's calculated from aspect ratio.
   if (GetScreenWidth() > GetScreenHeight()) {
-    float ratio = (float)GetScreenWidth() / (float)GetScreenHeight();
-    screen_size_ = {ratio * 2.0f, 2.0f};
+    float aspect_ratio = (float)GetScreenWidth() / (float)GetScreenHeight();
+    LOG << "aspect ratio: " << aspect_ratio;
+    screen_size_ = {aspect_ratio * 2.0f, 2.0f};
+    projection_ = base::Ortho(-aspect_ratio, aspect_ratio, -1.0f, 1.0f);
   } else {
-    float ratio = (float)GetScreenHeight() / (float)GetScreenWidth();
-    screen_size_ = {2.0f, ratio * 2.0f};
+    float aspect_ratio = (float)GetScreenHeight() / (float)GetScreenWidth();
+    LOG << "aspect_ratio: " << aspect_ratio;
+    screen_size_ = {2.0f, aspect_ratio * 2.0f};
+    projection_ = base::Ortho(-1.0, 1.0, -aspect_ratio, aspect_ratio);
   }
 
   system_font_ = GetAsset<Font>("engine/RobotoMono-Regular.ttf");
@@ -185,10 +191,6 @@ int Engine::GetScreenWidth() const {
 
 int Engine::GetScreenHeight() const {
   return renderer_->screen_height();
-}
-
-const Matrix4x4& Engine::GetProjectionMarix() const {
-  return renderer_->projection();
 }
 
 int Engine::GetDeviceDpi() const {

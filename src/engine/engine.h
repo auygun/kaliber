@@ -44,9 +44,6 @@ class Engine {
 
   void Exit();
 
-  // Return screen size in viewport scale.
-  base::Vector2 GetScreenSize() const { return screen_size_; }
-
   // Convert size from pixels to viewport scale.
   base::Vector2 ToScale(const base::Vector2& vec);
 
@@ -85,7 +82,10 @@ class Engine {
   int GetScreenWidth() const;
   int GetScreenHeight() const;
 
-  const base::Matrix4x4& GetProjectionMarix() const;
+  // Return screen size in viewport scale.
+  base::Vector2 GetScreenSize() const { return screen_size_; }
+
+  const base::Matrix4x4& GetProjectionMarix() const { return projection_; }
 
   int GetDeviceDpi() const;
 
@@ -98,20 +98,21 @@ class Engine {
  private:
   static Engine* singleton;
 
+  Platform* platform_ = nullptr;
+
+  Renderer* renderer_ = nullptr;
+
   std::unique_ptr<Game> game_;
 
   // Asset cache.
   std::unordered_map<std::string, std::shared_ptr<Asset>> assets_;
-
-  Platform* platform_ = nullptr;
-
-  Renderer* renderer_ = nullptr;
 
   std::shared_ptr<Geometry> quad_;
   std::shared_ptr<Shader> pass_through_shader_;
   std::shared_ptr<Shader> solid_shader_;
 
   base::Vector2 screen_size_ = {0, 0};
+  base::Matrix4x4 projection_;
 
   std::shared_ptr<const eng::Font> system_font_;
 

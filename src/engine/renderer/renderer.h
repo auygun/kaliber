@@ -25,7 +25,6 @@
 #endif
 
 #include "../../base/closure.h"
-#include "../../base/vecmath.h"
 #include "render_resource.h"
 #include "renderer_types.h"
 
@@ -73,7 +72,6 @@ class Renderer {
 
   int screen_width() const { return screen_width_; }
   int screen_height() const { return screen_height_; }
-  const base::Matrix4x4& projection() const { return projection_; }
 
   size_t GetAndResetFPS() {
     int ret = fps_;
@@ -142,7 +140,6 @@ class Renderer {
 
   int screen_width_ = 0;
   int screen_height_ = 0;
-  base::Matrix4x4 projection_;
 
   std::unordered_map<unsigned, std::weak_ptr<RenderResource>> resources_;
 
