@@ -7,7 +7,7 @@
 
 namespace eng {
 
-bool Renderer::Init() {
+bool Renderer::Initialize() {
   if (!CreateWindow())
     return false;
   return StartWorker();

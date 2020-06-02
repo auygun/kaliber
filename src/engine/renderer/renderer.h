@@ -45,9 +45,9 @@ class Renderer {
   void SetContextLostCB(base::Closure cb);
 
 #if defined(__ANDROID__)
-  bool Init(ANativeWindow* window);
+  bool Initialize(ANativeWindow* window);
 #elif defined(__linux__)
-  bool Init();
+  bool Initialize();
 #endif
 
   void Shutdown();

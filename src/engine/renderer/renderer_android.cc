@@ -6,7 +6,7 @@
 
 namespace eng {
 
-bool Renderer::Init(ANativeWindow* window) {
+bool Renderer::Initialize(ANativeWindow* window) {
   window_ = window;
   return StartWorker();
 }

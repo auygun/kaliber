@@ -162,7 +162,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
     case APP_CMD_INIT_WINDOW:
       DLOG << "APP_CMD_INIT_WINDOW";
       if (app->window != NULL) {
-        if (!platform->renderer_->Init(app->window)) {
+        if (!platform->renderer_->Initialize(app->window)) {
           LOG << "Failed to initialize the renderer.";
           throw internal_error;
         }
@@ -182,7 +182,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
         if (width != ANativeWindow_getWidth(app->window) ||
             height != ANativeWindow_getHeight(app->window)) {
           platform->renderer_->Shutdown();
-          if (!platform->renderer_->Init(platform->app_->window)) {
+          if (!platform->renderer_->Initialize(platform->app_->window)) {
             LOG << "Failed to initialize the renderer.";
             throw internal_error;
           }

@@ -21,7 +21,7 @@ void Platform::Initialize() {
   LOG << "Root path: " << root_path_.c_str();
 
   renderer_ = std::make_unique<Renderer>();
-  if (!renderer_->Init()) {
+  if (!renderer_->Initialize()) {
     LOG << "Failed to initialize renderer.";
     throw internal_error;
   }
