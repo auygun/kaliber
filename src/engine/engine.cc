@@ -237,13 +237,9 @@ void Engine::ContextLost() {
     return;
   }
 
-  pass_through_shader_->Invalidate();
-  solid_shader_->Invalidate();
-  quad_->Invalidate();
-  CreateRenderResources();
+  renderer_->InvalidateAllResources();
 
-  if (stats_.GetTexture())
-    stats_.GetTexture()->Invalidate();
+  CreateRenderResources();
 
   game_->ContextLost();
 }

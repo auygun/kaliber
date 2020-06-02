@@ -192,6 +192,14 @@ void Renderer::ReleaseResource(unsigned resource_id) {
     resources_.erase(it);
 }
 
+void Renderer::InvalidateAllResources() {
+  for (auto& r : resources_) {
+    std::shared_ptr<RenderResource> r_ptr = r.second.lock();
+    if (r_ptr)
+      r_ptr->Destroy();
+  }
+}
+
 void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
 #ifdef THREADED_RENDERING
   if (cmd->global) {
@@ -779,29 +787,6 @@ void Renderer::ContextLost() {
   draw_commands_[0].clear();
   draw_commands_[1].clear();
 #endif  // THREADED_RENDERING
-
-  // for (auto& p : texture_map_) {
-  //   glDeleteTextures(1, &(p.second->id));
-  //   *(p.second) = TextureOpenGL();
-  // }
-  // texture_map_.clear();
-
-  // for (auto& p : shader_map_) {
-  //   glDeleteProgram(p.second->id);
-  //   *(p.second) = ShaderOpenGL();
-  // }
-  // shader_map_.clear();
-
-  // for (auto& p : geometry_map_) {
-  //   if (p.second->index_buffer_id)
-  //     glDeleteBuffers(1, &(p.second->index_buffer_id));
-  //   if (p.second->vertex_buffer_id)
-  //     glDeleteBuffers(1, &(p.second->vertex_buffer_id));
-  //   if (p.second->vertex_array_id)
-  //     glDeleteVertexArrays(1, &(p.second->vertex_array_id));
-  //   *(p.second) = GeometryOpenGL();
-  // }
-  // geometry_map_.clear();
 
   context_lost_cb_();
 }

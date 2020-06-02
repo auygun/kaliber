@@ -63,13 +63,6 @@ bool Enemy::Initialize() {
 }
 
 void Enemy::ContextLost() {
-  skull_tex_->Invalidate();
-  bug_tex_->Invalidate();
-  target_tex_->Invalidate();
-  blast_tex_->Invalidate();
-  for (int i = 0; i < kEnemyType_Max; ++i)
-    score_tex_[i]->Invalidate();
-
   CreateRenderResources();
 }
 

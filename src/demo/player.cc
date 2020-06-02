@@ -35,9 +35,6 @@ bool Player::Initialize() {
 }
 
 void Player::ContextLost() {
-  weapon_tex_->Invalidate();
-  beam_tex_->Invalidate();
-
   CreateRenderResources();
 }
 

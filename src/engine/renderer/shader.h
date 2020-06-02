@@ -19,7 +19,9 @@ class Shader : public RenderResource {
 
   void Create(std::shared_ptr<const ShaderSource> source,
               const VertexDescripton& vd);
-  void Destroy();
+
+  void Destroy() override;
+
   void Activate();
 
   void SetUniform(const std::string& name, const base::Vector2& v);

@@ -10,7 +10,8 @@ class RenderResource {
   RenderResource(unsigned resource_id);
   virtual ~RenderResource();
 
-  void Invalidate() { valid_ = false; }
+  virtual void Destroy() = 0;
+
   bool IsValid() const { return valid_; }
 
   void SetImplData(std::shared_ptr<void> impl_data) {

@@ -113,7 +113,6 @@ void Menu::Draw() {
 }
 
 void Menu::ContextLost() {
-  tex_->Invalidate();
   tex_->Update(CreateImage());
 }
 

@@ -90,8 +90,6 @@ void Hud::Draw() {
 }
 
 void Hud::ContextLost() {
-  for (int i = 0; i < 2; ++i)
-    text_[i].GetTexture()->Invalidate();
   PrintScore(last_score_, false);
   PrintWave(last_wave_, false);
 }

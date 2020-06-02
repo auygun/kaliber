@@ -18,7 +18,7 @@ class Texture : public RenderResource {
   // Uploads image.
   void Update(std::shared_ptr<const Image> image);
 
-  void Destroy();
+  void Destroy() override;
 
   void Activate();
 

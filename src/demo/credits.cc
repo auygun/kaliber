@@ -70,10 +70,8 @@ void Credits::Draw() {
 }
 
 void Credits::ContextLost() {
-  if (tex_) {
-    tex_->Invalidate();
+  if (tex_)
     tex_->Update(CreateImage());
-  }
 }
 
 void Credits::Show() {

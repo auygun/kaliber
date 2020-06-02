@@ -54,7 +54,6 @@ void SkyQuad::Draw(float frame_frac) {
 }
 
 void SkyQuad::ContextLost() {
-  shader_->Invalidate();
   Create();
 }
 
