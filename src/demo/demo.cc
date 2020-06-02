@@ -190,7 +190,7 @@ void Demo::UpdateGameState(float delta_time) {
 
       SetDelayedWork(1, [&]() -> void {
         RandomGenerator& rnd = Engine::Get().GetRandomGenerator();
-        int dominant_channel = rnd.GetInt() % 3;
+        int dominant_channel = rnd.Roll(0, 2);
         float weights[3] = {0, 0, 0};
         weights[dominant_channel] = 1;
         Vector4 c = {Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[0],

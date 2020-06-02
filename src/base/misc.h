@@ -1,8 +1,6 @@
 #ifndef MISC_H
 #define MISC_H
 
-#include "vecmath.h"
-
 #define CRASH *((int*)nullptr) = 0;
 
 namespace base {
@@ -30,11 +28,6 @@ inline bool IsPow2(int value) {
 inline int RoundUpToPow2(int val) {
   int i = 1 << GetHighestBitPos(val);
   return val == i ? val : i << 1;
-}
-
-// Round a float to int.
-inline int Round(float f) {
-  return int(f + 0.5f);
 }
 
 }  // namespace base

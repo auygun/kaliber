@@ -1,14 +1,22 @@
 #ifndef INTERPOLATION_H
 #define INTERPOLATION_H
 
-#include "vecmath.h"
-
 namespace base {
+
+// Round a float to int.
+inline int Round(float f) {
+  return int(f + 0.5f);
+}
 
 // Linearly interpolate between a and b, by fraction t.
 template <class T>
 inline T Lerp(const T& a, const T& b, float t) {
   return a + (b - a) * t;
+}
+
+template <>
+inline int Lerp<int>(const int& a, const int& b, float t) {
+  return Round(a + (b - a) * t);
 }
 
 inline float SmoothStep(float t) {
