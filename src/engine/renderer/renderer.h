@@ -60,6 +60,8 @@ class Renderer {
 
   void DestroyAllResources();
 
+  void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
+
   bool SupportsETC1() const { return texture_compression_.etc1; }
   bool SupportsDXT1() const {
     return texture_compression_.dxt1 || texture_compression_.s3tc;
@@ -69,16 +71,10 @@ class Renderer {
 
   bool SupportsVAO() const { return vertex_array_objects_; }
 
-  void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
-
   int screen_width() const { return screen_width_; }
   int screen_height() const { return screen_height_; }
 
-  size_t GetAndResetFPS() {
-    int ret = fps_;
-    fps_ = 0;
-    return ret;
-  }
+  size_t GetAndResetFPS();
 
   size_t global_queue_size() { return global_queue_size_; }
   size_t render_queue_size() { return render_queue_size_; }

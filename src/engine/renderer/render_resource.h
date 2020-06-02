@@ -3,8 +3,8 @@
 
 #include <array>
 #include <memory>
-#include <typeinfo>
 #include <typeindex>
+#include <typeinfo>
 
 namespace eng {
 
@@ -21,7 +21,7 @@ class RenderResource {
 
   bool IsValid() const { return valid_; }
 
-  std::shared_ptr<void> GetImplData() { return impl_data_; }
+  std::shared_ptr<void> impl_data() { return impl_data_; }
 
  protected:
   unsigned resource_id_ = 0;
@@ -40,16 +40,16 @@ class RenderResourceFactoryBase {
       : resource_type_(resource_type) {}
   virtual ~RenderResourceFactoryBase() = default;
 
-  virtual std::shared_ptr<eng::RenderResource> Create(
-      unsigned id,
-      std::shared_ptr<void> impl_data,
-      Renderer* renderer) = 0;
+  virtual std::shared_ptr<eng::RenderResource>
+  Create(unsigned id, std::shared_ptr<void> impl_data, Renderer* renderer) = 0;
 
   template <typename T>
-  bool IsTypeOf() const { return resource_type_ == std::type_index(typeid(T)); }
+  bool IsTypeOf() const {
+    return resource_type_ == std::type_index(typeid(T));
+  }
 
-  private:
-    std::type_index resource_type_;
+ private:
+  std::type_index resource_type_;
 };
 
 template <typename T>

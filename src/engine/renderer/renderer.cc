@@ -41,6 +41,91 @@ void Renderer::SetContextLostCB(base::Closure cb) {
   context_lost_cb_ = std::move(cb);
 }
 
+void Renderer::ContextLost() {
+  LOG << "Context lost.";
+
+#ifdef THREADED_RENDERING
+  global_commands_.clear();
+  draw_commands_[0].clear();
+  draw_commands_[1].clear();
+#endif  // THREADED_RENDERING
+
+  context_lost_cb_();
+}
+
+std::shared_ptr<RenderResource> Renderer::CreateResource(
+    RenderResourceFactoryBase& factory) {
+  static unsigned last_id = 0;
+
+  // Set implementation specific data. This data will be sent with render
+  // commands to the render thread and sould not be used in any other thread.
+  std::shared_ptr<void> impl_data;
+  if (factory.IsTypeOf<Geometry>())
+    impl_data = std::make_shared<GeometryOpenGL>();
+  else if (factory.IsTypeOf<Shader>())
+    impl_data = std::make_shared<ShaderOpenGL>();
+  else if (factory.IsTypeOf<Texture>())
+    impl_data = std::make_shared<TextureOpenGL>();
+  else
+    assert(false);
+
+  unsigned resource_id = ++last_id;
+  auto resource = factory.Create(resource_id, impl_data, this);
+  resources_[resource_id] = resource;
+  return resource;
+}
+
+void Renderer::ReleaseResource(unsigned resource_id) {
+  auto it = resources_.find(resource_id);
+  if (it != resources_.end())
+    resources_.erase(it);
+}
+
+void Renderer::DestroyAllResources() {
+  for (auto& r : resources_) {
+    std::shared_ptr<RenderResource> r_ptr = r.second.lock();
+    if (r_ptr)
+      r_ptr->Destroy();
+  }
+}
+
+void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
+#ifdef THREADED_RENDERING
+  if (cmd->global) {
+    {
+      std::unique_lock<std::mutex> scoped_lock(mutex_);
+      global_commands_.push_back(std::move(cmd));
+    }
+    cv_.notify_one();
+    global_queue_size_ = global_commands_.size();
+    return;
+  }
+
+  bool new_frame = cmd->cmd_id == HHASH("CmdPresent");
+  draw_commands_[1].push_back(std::move(cmd));
+  if (new_frame) {
+    render_queue_size_ = draw_commands_[1].size();
+    {
+      std::unique_lock<std::mutex> scoped_lock(mutex_);
+      draw_commands_[0].swap(draw_commands_[1]);
+    }
+    cv_.notify_one();
+    fps_ += draw_commands_[1].size() ? 0 : 1;
+    draw_commands_[1].clear();
+  }
+#else
+  ProcessCommand(cmd.get());
+#endif  // THREADED_RENDERING
+}
+
+#ifdef THREADED_RENDERING
+
+size_t Renderer::GetAndResetFPS() {
+  int ret = fps_;
+  fps_ = 0;
+  return ret;
+}
+
 bool Renderer::InitCommon() {
   // Get information about the currently active context.
   const char* renderer =
@@ -152,73 +237,6 @@ void Renderer::TerminateWorker() {
   ShutdownInternal();
 #endif  // THREADED_RENDERING
 }
-
-std::shared_ptr<RenderResource> Renderer::CreateResource(
-    RenderResourceFactoryBase& factory) {
-  static unsigned last_id = 0;
-
-  // Set implementation specific data. This data will be sent with render
-  // commands to the render thread and sould not be used in any other thread.
-  std::shared_ptr<void> impl_data;
-  if (factory.IsTypeOf<Geometry>())
-    impl_data = std::make_shared<GeometryOpenGL>();
-  else if (factory.IsTypeOf<Shader>())
-    impl_data = std::make_shared<ShaderOpenGL>();
-  else if (factory.IsTypeOf<Texture>())
-    impl_data = std::make_shared<TextureOpenGL>();
-  else
-    assert(false);
-
-  unsigned resource_id = ++last_id;
-  auto resource = factory.Create(resource_id, impl_data, this);
-  resources_[resource_id] = resource;
-  return resource;
-}
-
-void Renderer::ReleaseResource(unsigned resource_id) {
-  auto it = resources_.find(resource_id);
-  if (it != resources_.end())
-    resources_.erase(it);
-}
-
-void Renderer::DestroyAllResources() {
-  for (auto& r : resources_) {
-    std::shared_ptr<RenderResource> r_ptr = r.second.lock();
-    if (r_ptr)
-      r_ptr->Destroy();
-  }
-}
-
-void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
-#ifdef THREADED_RENDERING
-  if (cmd->global) {
-    {
-      std::unique_lock<std::mutex> scoped_lock(mutex_);
-      global_commands_.push_back(std::move(cmd));
-    }
-    cv_.notify_one();
-    global_queue_size_ = global_commands_.size();
-    return;
-  }
-
-  bool new_frame = cmd->cmd_id == HHASH("CmdPresent");
-  draw_commands_[1].push_back(std::move(cmd));
-  if (new_frame) {
-    render_queue_size_ = draw_commands_[1].size();
-    {
-      std::unique_lock<std::mutex> scoped_lock(mutex_);
-      draw_commands_[0].swap(draw_commands_[1]);
-    }
-    cv_.notify_one();
-    fps_ += draw_commands_[1].size() ? 0 : 1;
-    draw_commands_[1].clear();
-  }
-#else
-  ProcessCommand(cmd.get());
-#endif  // THREADED_RENDERING
-}
-
-#ifdef THREADED_RENDERING
 
 void Renderer::WorkerMain(std::promise<bool> promise) {
   promise.set_value(InitInternal());
@@ -766,18 +784,6 @@ GLint Renderer::GetUniformLocation(
           << ")";
   }
   return index;
-}
-
-void Renderer::ContextLost() {
-  LOG << "Context lost.";
-
-#ifdef THREADED_RENDERING
-  global_commands_.clear();
-  draw_commands_[0].clear();
-  draw_commands_[1].clear();
-#endif  // THREADED_RENDERING
-
-  context_lost_cb_();
 }
 
 }  // namespace eng
