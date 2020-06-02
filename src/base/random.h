@@ -5,11 +5,11 @@
 
 namespace base {
 
-class RandomGenerator {
+class Random {
  public:
-  RandomGenerator();
-  RandomGenerator(unsigned seed);
-  ~RandomGenerator();
+  Random();
+  Random(unsigned seed);
+  ~Random();
 
   // Returns a random float between 0 and 1.
   float GetFloat() { return real_distribution_(generator_); }

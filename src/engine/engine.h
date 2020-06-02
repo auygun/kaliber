@@ -5,7 +5,7 @@
 #include <memory>
 #include <unordered_map>
 
-#include "../base/random_generator.h"
+#include "../base/random.h"
 #include "../base/task_runner.h"
 #include "../base/vecmath.h"
 #include "asset.h"
@@ -76,7 +76,7 @@ class Engine {
 
   std::shared_ptr<const eng::Font> GetSystemFont() { return system_font_; }
 
-  base::RandomGenerator& GetRandomGenerator() { return random_; }
+  base::Random& GetRandomGenerator() { return random_; }
 
   Game* GetGame() { return game_.get(); }
 
@@ -129,7 +129,7 @@ class Engine {
 
   base::TaskRunner task_runner_;
 
-  base::RandomGenerator random_;
+  base::Random random_;
 
   std::shared_ptr<RenderResource> CreateRenderResourceInternal(
       RenderResourceFactoryBase& factory);

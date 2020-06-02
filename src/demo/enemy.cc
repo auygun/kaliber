@@ -270,7 +270,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
 
 void Enemy::SpawnNextEnemy() {
   Engine& engine = Engine::Get();
-  RandomGenerator& rnd = engine.GetRandomGenerator();
+  Random& rnd = engine.GetRandomGenerator();
 
   float factor = Lerp(1.0f, spawn_factor_, spawn_factor_interpolator_);
   EnemyType enemy_type = kEnemyType_Invalid;

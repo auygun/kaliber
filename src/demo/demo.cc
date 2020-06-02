@@ -5,7 +5,7 @@
 
 #include "../base/interpolation.h"
 #include "../base/log.h"
-#include "../base/random_generator.h"
+#include "../base/random.h"
 #include "../engine/engine.h"
 #include "../engine/game_factory.h"
 #include "../engine/input_event.h"
@@ -189,7 +189,7 @@ void Demo::UpdateGameState(float delta_time) {
       enemy_.OnWaveFinished();
 
       SetDelayedWork(1, [&]() -> void {
-        RandomGenerator& rnd = Engine::Get().GetRandomGenerator();
+        Random& rnd = Engine::Get().GetRandomGenerator();
         int dominant_channel = rnd.Roll(0, 2);
         if (dominant_channel == last_dominant_channel_)
           dominant_channel = (dominant_channel + 1) % 3;

@@ -43,7 +43,7 @@ add_library(native-activity SHARED
     ../../../src/base/asset_file.cc
     ../../../src/base/collusion_test.cc
     ../../../src/base/log.cc
-    ../../../src/base/random_generator.cc
+    ../../../src/base/random.cc
     ../../../src/base/task_runner.cc
     ../../../src/base/timer.cc
     ../../../src/base/vecmath.cc

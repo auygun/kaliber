@@ -68,7 +68,7 @@ GLTEST_SRC := \
   $(SRC_ROOT)/base/asset_file.cc \
   $(SRC_ROOT)/base/collusion_test.cc \
   $(SRC_ROOT)/base/log.cc \
-  $(SRC_ROOT)/base/random_generator.cc \
+  $(SRC_ROOT)/base/random.cc \
   $(SRC_ROOT)/base/task_runner.cc \
   $(SRC_ROOT)/base/timer.cc \
   $(SRC_ROOT)/base/vecmath.cc \

@@ -2,7 +2,7 @@
 
 #include "../base/interpolation.h"
 #include "../base/log.h"
-#include "../base/random_generator.h"
+#include "../base/random.h"
 #include "../engine/engine.h"
 #include "../engine/renderer/geometry.h"
 #include "../engine/renderer/shader.h"
