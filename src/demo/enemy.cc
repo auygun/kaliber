@@ -123,7 +123,8 @@ Vector2 Enemy::GetTargetPos(DamageType damage_type) {
 
 void Enemy::SelectTarget(DamageType damage_type,
                          const Vector2& origin,
-                         const Vector2& dir) {
+                         const Vector2& dir,
+                         float snap_factor) {
   assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
   if (waiting_for_next_wave_)
@@ -142,13 +143,16 @@ void Enemy::SelectTarget(DamageType damage_type,
       e.target_animator.Stop(Animator::kAllAnimations);
     }
 
-    if (!base::Intersection(e.sprite.GetOffset(), e.sprite.GetScale() * 1.2f,
+    if (!base::Intersection(e.sprite.GetOffset(),
+                            e.sprite.GetScale() * snap_factor,
                             origin, dir))
       continue;
 
     Vector2 weapon_enemy_dir = e.sprite.GetOffset() - origin;
     float enemy_weapon_dist = weapon_enemy_dir.Magnitude();
-    if (closest_dist > enemy_weapon_dist) {
+    if (closest_dist > enemy_weapon_dist &&
+        (!best_enemy || best_enemy->damage_type == e.damage_type ||
+         e.damage_type == damage_type)) {
       closest_dist = enemy_weapon_dist;
       best_enemy = &e;
     }

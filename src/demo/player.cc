@@ -83,7 +83,20 @@ Vector2 Player::GetWeaponScale() const {
 }
 
 DamageType Player::GetWeaponType(const Vector2& pos) {
-  return pos.x < 0 ? kDamageType_Blue : kDamageType_Green;
+  DamageType closest_weapon = kDamageType_Invalid;
+  float closest_dist = std::numeric_limits<float>::max();
+  for (int i = 0; i < 2; ++i) {
+    float dist = (pos - weapon_[i].GetOffset()).Magnitude();
+    if (dist < closest_dist) {
+      closest_dist = dist;
+      closest_weapon = (DamageType)i;
+    }
+  }
+
+  assert(closest_weapon != kDamageType_Invalid);
+  if (closest_dist < weapon_[closest_weapon].GetScale().x * 0.8f)
+    return closest_weapon;
+  return kDamageType_Invalid;
 }
 
 void Player::SetBeamLength(DamageType type, float len) {
@@ -215,17 +228,20 @@ void Player::UpdateTarget() {
 
   if (drag_valid_) {
     Vector2 dir = (drag_end_ - drag_start_).Normalize();
-    game->GetEnemy().SelectTarget(active_weapon_,
-                                  drag_start_, dir);
+    game->GetEnemy().SelectTarget(active_weapon_, drag_start_, dir, 1.2f);
+    if (!game->GetEnemy().HasTarget(active_weapon_))
+      game->GetEnemy().SelectTarget(active_weapon_, drag_start_, dir, 2);
   } else {
     game->GetEnemy().DeselectTarget(active_weapon_);
   }
 }
 
 void Player::DragStart(const Vector2& pos) {
+  active_weapon_ = GetWeaponType(pos);
+  if (active_weapon_ == kDamageType_Invalid)
+    return;
+
   drag_start_ = drag_end_ = pos;
-  active_weapon_ = GetWeaponType(drag_start_);
-  assert(active_weapon_ != kDamageType_Invalid);
 
   drag_sign_[active_weapon_].SetOffset(drag_start_);
   drag_sign_[active_weapon_].SetVisible(true);
