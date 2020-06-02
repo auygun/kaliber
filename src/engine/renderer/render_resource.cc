@@ -2,15 +2,15 @@
 
 #include <cassert>
 
-#include "../engine.h"
+#include "renderer.h"
 
 namespace eng {
 
-RenderResource::RenderResource(unsigned resource_id)
-    : resource_id_(resource_id) {}
+RenderResource::RenderResource(unsigned resource_id, Renderer* renderer)
+    : resource_id_(resource_id), renderer_(renderer) {}
 
 RenderResource::~RenderResource() {
-  Engine::Get().ReleaseResource(resource_id_);
+  renderer_->ReleaseResource(resource_id_);
 }
 
 }  // namespace eng

@@ -4,11 +4,12 @@
 
 #include "../engine.h"
 #include "../mesh.h"
+#include "renderer.h"
 #include "render_command.h"
 
 namespace eng {
 
-Geometry::Geometry(unsigned resource_id) : RenderResource(resource_id) {}
+Geometry::Geometry(unsigned resource_id, Renderer *renderer) : RenderResource(resource_id, renderer) {}
 
 Geometry::~Geometry() {
   Destroy();
@@ -25,14 +26,14 @@ void Geometry::Create(std::shared_ptr<const Mesh> mesh) {
   auto cmd = std::make_unique<CmdCreateGeometry>();
   cmd->mesh = mesh;
   cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
-  Engine::Get().EnqueueRenderCommand(std::move(cmd));
+  renderer_->EnqueueCommand(std::move(cmd));
 }
 
 void Geometry::Destroy() {
   if (valid_) {
     auto cmd = std::make_unique<CmdDestroyGeometry>();
     cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
-    Engine::Get().EnqueueRenderCommand(std::move(cmd));
+    renderer_->EnqueueCommand(std::move(cmd));
     valid_ = false;
   }
 }
@@ -41,7 +42,7 @@ void Geometry::Draw() {
   if (valid_) {
     auto cmd = std::make_unique<CmdDrawGeometry>();
     cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
-    Engine::Get().EnqueueRenderCommand(std::move(cmd));
+    renderer_->EnqueueCommand(std::move(cmd));
   }
 }
 

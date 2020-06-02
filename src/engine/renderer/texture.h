@@ -9,10 +9,11 @@
 namespace eng {
 
 class Image;
+class Renderer;
 
 class Texture : public RenderResource {
  public:
-  Texture(unsigned resource_id);
+  Texture(unsigned resource_id, Renderer* renderer);
   ~Texture() override;
 
   // Uploads image.

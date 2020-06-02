@@ -10,11 +10,12 @@
 
 namespace eng {
 
+class Renderer;
 class ShaderSource;
 
 class Shader : public RenderResource {
  public:
-  Shader(unsigned resource_id);
+  Shader(unsigned resource_id, Renderer* renderer);
   ~Shader() override;
 
   void Create(std::shared_ptr<const ShaderSource> source,

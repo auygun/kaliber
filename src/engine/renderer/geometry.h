@@ -9,11 +9,12 @@
 
 namespace eng {
 
+class Renderer;
 class Mesh;
 
 class Geometry : public RenderResource {
  public:
-  Geometry(unsigned resource_id);
+  Geometry(unsigned resource_id, Renderer* renderer);
   ~Geometry() override;
 
   void Create(std::shared_ptr<const Mesh> mesh);

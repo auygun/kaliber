@@ -5,9 +5,11 @@
 
 namespace eng {
 
+class Renderer;
+
 class RenderResource {
  public:
-  RenderResource(unsigned resource_id);
+  RenderResource(unsigned resource_id, Renderer* renderer);
   virtual ~RenderResource();
 
   virtual void Destroy() = 0;
@@ -24,6 +26,8 @@ class RenderResource {
   std::shared_ptr<void> impl_data_;  // For use in render thread only.
   bool valid_ = false;
 
+  Renderer* renderer_ = nullptr;
+
   RenderResource(const RenderResource&) = delete;
   RenderResource& operator=(const RenderResource&) = delete;
 };
@@ -32,7 +36,7 @@ class RenderResourceFactoryBase {
  public:
   virtual ~RenderResourceFactoryBase() = default;
 
-  virtual std::shared_ptr<eng::RenderResource> Create(unsigned id) = 0;
+  virtual std::shared_ptr<eng::RenderResource> Create(unsigned id, Renderer* renderer) = 0;
 };
 
 template <typename T>
@@ -40,8 +44,8 @@ class RenderResourceFactory : public RenderResourceFactoryBase {
  public:
   ~RenderResourceFactory() override = default;
 
-  std::shared_ptr<eng::RenderResource> Create(unsigned id) override {
-    return std::make_shared<T>(id);
+  std::shared_ptr<eng::RenderResource> Create(unsigned id, Renderer* renderer) override {
+    return std::make_shared<T>(id, renderer);
   }
 };
 

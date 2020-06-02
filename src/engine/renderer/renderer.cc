@@ -168,7 +168,7 @@ std::shared_ptr<RenderResource> Renderer::CreateResource(RenderResourceFactoryBa
   static unsigned last_id = 0;
 
   unsigned resource_id = ++last_id;
-  auto resource = factory.Create(resource_id);
+  auto resource = factory.Create(resource_id, this);
 
   // Set implementation specific data. This data will be sent with render
   // commands to the render thread and sould not be used in any other thread.
@@ -187,7 +187,6 @@ std::shared_ptr<RenderResource> Renderer::CreateResource(RenderResourceFactoryBa
 
 void Renderer::ReleaseResource(unsigned resource_id) {
   auto it = resources_.find(resource_id);
-  LOG << __func__ << " " << (it != resources_.end());
   if (it != resources_.end())
     resources_.erase(it);
 }

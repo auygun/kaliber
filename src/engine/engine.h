@@ -88,8 +88,6 @@ class Engine {
     return std::dynamic_pointer_cast<T>(CreateRenderResourceInternal(factory));
   }
 
-  void ReleaseResource(unsigned resource_id);
-
   // Returns immutable asset that can be accessed between multiple threads
   // without locking. Returns nullptr if no asset was found with the given name.
   template <typename T>
@@ -100,8 +98,6 @@ class Engine {
 
   void AddInputEvent(std::unique_ptr<InputEvent> event);
   std::unique_ptr<InputEvent> GetNextInputEvent();
-
-  void EnqueueRenderCommand(std::unique_ptr<RenderCommand> cmd);
 
   // Access to the render resources.
   std::shared_ptr<Geometry> GetQuad() { return quad_; }

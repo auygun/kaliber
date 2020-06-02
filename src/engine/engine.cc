@@ -138,10 +138,6 @@ Vector2 Engine::ToPosition(const Vector2& vec) {
   return ToScale(vec) - GetScreenSize() / 2.0f;
 }
 
-void Engine::ReleaseResource(unsigned resource_id) {
-  renderer_->ReleaseResource(resource_id);
-}
-
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
   switch (event->GetType()) {
     case InputEvent::kTap:
@@ -181,10 +177,6 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
     input_queue_.pop_front();
   }
   return event;
-}
-
-void Engine::EnqueueRenderCommand(std::unique_ptr<RenderCommand> cmd) {
-  renderer_->EnqueueCommand(std::move(cmd));
 }
 
 int Engine::GetScreenWidth() const {
