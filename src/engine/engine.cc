@@ -35,7 +35,9 @@ Engine::Engine(Platform* platform, Renderer *renderer)
   solid_shader_ = CreateRenderResource<Shader>();
 }
 
-Engine::~Engine() = default;
+Engine::~Engine() {
+  singleton = nullptr;
+}
 
 Engine& Engine::Get() {
   return *singleton;
