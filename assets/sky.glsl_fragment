@@ -7,7 +7,7 @@ varying highp vec2 tex_coord_0;
 
 float random(highp vec2 p) {
   highp float sd = sin(dot(p, vec2(54.90898, 18.233)));
-  return fract(sd * 4337.5453);
+  return fract(sd * 2671.6182);
 }
 
 float nebula(in highp vec2 p) {
@@ -34,7 +34,7 @@ float stars(in highp vec2 p, float num_cells, float size) {
   a /= num_cells * size;
   float e = dot(a, a);
 
-  return smoothstep(0.95, 1.0, (1.0 - sqrt(e)));
+  return smoothstep(0.95, 1.0, (1.0 - e * 35.0));
 }
 
 void main() {
