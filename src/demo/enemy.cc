@@ -150,9 +150,7 @@ void Enemy::SelectTarget(DamageType damage_type,
 
     Vector2 weapon_enemy_dir = e.sprite.GetOffset() - origin;
     float enemy_weapon_dist = weapon_enemy_dir.Magnitude();
-    if (closest_dist > enemy_weapon_dist &&
-        (!best_enemy || best_enemy->damage_type == e.damage_type ||
-         e.damage_type == damage_type)) {
+    if (closest_dist > enemy_weapon_dist) {
       closest_dist = enemy_weapon_dist;
       best_enemy = &e;
     }

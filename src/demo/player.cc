@@ -94,7 +94,7 @@ DamageType Player::GetWeaponType(const Vector2& pos) {
   }
 
   assert(closest_weapon != kDamageType_Invalid);
-  if (closest_dist < weapon_[closest_weapon].GetScale().x * 0.8f)
+  if (closest_dist < weapon_[closest_weapon].GetScale().x * 0.9f)
     return closest_weapon;
   return kDamageType_Invalid;
 }
