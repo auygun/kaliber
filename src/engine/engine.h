@@ -140,8 +140,6 @@ class Engine {
 
   bool CreateRenderResources();
 
-  void KillUnusedResources(float delta_time);
-
   void SetSatsVisible(bool visible);
   void PrintStats();
 

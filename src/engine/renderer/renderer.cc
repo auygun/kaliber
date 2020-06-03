@@ -417,8 +417,7 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
 
 void Renderer::HandleCmdDestoryTexture(RenderCommand* cmd) {
   auto* c = static_cast<CmdDestoryTexture*>(cmd);
-  std::shared_ptr<TextureOpenGL> impl_data =
-      std::static_pointer_cast<TextureOpenGL>(c->impl_data);
+  auto impl_data = std::static_pointer_cast<TextureOpenGL>(c->impl_data);
   if (impl_data->id > 0) {
     glDeleteTextures(1, &(impl_data->id));
     *impl_data = {};
@@ -427,8 +426,7 @@ void Renderer::HandleCmdDestoryTexture(RenderCommand* cmd) {
 
 void Renderer::HandleCmdActivateTexture(RenderCommand* cmd) {
   auto* c = static_cast<CmdActivateTexture*>(cmd);
-  std::shared_ptr<TextureOpenGL> impl_data =
-      std::static_pointer_cast<TextureOpenGL>(c->impl_data);
+  auto impl_data = std::static_pointer_cast<TextureOpenGL>(c->impl_data);
   if (impl_data->id > 0)
     glBindTexture(GL_TEXTURE_2D, impl_data->id);
 }

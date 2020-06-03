@@ -42,8 +42,6 @@ class Platform {
 
   void Exit();
 
-  Renderer* GetRenderer() { return renderer_.get(); }
-
   int GetDeviceDpi() const { return device_dpi_; }
 
   const std::string& GetRootPath() const { return root_path_; }
