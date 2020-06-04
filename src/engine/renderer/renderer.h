@@ -58,7 +58,7 @@ class Renderer {
       RenderResourceFactoryBase& factory);
   void ReleaseResource(unsigned resource_id);
 
-  void DestroyAllResources();
+  void InvalidateAllResources();
 
   void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
 

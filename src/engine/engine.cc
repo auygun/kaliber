@@ -231,7 +231,7 @@ void Engine::ContextLost() {
     return;
   }
 
-  renderer_->DestroyAllResources();
+  renderer_->InvalidateAllResources();
 
   CreateRenderResources();
 

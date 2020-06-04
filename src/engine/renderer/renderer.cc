@@ -81,7 +81,7 @@ void Renderer::ReleaseResource(unsigned resource_id) {
     resources_.erase(it);
 }
 
-void Renderer::DestroyAllResources() {
+void Renderer::InvalidateAllResources() {
   for (auto& r : resources_) {
     std::shared_ptr<RenderResource> r_ptr = r.second.lock();
     if (r_ptr)
