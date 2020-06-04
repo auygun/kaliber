@@ -36,25 +36,6 @@ class Log {
     return *this;
   }
 
-  template <>
-  Log& operator<<<bool>(const bool& arg) {
-    stream_ << (arg ? "true" : "false");
-    return *this;
-  }
-
-  template <>
-  Log& operator<<<Vector2>(const Vector2& arg) {
-    stream_ << "(" << arg.x << ", " << arg.y << ")";
-    return *this;
-  }
-
-  template <>
-  Log& operator<<<Vector4>(const Vector4& arg) {
-    stream_ << "(" << arg.x << ", " << arg.y << ", " << arg.z << ", " << arg.w
-            << ")";
-    return *this;
-  }
-
   static Log* swallow_stream;
 
  private:

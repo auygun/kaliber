@@ -5,6 +5,7 @@
 #include <string>
 
 #include "../base/closure.h"
+#include "../base/vecmath.h"
 #include "../engine/animator.h"
 #include "../engine/image_quad.h"
 
@@ -62,6 +63,8 @@ class Menu {
   int max_text_width_ = 0;
 
   Option selected_option_ = kOption_Invalid;
+
+  base::Vector2 tap_pos_[2] = {{0, 0}, {0, 0}};
 
   std::shared_ptr<eng::Image> CreateImage();
 

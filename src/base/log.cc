@@ -23,11 +23,30 @@ Log::~Log() {
   if (last_slash_pos != std::string::npos)
     filename = filename.substr(last_slash_pos + 1);
 #if defined(__ANDROID__)
-  __android_log_print(ANDROID_LOG_ERROR, "gltest", "[%s:%d] %s",
+  __android_log_print(ANDROID_LOG_ERROR, "kaliber", "[%s:%d] %s",
                       filename.c_str(), line_, text.c_str());
 #else
   printf("[%s:%d] %s", filename.c_str(), line_, text.c_str());
 #endif
+}
+
+template <>
+Log& Log::operator<<<bool>(const bool& arg) {
+  stream_ << (arg ? "true" : "false");
+  return *this;
+}
+
+template <>
+Log& Log::operator<<<Vector2>(const Vector2& arg) {
+  stream_ << "(" << arg.x << ", " << arg.y << ")";
+  return *this;
+}
+
+template <>
+Log& Log::operator<<<Vector4>(const Vector4& arg) {
+  stream_ << "(" << arg.x << ", " << arg.y << ", " << arg.z << ", " << arg.w
+          << ")";
+  return *this;
 }
 
 }  // namespace base

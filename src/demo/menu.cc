@@ -7,7 +7,6 @@
 #include "../base/collusion_test.h"
 #include "../base/interpolation.h"
 #include "../base/log.h"
-#include "../base/vecmath.h"
 #include "../base/worker.h"
 #include "../engine/engine.h"
 #include "../engine/font.h"
@@ -90,20 +89,32 @@ void Menu::Update(float delta_time) {
 }
 
 void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
-  if (event->GetType() != InputEvent::kTap || IsAnimating())
+  if (event->GetType() == InputEvent::kTap ||
+      event->GetType() == InputEvent::kDragStart)
+    tap_pos_[0] = tap_pos_[1] = event->GetVector(0);
+  else if (event->GetType() == InputEvent::kDrag)
+    tap_pos_[1] = event->GetVector(0);
+
+  if ((event->GetType() != InputEvent::kTap &&
+       event->GetType() != InputEvent::kDragEnd) || IsAnimating())
     return;
 
   for (int i = 0; i < kOption_Max; ++i) {
     if (items_[i].hide)
       continue;
-    if (Intersection(items_[i].text.GetOffset(),
+    if (!Intersection(items_[i].text.GetOffset(),
                      items_[i].text.GetScale() * Vector2(1.2f, 2),
-                     event->GetVector(0))) {
-      items_[i].text_animator.SetEndCallback(Animator::kBlending,
-                                             items_[i].select_item_cb_);
-      items_[i].text_animator.SetBlending(kColorHighlight, kBlendingSpeed);
-      items_[i].text_animator.Play(Animator::kBlending, false);
-    }
+                     tap_pos_[0]))
+      continue;
+    if (!Intersection(items_[i].text.GetOffset(),
+                     items_[i].text.GetScale() * Vector2(1.2f, 2),
+                     tap_pos_[1]))
+      continue;
+
+    items_[i].text_animator.SetEndCallback(Animator::kBlending,
+                                            items_[i].select_item_cb_);
+    items_[i].text_animator.SetBlending(kColorHighlight, kBlendingSpeed);
+    items_[i].text_animator.Play(Animator::kBlending, false);
   }
 }
 

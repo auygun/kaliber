@@ -52,7 +52,7 @@ bool Renderer::CreateWindow() {
                     0, visual_info_->depth, InputOutput, visual_info_->visual,
                     CWColormap | CWEventMask, &window_attributes);
   XMapWindow(display_, window_);
-  XStoreName(display_, window_, "gltest");
+  XStoreName(display_, window_, "kaliber");
 
   return true;
 }
