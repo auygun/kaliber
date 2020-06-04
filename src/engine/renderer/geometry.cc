@@ -28,14 +28,14 @@ void Geometry::Create(std::shared_ptr<const Mesh> mesh) {
 
   auto cmd = std::make_unique<CmdCreateGeometry>();
   cmd->mesh = mesh;
-  cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
+  cmd->impl_data = impl_data_;
   renderer_->EnqueueCommand(std::move(cmd));
 }
 
 void Geometry::Destroy() {
   if (valid_) {
     auto cmd = std::make_unique<CmdDestroyGeometry>();
-    cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
+    cmd->impl_data = impl_data_;
     renderer_->EnqueueCommand(std::move(cmd));
     valid_ = false;
   }
@@ -44,7 +44,7 @@ void Geometry::Destroy() {
 void Geometry::Draw() {
   if (valid_) {
     auto cmd = std::make_unique<CmdDrawGeometry>();
-    cmd->impl_data = std::static_pointer_cast<void>(impl_data_);
+    cmd->impl_data = impl_data_;
     renderer_->EnqueueCommand(std::move(cmd));
   }
 }
