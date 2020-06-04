@@ -42,6 +42,8 @@ struct RenderCommand {
   RenderCommand(CommandId id, bool g) : cmd_id(id), global(g) {}
 #endif
 
+  virtual ~RenderCommand() = default;
+
   const CommandId cmd_id = INVALID_CMD_ID;
   const bool global = false;
 #ifdef _DEBUG
