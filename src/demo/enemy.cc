@@ -288,7 +288,7 @@ void Enemy::OnWaveStarted(int wave) {
   num_enemies_killed_in_current_wave_ = 0;
   seconds_since_last_spawn_ = {0, 0, 0};
   seconds_to_next_spawn_ = {0, 0, 0};
-  spawn_factor_ = 1 / (log10(0.25f * (wave + 4) + 1.468f) * 6);
+  spawn_factor_ = 1 / (log10(0.25f * ((wave + 4) * 0.8f) + 1.468f) * 6);
   spawn_factor_interpolator_ = 0;
   waiting_for_next_wave_ = false;
 }
