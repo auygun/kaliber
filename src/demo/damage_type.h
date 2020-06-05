@@ -14,6 +14,7 @@ enum EnemyType {
   kEnemyType_LightSkull,
   kEnemyType_DarkSkull,
   kEnemyType_Tank,
+  kEnemyType_Bug,
   kEnemyType_Max
 };
 

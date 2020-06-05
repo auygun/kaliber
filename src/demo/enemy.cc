@@ -23,23 +23,31 @@ namespace {
 
 constexpr int idle1_frame_start[][3] = {{0, 50, -1},
                                         {23, 73, -1},
-                                        {-1, -1, 100}};
+                                        {-1, -1, 100},
+                                        {13, 33, -1},
+                                        {-1, -1, -1}};
 constexpr int idle2_frame_start[][3] = {{7, 57, -1},
                                         {30, 80, -1},
-                                        {-1, -1, 107}};
+                                        {-1, -1, 107},
+                                        {-1, -1, -1}};
 
-constexpr int idle1_frame_count[][3] = {{7, 7, -1}, {7, 7, -1}, {-1, -1, 7}};
+constexpr int idle1_frame_count[][3] = {{7, 7, -1},
+                                        {7, 7, -1},
+                                        {-1, -1, 7},
+                                        {6, 6, -1}};
 constexpr int idle2_frame_count[][3] = {{16, 16, -1},
                                         {16, 16, -1},
-                                        {-1, -1, 16}};
+                                        {-1, -1, 16},
+                                        {-1, -1, -1}};
 
 constexpr int idle_frame_speed = 12;
 
-constexpr int enemy_scores[] = {100, 150, 300};
+constexpr int enemy_scores[] = {100, 150, 300, 200};
 
 constexpr float kSpawnPeriod[kEnemyType_Max][2] = {{2, 5},
                                                    {15, 25},
-                                                   {110, 130}};
+                                                   {110, 130},
+                                                   {70, 100}};
 
 void SetupFadeOutAnim(Animator& animator, float delay) {
   animator.SetEndCallback(Animator::kTimer, [&]() -> void {
@@ -52,14 +60,20 @@ void SetupFadeOutAnim(Animator& animator, float delay) {
   animator.SetTimer(delay);
 }
 
+float SnapSpawnPosX(int col) {
+  Vector2 s = eng::Engine::Get().GetScreenSize();
+  return (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2;
+}
+
 }  // namespace
 
 Enemy::Enemy()
     : skull_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      // bug_tex_(Engine::Get().CreateRenderResource<Texture>()),
+      bug_tex_(Engine::Get().CreateRenderResource<Texture>()),
       target_tex_(Engine::Get().CreateRenderResource<Texture>()),
       blast_tex_(Engine::Get().CreateRenderResource<Texture>()),
       score_tex_{Engine::Get().CreateRenderResource<Texture>(),
+                 Engine::Get().CreateRenderResource<Texture>(),
                  Engine::Get().CreateRenderResource<Texture>(),
                  Engine::Get().CreateRenderResource<Texture>()} {}
 
@@ -99,7 +113,8 @@ void Enemy::Update(float delta_time) {
       continue;
     }
 
-    if (!it->idle2_anim && rnd.Roll(200) == 1) {
+    if (it->enemy_type != kEnemyType_Bug &&
+        !it->idle2_anim && rnd.Roll(200) == 1) {
       it->idle2_anim = true;
       it->sprite_animator.Stop(Animator::kFrames);
       it->sprite.SetFrame(idle2_frame_start[it->enemy_type][it->damage_type]);
@@ -163,7 +178,7 @@ void Enemy::SelectTarget(DamageType damage_type,
   std::vector<std::tuple<EnemyUnit*, float, float>> candidates;
 
   for (auto& e : enemies_) {
-    if (e.hit_points <= 0 || e.marked_for_removal)
+    if (e.hit_points <= 0 || e.marked_for_removal || e.stealth)
       continue;
 
     if (e.targetted_by_weapon_ == damage_type) {
@@ -256,13 +271,14 @@ void Enemy::HitTarget(DamageType damage_type) {
 
   EnemyUnit* target = GetTarget(damage_type);
 
-  if (target) {
-    target->target.SetVisible(false);
-    target->target_animator.Stop(Animator::kAllAnimations);
-  }
+  if (!target)
+    return;
 
-  if (!target || (target->damage_type != kDamageType_Any &&
-                  target->damage_type != damage_type))
+  target->target.SetVisible(false);
+  target->target_animator.Stop(Animator::kAllAnimations);
+
+  if ((target->damage_type != kDamageType_Any &&
+       target->damage_type != damage_type))
     return;
 
   TakeDamage(target, 1);
@@ -272,6 +288,13 @@ void Enemy::OnWaveFinished() {
   for (auto& e : enemies_) {
     if (!e.marked_for_removal && e.hit_points > 0)
       e.movement_animator.Pause(Animator::kMovement);
+    if (e.stealth) {
+      e.sprite_animator.Stop(Animator::kAllAnimations);
+      e.sprite_animator.SetEndCallback(Animator::kBlending, nullptr);
+      e.sprite_animator.SetBlending({1, 1, 1, 1}, 0.5f);
+      e.sprite_animator.Play(Animator::kBlending, false);
+      e.sprite_animator.Play(Animator::kFrames, true);
+    }
   }
   waiting_for_next_wave_ = true;
 }
@@ -330,6 +353,34 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
 
     target->health_animator.Stop(Animator::kTimer | Animator::kBlending);
     target->health_animator.Play(Animator::kTimer, false);
+
+    if (target->enemy_type == kEnemyType_Bug) {
+      target->stealth = true;
+      target->movement_animator.Pause(Animator::kMovement);
+      target->sprite_animator.Pause(Animator::kFrames);
+
+      Random& rnd = Engine::Get().GetRandomGenerator();
+      float stealth_timer = Lerp(2.0f, 5.0f, rnd.GetFloat());
+      target->sprite_animator.SetEndCallback(Animator::kTimer,
+          [&, target]() -> void {
+            float x = SnapSpawnPosX(rnd.Roll(4) - 1);
+            TranslateEnemyUnit(*target, {x - target->sprite.GetOffset().x,0});
+
+            target->sprite_animator.SetEndCallback(Animator::kBlending,
+                [&, target]() -> void {
+                  target->stealth = false;
+                  target->movement_animator.Play(Animator::kMovement, true);
+                  target->sprite_animator.Play(Animator::kFrames, false);
+                });
+            target->sprite_animator.SetBlending({1, 1, 1, 1}, 1.0f);
+            target->sprite_animator.Play(Animator::kBlending, false);
+          });
+
+      target->sprite_animator.SetTimer(stealth_timer);
+      target->sprite_animator.SetBlending({1, 1, 1, 0}, 1.5f);
+      target->sprite_animator.Play(Animator::kBlending | Animator::kTimer,
+                                   false);
+    }
   }
 }
 
@@ -366,7 +417,7 @@ void Enemy::SpawnNextEnemy() {
   if (col == last_spawn_col_)
     col = (col + 1) % 4;
   last_spawn_col_ = col;
-  float x = (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2;
+  float x = SnapSpawnPosX(col);
   Vector2 pos = {x, s.y / 2};
   float speed = enemy_type == kEnemyType_Tank
                     ? 36.0f
@@ -388,15 +439,25 @@ void Enemy::Spawn(EnemyType enemy_type,
   auto& e = enemies_.emplace_back();
   e.enemy_type = enemy_type;
   e.damage_type = damage_type;
-  if (enemy_type == kEnemyType_LightSkull) {
-    e.total_health = e.hit_points = 1;
-    e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
-  } else if (enemy_type == kEnemyType_DarkSkull) {
-    e.total_health = e.hit_points = 2;
-    e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
-  } else {  // kEnemyType_Tank
-    e.total_health = e.hit_points = 6;
-    e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
+  switch (enemy_type) {
+    case kEnemyType_LightSkull:
+      e.total_health = e.hit_points = 1;
+      e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
+      break;
+    case kEnemyType_DarkSkull:
+      e.total_health = e.hit_points = 2;
+      e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
+      break;
+    case kEnemyType_Tank:
+      e.total_health = e.hit_points = 6;
+      e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
+      break;
+    case kEnemyType_Bug:
+      e.total_health = e.hit_points = 2;
+      e.sprite.Create(bug_tex_, {10, 4});
+      break;
+    default:
+      assert(false);
   }
   e.sprite.AutoScale();
   e.sprite.SetVisible(true);
@@ -517,7 +578,7 @@ bool Enemy::CreateRenderResources() {
     return false;
 
   skull_tex_->Update(skull_image);
-  // bug_tex_->Update(bug_image);
+  bug_tex_->Update(bug_image);
   target_tex_->Update(target_image);
   blast_tex_->Update(blast_image);
 
@@ -525,4 +586,13 @@ bool Enemy::CreateRenderResources() {
     score_tex_[i]->Update(GetScoreImage(GetScore((EnemyType)i)));
 
   return true;
+}
+
+void Enemy::TranslateEnemyUnit(EnemyUnit& e, const Vector2& delta) {
+  e.sprite.Translate(delta);
+  e.target.Translate(delta);
+  e.blast.Translate(delta);
+  e.health_base.Translate(delta);
+  e.health_bar.Translate(delta);
+  e.score.Translate(delta);
 }

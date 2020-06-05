@@ -58,6 +58,7 @@ class Enemy {
     int hit_points = 0;
 
     bool idle2_anim = false;
+    bool stealth = false;
 
     eng::ImageQuad sprite;
     eng::ImageQuad target;
@@ -75,7 +76,7 @@ class Enemy {
   };
 
   std::shared_ptr<eng::Texture> skull_tex_;
-  // std::shared_ptr<eng::Texture> bug_tex_;
+  std::shared_ptr<eng::Texture> bug_tex_;
   std::shared_ptr<eng::Texture> target_tex_;
   std::shared_ptr<eng::Texture> blast_tex_;
   std::shared_ptr<eng::Texture> score_tex_[kEnemyType_Max];
@@ -112,6 +113,8 @@ class Enemy {
   std::shared_ptr<eng::Image> GetScoreImage(int score);
 
   bool CreateRenderResources();
+
+  void TranslateEnemyUnit(EnemyUnit& e, const base::Vector2& delta);
 };
 
 #endif  // ENEMY_H
