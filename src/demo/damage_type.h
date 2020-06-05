@@ -11,8 +11,8 @@ enum DamageType {
 
 enum EnemyType {
   kEnemyType_Invalid = -1,
-  kEnemyType_Skull,
-  kEnemyType_Bug,
+  kEnemyType_LightSkull,
+  kEnemyType_DarkSkull,
   kEnemyType_Tank,
   kEnemyType_Max
 };

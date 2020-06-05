@@ -57,6 +57,8 @@ class Enemy {
     int total_health = 0;
     int hit_points = 0;
 
+    bool idle2_anim = false;
+
     eng::ImageQuad sprite;
     eng::ImageQuad target;
     eng::ImageQuad blast;
@@ -73,7 +75,7 @@ class Enemy {
   };
 
   std::shared_ptr<eng::Texture> skull_tex_;
-  std::shared_ptr<eng::Texture> bug_tex_;
+  // std::shared_ptr<eng::Texture> bug_tex_;
   std::shared_ptr<eng::Texture> target_tex_;
   std::shared_ptr<eng::Texture> blast_tex_;
   std::shared_ptr<eng::Texture> score_tex_[kEnemyType_Max];

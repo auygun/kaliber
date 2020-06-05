@@ -21,11 +21,19 @@ using namespace eng;
 
 namespace {
 
-constexpr int enemy_frame_start[][3] = {{0, 50, -1},
-                                        {13, 33, -1},
+constexpr int idle1_frame_start[][3] = {{0, 50, -1},
+                                        {23, 73, -1},
                                         {-1, -1, 100}};
-constexpr int enemy_frame_count[][3] = {{7, 7, -1}, {6, 6, -1}, {-1, -1, 7}};
-constexpr int enemy_frame_speed = 12;
+constexpr int idle2_frame_start[][3] = {{7, 57, -1},
+                                        {30, 80, -1},
+                                        {-1, -1, 107}};
+
+constexpr int idle1_frame_count[][3] = {{7, 7, -1}, {7, 7, -1}, {-1, -1, 7}};
+constexpr int idle2_frame_count[][3] = {{16, 16, -1},
+                                        {16, 16, -1},
+                                        {-1, -1, 16}};
+
+constexpr int idle_frame_speed = 12;
 
 constexpr int enemy_scores[] = {100, 150, 300};
 
@@ -48,7 +56,7 @@ void SetupFadeOutAnim(Animator& animator, float delay) {
 
 Enemy::Enemy()
     : skull_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      bug_tex_(Engine::Get().CreateRenderResource<Texture>()),
+      // bug_tex_(Engine::Get().CreateRenderResource<Texture>()),
       target_tex_(Engine::Get().CreateRenderResource<Texture>()),
       blast_tex_(Engine::Get().CreateRenderResource<Texture>()),
       score_tex_{Engine::Get().CreateRenderResource<Texture>(),
@@ -83,11 +91,31 @@ void Enemy::Update(float delta_time) {
     SpawnNextEnemy();
   }
 
+  Random& rnd = Engine::Get().GetRandomGenerator();
+
   for (auto it = enemies_.begin(); it != enemies_.end(); ++it) {
     if (it->marked_for_removal) {
       it = enemies_.erase(it);
       continue;
     }
+
+    if (!it->idle2_anim && rnd.Roll(200) == 1) {
+      it->idle2_anim = true;
+      it->sprite_animator.Stop(Animator::kFrames);
+      it->sprite.SetFrame(idle2_frame_start[it->enemy_type][it->damage_type]);
+      it->sprite_animator.SetFrames(
+          idle2_frame_count[it->enemy_type][it->damage_type], idle_frame_speed);
+      auto& e = *it;
+      it->sprite_animator.SetEndCallback(Animator::kFrames, [&]() -> void {
+        e.sprite_animator.Stop(Animator::kFrames);
+        e.sprite.SetFrame(idle1_frame_start[e.enemy_type][e.damage_type]);
+        e.sprite_animator.SetFrames(
+            idle1_frame_count[e.enemy_type][e.damage_type], idle_frame_speed);
+        e.sprite_animator.Play(Animator::kFrames, true);
+      });
+      it->sprite_animator.Play(Animator::kFrames, false);
+    }
+
     it->sprite_animator.Update(delta_time);
     it->target_animator.Update(delta_time);
     it->blast_animator.Update(delta_time);
@@ -360,12 +388,12 @@ void Enemy::Spawn(EnemyType enemy_type,
   auto& e = enemies_.emplace_back();
   e.enemy_type = enemy_type;
   e.damage_type = damage_type;
-  if (enemy_type == kEnemyType_Skull) {
+  if (enemy_type == kEnemyType_LightSkull) {
     e.total_health = e.hit_points = 1;
     e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
-  } else if (enemy_type == kEnemyType_Bug) {
+  } else if (enemy_type == kEnemyType_DarkSkull) {
     e.total_health = e.hit_points = 2;
-    e.sprite.Create(bug_tex_, {10, 4});
+    e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
   } else {  // kEnemyType_Tank
     e.total_health = e.hit_points = 6;
     e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
@@ -375,9 +403,9 @@ void Enemy::Spawn(EnemyType enemy_type,
   Vector2 spawn_pos = pos + Vector2(0, e.sprite.GetScale().y / 2);
   e.sprite.SetOffset(spawn_pos);
 
-  e.sprite.SetFrame(enemy_frame_start[enemy_type][damage_type]);
-  e.sprite_animator.SetFrames(enemy_frame_count[enemy_type][damage_type],
-                              enemy_frame_speed);
+  e.sprite.SetFrame(idle1_frame_start[enemy_type][damage_type]);
+  e.sprite_animator.SetFrames(idle1_frame_count[enemy_type][damage_type],
+                              idle_frame_speed);
 
   e.sprite_animator.Attach(&e.sprite);
   e.sprite_animator.Play(Animator::kFrames, true);
@@ -489,7 +517,7 @@ bool Enemy::CreateRenderResources() {
     return false;
 
   skull_tex_->Update(skull_image);
-  bug_tex_->Update(bug_image);
+  // bug_tex_->Update(bug_image);
   target_tex_->Update(target_image);
   blast_tex_->Update(blast_image);
 
