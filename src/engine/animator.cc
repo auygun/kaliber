@@ -40,6 +40,7 @@ void Animator::Stop(int animation) {
   play_flags_ |= animation;
   Update(0);
   play_flags_ &= ~animation;
+  loop_flags_ &= ~animation;
 }
 
 void Animator::SetEndCallback(int animation, base::Closure cb) {
