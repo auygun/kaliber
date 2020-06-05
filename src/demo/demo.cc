@@ -190,7 +190,7 @@ void Demo::UpdateGameState(float delta_time) {
 
       SetDelayedWork(1, [&]() -> void {
         Random& rnd = Engine::Get().GetRandomGenerator();
-        int dominant_channel = rnd.Roll(0, 2);
+        int dominant_channel = rnd.Roll(3) - 1;
         if (dominant_channel == last_dominant_channel_)
           dominant_channel = (dominant_channel + 1) % 3;
         last_dominant_channel_ = dominant_channel;

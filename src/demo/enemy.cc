@@ -291,11 +291,11 @@ void Enemy::SpawnNextEnemy() {
 
   DamageType damage_type = enemy_type == kEnemyType_Tank
                                ? kDamageType_Any
-                               : (DamageType)(rnd.Roll(0, 1));
+                               : (DamageType)(rnd.Roll(2) - 1);
 
   Vector2 s = engine.GetScreenSize();
   int col;
-  col = rnd.Roll(0, 3);
+  col = rnd.Roll(4) - 1;
   if (col == last_spawn_col_)
     col = (col + 1) % 4;
   last_spawn_col_ = col;
@@ -303,7 +303,7 @@ void Enemy::SpawnNextEnemy() {
   Vector2 pos = {x, s.y / 2};
   float speed = enemy_type == kEnemyType_Tank
                     ? 36.0f
-                    : (rnd.Roll(1, 4) == 4 ? 6.0f : 10.0f);
+                    : (rnd.Roll(4) == 4 ? 6.0f : 10.0f);
 
   Spawn(enemy_type, damage_type, pos, speed);
 }
