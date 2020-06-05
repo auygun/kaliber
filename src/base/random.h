@@ -14,8 +14,8 @@ class Random {
   // Returns a random float between 0 and 1.
   float GetFloat() { return real_distribution_(generator_); }
 
-  // Returns a random int between min and max.
-  int Roll(int min, int max);
+  // Roll dice with the given number of sides.
+  int Roll(int sides);
 
  private:
   std::mt19937 generator_;

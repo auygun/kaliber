@@ -19,8 +19,8 @@ Random::Random(unsigned seed) {
 
 Random::~Random() = default;
 
-int Random::Roll(int min, int max) {
-  return Lerp(min, max, GetFloat());
+int Random::Roll(int sides) {
+  return Lerp(1, sides, GetFloat());
 }
 
 }  // namespace base
