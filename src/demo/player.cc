@@ -94,7 +94,7 @@ DamageType Player::GetWeaponType(const Vector2& pos) {
   }
 
   assert(closest_weapon != kDamageType_Invalid);
-  if (closest_dist < weapon_[closest_weapon].GetScale().x * 0.9f)
+  if (closest_dist < weapon_[closest_weapon].GetScale().x * 0.7f)
     return closest_weapon;
   return kDamageType_Invalid;
 }
@@ -227,10 +227,9 @@ void Player::UpdateTarget() {
   Demo* game = static_cast<Demo*>(engine.GetGame());
 
   if (drag_valid_) {
+    Vector2 origin = weapon_[active_weapon_].GetOffset();
     Vector2 dir = (drag_end_ - drag_start_).Normalize();
-    game->GetEnemy().SelectTarget(active_weapon_, drag_start_, dir, 1.2f);
-    if (!game->GetEnemy().HasTarget(active_weapon_))
-      game->GetEnemy().SelectTarget(active_weapon_, drag_start_, dir, 2);
+    game->GetEnemy().SelectTarget(active_weapon_, origin, dir);
   } else {
     game->GetEnemy().DeselectTarget(active_weapon_);
   }
@@ -323,7 +322,7 @@ bool Player::ValidateDrag() {
   Vector2 dir = drag_end_ - drag_start_;
   float len = dir.Magnitude();
   dir.Normalize();
-  if (len < weapon_[active_weapon_].GetScale().y / 4)
+  if (len < weapon_[active_weapon_].GetScale().y / 3)
     return false;
   if (dir.DotProduct(Vector2(0, 1)) < 0)
     return false;

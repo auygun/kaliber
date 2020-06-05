@@ -35,8 +35,7 @@ class Enemy {
 
   void SelectTarget(DamageType damage_type,
                     const base::Vector2& origin,
-                    const base::Vector2& dir,
-                    float snap_factor);
+                    const base::Vector2& dir);
   void DeselectTarget(DamageType damage_type);
 
   void HitTarget(DamageType damage_type);

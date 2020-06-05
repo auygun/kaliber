@@ -1,8 +1,11 @@
 #include "enemy.h"
 
+#include <algorithm>
 #include <cassert>
 #include <functional>
 #include <limits>
+#include <tuple>
+#include <vector>
 
 #include "../base/collusion_test.h"
 #include "../base/interpolation.h"
@@ -123,16 +126,14 @@ Vector2 Enemy::GetTargetPos(DamageType damage_type) {
 
 void Enemy::SelectTarget(DamageType damage_type,
                          const Vector2& origin,
-                         const Vector2& dir,
-                         float snap_factor) {
+                         const Vector2& dir) {
   assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
   if (waiting_for_next_wave_)
     return;
 
-  EnemyUnit* best_enemy = nullptr;
+  std::vector<std::tuple<EnemyUnit*, float, float>> candidates;
 
-  float closest_dist = std::numeric_limits<float>::max();
   for (auto& e : enemies_) {
     if (e.hit_points <= 0 || e.marked_for_removal)
       continue;
@@ -143,18 +144,56 @@ void Enemy::SelectTarget(DamageType damage_type,
       e.target_animator.Stop(Animator::kAllAnimations);
     }
 
-    if (!base::Intersection(e.sprite.GetOffset(),
-                            e.sprite.GetScale() * snap_factor,
-                            origin, dir))
-      continue;
-
     Vector2 weapon_enemy_dir = e.sprite.GetOffset() - origin;
     float enemy_weapon_dist = weapon_enemy_dir.Magnitude();
-    if (closest_dist > enemy_weapon_dist) {
-      closest_dist = enemy_weapon_dist;
-      best_enemy = &e;
+    weapon_enemy_dir.Normalize();
+    float cos_theta = weapon_enemy_dir.DotProduct(dir);
+    if (cos_theta > 0.95f)
+      candidates.push_back(std::make_tuple(&e, cos_theta, enemy_weapon_dist));
+  }
+
+  if (candidates.empty())
+    return;
+
+  for (auto it = candidates.begin(); it != candidates.end();) {
+    auto [cand_enemy, cand_cos_theta, cand_dist] = *it;
+
+    auto oit = candidates.begin();
+    for (; oit != candidates.end(); ++oit) {
+      auto [other_enemy, other_cos_theta, other_dist] = *oit;
+
+      if (cand_enemy == other_enemy || cand_dist < other_dist)
+        continue;
+
+      if (base::Intersection(other_enemy->sprite.GetOffset(),
+                              other_enemy->sprite.GetScale() * 1.2f,
+                              origin, dir)) {
+        break;
+      }
+    }
+    if (oit != candidates.end())
+      it = candidates.erase(it);
+    else
+      ++it;
+  }
+
+  if (candidates.empty())
+    return;
+
+  std::sort(candidates.begin(), candidates.end(), [](auto& a, auto& b) {
+    return std::get<1>(a) > std::get<1>(b);
+  });
+
+  EnemyUnit* best_enemy = nullptr;
+  for (auto& cand : candidates) {
+    if (std::get<0>(cand)->damage_type == damage_type ||
+        std::get<0>(cand)->damage_type == kDamageType_Any) {
+      best_enemy = std::get<0>(cand);
+      break;
     }
   }
+  if (!best_enemy)
+    best_enemy = std::get<0>(candidates[0]);
 
   if (best_enemy) {
     best_enemy->targetted_by_weapon_ = damage_type;
