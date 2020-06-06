@@ -33,6 +33,11 @@ bool Demo::Initialize() {
     return false;
   }
 
+  if (!boss_.Initialize()) {
+    LOG << "Failed to create the boss.";
+    return false;
+  }
+
   if (!hud_.Initialize()) {
     LOG << "Failed to create the hud.";
     return false;
@@ -94,6 +99,7 @@ void Demo::Draw(float frame_frac) {
   sky_.Draw(frame_frac);
   player_.Draw(frame_frac);
   enemy_.Draw(frame_frac);
+  boss_.Draw(frame_frac);
   hud_.Draw();
   menu_.Draw();
   credits_.Draw();
@@ -102,6 +108,7 @@ void Demo::Draw(float frame_frac) {
 void Demo::ContextLost() {
   enemy_.ContextLost();
   player_.ContextLost();
+  boss_.ContextLost();
   hud_.ContextLost();
   menu_.ContextLost();
   credits_.ContextLost();
@@ -174,6 +181,7 @@ void Demo::UpdateGameState(float delta_time) {
   sky_.Update(delta_time);
   player_.Update(delta_time);
   enemy_.Update(delta_time);
+  boss_.Update(delta_time);
 
   if (waiting_for_next_wave_)
     return;
