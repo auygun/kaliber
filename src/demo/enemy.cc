@@ -563,6 +563,7 @@ std::shared_ptr<Image> Enemy::GetScoreImage(int score) {
 
   font_->Print(0, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
 
+  image->Compress();
   image->SetImmutable();
   return image;
 }
