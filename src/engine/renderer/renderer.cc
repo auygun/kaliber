@@ -384,6 +384,9 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
         break;
 #if defined(__ANDROID__)
       case Image::kATC:
+        format = GL_ATC_RGB_AMD;
+        break;
+      case Image::kATCIA:
         format = GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD;
         break;
 #endif

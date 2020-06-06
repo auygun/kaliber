@@ -16,6 +16,9 @@
 
 cmake_minimum_required(VERSION 3.4.1)
 
+include(AndroidNdkModules)
+android_ndk_import_module_cpufeatures()
+
 # build native_app_glue as a static lib
 if (CMAKE_BUILD_TYPE MATCHES Debug)
     set(${CMAKE_C_FLAGS}, "${CMAKE_C_FLAGS} -D_DEBUG")
@@ -79,7 +82,23 @@ add_library(native-activity SHARED
     ../../../src/third_party/jsoncpp/jsoncpp.cc
     ../../../src/third_party/minizip/ioapi.c
     ../../../src/third_party/minizip/unzip.c
+    ../../../src/third_party/texture_compressor/dxt_encoder_internals.cc
+    ../../../src/third_party/texture_compressor/dxt_encoder.cc
+    ../../../src/third_party/texture_compressor/texture_compressor.cc
+    ../../../src/third_party/texture_compressor/texture_compressor_etc1.cc
 )
+
+if (ANDROID_ABI STREQUAL armeabi-v7a)
+    target_sources(native-activity PRIVATE ../../../src/third_party/texture_compressor/dxt_encoder_neon.cc)
+    target_sources(native-activity PRIVATE ../../../src/third_party/texture_compressor/texture_compressor_etc1_neon.cc)
+    set_source_files_properties(../../../src/third_party/texture_compressor/dxt_encoder_neon.cc PROPERTIES COMPILE_FLAGS -mfpu=neon)
+    set_source_files_properties(../../../src/third_party/texture_compressor/texture_compressor_etc1_neon.cc PROPERTIES COMPILE_FLAGS -mfpu=neon)
+endif()
+
+if (ANDROID_ABI STREQUAL arm64-v8a)
+    target_sources(native-activity PRIVATE ../../../src/third_party/texture_compressor/dxt_encoder_neon.cc)
+    target_sources(native-activity PRIVATE ../../../src/third_party/texture_compressor/texture_compressor_etc1_neon.cc)
+endif()
 
 target_include_directories(native-activity PRIVATE
     ${ANDROID_NDK}/sources/android/native_app_glue
@@ -89,6 +108,7 @@ target_include_directories(native-activity PRIVATE
 target_link_libraries(native-activity
     android
     native_app_glue
+    cpufeatures
     EGL
     GLESv2
     log
