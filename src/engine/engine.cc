@@ -2,6 +2,7 @@
 
 #include "../base/log.h"
 #include "../base/worker.h"
+#include "../third_party/texture_compressor/texture_compressor.h"
 #include "font.h"
 #include "game.h"
 #include "game_factory.h"
@@ -55,6 +56,25 @@ bool Engine::Initialize() {
     LOG << "aspect_ratio: " << aspect_ratio;
     screen_size_ = {2.0f, aspect_ratio * 2.0f};
     projection_ = base::Ortho(-1.0, 1.0, -aspect_ratio, aspect_ratio);
+  }
+
+  if (renderer_->SupportsDXT5()) {
+    tex_comp_alpha_ =
+        TextureCompressor::Create(TextureCompressor::kFormatDXT5);
+  } else if (renderer_->SupportsATC()) {
+    tex_comp_alpha_ =
+        TextureCompressor::Create(TextureCompressor::kFormatATCIA);
+  }
+
+  if (renderer_->SupportsDXT1()) {
+    tex_comp_opaque_ =
+        TextureCompressor::Create(TextureCompressor::kFormatDXT1);
+  } else if (renderer_->SupportsATC()) {
+    tex_comp_opaque_ =
+        TextureCompressor::Create(TextureCompressor::kFormatATC);
+  } else if (renderer_->SupportsETC1()) {
+    tex_comp_opaque_ =
+        TextureCompressor::Create(TextureCompressor::kFormatETC1);
   }
 
   system_font_ = GetAsset<Font>("engine/RobotoMono-Regular.ttf");
@@ -184,6 +204,10 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
     input_queue_.pop_front();
   }
   return event;
+}
+
+TextureCompressor* Engine::GetTextureCompressor(bool opacity) {
+  return opacity ? tex_comp_alpha_.get() : tex_comp_opaque_.get();
 }
 
 int Engine::GetScreenWidth() const {

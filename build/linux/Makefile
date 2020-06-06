@@ -101,7 +101,11 @@ GLTEST_SRC := \
   $(SRC_ROOT)/third_party/glew/glew.c \
   $(SRC_ROOT)/third_party/jsoncpp/jsoncpp.cc \
   $(SRC_ROOT)/third_party/minizip/ioapi.c \
-  $(SRC_ROOT)/third_party/minizip/unzip.c
+  $(SRC_ROOT)/third_party/minizip/unzip.c \
+  $(SRC_ROOT)/third_party/texture_compressor/dxt_encoder_internals.cc \
+  $(SRC_ROOT)/third_party/texture_compressor/dxt_encoder.cc \
+  $(SRC_ROOT)/third_party/texture_compressor/texture_compressor.cc \
+  $(SRC_ROOT)/third_party/texture_compressor/texture_compressor_etc1.cc
 
 GLTEST_EXE := $(call app_exe,gltest)
 GLTEST_OBJS := $(call objs_from_src, $(GLTEST_SRC))

@@ -6,6 +6,7 @@
 #include "../base/interpolation.h"
 #include "../base/log.h"
 #include "../base/misc.h"
+#include "../third_party/texture_compressor/texture_compressor.h"
 #include "engine.h"
 
 // This 3rd party library is written in C and uses malloc, which means that we
@@ -149,10 +150,10 @@ size_t Image::GetSize() const {
     case kRGBA32:
       return width_ * height_ * 4;
     case kDXT1:
+    case kATC:
       return ((width_ + 3) / 4) * ((height_ + 3) / 4) * 8;
     case kDXT5:
-      return ((width_ + 3) / 4) * ((height_ + 3) / 4) * 16;
-    case kATC:
+    case kATCIA:
       return ((width_ + 3) / 4) * ((height_ + 3) / 4) * 16;
     case kETC1:
       return (width_ * height_ * 4) / 8;
@@ -193,6 +194,46 @@ void Image::ConvertToPow2() {
     width_ = new_width;
     height_ = new_height;
   }
+}
+
+bool Image::Compress() {
+  TextureCompressor* tc =  Engine::Get().GetTextureCompressor(true);
+  if (!tc)
+    return false;
+
+  switch (tc->format()) {
+    case TextureCompressor::kFormatATC:
+      format_ = kATC;
+      break;
+    case TextureCompressor::kFormatATCIA:
+      format_ = kATCIA;
+      break;
+    case TextureCompressor::kFormatDXT1:
+      format_ = kDXT1;
+      break;
+    case TextureCompressor::kFormatDXT5:
+      format_ = kDXT5;
+      break;
+    case TextureCompressor::kFormatETC1:
+      format_ = kETC1;
+      break;
+    default:
+      return false;
+  }
+
+  LOG << "Compressing image " << GetName() << ". Format: " << format_;
+
+  unsigned compressedSize = GetSize();
+  uint8_t *compressedBuffer = (uint8_t *)AlignedAlloc(compressedSize *
+                                                      sizeof(uint8_t));
+
+  const uint8_t *src = buffer_.get();
+  uint8_t *dst = compressedBuffer;
+
+  tc->Compress(src, dst, width_, height_, TextureCompressor::kQualityHigh);
+
+  buffer_.reset(compressedBuffer);
+  return true;
 }
 
 uint8_t* Image::GetBuffer() {

@@ -12,6 +12,8 @@
 #include "image_quad.h"
 #include "renderer/render_resource.h"
 
+class TextureCompressor;
+
 namespace eng {
 
 class Font;
@@ -78,6 +80,8 @@ class Engine {
 
   base::Random& GetRandomGenerator() { return random_; }
 
+  TextureCompressor* GetTextureCompressor(bool opacity);
+
   Game* GetGame() { return game_.get(); }
 
   // Return screen width/height in pixels.
@@ -117,6 +121,9 @@ class Engine {
   base::Matrix4x4 projection_;
 
   std::shared_ptr<const eng::Font> system_font_;
+
+  std::unique_ptr<TextureCompressor> tex_comp_opaque_;
+  std::unique_ptr<TextureCompressor> tex_comp_alpha_;
 
   ImageQuad stats_;
 
