@@ -43,6 +43,13 @@ class Enemy {
   void OnWaveFinished();
   void OnWaveStarted(int wave);
 
+  void Spawn(EnemyType enemy_type,
+             DamageType damage_type,
+             const base::Vector2& pos,
+             float speed);
+
+  void SpawnBoss(const base::Vector2& pos, const base::Vector2& scale);
+
   int num_enemies_killed_in_current_wave() {
     return num_enemies_killed_in_current_wave_;
   }
@@ -100,11 +107,6 @@ class Enemy {
   void TakeDamage(EnemyUnit* target, int damage);
 
   void SpawnNextEnemy();
-
-  void Spawn(EnemyType enemy_type,
-             DamageType damage_type,
-             const base::Vector2& pos,
-             float speed);
 
   EnemyUnit* GetTarget(DamageType damage_type);
 

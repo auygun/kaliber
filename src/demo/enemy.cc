@@ -42,7 +42,7 @@ constexpr int idle2_frame_count[][3] = {{16, 16, -1},
 
 constexpr int idle_frame_speed = 12;
 
-constexpr int enemy_scores[] = {100, 150, 300, 200};
+constexpr int enemy_scores[] = {100, 150, 300, 200, 500};
 
 constexpr float kSpawnPeriod[kEnemyType_Max][2] = {{2, 5},
                                                    {15, 25},
@@ -75,6 +75,7 @@ Enemy::Enemy()
       score_tex_{Engine::Get().CreateRenderResource<Texture>(),
                  Engine::Get().CreateRenderResource<Texture>(),
                  Engine::Get().CreateRenderResource<Texture>(),
+                 Engine::Get().CreateRenderResource<Texture>(),
                  Engine::Get().CreateRenderResource<Texture>()} {}
 
 Enemy::~Enemy() = default;
@@ -92,18 +93,18 @@ void Enemy::ContextLost() {
 }
 
 void Enemy::Update(float delta_time) {
-  if (!waiting_for_next_wave_) {
-    if (spawn_factor_interpolator_ < 1) {
-      spawn_factor_interpolator_ += delta_time * 0.1f;
-      if (spawn_factor_interpolator_ > 1)
-        spawn_factor_interpolator_ = 1;
-    }
+  // if (!waiting_for_next_wave_) {
+  //   if (spawn_factor_interpolator_ < 1) {
+  //     spawn_factor_interpolator_ += delta_time * 0.1f;
+  //     if (spawn_factor_interpolator_ > 1)
+  //       spawn_factor_interpolator_ = 1;
+  //   }
 
-    for (int i = 0; i < kEnemyType_Max; ++i)
-      seconds_since_last_spawn_[i] += delta_time;
+  //   for (int i = 0; i < kEnemyType_Max; ++i)
+  //     seconds_since_last_spawn_[i] += delta_time;
 
-    SpawnNextEnemy();
-  }
+  //   SpawnNextEnemy();
+  // }
 
   Random& rnd = Engine::Get().GetRandomGenerator();
 
@@ -113,7 +114,9 @@ void Enemy::Update(float delta_time) {
       continue;
     }
 
-    if (it->enemy_type != kEnemyType_Bug &&
+    if ((it->enemy_type == kEnemyType_LightSkull ||
+         it->enemy_type == kEnemyType_DarkSkull ||
+         it->enemy_type == kEnemyType_Tank) &&
         !it->idle2_anim && rnd.Roll(200) == 1) {
       it->idle2_anim = true;
       it->sprite_animator.Stop(Animator::kFrames);
@@ -316,116 +319,6 @@ void Enemy::OnWaveStarted(int wave) {
   waiting_for_next_wave_ = false;
 }
 
-void Enemy::TakeDamage(EnemyUnit* target, int damage) {
-  assert(!target->marked_for_removal);
-  assert(target->hit_points > 0);
-
-  target->blast.SetVisible(true);
-  target->blast_animator.Play(Animator::kFrames, false);
-
-  target->hit_points -= damage;
-  if (target->hit_points <= 0) {
-    if (!waiting_for_next_wave_)
-      ++num_enemies_killed_in_current_wave_;
-
-    target->sprite.SetVisible(false);
-    target->health_base.SetVisible(false);
-    target->health_bar.SetVisible(false);
-    target->score.SetVisible(true);
-
-    target->score_animator.Play(Animator::kTimer | Animator::kMovement, false);
-    target->movement_animator.Pause(Animator::kMovement);
-
-    Engine& engine = Engine::Get();
-    Demo* game = static_cast<Demo*>(engine.GetGame());
-    game->AddScore(GetScore(target->enemy_type));
-  } else {
-    target->targetted_by_weapon_ = kDamageType_Invalid;
-
-    Vector2 s = target->sprite.GetScale() * Vector2(0.6f, 0.01f);
-    s.x *= (float)target->hit_points / (float)target->total_health;
-    float t = (s.x - target->health_bar.GetScale().x) / 2;
-    target->health_bar.SetScale(s);
-    target->health_bar.Translate({t, 0});
-
-    target->health_base.SetVisible(true);
-    target->health_bar.SetVisible(true);
-
-    target->health_animator.Stop(Animator::kTimer | Animator::kBlending);
-    target->health_animator.Play(Animator::kTimer, false);
-
-    if (target->enemy_type == kEnemyType_Bug) {
-      target->stealth = true;
-      target->movement_animator.Pause(Animator::kMovement);
-      target->sprite_animator.Pause(Animator::kFrames);
-
-      Random& rnd = Engine::Get().GetRandomGenerator();
-      float stealth_timer = Lerp(2.0f, 5.0f, rnd.GetFloat());
-      target->sprite_animator.SetEndCallback(Animator::kTimer,
-          [&, target]() -> void {
-            float x = SnapSpawnPosX(rnd.Roll(4) - 1);
-            TranslateEnemyUnit(*target, {x - target->sprite.GetOffset().x,0});
-
-            target->sprite_animator.SetEndCallback(Animator::kBlending,
-                [&, target]() -> void {
-                  target->stealth = false;
-                  target->movement_animator.Play(Animator::kMovement, true);
-                  target->sprite_animator.Play(Animator::kFrames, false);
-                });
-            target->sprite_animator.SetBlending({1, 1, 1, 1}, 1.0f);
-            target->sprite_animator.Play(Animator::kBlending, false);
-          });
-
-      target->sprite_animator.SetTimer(stealth_timer);
-      target->sprite_animator.SetBlending({1, 1, 1, 0}, 1.5f);
-      target->sprite_animator.Play(Animator::kBlending | Animator::kTimer,
-                                   false);
-    }
-  }
-}
-
-void Enemy::SpawnNextEnemy() {
-  Engine& engine = Engine::Get();
-  Random& rnd = engine.GetRandomGenerator();
-
-  float factor = Lerp(1.0f, spawn_factor_, spawn_factor_interpolator_);
-  EnemyType enemy_type = kEnemyType_Invalid;
-
-  for (int i = 0; i < kEnemyType_Max; ++i) {
-    if (seconds_since_last_spawn_[i] >= seconds_to_next_spawn_[i]) {
-      if (seconds_to_next_spawn_[i] > 0)
-        enemy_type = (EnemyType)i;
-
-      seconds_since_last_spawn_[i] = 0;
-      seconds_to_next_spawn_[i] =
-          Lerp(kSpawnPeriod[i][0] * factor, kSpawnPeriod[i][1] * factor,
-               rnd.GetFloat());
-      break;
-    }
-  }
-
-  if (enemy_type == kEnemyType_Invalid)
-    return;
-
-  DamageType damage_type = enemy_type == kEnemyType_Tank
-                               ? kDamageType_Any
-                               : (DamageType)(rnd.Roll(2) - 1);
-
-  Vector2 s = engine.GetScreenSize();
-  int col;
-  col = rnd.Roll(4) - 1;
-  if (col == last_spawn_col_)
-    col = (col + 1) % 4;
-  last_spawn_col_ = col;
-  float x = SnapSpawnPosX(col);
-  Vector2 pos = {x, s.y / 2};
-  float speed = enemy_type == kEnemyType_Tank
-                    ? 36.0f
-                    : (rnd.Roll(4) == 4 ? 6.0f : 10.0f);
-
-  Spawn(enemy_type, damage_type, pos, speed);
-}
-
 void Enemy::Spawn(EnemyType enemy_type,
                   DamageType damage_type,
                   const Vector2& pos,
@@ -536,6 +429,152 @@ void Enemy::Spawn(EnemyType enemy_type,
   e.movement_animator.Attach(&e.health_bar);
   e.movement_animator.Attach(&e.score);
   e.movement_animator.Play(Animator::kMovement, false);
+}
+
+void Enemy::SpawnBoss(const Vector2& pos, const Vector2& scale) {
+  auto& e = enemies_.emplace_back();
+  e.enemy_type = kEnemyType_Boss;
+  e.damage_type = kDamageType_Any;
+  e.total_health = e.hit_points = 20;
+
+  e.sprite.Create(target_tex_, {6, 2});
+  e.sprite.SetOffset(pos);
+  e.sprite.SetScale(scale);
+
+  e.health_base.Scale(e.sprite.GetScale() * Vector2(0.6f, 0.01f));
+  e.health_base.SetOffset(pos);
+  e.health_base.PlaceToBottomOf(e.sprite);
+  e.health_base.SetColor({0.5f, 0.5f, 0.5f, 1});
+
+  e.health_bar.Scale(e.sprite.GetScale() * Vector2(0.6f, 0.01f));
+  e.health_bar.SetOffset(pos);
+  e.health_bar.PlaceToBottomOf(e.sprite);
+  e.health_bar.SetColor({0.161f, 0.89f, 0.322f, 1});
+
+  e.score.Create(score_tex_[e.enemy_type]);
+  e.score.AutoScale();
+  e.score.SetColor({1, 1, 1, 1});
+  e.score.SetOffset(pos);
+
+  SetupFadeOutAnim(e.health_animator, 1);
+  e.health_animator.Attach(&e.health_base);
+  e.health_animator.Attach(&e.health_bar);
+
+  SetupFadeOutAnim(e.score_animator, 0.2f);
+  e.score_animator.SetMovement({0, Engine::Get().GetScreenSize().y / 2}, 2.0f);
+  e.score_animator.SetEndCallback(
+      Animator::kMovement, [&]() -> void { e.marked_for_removal = true; });
+  e.score_animator.Attach(&e.score);
+}
+
+void Enemy::TakeDamage(EnemyUnit* target, int damage) {
+  assert(!target->marked_for_removal);
+  assert(target->hit_points > 0);
+
+  target->blast.SetVisible(true);
+  target->blast_animator.Play(Animator::kFrames, false);
+
+  target->hit_points -= damage;
+  if (target->hit_points <= 0) {
+    if (!waiting_for_next_wave_)
+      ++num_enemies_killed_in_current_wave_;
+
+    target->sprite.SetVisible(false);
+    target->health_base.SetVisible(false);
+    target->health_bar.SetVisible(false);
+    target->score.SetVisible(true);
+
+    target->score_animator.Play(Animator::kTimer | Animator::kMovement, false);
+    target->movement_animator.Pause(Animator::kMovement);
+
+    Engine& engine = Engine::Get();
+    Demo* game = static_cast<Demo*>(engine.GetGame());
+    game->AddScore(GetScore(target->enemy_type));
+  } else {
+    target->targetted_by_weapon_ = kDamageType_Invalid;
+
+    Vector2 s = target->sprite.GetScale() * Vector2(0.6f, 0.01f);
+    s.x *= (float)target->hit_points / (float)target->total_health;
+    float t = (s.x - target->health_bar.GetScale().x) / 2;
+    target->health_bar.SetScale(s);
+    target->health_bar.Translate({t, 0});
+
+    target->health_base.SetVisible(true);
+    target->health_bar.SetVisible(true);
+
+    target->health_animator.Stop(Animator::kTimer | Animator::kBlending);
+    target->health_animator.Play(Animator::kTimer, false);
+
+    if (target->enemy_type == kEnemyType_Bug) {
+      target->stealth = true;
+      target->movement_animator.Pause(Animator::kMovement);
+      target->sprite_animator.Pause(Animator::kFrames);
+
+      Random& rnd = Engine::Get().GetRandomGenerator();
+      float stealth_timer = Lerp(2.0f, 5.0f, rnd.GetFloat());
+      target->sprite_animator.SetEndCallback(Animator::kTimer,
+          [&, target]() -> void {
+            float x = SnapSpawnPosX(rnd.Roll(4) - 1);
+            TranslateEnemyUnit(*target, {x - target->sprite.GetOffset().x,0});
+
+            target->sprite_animator.SetEndCallback(Animator::kBlending,
+                [&, target]() -> void {
+                  target->stealth = false;
+                  target->movement_animator.Play(Animator::kMovement, true);
+                  target->sprite_animator.Play(Animator::kFrames, false);
+                });
+            target->sprite_animator.SetBlending({1, 1, 1, 1}, 1.0f);
+            target->sprite_animator.Play(Animator::kBlending, false);
+          });
+
+      target->sprite_animator.SetTimer(stealth_timer);
+      target->sprite_animator.SetBlending({1, 1, 1, 0}, 1.5f);
+      target->sprite_animator.Play(Animator::kBlending | Animator::kTimer,
+                                   false);
+    }
+  }
+}
+
+void Enemy::SpawnNextEnemy() {
+  Engine& engine = Engine::Get();
+  Random& rnd = engine.GetRandomGenerator();
+
+  float factor = Lerp(1.0f, spawn_factor_, spawn_factor_interpolator_);
+  EnemyType enemy_type = kEnemyType_Invalid;
+
+  for (int i = 0; i < kEnemyType_Max; ++i) {
+    if (seconds_since_last_spawn_[i] >= seconds_to_next_spawn_[i]) {
+      if (seconds_to_next_spawn_[i] > 0)
+        enemy_type = (EnemyType)i;
+
+      seconds_since_last_spawn_[i] = 0;
+      seconds_to_next_spawn_[i] =
+          Lerp(kSpawnPeriod[i][0] * factor, kSpawnPeriod[i][1] * factor,
+               rnd.GetFloat());
+      break;
+    }
+  }
+
+  if (enemy_type == kEnemyType_Invalid)
+    return;
+
+  DamageType damage_type = enemy_type == kEnemyType_Tank
+                               ? kDamageType_Any
+                               : (DamageType)(rnd.Roll(2) - 1);
+
+  Vector2 s = engine.GetScreenSize();
+  int col;
+  col = rnd.Roll(4) - 1;
+  if (col == last_spawn_col_)
+    col = (col + 1) % 4;
+  last_spawn_col_ = col;
+  float x = SnapSpawnPosX(col);
+  Vector2 pos = {x, s.y / 2};
+  float speed = enemy_type == kEnemyType_Tank
+                    ? 36.0f
+                    : (rnd.Roll(4) == 4 ? 6.0f : 10.0f);
+
+  Spawn(enemy_type, damage_type, pos, speed);
 }
 
 Enemy::EnemyUnit* Enemy::GetTarget(DamageType damage_type) {

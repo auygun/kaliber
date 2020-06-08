@@ -36,11 +36,11 @@ class Boss {
   // int total_health = 0;
   // int hit_points = 0;
 
-  eng::ImageQuad sprite;
+  eng::ImageQuad sprite_;
   // eng::SolidQuad health_base;
   // eng::SolidQuad health_bar;
 
-  // eng::Animator sprite_animator;
+  eng::Animator sprite_animator_;
 
   std::shared_ptr<eng::Texture> boss_tex_;
 
