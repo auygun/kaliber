@@ -3,7 +3,6 @@
 
 #include "../base/closure.h"
 #include "../engine/game.h"
-#include "boss.h"
 #include "credits.h"
 #include "enemy.h"
 #include "hud.h"
@@ -46,7 +45,6 @@ class Demo : public eng::Game {
 
   Player player_;
   Enemy enemy_;
-  Boss boss_;
   Hud hud_;
   Menu menu_;
   Credits credits_;
@@ -74,6 +72,9 @@ class Demo : public eng::Game {
 
   void Continue();
   void StartNewGame();
+
+  void StartNextWave();
+  void StartNextBoss();
 
   void SetDelayedWork(float seconds, base::Closure cb);
 };

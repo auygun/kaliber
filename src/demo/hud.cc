@@ -95,39 +95,37 @@ void Hud::ContextLost() {
 }
 
 void Hud::Show() {
-  if (text_[0].IsVisible())
+  if (text_[0].IsVisible() && text_[1].IsVisible())
     return;
 
   for (int i = 0; i < 2; ++i) {
     progress_bar_[i].SetVisible(true);
     text_[i].SetVisible(true);
-    progress_bar_animator_[i].SetBlending(kPprogressBarColor[i], 0.3f);
+    progress_bar_animator_[i].SetBlending(kPprogressBarColor[i], 0.5f);
     progress_bar_animator_[i].Play(Animator::kBlending, false);
   }
 }
 
 void Hud::HideProgress() {
-  if (text_[0].IsVisible())
+  if (!progress_bar_[0].IsVisible())
     return;
 
+  text_animator_[1].SetEndCallback(Animator::kBlending, [&]() -> void {
+    text_animator_[1].SetEndCallback(Animator::kBlending, nullptr);
+    text_[1].SetVisible(false);
+  });
+  text_animator_[1].SetBlending(kTextColor * Vector4(1, 1, 1, 0), 0.5f);
+  text_animator_[1].Play(Animator::kBlending, false);
+
   for (int i = 0; i < 2; ++i) {
-    progress_bar_[i].SetVisible(true);
-    text_[i].SetVisible(true);
-
-    text_animator_[i].SetEndCallback(Animator::kBlending, [&, i]() -> void {
-      text_animator_[i].SetEndCallback(Animator::kBlending, nullptr);
-      text_[i].SetVisible(false);
-    });
-    text_animator_[i].SetBlending({1, 1, 1, 0}, 0.3f);
-    text_animator_[i].Play(Animator::kBlending, false);
-
     progress_bar_animator_[i].SetEndCallback(Animator::kBlending,
         [&, i]() -> void {
           progress_bar_animator_[i].SetEndCallback(Animator::kBlending,
                                                    nullptr);
-          text_[i].SetVisible(false);
+          progress_bar_animator_[1].SetVisible(false);
         });
-    progress_bar_animator_[i].SetBlending({1, 1, 1, 0}, 0.3f);
+    progress_bar_animator_[i].SetBlending(
+        kPprogressBarColor[i] * Vector4(1, 1, 1, 0), 0.5f);
     progress_bar_animator_[i].Play(Animator::kBlending, false);
   }
 }
@@ -152,7 +150,8 @@ void Hud::PrintWave(int wave, bool flash) {
 
   if (flash) {
     text_animator_[1].SetEndCallback(Animator::kBlending, text_animator_cb_[1]);
-    text_animator_[1].SetBlending({1, 1, 1, 1}, 0.08f);
+    text_animator_[1].SetBlending(
+        {1, 1, 1, 1}, 0.1f, std::bind(Acceleration, std::placeholders::_1, 1));
     text_animator_[1].Play(Animator::kBlending, false);
   }
 }

@@ -40,17 +40,12 @@ class Enemy {
 
   void HitTarget(DamageType damage_type);
 
+  bool IsBossAlive() const;
+
   void OnWaveFinished();
   void OnWaveStarted(int wave, bool boss_figt);
 
-  void Spawn(EnemyType enemy_type,
-             DamageType damage_type,
-             const base::Vector2& pos,
-             float speed);
-
-  void SpawnBoss(const base::Vector2& pos, const base::Vector2& scale);
-
-  int num_enemies_killed_in_current_wave() {
+  int num_enemies_killed_in_current_wave() const {
     return num_enemies_killed_in_current_wave_;
   }
 
@@ -84,9 +79,13 @@ class Enemy {
 
   std::shared_ptr<eng::Texture> skull_tex_;
   std::shared_ptr<eng::Texture> bug_tex_;
+  std::shared_ptr<eng::Texture> boss_tex_;
   std::shared_ptr<eng::Texture> target_tex_;
   std::shared_ptr<eng::Texture> blast_tex_;
   std::shared_ptr<eng::Texture> score_tex_[kEnemyType_Max];
+
+  eng::ImageQuad boss_;
+  eng::Animator boss_animator_;
 
   std::shared_ptr<const eng::Font> font_;
 
@@ -94,8 +93,10 @@ class Enemy {
 
   int num_enemies_killed_in_current_wave_ = 0;
 
-  std::array<float, kEnemyType_Max> seconds_since_last_spawn_ = {0, 0, 0};
-  std::array<float, kEnemyType_Max> seconds_to_next_spawn_ = {0, 0, 0};
+  std::array<float, kEnemyType_Unit_Last + 1> seconds_since_last_spawn_ =
+      {0, 0, 0, 0};
+  std::array<float, kEnemyType_Unit_Last + 1> seconds_to_next_spawn_ =
+      {0, 0, 0, 0};
 
   float spawn_factor_ = 0;
   float spawn_factor_interpolator_ = 0;
@@ -106,9 +107,17 @@ class Enemy {
 
   bool boss_fight_ = false;
 
+  void SpawnUnit(EnemyType enemy_type,
+                 DamageType damage_type,
+                 const base::Vector2& pos,
+                 float speed);
+
+  void SpawnBoss();
+
   void TakeDamage(EnemyUnit* target, int damage);
 
-  void SpawnNextEnemy();
+  void UpdateWave(float delta_time);
+  void UpdateBoss(float delta_time);
 
   EnemyUnit* GetTarget(DamageType damage_type);
 

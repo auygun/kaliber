@@ -124,6 +124,7 @@ void Animator::Update(float delta_time) {
     UpdateTimer(delta_time);
 
   for (auto& a : elements_) {
+    // TODO: Move out of loop.
     if (play_flags_ & kMovement) {
       float interpolated_time = movement_interpolator_
                                     ? movement_interpolator_(movement_time_)

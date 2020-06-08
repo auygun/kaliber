@@ -33,11 +33,6 @@ bool Demo::Initialize() {
     return false;
   }
 
-  if (!boss_.Initialize()) {
-    LOG << "Failed to create the boss.";
-    return false;
-  }
-
   if (!hud_.Initialize()) {
     LOG << "Failed to create the hud.";
     return false;
@@ -98,7 +93,6 @@ void Demo::Update(float delta_time) {
 void Demo::Draw(float frame_frac) {
   sky_.Draw(frame_frac);
   player_.Draw(frame_frac);
-  boss_.Draw(frame_frac);
   enemy_.Draw(frame_frac);
   hud_.Draw();
   menu_.Draw();
@@ -108,7 +102,6 @@ void Demo::Draw(float frame_frac) {
 void Demo::ContextLost() {
   enemy_.ContextLost();
   player_.ContextLost();
-  boss_.ContextLost();
   hud_.ContextLost();
   menu_.ContextLost();
   credits_.ContextLost();
@@ -186,65 +179,27 @@ void Demo::UpdateGameState(float delta_time) {
     return;
 
   if (boss_fight_) {
-    boss_.Update(delta_time);
-  } else if (enemy_.num_enemies_killed_in_current_wave() !=
-             last_num_enemies_killed_) {
+    if (!enemy_.IsBossAlive()) {
+      LOG << "Boss died. Starting next wave";
+      StartNextWave();
+    }
+    return;
+  }
+
+  if (enemy_.num_enemies_killed_in_current_wave() != last_num_enemies_killed_) {
     last_num_enemies_killed_ = enemy_.num_enemies_killed_in_current_wave();
     int enemies_remaining = total_enemies_ - last_num_enemies_killed_;
 
     if (enemies_remaining <= 0) {
-      waiting_for_next_wave_ = true;
-      hud_.SetProgress(wave_ > 0 ? 0 : 1);
-
-      enemy_.OnWaveFinished();
-
-      SetDelayedWork(1, [&]() -> void {
-        Random& rnd = Engine::Get().GetRandomGenerator();
-        int dominant_channel = rnd.Roll(3) - 1;
-        if (dominant_channel == last_dominant_channel_)
-          dominant_channel = (dominant_channel + 1) % 3;
-        last_dominant_channel_ = dominant_channel;
-
-        float weights[3] = {0, 0, 0};
-        weights[dominant_channel] = 1;
-        Vector4 c = {Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[0],
-                     Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[1],
-                     Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[2], 1};
-        c += {Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[0]),
-              Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[1]),
-              Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[2]), 1};
-        sky_.SwitchColor(c);
-
-        if (wave_ == 1) {
-          hud_.HideProgress();
-
-          boss_fight_ = true;
-          total_enemies_ = 0;
-          last_num_enemies_killed_ = 0;
-
-          enemy_.OnWaveStarted(wave_, true);
-          SetDelayedWork(1, [&]() -> void {
-            boss_.Start();
-          });
-        } else {
-          ++wave_;
-          hud_.PrintScore(score_, true);
-          hud_.PrintWave(wave_, true);
-          hud_.SetProgress(1);
-
-          float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;
-          total_enemies_ = (int)(6 * factor);
-          last_num_enemies_killed_ = 0;
-          DLOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
-
-          enemy_.OnWaveStarted(wave_, false);
-        }
-
-        waiting_for_next_wave_ = false;
-      });
-    } else {
+      if (wave_ %2) {
+        LOG << "Wave finished. Boss time";
+        StartNextBoss();
+      } else {
+        LOG << "Wave finished. Starting next wave";
+        StartNextWave();
+      }
+    } else
       hud_.SetProgress((float)enemies_remaining / (float)total_enemies_);
-    }
   }
 }
 
@@ -262,6 +217,83 @@ void Demo::StartNewGame() {
   delayed_work_timer_ = 0;
   delayed_work_cb_ = nullptr;
   EnterGameState();
+}
+
+void Demo::StartNextWave() {
+  waiting_for_next_wave_ = true;
+  hud_.SetProgress(wave_ > 0 ? 0 : 1);
+
+  enemy_.OnWaveFinished();
+
+  SetDelayedWork(1, [&]() -> void {
+    Random& rnd = Engine::Get().GetRandomGenerator();
+    int dominant_channel = rnd.Roll(3) - 1;
+    if (dominant_channel == last_dominant_channel_)
+      dominant_channel = (dominant_channel + 1) % 3;
+    last_dominant_channel_ = dominant_channel;
+
+    float weights[3] = {0, 0, 0};
+    weights[dominant_channel] = 1;
+    Vector4 c = {Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[0],
+                  Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[1],
+                  Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[2], 1};
+    c += {Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[0]),
+          Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[1]),
+          Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[2]), 1};
+    sky_.SwitchColor(c);
+
+    ++wave_;
+    if (boss_fight_)
+      hud_.Show();
+    hud_.PrintScore(score_, true);
+    hud_.PrintWave(wave_, true);
+    hud_.SetProgress(1);
+
+    // float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;
+    total_enemies_ = 1; //(int)(6 * factor);
+    last_num_enemies_killed_ = 0;
+    boss_fight_ = false;
+    DLOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
+
+    enemy_.OnWaveStarted(wave_, false);
+
+    waiting_for_next_wave_ = false;
+  });
+}
+
+void Demo::StartNextBoss() {
+  waiting_for_next_wave_ = true;
+  hud_.SetProgress(wave_ > 0 ? 0 : 1);
+
+  enemy_.OnWaveFinished();
+
+  SetDelayedWork(1, [&]() -> void {
+    Random& rnd = Engine::Get().GetRandomGenerator();
+    int dominant_channel = rnd.Roll(3) - 1;
+    if (dominant_channel == last_dominant_channel_)
+      dominant_channel = (dominant_channel + 1) % 3;
+    last_dominant_channel_ = dominant_channel;
+
+    float weights[3] = {0, 0, 0};
+    weights[dominant_channel] = 1;
+    Vector4 c = {Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[0],
+                  Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[1],
+                  Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[2], 1};
+    c += {Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[0]),
+          Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[1]),
+          Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[2]), 1};
+    sky_.SwitchColor(c);
+
+    hud_.HideProgress();
+
+    total_enemies_ = 0;
+    last_num_enemies_killed_ = 0;
+    boss_fight_ = true;
+
+    enemy_.OnWaveStarted(wave_, true);
+
+    waiting_for_next_wave_ = false;
+  });
 }
 
 void Demo::SetDelayedWork(float seconds, base::Closure cb) {
