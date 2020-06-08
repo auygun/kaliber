@@ -66,6 +66,9 @@ void Animator::SetMovement(Vector2 direction,
   movement_direction_ = direction;
   movement_speed_ = 1.0f / duration;
   movement_interpolator_ = std::move(interpolator);
+
+  for (auto& a : elements_)
+    a.movement_last_offset = {0, 0};
 }
 
 void Animator::SetRotation(float trget,
@@ -74,6 +77,9 @@ void Animator::SetRotation(float trget,
   rotation_target_ = trget;
   rotation_speed_ = 1.0f / duration;
   rotation_interpolator_ = std::move(interpolator);
+
+  for (auto& a : elements_)
+    a.rotation_last_theta = 0;
 }
 
 void Animator::SetBlending(Vector4 target,
