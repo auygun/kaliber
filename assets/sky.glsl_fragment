@@ -1,4 +1,10 @@
+#ifdef GL_ES
 precision mediump float;
+#else
+#define lowp
+#define mediump
+#define highp
+#endif
 
 uniform highp vec2 sky_offset;
 uniform vec3 nebula_color;
