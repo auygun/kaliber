@@ -6,13 +6,6 @@
 #include "../base/log.h"
 #include "engine.h"
 
-namespace {
-
-constexpr char kKeywordDelimiter[] = ";{}() \t";
-constexpr char kKeywordHighp[] = "highp";
-
-}  // namespace
-
 namespace eng {
 
 bool ShaderSource::Load(const std::string& name) {
@@ -34,8 +27,7 @@ bool ShaderSource::Load(const std::string& name) {
     return false;
   }
 
-  vertex_source_ = engine.IsMobile() ? std::move(vertex_source)
-                                     : Preprocess(vertex_source.get(), size);
+  vertex_source_ = std::string(vertex_source.get(), size + 1);
 
   std::string fragment_file_name = name;
   fragment_file_name += "_fragment";
@@ -46,34 +38,9 @@ bool ShaderSource::Load(const std::string& name) {
     return false;
   }
 
-  fragment_source_ = engine.IsMobile()
-                         ? std::move(fragment_source)
-                         : Preprocess(fragment_source.get(), size);
+  fragment_source_ = std::string(fragment_source.get(), size + 1);
 
   return true;
-}
-
-std::unique_ptr<char[]> ShaderSource::Preprocess(char* source, size_t size) {
-  std::unique_ptr<char[]> buffer = std::make_unique<char[]>(size);
-  char* dst = buffer.get();
-  memcpy(dst, source, size + 1);
-
-  char* token = strtok(source, kKeywordDelimiter);
-  char* last_token = token;
-
-  while (token) {
-    dst += token - last_token;
-    last_token = token;
-
-    if (strcmp(token, kKeywordHighp) == 0) {
-      size_t keyword_length = strlen(kKeywordHighp);
-      memset(dst, ' ', keyword_length);
-    }
-
-    token = strtok(NULL, kKeywordDelimiter);
-  }
-
-  return buffer;
 }
 
 }  // namespace eng

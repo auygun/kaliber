@@ -1,6 +1,7 @@
 #ifndef ASSET_H
 #define ASSET_H
 
+#include <memory>
 #include <string>
 
 namespace eng {
