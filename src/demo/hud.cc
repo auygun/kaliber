@@ -106,6 +106,32 @@ void Hud::Show() {
   }
 }
 
+void Hud::HideProgress() {
+  if (text_[0].IsVisible())
+    return;
+
+  for (int i = 0; i < 2; ++i) {
+    progress_bar_[i].SetVisible(true);
+    text_[i].SetVisible(true);
+
+    text_animator_[i].SetEndCallback(Animator::kBlending, [&, i]() -> void {
+      text_animator_[i].SetEndCallback(Animator::kBlending, nullptr);
+      text_[i].SetVisible(false);
+    });
+    text_animator_[i].SetBlending({1, 1, 1, 0}, 0.3f);
+    text_animator_[i].Play(Animator::kBlending, false);
+
+    progress_bar_animator_[i].SetEndCallback(Animator::kBlending,
+        [&, i]() -> void {
+          progress_bar_animator_[i].SetEndCallback(Animator::kBlending,
+                                                   nullptr);
+          text_[i].SetVisible(false);
+        });
+    progress_bar_animator_[i].SetBlending({1, 1, 1, 0}, 0.3f);
+    progress_bar_animator_[i].Play(Animator::kBlending, false);
+  }
+}
+
 void Hud::PrintScore(int score, bool flash) {
   last_score_ = score;
   Print(0, std::to_string(score));

@@ -64,6 +64,8 @@ class Demo : public eng::Game {
 
   int waiting_for_next_wave_ = false;
 
+  bool boss_fight_ = false;
+
   float delayed_work_timer_ = 0;
   base::Closure delayed_work_cb_;
 

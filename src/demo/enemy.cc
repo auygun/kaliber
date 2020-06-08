@@ -93,18 +93,18 @@ void Enemy::ContextLost() {
 }
 
 void Enemy::Update(float delta_time) {
-  // if (!waiting_for_next_wave_) {
-  //   if (spawn_factor_interpolator_ < 1) {
-  //     spawn_factor_interpolator_ += delta_time * 0.1f;
-  //     if (spawn_factor_interpolator_ > 1)
-  //       spawn_factor_interpolator_ = 1;
-  //   }
+  if (!waiting_for_next_wave_ && !boss_fight_) {
+    if (spawn_factor_interpolator_ < 1) {
+      spawn_factor_interpolator_ += delta_time * 0.1f;
+      if (spawn_factor_interpolator_ > 1)
+        spawn_factor_interpolator_ = 1;
+    }
 
-  //   for (int i = 0; i < kEnemyType_Max; ++i)
-  //     seconds_since_last_spawn_[i] += delta_time;
+    for (int i = 0; i < kEnemyType_Max; ++i)
+      seconds_since_last_spawn_[i] += delta_time;
 
-  //   SpawnNextEnemy();
-  // }
+    SpawnNextEnemy();
+  }
 
   Random& rnd = Engine::Get().GetRandomGenerator();
 
@@ -302,10 +302,10 @@ void Enemy::OnWaveFinished() {
   waiting_for_next_wave_ = true;
 }
 
-void Enemy::OnWaveStarted(int wave) {
+void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   for (auto& e : enemies_) {
     if (!e.marked_for_removal && e.hit_points > 0) {
-      if (wave == 1)
+      if (wave == 1 && !boss_fight)
         e.marked_for_removal = true;
       else
         TakeDamage(&e, 100);
@@ -317,6 +317,7 @@ void Enemy::OnWaveStarted(int wave) {
   spawn_factor_ = 1 / (log10(0.25f * ((wave + 4) * 0.8f) + 1.468f) * 6);
   spawn_factor_interpolator_ = 0;
   waiting_for_next_wave_ = false;
+  boss_fight_ = boss_fight;
 }
 
 void Enemy::Spawn(EnemyType enemy_type,
@@ -437,9 +438,15 @@ void Enemy::SpawnBoss(const Vector2& pos, const Vector2& scale) {
   e.damage_type = kDamageType_Any;
   e.total_health = e.hit_points = 20;
 
-  e.sprite.Create(target_tex_, {6, 2});
+  // e.sprite.Create(target_tex_, {6, 2});
+  e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
   e.sprite.SetOffset(pos);
   e.sprite.SetScale(scale);
+  e.sprite.SetVisible(true);
+
+  e.target.Create(target_tex_, {6, 2});
+  e.target.AutoScale();
+  e.target.SetOffset(pos);
 
   e.health_base.Scale(e.sprite.GetScale() * Vector2(0.6f, 0.01f));
   e.health_base.SetOffset(pos);
@@ -455,6 +462,8 @@ void Enemy::SpawnBoss(const Vector2& pos, const Vector2& scale) {
   e.score.AutoScale();
   e.score.SetColor({1, 1, 1, 1});
   e.score.SetOffset(pos);
+
+  e.target_animator.Attach(&e.target);
 
   SetupFadeOutAnim(e.health_animator, 1);
   e.health_animator.Attach(&e.health_base);

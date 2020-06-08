@@ -29,6 +29,8 @@ class Hud {
 
   void Show();
 
+  void HideProgress();
+
   void PrintScore(int score, bool flash);
   void PrintWave(int wave, bool flash);
   void SetProgress(float progress);

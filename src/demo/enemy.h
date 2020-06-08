@@ -41,7 +41,7 @@ class Enemy {
   void HitTarget(DamageType damage_type);
 
   void OnWaveFinished();
-  void OnWaveStarted(int wave);
+  void OnWaveStarted(int wave, bool boss_figt);
 
   void Spawn(EnemyType enemy_type,
              DamageType damage_type,
@@ -103,6 +103,8 @@ class Enemy {
   bool waiting_for_next_wave_ = false;
 
   int last_spawn_col_ = 0;
+
+  bool boss_fight_ = false;
 
   void TakeDamage(EnemyUnit* target, int damage);
 

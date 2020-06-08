@@ -21,24 +21,17 @@ bool Boss::Initialize() {
 
   sprite_.Create(boss_tex_, {4, 3});
   sprite_.AutoScale();
-  sprite_.SetOffset((Engine::Get().GetScreenSize() + sprite_.GetScale()) *
-                   Vector2(0, 0.5f));
-  sprite_.SetVisible(true);
 
+  sprite_animator_.SetEndCallback(Animator::kMovement, [&]() -> void {
+    Vector2 pos = {0 ,0}, scale = {1, 1};
+    GetHitBox(pos, scale);
+    Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
+    game->GetEnemy().SpawnBoss(pos, scale);
+  });
   sprite_animator_.SetMovement({0, sprite_.GetScale().y * -0.99f}, 2,
       std::bind(Acceleration, std::placeholders::_1, -1));
-  sprite_animator_.Play(Animator::kMovement, false);
-
   sprite_animator_.SetFrames(8, 12);
   sprite_animator_.Attach(&sprite_);
-  sprite_animator_.Play(Animator::kFrames, true);
-
-  Engine& engine = Engine::Get();
-  Demo* game = static_cast<Demo*>(engine.GetGame());
-
-  game->GetEnemy().SpawnBoss(sprite_.GetOffset() -
-                                sprite_.GetScale() * Vector2(0, 0.3f),
-                             sprite_.GetScale() * 0.3f);
 
   return true;
 }
@@ -55,7 +48,19 @@ void Boss::Draw(float frame_frac) {
   sprite_.Draw();
 }
 
+void Boss::Start() {
+  sprite_.SetVisible(true);
+  sprite_.SetOffset((Engine::Get().GetScreenSize() + sprite_.GetScale()) *
+                   Vector2(0, 0.5f));
+  sprite_animator_.Play(Animator::kMovement | Animator::kFrames, false);
+}
+
 void Boss::Hit(DamageType damage_type) {
+}
+
+void Boss::GetHitBox(Vector2& pos, Vector2& scale) {
+  pos = sprite_.GetOffset() - sprite_.GetScale() * Vector2(0, 0.3f);
+  scale = sprite_.GetScale() * 0.3f;
 }
 
 bool Boss::CreateRenderResources() {

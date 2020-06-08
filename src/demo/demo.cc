@@ -98,8 +98,8 @@ void Demo::Update(float delta_time) {
 void Demo::Draw(float frame_frac) {
   sky_.Draw(frame_frac);
   player_.Draw(frame_frac);
-  enemy_.Draw(frame_frac);
   boss_.Draw(frame_frac);
+  enemy_.Draw(frame_frac);
   hud_.Draw();
   menu_.Draw();
   credits_.Draw();
@@ -181,12 +181,14 @@ void Demo::UpdateGameState(float delta_time) {
   sky_.Update(delta_time);
   player_.Update(delta_time);
   enemy_.Update(delta_time);
-  boss_.Update(delta_time);
 
   if (waiting_for_next_wave_)
     return;
 
-  if (enemy_.num_enemies_killed_in_current_wave() != last_num_enemies_killed_) {
+  if (boss_fight_) {
+    boss_.Update(delta_time);
+  } else if (enemy_.num_enemies_killed_in_current_wave() !=
+             last_num_enemies_killed_) {
     last_num_enemies_killed_ = enemy_.num_enemies_killed_in_current_wave();
     int enemies_remaining = total_enemies_ - last_num_enemies_killed_;
 
@@ -213,17 +215,30 @@ void Demo::UpdateGameState(float delta_time) {
               Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[2]), 1};
         sky_.SwitchColor(c);
 
-        ++wave_;
-        hud_.PrintScore(score_, true);
-        hud_.PrintWave(wave_, true);
-        hud_.SetProgress(1);
+        if (wave_ == 1) {
+          hud_.HideProgress();
 
-        float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;
-        total_enemies_ = (int)(6 * factor);
-        last_num_enemies_killed_ = 0;
-        DLOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
+          boss_fight_ = true;
+          total_enemies_ = 0;
+          last_num_enemies_killed_ = 0;
 
-        enemy_.OnWaveStarted(wave_);
+          enemy_.OnWaveStarted(wave_, true);
+          SetDelayedWork(1, [&]() -> void {
+            boss_.Start();
+          });
+        } else {
+          ++wave_;
+          hud_.PrintScore(score_, true);
+          hud_.PrintWave(wave_, true);
+          hud_.SetProgress(1);
+
+          float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;
+          total_enemies_ = (int)(6 * factor);
+          last_num_enemies_killed_ = 0;
+          DLOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
+
+          enemy_.OnWaveStarted(wave_, false);
+        }
 
         waiting_for_next_wave_ = false;
       });

@@ -30,7 +30,11 @@ class Boss {
 
   void Draw(float frame_frac);
 
+  void Start();
+
   void Hit(DamageType damage_type);
+
+  void GetHitBox(base::Vector2& pos, base::Vector2& scale);
 
  private:
   // int total_health = 0;
