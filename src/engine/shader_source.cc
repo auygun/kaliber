@@ -27,7 +27,7 @@ bool ShaderSource::Load(const std::string& name) {
     return false;
   }
 
-  vertex_source_ = std::string(vertex_source.get(), size + 1);
+  vertex_source_ = std::move(vertex_source);
 
   std::string fragment_file_name = name;
   fragment_file_name += "_fragment";
@@ -38,7 +38,7 @@ bool ShaderSource::Load(const std::string& name) {
     return false;
   }
 
-  fragment_source_ = std::string(fragment_source.get(), size + 1);
+  fragment_source_ = std::move(fragment_source);
 
   return true;
 }

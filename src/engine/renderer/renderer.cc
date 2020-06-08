@@ -566,12 +566,12 @@ void Renderer::HandleCmdCreateShader(RenderCommand* cmd) {
     return;
 
   GLuint vertex_shader =
-      CreateShader(c->source->GetVertexSource().c_str(), GL_VERTEX_SHADER);
+      CreateShader(c->source->GetVertexSource(), GL_VERTEX_SHADER);
   if (!vertex_shader)
     return;
 
   GLuint fragment_shader =
-      CreateShader(c->source->GetFragmentSource().c_str(), GL_FRAGMENT_SHADER);
+      CreateShader(c->source->GetFragmentSource(), GL_FRAGMENT_SHADER);
   if (!fragment_shader)
     return;
 
