@@ -27,8 +27,8 @@ class ImageQuad : public Animatable {
 
   // Animatable interface.
   void SetFrame(size_t frame) override;
-  size_t GetFrame() override { return current_frame_; }
-  size_t GetNumFrames() override;
+  size_t GetFrame() const override { return current_frame_; }
+  size_t GetNumFrames() const override;
   void SetColor(const base::Vector4& color) override { color_ = color; }
   base::Vector4 GetColor() const override { return color_; }
 

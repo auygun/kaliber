@@ -28,8 +28,8 @@ class SkyQuad : public eng::Animatable {
 
   // Animatable interface.
   void SetFrame(size_t frame) override {}
-  size_t GetFrame() override { return 0; }
-  size_t GetNumFrames() override { return 0; }
+  size_t GetFrame() const override { return 0; }
+  size_t GetNumFrames() const override { return 0; }
   void SetColor(const base::Vector4& color) override { nebula_color_ = color; }
   base::Vector4 GetColor() const override { return nebula_color_; }
 
