@@ -333,14 +333,14 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   seconds_to_next_spawn_ = {0, 0, 0, 0};
   spawn_factor_ = 1 / (log10(0.25f * ((wave + 4) * 0.8f) + 1.468f) * 6);
   spawn_factor_interpolator_ = 0;
+  boss_spawn_cooldown_ = 5;
+  boss_spawn_duration_ = 0;
+  last_spawn_col_ = 0;
   waiting_for_next_wave_ = false;
   boss_fight_ = boss_fight;
 
-  if (boss_fight) {
+  if (boss_fight)
     SpawnBoss();
-    seconds_to_next_spawn_ = {1, 1, 1, 1};
-    spawn_factor_ = 0.5f;
-  }
 }
 
 void Enemy::SpawnUnit(EnemyType enemy_type,
@@ -437,9 +437,12 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   float max_distance =
       engine.GetScreenSize().y - game->GetPlayer().GetWeaponScale().y / 2;
 
-  e.movement_animator.SetMovement(
-      {0, -max_distance}, speed,
-      std::bind(Acceleration, std::placeholders::_1, -0.15f));
+  Animator::Interpolator interpolator;
+  if (boss_fight_)
+    interpolator = std::bind(CatmullRom, std::placeholders::_1, 2.5f, 1.2f);
+  else
+    interpolator = std::bind(Acceleration, std::placeholders::_1, -0.15f);
+  e.movement_animator.SetMovement({0, -max_distance}, speed, interpolator);
   e.movement_animator.SetEndCallback(Animator::kMovement, [&]() -> void {
     e.sprite.SetVisible(false);
     e.target.SetVisible(false);
@@ -469,7 +472,7 @@ void Enemy::SpawnBoss() {
     auto& e = enemies_.emplace_front();
     e.enemy_type = kEnemyType_Boss;
     e.damage_type = kDamageType_Any;
-    e.total_health = e.hit_points = 1;
+    e.total_health = e.hit_points = 40;
 
     Vector2 hit_box_pos = boss_.GetOffset() - boss_.GetScale() * Vector2(0, 0.2f);
 
@@ -483,15 +486,17 @@ void Enemy::SpawnBoss() {
 
     Vector2 health_bar_offset = boss_.GetScale() * Vector2(0, 0.2f);
 
-    e.health_base.Scale(e.sprite.GetScale() * Vector2(0.6f, 0.01f));
+    e.health_base.Scale(e.sprite.GetScale() * Vector2(0.7f, 0.08f));
     e.health_base.SetOffset(hit_box_pos + health_bar_offset);
     e.health_base.PlaceToBottomOf(boss_);
     e.health_base.SetColor({0.5f, 0.5f, 0.5f, 1});
+    e.health_base.SetVisible(true);
 
-    e.health_bar.Scale(e.sprite.GetScale() * Vector2(0.6f, 0.01f));
+    e.health_bar.Scale(e.sprite.GetScale() * Vector2(0.7f, 0.08f));
     e.health_bar.SetOffset(hit_box_pos + health_bar_offset);
     e.health_bar.PlaceToBottomOf(boss_);
     e.health_bar.SetColor({0.161f, 0.89f, 0.322f, 1});
+    e.health_bar.SetVisible(true);
 
     e.score.Create(score_tex_[e.enemy_type]);
     e.score.AutoScale();
@@ -500,10 +505,6 @@ void Enemy::SpawnBoss() {
 
     e.target_animator.Attach(&e.target);
 
-    SetupFadeOutAnim(e.health_animator, 1);
-    e.health_animator.Attach(&e.health_base);
-    e.health_animator.Attach(&e.health_bar);
-
     SetupFadeOutAnim(e.score_animator, 0.2f);
     e.score_animator.SetMovement({0, Engine::Get().GetScreenSize().y / 2},
                                  2.0f);
@@ -511,7 +512,8 @@ void Enemy::SpawnBoss() {
         Animator::kMovement, [&]() -> void { e.marked_for_removal = true; });
     e.score_animator.Attach(&e.score);
   });
-  boss_animator_.Play(Animator::kMovement | Animator::kFrames, false);
+  boss_animator_.Play(Animator::kFrames, true);
+  boss_animator_.Play(Animator::kMovement, false);
 }
 
 void Enemy::TakeDamage(EnemyUnit* target, int damage) {
@@ -556,7 +558,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
   } else {
     target->targetted_by_weapon_ = kDamageType_Invalid;
 
-    Vector2 s = target->sprite.GetScale() * Vector2(0.6f, 0.01f);
+    Vector2 s = target->health_base.GetScale();
     s.x *= (float)target->hit_points / (float)target->total_health;
     float t = (s.x - target->health_bar.GetScale().x) / 2;
     target->health_bar.SetScale(s);
@@ -621,7 +623,8 @@ void Enemy::UpdateWave(float delta_time) {
 
       seconds_since_last_spawn_[i] = 0;
       seconds_to_next_spawn_[i] =
-          Lerp(kSpawnPeriodWave[i][0] * factor, kSpawnPeriodWave[i][1] * factor,
+          Lerp(kSpawnPeriodWave[i][0] * factor,
+               kSpawnPeriodWave[i][1] * factor,
                rnd.GetFloat());
       break;
     }
@@ -650,6 +653,19 @@ void Enemy::UpdateWave(float delta_time) {
 }
 
 void Enemy::UpdateBoss(float delta_time) {
+  if (boss_spawn_cooldown_ > 0) {
+    boss_spawn_cooldown_ -= delta_time;
+    if (boss_spawn_cooldown_ > 0)
+      return;
+    boss_spawn_duration_ = 6;
+  }
+
+  boss_spawn_duration_ -= delta_time;
+  if (boss_spawn_duration_ <= 0) {
+    boss_spawn_cooldown_ = 5;
+    return;
+  }
+
   for (int i = 0; i < kEnemyType_Unit_Last + 1; ++i)
     seconds_since_last_spawn_[i] += delta_time;
 
@@ -665,7 +681,8 @@ void Enemy::UpdateBoss(float delta_time) {
 
       seconds_since_last_spawn_[i] = 0;
       seconds_to_next_spawn_[i] =
-          Lerp(kSpawnPeriodBoss[i][0] * spawn_factor_, kSpawnPeriodBoss[i][1] * spawn_factor_,
+          Lerp(kSpawnPeriodBoss[i][0] * spawn_factor_ * 0.8f,
+               kSpawnPeriodBoss[i][1] * spawn_factor_ * 0.8f,
                rnd.GetFloat());
       break;
     }
@@ -678,14 +695,10 @@ void Enemy::UpdateBoss(float delta_time) {
                                ? kDamageType_Any
                                : (DamageType)(rnd.Roll(2) - 1);
 
-  Vector2 s = engine.GetScreenSize();
-  int col;
-  col = rnd.Roll(4) - 1;
-  if (col == last_spawn_col_)
-    col = (col + 1) % 4;
-  last_spawn_col_ = col;
-  float x = SnapSpawnPosX(col);
-  Vector2 pos = {x, s.y / 2};
+  int col = (last_spawn_col_++) % 2;
+  float offset = Lerp(boss_.GetScale().x * -0.12f, boss_.GetScale().x * 0.12f, rnd.GetFloat());
+  float x = (boss_.GetScale().x / 3) * (col ? 1 : -1) + offset;
+  Vector2 pos = {x, boss_.GetOffset().y - boss_.GetScale().y / 2};
   float speed = enemy_type == kEnemyType_Tank
                     ? 36.0f
                     : (rnd.Roll(4) == 4 ? 6.0f : 10.0f);

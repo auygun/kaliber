@@ -189,7 +189,7 @@ void Demo::UpdateGameState(float delta_time) {
     int enemies_remaining = total_enemies_ - last_num_enemies_killed_;
 
     if (enemies_remaining <= 0)
-      StartNextStage(wave_ % 2);
+      StartNextStage(wave_ && !(wave_ % 3));
     else
       hud_.SetProgress((float)enemies_remaining / (float)total_enemies_);
   }

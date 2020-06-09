@@ -103,6 +103,9 @@ class Enemy {
   float spawn_factor_ = 0;
   float spawn_factor_interpolator_ = 0;
 
+  float boss_spawn_duration_ = 0;
+  float boss_spawn_cooldown_ = 0;
+
   bool waiting_for_next_wave_ = false;
 
   int last_spawn_col_ = 0;
