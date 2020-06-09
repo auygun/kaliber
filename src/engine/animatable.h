@@ -27,8 +27,8 @@ class Animatable {
 
   // Pure virtuals for frame animation support.
   virtual void SetFrame(size_t frame) = 0;
-  virtual size_t GetFrame() = 0;
-  virtual size_t GetNumFrames() = 0;
+  virtual size_t GetFrame() const = 0;
+  virtual size_t GetNumFrames() const = 0;
 
   virtual void SetColor(const base::Vector4& color) = 0;
   virtual base::Vector4 GetColor() const = 0;

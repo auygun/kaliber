@@ -36,7 +36,7 @@ void ImageQuad::SetFrame(size_t frame) {
   current_frame_ = frame;
 }
 
-size_t ImageQuad::GetNumFrames() {
+size_t ImageQuad::GetNumFrames() const {
   return num_frames_[0] * num_frames_[1];
 }
 
