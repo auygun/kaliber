@@ -80,7 +80,6 @@ void Demo::Update(float delta_time) {
     hud_.PrintScore(score_, true);
   }
 
-  hud_.Update(delta_time);
   menu_.Update(delta_time);
   credits_.Update(delta_time);
 
@@ -171,6 +170,7 @@ void Demo::UpdateMenuState(float delta_time) {
 }
 
 void Demo::UpdateGameState(float delta_time) {
+  hud_.Update(delta_time);
   sky_.Update(delta_time);
   player_.Update(delta_time);
   enemy_.Update(delta_time);
@@ -179,10 +179,8 @@ void Demo::UpdateGameState(float delta_time) {
     return;
 
   if (boss_fight_) {
-    if (!enemy_.IsBossAlive()) {
-      LOG << "Boss died. Starting next wave";
-      StartNextWave();
-    }
+    if (!enemy_.IsBossAlive())
+      StartNextStage(false);
     return;
   }
 
@@ -190,15 +188,9 @@ void Demo::UpdateGameState(float delta_time) {
     last_num_enemies_killed_ = enemy_.num_enemies_killed_in_current_wave();
     int enemies_remaining = total_enemies_ - last_num_enemies_killed_;
 
-    if (enemies_remaining <= 0) {
-      if (wave_ %2) {
-        LOG << "Wave finished. Boss time";
-        StartNextBoss();
-      } else {
-        LOG << "Wave finished. Starting next wave";
-        StartNextWave();
-      }
-    } else
+    if (enemies_remaining <= 0)
+      StartNextStage(wave_ % 2);
+    else
       hud_.SetProgress((float)enemies_remaining / (float)total_enemies_);
   }
 }
@@ -219,80 +211,58 @@ void Demo::StartNewGame() {
   EnterGameState();
 }
 
-void Demo::StartNextWave() {
+void Demo::StartNextStage(bool boss) {
   waiting_for_next_wave_ = true;
   hud_.SetProgress(wave_ > 0 ? 0 : 1);
 
   enemy_.OnWaveFinished();
 
-  SetDelayedWork(1, [&]() -> void {
-    Random& rnd = Engine::Get().GetRandomGenerator();
-    int dominant_channel = rnd.Roll(3) - 1;
-    if (dominant_channel == last_dominant_channel_)
-      dominant_channel = (dominant_channel + 1) % 3;
-    last_dominant_channel_ = dominant_channel;
+  SetDelayedWork(1, [&, boss]() -> void {
+    enemy_.KillAllEnemyUnits();
 
-    float weights[3] = {0, 0, 0};
-    weights[dominant_channel] = 1;
-    Vector4 c = {Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[0],
-                  Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[1],
-                  Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[2], 1};
-    c += {Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[0]),
-          Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[1]),
-          Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[2]), 1};
-    sky_.SwitchColor(c);
+    SetDelayedWork(boss_fight_ ? 4 : 0.5f, [&, boss]() -> void {
+      Random& rnd = Engine::Get().GetRandomGenerator();
+      int dominant_channel = rnd.Roll(3) - 1;
+      if (dominant_channel == last_dominant_channel_)
+        dominant_channel = (dominant_channel + 1) % 3;
+      last_dominant_channel_ = dominant_channel;
 
-    ++wave_;
-    if (boss_fight_)
-      hud_.Show();
-    hud_.PrintScore(score_, true);
-    hud_.PrintWave(wave_, true);
-    hud_.SetProgress(1);
+      float weights[3] = {0, 0, 0};
+      weights[dominant_channel] = 1;
+      Vector4 c = {Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[0],
+                    Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[1],
+                    Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[2], 1};
+      c += {Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[0]),
+            Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[1]),
+            Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[2]), 1};
+      sky_.SwitchColor(c);
 
-    // float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;
-    total_enemies_ = 1; //(int)(6 * factor);
-    last_num_enemies_killed_ = 0;
-    boss_fight_ = false;
-    DLOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
+      if (boss) {
+        hud_.HideProgress();
 
-    enemy_.OnWaveStarted(wave_, false);
+        total_enemies_ = 0;
+        last_num_enemies_killed_ = 0;
+        boss_fight_ = true;
+        DLOG << "Boss fight.";
+      } else {
+        ++wave_;
+        if (boss_fight_)
+          hud_.Show();
+        hud_.PrintScore(score_, true);
+        hud_.PrintWave(wave_, true);
+        hud_.SetProgress(1);
 
-    waiting_for_next_wave_ = false;
-  });
-}
+        // float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;
+        total_enemies_ = 1; //(int)(6 * factor);
+        last_num_enemies_killed_ = 0;
+        boss_fight_ = false;
+        DLOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
+      }
 
-void Demo::StartNextBoss() {
-  waiting_for_next_wave_ = true;
-  hud_.SetProgress(wave_ > 0 ? 0 : 1);
+      enemy_.OnWaveStarted(wave_, boss);
 
-  enemy_.OnWaveFinished();
-
-  SetDelayedWork(1, [&]() -> void {
-    Random& rnd = Engine::Get().GetRandomGenerator();
-    int dominant_channel = rnd.Roll(3) - 1;
-    if (dominant_channel == last_dominant_channel_)
-      dominant_channel = (dominant_channel + 1) % 3;
-    last_dominant_channel_ = dominant_channel;
-
-    float weights[3] = {0, 0, 0};
-    weights[dominant_channel] = 1;
-    Vector4 c = {Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[0],
-                  Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[1],
-                  Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[2], 1};
-    c += {Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[0]),
-          Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[1]),
-          Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[2]), 1};
-    sky_.SwitchColor(c);
-
-    hud_.HideProgress();
-
-    total_enemies_ = 0;
-    last_num_enemies_killed_ = 0;
-    boss_fight_ = true;
-
-    enemy_.OnWaveStarted(wave_, true);
-
-    waiting_for_next_wave_ = false;
+      waiting_for_next_wave_ = false;
+    });
   });
 }
 

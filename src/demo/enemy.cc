@@ -108,11 +108,12 @@ void Enemy::ContextLost() {
 }
 
 void Enemy::Update(float delta_time) {
-  // Update gameplay for the current state (wave or boss).
-  if (boss_fight_)
-    UpdateBoss(delta_time);
-  else if (!waiting_for_next_wave_)
-    UpdateWave(delta_time);
+  if (!waiting_for_next_wave_) {
+    if (boss_fight_)
+      UpdateBoss(delta_time);
+    else
+      UpdateWave(delta_time);
+  }
 
   boss_animator_.Update(delta_time);
 
@@ -301,15 +302,7 @@ void Enemy::HitTarget(DamageType damage_type) {
 }
 
 bool Enemy::IsBossAlive() const {
-  if  (!boss_fight_)
-    return false;
-
-  if (boss_animator_.IsPlaying(Animator::kMovement | Animator::kTimer))
-    return true;
-
-  // Fist enemy is the boss.
-  return !enemies_.empty() && enemies_.begin()->enemy_type == kEnemyType_Boss &&
-         enemies_.begin()->hit_points > 0;
+  return boss_fight_ && boss_.GetFrame() < 9;
 }
 
 void Enemy::OnWaveFinished() {
@@ -327,15 +320,14 @@ void Enemy::OnWaveFinished() {
   waiting_for_next_wave_ = true;
 }
 
-void Enemy::OnWaveStarted(int wave, bool boss_fight) {
+void Enemy::KillAllEnemyUnits() {
   for (auto& e : enemies_) {
-    if (!e.marked_for_removal && e.hit_points > 0) {
-      if (wave == 1 && !boss_fight)
-        e.marked_for_removal = true;
-      else
-        TakeDamage(&e, 100);
-    }
+    if (!e.marked_for_removal && e.hit_points > 0)
+      TakeDamage(&e, 100);
   }
+}
+
+void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   num_enemies_killed_in_current_wave_ = 0;
   seconds_since_last_spawn_ = {0, 0, 0, 0};
   seconds_to_next_spawn_ = {0, 0, 0, 0};

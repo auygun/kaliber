@@ -73,8 +73,7 @@ class Demo : public eng::Game {
   void Continue();
   void StartNewGame();
 
-  void StartNextWave();
-  void StartNextBoss();
+  void StartNextStage(bool boss);
 
   void SetDelayedWork(float seconds, base::Closure cb);
 };
