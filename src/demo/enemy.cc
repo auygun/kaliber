@@ -323,11 +323,26 @@ void Enemy::OnWaveFinished() {
 void Enemy::KillAllEnemyUnits(bool just_remove) {
   for (auto& e : enemies_) {
     if (!e.marked_for_removal && e.hit_points > 0) {
-      if (just_remove)
-        e.marked_for_removal = true;
-      else
+      if (just_remove) {
+        e.sprite_animator.SetEndCallback(Animator::kBlending, [&]() -> void {
+          e.marked_for_removal = true;
+        });
+        e.sprite_animator.SetBlending({1, 1, 1, 0}, 0.3f);
+        e.sprite_animator.Play(Animator::kBlending, false);
+      } else {
         TakeDamage(&e, 100);
+      }
     }
+  }
+
+  // Hide boss if not already hiding.
+  if (boss_.IsVisible() &&
+      !boss_animator_.IsPlaying(Animator::kTimer | Animator::kMovement)) {
+    boss_animator_.SetEndCallback(Animator::kMovement, [&]() -> void {
+      boss_animator_.SetVisible(false);
+    });
+    boss_animator_.SetMovement({0, boss_.GetScale().y * 0.99f}, 1);
+    boss_animator_.Play(Animator::kMovement, false);
   }
 }
 
@@ -389,7 +404,11 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.sprite_animator.SetFrames(idle1_frame_count[enemy_type][damage_type],
                               idle_frame_speed);
 
+  e.sprite.SetColor({1, 1, 1, 0});
+  e.sprite_animator.SetBlending({1, 1, 1, 1}, 0.3f);
+
   e.sprite_animator.Attach(&e.sprite);
+  e.sprite_animator.Play(Animator::kBlending, false);
   e.sprite_animator.Play(Animator::kFrames, true);
 
   e.target.Create(target_tex_, {6, 2});
@@ -548,6 +567,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
     game->AddScore(GetScore(target->enemy_type));
 
     if (target->enemy_type == kEnemyType_Boss) {
+      // Play dead animation and move away the boss.
       boss_animator_.SetEndCallback(Animator::kMovement, [&]() -> void {
         boss_animator_.SetVisible(false);
       });
