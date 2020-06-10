@@ -221,23 +221,9 @@ void Demo::StartNextStage(bool boss) {
     enemy_.KillAllEnemyUnits();
 
     SetDelayedWork(boss_fight_ ? 4 : 0.5f, [&, boss]() -> void {
-      Random& rnd = Engine::Get().GetRandomGenerator();
-      int dominant_channel = rnd.Roll(3) - 1;
-      if (dominant_channel == last_dominant_channel_)
-        dominant_channel = (dominant_channel + 1) % 3;
-      last_dominant_channel_ = dominant_channel;
-
-      float weights[3] = {0, 0, 0};
-      weights[dominant_channel] = 1;
-      Vector4 c = {Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[0],
-                    Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[1],
-                    Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[2], 1};
-      c += {Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[0]),
-            Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[1]),
-            Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[2]), 1};
-      sky_.SwitchColor(c);
-
       if (boss) {
+        sky_.SwitchColor(sky_.nebula_color() * 0.5f);
+
         hud_.HideProgress();
 
         total_enemies_ = 0;
@@ -245,6 +231,22 @@ void Demo::StartNextStage(bool boss) {
         boss_fight_ = true;
         DLOG << "Boss fight.";
       } else {
+        Random& rnd = Engine::Get().GetRandomGenerator();
+        int dominant_channel = rnd.Roll(3) - 1;
+        if (dominant_channel == last_dominant_channel_)
+          dominant_channel = (dominant_channel + 1) % 3;
+        last_dominant_channel_ = dominant_channel;
+
+        float weights[3] = {0, 0, 0};
+        weights[dominant_channel] = 1;
+        Vector4 c = {Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[0],
+                      Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[1],
+                      Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[2], 1};
+        c += {Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[0]),
+              Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[1]),
+              Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[2]), 1};
+        sky_.SwitchColor(c);
+
         ++wave_;
         hud_.Show();
         hud_.SetProgress(1);
