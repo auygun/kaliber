@@ -458,20 +458,25 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.score_animator.Attach(&e.score);
 
   float max_distance =
-      engine.GetScreenSize().y - game->GetPlayer().GetWeaponScale().y / 2;
+      spawn_pos.y - game->GetPlayer().GetWeaponPos(kDamageType_Green).y;
 
   Animator::Interpolator interpolator;
   if (boss_fight_)
-    interpolator = std::bind(CatmullRom, std::placeholders::_1, 2.5f, 1.2f);
+    interpolator = std::bind(CatmullRom, std::placeholders::_1, 2.5f, 1.5f);
   else
     interpolator = std::bind(Acceleration, std::placeholders::_1, -0.15f);
   e.movement_animator.SetMovement({0, -max_distance}, speed, interpolator);
   e.movement_animator.SetEndCallback(Animator::kMovement, [&]() -> void {
-    e.sprite.SetVisible(false);
+    // Enemy has reached the player.
+    e.hit_points = 0;
     e.target.SetVisible(false);
     e.blast.SetVisible(false);
-    e.marked_for_removal = true;
     static_cast<Demo*>(engine.GetGame())->GetPlayer().TakeDamage(1);
+    e.sprite_animator.SetEndCallback(Animator::kBlending, [&]() -> void {
+      e.marked_for_removal = true;
+    });
+    e.sprite_animator.SetBlending({1, 1, 1, 0}, 0.3f);
+    e.sprite_animator.Play(Animator::kBlending, false);
   });
   e.movement_animator.Attach(&e.sprite);
   e.movement_animator.Attach(&e.target);
@@ -490,7 +495,7 @@ void Enemy::SpawnBoss() {
   boss_animator_.SetMovement({0, boss_.GetScale().y * -2.4f}, 5,
       std::bind(Acceleration, std::placeholders::_1, -1));
   boss_.SetFrame(0);
-  boss_animator_.SetFrames(8, 12);
+  boss_animator_.SetFrames(8, 16);
 
   boss_animator_.SetEndCallback(Animator::kMovement, [&]() -> void {
     // Spwawn a stationary enemy unit for the boss.

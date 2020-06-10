@@ -31,7 +31,7 @@ class Player {
 
   void TakeDamage(int damage);
 
-  void ResetHitPoints() { hit_points_ = total_health_; }
+  void ResetHitPoints() { TakeDamage(-total_health_); }
 
   base::Vector2 GetWeaponPos(DamageType type) const;
   base::Vector2 GetWeaponScale() const;
