@@ -115,9 +115,10 @@ void Demo::AddScore(int score) {
 void Demo::EnterMenuState() {
   if (state_ == kMenu)
     return;
-  if (wave_ == 0) {
+  if (state_ == kState_Invalid || state_ == kGameOver) {
     menu_.SetOptionEnabled(Menu::kContinue, false);
-  } else {
+    menu_.SetOptionEnabled(Menu::kNewGame, true);
+  } else if (state_ == kGame) {
     menu_.SetOptionEnabled(Menu::kContinue, true);
     menu_.SetOptionEnabled(Menu::kNewGame, false);
   }
@@ -225,6 +226,7 @@ void Demo::StartNewGame() {
   last_num_enemies_killed_ = -1;
   total_enemies_ = 0;
   waiting_for_next_wave_ = false;
+  boss_fight_ = false;
   delayed_work_timer_ = 0;
   delayed_work_cb_ = nullptr;
   player_.ResetHitPoints();
