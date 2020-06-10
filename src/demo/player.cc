@@ -169,6 +169,7 @@ void Player::Fire(DamageType type, Vector2 dir) {
   beam_[type].SetVisible(true);
   beam_spark_[type].SetVisible(true);
 
+  spark_animator_[type].Stop(Animator::kMovement);
   float length = beam_[type].GetScale().x * 0.85f;
   Vector2 movement = dir * -length;
   // Convert from units per second to duration.
