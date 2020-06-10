@@ -11,6 +11,8 @@
 #include "damage_type.h"
 
 namespace eng {
+class Font;
+class Image;
 class InputEvent;
 }  //  namespace eng
 
@@ -55,6 +57,13 @@ class Player {
   eng::SolidQuad nuke_;
   eng::Animator nuke_animator_;
 
+  std::shared_ptr<eng::Texture> nuke_counter_tex_;
+  eng::ImageQuad nuke_counter_;
+
+  std::shared_ptr<const eng::Font> font_;
+
+  int nuke_count_ = 3;
+
   int total_health_ = 3;
   int hit_points_ = 0;
 
@@ -89,6 +98,8 @@ class Player {
   void NavigateBack();
 
   bool CreateRenderResources();
+
+  std::shared_ptr<eng::Image> GetNukeCounterImage(int n);
 };
 
 #endif  // PLAYER_H

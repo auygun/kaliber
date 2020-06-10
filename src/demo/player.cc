@@ -5,6 +5,7 @@
 #include "../base/interpolation.h"
 #include "../base/log.h"
 #include "../engine/engine.h"
+#include "../engine/font.h"
 #include "../engine/image.h"
 #include "../engine/input_event.h"
 #include "demo.h"
@@ -27,11 +28,16 @@ const Vector4 kHealthBarColor[2] = {{0.5f, 0.5f, 0.5f, 1},
 
 Player::Player()
     : weapon_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      beam_tex_(Engine::Get().CreateRenderResource<Texture>()) {}
+      beam_tex_(Engine::Get().CreateRenderResource<Texture>()),
+      nuke_counter_tex_(Engine::Get().CreateRenderResource<Texture>()) {}
 
 Player::~Player() = default;
 
 bool Player::Initialize() {
+  font_ = Engine::Get().GetAsset<Font>("PixelCaps!.ttf");
+  if (!font_)
+    return false;
+
   if (!CreateRenderResources())
     return false;
 
@@ -49,6 +55,14 @@ bool Player::Initialize() {
     health_bar_[i].SetColor(kHealthBarColor[i]);
     health_bar_[i].SetVisible(true);
   }
+
+  nuke_counter_.Create(nuke_counter_tex_);
+  nuke_counter_.AutoScale();
+  nuke_counter_.PlaceToTopOf(health_bar_[0]);
+  nuke_counter_.Translate(hb_pos * Vector2(0, 1));
+  nuke_counter_.Translate(nuke_counter_.GetScale() * Vector2(0, 1));
+  nuke_counter_.SetColor({1, 1, 1, 1});
+  nuke_counter_.SetVisible(true);
 
   nuke_.Scale(Engine::Get().GetScreenSize());
   nuke_.SetColor({1, 1, 1, 0});
@@ -99,6 +113,7 @@ void Player::Draw(float frame_frac) {
     health_bar_[i].Draw();
   }
   nuke_.Draw();
+  nuke_counter_.Draw();
 }
 
 void Player::TakeDamage(int damage) {
@@ -279,6 +294,12 @@ void Player::UpdateTarget() {
 }
 
 void Player::Nuke() {
+  if (nuke_count_ <= 0)
+    return;
+
+  nuke_counter_tex_->Update(GetNukeCounterImage(--nuke_count_));
+  nuke_counter_.AutoScale();
+
   nuke_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
     nuke_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
       nuke_.SetVisible(false);
@@ -410,5 +431,24 @@ bool Player::CreateRenderResources() {
 
   weapon_tex_->Update(weapon_image);
   beam_tex_->Update(beam_image);
+
+  nuke_counter_tex_->Update(GetNukeCounterImage(nuke_count_));
+
   return true;
+}
+
+std::shared_ptr<Image> Player::GetNukeCounterImage(int n) {
+  std::string text = std::to_string(n);
+  int width, height;
+  font_->CalculateBoundingBox(text.c_str(), width, height);
+
+  auto image = std::make_shared<Image>();
+  image->Create(width, height);
+  image->Clear({1, 1, 1, 0});
+
+  font_->Print(0, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
+
+  image->Compress();
+  image->SetImmutable();
+  return image;
 }
