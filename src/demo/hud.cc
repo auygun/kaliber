@@ -95,7 +95,8 @@ void Hud::ContextLost() {
 }
 
 void Hud::Show() {
-  if (text_[0].IsVisible() && text_[1].IsVisible())
+  if (text_[0].IsVisible() && text_[1].IsVisible() &&
+      progress_bar_[0].IsVisible() && progress_bar_[1].IsVisible())
     return;
 
   for (int i = 0; i < 2; ++i) {
@@ -109,13 +110,6 @@ void Hud::Show() {
 void Hud::HideProgress() {
   if (!progress_bar_[0].IsVisible())
     return;
-
-  text_animator_[1].SetEndCallback(Animator::kBlending, [&]() -> void {
-    text_animator_[1].SetEndCallback(Animator::kBlending, nullptr);
-    text_[1].SetVisible(false);
-  });
-  text_animator_[1].SetBlending(kTextColor * Vector4(1, 1, 1, 0), 0.5f);
-  text_animator_[1].Play(Animator::kBlending, false);
 
   for (int i = 0; i < 2; ++i) {
     progress_bar_animator_[i].SetEndCallback(Animator::kBlending,

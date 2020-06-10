@@ -554,7 +554,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
         boss_animator_.Play(Animator::kMovement, false);
         boss_.SetFrame(11);
       });
-      boss_animator_.SetTimer(1);
+      boss_animator_.SetTimer(1.25f);
       boss_animator_.Play(Animator::kFrames | Animator::kTimer, true);
     }
   } else {

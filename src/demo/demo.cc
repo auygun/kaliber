@@ -74,12 +74,6 @@ void Demo::Update(float delta_time) {
     }
   }
 
-  if (add_score_ > 0) {
-    score_ += add_score_;
-    add_score_ = 0;
-    hud_.PrintScore(score_, true);
-  }
-
   menu_.Update(delta_time);
   credits_.Update(delta_time);
 
@@ -170,6 +164,12 @@ void Demo::UpdateMenuState(float delta_time) {
 }
 
 void Demo::UpdateGameState(float delta_time) {
+  if (add_score_ > 0) {
+    score_ += add_score_;
+    add_score_ = 0;
+    hud_.PrintScore(score_, true);
+  }
+
   hud_.Update(delta_time);
   sky_.Update(delta_time);
   player_.Update(delta_time);
@@ -217,7 +217,7 @@ void Demo::StartNextStage(bool boss) {
 
   enemy_.OnWaveFinished();
 
-  SetDelayedWork(1, [&, boss]() -> void {
+  SetDelayedWork(1.25f, [&, boss]() -> void {
     enemy_.KillAllEnemyUnits();
 
     SetDelayedWork(boss_fight_ ? 4 : 0.5f, [&, boss]() -> void {
@@ -246,18 +246,18 @@ void Demo::StartNextStage(bool boss) {
         DLOG << "Boss fight.";
       } else {
         ++wave_;
-        if (boss_fight_)
-          hud_.Show();
-        hud_.PrintScore(score_, true);
-        hud_.PrintWave(wave_, true);
+        hud_.Show();
         hud_.SetProgress(1);
 
-        // float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;
-        total_enemies_ = 1; //(int)(6 * factor);
+        float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;
+        total_enemies_ = (int)(6 * factor);
         last_num_enemies_killed_ = 0;
         boss_fight_ = false;
         DLOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
       }
+
+      hud_.PrintScore(score_, true);
+      hud_.PrintWave(wave_, true);
 
       enemy_.OnWaveStarted(wave_, boss);
 

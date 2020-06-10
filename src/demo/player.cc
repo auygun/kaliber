@@ -74,7 +74,8 @@ void Player::Draw(float frame_frac) {
 
 Vector2 Player::GetWeaponPos(DamageType type) const {
   return Engine::Get().GetScreenSize() /
-             Vector2(type == kDamageType_Green ? 3.5f : -3.5f, -3);
+             Vector2(type == kDamageType_Green ? 3.5f : -3.5f, -2) +
+         Vector2(0, weapon_[type].GetScale().y * 0.7f);
 }
 
 Vector2 Player::GetWeaponScale() const {
