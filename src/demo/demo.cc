@@ -61,7 +61,7 @@ void Demo::Update(float delta_time) {
       menu_.OnInputEvent(std::move(event));
     else if (state_ == kCredits)
       credits_.OnInputEvent(std::move(event));
-    else
+    else if (state_ != kGameOver)
       player_.OnInputEvent(std::move(event));
   }
 
@@ -79,7 +79,7 @@ void Demo::Update(float delta_time) {
 
   if (state_ == kMenu)
     UpdateMenuState(delta_time);
-  else if (state_ == kGame)
+  else if (state_ == kGame || state_ == kGameOver)
     UpdateGameState(delta_time);
 }
 
@@ -137,6 +137,25 @@ void Demo::EnterGameState() {
     return;
   hud_.Show();
   state_ = kGame;
+}
+
+void Demo::EnterGameOverState() {
+  if (state_ == kGameOver)
+    return;
+
+  enemy_.OnWaveFinished();
+  sky_.SwitchColor({0, 0, 0, 1});
+  hud_.PrintMessage("Game Over", 3);
+  state_ = kGameOver;
+
+  SetDelayedWork(1, [&]() -> void {
+    enemy_.KillAllEnemyUnits(true);
+    hud_.Hide();
+    SetDelayedWork(3, [&]() -> void {
+      wave_ = 0;
+      EnterMenuState();
+    });
+  });
 }
 
 void Demo::UpdateMenuState(float delta_time) {
@@ -208,6 +227,7 @@ void Demo::StartNewGame() {
   waiting_for_next_wave_ = false;
   delayed_work_timer_ = 0;
   delayed_work_cb_ = nullptr;
+  player_.ResetHitPoints();
   EnterGameState();
 }
 

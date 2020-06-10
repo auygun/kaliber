@@ -28,19 +28,23 @@ class Hud {
   void ContextLost();
 
   void Show();
-
+  void Hide();
   void HideProgress();
 
   void PrintScore(int score, bool flash);
   void PrintWave(int wave, bool flash);
   void SetProgress(float progress);
 
+  void PrintMessage(const std::string& text, float duration);
+
  private:
   eng::SolidQuad progress_bar_[2];
   eng::ImageQuad text_[2];
+  eng::ImageQuad message_;
 
   eng::Animator progress_bar_animator_[2];
   eng::Animator text_animator_[2];
+  eng::Animator message_animator_;
   base::Closure text_animator_cb_[2];
 
   std::shared_ptr<const eng::Font> font_;

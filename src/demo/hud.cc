@@ -25,6 +25,7 @@ const Vector4 kTextColor = {0.895f, 0.692f, 0.24f, 1};
 Hud::Hud() {
   text_[0].Create(Engine::Get().CreateRenderResource<Texture>());
   text_[1].Create(Engine::Get().CreateRenderResource<Texture>());
+  message_.Create(Engine::Get().CreateRenderResource<Texture>());
 }
 
 Hud::~Hud() = default;
@@ -72,6 +73,15 @@ bool Hud::Initialize() {
     text_animator_[i].Attach(&text_[i]);
   }
 
+  message_animator_.SetEndCallback(Animator::kTimer, [&]() -> void {
+    message_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
+      message_animator_.SetVisible(false);
+    });
+    message_animator_.SetBlending({1, 1, 1, 0}, 0.5f);
+    message_animator_.Play(Animator::kBlending, false);
+  });
+  message_animator_.Attach(&message_);
+
   return true;
 }
 
@@ -80,6 +90,7 @@ void Hud::Update(float delta_time) {
     text_animator_[i].Update(delta_time);
     progress_bar_animator_[i].Update(delta_time);
   }
+  message_animator_.Update(delta_time);
 }
 
 void Hud::Draw() {
@@ -87,11 +98,13 @@ void Hud::Draw() {
     progress_bar_[i].Draw();
     text_[i].Draw();
   }
+  message_.Draw();
 }
 
 void Hud::ContextLost() {
   PrintScore(last_score_, false);
   PrintWave(last_wave_, false);
+  message_.SetVisible(false);
 }
 
 void Hud::Show() {
@@ -105,6 +118,23 @@ void Hud::Show() {
     progress_bar_animator_[i].SetBlending(kPprogressBarColor[i], 0.5f);
     progress_bar_animator_[i].Play(Animator::kBlending, false);
   }
+}
+
+void Hud::Hide() {
+  if (!text_[0].IsVisible() && !text_[1].IsVisible() &&
+      !progress_bar_[0].IsVisible() && !progress_bar_[1].IsVisible())
+    return;
+
+  for (int i = 0; i < 2; ++i) {
+    text_animator_[i].SetEndCallback(Animator::kBlending, [&, i]() -> void {
+      text_animator_[i].SetEndCallback(Animator::kBlending, nullptr);
+      text_[i].SetVisible(false);
+    });
+    text_animator_[i].SetBlending(kTextColor * Vector4(1, 1, 1, 0), 0.5f);
+    text_animator_[i].Play(Animator::kBlending, false);
+  }
+
+  HideProgress();
 }
 
 void Hud::HideProgress() {
@@ -157,6 +187,35 @@ void Hud::SetProgress(float progress) {
   float t = (s.x - progress_bar_[1].GetScale().x) / 2;
   progress_bar_[1].SetScale(s);
   progress_bar_[1].Translate({t, 0});
+}
+
+void Hud::PrintMessage(const std::string& text, float duration) {
+  auto image = std::make_shared<Image>();
+  image->Create(max_text_width_, font_->GetLineHeight());
+  image->GradientV({1.0f, 1.0f, 1.0f, 0}, {.0f, .0f, 1.0f, 0},
+                   font_->GetLineHeight());
+
+  int w, h;
+  font_->CalculateBoundingBox(text.c_str(), w, h);
+  float x = (image->GetWidth() - w) / 2;
+
+  font_->Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
+  image->Compress();
+  image->SetImmutable();
+
+  message_.GetTexture()->Update(image);
+  message_.AutoScale();
+  message_.Scale(1.5f);
+  message_.SetColor({1, 1, 1, 0});
+  message_.SetVisible(true);
+
+  message_animator_.SetEndCallback(Animator::kBlending,
+    [&, duration]() -> void {
+      message_animator_.SetTimer(duration);
+      message_animator_.Play(Animator::kTimer, false);
+    });
+  message_animator_.SetBlending({1, 1, 1, 1}, 0.5f);
+  message_animator_.Play(Animator::kBlending, false);
 }
 
 void Hud::Print(int i, const std::string& text) {

@@ -32,6 +32,7 @@ class Demo : public eng::Game {
   void EnterMenuState();
   void EnterCreditsState();
   void EnterGameState();
+  void EnterGameOverState();
 
   Player& GetPlayer() { return player_; }
   Enemy& GetEnemy() { return enemy_; }
@@ -39,7 +40,7 @@ class Demo : public eng::Game {
   int wave() { return wave_; }
 
  private:
-  enum State { kState_Invalid = -1, kMenu, kGame, kCredits, kState_Max };
+  enum State { kState_Invalid = -1, kMenu, kGame, kCredits, kGameOver, kState_Max };
 
   State state_ = kState_Invalid;
 

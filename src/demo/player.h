@@ -31,6 +31,8 @@ class Player {
 
   void TakeDamage(int damage);
 
+  void ResetHitPoints() { hit_points_ = total_health_; }
+
   base::Vector2 GetWeaponPos(DamageType type) const;
   base::Vector2 GetWeaponScale() const;
 
@@ -51,7 +53,7 @@ class Player {
   eng::SolidQuad health_bar_[2];
 
   int total_health_ = 3;
-  int hit_points_ = 3;
+  int hit_points_ = 0;
 
   DamageType active_weapon_ = kDamageType_Invalid;
 

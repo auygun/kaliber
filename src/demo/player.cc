@@ -99,6 +99,9 @@ void Player::TakeDamage(int damage) {
   float t = (s.x - health_bar_[1].GetScale().x) / 2;
   health_bar_[1].SetScale(s);
   health_bar_[1].Translate({t, 0});
+
+  if (hit_points_ == 0)
+    static_cast<Demo*>(Engine::Get().GetGame())->EnterGameOverState();
 }
 
 Vector2 Player::GetWeaponPos(DamageType type) const {

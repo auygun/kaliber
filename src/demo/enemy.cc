@@ -320,10 +320,14 @@ void Enemy::OnWaveFinished() {
   waiting_for_next_wave_ = true;
 }
 
-void Enemy::KillAllEnemyUnits() {
+void Enemy::KillAllEnemyUnits(bool just_remove) {
   for (auto& e : enemies_) {
-    if (!e.marked_for_removal && e.hit_points > 0)
-      TakeDamage(&e, 100);
+    if (!e.marked_for_removal && e.hit_points > 0) {
+      if (just_remove)
+        e.marked_for_removal = true;
+      else
+        TakeDamage(&e, 100);
+    }
   }
 }
 

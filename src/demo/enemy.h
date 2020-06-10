@@ -45,7 +45,7 @@ class Enemy {
   void OnWaveFinished();
   void OnWaveStarted(int wave, bool boss_figt);
 
-  void KillAllEnemyUnits();
+  void KillAllEnemyUnits(bool just_remove = false);
 
   int num_enemies_killed_in_current_wave() const {
     return num_enemies_killed_in_current_wave_;
@@ -106,7 +106,7 @@ class Enemy {
   float boss_spawn_duration_ = 0;
   float boss_spawn_cooldown_ = 0;
 
-  bool waiting_for_next_wave_ = false;
+  bool waiting_for_next_wave_ = true;
 
   int last_spawn_col_ = 0;
 
