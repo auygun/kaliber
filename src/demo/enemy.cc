@@ -459,8 +459,8 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
 }
 
 void Enemy::SpawnBoss() {
+  // Setup visual sprite of the boss.
   boss_.SetVisible(true);
-
   boss_.SetOffset(Engine::Get().GetScreenSize() * Vector2(0, 0.5f) +
                   boss_.GetScale() * Vector2(0, 2.0f));
   boss_animator_.SetMovement({0, boss_.GetScale().y * -2.4f}, 5,
@@ -469,6 +469,7 @@ void Enemy::SpawnBoss() {
   boss_animator_.SetFrames(8, 12);
 
   boss_animator_.SetEndCallback(Animator::kMovement, [&]() -> void {
+    // Spwawn a stationary enemy unit for the boss.
     auto& e = enemies_.emplace_front();
     e.enemy_type = kEnemyType_Boss;
     e.damage_type = kDamageType_Any;
@@ -476,7 +477,7 @@ void Enemy::SpawnBoss() {
 
     Vector2 hit_box_pos = boss_.GetOffset() - boss_.GetScale() * Vector2(0, 0.2f);
 
-    // Just a hit box, not the visual sprite of the boss.
+    // Just a hit box, no visual sprite.
     e.sprite.SetOffset(hit_box_pos);
     e.sprite.SetScale(boss_.GetScale() * 0.3f);
 
@@ -486,6 +487,7 @@ void Enemy::SpawnBoss() {
 
     Vector2 health_bar_offset = boss_.GetScale() * Vector2(0, 0.2f);
 
+    // A thicker and always visible health bar.
     e.health_base.Scale(e.sprite.GetScale() * Vector2(0.7f, 0.08f));
     e.health_base.SetOffset(hit_box_pos + health_bar_offset);
     e.health_base.PlaceToBottomOf(boss_);
@@ -596,6 +598,18 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
       target->sprite_animator.SetBlending({1, 1, 1, 0}, 1.5f);
       target->sprite_animator.Play(Animator::kBlending | Animator::kTimer,
                                    false);
+    } else if (target->enemy_type == kEnemyType_Boss) {
+      boss_animator_.Stop(Animator::kFrames);
+      boss_.SetFrame(8);
+      boss_animator_.SetFrames(1, 1);
+      boss_animator_.SetEndCallback(Animator::kTimer, [&]() -> void {
+        boss_animator_.Stop(Animator::kFrames);
+        boss_.SetFrame(0);
+        boss_animator_.SetFrames(8, 12);
+        boss_animator_.Play(Animator::kFrames, true);
+      });
+      boss_animator_.SetTimer(0.2f);
+      boss_animator_.Play(Animator::kFrames | Animator::kTimer, true);
     }
   }
 }
