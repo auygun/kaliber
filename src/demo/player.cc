@@ -297,6 +297,11 @@ void Player::DragCancel() {
   if (active_weapon_ == kDamageType_Invalid)
     return;
 
+  Engine& engine = Engine::Get();
+  Demo* game = static_cast<Demo*>(engine.GetGame());
+
+  game->GetEnemy().DeselectTarget(active_weapon_);
+
   DamageType type = active_weapon_;
   active_weapon_ = kDamageType_Invalid;
   drag_sign_[type].SetVisible(false);
