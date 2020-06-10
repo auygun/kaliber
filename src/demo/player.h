@@ -52,6 +52,9 @@ class Player {
 
   eng::SolidQuad health_bar_[2];
 
+  eng::SolidQuad nuke_;
+  eng::Animator nuke_animator_;
+
   int total_health_ = 3;
   int hit_points_ = 0;
 
@@ -74,6 +77,8 @@ class Player {
   void SetupWeapons();
 
   void UpdateTarget();
+
+  void Nuke();
 
   void DragStart(const base::Vector2& pos);
   void Drag(const base::Vector2& pos);

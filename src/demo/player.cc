@@ -2,6 +2,7 @@
 
 #include <cassert>
 
+#include "../base/interpolation.h"
 #include "../base/log.h"
 #include "../engine/engine.h"
 #include "../engine/image.h"
@@ -49,6 +50,11 @@ bool Player::Initialize() {
     health_bar_[i].SetVisible(true);
   }
 
+  nuke_.Scale(Engine::Get().GetScreenSize());
+  nuke_.SetColor({1, 1, 1, 0});
+
+  nuke_animator_.Attach(&nuke_);
+
   return true;
 }
 
@@ -63,6 +69,7 @@ void Player::Update(float delta_time) {
     beam_animator_[i].Update(delta_time);
     spark_animator_[i].Update(delta_time);
   }
+  nuke_animator_.Update(delta_time);
 
   if (active_weapon_ != kDamageType_Invalid)
     UpdateTarget();
@@ -71,6 +78,8 @@ void Player::Update(float delta_time) {
 void Player::OnInputEvent(std::unique_ptr<InputEvent> event) {
   if (event->GetType() == InputEvent::kNavigateBack)
     NavigateBack();
+  else if (event->GetType() == InputEvent::kTap)
+    Nuke();
   else if (event->GetType() == InputEvent::kDragStart)
     DragStart(event->GetVector(0));
   else if (event->GetType() == InputEvent::kDrag)
@@ -89,6 +98,7 @@ void Player::Draw(float frame_frac) {
     weapon_[i].Draw();
     health_bar_[i].Draw();
   }
+  nuke_.Draw();
 }
 
 void Player::TakeDamage(int damage) {
@@ -266,6 +276,23 @@ void Player::UpdateTarget() {
   } else {
     game->GetEnemy().DeselectTarget(active_weapon_);
   }
+}
+
+void Player::Nuke() {
+  nuke_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
+    nuke_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
+      nuke_.SetVisible(false);
+    });
+    nuke_animator_.SetBlending(
+        {1, 1, 1, 0}, 2, std::bind(Acceleration, std::placeholders::_1, -1));
+    nuke_animator_.Play(Animator::kBlending, false);
+  });
+  nuke_animator_.SetBlending(
+      {1, 1, 1, 1}, 0.1f, std::bind(Acceleration, std::placeholders::_1, 1));
+  nuke_animator_.Play(Animator::kBlending, false);
+  nuke_.SetVisible(true);
+
+  static_cast<Demo*>(Engine::Get().GetGame())->GetEnemy().KillAllEnemyUnits();
 }
 
 void Player::DragStart(const Vector2& pos) {
