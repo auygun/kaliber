@@ -6,6 +6,7 @@
 #include "../base/vecmath.h"
 #include "../engine/animator.h"
 #include "../engine/image_quad.h"
+#include "../engine/solid_quad.h"
 #include "../engine/renderer/texture.h"
 #include "damage_type.h"
 
@@ -28,6 +29,8 @@ class Player {
 
   void Draw(float frame_frac);
 
+  void TakeDamage(int damage);
+
   base::Vector2 GetWeaponPos(DamageType type) const;
   base::Vector2 GetWeaponScale() const;
 
@@ -44,6 +47,11 @@ class Player {
   eng::Animator cooldown_animator_[2];
   eng::Animator beam_animator_[2];
   eng::Animator spark_animator_[2];
+
+  eng::SolidQuad health_bar_[2];
+
+  int total_health_ = 3;
+  int hit_points_ = 3;
 
   DamageType active_weapon_ = kDamageType_Invalid;
 

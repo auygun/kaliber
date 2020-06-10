@@ -19,6 +19,9 @@ constexpr int wepon_cooldown_frame[] = {5, 13};
 constexpr int wepon_cooldown_frame_count = 3;
 constexpr int wepon_anim_speed = 48;
 
+const Vector4 kHealthBarColor[2] = {{0.5f, 0.5f, 0.5f, 1},
+                                    {0.161f, 0.89f, 0.322f, 1}};
+
 }  // namespace
 
 Player::Player()
@@ -30,7 +33,22 @@ Player::~Player() = default;
 bool Player::Initialize() {
   if (!CreateRenderResources())
     return false;
+
   SetupWeapons();
+
+  Vector2 hb_pos = Engine::Get().GetScreenSize() /
+                   Vector2(2, -2) + Vector2(0, weapon_[0].GetScale().y / 2);
+  Vector2 hb_scale = {((weapon_[0].GetOffset() - weapon_[1].GetOffset())
+                       .Magnitude() - weapon_[0].GetScale().x) * 1.1f,
+                      weapon_[0].GetScale().y * 0.04f};
+
+  for (int i = 0; i < 2; ++ i) {
+    health_bar_[i].Scale(hb_scale);
+    health_bar_[i].Translate(hb_pos * Vector2(0, 1));
+    health_bar_[i].SetColor(kHealthBarColor[i]);
+    health_bar_[i].SetVisible(true);
+  }
+
   return true;
 }
 
@@ -69,7 +87,18 @@ void Player::Draw(float frame_frac) {
     beam_[i].Draw();
     beam_spark_[i].Draw();
     weapon_[i].Draw();
+    health_bar_[i].Draw();
   }
+}
+
+void Player::TakeDamage(int damage) {
+  hit_points_ = std::min(total_health_, std::max(0, hit_points_ - damage));
+
+  Vector2 s = health_bar_[0].GetScale();
+  s.x *= (float)hit_points_ / (float)total_health_;
+  float t = (s.x - health_bar_[1].GetScale().x) / 2;
+  health_bar_[1].SetScale(s);
+  health_bar_[1].Translate({t, 0});
 }
 
 Vector2 Player::GetWeaponPos(DamageType type) const {

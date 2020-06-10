@@ -249,6 +249,8 @@ void Demo::StartNextStage(bool boss) {
         hud_.Show();
         hud_.SetProgress(1);
 
+        player_.TakeDamage(-1);
+
         float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;
         total_enemies_ = (int)(6 * factor);
         last_num_enemies_killed_ = 0;

@@ -448,6 +448,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
     e.target.SetVisible(false);
     e.blast.SetVisible(false);
     e.marked_for_removal = true;
+    static_cast<Demo*>(engine.GetGame())->GetPlayer().TakeDamage(1);
   });
   e.movement_animator.Attach(&e.sprite);
   e.movement_animator.Attach(&e.target);
