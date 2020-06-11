@@ -285,6 +285,9 @@ void Image::ConvertToPow2() {
 }
 
 bool Image::Compress() {
+  if (IsCompressed())
+    return true;
+
   TextureCompressor* tc =  Engine::Get().GetTextureCompressor(true);
   if (!tc)
     return false;
