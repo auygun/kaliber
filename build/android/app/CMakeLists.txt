@@ -16,6 +16,11 @@
 
 cmake_minimum_required(VERSION 3.4.1)
 
+# OBOE Library
+set (OBOE_DIR ../../../src/third_party/oboe)
+add_subdirectory(${OBOE_DIR} ./oboe-bin)
+
+
 include(AndroidNdkModules)
 android_ndk_import_module_cpufeatures()
 
@@ -108,6 +113,7 @@ target_include_directories(native-activity PRIVATE
 target_link_libraries(native-activity
     android
     native_app_glue
+    oboe
     cpufeatures
     EGL
     GLESv2
