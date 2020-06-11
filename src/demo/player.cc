@@ -114,6 +114,7 @@ void Player::OnInputEvent(std::unique_ptr<InputEvent> event) {
 }
 
 void Player::Draw(float frame_frac) {
+  nuke_.Draw();
   for (int i = 0; i < 2; ++i) {
     drag_sign_[i].Draw();
     beam_[i].Draw();
@@ -121,7 +122,6 @@ void Player::Draw(float frame_frac) {
     weapon_[i].Draw();
     health_bar_[i].Draw();
   }
-  nuke_.Draw();
   nuke_symbol_.Draw();
   nuke_counter_.Draw();
 }
