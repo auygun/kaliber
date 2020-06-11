@@ -243,7 +243,6 @@ std::shared_ptr<Asset> Engine::GetAssetInternal(AssetFactoryBase& factory) {
   auto asset = factory.Create();
   if (!asset->Load(factory.name().c_str()))
     return nullptr;
-  asset->SetImmutable();
 
   assets_[factory.name()] = asset;
   return asset;
@@ -269,6 +268,7 @@ bool Engine::CreateRenderResources() {
     LOG << "Could not create quad mesh.";
     return false;
   }
+  quad_mesh->SetImmutable();
   quad_->Create(quad_mesh);
 
   // Create the shader we can reuse for texture rendering.
@@ -277,6 +277,7 @@ bool Engine::CreateRenderResources() {
     LOG << "Could not create pass through shader.";
     return false;
   }
+  pts_source->SetImmutable();
   pass_through_shader_->Create(pts_source, quad_->vertex_description());
 
   // Create the shader we can reuse for solid rendering.
@@ -285,6 +286,7 @@ bool Engine::CreateRenderResources() {
     LOG << "Could not create solid shader.";
     return false;
   }
+  ss_source->SetImmutable();
   solid_shader_->Create(ss_source, quad_->vertex_description());
 
   return true;

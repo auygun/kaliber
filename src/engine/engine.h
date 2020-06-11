@@ -58,10 +58,10 @@ class Engine {
     return std::dynamic_pointer_cast<T>(CreateRenderResourceInternal(factory));
   }
 
-  // Returns immutable asset that can be accessed between multiple threads
-  // without locking. Returns nullptr if no asset was found with the given name.
+  // Returns asset from cache. Loads the asset if not cached. Returns nullptr if
+  // no asset was found with the given name.
   template <typename T>
-  std::shared_ptr<const T> GetAsset(const std::string& name) {
+  std::shared_ptr<T> GetAsset(const std::string& name) {
     AssetFactory<T> factory(name);
     return std::dynamic_pointer_cast<T>(GetAssetInternal(factory));
   }

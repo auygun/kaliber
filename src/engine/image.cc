@@ -230,8 +230,6 @@ bool Image::Load(const std::string& file_name) {
   }
 #endif
 
-  Compress();
-
   return !!buffer_;
 }
 
