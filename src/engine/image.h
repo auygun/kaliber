@@ -22,6 +22,7 @@ class Image : public Asset {
 
   bool Create(int width, int height);
   void Copy(const Image& other);
+  bool CreateMip(const Image& other);
   bool Load(const std::string& file_name) override;
 
   bool Compress();

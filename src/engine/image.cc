@@ -1,5 +1,6 @@
 #include "image.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include "../base/asset_file.h"
@@ -15,6 +16,48 @@
 #include "../third_party/stb/stb_image.h"
 
 using namespace base;
+
+namespace {
+
+// Blend between two colors with equal weights.
+uint32_t Mix2(uint32_t p0, uint32_t p1) {
+  uint32_t r = (((p0 >> 0) & 0xff) + ((p1 >> 0) & 0xff)) / 2;
+  uint32_t g = (((p0 >> 8) & 0xff) + ((p1 >> 8) & 0xff)) / 2;
+  uint32_t b = (((p0 >> 16) & 0xff) + ((p1 >> 16) & 0xff)) / 2;
+  uint32_t a = (((p0 >> 24) & 0xff) + ((p1 >> 24) & 0xff)) / 2;
+
+  return (r << 0) | (g << 8) | (b << 16) | (a << 24);
+}
+
+// Blend between four colors with equal weights.
+uint32_t Mix4(uint32_t p0, uint32_t p1, uint32_t p2, uint32_t p3) {
+  uint32_t r = (((p0 >> 0) & 0xff) + ((p1 >> 0) & 0xff) + ((p2 >> 0) & 0xff) +
+                ((p3 >> 0) & 0xff)) /
+               4;
+  uint32_t g = (((p0 >> 8) & 0xff) + ((p1 >> 8) & 0xff) + ((p2 >> 8) & 0xff) +
+                ((p3 >> 8) & 0xff)) /
+               4;
+  uint32_t b = (((p0 >> 16) & 0xff) + ((p1 >> 16) & 0xff) +
+                ((p2 >> 16) & 0xff) + ((p3 >> 16) & 0xff)) /
+               4;
+  uint32_t a = (((p0 >> 24) & 0xff) + ((p1 >> 24) & 0xff) +
+                ((p2 >> 24) & 0xff) + ((p3 >> 24) & 0xff)) /
+               4;
+
+  return (r << 0) | (g << 8) | (b << 16) | (a << 24);
+}
+
+// Anisotropic blending of colors.
+void MipNonUniform(void* dst, const void* src, size_t length) {
+  const uint32_t* s = reinterpret_cast<const uint32_t*>(src);
+  uint32_t* d = reinterpret_cast<uint32_t*>(dst);
+  for (size_t y = 0; y < length; ++y) {
+    *d++ = Mix2(s[0], s[1]);
+    s += 2;
+  }
+}
+
+}  // namespace
 
 namespace eng {
 
@@ -59,6 +102,51 @@ void Image::Copy(const Image& other) {
   width_ = other.width_;
   height_ = other.height_;
   format_ = other.format_;
+}
+
+bool Image::CreateMip(const Image& other) {
+  if (IsImmutable()) {
+    LOG << "Error: Image is immutable. Failed to copy.";
+    return false;
+  }
+
+  if (other.width_ <= 1 || other.height_ <= 1 || other.GetFormat() != kRGBA32)
+    return false;
+
+  // Reduce the dimensions.
+  width_ = std::max(other.width_ >> 1, 1);
+  height_ = std::max(other.height_ >> 1, 1);
+  format_ = kRGBA32;
+  buffer_.reset((uint8_t*)AlignedAlloc(GetSize()));
+
+  // If the width isn't perfectly divisable with two, then we end up skewing
+  // the image because the source offset isn't updated properly.
+  bool unaligned_width = other.width_ & 1;
+
+  // Special case the non-uniform/anisotropic cases, eg 4:1 or 1:4 textures.
+  // This is only an issue once we reach the highest mip levels where one
+  // dimension is one pixel.
+  if (other.width_ == 1) {
+    // Interestingly the horizontal and vertical case becomes the same code,
+    // it's only about which value to use as the run length that differs.
+    MipNonUniform(buffer_.get(), other.buffer_.get(), height_);
+  } else if (other.height_ == 1) {
+    MipNonUniform(buffer_.get(), other.buffer_.get(), width_);
+  } else {
+    const uint32_t* s = reinterpret_cast<const uint32_t*>(other.buffer_.get());
+    uint32_t* d = reinterpret_cast<uint32_t*>(buffer_.get());
+    for (size_t y = 0; y < height_; ++y) {
+      for (size_t x = 0; x < width_; ++x) {
+        *d++ = Mix4(s[0], s[1], s[other.width_], s[other.width_ + 1]);
+        s += 2;
+      }
+      if (unaligned_width)
+        ++s;
+      s += other.width_;
+    }
+  }
+
+  return true;
 }
 
 bool Image::Load(const std::string& file_name) {
