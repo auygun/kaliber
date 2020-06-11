@@ -16,6 +16,7 @@ class Asset {
   void SetName(const std::string& name) { name_ = name; }
   const std::string& GetName() const { return name_; }
 
+  // Immutable assets can be accessed between multiple threads without locking.
   void SetImmutable() { immutable_ = true; }
   bool IsImmutable() const { return immutable_; }
 
