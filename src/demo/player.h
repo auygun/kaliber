@@ -57,7 +57,9 @@ class Player {
   eng::SolidQuad nuke_;
   eng::Animator nuke_animator_;
 
+  std::shared_ptr<eng::Texture> nuke_symbol_tex_;
   std::shared_ptr<eng::Texture> nuke_counter_tex_;
+  eng::ImageQuad nuke_symbol_;
   eng::ImageQuad nuke_counter_;
 
   std::shared_ptr<const eng::Font> font_;

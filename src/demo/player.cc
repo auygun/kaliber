@@ -29,6 +29,7 @@ const Vector4 kHealthBarColor[2] = {{0.5f, 0.5f, 0.5f, 1},
 Player::Player()
     : weapon_tex_(Engine::Get().CreateRenderResource<Texture>()),
       beam_tex_(Engine::Get().CreateRenderResource<Texture>()),
+      nuke_symbol_tex_(Engine::Get().CreateRenderResource<Texture>()),
       nuke_counter_tex_(Engine::Get().CreateRenderResource<Texture>()) {}
 
 Player::~Player() = default;
@@ -58,9 +59,17 @@ bool Player::Initialize() {
 
   nuke_counter_.Create(nuke_counter_tex_);
   nuke_counter_.AutoScale();
+
+  nuke_symbol_.Create(nuke_symbol_tex_);
+  nuke_symbol_.AutoScale();
+  nuke_symbol_.PlaceToTopOf(health_bar_[0]);
+  nuke_symbol_.Translate(hb_pos * Vector2(0, 1));
+  nuke_symbol_.Translate(nuke_symbol_.GetScale() * Vector2(-0.5f, 1));
+  nuke_symbol_.SetVisible(true);
+
   nuke_counter_.PlaceToTopOf(health_bar_[0]);
-  nuke_counter_.Translate(hb_pos * Vector2(0, 1));
-  nuke_counter_.Translate(nuke_counter_.GetScale() * Vector2(0, 1));
+  nuke_counter_.SetOffset(nuke_symbol_.GetOffset());
+  nuke_counter_.PlaceToRightOf(nuke_symbol_);
   nuke_counter_.SetColor({1, 1, 1, 1});
   nuke_counter_.SetVisible(true);
 
@@ -113,6 +122,7 @@ void Player::Draw(float frame_frac) {
     health_bar_[i].Draw();
   }
   nuke_.Draw();
+  nuke_symbol_.Draw();
   nuke_counter_.Draw();
 }
 
@@ -434,7 +444,8 @@ bool Player::CreateRenderResources() {
 
   auto weapon_image = engine.GetAsset<Image>("enemy_anims_flare_ok.png");
   auto beam_image = engine.GetAsset<Image>("enemy_ray_ok.png");
-  if (!weapon_image || !beam_image)
+  auto nuke_image = engine.GetAsset<Image>("nuke.png");
+  if (!weapon_image || !beam_image || !nuke_image)
     return false;
 
   weapon_image->Compress();
@@ -445,6 +456,15 @@ bool Player::CreateRenderResources() {
   weapon_tex_->Update(weapon_image);
   beam_tex_->Update(beam_image);
 
+  auto current_mip = nuke_image;
+  for (int i = 0; i < 3; ++i) {
+    auto next_mip = std::make_shared<Image>();
+    next_mip->CreateMip(*current_mip);
+    current_mip = next_mip;
+  }
+  current_mip->Compress();
+  current_mip->SetImmutable();
+  nuke_symbol_tex_->Update(current_mip);
   nuke_counter_tex_->Update(GetNukeCounterImage(nuke_count_));
 
   return true;
