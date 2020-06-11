@@ -315,23 +315,32 @@ void Player::Nuke() {
   if (nuke_count_ <= 0)
     return;
 
+  Engine& engine = Engine::Get();
+  Demo* game = static_cast<Demo*>(engine.GetGame());
+
   nuke_counter_tex_->Update(GetNukeCounterImage(--nuke_count_));
   nuke_counter_.AutoScale();
 
-  nuke_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
+  nuke_animator_.SetEndCallback(Animator::kBlending, [&, game]() -> void {
     nuke_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
       nuke_.SetVisible(false);
     });
     nuke_animator_.SetBlending(
         {1, 1, 1, 0}, 2, std::bind(Acceleration, std::placeholders::_1, -1));
-    nuke_animator_.Play(Animator::kBlending, false);
+    nuke_animator_.SetEndCallback(Animator::kTimer, [&, game]() -> void {
+      game->GetEnemy().KillAllEnemyUnits();
+      game->GetEnemy().ResumeProgress();
+    });
+    nuke_animator_.SetTimer(0.5f);
+    nuke_animator_.Play(Animator::kBlending | Animator::kTimer, false);
   });
   nuke_animator_.SetBlending(
       {1, 1, 1, 1}, 0.1f, std::bind(Acceleration, std::placeholders::_1, 1));
   nuke_animator_.Play(Animator::kBlending, false);
   nuke_.SetVisible(true);
 
-  static_cast<Demo*>(Engine::Get().GetGame())->GetEnemy().KillAllEnemyUnits();
+  game->GetEnemy().PauseProgress();
+  game->GetEnemy().StopAllEnemyUnits();
 }
 
 void Player::DragStart(const Vector2& pos) {

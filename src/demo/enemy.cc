@@ -108,7 +108,7 @@ void Enemy::ContextLost() {
 }
 
 void Enemy::Update(float delta_time) {
-  if (!waiting_for_next_wave_) {
+  if (!paused_) {
     if (boss_fight_)
       UpdateBoss(delta_time);
     else
@@ -189,7 +189,7 @@ void Enemy::SelectTarget(DamageType damage_type,
                          const Vector2& dir) {
   assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
-  if (waiting_for_next_wave_)
+  if (paused_)
     return;
 
   std::vector<std::tuple<EnemyUnit*, float, float>> candidates;
@@ -283,7 +283,7 @@ void Enemy::DeselectTarget(DamageType damage_type) {
 void Enemy::HitTarget(DamageType damage_type) {
   assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
-  if (waiting_for_next_wave_)
+  if (paused_)
     return;
 
   EnemyUnit* target = GetTarget(damage_type);
@@ -305,8 +305,18 @@ bool Enemy::IsBossAlive() const {
   return boss_fight_ && boss_.GetFrame() < 9;
 }
 
-void Enemy::OnWaveFinished() {
+void Enemy::PauseProgress() {
+  paused_ = true;
+}
+
+void Enemy::ResumeProgress() {
+  paused_ = false;
+}
+
+void Enemy::StopAllEnemyUnits() {
   for (auto& e : enemies_) {
+    if (e.enemy_type == kEnemyType_Boss)
+      continue;
     if (!e.marked_for_removal && e.hit_points > 0)
       e.movement_animator.Pause(Animator::kMovement);
     if (e.stealth) {
@@ -317,7 +327,6 @@ void Enemy::OnWaveFinished() {
       e.sprite_animator.Play(Animator::kFrames, true);
     }
   }
-  waiting_for_next_wave_ = true;
 }
 
 void Enemy::KillAllEnemyUnits() {
@@ -362,7 +371,7 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   boss_spawn_cooldown_ = 5;
   boss_spawn_duration_ = 0;
   last_spawn_col_ = 0;
-  waiting_for_next_wave_ = false;
+  paused_ = false;
   boss_fight_ = boss_fight;
 
   if (boss_fight)
@@ -563,8 +572,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
 
   target->hit_points -= damage;
   if (target->hit_points <= 0) {
-    if (!waiting_for_next_wave_)
-      ++num_enemies_killed_in_current_wave_;
+    ++num_enemies_killed_in_current_wave_;
 
     target->sprite.SetVisible(false);
     target->health_base.SetVisible(false);

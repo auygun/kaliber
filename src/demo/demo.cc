@@ -144,7 +144,8 @@ void Demo::EnterGameOverState() {
   if (state_ == kGameOver)
     return;
 
-  enemy_.OnWaveFinished();
+  enemy_.PauseProgress();
+  enemy_.StopAllEnemyUnits();
   sky_.SwitchColor({0, 0, 0, 1});
   hud_.PrintMessage("Game Over", 3);
   state_ = kGameOver;
@@ -237,7 +238,8 @@ void Demo::StartNextStage(bool boss) {
   waiting_for_next_wave_ = true;
   hud_.SetProgress(wave_ > 0 ? 0 : 1);
 
-  enemy_.OnWaveFinished();
+  enemy_.PauseProgress();
+  enemy_.StopAllEnemyUnits();
 
   SetDelayedWork(1.25f, [&, boss]() -> void {
     enemy_.KillAllEnemyUnits();

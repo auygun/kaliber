@@ -42,9 +42,12 @@ class Enemy {
 
   bool IsBossAlive() const;
 
-  void OnWaveFinished();
+  void PauseProgress();
+  void ResumeProgress();
+
   void OnWaveStarted(int wave, bool boss_figt);
 
+  void StopAllEnemyUnits();
   void KillAllEnemyUnits();
   void RemoveAll();
 
@@ -107,7 +110,7 @@ class Enemy {
   float boss_spawn_duration_ = 0;
   float boss_spawn_cooldown_ = 0;
 
-  bool waiting_for_next_wave_ = true;
+  bool paused_ = true;
 
   int last_spawn_col_ = 0;
 
