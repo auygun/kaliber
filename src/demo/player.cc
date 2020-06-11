@@ -437,6 +437,11 @@ bool Player::CreateRenderResources() {
   if (!weapon_image || !beam_image)
     return false;
 
+  weapon_image->Compress();
+  weapon_image->SetImmutable();
+  beam_image->Compress();
+  beam_image->SetImmutable();
+
   weapon_tex_->Update(weapon_image);
   beam_tex_->Update(beam_image);
 

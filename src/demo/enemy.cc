@@ -799,6 +799,17 @@ bool Enemy::CreateRenderResources() {
       !blast_image)
     return false;
 
+  skull_image->Compress();
+  skull_image->SetImmutable();
+  bug_image->Compress();
+  bug_image->SetImmutable();
+  boss_image->Compress();
+  boss_image->SetImmutable();
+  target_image->Compress();
+  target_image->SetImmutable();
+  blast_image->Compress();
+  blast_image->SetImmutable();
+
   skull_tex_->Update(skull_image);
   bug_tex_->Update(bug_image);
   boss_tex_->Update(boss_image);
