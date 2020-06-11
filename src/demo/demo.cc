@@ -150,7 +150,7 @@ void Demo::EnterGameOverState() {
   state_ = kGameOver;
 
   SetDelayedWork(1, [&]() -> void {
-    enemy_.KillAllEnemyUnits(true);
+    enemy_.RemoveAll();
     hud_.Hide();
     SetDelayedWork(3, [&]() -> void {
       wave_ = 0;
@@ -209,7 +209,7 @@ void Demo::UpdateGameState(float delta_time) {
     int enemies_remaining = total_enemies_ - last_num_enemies_killed_;
 
     if (enemies_remaining <= 0)
-      StartNextStage(wave_ && !(wave_ % 3));
+      StartNextStage(/*wave_ && !(wave_ % 3)*/ true);
     else
       hud_.SetProgress((float)enemies_remaining / (float)total_enemies_);
   }

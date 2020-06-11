@@ -320,18 +320,25 @@ void Enemy::OnWaveFinished() {
   waiting_for_next_wave_ = true;
 }
 
-void Enemy::KillAllEnemyUnits(bool just_remove) {
+void Enemy::KillAllEnemyUnits() {
   for (auto& e : enemies_) {
-    if (!e.marked_for_removal && e.hit_points > 0) {
-      if (just_remove) {
-        e.sprite_animator.SetEndCallback(Animator::kBlending, [&]() -> void {
-          e.marked_for_removal = true;
-        });
-        e.sprite_animator.SetBlending({1, 1, 1, 0}, 0.3f);
-        e.sprite_animator.Play(Animator::kBlending, false);
-      } else {
-        TakeDamage(&e, 100);
-      }
+    if (!e.marked_for_removal && e.hit_points > 0 &&
+        e.enemy_type != kEnemyType_Boss) {
+      TakeDamage(&e, 100);
+    }
+  }
+}
+
+void Enemy::RemoveAll() {
+  for (auto& e : enemies_) {
+    if (e.enemy_type == kEnemyType_Boss) {
+      e.marked_for_removal = true;
+    } else if (!e.marked_for_removal && e.hit_points > 0) {
+      e.sprite_animator.SetEndCallback(Animator::kBlending, [&]() -> void {
+        e.marked_for_removal = true;
+      });
+      e.sprite_animator.SetBlending({1, 1, 1, 0}, 0.3f);
+      e.sprite_animator.Play(Animator::kBlending, false);
     }
   }
 
