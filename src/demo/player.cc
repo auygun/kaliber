@@ -129,6 +129,14 @@ void Player::TakeDamage(int damage) {
     static_cast<Demo*>(Engine::Get().GetGame())->EnterGameOverState();
 }
 
+void Player::Reset() {
+  TakeDamage(-total_health_);
+
+  nuke_count_ = 3;
+  nuke_counter_tex_->Update(GetNukeCounterImage(nuke_count_));
+  nuke_counter_.AutoScale();
+}
+
 Vector2 Player::GetWeaponPos(DamageType type) const {
   return Engine::Get().GetScreenSize() /
              Vector2(type == kDamageType_Green ? 3.5f : -3.5f, -2) +

@@ -229,7 +229,7 @@ void Demo::StartNewGame() {
   boss_fight_ = false;
   delayed_work_timer_ = 0;
   delayed_work_cb_ = nullptr;
-  player_.ResetHitPoints();
+  player_.Reset();
   EnterGameState();
 }
 

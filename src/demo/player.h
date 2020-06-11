@@ -33,7 +33,7 @@ class Player {
 
   void TakeDamage(int damage);
 
-  void ResetHitPoints() { TakeDamage(-total_health_); }
+  void Reset();
 
   base::Vector2 GetWeaponPos(DamageType type) const;
   base::Vector2 GetWeaponScale() const;
@@ -62,7 +62,7 @@ class Player {
 
   std::shared_ptr<const eng::Font> font_;
 
-  int nuke_count_ = 3;
+  int nuke_count_ = 0;
 
   int total_health_ = 3;
   int hit_points_ = 0;
