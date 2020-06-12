@@ -6,6 +6,7 @@
 #include <string>
 
 #include "../../base/timer.h"
+#include "../audio/audio_forward.h"
 
 #if defined(__ANDROID__)
 struct android_app;
@@ -61,6 +62,7 @@ class Platform {
   bool has_focus_ = false;
   bool should_exit_ = false;
 
+  std::unique_ptr<Audio> audio_;
   std::unique_ptr<Renderer> renderer_;
   std::unique_ptr<Engine> engine_;
 
@@ -73,6 +75,8 @@ class Platform {
 
   static int32_t HandleInput(android_app* app, AInputEvent* event);
   static void HandleCmd(android_app* app, int32_t cmd);
+#else
+
 #endif
 
   Platform(const Platform&) = delete;

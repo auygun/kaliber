@@ -4,6 +4,7 @@
 
 #include "../../base/log.h"
 #include "../engine.h"
+#include "../audio/audio.h"
 #include "../renderer/renderer.h"
 
 // Save battery on mobile devices.
@@ -15,11 +16,12 @@ Platform::InternalError Platform::internal_error;
 
 void Platform::Shutdown() {
   LOG << "Shutting down platform.";
+  audio_->Shutdown();
   renderer_->Shutdown();
 }
 
 void Platform::RunMainLoop() {
-  engine_ = std::make_unique<Engine>(this, renderer_.get());
+  engine_ = std::make_unique<Engine>(this, renderer_.get(), audio_.get());
   if (!engine_->Initialize()) {
     LOG << "Failed to initialize the engine.";
     throw internal_error;
