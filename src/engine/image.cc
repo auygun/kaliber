@@ -76,7 +76,7 @@ Image& Image::operator=(const Image& other) {
 
 bool Image::Create(int w, int h) {
   if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to create.";
+    LOG << "Error: Asset is mutable. Failed to create.";
     return false;
   }
 
@@ -90,7 +90,7 @@ bool Image::Create(int w, int h) {
 
 void Image::Copy(const Image& other) {
   if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to copy.";
+    LOG << "Error: Asset is mutable. Failed to copy.";
     return;
   }
 
@@ -106,7 +106,7 @@ void Image::Copy(const Image& other) {
 
 bool Image::CreateMip(const Image& other) {
   if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to copy.";
+    LOG << "Error: Asset is mutable. Failed to copy.";
     return false;
   }
 
@@ -151,7 +151,7 @@ bool Image::CreateMip(const Image& other) {
 
 bool Image::Load(const std::string& file_name) {
   if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to load.";
+    LOG << "Error: Asset is mutable. Failed to load.";
     return false;
   }
 
@@ -329,7 +329,7 @@ bool Image::Compress() {
 
 uint8_t* Image::GetBuffer() {
   if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to return writable buffer.";
+    LOG << "Error: Asset is mutable. Failed to return writable buffer.";
     return nullptr;
   }
 
@@ -338,7 +338,7 @@ uint8_t* Image::GetBuffer() {
 
 void Image::Clear(Vector4 rgba) {
   if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to clear.";
+    LOG << "Error: Asset is mutable. Failed to clear.";
     return;
   }
 
@@ -361,7 +361,7 @@ void Image::Clear(Vector4 rgba) {
 
 void Image::GradientH() {
   if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to apply gradient.";
+    LOG << "Error: Asset is mutable. Failed to apply gradient.";
     return;
   }
 
@@ -381,7 +381,7 @@ void Image::GradientH() {
 
 void Image::GradientV(const Vector4& c1, const Vector4& c2, int height) {
   if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to apply gradient.";
+    LOG << "Error: Asset is mutable. Failed to apply gradient.";
     return;
   }
 
