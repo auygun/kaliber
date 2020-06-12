@@ -2,11 +2,15 @@
 #define AUDIO_OBOE_H
 
 #include <memory>
+#include <mutex>
+#include <list>
 
 #include "../../third_party/oboe/include/oboe/AudioStream.h"
 #include "../../third_party/oboe/include/oboe/AudioStreamCallback.h"
 
 namespace eng {
+
+class Sound;
 
 class AudioOboe {
  public:
@@ -17,7 +21,17 @@ class AudioOboe {
 
   void Shutdown();
 
+  void Play(std::shared_ptr<const Sound> sound, bool loop);
+
  private:
+  enum SampleFlags { kLoop = 1 };
+
+  struct Sample {
+    std::shared_ptr<const Sound> sound;
+    size_t ind;
+    unsigned flags_;
+  };
+
   class StreamCallback : public oboe::AudioStreamCallback {
    public:
     StreamCallback(AudioOboe* audio);
@@ -36,6 +50,11 @@ class AudioOboe {
 
   oboe::ManagedStream stream_;
   std::unique_ptr<StreamCallback> callback_;
+
+  std::list<Sample> samples_[2];
+  std::mutex mutex_;
+
+  void RenderAudio(float *output_buffer, int32_t num_frames);
 };
 
 }  // namespace eng
