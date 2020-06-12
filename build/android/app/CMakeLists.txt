@@ -82,6 +82,7 @@ add_library(native-activity SHARED
     ../../../src/engine/renderer/texture.cc
     ../../../src/engine/shader_source.cc
     ../../../src/engine/solid_quad.cc
+    ../../../src/engine/sound.cc
     ../../../src/third_party/android/gestureDetector.cpp
     ../../../src/third_party/android/gl3stub.c
     ../../../src/third_party/android/GLContext.cpp
@@ -90,8 +91,8 @@ add_library(native-activity SHARED
     ../../../src/third_party/minizip/unzip.c
     ../../../src/third_party/texture_compressor/dxt_encoder_internals.cc
     ../../../src/third_party/texture_compressor/dxt_encoder.cc
-    ../../../src/third_party/texture_compressor/texture_compressor.cc
     ../../../src/third_party/texture_compressor/texture_compressor_etc1.cc
+    ../../../src/third_party/texture_compressor/texture_compressor.cc
 )
 
 if (ANDROID_ABI STREQUAL armeabi-v7a)
