@@ -10,6 +10,7 @@
 #include "../base/vecmath.h"
 #include "asset.h"
 #include "image_quad.h"
+#include "audio/audio_forward.h"
 #include "renderer/render_resource.h"
 
 class TextureCompressor;
@@ -27,7 +28,7 @@ class Shader;
 
 class Engine {
  public:
-  Engine(Platform* platform, Renderer* renderer);
+  Engine(Platform* platform, Renderer* renderer, Audio *audio);
   ~Engine();
 
   static Engine& Get();
@@ -97,6 +98,8 @@ class Engine {
 
   const std::string& GetRootPath() const;
 
+  Audio* GetAudio() { return audio_; }
+
   bool IsMobile() const;
 
   float seconds_accumulated() const { return seconds_accumulated_; }
@@ -107,6 +110,8 @@ class Engine {
   Platform* platform_ = nullptr;
 
   Renderer* renderer_ = nullptr;
+
+  Audio* audio_;
 
   std::unique_ptr<Game> game_;
 

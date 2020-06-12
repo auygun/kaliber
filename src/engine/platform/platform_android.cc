@@ -7,6 +7,7 @@
 #include "../../base/file.h"
 #include "../../base/log.h"
 #include "../../third_party/android/gestureDetector.h"
+#include "../audio/audio_oboe.h"
 #include "../engine.h"
 #include "../input_event.h"
 #include "../renderer/renderer.h"
@@ -220,6 +221,12 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
 void Platform::Initialize(android_app* app) {
   LOG << "Initializing platform.";
   app_ = app;
+
+  audio_ = std::make_unique<AudioOboe>();
+  if (!audio_->Initialize()) {
+    LOG << "Failed to initialize audio system.";
+    throw internal_error;
+  }
 
   renderer_ = std::make_unique<Renderer>();
 

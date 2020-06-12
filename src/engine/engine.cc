@@ -10,6 +10,7 @@
 #include "input_event.h"
 #include "mesh.h"
 #include "platform/platform.h"
+#include "audio/audio.h"
 #include "renderer/geometry.h"
 #include "renderer/render_command.h"
 #include "renderer/renderer.h"
@@ -23,8 +24,8 @@ namespace eng {
 
 Engine* Engine::singleton = nullptr;
 
-Engine::Engine(Platform* platform, Renderer* renderer)
-    : platform_(platform), renderer_(renderer) {
+Engine::Engine(Platform* platform, Renderer* renderer, Audio* audio)
+    : platform_(platform), renderer_(renderer), audio_(audio) {
   assert(!singleton);
   singleton = this;
 
