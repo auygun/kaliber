@@ -2,9 +2,13 @@
 
 #include <cstring>
 
+#include "../../base/interpolation.h"
 #include "../../base/log.h"
+#include "../../base/random.h"
 #include "../../third_party/oboe/include/oboe/Oboe.h"
 #include "../sound.h"
+
+using namespace base;
 
 namespace {
 
@@ -49,10 +53,12 @@ void AudioOboe::Shutdown() {
   LOG << "Shutting down audio system.";
 }
 
+Random rrr;
+
 void AudioOboe::Play(std::shared_ptr<const Sound> sound, bool loop) {
   std::unique_lock<std::mutex> scoped_lock(mutex_);
   Sample &s = samples_[0].emplace_back();
-  s = {sound, 0, (unsigned)(loop ? kLoop : 0)};
+  s = {sound, 0, Lerp(0.8f, 1.2f, rrr.GetFloat()), (unsigned)(loop ? kLoop : 0)};
 }
 
 void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
@@ -63,10 +69,14 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
 
   memset(output_buffer, 0, sizeof(float) * num_frames * kChannelCount);
 
+  float z = 0.0f;
   for (auto it = samples_[1].begin(); it != samples_[1].end();) {
     const float *src = it->sound->GetBuffer();
     for (size_t i = 0; i < num_frames * kChannelCount; ++i) {
-      output_buffer[i] += src[it->ind++];
+      output_buffer[i] += src[it->ind];
+      z += it->step;
+      it->ind += (int)z;
+      z -= (int)z;
       if (it->flags_ & kLoop) {
         it->ind %= it->sound->num_samples();
       } else if (it->ind >= it->sound->num_samples()) {

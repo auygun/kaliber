@@ -29,6 +29,7 @@ class AudioOboe {
   struct Sample {
     std::shared_ptr<const Sound> sound;
     size_t ind;
+    float step;
     unsigned flags_;
   };
 
