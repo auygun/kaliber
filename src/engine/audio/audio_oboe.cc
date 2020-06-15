@@ -7,6 +7,7 @@
 #include "../../base/random.h"
 #include "../../third_party/oboe/include/oboe/Oboe.h"
 #include "../sound.h"
+#include "audio_resource.h"
 
 using namespace base;
 
@@ -53,12 +54,26 @@ void AudioOboe::Shutdown() {
   LOG << "Shutting down audio system.";
 }
 
-Random rrr;
+std::shared_ptr<AudioResource> AudioOboe::CreateResource() {
+  auto impl_data = std::make_shared<Sample>();
+  return std::make_shared<AudioResource>(impl_data, this);
+}
 
-void AudioOboe::Play(std::shared_ptr<const Sound> sound, bool loop) {
+void AudioOboe::Play(std::shared_ptr<const Sound> sound,
+                     std::shared_ptr<void> impl_data,
+                     bool loop,
+                     int step) {
+  auto sample = std::static_pointer_cast<Sample>(impl_data);
+  if (sample->flags & kPlaying)
+    return;
+
+  sample->sound = sound;
+  sample->flags |= kPlaying;
+  sample->step = step;
+  sample->accumulator = 0;
+
   std::unique_lock<std::mutex> scoped_lock(mutex_);
-  Sample &s = samples_[0].emplace_back();
-  s = {sound, 0, Lerp(0.8f, 1.2f, rrr.GetFloat()), (unsigned)(loop ? kLoop : 0)};
+  samples_[0].push_back(sample);
 }
 
 void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
@@ -69,22 +84,49 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
 
   memset(output_buffer, 0, sizeof(float) * num_frames * kChannelCount);
 
-  float z = 0.0f;
   for (auto it = samples_[1].begin(); it != samples_[1].end();) {
-    const float *src = it->sound->GetBuffer();
-    for (size_t i = 0; i < num_frames * kChannelCount; ++i) {
-      output_buffer[i] += src[it->ind];
-      z += it->step;
-      it->ind += (int)z;
-      z -= (int)z;
-      if (it->flags_ & kLoop) {
-        it->ind %= it->sound->num_samples();
-      } else if (it->ind >= it->sound->num_samples()) {
-        it = samples_[1].erase(it);
-        break;
+    Sample* sample = it->get();
+
+    const float *src = sample->sound->GetBuffer();
+    size_t num_samples = sample->sound->num_samples();
+    bool remove = false;
+
+    if (sample->step == 1) {
+      // No resampling.
+      for (size_t i = 0; i < num_frames * kChannelCount; ++i) {
+        output_buffer[i] += src[sample->src_index++];
+
+        if (sample->flags & kLoop) {
+          sample->src_index %= num_samples;
+        } else if (sample->src_index >= num_samples) {
+          remove = true;
+          break;
+        }
+      }
+    } else {
+      // Do basic resampling.
+      for (size_t i = 0; i < num_frames * kChannelCount; ++i) {
+        output_buffer[i] += src[sample->src_index];
+
+        sample->accumulator += sample->step;
+        sample->src_index += sample->accumulator / 10;
+        sample->accumulator %= 10;
+
+        if (sample->flags & kLoop) {
+          sample->src_index %= num_samples;
+        } else if (sample->src_index >= num_samples) {
+          remove = true;
+          break;
+        }
       }
     }
-    ++it;
+
+    if (remove) {
+      sample->flags &= ~kPlaying;
+      it = samples_[1].erase(it);
+    } else {
+      ++it;
+    }
   }
 }
 

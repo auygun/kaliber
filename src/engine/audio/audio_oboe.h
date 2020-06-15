@@ -10,6 +10,7 @@
 
 namespace eng {
 
+class AudioResource;
 class Sound;
 
 class AudioOboe {
@@ -21,16 +22,22 @@ class AudioOboe {
 
   void Shutdown();
 
-  void Play(std::shared_ptr<const Sound> sound, bool loop);
+  std::shared_ptr<AudioResource> CreateResource();
+
+  void Play(std::shared_ptr<const Sound> sound,
+            std::shared_ptr<void> impl_data,
+            bool loop,
+            int step);
 
  private:
-  enum SampleFlags { kLoop = 1 };
+  enum SampleFlags { kPlaying = 1, kLoop = 2 };
 
   struct Sample {
     std::shared_ptr<const Sound> sound;
-    size_t ind;
-    float step;
-    unsigned flags_;
+    size_t src_index = 0;
+    size_t step = 0;
+    size_t accumulator = 0;
+    unsigned flags = 0;
   };
 
   class StreamCallback : public oboe::AudioStreamCallback {
@@ -52,7 +59,7 @@ class AudioOboe {
   oboe::ManagedStream stream_;
   std::unique_ptr<StreamCallback> callback_;
 
-  std::list<Sample> samples_[2];
+  std::list<std::shared_ptr<Sample>> samples_[2];
   std::mutex mutex_;
 
   void RenderAudio(float *output_buffer, int32_t num_frames);

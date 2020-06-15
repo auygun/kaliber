@@ -65,7 +65,9 @@ add_library(native-activity SHARED
     ../../../src/demo/sky_quad.cc
     ../../../src/engine/animatable.cc
     ../../../src/engine/animator.cc
+    ../../../src/engine/audio_player.cc
     ../../../src/engine/audio/audio_oboe.cc
+    ../../../src/engine/audio/audio_resource.cc
     ../../../src/engine/engine.cc
     ../../../src/engine/font.cc
     ../../../src/engine/image_quad.cc
