@@ -17,6 +17,7 @@ class TextureCompressor;
 
 namespace eng {
 
+class AudioResource;
 class Font;
 class Game;
 class InputEvent;
@@ -58,6 +59,8 @@ class Engine {
     RenderResourceFactory<T> factory;
     return std::dynamic_pointer_cast<T>(CreateRenderResourceInternal(factory));
   }
+
+  std::shared_ptr<AudioResource> CreateAudioResource();
 
   // Returns asset from cache. Loads the asset if not cached. Returns nullptr if
   // no asset was found with the given name.

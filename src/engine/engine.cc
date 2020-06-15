@@ -3,6 +3,7 @@
 #include "../base/log.h"
 #include "../base/worker.h"
 #include "../third_party/texture_compressor/texture_compressor.h"
+#include "audio/audio.h"
 #include "font.h"
 #include "game.h"
 #include "game_factory.h"
@@ -10,7 +11,6 @@
 #include "input_event.h"
 #include "mesh.h"
 #include "platform/platform.h"
-#include "audio/audio.h"
 #include "renderer/geometry.h"
 #include "renderer/render_command.h"
 #include "renderer/renderer.h"
@@ -164,6 +164,10 @@ Vector2 Engine::ToScale(const Vector2& vec) {
 
 Vector2 Engine::ToPosition(const Vector2& vec) {
   return ToScale(vec) - GetScreenSize() / 2.0f;
+}
+
+std::shared_ptr<AudioResource> Engine::CreateAudioResource() {
+  return audio_->CreateResource();
 }
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
