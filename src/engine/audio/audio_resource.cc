@@ -11,8 +11,12 @@ AudioResource::~AudioResource() = default;
 
 void AudioResource::Play(std::shared_ptr<const Sound> sound,
                          bool loop,
-                         int step) {
+                         size_t step) {
   audio_->Play(sound, impl_data_, loop, step);
+}
+
+void AudioResource::Stop() {
+  audio_->Stop(impl_data_);
 }
 
 }  // namespace eng

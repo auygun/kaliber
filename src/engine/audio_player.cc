@@ -25,4 +25,9 @@ void AudioPlayer::Play(bool loop, bool variate) {
   }
 }
 
+void AudioPlayer::Stop() {
+  if (resource_)
+    resource_->Stop();
+}
+
 }  // namespace eng
