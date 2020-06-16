@@ -7,7 +7,7 @@
 
 #include "../base/vecmath.h"
 #include "../engine/animator.h"
-#include "../engine/audio_player.h"
+#include "../engine/sound_player.h"
 #include "../engine/image_quad.h"
 #include "../engine/solid_quad.h"
 #include "damage_type.h"
@@ -83,7 +83,7 @@ class Enemy {
     eng::Animator health_animator;
     eng::Animator score_animator;
 
-    eng::AudioPlayer explosion_;
+    eng::SoundPlayer explosion_;
   };
 
   std::shared_ptr<eng::Texture> skull_tex_;

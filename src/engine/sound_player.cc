@@ -1,4 +1,4 @@
-#include "audio_player.h"
+#include "sound_player.h"
 
 #include "../base/interpolation.h"
 #include "audio/audio_resource.h"
@@ -8,15 +8,15 @@ using namespace base;
 
 namespace eng {
 
-AudioPlayer::AudioPlayer() : resource_(Engine::Get().CreateAudioResource()) {}
+SoundPlayer::SoundPlayer() : resource_(Engine::Get().CreateAudioResource()) {}
 
-AudioPlayer::~AudioPlayer() = default;
+SoundPlayer::~SoundPlayer() = default;
 
-void AudioPlayer::SetSound(std::shared_ptr<const Sound> sound) {
+void SoundPlayer::SetSound(std::shared_ptr<const Sound> sound) {
   sound_ = sound;
 }
 
-void AudioPlayer::Play(bool loop, bool variate) {
+void SoundPlayer::Play(bool loop, bool variate) {
   if (resource_) {
     int step = variate
                ? Lerp(9, 11, Engine::Get().GetRandomGenerator().GetFloat())
@@ -25,7 +25,7 @@ void AudioPlayer::Play(bool loop, bool variate) {
   }
 }
 
-void AudioPlayer::Stop() {
+void SoundPlayer::Stop() {
   if (resource_)
     resource_->Stop();
 }

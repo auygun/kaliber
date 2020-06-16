@@ -65,7 +65,6 @@ add_library(native-activity SHARED
     ../../../src/demo/sky_quad.cc
     ../../../src/engine/animatable.cc
     ../../../src/engine/animator.cc
-    ../../../src/engine/audio_player.cc
     ../../../src/engine/audio/audio_oboe.cc
     ../../../src/engine/audio/audio_resource.cc
     ../../../src/engine/engine.cc
@@ -84,6 +83,7 @@ add_library(native-activity SHARED
     ../../../src/engine/renderer/texture.cc
     ../../../src/engine/shader_source.cc
     ../../../src/engine/solid_quad.cc
+    ../../../src/engine/sound_player.cc
     ../../../src/engine/sound.cc
     ../../../src/third_party/android/gestureDetector.cpp
     ../../../src/third_party/android/gl3stub.c
