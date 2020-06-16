@@ -37,7 +37,11 @@ bool AudioOboe::Initialize() {
       ->setCallback(callback_.get())
       ->openManagedStream(stream_);
 
-  LOG << "Audio stream sample rate: " << stream_->getSampleRate();
+  LOG << "Oboe Audio Stream:";
+  LOG << "  performance mode: " << (int)stream_->getPerformanceMode();
+  LOG << "  format:           " << (int)stream_->getFormat();
+  LOG << "  channel count:    " << stream_->getChannelCount();
+  LOG << "  sample rate:      " << stream_->getSampleRate();
 
   if (result != oboe::Result::OK) {
     LOG << "Failed to create the playback stream. Error: %s"
