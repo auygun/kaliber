@@ -8,10 +8,10 @@ namespace eng {
 class AudioResource;
 class Sound;
 
-class AudioPlayer {
+class SoundPlayer {
  public:
-  AudioPlayer();
-  ~AudioPlayer();
+  SoundPlayer();
+  ~SoundPlayer();
 
   void SetSound(std::shared_ptr<const Sound> sound);
 
@@ -23,8 +23,8 @@ class AudioPlayer {
   std::shared_ptr<AudioResource> resource_;
   std::shared_ptr<const Sound> sound_;
 
-  AudioPlayer(const AudioPlayer&) = delete;
-  AudioPlayer& operator=(const AudioPlayer&) = delete;
+  SoundPlayer(const SoundPlayer&) = delete;
+  SoundPlayer& operator=(const SoundPlayer&) = delete;
 };
 
 }  // namespace eng
