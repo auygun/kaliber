@@ -64,11 +64,12 @@ void AudioOboe::Play(std::shared_ptr<const Sound> sound,
                      bool loop,
                      size_t step) {
   auto sample = std::static_pointer_cast<Sample>(impl_data);
-  if (sample->flags & kPlaying)
+  if (sample->active)
     return;
 
-  unsigned flags = kPlaying | (unsigned)(loop ? kLoop : 0);
-  *sample = {sound, 0, step, 0, flags};
+  // The given sample is not accessed by the audio thread right now. It's safe
+  // to write.
+  *sample = {sound, 0, step, 0, (unsigned)(loop ? kLoop : 0), true};
 
   std::unique_lock<std::mutex> scoped_lock(mutex_);
   samples_[0].push_back(sample);
@@ -76,10 +77,11 @@ void AudioOboe::Play(std::shared_ptr<const Sound> sound,
 
 void AudioOboe::Stop(std::shared_ptr<void> impl_data) {
   auto sample = std::static_pointer_cast<Sample>(impl_data);
-  if (!(sample->flags & kPlaying))
+  if (!sample->active)
     return;
 
-  sample->flags &= ~kPlaying;
+  // Audio thread does read-only access to "flags". It's safe to write here.
+  sample->flags |= kStop;
 }
 
 void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
@@ -97,7 +99,7 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
     size_t num_samples = sample->sound->num_samples();
     bool remove = false;
 
-    if (!(sample->flags & kPlaying)) {
+    if (sample->flags & kStop) {
       remove = true;
     } else if (sample->step == 1) {
       // No resampling.
@@ -129,10 +131,13 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
       }
     }
 
-    if (remove)
+    if (remove) {
+      // Main thread does read-only access to "active". It's safe to write here.
+      sample->active = false;
       it = samples_[1].erase(it);
-    else
+    } else {
       ++it;
+    }
   }
 }
 

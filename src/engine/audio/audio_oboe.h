@@ -32,7 +32,7 @@ class AudioOboe {
   void Stop(std::shared_ptr<void> impl_data);
 
  private:
-  enum SampleFlags { kPlaying = 1, kLoop = 2 };
+  enum SampleFlags { kLoop = 1, kStop = 2 };
 
   struct Sample {
     std::shared_ptr<const Sound> sound;
@@ -40,6 +40,7 @@ class AudioOboe {
     size_t step = 0;
     size_t accumulator = 0;
     unsigned flags = 0;
+    bool active = false;
   };
 
   class StreamCallback : public oboe::AudioStreamCallback {
