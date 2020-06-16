@@ -62,18 +62,24 @@ std::shared_ptr<AudioResource> AudioOboe::CreateResource() {
 void AudioOboe::Play(std::shared_ptr<const Sound> sound,
                      std::shared_ptr<void> impl_data,
                      bool loop,
-                     int step) {
+                     size_t step) {
   auto sample = std::static_pointer_cast<Sample>(impl_data);
   if (sample->flags & kPlaying)
     return;
 
-  sample->sound = sound;
-  sample->flags |= kPlaying;
-  sample->step = step;
-  sample->accumulator = 0;
+  unsigned flags = kPlaying | (unsigned)(loop ? kLoop : 0);
+  *sample = {sound, 0, step, 0, flags};
 
   std::unique_lock<std::mutex> scoped_lock(mutex_);
   samples_[0].push_back(sample);
+}
+
+void AudioOboe::Stop(std::shared_ptr<void> impl_data) {
+  auto sample = std::static_pointer_cast<Sample>(impl_data);
+  if (!(sample->flags & kPlaying))
+    return;
+
+  sample->flags &= ~kPlaying;
 }
 
 void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
@@ -91,7 +97,9 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
     size_t num_samples = sample->sound->num_samples();
     bool remove = false;
 
-    if (sample->step == 1) {
+    if (!(sample->flags & kPlaying)) {
+      remove = true;
+    } else if (sample->step == 1) {
       // No resampling.
       for (size_t i = 0; i < num_frames * kChannelCount; ++i) {
         output_buffer[i] += src[sample->src_index++];
@@ -121,12 +129,10 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
       }
     }
 
-    if (remove) {
-      sample->flags &= ~kPlaying;
+    if (remove)
       it = samples_[1].erase(it);
-    } else {
+    else
       ++it;
-    }
   }
 }
 

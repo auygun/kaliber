@@ -27,7 +27,9 @@ class AudioOboe {
   void Play(std::shared_ptr<const Sound> sound,
             std::shared_ptr<void> impl_data,
             bool loop,
-            int step);
+            size_t step);
+
+  void Stop(std::shared_ptr<void> impl_data);
 
  private:
   enum SampleFlags { kPlaying = 1, kLoop = 2 };

@@ -17,6 +17,8 @@ class AudioPlayer {
 
   void Play(bool loop, bool variate);
 
+  void Stop();
+
  private:
   std::shared_ptr<AudioResource> resource_;
   std::shared_ptr<const Sound> sound_;

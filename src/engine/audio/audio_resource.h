@@ -15,7 +15,9 @@ class AudioResource {
                 Audio* audio);
   ~AudioResource();
 
-  void Play(std::shared_ptr<const Sound> sound, bool loop, int step);
+  void Play(std::shared_ptr<const Sound> sound, bool loop, size_t step);
+
+  void Stop();
 
  private:
   std::shared_ptr<void> impl_data_;
