@@ -101,29 +101,22 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
 
     const float *src = sample->sound->GetBuffer();
     size_t num_samples = sample->sound->num_samples();
+    int num_channels = sample->sound->num_channels();
+    int src_channel_step = sample->sound->num_channels() - 1;
     bool remove = false;
 
     if (sample->flags & kStop) {
       remove = true;
-    } else if (sample->step == 1) {
-      // No resampling.
-      for (size_t i = 0; i < num_frames * kChannelCount; ++i) {
-        output_buffer[i] += src[sample->src_index++];
-
-        if (sample->flags & kLoop) {
-          sample->src_index %= num_samples;
-        } else if (sample->src_index >= num_samples) {
-          remove = true;
-          break;
-        }
-      }
     } else {
-      // Do basic resampling.
-      for (size_t i = 0; i < num_frames * kChannelCount; ++i) {
-        output_buffer[i] += src[sample->src_index];
+      for (size_t i = 0; i < num_frames * kChannelCount;) {
+        // Mix channels.
+        output_buffer[i++] += src[sample->src_index];
+        sample->src_index += src_channel_step;
+        output_buffer[i++] += src[sample->src_index];
 
+        // Basic resampling.
         sample->accumulator += sample->step;
-        sample->src_index += sample->accumulator / 10;
+        sample->src_index += num_channels * sample->accumulator / 10;
         sample->accumulator %= 10;
 
         if (sample->flags & kLoop) {

@@ -20,7 +20,7 @@ void SoundPlayer::Play(bool loop, bool variate) {
   if (resource_) {
     int step = variate
                ? Lerp(9, 11, Engine::Get().GetRandomGenerator().GetFloat())
-               : 1;
+               : 10;
     resource_->Play(sound_, loop, step);
   }
 }
