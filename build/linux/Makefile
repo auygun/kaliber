@@ -82,6 +82,7 @@ GLTEST_SRC := \
   $(SRC_ROOT)/demo/sky_quad.cc \
   $(SRC_ROOT)/engine/animatable.cc \
   $(SRC_ROOT)/engine/animator.cc \
+  $(SRC_ROOT)/engine/audio/audio_resource.cc \
   $(SRC_ROOT)/engine/engine.cc \
   $(SRC_ROOT)/engine/font.cc \
   $(SRC_ROOT)/engine/image_quad.cc \
@@ -98,6 +99,7 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/renderer/texture.cc \
   $(SRC_ROOT)/engine/shader_source.cc \
   $(SRC_ROOT)/engine/solid_quad.cc \
+  $(SRC_ROOT)/engine/sound_player.cc \
   $(SRC_ROOT)/engine/sound.cc \
   $(SRC_ROOT)/third_party/glew/glew.c \
   $(SRC_ROOT)/third_party/jsoncpp/jsoncpp.cc \
@@ -105,8 +107,8 @@ GLTEST_SRC := \
   $(SRC_ROOT)/third_party/minizip/unzip.c \
   $(SRC_ROOT)/third_party/texture_compressor/dxt_encoder_internals.cc \
   $(SRC_ROOT)/third_party/texture_compressor/dxt_encoder.cc \
+  $(SRC_ROOT)/third_party/texture_compressor/texture_compressor_etc1.cc \
   $(SRC_ROOT)/third_party/texture_compressor/texture_compressor.cc \
-  $(SRC_ROOT)/third_party/texture_compressor/texture_compressor_etc1.cc
 
 GLTEST_EXE := $(call app_exe,gltest)
 GLTEST_OBJS := $(call objs_from_src, $(GLTEST_SRC))
