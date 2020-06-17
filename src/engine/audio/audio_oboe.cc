@@ -66,14 +66,18 @@ std::shared_ptr<AudioResource> AudioOboe::CreateResource() {
 void AudioOboe::Play(std::shared_ptr<const Sound> sound,
                      std::shared_ptr<void> impl_data,
                      bool loop,
-                     size_t step) {
+                     size_t step,
+                     bool simulate_stereo) {
   auto sample = std::static_pointer_cast<Sample>(impl_data);
   if (sample->active)
     return;
 
   // The given sample is not accessed by the audio thread right now. It's safe
   // to write.
-  *sample = {sound, 0, step, 0, (unsigned)(loop ? kLoop : 0), true};
+  unsigned flags = 0;
+  flags |= (unsigned)(loop ? kLoop : 0);
+  flags |= (unsigned)(simulate_stereo ? kSimulateStereo : 0);
+  *sample = {sound, 0, step, 0, flags, true};
 
   std::unique_lock<std::mutex> scoped_lock(mutex_);
   samples_[0].push_back(sample);
@@ -102,30 +106,54 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
     const float *src = sample->sound->GetBuffer();
     size_t num_samples = sample->sound->num_samples();
     int num_channels = sample->sound->num_channels();
-    int src_channel_step = sample->sound->num_channels() - 1;
+    size_t src_index = sample->src_index;
+    size_t step = sample->step;
+    size_t accumulator = sample->accumulator;
+    unsigned flags = sample->flags;
+
+    int src_channel_step = num_channels - 1;
+    int channel_offset = (flags & kSimulateStereo) && num_channels == 1
+                         ? sample->sound->hz() / 10
+                         : 0;
     bool remove = false;
 
-    if (sample->flags & kStop) {
+    if (flags & kStop) {
       remove = true;
     } else {
       for (size_t i = 0; i < num_frames * kChannelCount;) {
-        // Mix channels.
-        output_buffer[i++] += src[sample->src_index];
-        sample->src_index += src_channel_step;
-        output_buffer[i++] += src[sample->src_index];
+        // Mix the 1st channel.
+        output_buffer[i++] += src[src_index];
 
-        // Basic resampling.
-        sample->accumulator += sample->step;
-        sample->src_index += num_channels * sample->accumulator / 10;
-        sample->accumulator %= 10;
+        // Advance to the next source channel in case the sample is stereo.
+        src_index += src_channel_step;
 
-        if (sample->flags & kLoop) {
-          sample->src_index %= num_samples;
-        } else if (sample->src_index >= num_samples) {
+        // Mix the 2nd channel. Offset the source index for stereo simulation.
+        int ind = channel_offset + src_index;
+        if (ind < num_samples)
+          output_buffer[i++] += src[ind];
+        else if (flags & kLoop)
+          output_buffer[i++] += src[ind % num_samples];
+        else
+          i++;
+
+        // Basic resampling for variations.
+        accumulator += step;
+        src_index += num_channels * accumulator / 10;
+        accumulator %= 10;
+
+        // Advance source index. Mark for removal once end of the sample is
+        // reached.
+        if (flags & kLoop) {
+          src_index %= num_samples;
+        } else if (src_index >= num_samples) {
           remove = true;
           break;
         }
       }
+
+      sample->src_index = src_index;
+      sample->step = step;
+      sample->accumulator = accumulator;
     }
 
     if (remove) {

@@ -15,13 +15,19 @@ class SoundPlayer {
 
   void SetSound(std::shared_ptr<const Sound> sound);
 
-  void Play(bool loop, bool variate);
+  void Play(bool loop);
 
   void Stop();
+
+  void SetVariate(bool variate) { variate_ = variate; }
+  void SetSimulateStereo(bool simulate) { simulate_stereo_ = simulate; }
 
  private:
   std::shared_ptr<AudioResource> resource_;
   std::shared_ptr<const Sound> sound_;
+
+  bool variate_ = false;
+  bool simulate_stereo_ = false;  // For mono samples only.
 
   SoundPlayer(const SoundPlayer&) = delete;
   SoundPlayer& operator=(const SoundPlayer&) = delete;

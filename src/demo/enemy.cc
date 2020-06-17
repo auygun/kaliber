@@ -504,6 +504,8 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.movement_animator.Play(Animator::kMovement, false);
 
   e.explosion_.SetSound(engine.GetAsset<Sound>("explosion.mp3"));
+  e.explosion_.SetVariate(true);
+  e.explosion_.SetSimulateStereo(true);
 }
 
 void Enemy::SpawnBoss() {
@@ -589,7 +591,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
     Demo* game = static_cast<Demo*>(engine.GetGame());
     game->AddScore(GetScore(target->enemy_type));
 
-    target->explosion_.Play(false, true);
+    target->explosion_.Play(false);
 
     if (target->enemy_type == kEnemyType_Boss) {
       // Play dead animation and move away the boss.
