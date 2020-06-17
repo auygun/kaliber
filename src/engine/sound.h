@@ -24,14 +24,14 @@ class Sound : public Asset {
   bool IsValid() const { return !!buffer_; }
 
   size_t num_samples() const { return num_samples_; }
-  int num_channels() const { return num_channels_; }
-  int hz() const { return hz_; }
+  size_t num_channels() const { return num_channels_; }
+  size_t hz() const { return hz_; }
 
  private:
   std::unique_ptr<float[]> buffer_;
   size_t num_samples_ = 0;  // Channels included.
-  int num_channels_ = 0;
-  int hz_ = 0;
+  size_t num_channels_ = 0;
+  size_t hz_ = 0;
 };
 
 }  // namespace eng
