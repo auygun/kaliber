@@ -19,8 +19,8 @@ void SoundPlayer::SetSound(std::shared_ptr<const Sound> sound) {
 void SoundPlayer::Play(bool loop) {
   if (resource_) {
     int step = variate_
-               ? Lerp(9, 11, Engine::Get().GetRandomGenerator().GetFloat())
-               : 10;
+               ? Engine::Get().GetRandomGenerator().Roll(3) - 2
+               : 0;
     resource_->Play(sound_, loop, step, simulate_stereo_);
   }
 }
