@@ -50,6 +50,7 @@ bool Demo::Initialize() {
   }
 
   music_.SetSound(Engine::Get().GetAsset<Sound>("file_example_MP3_700KB.mp3"));
+  music_.SetAplitude(0.4f);
   music_.Play(true);
 
   EnterMenuState();
@@ -142,7 +143,7 @@ void Demo::EnterCreditsState() {
 void Demo::EnterGameState() {
   if (state_ == kGame)
     return;
-  music_.Resume();
+  music_.Resume(true);
   hud_.Show();
   state_ = kGame;
 }

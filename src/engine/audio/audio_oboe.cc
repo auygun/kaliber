@@ -62,37 +62,22 @@ std::shared_ptr<AudioResource> AudioOboe::CreateResource() {
   return std::make_shared<AudioResource>(impl_data, this);
 }
 
-void AudioOboe::Play(std::shared_ptr<const Sound> sound,
-                     std::shared_ptr<void> impl_data,
-                     bool loop,
-                     size_t step,
-                     bool simulate_stereo,
-                     float amplitude) {
+void AudioOboe::Play(std::shared_ptr<void> impl_data,
+                     std::shared_ptr<const Sound> sound,
+                     float amplitude,
+                     bool reset_pos) {
   auto sample = std::static_pointer_cast<Sample>(impl_data);
   if (sample->active)
     return;
 
-  // The given sample is not accessed by the audio thread right now.
-  unsigned flags = 0;
-  flags |= (unsigned)(loop ? kLoop : 0);
-  flags |= (unsigned)(simulate_stereo ? kSimulateStereo : 0);
-  *sample = {flags, step + 10, 0, sound, 0, 0, amplitude, true};
-
-  std::unique_lock<std::mutex> scoped_lock(mutex_);
-  samples_[0].push_back(sample);
-}
-
-void AudioOboe::Play(std::shared_ptr<const Sound> sound,
-                     std::shared_ptr<void> impl_data,
-                     float amplitude) {
-  auto sample = std::static_pointer_cast<Sample>(impl_data);
-  if (sample->active)
-    return;
-
-  sample->active = true;
-  sample->amplitude = amplitude;
+  if (reset_pos) {
+    sample->src_index = 0;
+    sample->accumulator = 0;
+  }
   sample->flags &= ~kStopped;
-  sample->flags &= ~kModifyAmplitude;
+  sample->sound = sound;
+  sample->amplitude = amplitude;
+  sample->active = true;
 
   std::unique_lock<std::mutex> scoped_lock(mutex_);
   samples_[0].push_back(sample);
@@ -106,14 +91,37 @@ void AudioOboe::Stop(std::shared_ptr<void> impl_data) {
   sample->flags |= kStopped;
 }
 
+void AudioOboe::SetLoop(std::shared_ptr<void> impl_data, bool loop) {
+  auto sample = std::static_pointer_cast<Sample>(impl_data);
+  if (loop)
+    sample->flags |= kLoop;
+  else
+    sample->flags &= ~kLoop;
+}
+
+void AudioOboe::SetSimulateStereo(std::shared_ptr<void> impl_data,
+                                  bool simulate) {
+  auto sample = std::static_pointer_cast<Sample>(impl_data);
+  if (simulate)
+    sample->flags |= kSimulateStereo;
+  else
+    sample->flags &= ~kSimulateStereo;
+}
+
+void AudioOboe::SetResampleStep(std::shared_ptr<void> impl_data, size_t step) {
+  auto sample = std::static_pointer_cast<Sample>(impl_data);
+  sample->step = step + 10;
+}
+
+void AudioOboe::SetMaxAmplitude(std::shared_ptr<void> impl_data, float max_amplitude) {
+  auto sample = std::static_pointer_cast<Sample>(impl_data);
+  sample->max_amplitude = max_amplitude;
+}
+
 void AudioOboe::SetAmplitudeInc(std::shared_ptr<void> impl_data,
                                 float amplitude_inc) {
   auto sample = std::static_pointer_cast<Sample>(impl_data);
   sample->amplitude_inc = amplitude_inc;
-  if (amplitude_inc != 0)
-    sample->flags |= kModifyAmplitude;
-  else
-    sample->flags &= ~kModifyAmplitude;
 }
 
 size_t AudioOboe::GetSampleRate() {
@@ -148,6 +156,7 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
       size_t accumulator = sample->accumulator;
       float amplitude = sample->amplitude;
       float amplitude_inc = sample->amplitude_inc;
+      float max_amplitude = sample->max_amplitude;
 
       size_t channel_offset = (flags & kSimulateStereo) && num_channels == 1
                               ? sample->sound->hz() / 10
@@ -167,12 +176,12 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
           i++;
 
         // Apply amplitude modification.
-        if (flags & kModifyAmplitude) {
-          amplitude += amplitude_inc;
-          if (amplitude <= 0) {
-            remove = true;
-            break;
-          }
+        amplitude += amplitude_inc;
+        if (amplitude <= 0) {
+          remove = true;
+          break;
+        } else if (amplitude > max_amplitude) {
+          amplitude = max_amplitude;
         }
 
         // Basic resampling for variations.

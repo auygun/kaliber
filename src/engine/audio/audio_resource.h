@@ -15,16 +15,14 @@ class AudioResource {
                 Audio* audio);
   ~AudioResource();
 
-  void Play(std::shared_ptr<const Sound> sound,
-            bool loop,
-            size_t step,
-            bool simulate_stereo,
-            float amplitude);
-
-  void Play(std::shared_ptr<const Sound> sound, float amplitude);
+  void Play(std::shared_ptr<const Sound> sound, float amplitude, bool reset_pos);
 
   void Stop();
 
+  void SetLoop(bool loop);
+  void SetSimulateStereo(bool simulate);
+  void SetResampleStep(size_t step);
+  void SetMaxAmplitude(float max_amplitude);
   void SetAmplitudeInc(float amplitude_inc);
 
  private:

@@ -13,19 +13,29 @@ AudioResource::~AudioResource() {
 }
 
 void AudioResource::Play(std::shared_ptr<const Sound> sound,
-                         bool loop,
-                         size_t step,
-                         bool simulate_stereo,
-                         float amplitude) {
-  audio_->Play(sound, impl_data_, loop, step, simulate_stereo, amplitude);
-}
-
-void AudioResource::Play(std::shared_ptr<const Sound> sound, float amplitude) {
-  audio_->Play(sound, impl_data_, amplitude);
+                         float amplitude,
+                         bool reset_pos) {
+  audio_->Play(impl_data_, sound, amplitude, reset_pos);
 }
 
 void AudioResource::Stop() {
   audio_->Stop(impl_data_);
+}
+
+void AudioResource::SetLoop(bool loop) {
+  audio_->SetLoop(impl_data_, loop);
+}
+
+void AudioResource::SetSimulateStereo(bool simulate) {
+  audio_->SetSimulateStereo(impl_data_, simulate);
+}
+
+void AudioResource::SetResampleStep(size_t step) {
+  audio_->SetResampleStep(impl_data_, step);
+}
+
+void AudioResource::SetMaxAmplitude(float max_amplitude) {
+  audio_->SetMaxAmplitude(impl_data_, max_amplitude);
 }
 
 void AudioResource::SetAmplitudeInc(float amplitude_inc) {
