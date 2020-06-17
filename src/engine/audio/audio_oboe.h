@@ -28,7 +28,8 @@ class AudioOboe {
             std::shared_ptr<void> impl_data,
             bool loop,
             size_t step,
-            bool simulate_stereo);
+            bool simulate_stereo,
+            float amplitude);
 
   void Pause(std::shared_ptr<void> impl_data);
 
@@ -46,6 +47,7 @@ class AudioOboe {
     size_t src_index = 0;
     size_t step = 0;
     size_t accumulator = 0;
+    float amplitude = 1.0f;
     unsigned flags = 0;
     bool active = false;
   };

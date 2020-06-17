@@ -31,7 +31,6 @@ bool AudioOboe::Initialize() {
       ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
       ->setFormat(oboe::AudioFormat::Float)
       ->setChannelCount(kChannelCount)
-      ->setSampleRate(48000)
       ->setDirection(oboe::Direction::Output)
       ->setUsage(oboe::Usage::Game)
       ->setCallback(callback_.get())
@@ -67,7 +66,8 @@ void AudioOboe::Play(std::shared_ptr<const Sound> sound,
                      std::shared_ptr<void> impl_data,
                      bool loop,
                      size_t step,
-                     bool simulate_stereo) {
+                     bool simulate_stereo,
+                     float amplitude) {
   auto sample = std::static_pointer_cast<Sample>(impl_data);
   if (sample->active)
     return;
@@ -77,7 +77,7 @@ void AudioOboe::Play(std::shared_ptr<const Sound> sound,
   unsigned flags = 0;
   flags |= (unsigned)(loop ? kLoop : 0);
   flags |= (unsigned)(simulate_stereo ? kSimulateStereo : 0);
-  *sample = {sound, 0, step + 10, 0, flags, true};
+  *sample = {sound, 0, step + 10, 0, amplitude, flags, true};
 
   std::unique_lock<std::mutex> scoped_lock(mutex_);
   samples_[0].push_back(sample);
@@ -140,6 +140,7 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
     size_t src_index = sample->src_index;
     size_t step = sample->step;
     size_t accumulator = sample->accumulator;
+    float amplitude = sample->amplitude;
 
     size_t channel_offset = (flags & kSimulateStereo) && num_channels == 1
                             ? sample->sound->hz() / 10
@@ -151,14 +152,14 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
     } else {
       for (size_t i = 0; i < num_frames * kChannelCount;) {
         // Mix the 1st channel.
-        output_buffer[i++] += src[0][src_index];
+        output_buffer[i++] += src[0][src_index] * amplitude;
 
         // Mix the 2nd channel. Offset the source index for stereo simulation.
         size_t ind = channel_offset + src_index;
         if (ind < num_samples)
-          output_buffer[i++] += src[1][ind];
+          output_buffer[i++] += src[1][ind] * amplitude;
         else if (flags & kLoop)
-          output_buffer[i++] += src[1][ind % num_samples];
+          output_buffer[i++] += src[1][ind % num_samples] * amplitude;
         else
           i++;
 
