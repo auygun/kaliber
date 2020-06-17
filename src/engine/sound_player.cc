@@ -25,6 +25,16 @@ void SoundPlayer::Play(bool loop) {
   }
 }
 
+void SoundPlayer::Pause() {
+  if (resource_)
+    resource_->Pause();
+}
+
+void SoundPlayer::Resume() {
+  if (resource_)
+    resource_->Resume();
+}
+
 void SoundPlayer::Stop() {
   if (resource_)
     resource_->Stop();
