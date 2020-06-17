@@ -105,16 +105,16 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
 
     const float *src = sample->sound->GetBuffer();
     size_t num_samples = sample->sound->num_samples();
-    int num_channels = sample->sound->num_channels();
+    size_t num_channels = sample->sound->num_channels();
     size_t src_index = sample->src_index;
     size_t step = sample->step;
     size_t accumulator = sample->accumulator;
     unsigned flags = sample->flags;
 
-    int src_channel_step = num_channels - 1;
-    int channel_offset = (flags & kSimulateStereo) && num_channels == 1
-                         ? sample->sound->hz() / 10
-                         : 0;
+    size_t src_channel_step = num_channels - 1;
+    size_t channel_offset = (flags & kSimulateStereo) && num_channels == 1
+                            ? sample->sound->hz() / 10
+                            : 0;
     bool remove = false;
 
     if (flags & kStop) {
@@ -128,7 +128,7 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
         src_index += src_channel_step;
 
         // Mix the 2nd channel. Offset the source index for stereo simulation.
-        int ind = channel_offset + src_index;
+        size_t ind = channel_offset + src_index;
         if (ind < num_samples)
           output_buffer[i++] += src[ind];
         else if (flags & kLoop)
