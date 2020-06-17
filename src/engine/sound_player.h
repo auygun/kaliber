@@ -17,20 +17,26 @@ class SoundPlayer {
 
   void Play(bool loop);
 
-  void Resume();
+  void Resume(bool fade_in);
 
   void Stop(bool fade_out);
 
-  void SetVariate(bool variate) { variate_ = variate; }
-  void SetSimulateStereo(bool simulate) { simulate_stereo_ = simulate; }
-  void SetAplitude(float amplitude) { amplitude_ = amplitude; }
+  // Picks a random variation of the sound or the original sound if "variate" is
+  // false. Variations are obtained by slightly up or down sampling.
+  void SetVariate(bool variate);
+
+  // Enable or disable stereo simulation effect. Valid for mono samples only.
+  // Disabled by default.
+  void SetSimulateStereo(bool simulate);
+
+  // Set aplitude. Ampitude cannot be altered during playback. Must be called
+  // before play/resume.
+  void SetAplitude(float amplitude);
 
  private:
   std::shared_ptr<AudioResource> resource_;
   std::shared_ptr<const Sound> sound_;
 
-  bool variate_ = false;
-  bool simulate_stereo_ = false;  // For mono samples only.
   float amplitude_ = 1.0f;
 
   SoundPlayer(const SoundPlayer&) = delete;

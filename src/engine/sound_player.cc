@@ -17,26 +17,39 @@ void SoundPlayer::SetSound(std::shared_ptr<const Sound> sound) {
 }
 
 void SoundPlayer::Play(bool loop) {
-  if (resource_) {
-    int step = variate_
-               ? Engine::Get().GetRandomGenerator().Roll(3) - 2
-               : 0;
-    resource_->Play(sound_, loop, step, simulate_stereo_, amplitude_);
-  }
+  resource_->SetAmplitudeInc(0);
+  resource_->SetLoop(loop);
+  resource_->Play(sound_, amplitude_, true);
 }
 
-void SoundPlayer::Resume() {
-  if (resource_)
-    resource_->Play(sound_, amplitude_);
+void SoundPlayer::Resume(bool fade_in) {
+  if (fade_in) {
+    resource_->SetAmplitudeInc(0.0001f);
+    resource_->SetMaxAmplitude(amplitude_);
+  }
+  resource_->Play(sound_, fade_in ? 0 : amplitude_, false);
 }
 
 void SoundPlayer::Stop(bool fade_out) {
-  if (resource_) {
-    if (fade_out)
-      resource_->SetAmplitudeInc(-0.0001f);
-    else
-      resource_->Stop();
-  }
+  if (fade_out)
+    resource_->SetAmplitudeInc(-0.0001f);
+  else
+    resource_->Stop();
+}
+
+void SoundPlayer::SetVariate(bool variate) {
+  int step = variate
+             ? Engine::Get().GetRandomGenerator().Roll(3) - 2
+             : 0;
+  resource_->SetResampleStep(step);
+}
+
+void SoundPlayer::SetSimulateStereo(bool simulate) {
+  resource_->SetSimulateStereo(simulate);
+}
+
+void SoundPlayer::SetAplitude(float amplitude) {
+  amplitude_ = amplitude;
 }
 
 }  // namespace eng
