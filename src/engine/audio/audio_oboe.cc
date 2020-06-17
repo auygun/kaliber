@@ -92,6 +92,10 @@ void AudioOboe::Stop(std::shared_ptr<void> impl_data) {
   sample->flags |= kStop;
 }
 
+size_t AudioOboe::GetSampleRate() {
+  return stream_->getSampleRate();
+}
+
 void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
   {
     std::unique_lock<std::mutex> scoped_lock(mutex_);
@@ -103,7 +107,10 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
   for (auto it = samples_[1].begin(); it != samples_[1].end();) {
     Sample* sample = it->get();
 
-    const float *src = sample->sound->GetBuffer();
+    const float *src[2] = {sample->sound->GetBuffer(0),
+                           sample->sound->GetBuffer(1)};
+    if (!src[1])
+      src[1] = src[0];
     size_t num_samples = sample->sound->num_samples();
     size_t num_channels = sample->sound->num_channels();
     size_t src_index = sample->src_index;
@@ -111,7 +118,6 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
     size_t accumulator = sample->accumulator;
     unsigned flags = sample->flags;
 
-    size_t src_channel_step = num_channels - 1;
     size_t channel_offset = (flags & kSimulateStereo) && num_channels == 1
                             ? sample->sound->hz() / 10
                             : 0;
@@ -122,17 +128,14 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
     } else {
       for (size_t i = 0; i < num_frames * kChannelCount;) {
         // Mix the 1st channel.
-        output_buffer[i++] += src[src_index];
-
-        // Advance to the next source channel in case the sample is stereo.
-        src_index += src_channel_step;
+        output_buffer[i++] += src[0][src_index];
 
         // Mix the 2nd channel. Offset the source index for stereo simulation.
         size_t ind = channel_offset + src_index;
         if (ind < num_samples)
-          output_buffer[i++] += src[ind];
+          output_buffer[i++] += src[1][ind];
         else if (flags & kLoop)
-          output_buffer[i++] += src[ind % num_samples];
+          output_buffer[i++] += src[1][ind % num_samples];
         else
           i++;
 
@@ -182,6 +185,7 @@ oboe::DataCallbackResult AudioOboe::StreamCallback::onAudioReady(
 void AudioOboe::StreamCallback::onErrorAfterClose(
     oboe::AudioStream *oboe_stream, oboe::Result error) {
   LOG << "Error after close. Error: %s" << oboe::convertToText(error);
+  // TODO: Do this in main thread.
   audio_->Initialize();
 }
 
