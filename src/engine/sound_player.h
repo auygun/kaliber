@@ -25,6 +25,7 @@ class SoundPlayer {
 
   void SetVariate(bool variate) { variate_ = variate; }
   void SetSimulateStereo(bool simulate) { simulate_stereo_ = simulate; }
+  void SetAplitude(float amplitude) { amplitude_ = amplitude; }
 
  private:
   std::shared_ptr<AudioResource> resource_;
@@ -32,6 +33,7 @@ class SoundPlayer {
 
   bool variate_ = false;
   bool simulate_stereo_ = false;  // For mono samples only.
+  float amplitude_ = 1.0f;
 
   SoundPlayer(const SoundPlayer&) = delete;
   SoundPlayer& operator=(const SoundPlayer&) = delete;

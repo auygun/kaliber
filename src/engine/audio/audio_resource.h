@@ -18,7 +18,8 @@ class AudioResource {
   void Play(std::shared_ptr<const Sound> sound,
             bool loop,
             size_t step,
-            bool simulate_stereo);
+            bool simulate_stereo,
+            float amplitude);
 
   void Pause();
 

@@ -21,7 +21,7 @@ void SoundPlayer::Play(bool loop) {
     int step = variate_
                ? Engine::Get().GetRandomGenerator().Roll(3) - 2
                : 0;
-    resource_->Play(sound_, loop, step, simulate_stereo_);
+    resource_->Play(sound_, loop, step, simulate_stereo_, amplitude_);
   }
 }
 

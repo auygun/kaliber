@@ -15,8 +15,9 @@ AudioResource::~AudioResource() {
 void AudioResource::Play(std::shared_ptr<const Sound> sound,
                          bool loop,
                          size_t step,
-                         bool simulate_stereo) {
-  audio_->Play(sound, impl_data_, loop, step, simulate_stereo);
+                         bool simulate_stereo,
+                         float amplitude) {
+  audio_->Play(sound, impl_data_, loop, step, simulate_stereo, amplitude);
 }
 
 void AudioResource::Pause() {
