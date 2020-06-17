@@ -16,12 +16,12 @@ void SoundPlayer::SetSound(std::shared_ptr<const Sound> sound) {
   sound_ = sound;
 }
 
-void SoundPlayer::Play(bool loop, bool variate) {
+void SoundPlayer::Play(bool loop) {
   if (resource_) {
-    int step = variate
+    int step = variate_
                ? Lerp(9, 11, Engine::Get().GetRandomGenerator().GetFloat())
                : 10;
-    resource_->Play(sound_, loop, step);
+    resource_->Play(sound_, loop, step, simulate_stereo_);
   }
 }
 
