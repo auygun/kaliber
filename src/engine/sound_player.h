@@ -17,11 +17,9 @@ class SoundPlayer {
 
   void Play(bool loop);
 
-  void Pause();
-
   void Resume();
 
-  void Stop();
+  void Stop(bool fade_out);
 
   void SetVariate(bool variate) { variate_ = variate; }
   void SetSimulateStereo(bool simulate) { simulate_stereo_ = simulate; }

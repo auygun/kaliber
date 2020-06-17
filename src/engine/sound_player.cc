@@ -25,19 +25,18 @@ void SoundPlayer::Play(bool loop) {
   }
 }
 
-void SoundPlayer::Pause() {
-  if (resource_)
-    resource_->Pause();
-}
-
 void SoundPlayer::Resume() {
   if (resource_)
-    resource_->Resume();
+    resource_->Play(sound_, amplitude_);
 }
 
-void SoundPlayer::Stop() {
-  if (resource_)
-    resource_->Stop();
+void SoundPlayer::Stop(bool fade_out) {
+  if (resource_) {
+    if (fade_out)
+      resource_->SetAmplitudeInc(-0.0001f);
+    else
+      resource_->Stop();
+  }
 }
 
 }  // namespace eng

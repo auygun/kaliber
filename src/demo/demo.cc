@@ -106,7 +106,7 @@ void Demo::ContextLost() {
 }
 
 void Demo::LostFocus() {
-  music_.Pause();
+  music_.Stop(true);
   if (state_ == kGame)
     EnterMenuState();
 }
@@ -126,7 +126,7 @@ void Demo::EnterMenuState() {
   } else if (state_ == kGame) {
     menu_.SetOptionEnabled(Menu::kContinue, true);
     menu_.SetOptionEnabled(Menu::kNewGame, false);
-    music_.Pause();
+    music_.Stop(true);
   }
   menu_.Show();
   state_ = kMenu;
