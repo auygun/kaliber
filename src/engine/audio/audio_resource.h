@@ -21,11 +21,11 @@ class AudioResource {
             bool simulate_stereo,
             float amplitude);
 
-  void Pause();
-
-  void Resume();
+  void Play(std::shared_ptr<const Sound> sound, float amplitude);
 
   void Stop();
+
+  void SetAmplitudeInc(float amplitude_inc);
 
  private:
   std::shared_ptr<void> impl_data_;

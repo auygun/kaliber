@@ -72,33 +72,30 @@ void AudioOboe::Play(std::shared_ptr<const Sound> sound,
   if (sample->active)
     return;
 
-  // The given sample is not accessed by the audio thread right now. It's safe
-  // to write.
+  // The given sample is not accessed by the audio thread right now.
   unsigned flags = 0;
   flags |= (unsigned)(loop ? kLoop : 0);
   flags |= (unsigned)(simulate_stereo ? kSimulateStereo : 0);
-  *sample = {sound, 0, step + 10, 0, amplitude, flags, true};
+  *sample = {flags, step + 10, 0, sound, 0, 0, amplitude, true};
 
   std::unique_lock<std::mutex> scoped_lock(mutex_);
   samples_[0].push_back(sample);
 }
 
-void AudioOboe::Pause(std::shared_ptr<void> impl_data) {
+void AudioOboe::Play(std::shared_ptr<const Sound> sound,
+                     std::shared_ptr<void> impl_data,
+                     float amplitude) {
   auto sample = std::static_pointer_cast<Sample>(impl_data);
-  if (!sample->active || (sample->flags & kPaused))
+  if (sample->active)
     return;
 
-  // Audio thread does read-only access to "flags". It's safe to write here.
-  sample->flags |= kPaused;
-}
+  sample->active = true;
+  sample->amplitude = amplitude;
+  sample->flags &= ~kStopped;
+  sample->flags &= ~kModifyAmplitude;
 
-void AudioOboe::Resume(std::shared_ptr<void> impl_data) {
-  auto sample = std::static_pointer_cast<Sample>(impl_data);
-  if (!sample->active || !(sample->flags & kPaused))
-    return;
-
-  // Audio thread does read-only access to "flags". It's safe to write here.
-  sample->flags &= ~kPaused;
+  std::unique_lock<std::mutex> scoped_lock(mutex_);
+  samples_[0].push_back(sample);
 }
 
 void AudioOboe::Stop(std::shared_ptr<void> impl_data) {
@@ -106,8 +103,17 @@ void AudioOboe::Stop(std::shared_ptr<void> impl_data) {
   if (!sample->active)
     return;
 
-  // Audio thread does read-only access to "flags". It's safe to write here.
   sample->flags |= kStopped;
+}
+
+void AudioOboe::SetAmplitudeInc(std::shared_ptr<void> impl_data,
+                                float amplitude_inc) {
+  auto sample = std::static_pointer_cast<Sample>(impl_data);
+  sample->amplitude_inc = amplitude_inc;
+  if (amplitude_inc != 0)
+    sample->flags |= kModifyAmplitude;
+  else
+    sample->flags &= ~kModifyAmplitude;
 }
 
 size_t AudioOboe::GetSampleRate() {
@@ -126,30 +132,27 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
     Sample* sample = it->get();
 
     unsigned flags = sample->flags;
-    if (flags & kPaused) {
-      ++it;
-      continue;
-    }
-
-    const float *src[2] = {sample->sound->GetBuffer(0),
-                           sample->sound->GetBuffer(1)};
-    if (!src[1])
-      src[1] = src[0];
-    size_t num_samples = sample->sound->num_samples();
-    size_t num_channels = sample->sound->num_channels();
-    size_t src_index = sample->src_index;
-    size_t step = sample->step;
-    size_t accumulator = sample->accumulator;
-    float amplitude = sample->amplitude;
-
-    size_t channel_offset = (flags & kSimulateStereo) && num_channels == 1
-                            ? sample->sound->hz() / 10
-                            : 0;
     bool remove = false;
 
     if (flags & kStopped) {
       remove = true;
     } else {
+      const float *src[2] = {sample->sound->GetBuffer(0),
+                            sample->sound->GetBuffer(1)};
+      if (!src[1])
+        src[1] = src[0];
+      size_t num_samples = sample->sound->num_samples();
+      size_t num_channels = sample->sound->num_channels();
+      size_t src_index = sample->src_index;
+      size_t step = sample->step;
+      size_t accumulator = sample->accumulator;
+      float amplitude = sample->amplitude;
+      float amplitude_inc = sample->amplitude_inc;
+
+      size_t channel_offset = (flags & kSimulateStereo) && num_channels == 1
+                              ? sample->sound->hz() / 10
+                              : 0;
+
       for (size_t i = 0; i < num_frames * kChannelCount;) {
         // Mix the 1st channel.
         output_buffer[i++] += src[0][src_index] * amplitude;
@@ -163,13 +166,21 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
         else
           i++;
 
+        // Apply amplitude modification.
+        if (flags & kModifyAmplitude) {
+          amplitude += amplitude_inc;
+          if (amplitude <= 0) {
+            remove = true;
+            break;
+          }
+        }
+
         // Basic resampling for variations.
         accumulator += step;
         src_index += num_channels * accumulator / 10;
         accumulator %= 10;
 
-        // Advance source index. Mark for removal once end of the sample is
-        // reached.
+        // Advance source index.
         if (flags & kLoop) {
           src_index %= num_samples;
         } else if (src_index >= num_samples) {
@@ -179,12 +190,11 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
       }
 
       sample->src_index = src_index;
-      sample->step = step;
       sample->accumulator = accumulator;
+      sample->amplitude = amplitude;
     }
 
     if (remove) {
-      // Main thread does read-only access to "active". It's safe to write here.
       sample->active = false;
       it = samples_[1].erase(it);
     } else {

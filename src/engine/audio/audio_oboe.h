@@ -31,24 +31,35 @@ class AudioOboe {
             bool simulate_stereo,
             float amplitude);
 
-  void Pause(std::shared_ptr<void> impl_data);
-
-  void Resume(std::shared_ptr<void> impl_data);
+  void Play(std::shared_ptr<const Sound> sound,
+            std::shared_ptr<void> impl_data,
+            float amplitude);
 
   void Stop(std::shared_ptr<void> impl_data);
+
+  void SetAmplitudeInc(std::shared_ptr<void> impl_data, float amplitude_inc);
 
   size_t GetSampleRate();
 
  private:
-  enum SampleFlags { kLoop = 1, kPaused = 2, kStopped = 4, kSimulateStereo = 8 };
+  enum SampleFlags {
+    kLoop = 1,
+    kStopped = 2,
+    kSimulateStereo = 4,
+    kModifyAmplitude = 8
+  };
 
   struct Sample {
+    // Write accessed by the audio thread.
+    unsigned flags = 0;
+    size_t step = 0;
+    float amplitude_inc = 0;
+
+    // Read-only accessed by the audio thread.
     std::shared_ptr<const Sound> sound;
     size_t src_index = 0;
-    size_t step = 0;
     size_t accumulator = 0;
     float amplitude = 1.0f;
-    unsigned flags = 0;
     bool active = false;
   };
 

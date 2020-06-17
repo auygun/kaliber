@@ -20,16 +20,16 @@ void AudioResource::Play(std::shared_ptr<const Sound> sound,
   audio_->Play(sound, impl_data_, loop, step, simulate_stereo, amplitude);
 }
 
-void AudioResource::Pause() {
-    audio_->Pause(impl_data_);
-}
-
-void AudioResource::Resume() {
-    audio_->Resume(impl_data_);
+void AudioResource::Play(std::shared_ptr<const Sound> sound, float amplitude) {
+  audio_->Play(sound, impl_data_, amplitude);
 }
 
 void AudioResource::Stop() {
   audio_->Stop(impl_data_);
+}
+
+void AudioResource::SetAmplitudeInc(float amplitude_inc) {
+    audio_->SetAmplitudeInc(impl_data_, amplitude_inc);
 }
 
 }  // namespace eng
