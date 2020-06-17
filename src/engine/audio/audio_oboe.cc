@@ -77,7 +77,7 @@ void AudioOboe::Play(std::shared_ptr<const Sound> sound,
   unsigned flags = 0;
   flags |= (unsigned)(loop ? kLoop : 0);
   flags |= (unsigned)(simulate_stereo ? kSimulateStereo : 0);
-  *sample = {sound, 0, step, 0, flags, true};
+  *sample = {sound, 0, step + 10, 0, flags, true};
 
   std::unique_lock<std::mutex> scoped_lock(mutex_);
   samples_[0].push_back(sample);
