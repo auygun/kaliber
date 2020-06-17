@@ -96,6 +96,8 @@ class Enemy {
   eng::ImageQuad boss_;
   eng::Animator boss_animator_;
 
+  eng::SoundPlayer music_;
+
   std::shared_ptr<const eng::Font> font_;
 
   std::list<EnemyUnit> enemies_;

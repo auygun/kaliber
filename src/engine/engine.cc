@@ -231,6 +231,10 @@ const std::string& Engine::GetRootPath() const {
   return platform_->GetRootPath();
 }
 
+size_t Engine::GetAudioSampleRate() {
+  return audio_->GetSampleRate();
+}
+
 bool Engine::IsMobile() const {
   return platform_->mobile_device();
 }

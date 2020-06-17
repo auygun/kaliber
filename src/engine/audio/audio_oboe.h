@@ -32,6 +32,8 @@ class AudioOboe {
 
   void Stop(std::shared_ptr<void> impl_data);
 
+  size_t GetSampleRate();
+
  private:
   enum SampleFlags { kLoop = 1, kStop = 2, kSimulateStereo = 4 };
 
