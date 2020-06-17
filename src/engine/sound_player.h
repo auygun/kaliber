@@ -17,6 +17,10 @@ class SoundPlayer {
 
   void Play(bool loop);
 
+  void Pause();
+
+  void Resume();
+
   void Stop();
 
   void SetVariate(bool variate) { variate_ = variate; }

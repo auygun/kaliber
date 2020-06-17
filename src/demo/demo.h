@@ -3,6 +3,7 @@
 
 #include "../base/closure.h"
 #include "../engine/game.h"
+#include "../engine/sound_player.h"
 #include "credits.h"
 #include "enemy.h"
 #include "hud.h"
@@ -64,6 +65,8 @@ class Demo : public eng::Game {
   int waiting_for_next_wave_ = false;
 
   bool boss_fight_ = false;
+
+  eng::SoundPlayer music_;
 
   float delayed_work_timer_ = 0;
   base::Closure delayed_work_cb_;

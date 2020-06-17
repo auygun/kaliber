@@ -83,13 +83,31 @@ void AudioOboe::Play(std::shared_ptr<const Sound> sound,
   samples_[0].push_back(sample);
 }
 
+void AudioOboe::Pause(std::shared_ptr<void> impl_data) {
+  auto sample = std::static_pointer_cast<Sample>(impl_data);
+  if (!sample->active || (sample->flags & kPaused))
+    return;
+
+  // Audio thread does read-only access to "flags". It's safe to write here.
+  sample->flags |= kPaused;
+}
+
+void AudioOboe::Resume(std::shared_ptr<void> impl_data) {
+  auto sample = std::static_pointer_cast<Sample>(impl_data);
+  if (!sample->active || !(sample->flags & kPaused))
+    return;
+
+  // Audio thread does read-only access to "flags". It's safe to write here.
+  sample->flags &= ~kPaused;
+}
+
 void AudioOboe::Stop(std::shared_ptr<void> impl_data) {
   auto sample = std::static_pointer_cast<Sample>(impl_data);
   if (!sample->active)
     return;
 
   // Audio thread does read-only access to "flags". It's safe to write here.
-  sample->flags |= kStop;
+  sample->flags |= kStopped;
 }
 
 size_t AudioOboe::GetSampleRate() {
@@ -107,6 +125,12 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
   for (auto it = samples_[1].begin(); it != samples_[1].end();) {
     Sample* sample = it->get();
 
+    unsigned flags = sample->flags;
+    if (flags & kPaused) {
+      ++it;
+      continue;
+    }
+
     const float *src[2] = {sample->sound->GetBuffer(0),
                            sample->sound->GetBuffer(1)};
     if (!src[1])
@@ -116,14 +140,13 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
     size_t src_index = sample->src_index;
     size_t step = sample->step;
     size_t accumulator = sample->accumulator;
-    unsigned flags = sample->flags;
 
     size_t channel_offset = (flags & kSimulateStereo) && num_channels == 1
                             ? sample->sound->hz() / 10
                             : 0;
     bool remove = false;
 
-    if (flags & kStop) {
+    if (flags & kStopped) {
       remove = true;
     } else {
       for (size_t i = 0; i < num_frames * kChannelCount;) {

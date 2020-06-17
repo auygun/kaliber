@@ -9,6 +9,7 @@
 #include "../engine/engine.h"
 #include "../engine/game_factory.h"
 #include "../engine/input_event.h"
+#include "../engine/sound.h"
 
 DECLARE_GAME_BEGIN
 DECLARE_GAME(Demo)
@@ -47,6 +48,9 @@ bool Demo::Initialize() {
     LOG << "Failed to create the credits.";
     return false;
   }
+
+  music_.SetSound(Engine::Get().GetAsset<Sound>("file_example_MP3_700KB.mp3"));
+  music_.Play(true);
 
   EnterMenuState();
 
@@ -102,6 +106,7 @@ void Demo::ContextLost() {
 }
 
 void Demo::LostFocus() {
+  music_.Pause();
   if (state_ == kGame)
     EnterMenuState();
 }
@@ -121,6 +126,7 @@ void Demo::EnterMenuState() {
   } else if (state_ == kGame) {
     menu_.SetOptionEnabled(Menu::kContinue, true);
     menu_.SetOptionEnabled(Menu::kNewGame, false);
+    music_.Pause();
   }
   menu_.Show();
   state_ = kMenu;
@@ -136,6 +142,7 @@ void Demo::EnterCreditsState() {
 void Demo::EnterGameState() {
   if (state_ == kGame)
     return;
+  music_.Resume();
   hud_.Show();
   state_ = kGame;
 }

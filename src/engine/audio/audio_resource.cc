@@ -19,6 +19,14 @@ void AudioResource::Play(std::shared_ptr<const Sound> sound,
   audio_->Play(sound, impl_data_, loop, step, simulate_stereo);
 }
 
+void AudioResource::Pause() {
+    audio_->Pause(impl_data_);
+}
+
+void AudioResource::Resume() {
+    audio_->Resume(impl_data_);
+}
+
 void AudioResource::Stop() {
   audio_->Stop(impl_data_);
 }

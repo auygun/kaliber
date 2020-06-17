@@ -96,8 +96,6 @@ bool Enemy::Initialize() {
 
   // Precache assets.
   Engine::Get().GetAsset<Sound>("explosion.mp3");
-  music_.SetSound(Engine::Get().GetAsset<Sound>("file_example_MP3_700KB.mp3"));
-  music_.Play(true);
 
   if (!CreateRenderResources())
     return false;

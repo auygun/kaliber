@@ -30,12 +30,16 @@ class AudioOboe {
             size_t step,
             bool simulate_stereo);
 
+  void Pause(std::shared_ptr<void> impl_data);
+
+  void Resume(std::shared_ptr<void> impl_data);
+
   void Stop(std::shared_ptr<void> impl_data);
 
   size_t GetSampleRate();
 
  private:
-  enum SampleFlags { kLoop = 1, kStop = 2, kSimulateStereo = 4 };
+  enum SampleFlags { kLoop = 1, kPaused = 2, kStopped = 4, kSimulateStereo = 8 };
 
   struct Sample {
     std::shared_ptr<const Sound> sound;

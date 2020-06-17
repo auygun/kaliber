@@ -20,6 +20,10 @@ class AudioResource {
             size_t step,
             bool simulate_stereo);
 
+  void Pause();
+
+  void Resume();
+
   void Stop();
 
  private:
