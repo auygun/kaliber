@@ -11,9 +11,6 @@ class Sound;
 
 class AudioBase {
  public:
-  AudioBase();
-  ~AudioBase();
-
   void Play(std::shared_ptr<void> impl_data,
             std::shared_ptr<const Sound> sound,
             float amplitude,
@@ -49,6 +46,9 @@ class AudioBase {
 
   std::list<std::shared_ptr<Sample>> samples_[2];
   std::mutex mutex_;
+
+  AudioBase();
+  ~AudioBase();
 
   void RenderAudio(float *output_buffer, size_t num_frames);
 };

@@ -32,7 +32,7 @@ bool AudioOboe::Initialize() {
   LOG << "  sample rate:      " << stream_->getSampleRate();
 
   if (result != oboe::Result::OK) {
-    LOG << "Failed to create the playback stream. Error: %s"
+    LOG << "Failed to create the playback stream. Error: "
         << oboe::convertToText(result);
     return false;
   }
@@ -70,7 +70,7 @@ oboe::DataCallbackResult AudioOboe::StreamCallback::onAudioReady(
 
 void AudioOboe::StreamCallback::onErrorAfterClose(
     oboe::AudioStream *oboe_stream, oboe::Result error) {
-  LOG << "Error after close. Error: %s" << oboe::convertToText(error);
+  LOG << "Error after close. Error: " << oboe::convertToText(error);
   // TODO: Do this in main thread.
   audio_->Initialize();
 }
