@@ -56,7 +56,7 @@ bool Sound::Load(const std::string& file_name) {
       << "layer " << info.layer << ", "
       << "avg_bitrate_kbps " << info.avg_bitrate_kbps;
 
-  num_samples_ = info.samples;
+  num_samples_ = info.samples / info.channels;
   num_channels_ = info.channels;
   hz_ = info.hz;
 
@@ -90,9 +90,9 @@ void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {
     // Deinterleave into separate channels.
     buffer_[0] = std::make_unique<float[]>(num_samples_);
     buffer_[1] = std::make_unique<float[]>(num_samples_);
-    for (int i = 0; i < num_samples_; i += 2) {
-      buffer_[0].get()[i] = input_buffer.get()[i];
-      buffer_[1].get()[i] = input_buffer.get()[i + 1];
+    for (int i = 0, j = 0; i < num_samples_ * 2; i += 2) {
+      buffer_[0].get()[j] = input_buffer.get()[i];
+      buffer_[1].get()[j++] = input_buffer.get()[i + 1];
     }
   }
 

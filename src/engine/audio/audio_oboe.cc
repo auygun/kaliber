@@ -186,7 +186,7 @@ void AudioOboe::RenderAudio(float *output_buffer, int32_t num_frames) {
 
         // Basic resampling for variations.
         accumulator += step;
-        src_index += num_channels * accumulator / 10;
+        src_index += accumulator / 10;
         accumulator %= 10;
 
         // Advance source index.
