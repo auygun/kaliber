@@ -98,7 +98,7 @@ void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {
 
   // Resample to match the system sample rate if needed.
   size_t system_hz = Engine::Get().GetAudioSampleRate();
-  if (system_hz == hz_)
+  if (system_hz == 0 || system_hz == hz_)
     return;
 
   LOG << "Resampling from " << hz_ << " to " << system_hz;

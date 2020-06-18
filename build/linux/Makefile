@@ -58,7 +58,7 @@ CXXFLAGS += -std=c++17
 # --- Internal functions ---
 app_exe = $(OUTPUT_DIR)/$(1)_$(ARCH)_$(BUILD)
 objs_from_src = $(patsubst $(SRC_ROOT)/%, $(BUILD_DIR)/%.o, $(basename $(1)))
-objs_from_src_in = $(call objs_from_src, $(shell find $(1) -name "*.cc" -o -name "*.c"))
+objs_from_src_in = $(call objs_from_src, $(shell find $(1) -name "*.cc" -o -name "*.cpp" -o -name "*.c"))
 
 # --- gltest application ---
 ifneq ($(filter gltest,$(APPS)),)
@@ -105,10 +105,11 @@ GLTEST_SRC := \
   $(SRC_ROOT)/third_party/jsoncpp/jsoncpp.cc \
   $(SRC_ROOT)/third_party/minizip/ioapi.c \
   $(SRC_ROOT)/third_party/minizip/unzip.c \
+  $(SRC_ROOT)/third_party/r8b/r8bbase.cpp \
   $(SRC_ROOT)/third_party/texture_compressor/dxt_encoder_internals.cc \
   $(SRC_ROOT)/third_party/texture_compressor/dxt_encoder.cc \
   $(SRC_ROOT)/third_party/texture_compressor/texture_compressor_etc1.cc \
-  $(SRC_ROOT)/third_party/texture_compressor/texture_compressor.cc \
+  $(SRC_ROOT)/third_party/texture_compressor/texture_compressor.cc
 
 GLTEST_EXE := $(call app_exe,gltest)
 GLTEST_OBJS := $(call objs_from_src, $(GLTEST_SRC))
@@ -161,5 +162,9 @@ $(BUILD_DIR)/%.o: $(SRC_ROOT)/%.c
 	$(HUSH_COMPILE) $(CC) -c $(CFLAGS) -o $@ $<
 
 $(BUILD_DIR)/%.o: $(SRC_ROOT)/%.cc
+	@mkdir -p $(@D)
+	$(HUSH_COMPILE) $(CXX) -c $(CXXFLAGS) -o $@ $<
+
+$(BUILD_DIR)/%.o: $(SRC_ROOT)/%.cpp
 	@mkdir -p $(@D)
 	$(HUSH_COMPILE) $(CXX) -c $(CXXFLAGS) -o $@ $<
