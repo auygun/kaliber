@@ -5,8 +5,6 @@
 #include "audio_oboe.h"
 #elif defined(__linux__)
 #include "audio_alsa.h"
-#else
-#include "audio_null.h"
 #endif
 
 namespace eng {
@@ -15,8 +13,6 @@ namespace eng {
 using Audio = AudioOboe;
 #elif defined(__linux__)
 using Audio = AudioAlsa;
-#else
-using Audio = AudioNull;
 #endif
 
 }  // namespace eng
