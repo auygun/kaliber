@@ -7,7 +7,7 @@
 #include "../../base/vecmath.h"
 #include "../engine.h"
 #include "../input_event.h"
-#include "../audio/audio_null.h"
+#include "../audio/audio_alsa.h"
 #include "../renderer/renderer.h"
 
 using namespace base;
@@ -21,7 +21,7 @@ void Platform::Initialize() {
   root_path_ = "../../";
   LOG << "Root path: " << root_path_.c_str();
 
-  audio_ = std::make_unique<AudioNull>();
+  audio_ = std::make_unique<AudioAlsa>();
   if (!audio_->Initialize()) {
     LOG << "Failed to initialize audio system.";
     throw internal_error;

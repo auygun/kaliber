@@ -6,6 +6,9 @@ namespace eng {
 #if defined(__ANDROID__)
 class AudioOboe;
 using Audio = AudioOboe;
+#elif defined(__linux__)
+class AudioAlsa;
+using Audio = AudioAlsa;
 #else
 class AudioNull;
 using Audio = AudioNull;

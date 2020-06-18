@@ -3,6 +3,8 @@
 
 #if defined(__ANDROID__)
 #include "audio_oboe.h"
+#elif defined(__linux__)
+#include "audio_alsa.h"
 #else
 #include "audio_null.h"
 #endif
@@ -11,6 +13,8 @@ namespace eng {
 
 #if defined(__ANDROID__)
 using Audio = AudioOboe;
+#elif defined(__linux__)
+using Audio = AudioAlsa;
 #else
 using Audio = AudioNull;
 #endif
