@@ -25,7 +25,7 @@ INTERMEDIATE_DIR := $(OUTPUT_DIR)/obj
 BUILD_DIR := $(INTERMEDIATE_DIR)/$(BUILD)
 
 ARFLAGS = r
-LDFLAGS = -lX11 -lGL -lz -pthread
+LDFLAGS = -lX11 -lGL -lz -pthread -lasound
 
 # Always enable debug information.
 CFLAGS += -g
@@ -82,6 +82,8 @@ GLTEST_SRC := \
   $(SRC_ROOT)/demo/sky_quad.cc \
   $(SRC_ROOT)/engine/animatable.cc \
   $(SRC_ROOT)/engine/animator.cc \
+  $(SRC_ROOT)/engine/audio/audio_alsa.cc \
+  $(SRC_ROOT)/engine/audio/audio_base.cc \
   $(SRC_ROOT)/engine/audio/audio_resource.cc \
   $(SRC_ROOT)/engine/engine.cc \
   $(SRC_ROOT)/engine/font.cc \
