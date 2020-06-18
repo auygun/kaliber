@@ -140,6 +140,7 @@ void Player::Fire(DamageType type, Vector2 dir) {
   beam_[type].SetVisible(true);
   beam_spark_[type].SetVisible(true);
 
+  spark_animator_[type].Stop(Animator::kMovement);
   float length = beam_[type].GetScale().x * 0.85f;
   Vector2 movement = dir * -length;
   // Convert from units per second to duration.
@@ -343,6 +344,11 @@ bool Player::CreateRenderResources() {
   auto beam_image = engine.GetAsset<Image>("enemy_ray_ok.png");
   if (!weapon_image || !beam_image)
     return false;
+
+  weapon_image->Compress();
+  weapon_image->SetImmutable();
+  beam_image->Compress();
+  beam_image->SetImmutable();
 
   weapon_tex_->Update(weapon_image);
   beam_tex_->Update(beam_image);
