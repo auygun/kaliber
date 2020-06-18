@@ -92,23 +92,11 @@ add_library(native-activity SHARED
     ../../../src/third_party/jsoncpp/jsoncpp.cc
     ../../../src/third_party/minizip/ioapi.c
     ../../../src/third_party/minizip/unzip.c
+    ../../../src/third_party/r8b/r8bbase.cpp
     ../../../src/third_party/texture_compressor/dxt_encoder_internals.cc
     ../../../src/third_party/texture_compressor/dxt_encoder.cc
     ../../../src/third_party/texture_compressor/texture_compressor_etc1.cc
     ../../../src/third_party/texture_compressor/texture_compressor.cc
-    ../../../src/third_party/r8b/CDSPBlockConvolver.h
-    ../../../src/third_party/r8b/CDSPFIRFilter.h
-    ../../../src/third_party/r8b/CDSPFracInterpolator.h
-    ../../../src/third_party/r8b/CDSPHBDownsampler.h
-    ../../../src/third_party/r8b/CDSPHBUpsampler.h
-    ../../../src/third_party/r8b/CDSPProcessor.h
-    ../../../src/third_party/r8b/CDSPRealFFT.h
-    ../../../src/third_party/r8b/CDSPResampler.h
-    ../../../src/third_party/r8b/CDSPSincFilterGen.h
-    ../../../src/third_party/r8b/fft4g.h
-    ../../../src/third_party/r8b/r8bbase.cpp
-    ../../../src/third_party/r8b/r8bbase.h
-    ../../../src/third_party/r8b/r8bconf.h
 )
 
 if (ANDROID_ABI STREQUAL armeabi-v7a)
