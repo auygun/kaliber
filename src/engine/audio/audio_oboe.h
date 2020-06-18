@@ -2,8 +2,6 @@
 #define AUDIO_OBOE_H
 
 #include <memory>
-#include <mutex>
-#include <list>
 
 #include "../../third_party/oboe/include/oboe/AudioStream.h"
 #include "../../third_party/oboe/include/oboe/AudioStreamCallback.h"
@@ -12,7 +10,6 @@
 namespace eng {
 
 class AudioResource;
-class Sound;
 
 class AudioOboe : public AudioBase {
  public:
