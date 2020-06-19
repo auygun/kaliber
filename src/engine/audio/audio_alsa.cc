@@ -39,22 +39,18 @@ bool AudioAlsa::Initialize() {
       break;
     }
 
-    // Set access type.
     if ((err = snd_pcm_hw_params_set_access(
              pcm_handle_, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
       LOG << "Cannot set access type. Error: " << snd_strerror(err);
       break;
     }
 
-    // Set sample format.
     if ((err = snd_pcm_hw_params_set_format(pcm_handle_, hw_params,
                                             SND_PCM_FORMAT_FLOAT_LE)) < 0) {
       LOG << "Cannot set sample format. Error: " << snd_strerror(err);
       break;
     }
 
-    // Set sample rate. If the exact rate is not supported by the hardware, use
-    // nearest possible rate.
     unsigned sample_rate = 48000;
     if ((err = snd_pcm_hw_params_set_rate_near(pcm_handle_, hw_params,
                                                &sample_rate, 0)) < 0) {
@@ -62,21 +58,19 @@ bool AudioAlsa::Initialize() {
       break;
     }
 
-    // Set number of channels.
     if ((err = snd_pcm_hw_params_set_channels(pcm_handle_, hw_params, 2)) < 0) {
       LOG << "Cannot set channel count. Error: " << snd_strerror(err);
       break;
     }
 
-    // Set period time. Periods used to be called fragments.
-    unsigned period_time = 21340;
+    // Set perid time to 1 ms. The latency will be 3 ms for 3 perods.
+    unsigned period_time = 1000;
     if ((err = snd_pcm_hw_params_set_period_time_near(pcm_handle_, hw_params,
                                                       &period_time, 0)) < 0) {
       LOG << "Cannot set periods. Error: " << snd_strerror(err);
       break;
     }
 
-    // Set periods.
     unsigned periods = 3;
     if ((err = snd_pcm_hw_params_set_periods_near(pcm_handle_, hw_params,
                                                   &periods, 0)) < 0) {
