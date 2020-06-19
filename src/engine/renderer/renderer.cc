@@ -41,6 +41,10 @@ void Renderer::SetContextLostCB(base::Closure cb) {
   context_lost_cb_ = std::move(cb);
 }
 
+void Renderer::Update() {
+  task_runner_.Run();
+}
+
 void Renderer::ContextLost() {
   LOG << "Context lost.";
 
@@ -50,7 +54,9 @@ void Renderer::ContextLost() {
   draw_commands_[1].clear();
 #endif  // THREADED_RENDERING
 
-  context_lost_cb_();
+  InvalidateAllResources();
+
+  task_runner_.Enqueue(context_lost_cb_);
 }
 
 std::shared_ptr<RenderResource> Renderer::CreateResource(
@@ -79,14 +85,6 @@ void Renderer::ReleaseResource(unsigned resource_id) {
   auto it = resources_.find(resource_id);
   if (it != resources_.end())
     resources_.erase(it);
-}
-
-void Renderer::InvalidateAllResources() {
-  for (auto& r : resources_) {
-    std::shared_ptr<RenderResource> r_ptr = r.second.lock();
-    if (r_ptr)
-      r_ptr->Destroy();
-  }
 }
 
 void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
@@ -200,6 +198,14 @@ bool Renderer::InitCommon() {
   glViewport(0, 0, screen_width_, screen_height_);
 
   return true;
+}
+
+void Renderer::InvalidateAllResources() {
+  for (auto& r : resources_) {
+    std::shared_ptr<RenderResource> r_ptr = r.second.lock();
+    if (r_ptr)
+      r_ptr->Destroy();
+  }
 }
 
 bool Renderer::StartWorker() {

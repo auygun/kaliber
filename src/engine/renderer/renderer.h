@@ -25,6 +25,7 @@
 #endif
 
 #include "../../base/closure.h"
+#include "../../base/task_runner.h"
 #include "render_resource.h"
 #include "renderer_types.h"
 
@@ -52,13 +53,13 @@ class Renderer {
 
   void Shutdown();
 
+  void Update();
+
   void ContextLost();
 
   std::shared_ptr<RenderResource> CreateResource(
       RenderResourceFactoryBase& factory);
   void ReleaseResource(unsigned resource_id);
-
-  void InvalidateAllResources();
 
   void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
 
@@ -140,6 +141,8 @@ class Renderer {
 
   std::unordered_map<unsigned, std::weak_ptr<RenderResource>> resources_;
 
+  base::TaskRunner task_runner_;
+
 #ifdef THREADED_RENDERING
   // Global commands are independent from frames and guaranteed to be processed.
   std::deque<std::unique_ptr<RenderCommand>> global_commands_;
@@ -170,6 +173,8 @@ class Renderer {
   bool InitInternal();
   bool InitCommon();
   void ShutdownInternal();
+
+  void InvalidateAllResources();
 
   bool StartWorker();
   void TerminateWorker();

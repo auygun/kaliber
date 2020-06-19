@@ -6,7 +6,6 @@
 #include <unordered_map>
 
 #include "../base/random.h"
-#include "../base/task_runner.h"
 #include "../base/vecmath.h"
 #include "asset.h"
 #include "audio/audio_forward.h"
@@ -141,8 +140,6 @@ class Engine {
   float seconds_accumulated_ = 0.0f;
 
   std::deque<std::unique_ptr<InputEvent>> input_queue_;
-
-  base::TaskRunner task_runner_;
 
   base::Random random_;
 
