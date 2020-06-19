@@ -42,7 +42,9 @@ void Renderer::SetContextLostCB(base::Closure cb) {
 }
 
 void Renderer::Update() {
+#ifdef THREADED_RENDERING
   task_runner_.Run();
+#endif  // THREADED_RENDERING
 }
 
 void Renderer::ContextLost() {
@@ -56,7 +58,11 @@ void Renderer::ContextLost() {
 
   InvalidateAllResources();
 
+#ifdef THREADED_RENDERING
   task_runner_.Enqueue(context_lost_cb_);
+#else
+  context_lost_cb_();
+#endif  // THREADED_RENDERING
 }
 
 std::shared_ptr<RenderResource> Renderer::CreateResource(
@@ -115,8 +121,6 @@ void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
   ProcessCommand(cmd.get());
 #endif  // THREADED_RENDERING
 }
-
-#ifdef THREADED_RENDERING
 
 size_t Renderer::GetAndResetFPS() {
   int ret = fps_;
@@ -243,6 +247,8 @@ void Renderer::TerminateWorker() {
   ShutdownInternal();
 #endif  // THREADED_RENDERING
 }
+
+#ifdef THREADED_RENDERING
 
 void Renderer::WorkerMain(std::promise<bool> promise) {
   promise.set_value(InitInternal());

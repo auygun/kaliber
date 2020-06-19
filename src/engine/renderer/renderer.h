@@ -25,7 +25,9 @@
 #endif
 
 #include "../../base/closure.h"
+#ifdef THREADED_RENDERING
 #include "../../base/task_runner.h"
+#endif  // THREADED_RENDERING
 #include "render_resource.h"
 #include "renderer_types.h"
 
@@ -141,8 +143,6 @@ class Renderer {
 
   std::unordered_map<unsigned, std::weak_ptr<RenderResource>> resources_;
 
-  base::TaskRunner task_runner_;
-
 #ifdef THREADED_RENDERING
   // Global commands are independent from frames and guaranteed to be processed.
   std::deque<std::unique_ptr<RenderCommand>> global_commands_;
@@ -154,6 +154,8 @@ class Renderer {
   std::mutex mutex_;
   std::thread worker_thread_;
   bool terminate_worker_ = false;
+
+  base::TaskRunner task_runner_;
 #endif  // THREADED_RENDERING
 
   // Stats.
