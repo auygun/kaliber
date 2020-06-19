@@ -10,6 +10,7 @@
 #include "../engine/engine.h"
 #include "../engine/font.h"
 #include "../engine/image.h"
+#include "../engine/sound.h"
 #include "../engine/renderer/texture.h"
 #include "demo.h"
 
@@ -246,6 +247,8 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
     target->score_animator.Play(Animator::kTimer | Animator::kMovement, false);
     target->movement_animator.Pause(Animator::kMovement);
 
+    target->explosion_.Play(false);
+
     Engine& engine = Engine::Get();
     Demo* game = static_cast<Demo*>(engine.GetGame());
     game->AddScore(GetScore(target->enemy_type));
@@ -408,6 +411,10 @@ void Enemy::Spawn(EnemyType enemy_type,
   e.movement_animator.Attach(&e.health_bar);
   e.movement_animator.Attach(&e.score);
   e.movement_animator.Play(Animator::kMovement, false);
+
+  e.explosion_.SetSound(engine.GetAsset<Sound>("explosion.mp3"));
+  e.explosion_.SetVariate(true);
+  e.explosion_.SetSimulateStereo(true);
 }
 
 Enemy::EnemyUnit* Enemy::GetTarget(DamageType damage_type) {

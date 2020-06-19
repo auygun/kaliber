@@ -9,6 +9,7 @@
 #include "../engine/animator.h"
 #include "../engine/image_quad.h"
 #include "../engine/solid_quad.h"
+#include "../engine/sound_player.h"
 #include "damage_type.h"
 
 namespace eng {
@@ -71,6 +72,8 @@ class Enemy {
     eng::Animator blast_animator;
     eng::Animator health_animator;
     eng::Animator score_animator;
+
+    eng::SoundPlayer explosion_;
   };
 
   std::shared_ptr<eng::Texture> skull_tex_;
