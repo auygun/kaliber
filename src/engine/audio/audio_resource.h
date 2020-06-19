@@ -11,11 +11,12 @@ class Sound;
 
 class AudioResource {
  public:
-  AudioResource(std::shared_ptr<void> impl_data,
-                Audio* audio);
+  AudioResource(std::shared_ptr<void> impl_data, Audio* audio);
   ~AudioResource();
 
-  void Play(std::shared_ptr<const Sound> sound, float amplitude, bool reset_pos);
+  void Play(std::shared_ptr<const Sound> sound,
+            float amplitude,
+            bool reset_pos);
 
   void Stop();
 

@@ -46,9 +46,7 @@ void SoundPlayer::Stop(bool fade_out) {
 void SoundPlayer::SetVariate(bool variate) {
   if (!resource_)
     return;
-  int step = variate
-             ? Engine::Get().GetRandomGenerator().Roll(3) - 2
-             : 0;
+  int step = variate ? Engine::Get().GetRandomGenerator().Roll(3) - 2 : 0;
   resource_->SetResampleStep(step);
 }
 

@@ -30,11 +30,11 @@ class AudioOboe : public AudioBase {
     StreamCallback(AudioOboe* audio);
     ~StreamCallback() override;
 
-    oboe::DataCallbackResult onAudioReady(oboe::AudioStream *oboe_stream,
-                                          void *audio_data,
+    oboe::DataCallbackResult onAudioReady(oboe::AudioStream* oboe_stream,
+                                          void* audio_data,
                                           int32_t num_frames) override;
 
-    void onErrorAfterClose(oboe::AudioStream *oboe_stream,
+    void onErrorAfterClose(oboe::AudioStream* oboe_stream,
                            oboe::Result error) override;
 
    private:

@@ -9,8 +9,8 @@
 #include "../base/task_runner.h"
 #include "../base/vecmath.h"
 #include "asset.h"
-#include "image_quad.h"
 #include "audio/audio_forward.h"
+#include "image_quad.h"
 #include "renderer/render_resource.h"
 
 class TextureCompressor;
@@ -29,7 +29,7 @@ class Shader;
 
 class Engine {
  public:
-  Engine(Platform* platform, Renderer* renderer, Audio *audio);
+  Engine(Platform* platform, Renderer* renderer, Audio* audio);
   ~Engine();
 
   static Engine& Get();

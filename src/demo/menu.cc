@@ -96,23 +96,24 @@ void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
     tap_pos_[1] = event->GetVector(0);
 
   if ((event->GetType() != InputEvent::kTap &&
-       event->GetType() != InputEvent::kDragEnd) || IsAnimating())
+       event->GetType() != InputEvent::kDragEnd) ||
+      IsAnimating())
     return;
 
   for (int i = 0; i < kOption_Max; ++i) {
     if (items_[i].hide)
       continue;
     if (!Intersection(items_[i].text.GetOffset(),
-                     items_[i].text.GetScale() * Vector2(1.2f, 2),
-                     tap_pos_[0]))
+                      items_[i].text.GetScale() * Vector2(1.2f, 2),
+                      tap_pos_[0]))
       continue;
     if (!Intersection(items_[i].text.GetOffset(),
-                     items_[i].text.GetScale() * Vector2(1.2f, 2),
-                     tap_pos_[1]))
+                      items_[i].text.GetScale() * Vector2(1.2f, 2),
+                      tap_pos_[1]))
       continue;
 
     items_[i].text_animator.SetEndCallback(Animator::kBlending,
-                                            items_[i].select_item_cb_);
+                                           items_[i].select_item_cb_);
     items_[i].text_animator.SetBlending(kColorHighlight, kBlendingSpeed);
     items_[i].text_animator.Play(Animator::kBlending, false);
   }

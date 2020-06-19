@@ -2,8 +2,8 @@
 
 #include <cassert>
 
-#include "../base/log.h"
 #include "../base/asset_file.h"
+#include "../base/log.h"
 #define MINIMP3_ONLY_MP3
 #define MINIMP3_ONLY_SIMD
 #define MINIMP3_FLOAT_OUTPUT
@@ -16,11 +16,9 @@ using namespace base;
 
 namespace eng {
 
-Sound::Sound() {
-}
+Sound::Sound() {}
 
-Sound::~Sound() {
-}
+Sound::~Sound() {}
 
 bool Sound::Load(const std::string& file_name) {
   if (IsImmutable()) {
@@ -41,18 +39,16 @@ bool Sound::Load(const std::string& file_name) {
 
   mp3dec_t mp3d;
   mp3dec_file_info_t info;
-  int err = mp3dec_load_buf(&mp3d,
-                            reinterpret_cast<uint8_t*>(file_buffer.get()),
-                            buffer_size, &info, nullptr, nullptr);
+  int err =
+      mp3dec_load_buf(&mp3d, reinterpret_cast<uint8_t*>(file_buffer.get()),
+                      buffer_size, &info, nullptr, nullptr);
   if (err) {
-    LOG << "Failed to decode file: " << file_name << " error: " << err ;
+    LOG << "Failed to decode file: " << file_name << " error: " << err;
     return false;
   }
 
-  LOG << "Decoded " << GetName() << ". "
-      << info.samples << " samples, "
-      << info.channels << " channels, "
-      << info.hz << " hz, "
+  LOG << "Decoded " << GetName() << ". " << info.samples << " samples, "
+      << info.channels << " channels, " << info.hz << " hz, "
       << "layer " << info.layer << ", "
       << "avg_bitrate_kbps " << info.avg_bitrate_kbps;
 
@@ -102,16 +98,13 @@ void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {
     return;
 
   LOG << "Resampling from " << hz_ << " to " << system_hz;
-  size_t resampled_num_samples = ((float)system_hz / (float)hz_) *
-                                   num_samples_;
+  size_t resampled_num_samples = ((float)system_hz / (float)hz_) * num_samples_;
 
-	r8b::CDSPResampler24 resampler(hz_, system_hz, num_samples_);
+  r8b::CDSPResampler24 resampler(hz_, system_hz, num_samples_);
 
   for (int i = 0; i < num_channels_; ++i) {
     auto resampled_buffer_ = std::make_unique<float[]>(resampled_num_samples);
-    resampler.oneshot(buffer_[i].get(),
-                      num_samples_,
-                      resampled_buffer_.get(),
+    resampler.oneshot(buffer_[i].get(), num_samples_, resampled_buffer_.get(),
                       resampled_num_samples);
     buffer_[i].swap(resampled_buffer_);
   }

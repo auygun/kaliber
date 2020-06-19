@@ -60,8 +60,7 @@ bool Engine::Initialize() {
   }
 
   if (renderer_->SupportsDXT5()) {
-    tex_comp_alpha_ =
-        TextureCompressor::Create(TextureCompressor::kFormatDXT5);
+    tex_comp_alpha_ = TextureCompressor::Create(TextureCompressor::kFormatDXT5);
   } else if (renderer_->SupportsATC()) {
     tex_comp_alpha_ =
         TextureCompressor::Create(TextureCompressor::kFormatATCIA);
@@ -71,8 +70,7 @@ bool Engine::Initialize() {
     tex_comp_opaque_ =
         TextureCompressor::Create(TextureCompressor::kFormatDXT1);
   } else if (renderer_->SupportsATC()) {
-    tex_comp_opaque_ =
-        TextureCompressor::Create(TextureCompressor::kFormatATC);
+    tex_comp_opaque_ = TextureCompressor::Create(TextureCompressor::kFormatATC);
   } else if (renderer_->SupportsETC1()) {
     tex_comp_opaque_ =
         TextureCompressor::Create(TextureCompressor::kFormatETC1);

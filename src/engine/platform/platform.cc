@@ -3,8 +3,8 @@
 #include <thread>
 
 #include "../../base/log.h"
-#include "../engine.h"
 #include "../audio/audio.h"
+#include "../engine.h"
 #include "../renderer/renderer.h"
 
 // Save battery on mobile devices.

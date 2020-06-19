@@ -5,9 +5,9 @@
 
 #include "../../base/log.h"
 #include "../../base/vecmath.h"
+#include "../audio/audio_alsa.h"
 #include "../engine.h"
 #include "../input_event.h"
-#include "../audio/audio_alsa.h"
 #include "../renderer/renderer.h"
 
 using namespace base;

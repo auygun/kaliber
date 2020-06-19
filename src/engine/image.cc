@@ -288,7 +288,7 @@ bool Image::Compress() {
   if (IsCompressed())
     return true;
 
-  TextureCompressor* tc =  Engine::Get().GetTextureCompressor(true);
+  TextureCompressor* tc = Engine::Get().GetTextureCompressor(true);
   if (!tc)
     return false;
 
@@ -315,11 +315,11 @@ bool Image::Compress() {
   LOG << "Compressing image " << GetName() << ". Format: " << format_;
 
   unsigned compressedSize = GetSize();
-  uint8_t *compressedBuffer = (uint8_t *)AlignedAlloc(compressedSize *
-                                                      sizeof(uint8_t));
+  uint8_t* compressedBuffer =
+      (uint8_t*)AlignedAlloc(compressedSize * sizeof(uint8_t));
 
-  const uint8_t *src = buffer_.get();
-  uint8_t *dst = compressedBuffer;
+  const uint8_t* src = buffer_.get();
+  uint8_t* dst = compressedBuffer;
 
   tc->Compress(src, dst, width_, height_, TextureCompressor::kQualityHigh);
 

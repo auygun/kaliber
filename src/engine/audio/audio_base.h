@@ -1,9 +1,9 @@
 #ifndef AUDIO_BASE_H
 #define AUDIO_BASE_H
 
+#include <list>
 #include <memory>
 #include <mutex>
-#include <list>
 
 namespace eng {
 
@@ -50,7 +50,7 @@ class AudioBase {
   AudioBase();
   ~AudioBase();
 
-  void RenderAudio(float *output_buffer, size_t num_frames);
+  void RenderAudio(float* output_buffer, size_t num_frames);
 };
 
 }  // namespace eng

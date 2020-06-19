@@ -64,7 +64,8 @@ void AudioBase::SetResampleStep(std::shared_ptr<void> impl_data, size_t step) {
   sample->step = step + 10;
 }
 
-void AudioBase::SetMaxAmplitude(std::shared_ptr<void> impl_data, float max_amplitude) {
+void AudioBase::SetMaxAmplitude(std::shared_ptr<void> impl_data,
+                                float max_amplitude) {
   auto sample = std::static_pointer_cast<Sample>(impl_data);
   sample->max_amplitude = max_amplitude;
 }
@@ -75,7 +76,7 @@ void AudioBase::SetAmplitudeInc(std::shared_ptr<void> impl_data,
   sample->amplitude_inc = amplitude_inc;
 }
 
-void AudioBase::RenderAudio(float *output_buffer, size_t num_frames) {
+void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
   {
     std::unique_lock<std::mutex> scoped_lock(mutex_);
     samples_[1].splice(samples_[1].end(), samples_[0]);
@@ -92,8 +93,8 @@ void AudioBase::RenderAudio(float *output_buffer, size_t num_frames) {
     if (flags & kStopped) {
       remove = true;
     } else {
-      const float *src[2] = {sample->sound->GetBuffer(0),
-                            sample->sound->GetBuffer(1)};
+      const float* src[2] = {sample->sound->GetBuffer(0),
+                             sample->sound->GetBuffer(1)};
       if (!src[1])
         src[1] = src[0];
       size_t num_samples = sample->sound->num_samples();
@@ -106,8 +107,8 @@ void AudioBase::RenderAudio(float *output_buffer, size_t num_frames) {
       float max_amplitude = sample->max_amplitude;
 
       size_t channel_offset = (flags & kSimulateStereo) && num_channels == 1
-                              ? sample->sound->hz() / 10
-                              : 0;
+                                  ? sample->sound->hz() / 10
+                                  : 0;
 
       for (size_t i = 0; i < num_frames * kChannelCount;) {
         // Mix the 1st channel.

@@ -10,8 +10,8 @@
 #include "../engine/engine.h"
 #include "../engine/font.h"
 #include "../engine/image.h"
-#include "../engine/sound.h"
 #include "../engine/renderer/texture.h"
+#include "../engine/sound.h"
 #include "demo.h"
 
 using namespace base;
@@ -145,8 +145,7 @@ void Enemy::SelectTarget(DamageType damage_type,
     }
 
     if (!base::Intersection(e.sprite.GetOffset(),
-                            e.sprite.GetScale() * snap_factor,
-                            origin, dir))
+                            e.sprite.GetScale() * snap_factor, origin, dir))
       continue;
 
     Vector2 weapon_enemy_dir = e.sprite.GetOffset() - origin;
@@ -304,9 +303,8 @@ void Enemy::SpawnNextEnemy() {
   last_spawn_col_ = col;
   float x = (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2;
   Vector2 pos = {x, s.y / 2};
-  float speed = enemy_type == kEnemyType_Tank
-                    ? 36.0f
-                    : (rnd.Roll(4) == 4 ? 6.0f : 10.0f);
+  float speed =
+      enemy_type == kEnemyType_Tank ? 36.0f : (rnd.Roll(4) == 4 ? 6.0f : 10.0f);
 
   Spawn(enemy_type, damage_type, pos, speed);
 }
