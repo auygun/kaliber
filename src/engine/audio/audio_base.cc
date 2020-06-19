@@ -76,6 +76,16 @@ void AudioBase::SetAmplitudeInc(std::shared_ptr<void> impl_data,
   sample->amplitude_inc = amplitude_inc;
 }
 
+void AudioBase::SetEndCallback(std::shared_ptr<void> impl_data,
+                               base::Closure cb) {
+  auto sample = std::static_pointer_cast<Sample>(impl_data);
+  sample->end_cb = cb;
+}
+
+void AudioBase::Update() {
+  task_runner_.Run();
+}
+
 void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
   {
     std::unique_lock<std::mutex> scoped_lock(mutex_);
@@ -152,6 +162,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
     }
 
     if (remove) {
+      task_runner_.Enqueue(sample->end_cb);
       sample->active = false;
       it = samples_[1].erase(it);
     } else {

@@ -3,6 +3,8 @@
 
 #include <memory>
 
+#include "../base/closure.h"
+
 namespace eng {
 
 class AudioResource;
@@ -32,6 +34,9 @@ class SoundPlayer {
   // Set aplitude. Ampitude cannot be altered during playback. Must be called
   // before play/resume.
   void SetAplitude(float amplitude);
+
+  // Set callback to be called once playback stops.
+  void SetEndCallback(base::Closure cb);
 
  private:
   std::shared_ptr<AudioResource> resource_;

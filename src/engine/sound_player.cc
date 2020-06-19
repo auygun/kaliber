@@ -50,4 +50,8 @@ void SoundPlayer::SetAplitude(float amplitude) {
   amplitude_ = amplitude;
 }
 
+void SoundPlayer::SetEndCallback(base::Closure cb) {
+ resource_->SetEndCallback(cb);
+}
+
 }  // namespace eng

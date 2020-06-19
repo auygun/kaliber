@@ -108,6 +108,8 @@ void Engine::Shutdown() {
 void Engine::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
 
+  audio_->Update();
+
   task_runner_.Run();
 
   game_->Update(delta_time);
