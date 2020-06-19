@@ -43,6 +43,8 @@ class AudioOboe : public AudioBase {
 
   oboe::ManagedStream stream_;
   std::unique_ptr<StreamCallback> callback_;
+
+  bool RestartStream();
 };
 
 }  // namespace eng
