@@ -63,8 +63,8 @@ bool AudioAlsa::Initialize() {
       break;
     }
 
-    // Set perid time to 1 ms. The latency will be 3 ms for 3 perods.
-    unsigned period_time = 1000;
+    // Set perid time to 4 ms. The latency will be 12 ms for 3 perods.
+    unsigned period_time = 4000;
     if ((err = snd_pcm_hw_params_set_period_time_near(pcm_handle_, hw_params,
                                                       &period_time, 0)) < 0) {
       LOG << "Cannot set periods. Error: " << snd_strerror(err);
