@@ -47,8 +47,6 @@ set(CMAKE_SHARED_LINKER_FLAGS
     "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate")
 
 add_library(native-activity SHARED
-    ../../../src/base/asset_file_android.cc
-    ../../../src/base/asset_file.cc
     ../../../src/base/collusion_test.cc
     ../../../src/base/log.cc
     ../../../src/base/random.cc
@@ -73,6 +71,8 @@ add_library(native-activity SHARED
     ../../../src/engine/image_quad.cc
     ../../../src/engine/image.cc
     ../../../src/engine/mesh.cc
+    ../../../src/engine/platform/asset_file_android.cc
+    ../../../src/engine/platform/asset_file.cc
     ../../../src/engine/platform/platform_android.cc
     ../../../src/engine/platform/platform.cc
     ../../../src/engine/renderer/geometry.cc

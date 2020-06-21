@@ -1,9 +1,9 @@
 #include <assert.h>
 #include <string>
+#include "../../base/log.h"
 #include "asset_file.h"
-#include "log.h"
 
-namespace base {
+namespace eng {
 
 AssetFile::AssetFile() = default;
 
@@ -71,4 +71,4 @@ int AssetFile::Read(char* data, size_t size) {
   return result < size ? 0 : result;
 }
 
-}  // namespace base
+}  // namespace eng

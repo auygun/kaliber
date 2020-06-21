@@ -1,8 +1,8 @@
 #include "font.h"
 
-#include "../base/asset_file.h"
 #include "../base/log.h"
 #include "engine.h"
+#include "platform/asset_file.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "../third_party/stb/stb_truetype.h"
@@ -19,7 +19,7 @@ bool Font::Load(const std::string& file_name) {
 
   // Read the font file.
   size_t buffer_size = 0;
-  std::unique_ptr<char[]> buffer = base::AssetFile::ReadWholeFile(
+  std::unique_ptr<char[]> buffer = AssetFile::ReadWholeFile(
       file_name.c_str(), Engine::Get().GetRootPath().c_str(), &buffer_size);
   if (!buffer) {
     LOG << "Failed to read font file.";

@@ -50,7 +50,7 @@ void SoundPlayer::SetMaxAplitude(float max_amplitude) {
 }
 
 void SoundPlayer::SetEndCallback(base::Closure cb) {
- resource_->SetEndCallback(cb);
+  resource_->SetEndCallback(cb);
 }
 
 }  // namespace eng

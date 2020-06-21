@@ -1,7 +1,7 @@
 #include <string>
 #include "asset_file.h"
 
-namespace base {
+namespace eng {
 
 AssetFile::AssetFile() = default;
 
@@ -38,4 +38,4 @@ int AssetFile::Read(char* data, size_t size) {
   return 0;
 }
 
-}  // namespace base
+}  // namespace eng

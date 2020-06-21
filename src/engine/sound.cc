@@ -2,7 +2,6 @@
 
 #include <cassert>
 
-#include "../base/asset_file.h"
 #include "../base/log.h"
 #define MINIMP3_ONLY_MP3
 #define MINIMP3_ONLY_SIMD
@@ -11,6 +10,7 @@
 #include "../third_party/minimp3/minimp3_ex.h"
 #include "../third_party/r8b/CDSPResampler.h"
 #include "engine.h"
+#include "platform/asset_file.h"
 
 using namespace base;
 

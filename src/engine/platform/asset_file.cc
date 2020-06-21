@@ -1,7 +1,7 @@
 #include "asset_file.h"
-#include "log.h"
+#include "../../base/log.h"
 
-namespace base {
+namespace eng {
 
 std::unique_ptr<char[]> AssetFile::ReadWholeFile(const std::string& file_name,
                                                  const std::string& root_path,
@@ -38,4 +38,4 @@ std::unique_ptr<char[]> AssetFile::ReadWholeFile(const std::string& file_name,
   return buffer;
 }
 
-}  // namespace base
+}  // namespace eng

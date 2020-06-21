@@ -1,17 +1,16 @@
 #ifndef ASSET_FILE_H
 #define ASSET_FILE_H
 
-#include "file.h"
 #if defined(__ANDROID__)
 #include <zlib.h>
-#include "../third_party/minizip/unzip.h"
+#include "../../third_party/minizip/unzip.h"
 #elif defined(__linux__)
-#include <stdio.h>
+#include "../../base/file.h"
 #endif
 #include <memory>
 #include <string>
 
-namespace base {
+namespace eng {
 
 class AssetFile {
  public:
@@ -35,10 +34,10 @@ class AssetFile {
   unzFile archive_ = 0;
   size_t uncompressed_size_ = 0;
 #elif defined(__linux)
-  ScopedFILE file_;
+  base::ScopedFILE file_;
 #endif
 };
 
-}  // namespace base
+}  // namespace eng
 
 #endif  // ASSET_FILE_H
