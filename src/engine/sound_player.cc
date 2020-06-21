@@ -19,15 +19,13 @@ void SoundPlayer::SetSound(std::shared_ptr<const Sound> sound) {
 void SoundPlayer::Play(bool loop) {
   resource_->SetAmplitudeInc(0);
   resource_->SetLoop(loop);
-  resource_->Play(sound_, amplitude_, true);
+  resource_->Play(sound_, max_amplitude_, true);
 }
 
 void SoundPlayer::Resume(bool fade_in) {
-  if (fade_in) {
+  if (fade_in)
     resource_->SetAmplitudeInc(0.0001f);
-    resource_->SetMaxAmplitude(amplitude_);
-  }
-  resource_->Play(sound_, fade_in ? 0 : amplitude_, false);
+  resource_->Play(sound_, fade_in ? 0 : max_amplitude_, false);
 }
 
 void SoundPlayer::Stop(bool fade_out) {
@@ -46,8 +44,9 @@ void SoundPlayer::SetSimulateStereo(bool simulate) {
   resource_->SetSimulateStereo(simulate);
 }
 
-void SoundPlayer::SetAplitude(float amplitude) {
-  amplitude_ = amplitude;
+void SoundPlayer::SetMaxAplitude(float max_amplitude) {
+  max_amplitude_ = max_amplitude;
+  resource_->SetMaxAmplitude(max_amplitude);
 }
 
 void SoundPlayer::SetEndCallback(base::Closure cb) {

@@ -31,9 +31,7 @@ class SoundPlayer {
   // Disabled by default.
   void SetSimulateStereo(bool simulate);
 
-  // Set aplitude. Ampitude cannot be altered during playback. Must be called
-  // before play/resume.
-  void SetAplitude(float amplitude);
+  void SetMaxAplitude(float max_amplitude);
 
   // Set callback to be called once playback stops.
   void SetEndCallback(base::Closure cb);
@@ -42,7 +40,7 @@ class SoundPlayer {
   std::shared_ptr<AudioResource> resource_;
   std::shared_ptr<const Sound> sound_;
 
-  float amplitude_ = 1.0f;
+  float max_amplitude_ = 1.0f;
 
   SoundPlayer(const SoundPlayer&) = delete;
   SoundPlayer& operator=(const SoundPlayer&) = delete;
