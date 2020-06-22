@@ -20,8 +20,8 @@ std::unique_ptr<char[]> AssetFile::ReadWholeFile(const std::string& file_name,
       std::make_unique<char[]>(size + (null_terminate ? 1 : 0));
 
   // Read all of it.
-  int bytesRead = file.Read(buffer.get(), size);
-  if (!bytesRead) {
+  int bytes_read = file.Read(buffer.get(), size);
+  if (!bytes_read) {
     LOG << "Failed to read a buffer of size: " << size << " from file "
         << file_name;
     return nullptr;
@@ -29,7 +29,7 @@ std::unique_ptr<char[]> AssetFile::ReadWholeFile(const std::string& file_name,
 
   // Return the buffer size if the caller is interested.
   if (length)
-    *length = bytesRead;
+    *length = bytes_read;
 
   // Null terminate the buffer.
   if (null_terminate)
