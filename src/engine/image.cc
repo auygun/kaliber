@@ -83,7 +83,7 @@ bool Image::Create(int w, int h) {
   width_ = w;
   height_ = h;
 
-  buffer_.reset((uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t)));
+  buffer_.reset((uint8_t*)AlignedAlloc<16>(w * h * 4 * sizeof(uint8_t)));
 
   return true;
 }
@@ -96,7 +96,7 @@ void Image::Copy(const Image& other) {
 
   if (other.buffer_) {
     int size = other.GetSize();
-    buffer_.reset((uint8_t*)AlignedAlloc(size));
+    buffer_.reset((uint8_t*)AlignedAlloc<16>(size));
     memcpy(buffer_.get(), other.buffer_.get(), size);
   }
   width_ = other.width_;
@@ -117,7 +117,7 @@ bool Image::CreateMip(const Image& other) {
   width_ = std::max(other.width_ >> 1, 1);
   height_ = std::max(other.height_ >> 1, 1);
   format_ = kRGBA32;
-  buffer_.reset((uint8_t*)AlignedAlloc(GetSize()));
+  buffer_.reset((uint8_t*)AlignedAlloc<16>(GetSize()));
 
   // If the width isn't perfectly divisable with two, then we end up skewing
   // the image because the source offset isn't updated properly.
@@ -178,7 +178,8 @@ bool Image::Load(const std::string& file_name) {
     case 1:
       // LOG("Converting image from 1 to 4 channels.\n");
       // Assume it's an intensity, duplicate it to RGB and fill A with opaque.
-      converted_buffer = (uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t));
+      converted_buffer =
+          (uint8_t*)AlignedAlloc<16>(w * h * 4 * sizeof(uint8_t));
       for (int i = 0; i < w * h; ++i) {
         converted_buffer[i * 4 + 0] = buffer_[i];
         converted_buffer[i * 4 + 1] = buffer_[i];
@@ -190,7 +191,8 @@ bool Image::Load(const std::string& file_name) {
     case 3:
       // LOG("Converting image from 3 to 4 channels.\n");
       // Add an opaque channel.
-      converted_buffer = (uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t));
+      converted_buffer =
+          (uint8_t*)AlignedAlloc<16>(w * h * 4 * sizeof(uint8_t));
       for (int i = 0; i < w * h; ++i) {
         converted_buffer[i * 4 + 0] = buffer_[i * 3 + 0];
         converted_buffer[i * 4 + 1] = buffer_[i * 3 + 1];
@@ -210,9 +212,8 @@ bool Image::Load(const std::string& file_name) {
       return false;
   }
 
-  if (converted_buffer) {
+  if (converted_buffer)
     buffer_.reset(converted_buffer);
-  }
 
   width_ = w;
   height_ = h;
@@ -258,7 +259,7 @@ void Image::ConvertToPow2() {
         << height_ << ") to (" << new_width << ", " << new_height << ")";
 
     int bigger_size = new_width * new_height * 4 * sizeof(uint8_t);
-    uint8_t* bigger_buffer = (uint8_t*)AlignedAlloc(bigger_size);
+    uint8_t* bigger_buffer = (uint8_t*)AlignedAlloc<16>(bigger_size);
 
     // Fill it with black.
     memset(bigger_buffer, 0, bigger_size);
@@ -316,7 +317,7 @@ bool Image::Compress() {
 
   unsigned compressedSize = GetSize();
   uint8_t* compressedBuffer =
-      (uint8_t*)AlignedAlloc(compressedSize * sizeof(uint8_t));
+      (uint8_t*)AlignedAlloc<16>(compressedSize * sizeof(uint8_t));
 
   const uint8_t* src = buffer_.get();
   uint8_t* dst = compressedBuffer;

@@ -8,7 +8,7 @@
 
 namespace eng {
 
-class AudioSample;
+struct AudioSample;
 class Sound;
 
 class AudioResource {

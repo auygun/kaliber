@@ -61,14 +61,14 @@ void AssetFile::Close() {
   }
 }
 
-int AssetFile::GetSize() {
+size_t AssetFile::GetSize() {
   return uncompressed_size_;
 }
 
-int AssetFile::Read(char* data, size_t size) {
+size_t AssetFile::Read(char* data, size_t size) {
   // Uncompress data into the buffer.
   int result = unzReadCurrentFile(archive_, data, size);
-  return result < size ? 0 : result;
+  return result < 0 ? 0 : result;
 }
 
 }  // namespace eng

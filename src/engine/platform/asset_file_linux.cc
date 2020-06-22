@@ -18,8 +18,8 @@ void AssetFile::Close() {
   file_.reset();
 }
 
-int AssetFile::GetSize() {
-  int size = 0;
+size_t AssetFile::GetSize() {
+  size_t size = 0;
 
   if (file_) {
     if (!fseek(file_.get(), 0, SEEK_END)) {
@@ -31,7 +31,7 @@ int AssetFile::GetSize() {
   return size;
 }
 
-int AssetFile::Read(char* data, size_t size) {
+size_t AssetFile::Read(char* data, size_t size) {
   if (file_)
     return fread(data, 1, size, file_.get());
 

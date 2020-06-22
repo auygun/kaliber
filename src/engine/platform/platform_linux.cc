@@ -89,8 +89,7 @@ void Platform::Update() {
         break;
       }
       case ClientMessage: {
-        // TODO: Should check here for other client message types. However the
-        // only protocol registered above is WM_DELETE_WINDOW for now.
+        // WM_DELETE_WINDOW is the only registered type for now.
         should_exit_ = true;
         break;
       }

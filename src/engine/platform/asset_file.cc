@@ -11,7 +11,7 @@ std::unique_ptr<char[]> AssetFile::ReadWholeFile(const std::string& file_name,
   if (!file.Open(file_name, root_path))
     return nullptr;
 
-  int size = file.GetSize();
+  size_t size = file.GetSize();
   if (size == 0)
     return nullptr;
 
@@ -20,7 +20,7 @@ std::unique_ptr<char[]> AssetFile::ReadWholeFile(const std::string& file_name,
       std::make_unique<char[]>(size + (null_terminate ? 1 : 0));
 
   // Read all of it.
-  int bytes_read = file.Read(buffer.get(), size);
+  size_t bytes_read = file.Read(buffer.get(), size);
   if (!bytes_read) {
     LOG << "Failed to read a buffer of size: " << size << " from file "
         << file_name;
