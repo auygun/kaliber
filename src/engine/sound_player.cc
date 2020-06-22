@@ -17,26 +17,18 @@ void SoundPlayer::SetSound(std::shared_ptr<const Sound> sound) {
 }
 
 void SoundPlayer::Play(bool loop) {
-  if (!resource_)
-    return;
   resource_->SetAmplitudeInc(0);
   resource_->SetLoop(loop);
-  resource_->Play(sound_, amplitude_, true);
+  resource_->Play(sound_, max_amplitude_, true);
 }
 
 void SoundPlayer::Resume(bool fade_in) {
-  if (!resource_)
-    return;
-  if (fade_in) {
+  if (fade_in)
     resource_->SetAmplitudeInc(0.0001f);
-    resource_->SetMaxAmplitude(amplitude_);
-  }
-  resource_->Play(sound_, fade_in ? 0 : amplitude_, false);
+  resource_->Play(sound_, fade_in ? 0 : max_amplitude_, false);
 }
 
 void SoundPlayer::Stop(bool fade_out) {
-  if (!resource_)
-    return;
   if (fade_out)
     resource_->SetAmplitudeInc(-0.0001f);
   else
@@ -44,22 +36,21 @@ void SoundPlayer::Stop(bool fade_out) {
 }
 
 void SoundPlayer::SetVariate(bool variate) {
-  if (!resource_)
-    return;
-  int step = variate
-             ? Engine::Get().GetRandomGenerator().Roll(3) - 2
-             : 0;
+  int step = variate ? Engine::Get().GetRandomGenerator().Roll(3) - 2 : 0;
   resource_->SetResampleStep(step);
 }
 
 void SoundPlayer::SetSimulateStereo(bool simulate) {
-  if (!resource_)
-    return;
   resource_->SetSimulateStereo(simulate);
 }
 
-void SoundPlayer::SetAplitude(float amplitude) {
-  amplitude_ = amplitude;
+void SoundPlayer::SetMaxAplitude(float max_amplitude) {
+  max_amplitude_ = max_amplitude;
+  resource_->SetMaxAmplitude(max_amplitude);
+}
+
+void SoundPlayer::SetEndCallback(base::Closure cb) {
+  resource_->SetEndCallback(cb);
 }
 
 }  // namespace eng

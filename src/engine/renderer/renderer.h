@@ -25,6 +25,9 @@
 #endif
 
 #include "../../base/closure.h"
+#ifdef THREADED_RENDERING
+#include "../../base/task_runner.h"
+#endif  // THREADED_RENDERING
 #include "render_resource.h"
 #include "renderer_types.h"
 
@@ -52,13 +55,13 @@ class Renderer {
 
   void Shutdown();
 
+  void Update();
+
   void ContextLost();
 
   std::shared_ptr<RenderResource> CreateResource(
       RenderResourceFactoryBase& factory);
   void ReleaseResource(unsigned resource_id);
-
-  void InvalidateAllResources();
 
   void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
 
@@ -151,6 +154,8 @@ class Renderer {
   std::mutex mutex_;
   std::thread worker_thread_;
   bool terminate_worker_ = false;
+
+  base::TaskRunner task_runner_;
 #endif  // THREADED_RENDERING
 
   // Stats.
@@ -170,6 +175,8 @@ class Renderer {
   bool InitInternal();
   bool InitCommon();
   void ShutdownInternal();
+
+  void InvalidateAllResources();
 
   bool StartWorker();
   void TerminateWorker();

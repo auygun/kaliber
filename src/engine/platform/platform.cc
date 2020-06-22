@@ -3,8 +3,8 @@
 #include <thread>
 
 #include "../../base/log.h"
-#include "../engine.h"
 #include "../audio/audio.h"
+#include "../engine.h"
 #include "../renderer/renderer.h"
 
 // Save battery on mobile devices.
@@ -29,8 +29,10 @@ void Platform::RunMainLoop() {
 
   // Use fixed time steps.
   constexpr float time_step = 1.0f / 60.0f;
-  constexpr float speed = 1.0f;
+
+#ifdef USE_SLEEP
   constexpr float epsilon = 0.0001f;
+#endif  // USE_SLEEP
 
   timer_.Reset();
   float accumulator = 0.0;
@@ -63,7 +65,7 @@ void Platform::RunMainLoop() {
         engine_.reset();
         return;
       }
-      engine_->Update(time_step * speed);
+      engine_->Update(time_step);
       accumulator -= time_step;
     };
 

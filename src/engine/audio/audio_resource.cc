@@ -39,7 +39,11 @@ void AudioResource::SetMaxAmplitude(float max_amplitude) {
 }
 
 void AudioResource::SetAmplitudeInc(float amplitude_inc) {
-    audio_->SetAmplitudeInc(impl_data_, amplitude_inc);
+  audio_->SetAmplitudeInc(impl_data_, amplitude_inc);
+}
+
+void AudioResource::SetEndCallback(base::Closure cb) {
+  audio_->SetEndCallback(impl_data_, cb);
 }
 
 }  // namespace eng

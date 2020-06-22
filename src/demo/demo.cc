@@ -50,7 +50,7 @@ bool Demo::Initialize() {
   }
 
   music_.SetSound(Engine::Get().GetAsset<Sound>("file_example_MP3_700KB.mp3"));
-  music_.SetAplitude(0.4f);
+  music_.SetMaxAplitude(0.4f);
   music_.Play(true);
 
   EnterMenuState();

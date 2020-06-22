@@ -28,7 +28,7 @@ class AudioAlsa : public AudioBase {
 
  private:
   // Handle for the PCM device.
-  snd_pcm_t *pcm_handle_;
+  snd_pcm_t* pcm_handle_;
 
   std::thread worker_thread_;
   bool terminate_worker_ = false;

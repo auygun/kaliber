@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include "../../base/closure.h"
 #include "audio_forward.h"
 
 namespace eng {
@@ -11,11 +12,12 @@ class Sound;
 
 class AudioResource {
  public:
-  AudioResource(std::shared_ptr<void> impl_data,
-                Audio* audio);
+  AudioResource(std::shared_ptr<void> impl_data, Audio* audio);
   ~AudioResource();
 
-  void Play(std::shared_ptr<const Sound> sound, float amplitude, bool reset_pos);
+  void Play(std::shared_ptr<const Sound> sound,
+            float amplitude,
+            bool reset_pos);
 
   void Stop();
 
@@ -24,6 +26,7 @@ class AudioResource {
   void SetResampleStep(size_t step);
   void SetMaxAmplitude(float max_amplitude);
   void SetAmplitudeInc(float amplitude_inc);
+  void SetEndCallback(base::Closure cb);
 
  private:
   std::shared_ptr<void> impl_data_;

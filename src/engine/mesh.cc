@@ -3,10 +3,10 @@
 #include <string.h>
 #include <cassert>
 
-#include "../base/asset_file.h"
 #include "../base/log.h"
 #include "../third_party/jsoncpp/json.h"
 #include "engine.h"
+#include "platform/asset_file.h"
 
 namespace eng {
 
@@ -63,7 +63,7 @@ bool Mesh::Load(const std::string& file_name) {
   SetName(file_name);
 
   size_t buffer_size = 0;
-  std::unique_ptr<char[]> json_mesh = base::AssetFile::ReadWholeFile(
+  std::unique_ptr<char[]> json_mesh = AssetFile::ReadWholeFile(
       file_name.c_str(), Engine::Get().GetRootPath().c_str(), &buffer_size,
       true);
   if (!json_mesh) {

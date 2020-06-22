@@ -1,8 +1,8 @@
 #ifndef SOUND_H
 #define SOUND_H
 
-#include <memory>
 #include <stdint.h>
+#include <memory>
 #include <string>
 
 #include "asset.h"

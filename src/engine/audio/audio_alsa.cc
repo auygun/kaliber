@@ -19,10 +19,12 @@ bool AudioAlsa::Initialize() {
   int err;
 
   // Contains information about the hardware.
-  snd_pcm_hw_params_t *hw_params;
+  snd_pcm_hw_params_t* hw_params;
 
-  // Open the default PCM device.
-  if ((err = snd_pcm_open(&pcm_handle_, "default", SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
+  // "default" is usualy PulseAudio. Use "plughw" for direct hardware device and
+  // format conversion.
+  if ((err = snd_pcm_open(&pcm_handle_, "plughw:CARD=PCH",
+                          SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
     LOG << "Cannot open audio device. Error: " << snd_strerror(err);
     return false;
   }
@@ -33,46 +35,46 @@ bool AudioAlsa::Initialize() {
 
     // Init hw_params with full configuration space.
     if ((err = snd_pcm_hw_params_any(pcm_handle_, hw_params)) < 0) {
-      LOG << "Cannot initialize hardware parameter structure. Error: " << snd_strerror(err);
+      LOG << "Cannot initialize hardware parameter structure. Error: "
+          << snd_strerror(err);
       break;
     }
 
-    // Set access type.
-    if ((err = snd_pcm_hw_params_set_access(pcm_handle_, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
+    if ((err = snd_pcm_hw_params_set_access(
+             pcm_handle_, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
       LOG << "Cannot set access type. Error: " << snd_strerror(err);
       break;
     }
 
-    // Set sample format.
-    if ((err = snd_pcm_hw_params_set_format(pcm_handle_, hw_params, SND_PCM_FORMAT_FLOAT_LE)) < 0) {
+    if ((err = snd_pcm_hw_params_set_format(pcm_handle_, hw_params,
+                                            SND_PCM_FORMAT_FLOAT_LE)) < 0) {
       LOG << "Cannot set sample format. Error: " << snd_strerror(err);
       break;
     }
 
-    // Set sample rate. If the exact rate is not supported by the hardware, use
-    // nearest possible rate.
     unsigned sample_rate = 48000;
-    if ((err = snd_pcm_hw_params_set_rate_near(pcm_handle_, hw_params, &sample_rate, 0)) < 0) {
+    if ((err = snd_pcm_hw_params_set_rate_near(pcm_handle_, hw_params,
+                                               &sample_rate, 0)) < 0) {
       LOG << "Cannot set sample rate. Error: " << snd_strerror(err);
       break;
     }
 
-    // Set number of channels.
     if ((err = snd_pcm_hw_params_set_channels(pcm_handle_, hw_params, 2)) < 0) {
       LOG << "Cannot set channel count. Error: " << snd_strerror(err);
       break;
     }
 
-    // Set period time. Periods used to be called fragments.
-    unsigned period_time = 21340;
-    if ((err = snd_pcm_hw_params_set_period_time_near(pcm_handle_, hw_params, &period_time, 0)) < 0) {
+    // Set period time to 4 ms. The latency will be 12 ms for 3 perods.
+    unsigned period_time = 4000;
+    if ((err = snd_pcm_hw_params_set_period_time_near(pcm_handle_, hw_params,
+                                                      &period_time, 0)) < 0) {
       LOG << "Cannot set periods. Error: " << snd_strerror(err);
       break;
     }
 
-    // Set periods.
     unsigned periods = 3;
-    if ((err = snd_pcm_hw_params_set_periods_near(pcm_handle_, hw_params, &periods, 0)) < 0) {
+    if ((err = snd_pcm_hw_params_set_periods_near(pcm_handle_, hw_params,
+                                                  &periods, 0)) < 0) {
       LOG << "Cannot set periods. Error: " << snd_strerror(err);
       break;
     }
@@ -84,7 +86,8 @@ bool AudioAlsa::Initialize() {
     }
 
     if ((err = snd_pcm_prepare(pcm_handle_)) < 0) {
-      LOG << "Cannot prepare audio interface for use. Error: " << snd_strerror(err);
+      LOG << "Cannot prepare audio interface for use. Error: "
+          << snd_strerror(err);
       break;
     }
 
@@ -119,7 +122,7 @@ bool AudioAlsa::Initialize() {
     StartWorker();
 
     return true;
-  } while(false);
+  } while (false);
 
   snd_pcm_close(pcm_handle_);
   return false;
@@ -146,7 +149,8 @@ bool AudioAlsa::StartWorker() {
 
   std::promise<bool> promise;
   std::future<bool> future = promise.get_future();
-  worker_thread_ = std::thread(&AudioAlsa::WorkerMain, this, std::move(promise));
+  worker_thread_ =
+      std::thread(&AudioAlsa::WorkerMain, this, std::move(promise));
   return future.get();
 }
 

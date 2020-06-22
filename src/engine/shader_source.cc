@@ -2,9 +2,9 @@
 
 #include <cstring>
 
-#include "../base/asset_file.h"
 #include "../base/log.h"
 #include "engine.h"
+#include "platform/asset_file.h"
 
 namespace eng {
 
@@ -20,7 +20,7 @@ bool ShaderSource::Load(const std::string& name) {
 
   std::string vertex_file_name = name;
   vertex_file_name += "_vertex";
-  auto vertex_source = base::AssetFile::ReadWholeFile(
+  auto vertex_source = AssetFile::ReadWholeFile(
       vertex_file_name.c_str(), engine.GetRootPath().c_str(), &size, true);
   if (!vertex_source) {
     LOG << "Failed to read file: " << vertex_file_name;
@@ -31,7 +31,7 @@ bool ShaderSource::Load(const std::string& name) {
 
   std::string fragment_file_name = name;
   fragment_file_name += "_fragment";
-  auto fragment_source = base::AssetFile::ReadWholeFile(
+  auto fragment_source = AssetFile::ReadWholeFile(
       fragment_file_name.c_str(), engine.GetRootPath().c_str(), &size, true);
   if (!fragment_source) {
     LOG << "Failed to read file: " << fragment_file_name;

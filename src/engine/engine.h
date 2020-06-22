@@ -6,11 +6,10 @@
 #include <unordered_map>
 
 #include "../base/random.h"
-#include "../base/task_runner.h"
 #include "../base/vecmath.h"
 #include "asset.h"
-#include "image_quad.h"
 #include "audio/audio_forward.h"
+#include "image_quad.h"
 #include "renderer/render_resource.h"
 
 class TextureCompressor;
@@ -29,7 +28,7 @@ class Shader;
 
 class Engine {
  public:
-  Engine(Platform* platform, Renderer* renderer, Audio *audio);
+  Engine(Platform* platform, Renderer* renderer, Audio* audio);
   ~Engine();
 
   static Engine& Get();
@@ -141,8 +140,6 @@ class Engine {
   float seconds_accumulated_ = 0.0f;
 
   std::deque<std::unique_ptr<InputEvent>> input_queue_;
-
-  base::TaskRunner task_runner_;
 
   base::Random random_;
 

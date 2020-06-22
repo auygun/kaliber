@@ -1,9 +1,12 @@
 #ifndef AUDIO_BASE_H
 #define AUDIO_BASE_H
 
+#include <list>
 #include <memory>
 #include <mutex>
-#include <list>
+
+#include "../../base/closure.h"
+#include "../../base/task_runner.h"
 
 namespace eng {
 
@@ -23,6 +26,9 @@ class AudioBase {
   void SetResampleStep(std::shared_ptr<void> impl_data, size_t step);
   void SetMaxAmplitude(std::shared_ptr<void> impl_data, float max_amplitude);
   void SetAmplitudeInc(std::shared_ptr<void> impl_data, float amplitude_inc);
+  void SetEndCallback(std::shared_ptr<void> impl_data, base::Closure cb);
+
+  void Update();
 
  protected:
   enum SampleFlags { kLoop = 1, kStopped = 2, kSimulateStereo = 4 };
@@ -42,15 +48,19 @@ class AudioBase {
     size_t accumulator = 0;
     float amplitude = 1.0f;
     bool active = false;
+
+    base::Closure end_cb;
   };
 
   std::list<std::shared_ptr<Sample>> samples_[2];
   std::mutex mutex_;
 
+  base::TaskRunner task_runner_;
+
   AudioBase();
   ~AudioBase();
 
-  void RenderAudio(float *output_buffer, size_t num_frames);
+  void RenderAudio(float* output_buffer, size_t num_frames);
 };
 
 }  // namespace eng

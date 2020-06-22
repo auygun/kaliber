@@ -41,6 +41,12 @@ void Renderer::SetContextLostCB(base::Closure cb) {
   context_lost_cb_ = std::move(cb);
 }
 
+void Renderer::Update() {
+#ifdef THREADED_RENDERING
+  task_runner_.Run();
+#endif  // THREADED_RENDERING
+}
+
 void Renderer::ContextLost() {
   LOG << "Context lost.";
 
@@ -50,7 +56,13 @@ void Renderer::ContextLost() {
   draw_commands_[1].clear();
 #endif  // THREADED_RENDERING
 
+  InvalidateAllResources();
+
+#ifdef THREADED_RENDERING
+  task_runner_.Enqueue(context_lost_cb_);
+#else
   context_lost_cb_();
+#endif  // THREADED_RENDERING
 }
 
 std::shared_ptr<RenderResource> Renderer::CreateResource(
@@ -81,14 +93,6 @@ void Renderer::ReleaseResource(unsigned resource_id) {
     resources_.erase(it);
 }
 
-void Renderer::InvalidateAllResources() {
-  for (auto& r : resources_) {
-    std::shared_ptr<RenderResource> r_ptr = r.second.lock();
-    if (r_ptr)
-      r_ptr->Destroy();
-  }
-}
-
 void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
 #ifdef THREADED_RENDERING
   if (cmd->global) {
@@ -117,8 +121,6 @@ void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
   ProcessCommand(cmd.get());
 #endif  // THREADED_RENDERING
 }
-
-#ifdef THREADED_RENDERING
 
 size_t Renderer::GetAndResetFPS() {
   int ret = fps_;
@@ -202,6 +204,14 @@ bool Renderer::InitCommon() {
   return true;
 }
 
+void Renderer::InvalidateAllResources() {
+  for (auto& r : resources_) {
+    std::shared_ptr<RenderResource> r_ptr = r.second.lock();
+    if (r_ptr)
+      r_ptr->Destroy();
+  }
+}
+
 bool Renderer::StartWorker() {
 #ifdef THREADED_RENDERING
   LOG << "Strating render thread.";
@@ -237,6 +247,8 @@ void Renderer::TerminateWorker() {
   ShutdownInternal();
 #endif  // THREADED_RENDERING
 }
+
+#ifdef THREADED_RENDERING
 
 void Renderer::WorkerMain(std::promise<bool> promise) {
   promise.set_value(InitInternal());

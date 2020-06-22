@@ -15,31 +15,7 @@ AudioOboe::~AudioOboe() = default;
 bool AudioOboe::Initialize() {
   LOG << "Initializing audio system.";
 
-  oboe::AudioStreamBuilder builder;
-  oboe::Result result =  builder.setSharingMode(oboe::SharingMode::Exclusive)
-      ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
-      ->setFormat(oboe::AudioFormat::Float)
-      ->setChannelCount(kChannelCount)
-      ->setDirection(oboe::Direction::Output)
-      ->setUsage(oboe::Usage::Game)
-      ->setCallback(callback_.get())
-      ->openManagedStream(stream_);
-
-  LOG << "Oboe Audio Stream:";
-  LOG << "  performance mode: " << (int)stream_->getPerformanceMode();
-  LOG << "  format:           " << (int)stream_->getFormat();
-  LOG << "  channel count:    " << stream_->getChannelCount();
-  LOG << "  sample rate:      " << stream_->getSampleRate();
-
-  if (result != oboe::Result::OK) {
-    LOG << "Failed to create the playback stream. Error: "
-        << oboe::convertToText(result);
-    return false;
-  }
-
-  stream_->start();
-
-  return true;
+  return RestartStream();
 }
 
 void AudioOboe::Shutdown() {
@@ -60,19 +36,48 @@ AudioOboe::StreamCallback::StreamCallback(AudioOboe* audio) : audio_(audio) {}
 AudioOboe::StreamCallback::~StreamCallback() = default;
 
 oboe::DataCallbackResult AudioOboe::StreamCallback::onAudioReady(
-    oboe::AudioStream *oboe_stream,
-    void *audio_data,
+    oboe::AudioStream* oboe_stream,
+    void* audio_data,
     int32_t num_frames) {
-  float *output_buffer = static_cast<float*>(audio_data);
+  float* output_buffer = static_cast<float*>(audio_data);
   audio_->RenderAudio(output_buffer, num_frames);
   return oboe::DataCallbackResult::Continue;
 }
 
 void AudioOboe::StreamCallback::onErrorAfterClose(
-    oboe::AudioStream *oboe_stream, oboe::Result error) {
+    oboe::AudioStream* oboe_stream,
+    oboe::Result error) {
   LOG << "Error after close. Error: " << oboe::convertToText(error);
-  // TODO: Do this in main thread.
-  audio_->Initialize();
+
+  audio_->RestartStream();
+}
+
+bool AudioOboe::RestartStream() {
+  oboe::AudioStreamBuilder builder;
+  oboe::Result result =
+      builder.setSharingMode(oboe::SharingMode::Exclusive)
+          ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
+          ->setFormat(oboe::AudioFormat::Float)
+          ->setChannelCount(kChannelCount)
+          ->setDirection(oboe::Direction::Output)
+          ->setUsage(oboe::Usage::Game)
+          ->setCallback(callback_.get())
+          ->openManagedStream(stream_);
+
+  LOG << "Oboe Audio Stream:";
+  LOG << "  performance mode: " << (int)stream_->getPerformanceMode();
+  LOG << "  format:           " << (int)stream_->getFormat();
+  LOG << "  channel count:    " << stream_->getChannelCount();
+  LOG << "  sample rate:      " << stream_->getSampleRate();
+
+  if (result != oboe::Result::OK) {
+    LOG << "Failed to create the playback stream. Error: "
+        << oboe::convertToText(result);
+    return false;
+  }
+
+  stream_->start();
+  return true;
 }
 
 }  // namespace eng
