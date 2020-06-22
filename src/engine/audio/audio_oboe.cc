@@ -22,11 +22,6 @@ void AudioOboe::Shutdown() {
   LOG << "Shutting down audio system.";
 }
 
-std::shared_ptr<AudioResource> AudioOboe::CreateResource() {
-  auto impl_data = std::make_shared<Sample>();
-  return std::make_shared<AudioResource>(impl_data, this);
-}
-
 size_t AudioOboe::GetSampleRate() {
   return stream_->getSampleRate();
 }

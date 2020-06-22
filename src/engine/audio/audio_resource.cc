@@ -2,48 +2,70 @@
 
 #include "../../base/log.h"
 #include "audio.h"
+#include "audio_sample.h"
 
 namespace eng {
 
-AudioResource::AudioResource(std::shared_ptr<void> impl_data, Audio* audio)
-    : impl_data_(impl_data), audio_(audio) {}
+AudioResource::AudioResource(Audio* audio)
+    : sample_(std::make_shared<AudioSample>()), audio_(audio) {}
 
 AudioResource::~AudioResource() {
-  audio_->Stop(impl_data_);
+  sample_->flags |= AudioSample::kStopped;
 }
 
 void AudioResource::Play(std::shared_ptr<const Sound> sound,
                          float amplitude,
                          bool reset_pos) {
-  audio_->Play(impl_data_, sound, amplitude, reset_pos);
+  if (sample_->active)
+    return;
+
+  if (reset_pos) {
+    sample_->src_index = 0;
+    sample_->accumulator = 0;
+  }
+  sample_->flags &= ~AudioSample::kStopped;
+  sample_->sound = sound;
+  sample_->amplitude = amplitude;
+  sample_->active = true;
+
+  audio_->Play(sample_);
 }
 
 void AudioResource::Stop() {
-  audio_->Stop(impl_data_);
+  if (!sample_->active)
+    return;
+
+  sample_->flags |= AudioSample::kStopped;
 }
 
 void AudioResource::SetLoop(bool loop) {
-  audio_->SetLoop(impl_data_, loop);
+  if (loop)
+    sample_->flags |= AudioSample::kLoop;
+  else
+    sample_->flags &= ~AudioSample::kLoop;
 }
 
 void AudioResource::SetSimulateStereo(bool simulate) {
-  audio_->SetSimulateStereo(impl_data_, simulate);
+  if (simulate)
+    sample_->flags |= AudioSample::kSimulateStereo;
+  else
+    sample_->flags &= ~AudioSample::kSimulateStereo;
 }
 
 void AudioResource::SetResampleStep(size_t step) {
-  audio_->SetResampleStep(impl_data_, step);
+  sample_->step = step + 10;
 }
 
 void AudioResource::SetMaxAmplitude(float max_amplitude) {
-  audio_->SetMaxAmplitude(impl_data_, max_amplitude);
+  sample_->max_amplitude = max_amplitude;
 }
 
 void AudioResource::SetAmplitudeInc(float amplitude_inc) {
-  audio_->SetAmplitudeInc(impl_data_, amplitude_inc);
+  sample_->amplitude_inc = amplitude_inc;
 }
 
 void AudioResource::SetEndCallback(base::Closure cb) {
-  audio_->SetEndCallback(impl_data_, cb);
+  sample_->end_cb = cb;
 }
 
 }  // namespace eng

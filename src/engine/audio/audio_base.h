@@ -7,6 +7,7 @@
 
 #include "../../base/closure.h"
 #include "../../base/task_runner.h"
+#include "audio_sample.h"
 
 namespace eng {
 
@@ -14,45 +15,14 @@ class Sound;
 
 class AudioBase {
  public:
-  void Play(std::shared_ptr<void> impl_data,
-            std::shared_ptr<const Sound> sound,
-            float amplitude,
-            bool reset_pos);
-
-  void Stop(std::shared_ptr<void> impl_data);
-
-  void SetLoop(std::shared_ptr<void> impl_data, bool loop);
-  void SetSimulateStereo(std::shared_ptr<void> impl_data, bool simulate);
-  void SetResampleStep(std::shared_ptr<void> impl_data, size_t step);
-  void SetMaxAmplitude(std::shared_ptr<void> impl_data, float max_amplitude);
-  void SetAmplitudeInc(std::shared_ptr<void> impl_data, float amplitude_inc);
-  void SetEndCallback(std::shared_ptr<void> impl_data, base::Closure cb);
+  void Play(std::shared_ptr<AudioSample> impl_data);
 
   void Update();
 
  protected:
-  enum SampleFlags { kLoop = 1, kStopped = 2, kSimulateStereo = 4 };
-
   static constexpr int kChannelCount = 2;
 
-  struct Sample {
-    // Read-only accessed by the audio thread.
-    std::shared_ptr<const Sound> sound;
-    unsigned flags = 0;
-    size_t step = 10;
-    float amplitude_inc = 0;
-    float max_amplitude = 1.0f;
-
-    // Write accessed by the audio thread.
-    size_t src_index = 0;
-    size_t accumulator = 0;
-    float amplitude = 1.0f;
-    bool active = false;
-
-    base::Closure end_cb;
-  };
-
-  std::list<std::shared_ptr<Sample>> samples_[2];
+  std::list<std::shared_ptr<AudioSample>> samples_[2];
   std::mutex mutex_;
 
   base::TaskRunner task_runner_;
