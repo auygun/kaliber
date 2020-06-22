@@ -4,6 +4,7 @@
 #include "../base/worker.h"
 #include "../third_party/texture_compressor/texture_compressor.h"
 #include "audio/audio.h"
+#include "audio/audio_resource.h"
 #include "font.h"
 #include "game.h"
 #include "game_factory.h"
@@ -166,7 +167,7 @@ Vector2 Engine::ToPosition(const Vector2& vec) {
 }
 
 std::shared_ptr<AudioResource> Engine::CreateAudioResource() {
-  return audio_->CreateResource();
+  return std::make_shared<AudioResource>(audio_);
 }
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {

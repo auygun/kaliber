@@ -135,11 +135,6 @@ void AudioAlsa::Shutdown() {
   snd_pcm_close(pcm_handle_);
 }
 
-std::shared_ptr<AudioResource> AudioAlsa::CreateResource() {
-  auto impl_data = std::make_shared<Sample>();
-  return std::make_shared<AudioResource>(impl_data, this);
-}
-
 size_t AudioAlsa::GetSampleRate() {
   return sample_rate_;
 }

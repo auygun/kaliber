@@ -13,73 +13,9 @@ AudioBase::AudioBase() = default;
 
 AudioBase::~AudioBase() = default;
 
-void AudioBase::Play(std::shared_ptr<void> impl_data,
-                     std::shared_ptr<const Sound> sound,
-                     float amplitude,
-                     bool reset_pos) {
-  auto sample = std::static_pointer_cast<Sample>(impl_data);
-  if (sample->active)
-    return;
-
-  if (reset_pos) {
-    sample->src_index = 0;
-    sample->accumulator = 0;
-  }
-  sample->flags &= ~kStopped;
-  sample->sound = sound;
-  sample->amplitude = amplitude;
-  sample->active = true;
-
+void AudioBase::Play(std::shared_ptr<AudioSample> sample) {
   std::unique_lock<std::mutex> scoped_lock(mutex_);
   samples_[0].push_back(sample);
-}
-
-void AudioBase::Stop(std::shared_ptr<void> impl_data) {
-  auto sample = std::static_pointer_cast<Sample>(impl_data);
-  if (!sample->active)
-    return;
-
-  sample->flags |= kStopped;
-}
-
-void AudioBase::SetLoop(std::shared_ptr<void> impl_data, bool loop) {
-  auto sample = std::static_pointer_cast<Sample>(impl_data);
-  if (loop)
-    sample->flags |= kLoop;
-  else
-    sample->flags &= ~kLoop;
-}
-
-void AudioBase::SetSimulateStereo(std::shared_ptr<void> impl_data,
-                                  bool simulate) {
-  auto sample = std::static_pointer_cast<Sample>(impl_data);
-  if (simulate)
-    sample->flags |= kSimulateStereo;
-  else
-    sample->flags &= ~kSimulateStereo;
-}
-
-void AudioBase::SetResampleStep(std::shared_ptr<void> impl_data, size_t step) {
-  auto sample = std::static_pointer_cast<Sample>(impl_data);
-  sample->step = step + 10;
-}
-
-void AudioBase::SetMaxAmplitude(std::shared_ptr<void> impl_data,
-                                float max_amplitude) {
-  auto sample = std::static_pointer_cast<Sample>(impl_data);
-  sample->max_amplitude = max_amplitude;
-}
-
-void AudioBase::SetAmplitudeInc(std::shared_ptr<void> impl_data,
-                                float amplitude_inc) {
-  auto sample = std::static_pointer_cast<Sample>(impl_data);
-  sample->amplitude_inc = amplitude_inc;
-}
-
-void AudioBase::SetEndCallback(std::shared_ptr<void> impl_data,
-                               base::Closure cb) {
-  auto sample = std::static_pointer_cast<Sample>(impl_data);
-  sample->end_cb = cb;
 }
 
 void AudioBase::Update() {
@@ -95,12 +31,12 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
   memset(output_buffer, 0, sizeof(float) * num_frames * kChannelCount);
 
   for (auto it = samples_[1].begin(); it != samples_[1].end();) {
-    Sample* sample = it->get();
+    AudioSample* sample = it->get();
 
     unsigned flags = sample->flags;
     bool remove = false;
 
-    if (flags & kStopped) {
+    if (flags & AudioSample::kStopped) {
       remove = true;
     } else {
       const float* src[2] = {sample->sound->GetBuffer(0),
@@ -116,9 +52,10 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
       float amplitude_inc = sample->amplitude_inc;
       float max_amplitude = sample->max_amplitude;
 
-      size_t channel_offset = (flags & kSimulateStereo) && num_channels == 1
-                                  ? sample->sound->hz() / 10
-                                  : 0;
+      size_t channel_offset =
+          (flags & AudioSample::kSimulateStereo) && num_channels == 1
+              ? sample->sound->hz() / 10
+              : 0;
 
       for (size_t i = 0; i < num_frames * kChannelCount;) {
         // Mix the 1st channel.
@@ -128,7 +65,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
         size_t ind = channel_offset + src_index;
         if (ind < num_samples)
           output_buffer[i++] += src[1][ind] * amplitude;
-        else if (flags & kLoop)
+        else if (flags & AudioSample::kLoop)
           output_buffer[i++] += src[1][ind % num_samples] * amplitude;
         else
           i++;
@@ -148,7 +85,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
         accumulator %= 10;
 
         // Advance source index.
-        if (flags & kLoop) {
+        if (flags & AudioSample::kLoop) {
           src_index %= num_samples;
         } else if (src_index >= num_samples) {
           remove = true;

@@ -20,8 +20,6 @@ class AudioOboe : public AudioBase {
 
   void Shutdown();
 
-  std::shared_ptr<AudioResource> CreateResource();
-
   size_t GetSampleRate();
 
  private:

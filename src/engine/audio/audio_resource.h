@@ -8,11 +8,12 @@
 
 namespace eng {
 
+class AudioSample;
 class Sound;
 
 class AudioResource {
  public:
-  AudioResource(std::shared_ptr<void> impl_data, Audio* audio);
+  AudioResource(Audio* audio);
   ~AudioResource();
 
   void Play(std::shared_ptr<const Sound> sound,
@@ -29,7 +30,7 @@ class AudioResource {
   void SetEndCallback(base::Closure cb);
 
  private:
-  std::shared_ptr<void> impl_data_;
+  std::shared_ptr<AudioSample> sample_;
 
   Audio* audio_ = nullptr;
 
