@@ -29,9 +29,8 @@ struct AlignedMem {
   using ScoppedPtr = std::unique_ptr<T, internal::ScopedAlignedFree>;
 };
 
+template <int kAlignment>
 inline void* AlignedAlloc(size_t size) {
-  const size_t kAlignment = 16;
-
   void* ptr = NULL;
 #if defined(__ANDROID__)
   ptr = memalign(kAlignment, size);

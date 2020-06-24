@@ -20,9 +20,9 @@ class AssetFile {
   bool Open(const std::string& file_name, const std::string& root_path);
   void Close();
 
-  int GetSize();
+  size_t GetSize();
 
-  int Read(char* data, size_t size);
+  size_t Read(char* data, size_t size);
 
   static std::unique_ptr<char[]> ReadWholeFile(const std::string& file_name,
                                                const std::string& root_path,

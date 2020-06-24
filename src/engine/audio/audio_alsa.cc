@@ -21,9 +21,9 @@ bool AudioAlsa::Initialize() {
   // Contains information about the hardware.
   snd_pcm_hw_params_t* hw_params;
 
-  // "default" is usualy PulseAudio. Use "plughw" for direct hardware device and
-  // format conversion.
-  if ((err = snd_pcm_open(&pcm_handle_, "plughw:CARD=PCH",
+  // "default" is usualy PulseAudio. Use "plug:hw" instead for direct hardware
+  // device with software format conversion.
+  if ((err = snd_pcm_open(&pcm_handle_, "plug:hw",
                           SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
     LOG << "Cannot open audio device. Error: " << snd_strerror(err);
     return false;
@@ -47,8 +47,15 @@ bool AudioAlsa::Initialize() {
     }
 
     if ((err = snd_pcm_hw_params_set_format(pcm_handle_, hw_params,
-                                            SND_PCM_FORMAT_FLOAT_LE)) < 0) {
+                                            SND_PCM_FORMAT_FLOAT)) < 0) {
       LOG << "Cannot set sample format. Error: " << snd_strerror(err);
+      break;
+    }
+
+    // Disable software resampler.
+    if ((err = snd_pcm_hw_params_set_rate_resample(pcm_handle_, hw_params,
+                                                   0)) < 0) {
+      LOG << "Cannot disbale software resampler. Error: " << snd_strerror(err);
       break;
     }
 

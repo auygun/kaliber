@@ -22,11 +22,10 @@ inline int GetHighestBit(int value) {
 // Check if the given integer is a power of two, ie if only one bit is set.
 inline bool IsPow2(int value) {
   return GetHighestBit(value) == value;
-  // return ((value & (value - 1)) == 0);
 }
 
 inline int RoundUpToPow2(int val) {
-  int i = 1 << GetHighestBitPos(val);
+  int i = GetHighestBit(val);
   return val == i ? val : i << 1;
 }
 

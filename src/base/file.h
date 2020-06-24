@@ -1,7 +1,7 @@
 #ifndef FILE_H
 #define FILE_H
 
-#include <stdio.h>
+#include <cstdio>
 #include <memory>
 
 namespace internal {
