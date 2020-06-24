@@ -3,6 +3,7 @@
 #include "../base/interpolation.h"
 #include "audio/audio_resource.h"
 #include "engine.h"
+#include "sound.h"
 
 using namespace base;
 
@@ -12,7 +13,7 @@ SoundPlayer::SoundPlayer() : resource_(Engine::Get().CreateAudioResource()) {}
 
 SoundPlayer::~SoundPlayer() = default;
 
-void SoundPlayer::SetSound(std::shared_ptr<const Sound> sound) {
+void SoundPlayer::SetSound(std::shared_ptr<Sound> sound) {
   sound_ = sound;
 }
 

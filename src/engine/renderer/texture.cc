@@ -17,8 +17,9 @@ Texture::~Texture() {
   Destroy();
 }
 
-void Texture::Update(std::shared_ptr<const Image> image) {
-  assert(image->IsImmutable());
+void Texture::Update(std::shared_ptr<Image> image) {
+  if (!image->IsImmutable())
+    image->SetImmutable();
 
   valid_ = true;
   width_ = image->GetWidth();

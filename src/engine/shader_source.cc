@@ -1,5 +1,6 @@
 #include "shader_source.h"
 
+#include <cassert>
 #include <cstring>
 
 #include "../base/log.h"
@@ -9,10 +10,7 @@
 namespace eng {
 
 bool ShaderSource::Load(const std::string& name) {
-  if (IsImmutable()) {
-    LOG << "Error: ShaderSource is immutable. Failed to load.";
-    return false;
-  }
+  assert(!IsImmutable());
 
   Engine& engine = Engine::Get();
 

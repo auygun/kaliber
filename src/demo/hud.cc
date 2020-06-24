@@ -41,7 +41,6 @@ bool Hud::Initialize() {
   font_->CalculateBoundingBox("big_enough_text", max_text_width_, tmp);
 
   auto image = CreateImage();
-  image->SetImmutable();
 
   for (int i = 0; i < 2; ++i) {
     text_[i].GetTexture()->Update(image);
@@ -201,7 +200,6 @@ void Hud::PrintMessage(const std::string& text, float duration) {
 
   font_->Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
   image->Compress();
-  image->SetImmutable();
 
   message_.GetTexture()->Update(image);
   message_.AutoScale();
@@ -229,7 +227,6 @@ void Hud::Print(int i, const std::string& text) {
   }
 
   font_->Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
-  image->SetImmutable();
 
   text_[i].GetTexture()->Update(image);
 }

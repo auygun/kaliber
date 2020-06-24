@@ -75,10 +75,7 @@ Image& Image::operator=(const Image& other) {
 }
 
 bool Image::Create(int w, int h) {
-  if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to create.";
-    return false;
-  }
+  assert(!IsImmutable());
 
   width_ = w;
   height_ = h;
@@ -89,10 +86,7 @@ bool Image::Create(int w, int h) {
 }
 
 void Image::Copy(const Image& other) {
-  if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to copy.";
-    return;
-  }
+  assert(!IsImmutable());
 
   if (other.buffer_) {
     int size = other.GetSize();
@@ -105,10 +99,7 @@ void Image::Copy(const Image& other) {
 }
 
 bool Image::CreateMip(const Image& other) {
-  if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to copy.";
-    return false;
-  }
+  assert(!IsImmutable());
 
   if (other.width_ <= 1 || other.height_ <= 1 || other.GetFormat() != kRGBA32)
     return false;
@@ -150,15 +141,12 @@ bool Image::CreateMip(const Image& other) {
 }
 
 bool Image::Load(const std::string& file_name) {
-  if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to load.";
-    return false;
-  }
+  assert(!IsImmutable());
 
   SetName(file_name);
 
   size_t buffer_size = 0;
-  std::unique_ptr<char[]> file_buffer = AssetFile::ReadWholeFile(
+  auto file_buffer = AssetFile::ReadWholeFile(
       file_name.c_str(), Engine::Get().GetRootPath().c_str(), &buffer_size);
   if (!file_buffer) {
     LOG << "Failed to read file: " << file_name;
@@ -329,19 +317,13 @@ bool Image::Compress() {
 }
 
 uint8_t* Image::GetBuffer() {
-  if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to return writable buffer.";
-    return nullptr;
-  }
+  assert(!IsImmutable());
 
   return buffer_.get();
 }
 
 void Image::Clear(Vector4 rgba) {
-  if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to clear.";
-    return;
-  }
+  assert(!IsImmutable());
 
   // Quantize the color to target resolution.
   uint8_t r = (uint8_t)(rgba.x * 255.0f), g = (uint8_t)(rgba.y * 255.0f),
@@ -361,10 +343,7 @@ void Image::Clear(Vector4 rgba) {
 }
 
 void Image::GradientH() {
-  if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to apply gradient.";
-    return;
-  }
+  assert(!IsImmutable());
 
   // Fill out the first line manually.
   for (int x = 0; x < width_; ++x) {
@@ -381,10 +360,7 @@ void Image::GradientH() {
 }
 
 void Image::GradientV(const Vector4& c1, const Vector4& c2, int height) {
-  if (IsImmutable()) {
-    LOG << "Error: Image is immutable. Failed to apply gradient.";
-    return;
-  }
+  assert(!IsImmutable());
 
   // Fill each section with gradient.
   for (int h = 0; h < height_; ++h) {

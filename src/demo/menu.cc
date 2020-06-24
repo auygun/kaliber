@@ -203,7 +203,6 @@ std::shared_ptr<Image> Menu::CreateImage() {
   worker.Join();
 
   image->Compress();
-  image->SetImmutable();
   return image;
 }
 

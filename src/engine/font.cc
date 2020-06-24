@@ -1,5 +1,7 @@
 #include "font.h"
 
+#include <cassert>
+
 #include "../base/log.h"
 #include "engine.h"
 #include "platform/asset_file.h"
@@ -10,16 +12,13 @@
 namespace eng {
 
 bool Font::Load(const std::string& file_name) {
-  if (IsImmutable()) {
-    LOG << "Error: Font is immutable. Failed to load.";
-    return false;
-  }
+  assert(!IsImmutable());
 
   SetName(file_name);
 
   // Read the font file.
   size_t buffer_size = 0;
-  std::unique_ptr<char[]> buffer = AssetFile::ReadWholeFile(
+  auto buffer = AssetFile::ReadWholeFile(
       file_name.c_str(), Engine::Get().GetRootPath().c_str(), &buffer_size);
   if (!buffer) {
     LOG << "Failed to read font file.";

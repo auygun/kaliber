@@ -373,8 +373,6 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
   auto impl_data = std::static_pointer_cast<TextureOpenGL>(c->impl_data);
   bool new_texture = impl_data->id == 0;
 
-  assert(c->image->IsImmutable());
-
   GLuint gl_id = 0;
   if (new_texture)
     glGenTextures(1, &gl_id);

@@ -19,9 +19,10 @@ Shader::~Shader() {
   Destroy();
 }
 
-void Shader::Create(std::shared_ptr<const ShaderSource> source,
+void Shader::Create(std::shared_ptr<ShaderSource> source,
                     const VertexDescripton& vd) {
-  assert(source->IsImmutable());
+  if (!source->IsImmutable())
+    source->SetImmutable();
 
   Destroy();
   valid_ = true;

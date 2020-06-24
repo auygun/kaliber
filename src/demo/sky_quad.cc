@@ -25,7 +25,6 @@ bool SkyQuad::Create() {
   auto sky_source = engine.GetAsset<ShaderSource>("sky.glsl");
   if (!sky_source)
     return false;
-  sky_source->SetImmutable();
   shader_->Create(sky_source, engine.GetQuad()->vertex_description());
 
   scale_ = engine.GetScreenSize();
