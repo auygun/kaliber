@@ -63,7 +63,7 @@ typedef struct
     void *seek_data;
 } mp3dec_io_t;
 
-typedef struct
+typedef struct mp3dec_ex
 {
     mp3dec_t mp3d;
     mp3dec_map_info_t file;

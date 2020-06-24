@@ -13,7 +13,7 @@ struct AudioSample {
   enum SampleFlags { kLoop = 1, kStopped = 2, kSimulateStereo = 4 };
 
   // Read-only accessed by the audio thread.
-  std::shared_ptr<const Sound> sound;
+  std::shared_ptr<Sound> sound;
   unsigned flags = 0;
   size_t step = 10;
   float amplitude_inc = 0;

@@ -88,8 +88,15 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
         if (flags & AudioSample::kLoop) {
           src_index %= num_samples;
         } else if (src_index >= num_samples) {
-          remove = true;
-          break;
+          sample->sound->DecodeNextFrame();
+          if (sample->sound->num_samples() == 0) {
+            LOG << "remove sound!";
+            remove = true;
+            break;
+          }
+          src[0] = sample->sound->GetBuffer(0);
+          src[1] = sample->sound->GetBuffer(1);
+          src_index = 0;
         }
       }
 

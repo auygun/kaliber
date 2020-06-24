@@ -17,9 +17,12 @@ using namespace base;
 
 namespace eng {
 
-Sound::Sound() {}
+Sound::Sound() = default;
 
-Sound::~Sound() {}
+Sound::~Sound() {
+  if (mp3_dec_)
+    mp3dec_ex_close(mp3_dec_.get());
+}
 
 bool Sound::Load(const std::string& file_name) {
   assert(!IsImmutable());
@@ -35,31 +38,60 @@ bool Sound::Load(const std::string& file_name) {
     return false;
   }
 
-  mp3dec_t mp3d;
-  mp3dec_file_info_t info;
+  if (mp3_dec_)
+    mp3dec_ex_close(mp3_dec_.get());
+  mp3_dec_ = std::make_unique<mp3dec_ex_t>();
+
   int err =
-      mp3dec_load_buf(&mp3d, reinterpret_cast<uint8_t*>(file_buffer.get()),
-                      buffer_size, &info, nullptr, nullptr);
+      mp3dec_ex_open_buf(mp3_dec_.get(),
+                         reinterpret_cast<uint8_t*>(file_buffer.get()),
+                         buffer_size, MP3D_SEEK_TO_BYTE);
   if (err) {
     LOG << "Failed to decode file: " << file_name << " error: " << err;
     return false;
   }
 
-  LOG << "Decoded " << GetName() << ". " << info.samples << " samples, "
-      << info.channels << " channels, " << info.hz << " hz, "
-      << "layer " << info.layer << ", "
-      << "avg_bitrate_kbps " << info.avg_bitrate_kbps;
+  LOG << "Decoded " << GetName() << ". " << mp3_dec_->samples << " samples, "
+      << mp3_dec_->detected_samples << " samples detected, "
+      << mp3_dec_->info.channels << " channels, " << mp3_dec_->info.hz << " hz, "
+      << "layer " << mp3_dec_->info.layer << ", "
+      << "avg_bitrate_kbps " << mp3_dec_->info.bitrate_kbps;
 
-  num_samples_ = info.samples / info.channels;
-  num_channels_ = info.channels;
-  hz_ = info.hz;
+  num_channels_ = mp3_dec_->info.channels;
+  hz_ = mp3_dec_->info.hz;
+  num_samples_ = 0;
 
   assert(num_channels_ > 0 && num_channels_ <= 2);
 
-  std::unique_ptr<float[]> input_buffer;
-  input_buffer.reset(info.buffer);
+  // Fill up buffer and front buffer.
+  DecodeNextFrame();
+  DecodeNextFrame();
 
-  Preprocess(std::move(input_buffer));
+  return true;
+}
+
+bool Sound::DecodeNextFrame() {
+  front_buffer_[0].swap(buffer_[0]);
+  front_buffer_[1].swap(buffer_[1]);
+
+  if (num_samples_front_ && !num_samples_) {
+    num_samples_front_ = 0;
+    return true;
+  }
+
+  num_samples_front_ = num_samples_;
+  num_samples_ = 0;
+
+  auto buffer = std::make_unique<float[]>(MINIMP3_MAX_SAMPLES_PER_FRAME);
+  size_t samples_read = mp3dec_ex_read(mp3_dec_.get(), buffer.get(), MINIMP3_MAX_SAMPLES_PER_FRAME);
+  LOG << __func__ << " samples_read: " << samples_read;
+  if (samples_read != MINIMP3_MAX_SAMPLES_PER_FRAME && mp3_dec_->last_error)
+    return false;
+
+  num_samples_ = samples_read / mp3_dec_->info.channels;
+
+  if (num_samples_)
+    Preprocess(std::move(buffer));
 
   return true;
 }
@@ -71,7 +103,7 @@ size_t Sound::GetSize() const {
 float* Sound::GetBuffer(int channel) {
   assert(!IsImmutable());
 
-  return buffer_[channel].get();
+  return front_buffer_[channel].get();
 }
 
 void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {
