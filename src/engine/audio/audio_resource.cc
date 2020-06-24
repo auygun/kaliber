@@ -1,6 +1,7 @@
 #include "audio_resource.h"
 
 #include "../../base/log.h"
+#include "../sound.h"
 #include "audio.h"
 #include "audio_sample.h"
 
@@ -13,9 +14,12 @@ AudioResource::~AudioResource() {
   sample_->flags |= AudioSample::kStopped;
 }
 
-void AudioResource::Play(std::shared_ptr<const Sound> sound,
+void AudioResource::Play(std::shared_ptr<Sound> sound,
                          float amplitude,
                          bool reset_pos) {
+  if (!sound->IsImmutable())
+    sound->SetImmutable();
+
   if (sample_->active)
     return;
 

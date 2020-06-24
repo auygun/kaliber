@@ -16,9 +16,7 @@ class AudioResource {
   AudioResource(Audio* audio);
   ~AudioResource();
 
-  void Play(std::shared_ptr<const Sound> sound,
-            float amplitude,
-            bool reset_pos);
+  void Play(std::shared_ptr<Sound> sound, float amplitude, bool reset_pos);
 
   void Stop();
 

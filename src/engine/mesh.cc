@@ -21,10 +21,7 @@ bool Mesh::Create(Primitive primitive,
                   DataType index_description,
                   size_t num_indices,
                   const void* indices) {
-  if (IsImmutable()) {
-    LOG << "Error: Mesh is immutable. Failed to create.";
-    return false;
-  }
+  assert(!IsImmutable());
 
   primitive_ = primitive;
   num_vertices_ = num_vertices;
@@ -55,17 +52,14 @@ bool Mesh::Create(Primitive primitive,
 }
 
 bool Mesh::Load(const std::string& file_name) {
-  if (IsImmutable()) {
-    LOG << "Error: Mesh is immutable. Failed to load.";
-    return false;
-  }
+  assert(!IsImmutable());
 
   SetName(file_name);
 
   size_t buffer_size = 0;
-  std::unique_ptr<char[]> json_mesh = AssetFile::ReadWholeFile(
-      file_name.c_str(), Engine::Get().GetRootPath().c_str(), &buffer_size,
-      true);
+  auto json_mesh = AssetFile::ReadWholeFile(file_name.c_str(),
+                                            Engine::Get().GetRootPath().c_str(),
+                                            &buffer_size, true);
   if (!json_mesh) {
     LOG << "Failed to read file: " << file_name;
     return false;

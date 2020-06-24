@@ -136,6 +136,5 @@ std::shared_ptr<Image> Credits::CreateImage() {
   }
   worker.Join();
 
-  image->SetImmutable();
   return image;
 }
