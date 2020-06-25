@@ -39,10 +39,11 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
     if (flags & AudioSample::kStopped) {
       remove = true;
     } else {
-      const float* src[2] = {sample->sound->GetBuffer(0),
-                             sample->sound->GetBuffer(1)};
+      const float* src[2] = {std::const_pointer_cast<const Sound>(sample->sound)->GetBuffer(0),
+                             std::const_pointer_cast<const Sound>(sample->sound)->GetBuffer(1)};
       if (!src[1])
-        src[1] = src[0];
+        src[1] = src[0];  // mono.
+
       size_t num_samples = sample->sound->num_samples();
       size_t num_channels = sample->sound->num_channels();
       size_t src_index = sample->src_index;
@@ -88,15 +89,25 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
         if (flags & AudioSample::kLoop) {
           src_index %= num_samples;
         } else if (src_index >= num_samples) {
-          sample->sound->DecodeNextFrame();
-          if (sample->sound->num_samples() == 0) {
-            LOG << "remove sound!";
-            remove = true;
-            break;
-          }
-          src[0] = sample->sound->GetBuffer(0);
-          src[1] = sample->sound->GetBuffer(1);
           src_index = 0;
+
+          if (!sample->sound->streaming_in_progress()) {
+            if (sample->sound->eof()) {
+              LOG << "REMOVE SOUND";
+              remove = true;
+              break;
+            }
+
+            // Swap buffers and start streaming in background.
+            sample->sound->SwapBuffers();
+            src[0] = std::const_pointer_cast<const Sound>(sample->sound)->GetBuffer(0);
+            src[1] = std::const_pointer_cast<const Sound>(sample->sound)->GetBuffer(1);
+
+            worker_.Enqueue(std::bind(&Sound::Stream, sample->sound));
+            sample->sound->OnStreamingStarted();
+          } else {
+            LOG << "Buffer underrun!";
+          }
         }
       }
 

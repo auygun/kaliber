@@ -1,6 +1,7 @@
 #ifndef SOUND_H
 #define SOUND_H
 
+#include <atomic>
 #include <stdint.h>
 #include <memory>
 #include <string>
@@ -18,7 +19,11 @@ class Sound : public Asset {
 
   bool Load(const std::string& file_name) override;
 
-  bool DecodeNextFrame();
+  bool Stream();
+
+  void SwapBuffers();
+
+  void OnStreamingStarted();
 
   // Buffer size per channel.
   size_t GetSize() const;
@@ -32,6 +37,9 @@ class Sound : public Asset {
   size_t num_channels() const { return num_channels_; }
   size_t hz() const { return hz_; }
 
+  size_t streaming_in_progress() const { return streaming_in_progress_; }
+  bool eof() const { return eof_; }
+
  private:
   std::unique_ptr<float[]> buffer_[2];
   std::unique_ptr<float[]> front_buffer_[2];
@@ -42,7 +50,11 @@ class Sound : public Asset {
   size_t num_channels_ = 0;
   size_t hz_ = 0;
 
+  std::unique_ptr<char[]> encoded_data_;
+
   std::unique_ptr<mp3dec_ex_t> mp3_dec_;
+  bool eof_ = false;
+  std::atomic<bool> streaming_in_progress_ = false;
 
   void Preprocess(std::unique_ptr<float[]> input_buffer);
 };
