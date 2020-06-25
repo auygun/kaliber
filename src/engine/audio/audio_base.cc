@@ -39,13 +39,15 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
     if (flags & AudioSample::kStopped) {
       remove = true;
     } else {
-      const float* src[2] = {std::const_pointer_cast<const Sound>(sample->sound)->GetBuffer(0),
-                             std::const_pointer_cast<const Sound>(sample->sound)->GetBuffer(1)};
+      auto sound = sample->sound.get();
+
+      const float* src[2] = {const_cast<const Sound*>(sound)->GetBuffer(0),
+                             const_cast<const Sound*>(sound)->GetBuffer(1)};
       if (!src[1])
         src[1] = src[0];  // mono.
 
-      size_t num_samples = sample->sound->GetNumSamples();
-      size_t num_channels = sample->sound->num_channels();
+      size_t num_samples = sound->GetNumSamples();
+      size_t num_channels = sound->num_channels();
       size_t src_index = sample->src_index;
       size_t step = sample->step;
       size_t accumulator = sample->accumulator;
@@ -55,7 +57,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
 
       size_t channel_offset =
           (flags & AudioSample::kSimulateStereo) && num_channels == 1
-              ? sample->sound->hz() / 10
+              ? sound->hz() / 10
               : 0;
 
       for (size_t i = 0; i < num_frames * kChannelCount;) {
@@ -87,7 +89,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
 
         // Advance source index.
         if (src_index >= num_samples) {
-          if (!sample->sound->is_streaming_sound()) {
+          if (!sound->is_streaming_sound()) {
             if (flags & AudioSample::kLoop) {
               src_index %= num_samples;
             } else {
@@ -95,8 +97,8 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
               remove = true;
               break;
             }
-          } else if (!sample->sound->IsStreamingInProgress()) {
-            if (sample->sound->eof()) {
+          } else if (!sound->IsStreamingInProgress()) {
+            if (sound->eof()) {
               LOG << "REMOVE STREAMING SOUND";
               remove = true;
               break;
@@ -105,12 +107,12 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
             src_index = 0;
 
             // Swap buffers and start streaming in background.
-            sample->sound->SwapBuffers();
-            src[0] = std::const_pointer_cast<const Sound>(sample->sound)->GetBuffer(0);
-            src[1] = std::const_pointer_cast<const Sound>(sample->sound)->GetBuffer(1);
+            sound->SwapBuffers();
+            src[0] = const_cast<const Sound*>(sound)->GetBuffer(0);
+            src[1] = const_cast<const Sound*>(sound)->GetBuffer(1);
 
             worker_.Enqueue(std::bind(&Sound::Stream, sample->sound, flags & AudioSample::kLoop));
-            sample->sound->OnStreamingStarted();
+            sound->OnStreamingStarted();
           } else {
             LOG << "Buffer underrun!";
             src_index = 0;
