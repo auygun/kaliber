@@ -23,7 +23,7 @@ class Sound : public Asset {
 
   void SwapBuffers();
 
-  void OnStreamingStarted();
+  size_t IsStreamingInProgress() const;
 
   // Buffer size per channel.
   size_t GetSize() const;
@@ -34,10 +34,6 @@ class Sound : public Asset {
   bool IsValid() const { return !!front_buffer_[0]; }
 
   size_t GetNumSamples() const { return num_samples_front_; }
-
-  size_t IsStreamingInProgress() const {
-    return streaming_in_progress_.load(std::memory_order_acquire);
-  }
 
   size_t num_channels() const { return num_channels_; }
   size_t hz() const { return hz_; }
@@ -65,6 +61,8 @@ class Sound : public Asset {
   bool is_streaming_sound_ = false;
 
   bool StreamInternal(size_t num_samples, bool loop);
+
+  void SwapBuffersInternal();
 
   void Preprocess(std::unique_ptr<float[]> input_buffer);
 };

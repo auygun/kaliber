@@ -75,11 +75,11 @@ bool Sound::Load(const std::string& file_name) {
   // Fill up buffers.
   if (is_streaming_sound_) {
     StreamInternal(kMaxSamplesPerDecode, false);
-    SwapBuffers();
+    SwapBuffersInternal();
     StreamInternal(kMaxSamplesPerDecode, false);
   } else {
     StreamInternal(mp3_dec_->samples, false);
-    SwapBuffers();
+    SwapBuffersInternal();
     eof_ = true;
   }
 
@@ -93,17 +93,19 @@ bool Sound::Stream(bool loop) {
 }
 
 void Sound::SwapBuffers() {
-  front_buffer_[0].swap(back_buffer_[0]);
-  front_buffer_[1].swap(back_buffer_[1]);
-
-  num_samples_front_ = num_samples_back_;
-  num_samples_back_ = 0;
-}
-
-void Sound::OnStreamingStarted() {
   assert (is_streaming_sound_);
 
-  streaming_in_progress_.store(true, std::memory_order_relaxed);
+  SwapBuffersInternal();
+
+  // Memory barrier to ensure all memory writes become visible to the decoder
+  // thread.
+  streaming_in_progress_.store(true, std::memory_order_release);
+}
+
+size_t Sound::IsStreamingInProgress() const {
+  assert (is_streaming_sound_);
+
+  return streaming_in_progress_.load(std::memory_order_acquire);
 }
 
 size_t Sound::GetSize() const {
@@ -145,6 +147,14 @@ bool Sound::StreamInternal(size_t num_samples, bool loop) {
   streaming_in_progress_.store(false, std::memory_order_release);
 
   return true;
+}
+
+void Sound::SwapBuffersInternal() {
+  front_buffer_[0].swap(back_buffer_[0]);
+  front_buffer_[1].swap(back_buffer_[1]);
+
+  num_samples_front_ = num_samples_back_;
+  num_samples_back_ = 0;
 }
 
 void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {

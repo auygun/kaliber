@@ -112,7 +112,6 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
             src[1] = const_cast<const Sound*>(sound)->GetBuffer(1);
 
             worker_.Enqueue(std::bind(&Sound::Stream, sample->sound, flags & AudioSample::kLoop));
-            sound->OnStreamingStarted();
           } else {
             LOG << "Buffer underrun!";
             src_index = 0;
