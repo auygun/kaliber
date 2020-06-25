@@ -86,16 +86,16 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
         accumulator %= 10;
 
         // Advance source index.
-        if (flags & AudioSample::kLoop) {
-          src_index %= num_samples;
-        } else if (src_index >= num_samples) {
+        if (src_index >= num_samples) {
           if (!sample->sound->is_streaming_sound()) {
-            LOG << "REMOVE SOUND";
-            remove = true;
-            break;
-          }
-
-          if (!sample->sound->IsStreamingInProgress()) {
+            if (flags & AudioSample::kLoop) {
+              src_index %= num_samples;
+            } else {
+              LOG << "REMOVE SOUND";
+              remove = true;
+              break;
+            }
+          } else if (!sample->sound->IsStreamingInProgress()) {
             if (sample->sound->eof()) {
               LOG << "REMOVE STREAMING SOUND";
               remove = true;
@@ -109,12 +109,12 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
             src[0] = std::const_pointer_cast<const Sound>(sample->sound)->GetBuffer(0);
             src[1] = std::const_pointer_cast<const Sound>(sample->sound)->GetBuffer(1);
 
-            worker_.Enqueue(std::bind(&Sound::Stream, sample->sound));
+            worker_.Enqueue(std::bind(&Sound::Stream, sample->sound, flags & AudioSample::kLoop));
             sample->sound->OnStreamingStarted();
           } else {
             LOG << "Buffer underrun!";
             src_index = 0;
-        }
+          }
         }
       }
 

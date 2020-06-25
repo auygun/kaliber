@@ -19,7 +19,7 @@ class Sound : public Asset {
 
   bool Load(const std::string& file_name) override;
 
-  bool Stream();
+  bool Stream(bool loop);
 
   void SwapBuffers();
 
@@ -64,7 +64,7 @@ class Sound : public Asset {
 
   bool is_streaming_sound_ = false;
 
-  bool StreamInternal(size_t num_samples);
+  bool StreamInternal(size_t num_samples, bool loop);
 
   void Preprocess(std::unique_ptr<float[]> input_buffer);
 };
