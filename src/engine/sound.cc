@@ -37,9 +37,9 @@ bool Sound::Load(const std::string& file_name) {
   SetName(file_name);
 
   size_t buffer_size = 0;
-  encoded_data_ = AssetFile::ReadWholeFile(
-      file_name.c_str(), Engine::Get().GetRootPath().c_str(), &buffer_size,
-      false);
+  encoded_data_ = AssetFile::ReadWholeFile(file_name.c_str(),
+                                           Engine::Get().GetRootPath().c_str(),
+                                           &buffer_size, false);
   if (!encoded_data_) {
     LOG << "Failed to read file: " << file_name;
     return false;
@@ -49,19 +49,22 @@ bool Sound::Load(const std::string& file_name) {
     mp3dec_ex_close(mp3_dec_.get());
   mp3_dec_ = std::make_unique<mp3dec_ex_t>();
 
-  int err =
-      mp3dec_ex_open_buf(mp3_dec_.get(),
-                         reinterpret_cast<uint8_t*>(encoded_data_.get()),
-                         buffer_size, MP3D_SEEK_TO_BYTE);
+  int err = mp3dec_ex_open_buf(mp3_dec_.get(),
+                               reinterpret_cast<uint8_t*>(encoded_data_.get()),
+                               buffer_size, MP3D_SEEK_TO_BYTE);
   if (err) {
     LOG << "Failed to decode file: " << file_name << " error: " << err;
     return false;
   }
 
-  is_streaming_sound_ = mp3_dec_->samples / mp3_dec_->info.channels > kMinSamplesForStreaming ? true : false;
+  is_streaming_sound_ =
+      mp3_dec_->samples / mp3_dec_->info.channels > kMinSamplesForStreaming
+          ? true
+          : false;
 
-  LOG << (is_streaming_sound_ ? "Streaming " : "Loading ") << GetName() << ". " << mp3_dec_->samples << " samples, "
-      << mp3_dec_->info.channels << " channels, " << mp3_dec_->info.hz << " hz, "
+  LOG << (is_streaming_sound_ ? "Streaming " : "Loading ") << GetName() << ". "
+      << mp3_dec_->samples << " samples, " << mp3_dec_->info.channels
+      << " channels, " << mp3_dec_->info.hz << " hz, "
       << "layer " << mp3_dec_->info.layer << ", "
       << "avg_bitrate_kbps " << mp3_dec_->info.bitrate_kbps;
 
@@ -96,7 +99,7 @@ bool Sound::Stream(bool loop) {
 
 void Sound::SwapBuffers() {
   assert(!IsImmutable());
-  assert (is_streaming_sound_);
+  assert(is_streaming_sound_);
 
   SwapBuffersInternal();
 
@@ -125,7 +128,8 @@ bool Sound::StreamInternal(size_t num_samples, bool loop) {
   auto buffer = std::make_unique<float[]>(num_samples);
 
   for (;;) {
-    size_t samples_read = mp3dec_ex_read(mp3_dec_.get(), buffer.get(), num_samples);
+    size_t samples_read =
+        mp3dec_ex_read(mp3_dec_.get(), buffer.get(), num_samples);
     if (samples_read != num_samples && mp3_dec_->last_error) {
       eof_ = true;
       return false;
@@ -179,14 +183,15 @@ void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {
     return;
 
   DLOG << "Resampling from " << hz_ << " to " << system_hz;
-  size_t resampled_num_samples = ((float)system_hz / (float)hz_) * num_samples_back_;
+  size_t resampled_num_samples =
+      ((float)system_hz / (float)hz_) * num_samples_back_;
 
   r8b::CDSPResampler24 resampler(hz_, system_hz, num_samples_back_);
 
   for (int i = 0; i < num_channels_; ++i) {
     auto resampled_buffer_ = std::make_unique<float[]>(resampled_num_samples);
-    resampler.oneshot(back_buffer_[i].get(), num_samples_back_, resampled_buffer_.get(),
-                      resampled_num_samples);
+    resampler.oneshot(back_buffer_[i].get(), num_samples_back_,
+                      resampled_buffer_.get(), resampled_num_samples);
     back_buffer_[i].swap(resampled_buffer_);
   }
   num_samples_back_ = resampled_num_samples;

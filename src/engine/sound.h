@@ -1,8 +1,8 @@
 #ifndef SOUND_H
 #define SOUND_H
 
-#include <atomic>
 #include <stdint.h>
+#include <atomic>
 #include <memory>
 #include <string>
 
@@ -39,7 +39,9 @@ class Sound : public Asset {
   // Buffer size per channel.
   size_t GetSize() const;
 
-  const float* GetBuffer(int channel) const { return front_buffer_[channel].get(); }
+  const float* GetBuffer(int channel) const {
+    return front_buffer_[channel].get();
+  }
   float* GetBuffer(int channel);
 
   bool IsValid() const { return !!front_buffer_[0]; }
