@@ -65,7 +65,7 @@ bool Sound::Load(const std::string& file_name) {
 
   num_channels_ = mp3_dec_->info.channels;
   hz_ = mp3_dec_->info.hz;
-  num_samples_ = 0;
+  num_samples_back_ = 0;
   eof_ = false;
 
   assert(num_channels_ > 0 && num_channels_ <= 2);
@@ -86,9 +86,9 @@ bool Sound::Stream() {
     return false;
   }
 
-  num_samples_ = samples_read / mp3_dec_->info.channels;
+  num_samples_back_ = samples_read / mp3_dec_->info.channels;
 
-  if (num_samples_)
+  if (num_samples_back_)
     Preprocess(std::move(buffer));
   else
     eof_ = true;
@@ -101,11 +101,11 @@ bool Sound::Stream() {
 }
 
 void Sound::SwapBuffers() {
-  front_buffer_[0].swap(buffer_[0]);
-  front_buffer_[1].swap(buffer_[1]);
+  front_buffer_[0].swap(back_buffer_[0]);
+  front_buffer_[1].swap(back_buffer_[1]);
 
-  num_samples_front_ = num_samples_;
-  num_samples_ = 0;
+  num_samples_front_ = num_samples_back_;
+  num_samples_back_ = 0;
 }
 
 void Sound::OnStreamingStarted() {
@@ -113,7 +113,7 @@ void Sound::OnStreamingStarted() {
 }
 
 size_t Sound::GetSize() const {
-  return num_samples_ * sizeof(mp3d_sample_t);
+  return num_samples_back_ * sizeof(mp3d_sample_t);
 }
 
 float* Sound::GetBuffer(int channel) {
@@ -124,14 +124,14 @@ float* Sound::GetBuffer(int channel) {
 
 void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {
   if (num_channels_ == 1) {
-    buffer_[0] = std::move(input_buffer);
+    back_buffer_[0] = std::move(input_buffer);
   } else {
     // Deinterleave into separate channels.
-    buffer_[0] = std::make_unique<float[]>(num_samples_);
-    buffer_[1] = std::make_unique<float[]>(num_samples_);
-    for (int i = 0, j = 0; i < num_samples_ * 2; i += 2) {
-      buffer_[0].get()[j] = input_buffer.get()[i];
-      buffer_[1].get()[j++] = input_buffer.get()[i + 1];
+    back_buffer_[0] = std::make_unique<float[]>(num_samples_back_);
+    back_buffer_[1] = std::make_unique<float[]>(num_samples_back_);
+    for (int i = 0, j = 0; i < num_samples_back_ * 2; i += 2) {
+      back_buffer_[0].get()[j] = input_buffer.get()[i];
+      back_buffer_[1].get()[j++] = input_buffer.get()[i + 1];
     }
   }
 
@@ -141,17 +141,17 @@ void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {
     return;
 
   DLOG << "Resampling from " << hz_ << " to " << system_hz;
-  size_t resampled_num_samples = ((float)system_hz / (float)hz_) * num_samples_;
+  size_t resampled_num_samples = ((float)system_hz / (float)hz_) * num_samples_back_;
 
-  r8b::CDSPResampler24 resampler(hz_, system_hz, num_samples_);
+  r8b::CDSPResampler24 resampler(hz_, system_hz, num_samples_back_);
 
   for (int i = 0; i < num_channels_; ++i) {
     auto resampled_buffer_ = std::make_unique<float[]>(resampled_num_samples);
-    resampler.oneshot(buffer_[i].get(), num_samples_, resampled_buffer_.get(),
+    resampler.oneshot(back_buffer_[i].get(), num_samples_back_, resampled_buffer_.get(),
                       resampled_num_samples);
-    buffer_[i].swap(resampled_buffer_);
+    back_buffer_[i].swap(resampled_buffer_);
   }
-  num_samples_ = resampled_num_samples;
+  num_samples_back_ = resampled_num_samples;
 }
 
 }  // namespace eng

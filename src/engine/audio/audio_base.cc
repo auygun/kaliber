@@ -44,7 +44,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
       if (!src[1])
         src[1] = src[0];  // mono.
 
-      size_t num_samples = sample->sound->num_samples();
+      size_t num_samples = sample->sound->GetNumSamples();
       size_t num_channels = sample->sound->num_channels();
       size_t src_index = sample->src_index;
       size_t step = sample->step;

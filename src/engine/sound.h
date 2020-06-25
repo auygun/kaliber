@@ -33,21 +33,22 @@ class Sound : public Asset {
 
   bool IsValid() const { return !!front_buffer_[0]; }
 
-  size_t num_samples() const { return num_samples_front_; }
-  size_t num_channels() const { return num_channels_; }
-  size_t hz() const { return hz_; }
+  size_t GetNumSamples() const { return num_samples_front_; }
 
   size_t IsStreaming() const {
     return streaming_in_progress_.load(std::memory_order_acquire);
   }
 
+  size_t num_channels() const { return num_channels_; }
+  size_t hz() const { return hz_; }
+
   bool eof() const { return eof_; }
 
  private:
-  std::unique_ptr<float[]> buffer_[2];
+  std::unique_ptr<float[]> back_buffer_[2];
   std::unique_ptr<float[]> front_buffer_[2];
 
-  size_t num_samples_ = 0;
+  size_t num_samples_back_ = 0;
   size_t num_samples_front_ = 0;
 
   size_t num_channels_ = 0;
