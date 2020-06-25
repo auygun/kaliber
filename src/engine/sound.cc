@@ -182,7 +182,6 @@ void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {
   if (system_hz == 0 || system_hz == hz_)
     return;
 
-  DLOG << "Resampling from " << hz_ << " to " << system_hz;
   size_t resampled_num_samples =
       ((float)system_hz / (float)hz_) * num_samples_back_;
 

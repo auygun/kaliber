@@ -93,13 +93,11 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
             if (flags & AudioSample::kLoop) {
               src_index %= num_samples;
             } else {
-              LOG << "REMOVE SOUND";
               remove = true;
               break;
             }
           } else if (!sound->IsStreamingInProgress()) {
             if (sound->eof()) {
-              LOG << "REMOVE STREAMING SOUND";
               remove = true;
               break;
             }
