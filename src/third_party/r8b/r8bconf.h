@@ -16,6 +16,10 @@
 #ifndef R8BCONF_INCLUDED
 #define R8BCONF_INCLUDED
 
+#define R8B_PFFFT 1
+#define R8B_FASTTIMING 1
+#define R8B_EXTFFT 1
+
 #if defined( _WIN32 ) || defined( _WIN64 )
 	#define R8B_WIN 1
 #elif defined( __APPLE__ )

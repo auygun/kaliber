@@ -107,6 +107,7 @@ GLTEST_SRC := \
   $(SRC_ROOT)/third_party/jsoncpp/jsoncpp.cc \
   $(SRC_ROOT)/third_party/minizip/ioapi.c \
   $(SRC_ROOT)/third_party/minizip/unzip.c \
+  $(SRC_ROOT)/third_party/r8b/pffft.cpp \
   $(SRC_ROOT)/third_party/r8b/r8bbase.cpp \
   $(SRC_ROOT)/third_party/texture_compressor/dxt_encoder_internals.cc \
   $(SRC_ROOT)/third_party/texture_compressor/dxt_encoder.cc \
