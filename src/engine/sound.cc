@@ -81,18 +81,21 @@ bool Sound::Load(const std::string& file_name) {
     StreamInternal(mp3_dec_->samples, false);
     SwapBuffersInternal();
     eof_ = true;
+    encoded_data_.reset();
   }
 
   return true;
 }
 
 bool Sound::Stream(bool loop) {
-  assert (is_streaming_sound_);
+  assert(!IsImmutable());
+  assert(is_streaming_sound_);
 
   return StreamInternal(kMaxSamplesPerDecode, loop);
 }
 
 void Sound::SwapBuffers() {
+  assert(!IsImmutable());
   assert (is_streaming_sound_);
 
   SwapBuffersInternal();
@@ -103,7 +106,7 @@ void Sound::SwapBuffers() {
 }
 
 size_t Sound::IsStreamingInProgress() const {
-  assert (is_streaming_sound_);
+  assert(is_streaming_sound_);
 
   return streaming_in_progress_.load(std::memory_order_acquire);
 }

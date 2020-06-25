@@ -12,6 +12,17 @@ typedef struct mp3dec_ex mp3dec_ex_t;
 
 namespace eng {
 
+// Class for streaming and non-streaming sound assets. Loads and decodes mp3
+// files. Resamples the decoded audio to match the system sample rate if
+// necessary.
+//
+// Streaming starts automatically for big files and it's done from memory. It
+// loads the entire mp3 file and decodes small chunks on demand.
+// Instances of this class with streaming support cannot be set as immutable.
+//
+// A non-streaming sound can be shared between multiple audio resources and can
+// be played simultaneously. A streaming sound cannot be shared between multiple
+// audio resources. There can be only one audio track playing at a time.
 class Sound : public Asset {
  public:
   Sound();
