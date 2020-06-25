@@ -35,12 +35,14 @@ class Sound : public Asset {
 
   size_t GetNumSamples() const { return num_samples_front_; }
 
-  size_t IsStreaming() const {
+  size_t IsStreamingInProgress() const {
     return streaming_in_progress_.load(std::memory_order_acquire);
   }
 
   size_t num_channels() const { return num_channels_; }
   size_t hz() const { return hz_; }
+
+  bool is_streaming_sound() { return is_streaming_sound_; }
 
   bool eof() const { return eof_; }
 
@@ -59,6 +61,10 @@ class Sound : public Asset {
   std::unique_ptr<mp3dec_ex_t> mp3_dec_;
   bool eof_ = false;
   std::atomic<bool> streaming_in_progress_ = false;
+
+  bool is_streaming_sound_ = false;
+
+  bool StreamInternal(size_t num_samples);
 
   void Preprocess(std::unique_ptr<float[]> input_buffer);
 };

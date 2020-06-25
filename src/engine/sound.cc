@@ -17,6 +17,7 @@ using namespace base;
 
 namespace {
 
+constexpr size_t kMinSamplesForStreaming = 500000;
 constexpr size_t kMaxSamplesPerDecode = MINIMP3_MAX_SAMPLES_PER_FRAME * 50;
 
 }  // namespace
@@ -57,8 +58,9 @@ bool Sound::Load(const std::string& file_name) {
     return false;
   }
 
-  LOG << "Decoded " << GetName() << ". " << mp3_dec_->samples << " samples, "
-      << mp3_dec_->detected_samples << " samples detected, "
+  is_streaming_sound_ = mp3_dec_->samples / mp3_dec_->info.channels > kMinSamplesForStreaming ? true : false;
+
+  LOG << (is_streaming_sound_ ? "Streaming " : "Loading ") << GetName() << ". " << mp3_dec_->samples << " samples, "
       << mp3_dec_->info.channels << " channels, " << mp3_dec_->info.hz << " hz, "
       << "layer " << mp3_dec_->info.layer << ", "
       << "avg_bitrate_kbps " << mp3_dec_->info.bitrate_kbps;
@@ -70,18 +72,54 @@ bool Sound::Load(const std::string& file_name) {
 
   assert(num_channels_ > 0 && num_channels_ <= 2);
 
-  // Fill up buffer and front buffer.
-  Stream();
-  SwapBuffers();
-  Stream();
+  // Fill up buffers.
+  if (is_streaming_sound_) {
+    Stream();
+    SwapBuffers();
+    Stream();
+  } else {
+    StreamInternal(mp3_dec_->samples);
+    SwapBuffers();
+    eof_ = true;
+  }
 
   return true;
 }
 
 bool Sound::Stream() {
-  auto buffer = std::make_unique<float[]>(kMaxSamplesPerDecode);
-  size_t samples_read = mp3dec_ex_read(mp3_dec_.get(), buffer.get(), kMaxSamplesPerDecode);
-  if (samples_read != kMaxSamplesPerDecode && mp3_dec_->last_error) {
+  assert (is_streaming_sound_);
+
+  return StreamInternal(kMaxSamplesPerDecode);
+}
+
+void Sound::SwapBuffers() {
+  front_buffer_[0].swap(back_buffer_[0]);
+  front_buffer_[1].swap(back_buffer_[1]);
+
+  num_samples_front_ = num_samples_back_;
+  num_samples_back_ = 0;
+}
+
+void Sound::OnStreamingStarted() {
+  assert (is_streaming_sound_);
+
+  streaming_in_progress_.store(true, std::memory_order_relaxed);
+}
+
+size_t Sound::GetSize() const {
+  return num_samples_front_ * sizeof(mp3d_sample_t);
+}
+
+float* Sound::GetBuffer(int channel) {
+  assert(!IsImmutable());
+
+  return front_buffer_[channel].get();
+}
+
+bool Sound::StreamInternal(size_t num_samples) {
+  auto buffer = std::make_unique<float[]>(num_samples);
+  size_t samples_read = mp3dec_ex_read(mp3_dec_.get(), buffer.get(), num_samples);
+  if (samples_read != num_samples && mp3_dec_->last_error) {
     eof_ = true;
     return false;
   }
@@ -98,28 +136,6 @@ bool Sound::Stream() {
   streaming_in_progress_.store(false, std::memory_order_release);
 
   return true;
-}
-
-void Sound::SwapBuffers() {
-  front_buffer_[0].swap(back_buffer_[0]);
-  front_buffer_[1].swap(back_buffer_[1]);
-
-  num_samples_front_ = num_samples_back_;
-  num_samples_back_ = 0;
-}
-
-void Sound::OnStreamingStarted() {
-  streaming_in_progress_.store(true, std::memory_order_relaxed);
-}
-
-size_t Sound::GetSize() const {
-  return num_samples_back_ * sizeof(mp3d_sample_t);
-}
-
-float* Sound::GetBuffer(int channel) {
-  assert(!IsImmutable());
-
-  return front_buffer_[channel].get();
 }
 
 void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {

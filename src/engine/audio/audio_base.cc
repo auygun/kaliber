@@ -89,14 +89,20 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
         if (flags & AudioSample::kLoop) {
           src_index %= num_samples;
         } else if (src_index >= num_samples) {
-          src_index = 0;
+          if (!sample->sound->is_streaming_sound()) {
+            LOG << "REMOVE SOUND";
+            remove = true;
+            break;
+          }
 
-          if (!sample->sound->IsStreaming()) {
+          if (!sample->sound->IsStreamingInProgress()) {
             if (sample->sound->eof()) {
-              LOG << "REMOVE SOUND";
+              LOG << "REMOVE STREAMING SOUND";
               remove = true;
               break;
             }
+
+            src_index = 0;
 
             // Swap buffers and start streaming in background.
             sample->sound->SwapBuffers();
@@ -107,7 +113,8 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
             sample->sound->OnStreamingStarted();
           } else {
             LOG << "Buffer underrun!";
-          }
+            src_index = 0;
+        }
         }
       }
 
