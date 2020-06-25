@@ -91,7 +91,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
         } else if (src_index >= num_samples) {
           src_index = 0;
 
-          if (!sample->sound->streaming_in_progress()) {
+          if (!sample->sound->IsStreaming()) {
             if (sample->sound->eof()) {
               LOG << "REMOVE SOUND";
               remove = true;

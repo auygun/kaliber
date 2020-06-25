@@ -37,7 +37,10 @@ class Sound : public Asset {
   size_t num_channels() const { return num_channels_; }
   size_t hz() const { return hz_; }
 
-  size_t streaming_in_progress() const { return streaming_in_progress_; }
+  size_t IsStreaming() const {
+    return streaming_in_progress_.load(std::memory_order_acquire);
+  }
+
   bool eof() const { return eof_; }
 
  private:

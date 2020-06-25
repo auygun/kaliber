@@ -93,7 +93,9 @@ bool Sound::Stream() {
   else
     eof_ = true;
 
-  streaming_in_progress_ = false;
+  // Memory barrier to ensure all memory writes become visible to the audio
+  // thread.
+  streaming_in_progress_.store(false, std::memory_order_release);
 
   return true;
 }
@@ -107,7 +109,7 @@ void Sound::SwapBuffers() {
 }
 
 void Sound::OnStreamingStarted() {
-  streaming_in_progress_ = true;
+  streaming_in_progress_.store(true, std::memory_order_relaxed);
 }
 
 size_t Sound::GetSize() const {
