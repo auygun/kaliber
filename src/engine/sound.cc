@@ -75,16 +75,25 @@ bool Sound::Load(const std::string& file_name) {
 
   assert(num_channels_ > 0 && num_channels_ <= 2);
 
+  size_t system_hz = Engine::Get().GetAudioSampleRate();
+
   // Fill up buffers.
   if (is_streaming_sound_) {
+    resampler_ = std::make_unique<r8b::CDSPResampler16>(hz_, system_hz, kMaxSamplesPerDecode);
+
     StreamInternal(kMaxSamplesPerDecode, false);
     SwapBuffersInternal();
     StreamInternal(kMaxSamplesPerDecode, false);
   } else {
+    resampler_ = std::make_unique<r8b::CDSPResampler16>(hz_, system_hz, mp3_dec_->samples);
+
     StreamInternal(mp3_dec_->samples, false);
     SwapBuffersInternal();
     eof_ = true;
+
+    // We are done with decoding for non-streaming sound.
     encoded_data_.reset();
+    resampler_.reset();
   }
 
   return true;
@@ -165,33 +174,39 @@ void Sound::SwapBuffersInternal() {
 }
 
 void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {
+  std::unique_ptr<double[]> channels[2];
+
+  // r8b resampler supports only double floating point type.
   if (num_channels_ == 1) {
-    back_buffer_[0] = std::move(input_buffer);
+    // Single channel.
+    channels[0] = std::make_unique<double[]>(num_samples_back_);
+    for (int i = 0; i < num_samples_back_; ++i)
+      channels[0].get()[i] = input_buffer.get()[i];
   } else {
     // Deinterleave into separate channels.
-    back_buffer_[0] = std::make_unique<float[]>(num_samples_back_);
-    back_buffer_[1] = std::make_unique<float[]>(num_samples_back_);
+    channels[0] = std::make_unique<double[]>(num_samples_back_);
+    channels[1] = std::make_unique<double[]>(num_samples_back_);
     for (int i = 0, j = 0; i < num_samples_back_ * 2; i += 2) {
-      back_buffer_[0].get()[j] = input_buffer.get()[i];
-      back_buffer_[1].get()[j++] = input_buffer.get()[i + 1];
+      channels[0].get()[j] = input_buffer.get()[i];
+      channels[1].get()[j++] = input_buffer.get()[i + 1];
     }
   }
 
-  // Resample to match the system sample rate if needed.
   size_t system_hz = Engine::Get().GetAudioSampleRate();
-  if (system_hz == 0 || system_hz == hz_)
-    return;
-
   size_t resampled_num_samples =
       ((float)system_hz / (float)hz_) * num_samples_back_;
 
-  r8b::CDSPResampler24 resampler(hz_, system_hz, num_samples_back_);
+  if (!back_buffer_[0]) {
+    back_buffer_[0] = std::make_unique<float[]>(resampled_num_samples);
+    if (num_channels_ == 2)
+      back_buffer_[1] = std::make_unique<float[]>(resampled_num_samples);
+  }
 
+  // Resample to match the system sample rate if needed. Output from the
+  // resampler is converted from double to float.
   for (int i = 0; i < num_channels_; ++i) {
-    auto resampled_buffer_ = std::make_unique<float[]>(resampled_num_samples);
-    resampler.oneshot(back_buffer_[i].get(), num_samples_back_,
-                      resampled_buffer_.get(), resampled_num_samples);
-    back_buffer_[i].swap(resampled_buffer_);
+    resampler_->oneshot(channels[i].get(), num_samples_back_,
+                        back_buffer_[i].get(), resampled_num_samples);
   }
   num_samples_back_ = resampled_num_samples;
 }

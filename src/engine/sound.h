@@ -10,6 +10,10 @@
 
 typedef struct mp3dec_ex mp3dec_ex_t;
 
+namespace r8b {
+class CDSPResampler16;
+}  // namespace
+
 namespace eng {
 
 // Class for streaming and non-streaming sound assets. Loads and decodes mp3
@@ -68,6 +72,9 @@ class Sound : public Asset {
   std::unique_ptr<char[]> encoded_data_;
 
   std::unique_ptr<mp3dec_ex_t> mp3_dec_;
+
+  std::unique_ptr<r8b::CDSPResampler16> resampler_;
+
   bool eof_ = false;
   std::atomic<bool> streaming_in_progress_ = false;
 
