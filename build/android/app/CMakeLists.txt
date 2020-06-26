@@ -92,6 +92,7 @@ add_library(native-activity SHARED
     ../../../src/third_party/jsoncpp/jsoncpp.cc
     ../../../src/third_party/minizip/ioapi.c
     ../../../src/third_party/minizip/unzip.c
+    ../../../src/third_party/r8b/pffft.cpp
     ../../../src/third_party/r8b/r8bbase.cpp
     ../../../src/third_party/texture_compressor/dxt_encoder_internals.cc
     ../../../src/third_party/texture_compressor/dxt_encoder.cc
@@ -102,6 +103,7 @@ add_library(native-activity SHARED
 if (ANDROID_ABI STREQUAL armeabi-v7a)
     target_sources(native-activity PRIVATE ../../../src/third_party/texture_compressor/dxt_encoder_neon.cc)
     target_sources(native-activity PRIVATE ../../../src/third_party/texture_compressor/texture_compressor_etc1_neon.cc)
+    set_source_files_properties(../../../src/third_party/r8b/pffft.cpp PROPERTIES COMPILE_FLAGS -mfpu=neon)
     set_source_files_properties(../../../src/third_party/texture_compressor/dxt_encoder_neon.cc PROPERTIES COMPILE_FLAGS -mfpu=neon)
     set_source_files_properties(../../../src/third_party/texture_compressor/texture_compressor_etc1_neon.cc PROPERTIES COMPILE_FLAGS -mfpu=neon)
 endif()
