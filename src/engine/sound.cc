@@ -79,13 +79,15 @@ bool Sound::Load(const std::string& file_name) {
 
   // Fill up buffers.
   if (is_streaming_sound_) {
-    resampler_ = std::make_unique<r8b::CDSPResampler16>(hz_, system_hz, kMaxSamplesPerDecode);
+    resampler_ = std::make_unique<r8b::CDSPResampler16>(hz_, system_hz,
+                                                        kMaxSamplesPerDecode);
 
     StreamInternal(kMaxSamplesPerDecode, false);
     SwapBuffersInternal();
     StreamInternal(kMaxSamplesPerDecode, false);
   } else {
-    resampler_ = std::make_unique<r8b::CDSPResampler16>(hz_, system_hz, mp3_dec_->samples);
+    resampler_ = std::make_unique<r8b::CDSPResampler16>(hz_, system_hz,
+                                                        mp3_dec_->samples);
 
     StreamInternal(mp3_dec_->samples, false);
     SwapBuffersInternal();

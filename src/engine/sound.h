@@ -12,7 +12,7 @@ typedef struct mp3dec_ex mp3dec_ex_t;
 
 namespace r8b {
 class CDSPResampler16;
-}  // namespace
+}  // namespace r8b
 
 namespace eng {
 
