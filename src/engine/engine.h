@@ -7,7 +7,6 @@
 
 #include "../base/random.h"
 #include "../base/vecmath.h"
-#include "asset.h"
 #include "audio/audio_forward.h"
 #include "image_quad.h"
 #include "renderer/render_resource.h"
@@ -61,14 +60,6 @@ class Engine {
 
   std::shared_ptr<AudioResource> CreateAudioResource();
 
-  // Returns asset from cache. Loads the asset if not cached. Returns nullptr if
-  // no asset was found with the given name.
-  template <typename T>
-  std::shared_ptr<T> GetAsset(const std::string& name) {
-    AssetFactory<T> factory(name);
-    return std::dynamic_pointer_cast<T>(GetAssetInternal(factory));
-  }
-
   void AddInputEvent(std::unique_ptr<InputEvent> event);
   std::unique_ptr<InputEvent> GetNextInputEvent();
 
@@ -79,7 +70,7 @@ class Engine {
   }
   std::shared_ptr<Shader> GetSolidShader() { return solid_shader_; }
 
-  std::shared_ptr<const eng::Font> GetSystemFont() { return system_font_; }
+  const Font* GetSystemFont() { return system_font_.get(); }
 
   base::Random& GetRandomGenerator() { return random_; }
 
@@ -117,9 +108,6 @@ class Engine {
 
   std::unique_ptr<Game> game_;
 
-  // Asset cache.
-  std::unordered_map<std::string, std::shared_ptr<Asset>> assets_;
-
   std::shared_ptr<Geometry> quad_;
   std::shared_ptr<Shader> pass_through_shader_;
   std::shared_ptr<Shader> solid_shader_;
@@ -127,7 +115,7 @@ class Engine {
   base::Vector2 screen_size_ = {0, 0};
   base::Matrix4x4 projection_;
 
-  std::shared_ptr<const eng::Font> system_font_;
+  std::unique_ptr<Font> system_font_;
 
   std::unique_ptr<TextureCompressor> tex_comp_opaque_;
   std::unique_ptr<TextureCompressor> tex_comp_alpha_;
@@ -145,8 +133,6 @@ class Engine {
 
   std::shared_ptr<RenderResource> CreateRenderResourceInternal(
       RenderResourceFactoryBase& factory);
-
-  std::shared_ptr<Asset> GetAssetInternal(AssetFactoryBase& factory);
 
   void ContextLost();
 

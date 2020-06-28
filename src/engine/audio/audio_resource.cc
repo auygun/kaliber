@@ -17,9 +17,6 @@ AudioResource::~AudioResource() {
 void AudioResource::Play(std::shared_ptr<Sound> sound,
                          float amplitude,
                          bool reset_pos) {
-  if (!sound->IsImmutable() && !sound->is_streaming_sound())
-    sound->SetImmutable();
-
   if (sample_->active)
     return;
 

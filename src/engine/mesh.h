@@ -3,17 +3,16 @@
 
 #include <memory>
 #include <string>
-#include "asset.h"
 #include "renderer/renderer_types.h"
 
 namespace eng {
 
-class Mesh : public Asset {
+class Mesh {
  public:
   static const char kLayoutDelimiter[];
 
   Mesh() = default;
-  ~Mesh() override = default;
+  ~Mesh() = default;
 
   bool Create(Primitive primitive,
               const std::string& vertex_description,
@@ -23,7 +22,7 @@ class Mesh : public Asset {
               size_t num_indices = 0,
               const void* indices = nullptr);
 
-  bool Load(const std::string& file_name) override;
+  bool Load(const std::string& file_name);
 
   const void* GetVertices() const { return (void*)vertices_.get(); }
   const void* GetIndices() const { return (void*)indices_.get(); }

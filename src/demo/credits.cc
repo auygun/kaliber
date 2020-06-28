@@ -30,10 +30,8 @@ Credits::Credits() = default;
 Credits::~Credits() = default;
 
 bool Credits::Initialize() {
-  Engine& engine = Engine::Get();
-
-  font_ = engine.GetAsset<Font>("PixelCaps!.ttf");
-  if (!font_)
+  font_ = std::make_shared<Font>();
+  if (!font_->Load("PixelCaps!.ttf"))
     return false;
 
   max_text_width_ = -1;

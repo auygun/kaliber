@@ -18,9 +18,6 @@ Texture::~Texture() {
 }
 
 void Texture::Update(std::shared_ptr<Image> image) {
-  if (!image->IsImmutable())
-    image->SetImmutable();
-
   valid_ = true;
   width_ = image->GetWidth();
   height_ = image->GetHeight();

@@ -6,8 +6,6 @@
 #include <memory>
 #include <string>
 
-#include "asset.h"
-
 typedef struct mp3dec_ex mp3dec_ex_t;
 
 namespace r8b {
@@ -27,12 +25,12 @@ namespace eng {
 // A non-streaming sound can be shared between multiple audio resources and can
 // be played simultaneously. A streaming sound cannot be shared between multiple
 // audio resources. There can be only one audio track playing at a time.
-class Sound : public Asset {
+class Sound {
  public:
   Sound();
-  ~Sound() override;
+  ~Sound();
 
-  bool Load(const std::string& file_name) override;
+  bool Load(const std::string& file_name);
 
   bool Stream(bool loop);
 

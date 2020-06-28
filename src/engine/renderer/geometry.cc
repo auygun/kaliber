@@ -19,9 +19,6 @@ Geometry::~Geometry() {
 }
 
 void Geometry::Create(std::shared_ptr<Mesh> mesh) {
-  if (!mesh->IsImmutable())
-    mesh->SetImmutable();
-
   Destroy();
   valid_ = true;
 

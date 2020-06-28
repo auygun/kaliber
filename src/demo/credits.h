@@ -40,7 +40,7 @@ class Credits {
   eng::ImageQuad text_[kNumLines];
   eng::Animator text_animator_;
 
-  std::shared_ptr<const eng::Font> font_;
+  std::shared_ptr<eng::Font> font_;
   int max_text_width_ = 0;
 
   std::shared_ptr<eng::Image> CreateImage();

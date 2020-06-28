@@ -59,7 +59,7 @@ class Menu {
 
   Item items_[kOption_Max];
 
-  std::shared_ptr<const eng::Font> font_;
+  std::shared_ptr<eng::Font> font_;
   int max_text_width_ = 0;
 
   Option selected_option_ = kOption_Invalid;

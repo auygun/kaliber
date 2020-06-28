@@ -6,16 +6,15 @@
 #include <string>
 
 #include "../third_party/stb/stb_truetype.h"
-#include "asset.h"
 
 namespace eng {
 
-class Font : public Asset {
+class Font {
  public:
   Font() = default;
-  ~Font() override = default;
+  ~Font() = default;
 
-  bool Load(const std::string& file_name) override;
+  bool Load(const std::string& file_name);
 
   void CalculateBoundingBox(const std::string& text,
                             int& width,

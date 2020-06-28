@@ -22,8 +22,8 @@ SkyQuad::~SkyQuad() = default;
 bool SkyQuad::Create() {
   Engine& engine = Engine::Get();
 
-  auto sky_source = engine.GetAsset<ShaderSource>("sky.glsl");
-  if (!sky_source)
+  auto sky_source = std::make_shared<ShaderSource>();
+  if (!sky_source->Load("sky.glsl"))
     return false;
   shader_->Create(sky_source, engine.GetQuad()->vertex_description());
 

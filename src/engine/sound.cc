@@ -32,10 +32,6 @@ Sound::~Sound() {
 }
 
 bool Sound::Load(const std::string& file_name) {
-  assert(!IsImmutable());
-
-  SetName(file_name);
-
   size_t buffer_size = 0;
   encoded_data_ = AssetFile::ReadWholeFile(file_name.c_str(),
                                            Engine::Get().GetRootPath().c_str(),
@@ -62,7 +58,7 @@ bool Sound::Load(const std::string& file_name) {
           ? true
           : false;
 
-  LOG << (is_streaming_sound_ ? "Streaming " : "Loading ") << GetName() << ". "
+  LOG << (is_streaming_sound_ ? "Streaming " : "Loading ") << file_name << ". "
       << mp3_dec_->samples << " samples, " << mp3_dec_->info.channels
       << " channels, " << mp3_dec_->info.hz << " hz, "
       << "layer " << mp3_dec_->info.layer << ", "
@@ -102,14 +98,12 @@ bool Sound::Load(const std::string& file_name) {
 }
 
 bool Sound::Stream(bool loop) {
-  assert(!IsImmutable());
   assert(is_streaming_sound_);
 
   return StreamInternal(kMaxSamplesPerDecode, loop);
 }
 
 void Sound::SwapBuffers() {
-  assert(!IsImmutable());
   assert(is_streaming_sound_);
 
   SwapBuffersInternal();
@@ -130,8 +124,6 @@ size_t Sound::GetSize() const {
 }
 
 float* Sound::GetBuffer(int channel) {
-  assert(!IsImmutable());
-
   return front_buffer_[channel].get();
 }
 

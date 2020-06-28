@@ -6,24 +6,23 @@
 
 #include "../base/mem.h"
 #include "../base/vecmath.h"
-#include "asset.h"
 
 namespace eng {
 
-class Image : public Asset {
+class Image {
  public:
   enum Format { kRGBA32, kDXT1, kDXT5, kETC1, kATC, kATCIA };
 
   Image();
   Image(const Image& other);
-  ~Image() override;
+  ~Image();
 
   Image& operator=(const Image& other);
 
   bool Create(int width, int height);
   void Copy(const Image& other);
   bool CreateMip(const Image& other);
-  bool Load(const std::string& file_name) override;
+  bool Load(const std::string& file_name);
 
   bool Compress();
 
@@ -51,6 +50,8 @@ class Image : public Asset {
   int width_ = 0;
   int height_ = 0;
   Format format_ = kRGBA32;
+
+  std::string name_;
 };
 
 }  // namespace eng

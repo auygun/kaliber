@@ -340,9 +340,11 @@ void Player::NavigateBack() {
 bool Player::CreateRenderResources() {
   Engine& engine = Engine::Get();
 
-  auto weapon_image = engine.GetAsset<Image>("enemy_anims_flare_ok.png");
-  auto beam_image = engine.GetAsset<Image>("enemy_ray_ok.png");
-  if (!weapon_image || !beam_image)
+  auto weapon_image = std::make_shared<Image>();
+  if (!weapon_image->Load("enemy_anims_flare_ok.png"))
+    return false;
+  auto beam_image = std::make_shared<Image>();
+  if (!beam_image->Load("enemy_ray_ok.png"))
     return false;
 
   weapon_image->Compress();

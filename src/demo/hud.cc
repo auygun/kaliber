@@ -32,8 +32,8 @@ Hud::~Hud() = default;
 bool Hud::Initialize() {
   Engine& engine = Engine::Get();
 
-  font_ = engine.GetAsset<Font>("PixelCaps!.ttf");
-  if (!font_)
+  font_ = std::make_shared<Font>();
+  if (!font_->Load("PixelCaps!.ttf"))
     return false;
 
   int tmp;

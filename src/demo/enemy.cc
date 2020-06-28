@@ -56,8 +56,12 @@ Enemy::Enemy()
 Enemy::~Enemy() = default;
 
 bool Enemy::Initialize() {
-  font_ = Engine::Get().GetAsset<Font>("PixelCaps!.ttf");
-  if (!font_)
+  font_ = std::make_shared<Font>();
+  if (!font_->Load("PixelCaps!.ttf"))
+    return false;
+
+  explosion_sound_ = std::make_shared<Sound>();
+  if (!explosion_sound_->Load("explosion.mp3"))
     return false;
 
   return CreateRenderResources();
@@ -410,7 +414,7 @@ void Enemy::Spawn(EnemyType enemy_type,
   e.movement_animator.Attach(&e.score);
   e.movement_animator.Play(Animator::kMovement, false);
 
-  e.explosion_.SetSound(engine.GetAsset<Sound>("explosion.mp3"));
+  e.explosion_.SetSound(explosion_sound_);
   e.explosion_.SetVariate(true);
   e.explosion_.SetSimulateStereo(true);
 }
@@ -446,11 +450,17 @@ std::shared_ptr<Image> Enemy::GetScoreImage(int score) {
 bool Enemy::CreateRenderResources() {
   Engine& engine = Engine::Get();
 
-  auto skull_image = engine.GetAsset<Image>("enemy_anims_01_frames_ok.png");
-  auto bug_image = engine.GetAsset<Image>("enemy_anims_02_frames_ok.png");
-  auto target_image = engine.GetAsset<Image>("enemy_target_single_ok.png");
-  auto blast_image = engine.GetAsset<Image>("enemy_anims_blast_ok.png");
-  if (!skull_image || !bug_image || !target_image || !blast_image)
+  auto skull_image = std::make_shared<Image>();
+  if (!skull_image->Load("enemy_anims_01_frames_ok.png"))
+    return false;
+  auto bug_image = std::make_shared<Image>();
+  if (!bug_image->Load("enemy_anims_02_frames_ok.png"))
+    return false;
+  auto target_image = std::make_shared<Image>();
+  if (!target_image->Load("enemy_target_single_ok.png"))
+    return false;
+  auto blast_image = std::make_shared<Image>();
+  if (!blast_image->Load("enemy_anims_blast_ok.png"))
     return false;
 
   skull_image->Compress();

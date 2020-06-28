@@ -21,9 +21,6 @@ Shader::~Shader() {
 
 void Shader::Create(std::shared_ptr<ShaderSource> source,
                     const VertexDescripton& vd) {
-  if (!source->IsImmutable())
-    source->SetImmutable();
-
   Destroy();
   valid_ = true;
 
