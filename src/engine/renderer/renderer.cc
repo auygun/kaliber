@@ -212,7 +212,7 @@ void Renderer::InvalidateAllResources() {
 
 bool Renderer::StartWorker() {
 #ifdef THREADED_RENDERING
-  LOG << "Strating render thread.";
+  LOG << "Starting render thread.";
 
   global_commands_.clear();
   draw_commands_[0].clear();
@@ -368,7 +368,7 @@ void Renderer::HandleCmdClear(RenderCommand* cmd) {
 
 void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
   auto* c = static_cast<CmdUpdateTexture*>(cmd);
-  auto impl_data = std::static_pointer_cast<TextureOpenGL>(c->impl_data);
+  auto impl_data = reinterpret_cast<TextureOpenGL*>(c->impl_data.get());
   bool new_texture = impl_data->id == 0;
 
   GLuint gl_id = 0;
@@ -428,7 +428,7 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
 
 void Renderer::HandleCmdDestoryTexture(RenderCommand* cmd) {
   auto* c = static_cast<CmdDestoryTexture*>(cmd);
-  auto impl_data = std::static_pointer_cast<TextureOpenGL>(c->impl_data);
+  auto impl_data = reinterpret_cast<TextureOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0) {
     glDeleteTextures(1, &(impl_data->id));
     *impl_data = {};
@@ -437,14 +437,14 @@ void Renderer::HandleCmdDestoryTexture(RenderCommand* cmd) {
 
 void Renderer::HandleCmdActivateTexture(RenderCommand* cmd) {
   auto* c = static_cast<CmdActivateTexture*>(cmd);
-  auto impl_data = std::static_pointer_cast<TextureOpenGL>(c->impl_data);
+  auto impl_data = reinterpret_cast<TextureOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0)
     glBindTexture(GL_TEXTURE_2D, impl_data->id);
 }
 
 void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
   auto* c = static_cast<CmdCreateGeometry*>(cmd);
-  auto impl_data = std::static_pointer_cast<GeometryOpenGL>(c->impl_data);
+  auto impl_data = reinterpret_cast<GeometryOpenGL*>(c->impl_data.get());
   if (impl_data->vertex_buffer_id > 0)
     return;
 
@@ -507,7 +507,7 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
 
 void Renderer::HandleCmdDestroyGeometry(RenderCommand* cmd) {
   auto* c = static_cast<CmdDestroyGeometry*>(cmd);
-  auto impl_data = std::static_pointer_cast<GeometryOpenGL>(c->impl_data);
+  auto impl_data = reinterpret_cast<GeometryOpenGL*>(c->impl_data.get());
   if (impl_data->vertex_buffer_id == 0)
     return;
 
@@ -523,7 +523,7 @@ void Renderer::HandleCmdDestroyGeometry(RenderCommand* cmd) {
 
 void Renderer::HandleCmdDrawGeometry(RenderCommand* cmd) {
   auto* c = static_cast<CmdDrawGeometry*>(cmd);
-  auto impl_data = std::static_pointer_cast<GeometryOpenGL>(c->impl_data);
+  auto impl_data = reinterpret_cast<GeometryOpenGL*>(c->impl_data.get());
   if (impl_data->vertex_buffer_id == 0)
     return;
 
@@ -569,7 +569,7 @@ void Renderer::HandleCmdDrawGeometry(RenderCommand* cmd) {
 
 void Renderer::HandleCmdCreateShader(RenderCommand* cmd) {
   auto* c = static_cast<CmdCreateShader*>(cmd);
-  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0)
     return;
 
@@ -614,7 +614,7 @@ void Renderer::HandleCmdCreateShader(RenderCommand* cmd) {
 
 void Renderer::HandleCmdDestroyShader(RenderCommand* cmd) {
   auto* c = static_cast<CmdDestroyShader*>(cmd);
-  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0) {
     glDeleteProgram(impl_data->id);
     *impl_data = {};
@@ -623,14 +623,14 @@ void Renderer::HandleCmdDestroyShader(RenderCommand* cmd) {
 
 void Renderer::HandleCmdActivateShader(RenderCommand* cmd) {
   auto* c = static_cast<CmdActivateShader*>(cmd);
-  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0)
     glUseProgram(impl_data->id);
 }
 
 void Renderer::HandleCmdSetUniformVec2(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformVec2*>(cmd);
-  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0) {
     GLint index =
         GetUniformLocation(impl_data->id, c->name, impl_data->uniforms);
@@ -641,7 +641,7 @@ void Renderer::HandleCmdSetUniformVec2(RenderCommand* cmd) {
 
 void Renderer::HandleCmdSetUniformVec3(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformVec3*>(cmd);
-  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0) {
     GLint index =
         GetUniformLocation(impl_data->id, c->name, impl_data->uniforms);
@@ -652,7 +652,7 @@ void Renderer::HandleCmdSetUniformVec3(RenderCommand* cmd) {
 
 void Renderer::HandleCmdSetUniformVec4(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformVec4*>(cmd);
-  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0) {
     GLint index =
         GetUniformLocation(impl_data->id, c->name, impl_data->uniforms);
@@ -663,7 +663,7 @@ void Renderer::HandleCmdSetUniformVec4(RenderCommand* cmd) {
 
 void Renderer::HandleCmdSetUniformMat4(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformMat4*>(cmd);
-  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0) {
     GLint index =
         GetUniformLocation(impl_data->id, c->name, impl_data->uniforms);
@@ -674,7 +674,7 @@ void Renderer::HandleCmdSetUniformMat4(RenderCommand* cmd) {
 
 void Renderer::HandleCmdSetUniformFloat(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformFloat*>(cmd);
-  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0) {
     GLint index =
         GetUniformLocation(impl_data->id, c->name, impl_data->uniforms);
@@ -685,7 +685,7 @@ void Renderer::HandleCmdSetUniformFloat(RenderCommand* cmd) {
 
 void Renderer::HandleCmdSetUniformInt(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformInt*>(cmd);
-  auto impl_data = std::static_pointer_cast<ShaderOpenGL>(c->impl_data);
+  auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0) {
     GLint index =
         GetUniformLocation(impl_data->id, c->name, impl_data->uniforms);
