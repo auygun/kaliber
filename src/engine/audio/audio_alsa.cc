@@ -172,10 +172,8 @@ void AudioAlsa::WorkerMain(std::promise<bool> promise) {
   auto buffer = std::make_unique<float[]>(num_frames * 2);
 
   for (;;) {
-    if (terminate_worker_) {
-      worker_.Join();
+    if (terminate_worker_)
       return;
-    }
 
     RenderAudio(buffer.get(), num_frames);
 

@@ -11,7 +11,9 @@ namespace eng {
 
 AudioBase::AudioBase() = default;
 
-AudioBase::~AudioBase() = default;
+AudioBase::~AudioBase() {
+  worker_.Join();
+}
 
 void AudioBase::Play(std::shared_ptr<AudioSample> sample) {
   std::unique_lock<std::mutex> scoped_lock(mutex_);
