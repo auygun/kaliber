@@ -10,7 +10,6 @@
 namespace eng {
 class Image;
 class InputEvent;
-class Font;
 class Texture;
 }  // namespace eng
 
@@ -40,7 +39,6 @@ class Credits {
   eng::ImageQuad text_[kNumLines];
   eng::Animator text_animator_;
 
-  std::shared_ptr<eng::Font> font_;
   int max_text_width_ = 0;
 
   std::unique_ptr<eng::Image> CreateImage();

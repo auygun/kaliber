@@ -11,7 +11,6 @@
 
 namespace eng {
 class Image;
-class Font;
 }  // namespace eng
 
 class Hud {
@@ -41,7 +40,6 @@ class Hud {
   eng::Animator text_animator_[2];
   base::Closure text_animator_cb_[2];
 
-  std::shared_ptr<eng::Font> font_;
   int max_text_width_ = 0;
 
   int last_score_ = 0;

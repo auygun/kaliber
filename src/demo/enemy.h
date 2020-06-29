@@ -14,7 +14,6 @@
 
 namespace eng {
 class Image;
-class Font;
 class Sound;
 class Texture;
 }  // namespace eng
@@ -82,8 +81,6 @@ class Enemy {
   std::shared_ptr<eng::Texture> target_tex_;
   std::shared_ptr<eng::Texture> blast_tex_;
   std::shared_ptr<eng::Texture> score_tex_[kEnemyType_Max];
-
-  std::shared_ptr<eng::Font> font_;
 
   std::shared_ptr<eng::Sound> explosion_sound_;
 

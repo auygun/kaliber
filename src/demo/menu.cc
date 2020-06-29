@@ -13,6 +13,7 @@
 #include "../engine/image.h"
 #include "../engine/input_event.h"
 #include "../engine/renderer/texture.h"
+#include "demo.h"
 
 using namespace base;
 using namespace eng;
@@ -38,14 +39,12 @@ Menu::Menu() : tex_(Engine::Get().CreateRenderResource<Texture>()) {}
 Menu::~Menu() = default;
 
 bool Menu::Initialize() {
-  font_ = std::make_shared<Font>();
-  if (!font_->Load("PixelCaps!.ttf"))
-    return false;
+  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
 
   max_text_width_ = -1;
   for (int i = 0; i < kOption_Max; ++i) {
     int width, height;
-    font_->CalculateBoundingBox(kMenuOption[i], width, height);
+    font.CalculateBoundingBox(kMenuOption[i], width, height);
     if (width > max_text_width_)
       max_text_width_ = width;
   }
@@ -183,7 +182,9 @@ void Menu::Hide() {
 }
 
 std::unique_ptr<Image> Menu::CreateImage() {
-  int line_height = font_->GetLineHeight() + 1;
+  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+
+  int line_height = font.GetLineHeight() + 1;
   auto image = std::make_unique<Image>();
   image->Create(max_text_width_, line_height * kOption_Max);
 
@@ -193,10 +194,10 @@ std::unique_ptr<Image> Menu::CreateImage() {
   base::Worker worker(kOption_Max);
   for (int i = 0; i < kOption_Max; ++i) {
     int w, h;
-    font_->CalculateBoundingBox(kMenuOption[i], w, h);
+    font.CalculateBoundingBox(kMenuOption[i], w, h);
     float x = (image->GetWidth() - w) / 2;
     float y = line_height * i;
-    worker.Enqueue(std::bind(&Font::Print, font_, x, y, kMenuOption[i],
+    worker.Enqueue(std::bind(&Font::Print, &font, x, y, kMenuOption[i],
                              image->GetBuffer(), image->GetWidth()));
   }
   worker.Join();

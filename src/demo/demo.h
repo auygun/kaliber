@@ -2,6 +2,7 @@
 #define DEMO_H
 
 #include "../base/closure.h"
+#include "../engine/font.h"
 #include "../engine/game.h"
 #include "credits.h"
 #include "enemy.h"
@@ -33,6 +34,8 @@ class Demo : public eng::Game {
   void EnterCreditsState();
   void EnterGameState();
 
+  const eng::Font& GetFont() { return font_; }
+
   Player& GetPlayer() { return player_; }
   Enemy& GetEnemy() { return enemy_; }
 
@@ -51,6 +54,8 @@ class Demo : public eng::Game {
 
   SkyQuad sky_;
   int last_dominant_channel_ = -1;
+
+  eng::Font font_;
 
   int score_ = 0;
   int add_score_ = 0;

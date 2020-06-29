@@ -56,10 +56,6 @@ Enemy::Enemy()
 Enemy::~Enemy() = default;
 
 bool Enemy::Initialize() {
-  font_ = std::make_shared<Font>();
-  if (!font_->Load("PixelCaps!.ttf"))
-    return false;
-
   explosion_sound_ = std::make_shared<Sound>();
   if (!explosion_sound_->Load("explosion.mp3"))
     return false;
@@ -434,15 +430,17 @@ int Enemy::GetScore(EnemyType enemy_type) {
 }
 
 std::unique_ptr<Image> Enemy::GetScoreImage(int score) {
+  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+
   std::string text = std::to_string(score);
   int width, height;
-  font_->CalculateBoundingBox(text.c_str(), width, height);
+  font.CalculateBoundingBox(text.c_str(), width, height);
 
   auto image = std::make_unique<Image>();
   image->Create(width, height);
   image->Clear({1, 1, 1, 0});
 
-  font_->Print(0, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
+  font.Print(0, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
 
   return image;
 }

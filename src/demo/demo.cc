@@ -18,6 +18,9 @@ using namespace base;
 using namespace eng;
 
 bool Demo::Initialize() {
+  if (!font_.Load("PixelCaps!.ttf"))
+    return false;
+
   if (!sky_.Create()) {
     LOG << "Could not create the sky.";
     return false;

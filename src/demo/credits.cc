@@ -30,14 +30,12 @@ Credits::Credits() = default;
 Credits::~Credits() = default;
 
 bool Credits::Initialize() {
-  font_ = std::make_shared<Font>();
-  if (!font_->Load("PixelCaps!.ttf"))
-    return false;
+  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
 
   max_text_width_ = -1;
   for (int i = 0; i < kNumLines; ++i) {
     int width, height;
-    font_->CalculateBoundingBox(kCreditsLines[i], width, height);
+    font.CalculateBoundingBox(kCreditsLines[i], width, height);
     if (width > max_text_width_)
       max_text_width_ = width;
   }
@@ -118,7 +116,9 @@ void Credits::Hide() {
 }
 
 std::unique_ptr<Image> Credits::CreateImage() {
-  int line_height = font_->GetLineHeight() + 1;
+  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+
+  int line_height = font.GetLineHeight() + 1;
   auto image = std::make_unique<Image>();
   image->Create(max_text_width_, line_height * kNumLines);
   image->Clear({1, 1, 1, 0});
@@ -126,10 +126,10 @@ std::unique_ptr<Image> Credits::CreateImage() {
   Worker worker(kNumLines);
   for (int i = 0; i < kNumLines; ++i) {
     int w, h;
-    font_->CalculateBoundingBox(kCreditsLines[i], w, h);
+    font.CalculateBoundingBox(kCreditsLines[i], w, h);
     float x = (image->GetWidth() - w) / 2;
     float y = line_height * i;
-    worker.Enqueue(std::bind(&Font::Print, font_, x, y, kCreditsLines[i],
+    worker.Enqueue(std::bind(&Font::Print, &font, x, y, kCreditsLines[i],
                              image->GetBuffer(), image->GetWidth()));
   }
   worker.Join();
