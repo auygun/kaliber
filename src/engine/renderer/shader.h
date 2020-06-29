@@ -20,7 +20,7 @@ class Shader : public RenderResource {
          Renderer* renderer);
   ~Shader() override;
 
-  void Create(std::shared_ptr<ShaderSource> source, const VertexDescripton& vd);
+  void Create(std::unique_ptr<ShaderSource> source, const VertexDescripton& vd);
 
   void Destroy() override;
 

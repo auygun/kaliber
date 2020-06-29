@@ -68,7 +68,7 @@ RENDER_COMMAND_BEGIN(CmdActivateTexture)
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdCreateGeometry)
-  std::shared_ptr<const Mesh> mesh;
+  std::unique_ptr<Mesh> mesh;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
@@ -81,7 +81,7 @@ RENDER_COMMAND_BEGIN(CmdDrawGeometry)
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdCreateShader)
-  std::shared_ptr<const ShaderSource> source;
+  std::unique_ptr<ShaderSource> source;
   VertexDescripton vertex_description;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END

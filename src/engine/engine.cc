@@ -244,28 +244,28 @@ void Engine::ContextLost() {
 
 bool Engine::CreateRenderResources() {
   // Create the quad geometry we can reuse for all sprites.
-  auto quad_mesh = std::make_shared<Mesh>();
+  auto quad_mesh = std::make_unique<Mesh>();
   if (!quad_mesh->Load("engine/quad.mesh")) {
     LOG << "Could not create quad mesh.";
     return false;
   }
-  quad_->Create(quad_mesh);
+  quad_->Create(std::move(quad_mesh));
 
   // Create the shader we can reuse for texture rendering.
-  auto pts_source = std::make_shared<ShaderSource>();
-  if (!pts_source->Load("engine/pass_through.glsl")) {
+  auto source = std::make_unique<ShaderSource>();
+  if (!source->Load("engine/pass_through.glsl")) {
     LOG << "Could not create pass through shader.";
     return false;
   }
-  pass_through_shader_->Create(pts_source, quad_->vertex_description());
+  pass_through_shader_->Create(std::move(source), quad_->vertex_description());
 
   // Create the shader we can reuse for solid rendering.
-  auto ss_source = std::make_shared<ShaderSource>();
-  if (!ss_source->Load("engine/solid.glsl")) {
+  source = std::make_unique<ShaderSource>();
+  if (!source->Load("engine/solid.glsl")) {
     LOG << "Could not create solid shader.";
     return false;
   }
-  solid_shader_->Create(ss_source, quad_->vertex_description());
+  solid_shader_->Create(std::move(source), quad_->vertex_description());
 
   return true;
 }

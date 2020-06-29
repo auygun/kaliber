@@ -22,10 +22,10 @@ SkyQuad::~SkyQuad() = default;
 bool SkyQuad::Create() {
   Engine& engine = Engine::Get();
 
-  auto sky_source = std::make_shared<ShaderSource>();
-  if (!sky_source->Load("sky.glsl"))
+  auto source = std::make_unique<ShaderSource>();
+  if (!source->Load("sky.glsl"))
     return false;
-  shader_->Create(sky_source, engine.GetQuad()->vertex_description());
+  shader_->Create(std::move(source), engine.GetQuad()->vertex_description());
 
   scale_ = engine.GetScreenSize();
 

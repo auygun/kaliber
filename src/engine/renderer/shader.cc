@@ -19,13 +19,13 @@ Shader::~Shader() {
   Destroy();
 }
 
-void Shader::Create(std::shared_ptr<ShaderSource> source,
+void Shader::Create(std::unique_ptr<ShaderSource> source,
                     const VertexDescripton& vd) {
   Destroy();
   valid_ = true;
 
   auto cmd = std::make_unique<CmdCreateShader>();
-  cmd->source = source;
+  cmd->source = std::move(source);
   cmd->vertex_description = vd;
   cmd->impl_data = impl_data_;
   renderer_->EnqueueCommand(std::move(cmd));

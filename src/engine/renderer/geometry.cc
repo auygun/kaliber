@@ -18,14 +18,14 @@ Geometry::~Geometry() {
   Destroy();
 }
 
-void Geometry::Create(std::shared_ptr<Mesh> mesh) {
+void Geometry::Create(std::unique_ptr<Mesh> mesh) {
   Destroy();
   valid_ = true;
 
   vertex_description_ = mesh->vertex_description();
 
   auto cmd = std::make_unique<CmdCreateGeometry>();
-  cmd->mesh = mesh;
+  cmd->mesh = std::move(mesh);
   cmd->impl_data = impl_data_;
   renderer_->EnqueueCommand(std::move(cmd));
 }
