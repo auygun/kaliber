@@ -50,7 +50,7 @@ class Hud {
 
   void Print(int i, const std::string& text);
 
-  std::shared_ptr<eng::Image> CreateImage();
+  std::unique_ptr<eng::Image> CreateImage();
 };
 
 #endif  // HUD_H

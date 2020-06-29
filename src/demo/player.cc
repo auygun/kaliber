@@ -338,19 +338,17 @@ void Player::NavigateBack() {
 }
 
 bool Player::CreateRenderResources() {
-  Engine& engine = Engine::Get();
-
-  auto weapon_image = std::make_shared<Image>();
+  auto weapon_image = std::make_unique<Image>();
   if (!weapon_image->Load("enemy_anims_flare_ok.png"))
     return false;
-  auto beam_image = std::make_shared<Image>();
+  auto beam_image = std::make_unique<Image>();
   if (!beam_image->Load("enemy_ray_ok.png"))
     return false;
 
   weapon_image->Compress();
   beam_image->Compress();
 
-  weapon_tex_->Update(weapon_image);
-  beam_tex_->Update(beam_image);
+  weapon_tex_->Update(std::move(weapon_image));
+  beam_tex_->Update(std::move(beam_image));
   return true;
 }

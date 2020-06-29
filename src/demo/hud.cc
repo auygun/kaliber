@@ -39,10 +39,10 @@ bool Hud::Initialize() {
   int tmp;
   font_->CalculateBoundingBox("big_enough_text", max_text_width_, tmp);
 
-  auto image = CreateImage();
-
   for (int i = 0; i < 2; ++i) {
-    text_[i].GetTexture()->Update(image);
+    auto image = CreateImage();
+
+    text_[i].GetTexture()->Update(std::move(image));
     text_[i].AutoScale();
     text_[i].SetColor(kTextColor);
 
@@ -151,11 +151,11 @@ void Hud::Print(int i, const std::string& text) {
 
   font_->Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
 
-  text_[i].GetTexture()->Update(image);
+  text_[i].GetTexture()->Update(std::move(image));
 }
 
-std::shared_ptr<Image> Hud::CreateImage() {
-  auto image = std::make_shared<Image>();
+std::unique_ptr<Image> Hud::CreateImage() {
+  auto image = std::make_unique<Image>();
   image->Create(max_text_width_, font_->GetLineHeight());
   image->Clear({1, 1, 1, 0});
   return image;

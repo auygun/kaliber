@@ -295,7 +295,7 @@ void Engine::PrintStats() {
   int image_width = width + margin * 2;
   int image_height = (line_height + margin) * lines.size() + margin;
 
-  auto image = std::make_shared<Image>();
+  auto image = std::make_unique<Image>();
   image->Create(image_width, image_height);
   image->Clear({1, 1, 1, 0.08f});
 
@@ -309,7 +309,7 @@ void Engine::PrintStats() {
   }
   worker.Join();
 
-  stats_.GetTexture()->Update(image);
+  stats_.GetTexture()->Update(std::move(image));
   stats_.AutoScale();
 }
 

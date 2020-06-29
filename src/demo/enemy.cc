@@ -433,12 +433,12 @@ int Enemy::GetScore(EnemyType enemy_type) {
   return enemy_scores[enemy_type];
 }
 
-std::shared_ptr<Image> Enemy::GetScoreImage(int score) {
+std::unique_ptr<Image> Enemy::GetScoreImage(int score) {
   std::string text = std::to_string(score);
   int width, height;
   font_->CalculateBoundingBox(text.c_str(), width, height);
 
-  auto image = std::make_shared<Image>();
+  auto image = std::make_unique<Image>();
   image->Create(width, height);
   image->Clear({1, 1, 1, 0});
 
@@ -448,18 +448,16 @@ std::shared_ptr<Image> Enemy::GetScoreImage(int score) {
 }
 
 bool Enemy::CreateRenderResources() {
-  Engine& engine = Engine::Get();
-
-  auto skull_image = std::make_shared<Image>();
+  auto skull_image = std::make_unique<Image>();
   if (!skull_image->Load("enemy_anims_01_frames_ok.png"))
     return false;
-  auto bug_image = std::make_shared<Image>();
+  auto bug_image = std::make_unique<Image>();
   if (!bug_image->Load("enemy_anims_02_frames_ok.png"))
     return false;
-  auto target_image = std::make_shared<Image>();
+  auto target_image = std::make_unique<Image>();
   if (!target_image->Load("enemy_target_single_ok.png"))
     return false;
-  auto blast_image = std::make_shared<Image>();
+  auto blast_image = std::make_unique<Image>();
   if (!blast_image->Load("enemy_anims_blast_ok.png"))
     return false;
 
@@ -468,10 +466,10 @@ bool Enemy::CreateRenderResources() {
   target_image->Compress();
   blast_image->Compress();
 
-  skull_tex_->Update(skull_image);
-  bug_tex_->Update(bug_image);
-  target_tex_->Update(target_image);
-  blast_tex_->Update(blast_image);
+  skull_tex_->Update(std::move(skull_image));
+  bug_tex_->Update(std::move(bug_image));
+  target_tex_->Update(std::move(target_image));
+  blast_tex_->Update(std::move(blast_image));
 
   for (int i = 0; i < kEnemyType_Max; ++i)
     score_tex_[i]->Update(GetScoreImage(GetScore((EnemyType)i)));

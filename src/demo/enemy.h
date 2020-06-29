@@ -114,7 +114,7 @@ class Enemy {
 
   int GetScore(EnemyType enemy_type);
 
-  std::shared_ptr<eng::Image> GetScoreImage(int score);
+  std::unique_ptr<eng::Image> GetScoreImage(int score);
 
   bool CreateRenderResources();
 };

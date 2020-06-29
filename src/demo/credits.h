@@ -43,7 +43,7 @@ class Credits {
   std::shared_ptr<eng::Font> font_;
   int max_text_width_ = 0;
 
-  std::shared_ptr<eng::Image> CreateImage();
+  std::unique_ptr<eng::Image> CreateImage();
 };
 
 #endif  // CREDITS_H

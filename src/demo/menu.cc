@@ -38,8 +38,6 @@ Menu::Menu() : tex_(Engine::Get().CreateRenderResource<Texture>()) {}
 Menu::~Menu() = default;
 
 bool Menu::Initialize() {
-  Engine& engine = Engine::Get();
-
   font_ = std::make_shared<Font>();
   if (!font_->Load("PixelCaps!.ttf"))
     return false;
@@ -184,9 +182,9 @@ void Menu::Hide() {
   }
 }
 
-std::shared_ptr<Image> Menu::CreateImage() {
+std::unique_ptr<Image> Menu::CreateImage() {
   int line_height = font_->GetLineHeight() + 1;
-  auto image = std::make_shared<Image>();
+  auto image = std::make_unique<Image>();
   image->Create(max_text_width_, line_height * kOption_Max);
 
   // Fill the area of each menu item with gradient.

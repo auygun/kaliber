@@ -117,9 +117,9 @@ void Credits::Hide() {
   text_animator_.Play(Animator::kBlending, false);
 }
 
-std::shared_ptr<Image> Credits::CreateImage() {
+std::unique_ptr<Image> Credits::CreateImage() {
   int line_height = font_->GetLineHeight() + 1;
-  auto image = std::make_shared<Image>();
+  auto image = std::make_unique<Image>();
   image->Create(max_text_width_, line_height * kNumLines);
   image->Clear({1, 1, 1, 0});
 

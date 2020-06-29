@@ -66,7 +66,7 @@ class Menu {
 
   base::Vector2 tap_pos_[2] = {{0, 0}, {0, 0}};
 
-  std::shared_ptr<eng::Image> CreateImage();
+  std::unique_ptr<eng::Image> CreateImage();
 
   bool IsAnimating();
 };
