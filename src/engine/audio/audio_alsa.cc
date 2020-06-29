@@ -147,7 +147,7 @@ size_t AudioAlsa::GetSampleRate() {
 }
 
 bool AudioAlsa::StartWorker() {
-  LOG << "Strating audio thread.";
+  LOG << "Starting audio thread.";
 
   std::promise<bool> promise;
   std::future<bool> future = promise.get_future();

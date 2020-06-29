@@ -42,8 +42,6 @@ class Engine {
   void LostFocus();
   void GainedFocus();
 
-  void TrimMemory();
-
   void Exit();
 
   // Convert size from pixels to viewport scale.

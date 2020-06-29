@@ -143,8 +143,6 @@ void Engine::GainedFocus() {
     game_->GainedFocus();
 }
 
-void Engine::TrimMemory() {}
-
 void Engine::Exit() {
   platform_->Exit();
 }

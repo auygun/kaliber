@@ -212,8 +212,6 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
 
     case APP_CMD_LOW_MEMORY:
       DLOG << "APP_CMD_LOW_MEMORY";
-      if (platform->engine_)
-        platform->engine_->TrimMemory();
       break;
   }
 }
