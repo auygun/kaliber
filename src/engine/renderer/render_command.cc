@@ -1,14 +1,14 @@
 #include "render_command.h"
 
-#include "../shader_source.h"
 #include "../image.h"
 #include "../mesh.h"
+#include "../shader_source.h"
 
 #ifdef _DEBUG
-#define RENDER_COMMAND_IMPL(NAME, GLOBAL)            \
+#define RENDER_COMMAND_IMPL(NAME, GLOBAL) \
   NAME::NAME() : RenderCommand(CMD_ID, GLOBAL, #NAME) {}
 #else
-#define RENDER_COMMAND_IMPL(NAME, GLOBAL)            \
+#define RENDER_COMMAND_IMPL(NAME, GLOBAL) \
   NAME::NAME() : RenderCommand(CMD_ID, GLOBAL) {}
 #endif
 

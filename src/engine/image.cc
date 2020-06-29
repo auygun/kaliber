@@ -233,8 +233,8 @@ void Image::ConvertToPow2() {
   int new_width = RoundUpToPow2(width_);
   int new_height = RoundUpToPow2(height_);
   if ((new_width != width_) || (new_height != height_)) {
-    LOG << "Converting image from (" << width_ << ", "
-        << height_ << ") to (" << new_width << ", " << new_height << ")";
+    LOG << "Converting image from (" << width_ << ", " << height_ << ") to ("
+        << new_width << ", " << new_height << ")";
 
     int bigger_size = new_width * new_height * 4 * sizeof(uint8_t);
     uint8_t* bigger_buffer = (uint8_t*)AlignedAlloc<16>(bigger_size);
@@ -307,12 +307,10 @@ bool Image::Compress() {
 }
 
 uint8_t* Image::GetBuffer() {
-
   return buffer_.get();
 }
 
 void Image::Clear(Vector4 rgba) {
-
   // Quantize the color to target resolution.
   uint8_t r = (uint8_t)(rgba.x * 255.0f), g = (uint8_t)(rgba.y * 255.0f),
           b = (uint8_t)(rgba.z * 255.0f), a = (uint8_t)(rgba.w * 255.0f);
@@ -331,7 +329,6 @@ void Image::Clear(Vector4 rgba) {
 }
 
 void Image::GradientH() {
-
   // Fill out the first line manually.
   for (int x = 0; x < width_; ++x) {
     uint8_t intensity = x > 255 ? 255 : x;
