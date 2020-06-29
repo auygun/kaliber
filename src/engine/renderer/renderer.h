@@ -59,7 +59,7 @@ class Renderer {
 
   void ContextLost();
 
-  std::shared_ptr<RenderResource> CreateResource(
+  std::unique_ptr<RenderResource> CreateResource(
       RenderResourceFactoryBase& factory);
   void ReleaseResource(unsigned resource_id);
 
@@ -141,7 +141,7 @@ class Renderer {
   int screen_width_ = 0;
   int screen_height_ = 0;
 
-  std::unordered_map<unsigned, std::weak_ptr<RenderResource>> resources_;
+  std::unordered_map<unsigned, RenderResource*> resources_;
 
 #ifdef THREADED_RENDERING
   // Global commands are independent from frames and guaranteed to be processed.

@@ -65,7 +65,7 @@ void Renderer::ContextLost() {
 #endif  // THREADED_RENDERING
 }
 
-std::shared_ptr<RenderResource> Renderer::CreateResource(
+std::unique_ptr<RenderResource> Renderer::CreateResource(
     RenderResourceFactoryBase& factory) {
   static unsigned last_id = 0;
 
@@ -83,7 +83,7 @@ std::shared_ptr<RenderResource> Renderer::CreateResource(
 
   unsigned resource_id = ++last_id;
   auto resource = factory.Create(resource_id, impl_data, this);
-  resources_[resource_id] = resource;
+  resources_[resource_id] = resource.get();
   return resource;
 }
 
@@ -206,9 +206,7 @@ bool Renderer::InitCommon() {
 
 void Renderer::InvalidateAllResources() {
   for (auto& r : resources_) {
-    std::shared_ptr<RenderResource> r_ptr = r.second.lock();
-    if (r_ptr)
-      r_ptr->Destroy();
+      r.second->Destroy();
   }
 }
 

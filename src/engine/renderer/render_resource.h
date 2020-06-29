@@ -40,7 +40,7 @@ class RenderResourceFactoryBase {
       : resource_type_(resource_type) {}
   virtual ~RenderResourceFactoryBase() = default;
 
-  virtual std::shared_ptr<eng::RenderResource>
+  virtual std::unique_ptr<eng::RenderResource>
   Create(unsigned id, std::shared_ptr<void> impl_data, Renderer* renderer) = 0;
 
   template <typename T>
@@ -59,10 +59,10 @@ class RenderResourceFactory : public RenderResourceFactoryBase {
       : RenderResourceFactoryBase(std::type_index(typeid(T))) {}
   ~RenderResourceFactory() override = default;
 
-  std::shared_ptr<eng::RenderResource> Create(unsigned id,
+  std::unique_ptr<eng::RenderResource> Create(unsigned id,
                                               std::shared_ptr<void> impl_data,
                                               Renderer* renderer) override {
-    return std::make_shared<T>(id, impl_data, renderer);
+    return std::make_unique<T>(id, impl_data, renderer);
   }
 };
 
