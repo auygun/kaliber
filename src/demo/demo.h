@@ -20,8 +20,6 @@ class Demo : public eng::Game {
 
   void Update(float delta_time) override;
 
-  void Draw(float frame_frac) override;
-
   void ContextLost() override;
 
   void LostFocus() override;

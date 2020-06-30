@@ -16,19 +16,19 @@ class SoundPlayer {
   ~SoundPlayer();
 
   void SetSound(std::shared_ptr<Sound> sound);
+  void SetSound(std::unique_ptr<Sound> sound);
 
-  void Play(bool loop);
+  void Play(bool loop, float fade_in_duration = 0);
 
-  void Resume(bool fade_in);
+  void Resume(float fade_in_duration = 0);
 
-  void Stop(bool fade_out);
+  void Stop(float fade_out_duration = 0);
 
   // Picks a random variation of the sound or the original sound if "variate" is
   // false. Variations are obtained by slightly up or down sampling.
   void SetVariate(bool variate);
 
-  // Enable or disable stereo simulation effect. Valid for mono samples only.
-  // Disabled by default.
+  // Enable or disable stereo simulation effect. Disabled by default.
   void SetSimulateStereo(bool simulate);
 
   void SetMaxAplitude(float max_amplitude);
@@ -37,10 +37,12 @@ class SoundPlayer {
   void SetEndCallback(base::Closure cb);
 
  private:
-  std::shared_ptr<AudioResource> resource_;
+  std::unique_ptr<AudioResource> resource_;
   std::shared_ptr<Sound> sound_;
 
   float max_amplitude_ = 1.0f;
+
+  bool variate_ = false;
 
   SoundPlayer(const SoundPlayer&) = delete;
   SoundPlayer& operator=(const SoundPlayer&) = delete;

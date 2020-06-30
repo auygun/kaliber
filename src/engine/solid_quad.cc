@@ -2,18 +2,17 @@
 
 #include <memory>
 
+#include "../base/log.h"
 #include "engine.h"
 #include "renderer/geometry.h"
 #include "renderer/shader.h"
 
 namespace eng {
 
-void SolidQuad::Draw() {
-  if (!IsVisible())
-    return;
+void SolidQuad::Draw(float frame_frac) {
+  DCHECK(IsVisible());
 
-  std::shared_ptr<Geometry> quad = Engine::Get().GetQuad();
-  std::shared_ptr<Shader> shader = Engine::Get().GetSolidShader();
+  Shader* shader = Engine::Get().GetSolidShader();
 
   shader->Activate();
   shader->SetUniform("offset", offset_);
@@ -23,7 +22,7 @@ void SolidQuad::Draw() {
   shader->SetUniform("projection", Engine::Get().GetProjectionMarix());
   shader->SetUniform("color", color_);
 
-  quad->Draw();
+  Engine::Get().GetQuad()->Draw();
 }
 
 }  // namespace eng

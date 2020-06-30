@@ -1,18 +1,15 @@
 #include "menu.h"
 
-#include <cassert>
 #include <cmath>
 #include <vector>
 
 #include "../base/collusion_test.h"
 #include "../base/interpolation.h"
 #include "../base/log.h"
-#include "../base/worker.h"
 #include "../engine/engine.h"
 #include "../engine/font.h"
 #include "../engine/image.h"
 #include "../engine/input_event.h"
-#include "../engine/renderer/texture.h"
 #include "demo.h"
 
 using namespace base;
@@ -34,7 +31,7 @@ constexpr float kFadeSpeed = 0.2f;
 
 }  // namespace
 
-Menu::Menu() : tex_(Engine::Get().CreateRenderResource<Texture>()) {}
+Menu::Menu() = default;
 
 Menu::~Menu() = default;
 
@@ -49,11 +46,12 @@ bool Menu::Initialize() {
       max_text_width_ = width;
   }
 
-  tex_->Update(CreateImage());
+  if (!CreateRenderResources())
+    return false;
 
   for (int i = 0; i < kOption_Max; ++i) {
-    items_[i].text.Create(tex_, {1, 4});
-    items_[i].text.AutoScale();
+    items_[i].text.Create("menu_tex", {1, 4});
+    items_[i].text.SetZOrder(40);
     items_[i].text.Scale(1.5f);
     items_[i].text.SetColor(kColorFadeOut);
     items_[i].text.SetVisible(false);
@@ -86,15 +84,12 @@ void Menu::Update(float delta_time) {
 }
 
 void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
-  if (event->GetType() == InputEvent::kTap ||
-      event->GetType() == InputEvent::kDragStart)
+  if (event->GetType() == InputEvent::kDragStart)
     tap_pos_[0] = tap_pos_[1] = event->GetVector(0);
   else if (event->GetType() == InputEvent::kDrag)
     tap_pos_[1] = event->GetVector(0);
 
-  if ((event->GetType() != InputEvent::kTap &&
-       event->GetType() != InputEvent::kDragEnd) ||
-      IsAnimating())
+  if (event->GetType() != InputEvent::kDragEnd || IsAnimating())
     return;
 
   for (int i = 0; i < kOption_Max; ++i) {
@@ -114,15 +109,6 @@ void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
     items_[i].text_animator.SetBlending(kColorHighlight, kBlendingSpeed);
     items_[i].text_animator.Play(Animator::kBlending, false);
   }
-}
-
-void Menu::Draw() {
-  for (int i = 0; i < kOption_Max; ++i)
-    items_[i].text.Draw();
-}
-
-void Menu::ContextLost() {
-  tex_->Update(CreateImage());
 }
 
 void Menu::SetOptionEnabled(Option o, bool enable) {
@@ -181,6 +167,12 @@ void Menu::Hide() {
   }
 }
 
+bool Menu::CreateRenderResources() {
+  Engine::Get().SetImageSource("menu_tex", std::bind(&Menu::CreateImage, this));
+
+  return true;
+}
+
 std::unique_ptr<Image> Menu::CreateImage() {
   const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
 
@@ -191,16 +183,13 @@ std::unique_ptr<Image> Menu::CreateImage() {
   // Fill the area of each menu item with gradient.
   image->GradientV({1.0f, 1.0f, 1.0f, 0}, {.0f, .0f, 1.0f, 0}, line_height);
 
-  base::Worker worker(kOption_Max);
   for (int i = 0; i < kOption_Max; ++i) {
     int w, h;
     font.CalculateBoundingBox(kMenuOption[i], w, h);
     float x = (image->GetWidth() - w) / 2;
     float y = line_height * i;
-    worker.Enqueue(std::bind(&Font::Print, &font, x, y, kMenuOption[i],
-                             image->GetBuffer(), image->GetWidth()));
+    font.Print(x, y, kMenuOption[i], image->GetBuffer(), image->GetWidth());
   }
-  worker.Join();
 
   return image;
 }

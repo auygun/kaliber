@@ -1,5 +1,8 @@
 #include "font.h"
 
+#include <codecvt>
+#include <locale>
+
 #include "../base/log.h"
 #include "engine.h"
 #include "platform/asset_file.h"
@@ -123,9 +126,12 @@ void Font::CalculateBoundingBox(const std::string& text,
 
   float x = 0, y = 0;
 
-  const char* ptr = text.c_str();
+  std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t> convert;
+  std::u16string u16text = convert.from_bytes(text);
+  const char16_t* ptr = u16text.c_str();
+
   while (*ptr) {
-    if (*ptr >= kFirstChar /*&& *ptr < (kFirstChar + kNumChars)*/) {
+    if (*ptr >= kFirstChar && *ptr < (kFirstChar + kNumChars)) {
       stbtt_aligned_quad q;
       stbtt_GetBakedQuad(glyph_info_, kGlyphSize, kGlyphSize, *ptr - kFirstChar,
                          &x, &y, &q, 1);
@@ -140,9 +146,8 @@ void Font::CalculateBoundingBox(const std::string& text,
         x1 = ix1;
       if (iy1 > y1)
         y1 = iy1;
-
-      ++ptr;
     }
+    ++ptr;
   }
 }
 
@@ -168,9 +173,12 @@ void Font::Print(int x,
 
   float fx = (float)x, fy = (float)y + (float)yoff_;
 
-  const char* ptr = text.c_str();
+  std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t> convert;
+  std::u16string u16text = convert.from_bytes(text);
+  const char16_t* ptr = u16text.c_str();
+
   while (*ptr) {
-    if (*ptr >= kFirstChar /*&& *ptr < (kFirstChar + kNumChars)*/) {
+    if (*ptr >= kFirstChar && *ptr < (kFirstChar + kNumChars)) {
       stbtt_aligned_quad q;
       stbtt_GetBakedQuad(glyph_info_, kGlyphSize, kGlyphSize, *ptr - kFirstChar,
                          &fx, &fy, &q, 1);
@@ -184,9 +192,8 @@ void Font::Print(int x,
 
       StretchBlit_I8_to_RGBA32(ix0, iy0, ix1, iy1, iu0, iv0, iu1, iv1, buffer,
                                width, glyph_cache_.get(), kGlyphSize);
-
-      ++ptr;
     }
+    ++ptr;
   }
 }
 

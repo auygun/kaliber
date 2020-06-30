@@ -43,6 +43,33 @@ void Animator::Stop(int animation) {
   loop_flags_ &= ~animation;
 }
 
+float Animator::GetTime(int animation) {
+  if ((animation & kMovement) != 0)
+    return movement_time_;
+  if ((animation & kRotation) != 0)
+    return rotation_time_;
+  if ((animation & kBlending) != 0)
+    return blending_time_;
+  if ((animation & kFrames) != 0)
+    return frame_time_;
+  return timer_time_;
+}
+
+void Animator::SetTime(int animation, float time) {
+  DCHECK(time >= 0 && time <= 1);
+
+  if ((animation & kMovement) != 0)
+    movement_time_ = time;
+  if ((animation & kRotation) != 0)
+    rotation_time_ = time;
+  if ((animation & kBlending) != 0)
+    blending_time_ = time;
+  if ((animation & kFrames) != 0)
+    frame_time_ = time;
+  if ((animation & kTimer) != 0)
+    timer_time_ = time;
+}
+
 void Animator::SetEndCallback(int animation, base::Closure cb) {
   if ((inside_cb_ & animation) != 0) {
     has_pending_cb_ = true;

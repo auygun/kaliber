@@ -1,8 +1,7 @@
 #ifndef AUDIO_ALSA_H
 #define AUDIO_ALSA_H
 
-#include <future>
-#include <memory>
+#include <atomic>
 #include <thread>
 
 #include "audio_base.h"
@@ -22,23 +21,27 @@ class AudioAlsa : public AudioBase {
 
   void Shutdown();
 
+  void Suspend();
+  void Resume();
+
   size_t GetSampleRate();
 
  private:
   // Handle for the PCM device.
-  snd_pcm_t* pcm_handle_;
+  snd_pcm_t* device_;
 
-  std::thread worker_thread_;
-  bool terminate_worker_ = false;
+  std::thread audio_thread_;
+  std::atomic<bool> terminate_audio_thread_ = false;
+  std::atomic<bool> suspend_audio_thread_ = false;
 
   size_t num_channels_ = 0;
   size_t sample_rate_ = 0;
   size_t period_size_ = 0;
 
-  bool StartWorker();
-  void TerminateWorker();
+  bool StartAudioThread();
+  void TerminateAudioThread();
 
-  void WorkerMain(std::promise<bool> promise);
+  void AudioThreadMain();
 };
 
 }  // namespace eng

@@ -2,12 +2,10 @@
 
 #include "../base/log.h"
 #include "../base/vecmath.h"
-#include "../base/worker.h"
 #include "../engine/engine.h"
 #include "../engine/font.h"
 #include "../engine/image.h"
 #include "../engine/input_event.h"
-#include "../engine/renderer/texture.h"
 #include "demo.h"
 
 using namespace base;
@@ -16,11 +14,11 @@ using namespace eng;
 namespace {
 
 constexpr char kCreditsLines[Credits::kNumLines][15] = {
-    "Credits", "Code:", "Attila Uygun", "Graphics:", "Erkan Erturk"};
+    "Credits", "Code:", "Attila Uygun", "Graphics:", "Erkan Ertürk"};
 
 constexpr float kLineSpaces[Credits::kNumLines - 1] = {1.5f, 0.5f, 1.5f, 0.5f};
 
-const Vector4 kTextColor = {0.3f, 0.55f, 1.0f, 1};
+const Vector4 kTextColor = {0.80f, 0.87f, 0.93f, 1};
 constexpr float kFadeSpeed = 0.2f;
 
 }  // namespace
@@ -30,15 +28,18 @@ Credits::Credits() = default;
 Credits::~Credits() = default;
 
 bool Credits::Initialize() {
-  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+  const Font* font = Engine::Get().GetSystemFont();
 
   max_text_width_ = -1;
   for (int i = 0; i < kNumLines; ++i) {
     int width, height;
-    font.CalculateBoundingBox(kCreditsLines[i], width, height);
+    font->CalculateBoundingBox(kCreditsLines[i], width, height);
     if (width > max_text_width_)
       max_text_width_ = width;
   }
+
+  Engine::Get().SetImageSource("credits",
+                               std::bind(&Credits::CreateImage, this));
 
   for (int i = 0; i < kNumLines; ++i)
     text_animator_.Attach(&text_[i]);
@@ -51,8 +52,7 @@ void Credits::Update(float delta_time) {
 }
 
 void Credits::OnInputEvent(std::unique_ptr<InputEvent> event) {
-  if ((event->GetType() == InputEvent::kTap ||
-       event->GetType() == InputEvent::kDragEnd ||
+  if ((event->GetType() == InputEvent::kDragEnd ||
        event->GetType() == InputEvent::kNavigateBack) &&
       !text_animator_.IsPlaying(Animator::kBlending)) {
     Hide();
@@ -61,25 +61,13 @@ void Credits::OnInputEvent(std::unique_ptr<InputEvent> event) {
   }
 }
 
-void Credits::Draw() {
-  for (int i = 0; i < kNumLines; ++i)
-    text_[i].Draw();
-}
-
-void Credits::ContextLost() {
-  if (tex_)
-    tex_->Update(CreateImage());
-}
-
 void Credits::Show() {
-  tex_ = Engine::Get().CreateRenderResource<Texture>();
-  tex_->Update(CreateImage());
+  Engine::Get().RefreshImage("credits");
 
   for (int i = 0; i < kNumLines; ++i) {
-    text_[i].Create(tex_, {1, kNumLines});
+    text_[i].Create("credits", {1, kNumLines});
+    text_[i].SetZOrder(50);
     text_[i].SetOffset({0, 0});
-    text_[i].SetScale({1, 1});
-    text_[i].AutoScale();
     text_[i].SetColor(kTextColor * Vector4(1, 1, 1, 0));
     text_[i].SetFrame(i);
 
@@ -107,7 +95,6 @@ void Credits::Hide() {
   text_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
     for (int i = 0; i < kNumLines; ++i)
       text_[i].Destory();
-    tex_.reset();
     text_animator_.SetEndCallback(Animator::kBlending, nullptr);
     text_animator_.SetVisible(false);
   });
@@ -116,23 +103,21 @@ void Credits::Hide() {
 }
 
 std::unique_ptr<Image> Credits::CreateImage() {
-  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+  const Font* font = Engine::Get().GetSystemFont();
 
-  int line_height = font.GetLineHeight() + 1;
+  int line_height = font->GetLineHeight() + 1;
   auto image = std::make_unique<Image>();
   image->Create(max_text_width_, line_height * kNumLines);
   image->Clear({1, 1, 1, 0});
 
-  Worker worker(kNumLines);
   for (int i = 0; i < kNumLines; ++i) {
     int w, h;
-    font.CalculateBoundingBox(kCreditsLines[i], w, h);
+    font->CalculateBoundingBox(kCreditsLines[i], w, h);
     float x = (image->GetWidth() - w) / 2;
     float y = line_height * i;
-    worker.Enqueue(std::bind(&Font::Print, &font, x, y, kCreditsLines[i],
-                             image->GetBuffer(), image->GetWidth()));
+    font->Print(x, y, kCreditsLines[i], image->GetBuffer(), image->GetWidth());
   }
-  worker.Join();
 
+  image->Compress();
   return image;
 }

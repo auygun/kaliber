@@ -4,6 +4,7 @@
 #include <array>
 #include <memory>
 #include <string>
+
 #include "../../base/hash.h"
 #include "../../base/vecmath.h"
 #include "renderer_types.h"
@@ -14,11 +15,13 @@ class Image;
 class ShaderSource;
 class Mesh;
 
-#define RENDER_COMMAND_BEGIN(NAME)            \
+#define RENDER_COMMAND_BEGIN(NAME)                    \
   struct NAME : RenderCommand {                       \
     static constexpr CommandId CMD_ID = HHASH(#NAME); \
     NAME();
-#define RENDER_COMMAND_END };
+#define RENDER_COMMAND_END \
+  }                        \
+  ;
 
 struct RenderCommand {
   using CommandId = size_t;
@@ -43,13 +46,6 @@ struct RenderCommand {
   std::string cmd_name;
 #endif
 };
-
-RENDER_COMMAND_BEGIN(CmdEableBlend)
-RENDER_COMMAND_END
-
-RENDER_COMMAND_BEGIN(CmdClear)
-  std::array<float, 4> rgba;
-RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdPresent)
 RENDER_COMMAND_END

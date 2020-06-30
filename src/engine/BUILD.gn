@@ -1,0 +1,95 @@
+source_set("engine") {
+  sources =
+      [
+        "animatable.cc",
+        "animatable.h",
+        "animator.cc",
+        "animator.h",
+        "audio/audio_base.cc",
+        "audio/audio_base.h",
+        "audio/audio_forward.h",
+        "audio/audio_resource.cc",
+        "audio/audio_resource.h",
+        "audio/audio_sample.h",
+        "audio/audio.h",
+        "drawable.cc",
+        "drawable.h",
+        "engine.cc",
+        "engine.h",
+        "font.cc",
+        "font.h",
+        "game_factory.h",
+        "game.h",
+        "image_quad.cc",
+        "image_quad.h",
+        "image.cc",
+        "image.h",
+        "input_event.h",
+        "mesh.cc",
+        "mesh.h",
+        "platform/asset_file.cc",
+        "platform/asset_file.h",
+        "platform/platform_base.cc",
+        "platform/platform_base.h",
+        "platform/platform_forward.h",
+        "platform/platform.h",
+        "renderer/geometry.cc",
+        "renderer/geometry.h",
+        "renderer/opengl.h",
+        "renderer/render_command.cc",
+        "renderer/render_command.h",
+        "renderer/render_resource.cc",
+        "renderer/render_resource.h",
+        "renderer/renderer_types.cc",
+        "renderer/renderer_types.h",
+        "renderer/renderer.cc",
+        "renderer/renderer.h",
+        "renderer/shader.cc",
+        "renderer/shader.h",
+        "renderer/texture.cc",
+        "renderer/texture.h",
+        "shader_source.cc",
+        "shader_source.h",
+        "solid_quad.cc",
+        "solid_quad.h",
+        "sound_player.cc",
+        "sound_player.h",
+        "sound.cc",
+        "sound.h",
+      ]
+
+      ldflags = [] libs = []
+
+      if (target_os == "linux") {
+    sources +=
+        [
+          "audio/audio_alsa.cc",
+          "audio/audio_alsa.h",
+          "platform/asset_file_linux.cc",
+          "platform/platform_linux.cc",
+          "platform/platform_linux.h",
+          "renderer/renderer_linux.cc",
+        ]
+
+#ldflags += ["-L/usr/X11R6/lib"]
+
+        libs += [ "X11", "GL", "asound", "pthread" ]
+  }
+
+  if (target_os == "android") {
+    sources += [
+      "audio/audio_oboe.cc",
+      "audio/audio_oboe.h",
+      "platform/asset_file_android.cc",
+      "platform/platform_android.cc",
+      "platform/platform_android.h",
+      "renderer/renderer_android.cc",
+    ]
+
+#ldflags += ["-L/usr/X11R6/lib"]
+
+#libs += ["X11", "rt", "pthread"]
+  }
+
+  deps = []
+}

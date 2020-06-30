@@ -1,8 +1,7 @@
 #include "texture.h"
 
-#include <cassert>
-
-#include "../../engine/image.h"
+#include "../../base/log.h"
+#include "../image.h"
 #include "render_command.h"
 #include "renderer.h"
 
@@ -34,6 +33,7 @@ void Texture::Destroy() {
     cmd->impl_data = impl_data_;
     renderer_->EnqueueCommand(std::move(cmd));
     valid_ = false;
+    DLOG << "Texture destroyed. resource_id: " << resource_id_;
   }
 }
 

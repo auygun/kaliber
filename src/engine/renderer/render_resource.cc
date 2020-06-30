@@ -1,7 +1,5 @@
 #include "render_resource.h"
 
-#include <cassert>
-
 #include "renderer.h"
 
 namespace eng {

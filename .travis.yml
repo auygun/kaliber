@@ -1,0 +1,20 @@
+dist: trusty
+
+language: cpp
+
+os: linux
+
+compiler: 
+    - gcc
+    - clang
+
+env:
+    - BUILD_CONFIGURATION=debug
+    - BUILD_CONFIGURATION=release
+
+install:
+    - source build/travis.sh
+
+script:
+    - cd build/linux
+    - make BUILD=$BUILD_CONFIGURATION

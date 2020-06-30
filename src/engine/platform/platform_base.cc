@@ -3,6 +3,7 @@
 #include <thread>
 
 #include "../../base/log.h"
+#include "../../base/task_runner.h"
 #include "../audio/audio.h"
 #include "../engine.h"
 #include "../renderer/renderer.h"
@@ -10,18 +11,41 @@
 // Save battery on mobile devices.
 #define USE_SLEEP
 
+using namespace base;
+
 namespace eng {
 
-Platform::InternalError Platform::internal_error;
+PlatformBase::InternalError PlatformBase::internal_error;
 
-void Platform::Shutdown() {
+PlatformBase::PlatformBase() = default;
+
+PlatformBase::~PlatformBase() = default;
+
+void PlatformBase::Initialize() {
+  LOG << "Initializing platform.";
+
+  worker_.Initialize();
+  TaskRunner::CreateThreadLocalTaskRunner();
+
+  audio_ = std::make_unique<Audio>();
+  if (!audio_->Initialize()) {
+    LOG << "Failed to initialize audio system.";
+    throw internal_error;
+  }
+
+  renderer_ = std::make_unique<Renderer>();
+}
+
+void PlatformBase::Shutdown() {
   LOG << "Shutting down platform.";
+
   audio_->Shutdown();
   renderer_->Shutdown();
 }
 
-void Platform::RunMainLoop() {
-  engine_ = std::make_unique<Engine>(this, renderer_.get(), audio_.get());
+void PlatformBase::RunMainLoop() {
+  engine_ = std::make_unique<Engine>(static_cast<Platform*>(this),
+                                     renderer_.get(), audio_.get());
   if (!engine_->Initialize()) {
     LOG << "Failed to initialize the engine.";
     throw internal_error;
@@ -59,13 +83,17 @@ void Platform::RunMainLoop() {
 
     // Subdivide the frame time.
     while (accumulator >= time_step) {
-      Update();
+      TaskRunner::GetThreadLocalTaskRunner()->SingleConsumerRun();
+
+      static_cast<Platform*>(this)->Update();
+      engine_->Update(time_step);
+
       if (should_exit_) {
+        worker_.Shutdown();
         engine_->Shutdown();
         engine_.reset();
         return;
       }
-      engine_->Update(time_step);
       accumulator -= time_step;
     };
 

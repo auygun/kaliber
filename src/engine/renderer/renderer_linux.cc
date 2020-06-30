@@ -1,20 +1,21 @@
 #include "renderer.h"
 
-#include <X11/Xutil.h>
-
 #include "../../base/log.h"
-#include "../../third_party/glew/glew.h"
 
 namespace eng {
 
 bool Renderer::Initialize() {
+  LOG << "Initializing renderer.";
+
   if (!CreateWindow())
     return false;
-  return StartWorker();
+  return StartRenderThread();
 }
 
 void Renderer::Shutdown() {
-  TerminateWorker();
+  LOG << "Shutting down renderer.";
+
+  TerminateRenderThread();
   DestroyWindow();
 }
 
@@ -91,8 +92,10 @@ void Renderer::ShutdownInternal() {
 }
 
 void Renderer::HandleCmdPresent(RenderCommand* cmd) {
-  if (display_)
+  if (display_) {
     glXSwapBuffers(display_, window_);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  }
 }
 
 }  // namespace eng

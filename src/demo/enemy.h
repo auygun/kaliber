@@ -15,7 +15,6 @@
 namespace eng {
 class Image;
 class Sound;
-class Texture;
 }  // namespace eng
 
 class Enemy {
@@ -25,11 +24,7 @@ class Enemy {
 
   bool Initialize();
 
-  void ContextLost();
-
   void Update(float delta_time);
-
-  void Draw(float frame_frac);
 
   bool HasTarget(DamageType damage_type);
   base::Vector2 GetTargetPos(DamageType damage_type);
@@ -76,12 +71,6 @@ class Enemy {
     eng::SoundPlayer explosion_;
   };
 
-  std::shared_ptr<eng::Texture> skull_tex_;
-  std::shared_ptr<eng::Texture> bug_tex_;
-  std::shared_ptr<eng::Texture> target_tex_;
-  std::shared_ptr<eng::Texture> blast_tex_;
-  std::shared_ptr<eng::Texture> score_tex_[kEnemyType_Max];
-
   std::shared_ptr<eng::Sound> explosion_sound_;
 
   std::list<EnemyUnit> enemies_;
@@ -111,7 +100,7 @@ class Enemy {
 
   int GetScore(EnemyType enemy_type);
 
-  std::unique_ptr<eng::Image> GetScoreImage(int score);
+  std::unique_ptr<eng::Image> GetScoreImage(EnemyType enemy_type);
 
   bool CreateRenderResources();
 };

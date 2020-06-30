@@ -3,12 +3,14 @@
 
 #include <list>
 #include <memory>
-#include <mutex>
 
 #include "../../base/closure.h"
-#include "../../base/task_runner.h"
-#include "../../base/worker.h"
+#include "../../base/spinlock.h"
 #include "audio_sample.h"
+
+namespace base {
+class TaskRunner;
+}
 
 namespace eng {
 
@@ -16,24 +18,32 @@ class Sound;
 
 class AudioBase {
  public:
-  void Play(std::shared_ptr<AudioSample> impl_data);
+  void Play(std::shared_ptr<AudioSample> sample);
 
-  void Update();
+  void SetEnableAudio(bool enable) { audio_enabled_ = enable; }
 
  protected:
   static constexpr int kChannelCount = 2;
-
-  std::list<std::shared_ptr<AudioSample>> samples_[2];
-  std::mutex mutex_;
-
-  base::Worker worker_{1};
-
-  base::TaskRunner task_runner_;
 
   AudioBase();
   ~AudioBase();
 
   void RenderAudio(float* output_buffer, size_t num_frames);
+
+ private:
+  std::list<std::shared_ptr<AudioSample>> samples_[2];
+  base::Spinlock lock_;
+
+  base::TaskRunner* main_thread_task_runner_;
+
+  bool audio_enabled_ = true;
+
+  void DoStream(std::shared_ptr<AudioSample> sample, bool loop);
+
+  void EndCallback(std::shared_ptr<AudioSample> sample);
+
+  AudioBase(const AudioBase&) = delete;
+  AudioBase& operator=(const AudioBase&) = delete;
 };
 
 }  // namespace eng

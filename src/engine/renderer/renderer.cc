@@ -1,12 +1,14 @@
 #include "renderer.h"
 
 #include <algorithm>
-#include <cassert>
 #include <cstring>
 #include <sstream>
 
 #include "../../base/log.h"
 #include "../../base/vecmath.h"
+#ifdef THREADED_RENDERING
+#include "../../base/task_runner.h"
+#endif  // THREADED_RENDERING
 #include "../image.h"
 #include "../mesh.h"
 #include "../shader_source.h"
@@ -14,6 +16,8 @@
 #include "render_command.h"
 #include "shader.h"
 #include "texture.h"
+
+using namespace base;
 
 namespace {
 
@@ -31,20 +35,17 @@ const std::string kAttributeNames[eng::kAttribType_Max] = {
 
 namespace eng {
 
-Renderer::Renderer() = default;
-
-Renderer::~Renderer() {
-  TerminateWorker();
-}
-
-void Renderer::SetContextLostCB(base::Closure cb) {
-  context_lost_cb_ = std::move(cb);
-}
-
-void Renderer::Update() {
 #ifdef THREADED_RENDERING
-  task_runner_.Run();
+Renderer::Renderer()
+    : main_thread_task_runner_(TaskRunner::GetThreadLocalTaskRunner()) {}
+#else
+Renderer::Renderer() = default;
 #endif  // THREADED_RENDERING
+
+Renderer::~Renderer() = default;
+
+void Renderer::SetContextLostCB(Closure cb) {
+  context_lost_cb_ = std::move(cb);
 }
 
 void Renderer::ContextLost() {
@@ -59,7 +60,7 @@ void Renderer::ContextLost() {
   InvalidateAllResources();
 
 #ifdef THREADED_RENDERING
-  task_runner_.Enqueue(context_lost_cb_);
+  main_thread_task_runner_->EnqueueTask(HERE, context_lost_cb_);
 #else
   context_lost_cb_();
 #endif  // THREADED_RENDERING
@@ -79,7 +80,7 @@ std::unique_ptr<RenderResource> Renderer::CreateResource(
   else if (factory.IsTypeOf<Texture>())
     impl_data = std::make_shared<TextureOpenGL>();
   else
-    assert(false);
+    NOTREACHED << "- Unknown resource type.";
 
   unsigned resource_id = ++last_id;
   auto resource = factory.Create(resource_id, impl_data, this);
@@ -105,7 +106,7 @@ void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
     return;
   }
 
-  bool new_frame = cmd->cmd_id == HHASH("CmdPresent");
+  bool new_frame = cmd->cmd_id == CmdPresent::CMD_ID;
   draw_commands_[1].push_back(std::move(cmd));
   if (new_frame) {
     render_queue_size_ = draw_commands_[1].size();
@@ -174,7 +175,8 @@ bool Renderer::InitCommon() {
   if (extensions.find("GL_OES_vertex_array_object") != extensions.end()) {
     // This extension seems to be broken on older PowerVR drivers.
     if (!strstr(renderer, "PowerVR SGX 53") &&
-        !strstr(renderer, "PowerVR SGX 54")) {
+        !strstr(renderer, "PowerVR SGX 54") &&
+        !strstr(renderer, "Android Emulator")) {
       vertex_array_objects_ = true;
     }
   }
@@ -201,27 +203,33 @@ bool Renderer::InitCommon() {
 
   glViewport(0, 0, screen_width_, screen_height_);
 
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  glClearColor(0, 0, 0, 1);
+
   return true;
 }
 
 void Renderer::InvalidateAllResources() {
-  for (auto& r : resources_) {
-      r.second->Destroy();
-  }
+  for (auto& r : resources_)
+    r.second->Destroy();
 }
 
-bool Renderer::StartWorker() {
+bool Renderer::StartRenderThread() {
 #ifdef THREADED_RENDERING
   LOG << "Starting render thread.";
 
   global_commands_.clear();
   draw_commands_[0].clear();
   draw_commands_[1].clear();
-  terminate_worker_ = false;
+  terminate_render_thread_ = false;
 
   std::promise<bool> promise;
   std::future<bool> future = promise.get_future();
-  worker_thread_ = std::thread(&Renderer::WorkerMain, this, std::move(promise));
+  render_thread_ =
+      std::thread(&Renderer::RenderThreadMain, this, std::move(promise));
+  future.wait();
   return future.get();
 #else
   LOG << "Single threaded rendering.";
@@ -229,18 +237,18 @@ bool Renderer::StartWorker() {
 #endif  // THREADED_RENDERING
 }
 
-void Renderer::TerminateWorker() {
+void Renderer::TerminateRenderThread() {
 #ifdef THREADED_RENDERING
+  DCHECK(!terminate_render_thread_);
+
   // Notify worker thread and wait for it to terminate.
   {
     std::unique_lock<std::mutex> scoped_lock(mutex_);
-    if (terminate_worker_)
-      return;
-    terminate_worker_ = true;
+    terminate_render_thread_ = true;
   }
   cv_.notify_one();
   LOG << "Terminating render thread";
-  worker_thread_.join();
+  render_thread_.join();
 #else
   ShutdownInternal();
 #endif  // THREADED_RENDERING
@@ -248,7 +256,7 @@ void Renderer::TerminateWorker() {
 
 #ifdef THREADED_RENDERING
 
-void Renderer::WorkerMain(std::promise<bool> promise) {
+void Renderer::RenderThreadMain(std::promise<bool> promise) {
   promise.set_value(InitInternal());
 
   std::deque<std::unique_ptr<RenderCommand>> cq[2];
@@ -257,9 +265,9 @@ void Renderer::WorkerMain(std::promise<bool> promise) {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
       cv_.wait(scoped_lock, [&]() -> bool {
         return !global_commands_.empty() || !draw_commands_[0].empty() ||
-               terminate_worker_;
+               terminate_render_thread_;
       });
-      if (terminate_worker_) {
+      if (terminate_render_thread_) {
         ShutdownInternal();
         return;
       }
@@ -272,17 +280,11 @@ void Renderer::WorkerMain(std::promise<bool> promise) {
     LOG << "draw queue size: " << (int)cq[1].size();
 #endif
 
-    while (!cq[0].empty()) {
-      std::unique_ptr<RenderCommand> cmd;
-      cmd.swap(cq[0].front());
-      cq[0].pop_front();
-      ProcessCommand(cmd.get());
-    }
-    while (!cq[1].empty()) {
-      std::unique_ptr<RenderCommand> cmd;
-      cmd.swap(cq[1].front());
-      cq[1].pop_front();
-      ProcessCommand(cmd.get());
+    for (int i = 0; i < 2; ++i) {
+      while (!cq[i].empty()) {
+        ProcessCommand(cq[i].front().get());
+        cq[i].pop_front();
+      }
     }
   }
 }
@@ -295,75 +297,57 @@ void Renderer::ProcessCommand(RenderCommand* cmd) {
 #endif
 
   switch (cmd->cmd_id) {
-    case HHASH("CmdEableBlend"):
-      HandleCmdEnableBlend(cmd);
-      break;
-    case HHASH("CmdClear"):
-      HandleCmdClear(cmd);
-      break;
-    case HHASH("CmdPresent"):
+    case CmdPresent::CMD_ID:
       HandleCmdPresent(cmd);
       break;
-    case HHASH("CmdUpdateTexture"):
+    case CmdUpdateTexture::CMD_ID:
       HandleCmdUpdateTexture(cmd);
       break;
-    case HHASH("CmdDestoryTexture"):
+    case CmdDestoryTexture::CMD_ID:
       HandleCmdDestoryTexture(cmd);
       break;
-    case HHASH("CmdActivateTexture"):
+    case CmdActivateTexture::CMD_ID:
       HandleCmdActivateTexture(cmd);
       break;
-    case HHASH("CmdCreateGeometry"):
+    case CmdCreateGeometry::CMD_ID:
       HandleCmdCreateGeometry(cmd);
       break;
-    case HHASH("CmdDestroyGeometry"):
+    case CmdDestroyGeometry::CMD_ID:
       HandleCmdDestroyGeometry(cmd);
       break;
-    case HHASH("CmdDrawGeometry"):
+    case CmdDrawGeometry::CMD_ID:
       HandleCmdDrawGeometry(cmd);
       break;
-    case HHASH("CmdCreateShader"):
+    case CmdCreateShader::CMD_ID:
       HandleCmdCreateShader(cmd);
       break;
-    case HHASH("CmdDestroyShader"):
+    case CmdDestroyShader::CMD_ID:
       HandleCmdDestroyShader(cmd);
       break;
-    case HHASH("CmdActivateShader"):
+    case CmdActivateShader::CMD_ID:
       HandleCmdActivateShader(cmd);
       break;
-    case HHASH("CmdSetUniformVec2"):
+    case CmdSetUniformVec2::CMD_ID:
       HandleCmdSetUniformVec2(cmd);
       break;
-    case HHASH("CmdSetUniformVec3"):
+    case CmdSetUniformVec3::CMD_ID:
       HandleCmdSetUniformVec3(cmd);
       break;
-    case HHASH("CmdSetUniformVec4"):
+    case CmdSetUniformVec4::CMD_ID:
       HandleCmdSetUniformVec4(cmd);
       break;
-    case HHASH("CmdSetUniformMat4"):
+    case CmdSetUniformMat4::CMD_ID:
       HandleCmdSetUniformMat4(cmd);
       break;
-    case HHASH("CmdSetUniformFloat"):
+    case CmdSetUniformFloat::CMD_ID:
       HandleCmdSetUniformFloat(cmd);
       break;
-    case HHASH("CmdSetUniformInt"):
+    case CmdSetUniformInt::CMD_ID:
       HandleCmdSetUniformInt(cmd);
       break;
     default:
-      assert(false);
-      break;
+      NOTREACHED << "- Unknown render command: " << cmd->cmd_id;
   }
-}
-
-void Renderer::HandleCmdEnableBlend(RenderCommand* cmd) {
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-}
-
-void Renderer::HandleCmdClear(RenderCommand* cmd) {
-  auto* c = static_cast<CmdClear*>(cmd);
-  glClearColor(c->rgba[0], c->rgba[1], c->rgba[2], c->rgba[3]);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
@@ -379,7 +363,7 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
 
   glBindTexture(GL_TEXTURE_2D, gl_id);
   if (c->image->IsCompressed()) {
-    GLenum format;
+    GLenum format = 0;
     switch (c->image->GetFormat()) {
       case Image::kDXT1:
         format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
@@ -399,15 +383,23 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
         break;
 #endif
       default:
-        assert(false);
-        return;
+        NOTREACHED << "- Unhandled texure format: " << c->image->GetFormat();
     }
 
     glCompressedTexImage2D(GL_TEXTURE_2D, 0, format, c->image->GetWidth(),
                            c->image->GetHeight(), 0, c->image->GetSize(),
                            c->image->GetBuffer());
 
+    // Sometimes the first glCompressedTexImage2D call after context-lost
+    // generates GL_INVALID_VALUE.
     GLenum err = glGetError();
+    if (err == GL_INVALID_VALUE) {
+      glCompressedTexImage2D(GL_TEXTURE_2D, 0, format, c->image->GetWidth(),
+                             c->image->GetHeight(), 0, c->image->GetSize(),
+                             c->image->GetBuffer());
+      err = glGetError();
+    }
+
     if (err != GL_NO_ERROR)
       LOG << "GL ERROR after glCompressedTexImage2D: " << (int)err;
   } else {

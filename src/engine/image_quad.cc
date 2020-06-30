@@ -1,7 +1,6 @@
 #include "image_quad.h"
 
-#include <cassert>
-
+#include "../base/log.h"
 #include "engine.h"
 #include "renderer/geometry.h"
 #include "renderer/shader.h"
@@ -11,14 +10,20 @@ using namespace base;
 
 namespace eng {
 
-void ImageQuad::Create(std::shared_ptr<Texture> texture,
+void ImageQuad::Create(const std::string& asset_name,
                        std::array<int, 2> num_frames,
                        int frame_width,
                        int frame_height) {
-  texture_ = texture;
+  texture_ = Engine::Get().GetTexture(asset_name);
+
   num_frames_ = std::move(num_frames);
   frame_width_ = frame_width;
   frame_height_ = frame_height;
+
+  if ((frame_width_ > 0 && frame_height_ > 0) || texture_->IsValid())
+    AutoScale();
+
+  asset_name_ = asset_name;
 }
 
 void ImageQuad::Destory() {
@@ -26,13 +31,15 @@ void ImageQuad::Destory() {
 }
 
 void ImageQuad::AutoScale() {
+  auto& engine = Engine::Get();
   Vector2 dimensions = {GetFrameWidth(), GetFrameHeight()};
-  SetScale(Engine::Get().ToScale(dimensions));
-  Scale((float)Engine::Get().GetDeviceDpi() / 200.0f);
+  SetScale(engine.ToScale(dimensions));
+  Scale((float)engine.GetDeviceDpi() / engine.image_dpi());
 }
 
 void ImageQuad::SetFrame(size_t frame) {
-  assert(frame < GetNumFrames());
+  DCHECK(frame < GetNumFrames())
+      << "asset: " << asset_name_ << " frame: " << frame;
   current_frame_ = frame;
 }
 
@@ -40,8 +47,10 @@ size_t ImageQuad::GetNumFrames() const {
   return num_frames_[0] * num_frames_[1];
 }
 
-void ImageQuad::Draw() {
-  if (!IsVisible() || !texture_ || !texture_->IsValid())
+void ImageQuad::Draw(float frame_frac) {
+  DCHECK(IsVisible());
+
+  if (!texture_ || !texture_->IsValid())
     return;
 
   texture_->Activate();
@@ -49,8 +58,7 @@ void ImageQuad::Draw() {
   Vector2 tex_scale = {GetFrameWidth() / texture_->GetWidth(),
                        GetFrameHeight() / texture_->GetHeight()};
 
-  std::shared_ptr<Geometry> quad = Engine::Get().GetQuad();
-  std::shared_ptr<Shader> shader = Engine::Get().GetPassThroughShader();
+  Shader* shader = Engine::Get().GetPassThroughShader();
 
   shader->Activate();
   shader->SetUniform("offset", offset_);
@@ -63,7 +71,7 @@ void ImageQuad::Draw() {
   shader->SetUniform("color", color_);
   shader->SetUniform("texture", 0);
 
-  quad->Draw();
+  Engine::Get().GetQuad()->Draw();
 }
 
 float ImageQuad::GetFrameWidth() const {
@@ -78,9 +86,8 @@ float ImageQuad::GetFrameHeight() const {
 
 // Return the uv offset for the given frame.
 Vector2 ImageQuad::GetUVOffset(int frame) const {
-  assert(frame < num_frames_[0] * num_frames_[1]);
-  if (num_frames_[0] == 1 && num_frames_[1] == 1)
-    return {0, 0};
+  DCHECK(frame < GetNumFrames())
+      << "asset: " << asset_name_ << " frame: " << frame;
   return {(float)(frame % num_frames_[0]), (float)(frame / num_frames_[0])};
 }
 

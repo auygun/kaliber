@@ -10,7 +10,6 @@
 namespace eng {
 class Image;
 class InputEvent;
-class Texture;
 }  // namespace eng
 
 class Credits {
@@ -26,16 +25,10 @@ class Credits {
 
   void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
 
-  void Draw();
-
-  void ContextLost();
-
   void Show();
   void Hide();
 
  private:
-  std::shared_ptr<eng::Texture> tex_;
-
   eng::ImageQuad text_[kNumLines];
   eng::Animator text_animator_;
 

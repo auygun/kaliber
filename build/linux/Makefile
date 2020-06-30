@@ -25,7 +25,7 @@ INTERMEDIATE_DIR := $(OUTPUT_DIR)/obj
 BUILD_DIR := $(INTERMEDIATE_DIR)/$(BUILD)
 
 ARFLAGS = r
-LDFLAGS = -lX11 -lGL -lz -pthread -lasound
+LDFLAGS = -lX11 -lGL -pthread -lasound
 
 # Always enable debug information.
 CFLAGS += -g
@@ -36,6 +36,7 @@ CFLAGS += -MD -MP -MT $@
 # Predefined flags.
 ifeq ($(BUILD), debug)
   CFLAGS += -D_DEBUG
+  CFLAGS += -D_GLIBCXX_DEBUG
 endif
 
 # Enable compiler optimizations for everything except debug.
@@ -83,6 +84,7 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/audio/audio_alsa.cc \
   $(SRC_ROOT)/engine/audio/audio_base.cc \
   $(SRC_ROOT)/engine/audio/audio_resource.cc \
+  $(SRC_ROOT)/engine/drawable.cc \
   $(SRC_ROOT)/engine/engine.cc \
   $(SRC_ROOT)/engine/font.cc \
   $(SRC_ROOT)/engine/image_quad.cc \
@@ -90,8 +92,8 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/mesh.cc \
   $(SRC_ROOT)/engine/platform/asset_file_linux.cc \
   $(SRC_ROOT)/engine/platform/asset_file.cc \
+  $(SRC_ROOT)/engine/platform/platform_base.cc \
   $(SRC_ROOT)/engine/platform/platform_linux.cc \
-  $(SRC_ROOT)/engine/platform/platform.cc \
   $(SRC_ROOT)/engine/renderer/geometry.cc \
   $(SRC_ROOT)/engine/renderer/render_command.cc \
   $(SRC_ROOT)/engine/renderer/render_resource.cc \
@@ -106,8 +108,6 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/sound.cc \
   $(SRC_ROOT)/third_party/glew/glew.c \
   $(SRC_ROOT)/third_party/jsoncpp/jsoncpp.cc \
-  $(SRC_ROOT)/third_party/minizip/ioapi.c \
-  $(SRC_ROOT)/third_party/minizip/unzip.c \
   $(SRC_ROOT)/third_party/r8b/pffft.cpp \
   $(SRC_ROOT)/third_party/r8b/r8bbase.cpp \
   $(SRC_ROOT)/third_party/texture_compressor/dxt_encoder_internals.cc \

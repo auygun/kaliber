@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <string>
 #include "../../base/log.h"
 #include "asset_file.h"

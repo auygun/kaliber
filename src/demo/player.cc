@@ -1,7 +1,5 @@
 #include "player.h"
 
-#include <cassert>
-
 #include "../base/log.h"
 #include "../engine/engine.h"
 #include "../engine/image.h"
@@ -21,9 +19,7 @@ constexpr int wepon_anim_speed = 48;
 
 }  // namespace
 
-Player::Player()
-    : weapon_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      beam_tex_(Engine::Get().CreateRenderResource<Texture>()) {}
+Player::Player() = default;
 
 Player::~Player() = default;
 
@@ -32,10 +28,6 @@ bool Player::Initialize() {
     return false;
   SetupWeapons();
   return true;
-}
-
-void Player::ContextLost() {
-  CreateRenderResources();
 }
 
 void Player::Update(float delta_time) {
@@ -63,15 +55,6 @@ void Player::OnInputEvent(std::unique_ptr<InputEvent> event) {
     DragCancel();
 }
 
-void Player::Draw(float frame_frac) {
-  for (int i = 0; i < 2; ++i) {
-    drag_sign_[i].Draw();
-    beam_[i].Draw();
-    beam_spark_[i].Draw();
-    weapon_[i].Draw();
-  }
-}
-
 Vector2 Player::GetWeaponPos(DamageType type) const {
   return Engine::Get().GetScreenSize() /
              Vector2(type == kDamageType_Green ? 3.5f : -3.5f, -2) +
@@ -93,7 +76,7 @@ DamageType Player::GetWeaponType(const Vector2& pos) {
     }
   }
 
-  assert(closest_weapon != kDamageType_Invalid);
+  DCHECK(closest_weapon != kDamageType_Invalid);
   if (closest_dist < weapon_[closest_weapon].GetScale().x * 0.9f)
     return closest_weapon;
   return kDamageType_Invalid;
@@ -157,27 +140,27 @@ bool Player::IsFiring(DamageType type) {
 void Player::SetupWeapons() {
   for (int i = 0; i < 2; ++i) {
     // Setup draw sign.
-    drag_sign_[i].Create(weapon_tex_, {8, 2});
-    drag_sign_[i].AutoScale();
+    drag_sign_[i].Create("weapon_tex", {8, 2});
+    drag_sign_[i].SetZOrder(21);
     drag_sign_[i].SetFrame(i * 8);
 
     // Setup weapon.
-    weapon_[i].Create(weapon_tex_, {8, 2});
-    weapon_[i].AutoScale();
+    weapon_[i].Create("weapon_tex", {8, 2});
+    weapon_[i].SetZOrder(24);
     weapon_[i].SetVisible(true);
     weapon_[i].SetFrame(wepon_warmup_frame[i]);
 
     // Setup beam.
-    beam_[i].Create(beam_tex_, {1, 2});
-    beam_[i].AutoScale();
+    beam_[i].Create("beam_tex", {1, 2});
+    beam_[i].SetZOrder(22);
     beam_[i].SetFrame(i);
     beam_[i].PlaceToRightOf(weapon_[i]);
     beam_[i].Translate(weapon_[i].GetScale() * Vector2(-0.5f, 0));
     beam_[i].SetPivot(beam_[i].GetOffset());
 
     // Setup beam spark.
-    beam_spark_[i].Create(weapon_tex_, {8, 2});
-    beam_spark_[i].AutoScale();
+    beam_spark_[i].Create("weapon_tex", {8, 2});
+    beam_spark_[i].SetZOrder(23);
     beam_spark_[i].SetFrame(i * 8 + 1);
     beam_spark_[i].PlaceToRightOf(weapon_[i]);
     beam_spark_[i].Translate(weapon_[i].GetScale() * Vector2(-0.5f, 0));
@@ -338,17 +321,8 @@ void Player::NavigateBack() {
 }
 
 bool Player::CreateRenderResources() {
-  auto weapon_image = std::make_unique<Image>();
-  if (!weapon_image->Load("enemy_anims_flare_ok.png"))
-    return false;
-  auto beam_image = std::make_unique<Image>();
-  if (!beam_image->Load("enemy_ray_ok.png"))
-    return false;
+  Engine::Get().SetImageSource("weapon_tex", "enemy_anims_flare_ok.png", true);
+  Engine::Get().SetImageSource("beam_tex", "enemy_ray_ok.png", true);
 
-  weapon_image->Compress();
-  beam_image->Compress();
-
-  weapon_tex_->Update(std::move(weapon_image));
-  beam_tex_->Update(std::move(beam_image));
   return true;
 }

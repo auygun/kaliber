@@ -12,7 +12,6 @@
 namespace eng {
 class Image;
 class InputEvent;
-class Texture;
 }  // namespace eng
 
 class Menu {
@@ -35,10 +34,6 @@ class Menu {
 
   void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
 
-  void Draw();
-
-  void ContextLost();
-
   void SetOptionEnabled(Option o, bool enable);
 
   void Show();
@@ -54,8 +49,6 @@ class Menu {
     bool hide = false;
   };
 
-  std::shared_ptr<eng::Texture> tex_;
-
   Item items_[kOption_Max];
 
   int max_text_width_ = 0;
@@ -63,6 +56,8 @@ class Menu {
   Option selected_option_ = kOption_Invalid;
 
   base::Vector2 tap_pos_[2] = {{0, 0}, {0, 0}};
+
+  bool CreateRenderResources();
 
   std::unique_ptr<eng::Image> CreateImage();
 

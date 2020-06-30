@@ -1,14 +1,16 @@
 #include "engine.h"
 
 #include "../base/log.h"
-#include "../base/worker.h"
 #include "../third_party/texture_compressor/texture_compressor.h"
+#include "animator.h"
 #include "audio/audio.h"
 #include "audio/audio_resource.h"
+#include "drawable.h"
 #include "font.h"
 #include "game.h"
 #include "game_factory.h"
 #include "image.h"
+#include "image_quad.h"
 #include "input_event.h"
 #include "mesh.h"
 #include "platform/platform.h"
@@ -27,7 +29,7 @@ Engine* Engine::singleton = nullptr;
 
 Engine::Engine(Platform* platform, Renderer* renderer, Audio* audio)
     : platform_(platform), renderer_(renderer), audio_(audio) {
-  assert(!singleton);
+  DCHECK(!singleton);
   singleton = this;
 
   renderer_->SetContextLostCB(std::bind(&Engine::ContextLost, this));
@@ -35,9 +37,15 @@ Engine::Engine(Platform* platform, Renderer* renderer, Audio* audio)
   quad_ = CreateRenderResource<Geometry>();
   pass_through_shader_ = CreateRenderResource<Shader>();
   solid_shader_ = CreateRenderResource<Shader>();
+
+  stats_ = std::make_unique<ImageQuad>();
+  stats_->SetZOrder(std::numeric_limits<int>::max());
 }
 
 Engine::~Engine() {
+  game_.reset();
+  stats_.reset();
+
   singleton = nullptr;
 }
 
@@ -83,6 +91,8 @@ bool Engine::Initialize() {
   if (!CreateRenderResources())
     return false;
 
+  SetImageSource("stats_tex", std::bind(&Engine::PrintStats, this));
+
   game_ = GameFactoryBase::CreateGame("");
   if (!game_) {
     printf("No game found to run.\n");
@@ -104,10 +114,13 @@ void Engine::Shutdown() {
 void Engine::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
 
-  audio_->Update();
-  renderer_->Update();
-
   game_->Update(delta_time);
+
+  // Destroy unused textures.
+  for (auto& t : textures_) {
+    if (!t.second.persistent && t.second.texture.use_count() == 1)
+      t.second.texture->Destroy();
+  }
 
   fps_seconds_ += delta_time;
   if (fps_seconds_ >= 1) {
@@ -115,32 +128,50 @@ void Engine::Update(float delta_time) {
     fps_seconds_ = 0;
   }
 
-  if (stats_.IsVisible())
-    PrintStats();
+  if (stats_->IsVisible()) {
+    RefreshImage("stats_tex");
+    stats_->AutoScale();
+  }
 }
 
 void Engine::Draw(float frame_frac) {
-  auto cmd = std::make_unique<CmdClear>();
-  cmd->rgba = {0, 0, 0, 1};
-  renderer_->EnqueueCommand(std::move(cmd));
-  renderer_->EnqueueCommand(std::make_unique<CmdEableBlend>());
+  drawables_.sort(
+      [](auto& a, auto& b) { return a->GetZOrder() < b->GetZOrder(); });
 
-  game_->Draw(frame_frac);
-
-  if (stats_.IsVisible())
-    stats_.Draw();
+  for (auto d : drawables_) {
+    if (d->IsVisible())
+      d->Draw(frame_frac);
+  }
 
   renderer_->EnqueueCommand(std::make_unique<CmdPresent>());
 }
 
 void Engine::LostFocus() {
+  audio_->Suspend();
+
   if (game_)
     game_->LostFocus();
 }
 
 void Engine::GainedFocus() {
+  audio_->Resume();
+
   if (game_)
     game_->GainedFocus();
+}
+
+void Engine::AddDrawable(Drawable* drawable) {
+  DCHECK(std::find(drawables_.begin(), drawables_.end(), drawable) ==
+         drawables_.end());
+  drawables_.push_back(drawable);
+}
+
+void Engine::RemoveDrawable(Drawable* drawable) {
+  auto it = std::find(drawables_.begin(), drawables_.end(), drawable);
+  if (it != drawables_.end()) {
+    drawables_.erase(it);
+    return;
+  }
 }
 
 void Engine::Exit() {
@@ -156,32 +187,117 @@ Vector2 Engine::ToPosition(const Vector2& vec) {
   return ToScale(vec) - GetScreenSize() / 2.0f;
 }
 
-std::shared_ptr<AudioResource> Engine::CreateAudioResource() {
-  return std::make_shared<AudioResource>(audio_);
+void Engine::SetImageSource(const std::string& asset_name,
+                            const std::string& file_name,
+                            bool persistent) {
+  std::shared_ptr<Texture> texture;
+  auto it = textures_.find(asset_name);
+  if (it != textures_.end()) {
+    texture = it->second.texture;
+    it->second.asset_file = file_name;
+    it->second.create_image = nullptr;
+    it->second.persistent = persistent;
+  } else {
+    texture = CreateRenderResource<Texture>();
+    textures_[asset_name] = {texture, file_name, nullptr, persistent};
+  }
+
+  if (persistent) {
+    auto image = std::make_unique<Image>();
+    if (image->Load(file_name)) {
+      image->Compress();
+      texture->Update(std::move(image));
+    } else {
+      texture->Destroy();
+    }
+  }
+}
+
+void Engine::SetImageSource(const std::string& asset_name,
+                            CreateImageCB create_image,
+                            bool persistent) {
+  std::shared_ptr<Texture> texture;
+  auto it = textures_.find(asset_name);
+  if (it != textures_.end()) {
+    texture = it->second.texture;
+    it->second.create_image = create_image;
+    it->second.asset_file.clear();
+    it->second.persistent = persistent;
+  } else {
+    texture = CreateRenderResource<Texture>();
+    textures_[asset_name] = {texture, "", create_image, persistent};
+  }
+
+  if (persistent) {
+    auto image = create_image();
+    if (image)
+      texture->Update(std::move(image));
+    else
+      texture->Destroy();
+  }
+}
+
+void Engine::RefreshImage(const std::string& asset_name) {
+  auto it = textures_.find(asset_name);
+  if (it == textures_.end())
+    return;
+
+  std::unique_ptr<Image> image;
+  if (!it->second.asset_file.empty()) {
+    image = std::make_unique<Image>();
+    if (image->Load(it->second.asset_file))
+      image->Compress();
+    else
+      image.reset();
+  } else if (it->second.create_image) {
+    image = it->second.create_image();
+  }
+
+  if (image)
+    it->second.texture->Update(std::move(image));
+  else
+    it->second.texture->Destroy();
+}
+
+std::shared_ptr<Texture> Engine::GetTexture(const std::string& asset_name) {
+  auto it = textures_.find(asset_name);
+  if (it != textures_.end()) {
+    if (!it->second.texture->IsValid())
+      RefreshImage(it->first);
+    return it->second.texture;
+  }
+
+  std::shared_ptr<Texture> texture = CreateRenderResource<Texture>();
+  textures_[asset_name] = {texture};
+
+  return texture;
+}
+
+std::unique_ptr<AudioResource> Engine::CreateAudioResource() {
+  return std::make_unique<AudioResource>(audio_);
 }
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
   switch (event->GetType()) {
-    case InputEvent::kTap:
+    case InputEvent::kDragEnd:
       if (((GetScreenSize() / 2) * 0.9f - event->GetVector(0)).Magnitude() <=
           0.25f) {
-        SetSatsVisible(!stats_.IsVisible());
-        // Consume event.
-        return;
+        SetSatsVisible(!stats_->IsVisible());
+        // TODO: Enqueue DragCancel so we can consume this event.
       }
       break;
     case InputEvent::kKeyPress:
       if (event->GetKeyPress() == 's') {
-        SetSatsVisible(!stats_.IsVisible());
+        SetSatsVisible(!stats_->IsVisible());
         // Consume event.
         return;
       }
       break;
     case InputEvent::kDrag:
-      if (stats_.IsVisible()) {
-        if ((stats_.GetOffset() - event->GetVector(0)).Magnitude() <=
-            stats_.GetScale().y)
-          stats_.SetOffset(event->GetVector(0));
+      if (stats_->IsVisible()) {
+        if ((stats_->GetOffset() - event->GetVector(0)).Magnitude() <=
+            stats_->GetScale().y)
+          stats_->SetOffset(event->GetVector(0));
         // TODO: Enqueue DragCancel so we can consume this event.
       }
       break;
@@ -199,6 +315,15 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
     input_queue_.pop_front();
   }
   return event;
+}
+
+void Engine::Vibrate(int duration) {
+  if (vibration_enabled_)
+    platform_->Vibrate(duration);
+}
+
+void Engine::SetEnableAudio(bool enable) {
+  audio_->SetEnableAudio(enable);
 }
 
 TextureCompressor* Engine::GetTextureCompressor(bool opacity) {
@@ -229,13 +354,16 @@ bool Engine::IsMobile() const {
   return platform_->mobile_device();
 }
 
-std::shared_ptr<RenderResource> Engine::CreateRenderResourceInternal(
+std::unique_ptr<RenderResource> Engine::CreateRenderResourceInternal(
     RenderResourceFactoryBase& factory) {
   return renderer_->CreateResource(factory);
 }
 
 void Engine::ContextLost() {
   CreateRenderResources();
+
+  for (auto& t : textures_)
+    RefreshImage(t.first);
 
   game_->ContextLost();
 }
@@ -269,14 +397,17 @@ bool Engine::CreateRenderResources() {
 }
 
 void Engine::SetSatsVisible(bool visible) {
-  stats_.SetVisible(visible);
+  stats_->SetVisible(visible);
   if (visible)
-    stats_.Create(CreateRenderResource<Texture>());
+    stats_->Create("stats_tex");
   else
-    stats_.Destory();
+    stats_->Destory();
 }
 
-void Engine::PrintStats() {
+std::unique_ptr<Image> Engine::PrintStats() {
+  if (!stats_->IsVisible())
+    return nullptr;
+
   constexpr int width = 200;
   std::vector<std::string> lines;
   std::string line;
@@ -297,18 +428,14 @@ void Engine::PrintStats() {
   image->Create(image_width, image_height);
   image->Clear({1, 1, 1, 0.08f});
 
-  Worker worker(2);
   int y = margin;
   for (auto& text : lines) {
-    worker.Enqueue(std::bind(&Font::Print, system_font_.get(), margin, y,
-                             text.c_str(), image->GetBuffer(),
-                             image->GetWidth()));
+    system_font_->Print(margin, y, text.c_str(), image->GetBuffer(),
+                        image->GetWidth());
     y += line_height + margin;
   }
-  worker.Join();
 
-  stats_.GetTexture()->Update(std::move(image));
-  stats_.AutoScale();
+  return image;
 }
 
 }  // namespace eng

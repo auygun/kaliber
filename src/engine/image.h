@@ -46,12 +46,10 @@ class Image {
   void GradientV(const base::Vector4& c1, const base::Vector4& c2, int height);
 
  private:
-  base::AlignedMem<uint8_t[]>::ScoppedPtr buffer_;
+  base::AlignedMemPtr<uint8_t[]> buffer_;
   int width_ = 0;
   int height_ = 0;
   Format format_ = kRGBA32;
-
-  std::string name_;
 };
 
 }  // namespace eng

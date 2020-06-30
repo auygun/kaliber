@@ -1,67 +1,71 @@
 #include "worker.h"
+
 #include "log.h"
 
 namespace base {
 
-Worker::Worker(unsigned max_concurrency) : max_concurrency_(max_concurrency) {
-  if (max_concurrency_ > std::thread::hardware_concurrency() ||
-      max_concurrency_ == 0) {
-    max_concurrency_ = std::thread::hardware_concurrency();
-    if (max_concurrency_ == 0)
-      max_concurrency_ = 1;
-  }
+Worker* Worker::singleton = nullptr;
+
+Worker::Worker() {
+  DCHECK(!singleton);
+  singleton = this;
 }
 
-Worker::~Worker() = default;
-
-void Worker::Enqueue(base::Closure task) {
-  if (!active_) {
-    unsigned concurrency = max_concurrency_;
-    while (concurrency--)
-      threads_.emplace_back(&Worker::WorkerMain, this);
-    active_ = true;
-  }
-
-  bool notify;
-  {
-    std::unique_lock<std::mutex> scoped_lock(mutex_);
-    notify = tasks_.empty();
-    tasks_.emplace_back(std::move(task));
-  }
-  if (notify)
-    cv_.notify_all();
+Worker::~Worker() {
+  Shutdown();
+  singleton = nullptr;
 }
 
-void Worker::Join() {
-  if (!active_)
+void Worker::Initialize(unsigned max_concurrency) {
+  if (max_concurrency > std::thread::hardware_concurrency() ||
+      max_concurrency == 0) {
+    max_concurrency = std::thread::hardware_concurrency();
+    if (max_concurrency == 0)
+      max_concurrency = 1;
+  }
+
+  while (max_concurrency--)
+    threads_.emplace_back(&Worker::WorkerMain, this);
+}
+
+void Worker::Shutdown() {
+  if (threads_.empty())
     return;
 
-  {
-    std::unique_lock<std::mutex> scoped_lock(mutex_);
-    quit_when_idle_ = true;
-  }
-  cv_.notify_all();
+  quit_.store(true, std::memory_order_relaxed);
+  semaphore_.Release();
+
   for (auto& thread : threads_)
     thread.join();
   threads_.clear();
-  active_ = false;
+}
+
+void Worker::EnqueueTask(const Location& from, Closure task) {
+  DCHECK((!threads_.empty()));
+
+  task_runner_.EnqueueTask(from, std::move(task));
+  semaphore_.Release();
+}
+
+void Worker::EnqueueTaskAndReply(const Location& from,
+                                 Closure task,
+                                 Closure reply) {
+  DCHECK((!threads_.empty()));
+
+  task_runner_.EnqueueTaskAndReply(from, std::move(task), std::move(reply));
+  semaphore_.Release();
 }
 
 void Worker::WorkerMain() {
   for (;;) {
-    base::Closure task;
-    {
-      std::unique_lock<std::mutex> scoped_lock(mutex_);
-      while (tasks_.empty()) {
-        if (quit_when_idle_)
-          return;
-        cv_.wait(scoped_lock);
-      }
-      task.swap(tasks_.front());
-      tasks_.pop_front();
+    semaphore_.Acquire();
+
+    if (quit_.load(std::memory_order_relaxed)) {
+      semaphore_.Release();
+      return;
     }
 
-    task();
+    task_runner_.MultiConsumerRun();
   }
 }
 

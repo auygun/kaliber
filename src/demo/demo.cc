@@ -80,7 +80,7 @@ void Demo::Update(float delta_time) {
   if (add_score_ > 0) {
     score_ += add_score_;
     add_score_ = 0;
-    hud_.PrintScore(score_, true);
+    hud_.SetScore(score_, true);
   }
 
   hud_.Update(delta_time);
@@ -93,21 +93,7 @@ void Demo::Update(float delta_time) {
     UpdateGameState(delta_time);
 }
 
-void Demo::Draw(float frame_frac) {
-  sky_.Draw(frame_frac);
-  player_.Draw(frame_frac);
-  enemy_.Draw(frame_frac);
-  hud_.Draw();
-  menu_.Draw();
-  credits_.Draw();
-}
-
 void Demo::ContextLost() {
-  enemy_.ContextLost();
-  player_.ContextLost();
-  hud_.ContextLost();
-  menu_.ContextLost();
-  credits_.ContextLost();
   sky_.ContextLost();
 }
 
@@ -169,7 +155,7 @@ void Demo::UpdateMenuState(float delta_time) {
       Engine::Get().Exit();
       break;
     default:
-      assert(false);
+      NOTREACHED << "- Unknown menu option: " << menu_.selected_option();
   }
 }
 
@@ -209,8 +195,8 @@ void Demo::UpdateGameState(float delta_time) {
         sky_.SwitchColor(c);
 
         ++wave_;
-        hud_.PrintScore(score_, true);
-        hud_.PrintWave(wave_, true);
+        hud_.SetScore(score_, true);
+        hud_.SetWave(wave_, true);
         hud_.SetProgress(1);
 
         float factor = 3 * (log10(5 * (float)wave_) / log10(1.2f)) - 25;
@@ -245,7 +231,7 @@ void Demo::StartNewGame() {
 }
 
 void Demo::SetDelayedWork(float seconds, base::Closure cb) {
-  assert(delayed_work_cb_ == nullptr);
+  DCHECK(delayed_work_cb_ == nullptr);
   delayed_work_cb_ = std::move(cb);
   delayed_work_timer_ = seconds;
 }

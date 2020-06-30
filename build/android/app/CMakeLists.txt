@@ -20,9 +20,10 @@ cmake_minimum_required(VERSION 3.4.1)
 set (OBOE_DIR ../../../src/third_party/oboe)
 add_subdirectory(${OBOE_DIR} ./oboe-bin)
 
-
-include(AndroidNdkModules)
-android_ndk_import_module_cpufeatures()
+# cpufeatures
+include_directories(${ANDROID_NDK}/sources/android/cpufeatures)
+add_library(cpufeatures STATIC
+    ${ANDROID_NDK}/sources/android/cpufeatures/cpu-features.c)
 
 # build native_app_glue as a static lib
 if (CMAKE_BUILD_TYPE MATCHES Debug)
@@ -66,6 +67,7 @@ add_library(native-activity SHARED
     ../../../src/engine/audio/audio_base.cc
     ../../../src/engine/audio/audio_oboe.cc
     ../../../src/engine/audio/audio_resource.cc
+    ../../../src/engine/drawable.cc
     ../../../src/engine/engine.cc
     ../../../src/engine/font.cc
     ../../../src/engine/image_quad.cc
@@ -74,7 +76,7 @@ add_library(native-activity SHARED
     ../../../src/engine/platform/asset_file_android.cc
     ../../../src/engine/platform/asset_file.cc
     ../../../src/engine/platform/platform_android.cc
-    ../../../src/engine/platform/platform.cc
+    ../../../src/engine/platform/platform_base.cc
     ../../../src/engine/renderer/geometry.cc
     ../../../src/engine/renderer/render_command.cc
     ../../../src/engine/renderer/render_resource.cc
@@ -87,7 +89,6 @@ add_library(native-activity SHARED
     ../../../src/engine/solid_quad.cc
     ../../../src/engine/sound_player.cc
     ../../../src/engine/sound.cc
-    ../../../src/third_party/android/gestureDetector.cpp
     ../../../src/third_party/android/gl3stub.c
     ../../../src/third_party/android/GLContext.cpp
     ../../../src/third_party/jsoncpp/jsoncpp.cc

@@ -19,21 +19,20 @@
 #endif  // THREADED_RENDERING
 
 #include "opengl.h"
-#if defined(__linux__) && !defined(__ANDROID__)
-#include <X11/Xlib.h>
-#include "../../third_party/glew/glxew.h"
-#endif
 
 #include "../../base/closure.h"
-#ifdef THREADED_RENDERING
-#include "../../base/task_runner.h"
-#endif  // THREADED_RENDERING
 #include "render_resource.h"
 #include "renderer_types.h"
 
 #if defined(__ANDROID__)
 struct ANativeWindow;
 #endif
+
+#ifdef THREADED_RENDERING
+namespace base {
+class TaskRunner;
+}
+#endif  // THREADED_RENDERING
 
 namespace eng {
 
@@ -54,8 +53,6 @@ class Renderer {
 #endif
 
   void Shutdown();
-
-  void Update();
 
   void ContextLost();
 
@@ -152,10 +149,10 @@ class Renderer {
 
   std::condition_variable cv_;
   std::mutex mutex_;
-  std::thread worker_thread_;
-  bool terminate_worker_ = false;
+  std::thread render_thread_;
+  bool terminate_render_thread_ = false;
 
-  base::TaskRunner task_runner_;
+  base::TaskRunner* main_thread_task_runner_;
 #endif  // THREADED_RENDERING
 
   // Stats.
@@ -178,17 +175,15 @@ class Renderer {
 
   void InvalidateAllResources();
 
-  bool StartWorker();
-  void TerminateWorker();
+  bool StartRenderThread();
+  void TerminateRenderThread();
 
 #ifdef THREADED_RENDERING
-  void WorkerMain(std::promise<bool> promise);
+  void RenderThreadMain(std::promise<bool> promise);
 #endif  // THREADED_RENDERING
 
   void ProcessCommand(RenderCommand* cmd);
 
-  void HandleCmdEnableBlend(RenderCommand* cmd);
-  void HandleCmdClear(RenderCommand* cmd);
   void HandleCmdPresent(RenderCommand* cmd);
   void HandleCmdUpdateTexture(RenderCommand* cmd);
   void HandleCmdDestoryTexture(RenderCommand* cmd);

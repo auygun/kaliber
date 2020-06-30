@@ -6,7 +6,6 @@
 #include "../base/vecmath.h"
 #include "../engine/animator.h"
 #include "../engine/image_quad.h"
-#include "../engine/renderer/texture.h"
 #include "damage_type.h"
 
 namespace eng {
@@ -20,21 +19,14 @@ class Player {
 
   bool Initialize();
 
-  void ContextLost();
-
   void Update(float delta_time);
 
   void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
-
-  void Draw(float frame_frac);
 
   base::Vector2 GetWeaponPos(DamageType type) const;
   base::Vector2 GetWeaponScale() const;
 
  private:
-  std::shared_ptr<eng::Texture> weapon_tex_;
-  std::shared_ptr<eng::Texture> beam_tex_;
-
   eng::ImageQuad drag_sign_[2];
   eng::ImageQuad weapon_[2];
   eng::ImageQuad beam_[2];

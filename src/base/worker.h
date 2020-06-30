@@ -1,33 +1,53 @@
-#ifndef WORKER_H
-#define WORKER_H
+#ifndef THREAD_POOL_H
+#define THREAD_POOL_H
 
-#include <condition_variable>
-#include <deque>
-#include <mutex>
+#include <atomic>
 #include <thread>
 #include <vector>
+
 #include "closure.h"
+#include "semaphore.h"
+#include "task_runner.h"
 
 namespace base {
 
-// Feed the worker tasks and they will be called on a thread from the pool.
+class TaskRunner;
+
+// Feed the worker tasks (in the form of Closure objects) and they will be
+// called on any thread from the pool.
 class Worker {
  public:
-  Worker(unsigned max_concurrency = 0);
+  Worker();
   ~Worker();
 
-  void Enqueue(base::Closure task);
-  void Join();
+  static Worker& Get() { return *singleton; }
+
+  void Initialize(unsigned max_concurrency = 0);
+
+  void Shutdown();
+
+  void EnqueueTask(const Location& from, Closure task);
+
+  void EnqueueTaskAndReply(const Location& from, Closure task, Closure reply);
+
+  template <typename ReturnType>
+  void EnqueueTaskAndReplyWithResult(const Location& from,
+                                     std::function<ReturnType()> task,
+                                     std::function<void(ReturnType)> reply) {
+    task_runner_.EnqueueTaskAndReplyWithResult(from, std::move(task),
+                                               std::move(reply));
+    semaphore_.Release();
+  }
 
  private:
-  bool active_ = false;
-  unsigned max_concurrency_ = 0;
-
-  std::condition_variable cv_;
-  std::mutex mutex_;
   std::vector<std::thread> threads_;
-  std::deque<base::Closure> tasks_;
-  bool quit_when_idle_ = false;
+
+  Semaphore semaphore_;
+  std::atomic<bool> quit_{false};
+
+  base::TaskRunner task_runner_;
+
+  static Worker* singleton;
 
   void WorkerMain();
 
@@ -37,4 +57,4 @@ class Worker {
 
 }  // namespace base
 
-#endif  // WORKER_H
+#endif  // THREAD_POOL_H

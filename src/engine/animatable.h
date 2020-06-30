@@ -2,13 +2,14 @@
 #define SHAPE_H
 
 #include "../base/vecmath.h"
+#include "drawable.h"
 
 namespace eng {
 
-class Animatable {
+class Animatable : public Drawable {
  public:
   Animatable() = default;
-  virtual ~Animatable() = default;
+  ~Animatable() override = default;
 
   void Translate(const base::Vector2& offset);
   void Scale(const base::Vector2& scale);
@@ -33,9 +34,6 @@ class Animatable {
   virtual void SetColor(const base::Vector4& color) = 0;
   virtual base::Vector4 GetColor() const = 0;
 
-  void SetVisible(bool visible) { visible_ = visible; }
-  bool IsVisible() const { return visible_; }
-
   void PlaceToLeftOf(const Animatable& s) {
     Translate({s.GetScale().x / -2.0f + GetScale().x / -2.0f, 0});
   }
@@ -58,7 +56,6 @@ class Animatable {
   base::Vector2 pivot_ = {0, 0};
   base::Vector2 rotation_ = {0, 1};
   float theta_ = 0;
-  bool visible_ = false;
 };
 
 }  // namespace eng

@@ -2,17 +2,25 @@
 
 #include <android/native_window.h>
 
+#include "../../base/log.h"
 #include "../../third_party/android/GLContext.h"
 
 namespace eng {
 
 bool Renderer::Initialize(ANativeWindow* window) {
+  LOG << "Initializing renderer.";
+
   window_ = window;
-  return StartWorker();
+  return StartRenderThread();
 }
 
 void Renderer::Shutdown() {
-  TerminateWorker();
+  if (terminate_render_thread_)
+    return;
+
+  LOG << "Shutting down renderer.";
+
+  TerminateRenderThread();
 }
 
 bool Renderer::InitInternal() {
@@ -51,7 +59,9 @@ void Renderer::ShutdownInternal() {
 void Renderer::HandleCmdPresent(RenderCommand* cmd) {
   if (EGL_SUCCESS != ndk_helper::GLContext::GetInstance()->Swap()) {
     ContextLost();
+    return;
   }
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 }  // namespace eng

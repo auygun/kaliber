@@ -1,6 +1,5 @@
 #include "enemy.h"
 
-#include <cassert>
 #include <functional>
 #include <limits>
 
@@ -10,9 +9,10 @@
 #include "../engine/engine.h"
 #include "../engine/font.h"
 #include "../engine/image.h"
-#include "../engine/renderer/texture.h"
 #include "../engine/sound.h"
 #include "demo.h"
+
+using namespace std::string_literals;
 
 using namespace base;
 using namespace eng;
@@ -44,27 +44,16 @@ void SetupFadeOutAnim(Animator& animator, float delay) {
 
 }  // namespace
 
-Enemy::Enemy()
-    : skull_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      bug_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      target_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      blast_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      score_tex_{Engine::Get().CreateRenderResource<Texture>(),
-                 Engine::Get().CreateRenderResource<Texture>(),
-                 Engine::Get().CreateRenderResource<Texture>()} {}
+Enemy::Enemy() = default;
 
 Enemy::~Enemy() = default;
 
 bool Enemy::Initialize() {
   explosion_sound_ = std::make_shared<Sound>();
-  if (!explosion_sound_->Load("explosion.mp3"))
+  if (!explosion_sound_->Load("explosion.mp3", false))
     return false;
 
   return CreateRenderResources();
-}
-
-void Enemy::ContextLost() {
-  CreateRenderResources();
 }
 
 void Enemy::Update(float delta_time) {
@@ -95,25 +84,14 @@ void Enemy::Update(float delta_time) {
   }
 }
 
-void Enemy::Draw(float frame_frac) {
-  for (auto& e : enemies_) {
-    e.sprite.Draw();
-    e.target.Draw();
-    e.blast.Draw();
-    e.health_base.Draw();
-    e.health_bar.Draw();
-    e.score.Draw();
-  }
-}
-
 bool Enemy::HasTarget(DamageType damage_type) {
-  assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
+  DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
   return GetTarget(damage_type) ? true : false;
 }
 
 Vector2 Enemy::GetTargetPos(DamageType damage_type) {
-  assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
+  DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
   EnemyUnit* target = GetTarget(damage_type);
   if (target)
@@ -126,7 +104,7 @@ void Enemy::SelectTarget(DamageType damage_type,
                          const Vector2& origin,
                          const Vector2& dir,
                          float snap_factor) {
-  assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
+  DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
   if (waiting_for_next_wave_)
     return;
@@ -171,7 +149,7 @@ void Enemy::SelectTarget(DamageType damage_type,
 }
 
 void Enemy::DeselectTarget(DamageType damage_type) {
-  assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
+  DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
   EnemyUnit* target = GetTarget(damage_type);
   if (target) {
@@ -182,7 +160,7 @@ void Enemy::DeselectTarget(DamageType damage_type) {
 }
 
 void Enemy::HitTarget(DamageType damage_type) {
-  assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
+  DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
   if (waiting_for_next_wave_)
     return;
@@ -227,8 +205,8 @@ void Enemy::OnWaveStarted(int wave) {
 }
 
 void Enemy::TakeDamage(EnemyUnit* target, int damage) {
-  assert(!target->marked_for_removal);
-  assert(target->hit_points > 0);
+  DCHECK(!target->marked_for_removal);
+  DCHECK(target->hit_points > 0);
 
   target->blast.SetVisible(true);
   target->blast_animator.Play(Animator::kFrames, false);
@@ -313,8 +291,8 @@ void Enemy::Spawn(EnemyType enemy_type,
                   DamageType damage_type,
                   const Vector2& pos,
                   float speed) {
-  assert(enemy_type > kEnemyType_Invalid && enemy_type < kEnemyType_Max);
-  assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Max);
+  DCHECK(enemy_type > kEnemyType_Invalid && enemy_type < kEnemyType_Max);
+  DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Max);
 
   Engine& engine = Engine::Get();
   Demo* game = static_cast<Demo*>(engine.GetGame());
@@ -324,15 +302,15 @@ void Enemy::Spawn(EnemyType enemy_type,
   e.damage_type = damage_type;
   if (enemy_type == kEnemyType_Skull) {
     e.total_health = e.hit_points = 1;
-    e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
+    e.sprite.Create("skull_tex", {10, 13}, 100, 100);
   } else if (enemy_type == kEnemyType_Bug) {
     e.total_health = e.hit_points = 2;
-    e.sprite.Create(bug_tex_, {10, 4});
+    e.sprite.Create("bug_tex", {10, 4});
   } else {  // kEnemyType_Tank
     e.total_health = e.hit_points = 6;
-    e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
+    e.sprite.Create("skull_tex", {10, 13}, 100, 100);
   }
-  e.sprite.AutoScale();
+  e.sprite.SetZOrder(11);
   e.sprite.SetVisible(true);
   Vector2 spawn_pos = pos + Vector2(0, e.sprite.GetScale().y / 2);
   e.sprite.SetOffset(spawn_pos);
@@ -344,26 +322,28 @@ void Enemy::Spawn(EnemyType enemy_type,
   e.sprite_animator.Attach(&e.sprite);
   e.sprite_animator.Play(Animator::kFrames, true);
 
-  e.target.Create(target_tex_, {6, 2});
-  e.target.AutoScale();
+  e.target.Create("target_tex", {6, 2});
+  e.target.SetZOrder(12);
   e.target.SetOffset(spawn_pos);
 
-  e.blast.Create(blast_tex_, {6, 2});
-  e.blast.AutoScale();
+  e.blast.Create("blast_tex", {6, 2});
+  e.blast.SetZOrder(12);
   e.blast.SetOffset(spawn_pos);
 
+  e.health_base.SetZOrder(11);
   e.health_base.Scale(e.sprite.GetScale() * Vector2(0.6f, 0.01f));
   e.health_base.SetOffset(spawn_pos);
   e.health_base.PlaceToBottomOf(e.sprite);
   e.health_base.SetColor({0.5f, 0.5f, 0.5f, 1});
 
+  e.health_bar.SetZOrder(11);
   e.health_bar.Scale(e.sprite.GetScale() * Vector2(0.6f, 0.01f));
   e.health_bar.SetOffset(spawn_pos);
   e.health_bar.PlaceToBottomOf(e.sprite);
   e.health_bar.SetColor({0.161f, 0.89f, 0.322f, 1});
 
-  e.score.Create(score_tex_[e.enemy_type]);
-  e.score.AutoScale();
+  e.score.Create("score_tex"s + std::to_string(e.enemy_type));
+  e.score.SetZOrder(12);
   e.score.SetColor({1, 1, 1, 1});
   e.score.SetOffset(spawn_pos);
 
@@ -425,13 +405,14 @@ Enemy::EnemyUnit* Enemy::GetTarget(DamageType damage_type) {
 }
 
 int Enemy::GetScore(EnemyType enemy_type) {
-  assert(enemy_type > kEnemyType_Invalid && enemy_type < kEnemyType_Max);
+  DCHECK(enemy_type > kEnemyType_Invalid && enemy_type < kEnemyType_Max);
   return enemy_scores[enemy_type];
 }
 
-std::unique_ptr<Image> Enemy::GetScoreImage(int score) {
+std::unique_ptr<Image> Enemy::GetScoreImage(EnemyType enemy_type) {
   const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
 
+  int score = GetScore(enemy_type);
   std::string text = std::to_string(score);
   int width, height;
   font.CalculateBoundingBox(text.c_str(), width, height);
@@ -446,31 +427,17 @@ std::unique_ptr<Image> Enemy::GetScoreImage(int score) {
 }
 
 bool Enemy::CreateRenderResources() {
-  auto skull_image = std::make_unique<Image>();
-  if (!skull_image->Load("enemy_anims_01_frames_ok.png"))
-    return false;
-  auto bug_image = std::make_unique<Image>();
-  if (!bug_image->Load("enemy_anims_02_frames_ok.png"))
-    return false;
-  auto target_image = std::make_unique<Image>();
-  if (!target_image->Load("enemy_target_single_ok.png"))
-    return false;
-  auto blast_image = std::make_unique<Image>();
-  if (!blast_image->Load("enemy_anims_blast_ok.png"))
-    return false;
-
-  skull_image->Compress();
-  bug_image->Compress();
-  target_image->Compress();
-  blast_image->Compress();
-
-  skull_tex_->Update(std::move(skull_image));
-  bug_tex_->Update(std::move(bug_image));
-  target_tex_->Update(std::move(target_image));
-  blast_tex_->Update(std::move(blast_image));
+  Engine::Get().SetImageSource("skull_tex", "enemy_anims_01_frames_ok.png",
+                               true);
+  Engine::Get().SetImageSource("bug_tex", "enemy_anims_02_frames_ok.png", true);
+  Engine::Get().SetImageSource("target_tex", "enemy_target_single_ok.png",
+                               true);
+  Engine::Get().SetImageSource("blast_tex", "enemy_anims_blast_ok.png", true);
 
   for (int i = 0; i < kEnemyType_Max; ++i)
-    score_tex_[i]->Update(GetScoreImage(GetScore((EnemyType)i)));
+    Engine::Get().SetImageSource(
+        "score_tex"s + std::to_string(i),
+        std::bind(&Enemy::GetScoreImage, this, (EnemyType)i), true);
 
   return true;
 }

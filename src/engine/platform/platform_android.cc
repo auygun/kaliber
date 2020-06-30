@@ -1,13 +1,14 @@
-#include "platform.h"
+#include "platform_android.h"
 
 #include <android_native_app_glue.h>
 #include <unistd.h>
+
+#include <memory>
 #include <string>
 
-#include "../../base/file.h"
 #include "../../base/log.h"
-#include "../../third_party/android/gestureDetector.h"
-#include "../audio/audio_oboe.h"
+#include "../../base/task_runner.h"
+#include "../audio/audio.h"
 #include "../engine.h"
 #include "../input_event.h"
 #include "../renderer/renderer.h"
@@ -44,6 +45,39 @@ std::string GetApkPath(ANativeActivity* activity) {
   return apk_path;
 }
 
+void Vibrate(ANativeActivity* activity, int duration) {
+  JNIEnv* env = nullptr;
+  activity->vm->AttachCurrentThread(&env, nullptr);
+
+  jclass activity_clazz = env->GetObjectClass(activity->clazz);
+  jclass context_clazz = env->FindClass("android/content/Context");
+
+  jfieldID vibrator_service_id = env->GetStaticFieldID(
+      context_clazz, "VIBRATOR_SERVICE", "Ljava/lang/String;");
+  jobject vibrator_service_str =
+      env->GetStaticObjectField(context_clazz, vibrator_service_id);
+
+  jmethodID get_system_service_id =
+      env->GetMethodID(activity_clazz, "getSystemService",
+                       "(Ljava/lang/String;)Ljava/lang/Object;");
+  jobject vibrator_service_obj = env->CallObjectMethod(
+      activity->clazz, get_system_service_id, vibrator_service_str);
+
+  jclass vibrator_service_clazz = env->GetObjectClass(vibrator_service_obj);
+  jmethodID vibrate_id =
+      env->GetMethodID(vibrator_service_clazz, "vibrate", "(J)V");
+
+  jlong length = duration;
+  env->CallVoidMethod(vibrator_service_obj, vibrate_id, length);
+
+  env->DeleteLocalRef(vibrator_service_obj);
+  env->DeleteLocalRef(vibrator_service_clazz);
+  env->DeleteLocalRef(vibrator_service_str);
+  env->DeleteLocalRef(context_clazz);
+  env->DeleteLocalRef(activity_clazz);
+  activity->vm->DetachCurrentThread();
+}
+
 int32_t getDensityDpi(android_app* app) {
   AConfiguration* config = AConfiguration_new();
   AConfiguration_fromAssetManager(config, app->activity->assetManager);
@@ -56,11 +90,11 @@ int32_t getDensityDpi(android_app* app) {
 
 namespace eng {
 
-Platform::Platform() = default;
-Platform::~Platform() = default;
+PlatformAndroid::PlatformAndroid() = default;
+PlatformAndroid::~PlatformAndroid() = default;
 
-int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
-  Platform* platform = reinterpret_cast<Platform*>(app->userData);
+int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
+  PlatformAndroid* platform = reinterpret_cast<PlatformAndroid*>(app->userData);
 
   if (!platform->engine_)
     return 0;
@@ -73,88 +107,74 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
       platform->engine_->AddInputEvent(std::move(input_event));
     }
     return 1;
-  }
-
-  if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
-    ndk_helper::GESTURE_STATE tap_state =
-        platform->tap_detector_->Detect(event);
-    ndk_helper::GESTURE_STATE drag_state =
-        platform->drag_detector_->Detect(event);
-    ndk_helper::GESTURE_STATE pinch_state =
-        platform->pinch_detector_->Detect(event);
-
-    // Tap detector has a priority over other detectors
-    if (tap_state == ndk_helper::GESTURE_STATE_ACTION) {
-      platform->engine_->AddInputEvent(
-          std::make_unique<InputEvent>(InputEvent::kDragCancel));
-      // Detect tap
-      Vector2 v;
-      platform->tap_detector_->GetPointer(v);
-      v = platform->engine_->ToPosition(v);
-      // DLOG << "Tap: " << v;
-      auto input_event =
-          std::make_unique<InputEvent>(InputEvent::kTap, v * Vector2(1, -1));
-      platform->engine_->AddInputEvent(std::move(input_event));
-    } else {
-      // Handle drag state
-      if (drag_state & ndk_helper::GESTURE_STATE_START) {
-        // Otherwise, start dragging
-        Vector2 v;
-        platform->drag_detector_->GetPointer(v);
-        v = platform->engine_->ToPosition(v);
-        // DLOG << "drag-start: " << v;
-        auto input_event = std::make_unique<InputEvent>(InputEvent::kDragStart,
-                                                        v * Vector2(1, -1));
-        platform->engine_->AddInputEvent(std::move(input_event));
-      } else if (drag_state & ndk_helper::GESTURE_STATE_MOVE) {
-        Vector2 v;
-        platform->drag_detector_->GetPointer(v);
-        v = platform->engine_->ToPosition(v);
-        // DLOG << "drag: " << v;
-        auto input_event =
-            std::make_unique<InputEvent>(InputEvent::kDrag, v * Vector2(1, -1));
-        platform->engine_->AddInputEvent(std::move(input_event));
-      } else if (drag_state & ndk_helper::GESTURE_STATE_END) {
-        // DLOG << "drag-end!";
-        auto input_event = std::make_unique<InputEvent>(InputEvent::kDragEnd);
-        platform->engine_->AddInputEvent(std::move(input_event));
-      }
-
-      // Handle pinch state
-      if (pinch_state & ndk_helper::GESTURE_STATE_START) {
-        platform->engine_->AddInputEvent(
-            std::make_unique<InputEvent>(InputEvent::kDragCancel));
-        // Start new pinch
-        Vector2 v1;
-        Vector2 v2;
-        platform->pinch_detector_->GetPointers(v1, v2);
-        v1 = platform->engine_->ToPosition(v1);
-        v2 = platform->engine_->ToPosition(v2);
-        // DLOG << "pinch-start: " << v1 << " " << v2;
-        auto input_event = std::make_unique<InputEvent>(
-            InputEvent::kPinchStart, v1 * Vector2(1, -1), v2 * Vector2(1, -1));
-        platform->engine_->AddInputEvent(std::move(input_event));
-      } else if (pinch_state & ndk_helper::GESTURE_STATE_MOVE) {
-        // Multi touch
-        // Start new pinch
-        Vector2 v1;
-        Vector2 v2;
-        platform->pinch_detector_->GetPointers(v1, v2);
-        v1 = platform->engine_->ToPosition(v1);
-        v2 = platform->engine_->ToPosition(v2);
-        // DLOG << "pinch: " << v1 << " " << v2;
-        auto input_event = std::make_unique<InputEvent>(
-            InputEvent::kPinch, v1 * Vector2(1, -1), v2 * Vector2(1, -1));
-        platform->engine_->AddInputEvent(std::move(input_event));
-      }
+  } else if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
+    int32_t action = AMotionEvent_getAction(event);
+    int32_t index = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >>
+                    AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+    uint32_t flags = action & AMOTION_EVENT_ACTION_MASK;
+    int32_t count = AMotionEvent_getPointerCount(event);
+    int32_t pointer_id = AMotionEvent_getPointerId(event, index);
+    Vector2 pos[2] = {platform->pointer_pos_[0], platform->pointer_pos_[1]};
+    for (auto i = 0; i < count; ++i) {
+      int32_t id = AMotionEvent_getPointerId(event, i);
+      pos[id] = {AMotionEvent_getX(event, i), AMotionEvent_getY(event, i)};
+      pos[id] = platform->engine_->ToPosition(pos[id]);
     }
-    return 1;
+
+    if (pointer_id >= 2)
+      return 0;
+
+    std::unique_ptr<InputEvent> input_event;
+
+    switch (flags) {
+      case AMOTION_EVENT_ACTION_DOWN:
+      case AMOTION_EVENT_ACTION_POINTER_DOWN:
+        DLOG << "AMOTION_EVENT_ACTION_DOWN - pointer_id: " << pointer_id;
+        platform->pointer_pos_[pointer_id] = pos[pointer_id];
+        platform->pointer_down_[pointer_id] = true;
+        input_event =
+            std::make_unique<InputEvent>(InputEvent::kDragStart, pointer_id,
+                                         pos[pointer_id] * Vector2(1, -1));
+        break;
+
+      case AMOTION_EVENT_ACTION_UP:
+      case AMOTION_EVENT_ACTION_POINTER_UP:
+        DLOG << "AMOTION_EVENT_ACTION_UP -   pointer_id: " << pointer_id;
+        platform->pointer_pos_[pointer_id] = pos[pointer_id];
+        platform->pointer_down_[pointer_id] = false;
+        input_event = std::make_unique<InputEvent>(
+            InputEvent::kDragEnd, pointer_id, pos[pointer_id] * Vector2(1, -1));
+        break;
+
+      case AMOTION_EVENT_ACTION_MOVE:
+        if (platform->pointer_down_[0] && pos[0] != platform->pointer_pos_[0]) {
+          platform->pointer_pos_[0] = pos[0];
+          input_event = std::make_unique<InputEvent>(InputEvent::kDrag, 0,
+                                                     pos[0] * Vector2(1, -1));
+        }
+        if (platform->pointer_down_[1] && pos[1] != platform->pointer_pos_[1]) {
+          platform->pointer_pos_[1] = pos[1];
+          input_event = std::make_unique<InputEvent>(InputEvent::kDrag, 1,
+                                                     pos[1] * Vector2(1, -1));
+        }
+        break;
+
+      case AMOTION_EVENT_ACTION_CANCEL:
+        input_event = std::make_unique<InputEvent>(InputEvent::kDragCancel);
+        break;
+    }
+
+    if (input_event) {
+      platform->engine_->AddInputEvent(std::move(input_event));
+      return 1;
+    }
   }
+
   return 0;
 }
 
-void Platform::HandleCmd(android_app* app, int32_t cmd) {
-  Platform* platform = reinterpret_cast<Platform*>(app->userData);
+void PlatformAndroid::HandleCmd(android_app* app, int32_t cmd) {
+  PlatformAndroid* platform = reinterpret_cast<PlatformAndroid*>(app->userData);
 
   switch (cmd) {
     case APP_CMD_SAVE_STATE:
@@ -216,25 +236,10 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
   }
 }
 
-void Platform::Initialize(android_app* app) {
-  LOG << "Initializing platform.";
+void PlatformAndroid::Initialize(android_app* app) {
+  PlatformBase::Initialize();
+
   app_ = app;
-
-  audio_ = std::make_unique<AudioOboe>();
-  if (!audio_->Initialize()) {
-    LOG << "Failed to initialize audio system.";
-    throw internal_error;
-  }
-
-  renderer_ = std::make_unique<Renderer>();
-
-  tap_detector_ = std::make_unique<ndk_helper::TapDetector>();
-  drag_detector_ = std::make_unique<ndk_helper::DragDetector>();
-  pinch_detector_ = std::make_unique<ndk_helper::PinchDetector>();
-
-  tap_detector_->SetConfiguration(app_->config);
-  drag_detector_->SetConfiguration(app_->config);
-  pinch_detector_->SetConfiguration(app_->config);
 
   mobile_device_ = true;
 
@@ -245,13 +250,13 @@ void Platform::Initialize(android_app* app) {
   LOG << "Device DPI: " << device_dpi_;
 
   app->userData = reinterpret_cast<void*>(this);
-  app->onAppCmd = Platform::HandleCmd;
-  app->onInputEvent = Platform::HandleInput;
+  app->onAppCmd = PlatformAndroid::HandleCmd;
+  app->onInputEvent = PlatformAndroid::HandleInput;
 
   Update();
 }
 
-void Platform::Update() {
+void PlatformAndroid::Update() {
   int id;
   int events;
   android_poll_source* source;
@@ -270,19 +275,23 @@ void Platform::Update() {
   }
 }
 
-void Platform::Exit() {
+void PlatformAndroid::Exit() {
   ANativeActivity_finish(app_->activity);
+}
+
+void PlatformAndroid::Vibrate(int duration) {
+  ::Vibrate(app_->activity, duration);
 }
 
 }  // namespace eng
 
 void android_main(android_app* app) {
-  eng::Platform platform;
+  eng::PlatformAndroid platform;
   try {
     platform.Initialize(app);
     platform.RunMainLoop();
     platform.Shutdown();
-  } catch (eng::Platform::InternalError& e) {
+  } catch (eng::PlatformBase::InternalError& e) {
   }
   _exit(0);
 }

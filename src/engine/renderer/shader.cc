@@ -1,7 +1,5 @@
 #include "shader.h"
 
-#include <cassert>
-
 #include "../shader_source.h"
 #include "render_command.h"
 #include "renderer.h"

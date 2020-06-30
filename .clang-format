@@ -1,0 +1,7 @@
+BasedOnStyle: Chromium
+Standard: Cpp11
+
+MacroBlockBegin: "^\
+RENDER_COMMAND_BEGIN$"
+MacroBlockEnd: "^\
+RENDER_COMMAND_END$"

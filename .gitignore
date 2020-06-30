@@ -6,3 +6,4 @@ build/android/build
 build/linux/gltest_x86_64_debug
 build/linux/gltest_x86_64_release
 build/linux/obj
+out

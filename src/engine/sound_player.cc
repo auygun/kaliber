@@ -1,6 +1,7 @@
 #include "sound_player.h"
 
 #include "../base/interpolation.h"
+#include "../base/log.h"
 #include "audio/audio_resource.h"
 #include "engine.h"
 #include "sound.h"
@@ -14,31 +15,43 @@ SoundPlayer::SoundPlayer() : resource_(Engine::Get().CreateAudioResource()) {}
 SoundPlayer::~SoundPlayer() = default;
 
 void SoundPlayer::SetSound(std::shared_ptr<Sound> sound) {
+  CHECK(!sound->is_streaming_sound()) << "Streaming sound cannot be shared.";
+
   sound_ = sound;
 }
 
-void SoundPlayer::Play(bool loop) {
-  resource_->SetAmplitudeInc(0);
-  resource_->SetLoop(loop);
-  resource_->Play(sound_, max_amplitude_, true);
+void SoundPlayer::SetSound(std::unique_ptr<Sound> sound) {
+  sound_ = std::move(sound);
 }
 
-void SoundPlayer::Resume(bool fade_in) {
-  if (fade_in)
-    resource_->SetAmplitudeInc(0.0001f);
-  resource_->Play(sound_, fade_in ? 0 : max_amplitude_, false);
+void SoundPlayer::Play(bool loop, float fade_in_duration) {
+  if (sound_) {
+    int step = variate_ ? Engine::Get().GetRandomGenerator().Roll(3) - 2 : 0;
+    resource_->SetResampleStep(step);
+    resource_->SetLoop(loop);
+    if (fade_in_duration > 0)
+      resource_->SetAmplitudeInc(1.0f / (sound_->hz() * fade_in_duration));
+    else
+      resource_->SetAmplitudeInc(0);
+    resource_->Play(sound_, fade_in_duration > 0 ? 0 : max_amplitude_, true);
+  }
 }
 
-void SoundPlayer::Stop(bool fade_out) {
-  if (fade_out)
-    resource_->SetAmplitudeInc(-0.0001f);
+void SoundPlayer::Resume(float fade_in_duration) {
+  if (fade_in_duration > 0)
+    resource_->SetAmplitudeInc(1.0f / (sound_->hz() * fade_in_duration));
+  resource_->Play(sound_, fade_in_duration > 0 ? 0 : -1, false);
+}
+
+void SoundPlayer::Stop(float fade_out_duration) {
+  if (fade_out_duration > 0)
+    resource_->SetAmplitudeInc(-1.0f / (sound_->hz() * fade_out_duration));
   else
     resource_->Stop();
 }
 
 void SoundPlayer::SetVariate(bool variate) {
-  int step = variate ? Engine::Get().GetRandomGenerator().Roll(3) - 2 : 0;
-  resource_->SetResampleStep(step);
+  variate_ = variate;
 }
 
 void SoundPlayer::SetSimulateStereo(bool simulate) {

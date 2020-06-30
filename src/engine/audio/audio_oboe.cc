@@ -20,6 +20,16 @@ bool AudioOboe::Initialize() {
 
 void AudioOboe::Shutdown() {
   LOG << "Shutting down audio system.";
+
+  stream_->stop();
+}
+
+void AudioOboe::Suspend() {
+  stream_->pause();
+}
+
+void AudioOboe::Resume() {
+  stream_->start();
 }
 
 size_t AudioOboe::GetSampleRate() {
