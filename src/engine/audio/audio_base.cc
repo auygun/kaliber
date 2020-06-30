@@ -58,7 +58,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
       float max_amplitude = sample->max_amplitude;
 
       size_t channel_offset =
-          (flags & AudioSample::kSimulateStereo) && num_channels == 1
+          (flags & AudioSample::kSimulateStereo) && !sound->is_streaming_sound()
               ? sound->hz() / 10
               : 0;
 
@@ -91,10 +91,10 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
 
         // Advance source index.
         if (src_index >= num_samples) {
+          src_index %= num_samples;
+
           if (!sound->is_streaming_sound()) {
-            if (flags & AudioSample::kLoop) {
-              src_index %= num_samples;
-            } else {
+            if (!(flags & AudioSample::kLoop)) {
               remove = true;
               break;
             }
@@ -104,18 +104,18 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
               break;
             }
 
-            src_index = 0;
-
             // Swap buffers and start streaming in background.
             sound->SwapBuffers();
             src[0] = const_cast<const Sound*>(sound)->GetBuffer(0);
             src[1] = const_cast<const Sound*>(sound)->GetBuffer(1);
+            if (!src[1])
+              src[1] = src[0];  // mono.
+            num_samples = sound->GetNumSamples();
 
             worker_.Enqueue(std::bind(&Sound::Stream, sample->sound,
                                       flags & AudioSample::kLoop));
           } else {
             LOG << "Buffer underrun!";
-            src_index = 0;
           }
         }
       }

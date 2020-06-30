@@ -27,8 +27,7 @@ class SoundPlayer {
   // false. Variations are obtained by slightly up or down sampling.
   void SetVariate(bool variate);
 
-  // Enable or disable stereo simulation effect. Valid for mono samples only.
-  // Disabled by default.
+  // Enable or disable stereo simulation effect. Disabled by default.
   void SetSimulateStereo(bool simulate);
 
   void SetMaxAplitude(float max_amplitude);
