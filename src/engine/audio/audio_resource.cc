@@ -20,8 +20,10 @@ void AudioResource::Play(std::shared_ptr<Sound> sound,
   if (sample_->active)
     return;
 
-  if (reset_pos)
+  if (reset_pos) {
     sample_->src_index = 0;
+    sound->ResetStream();
+  }
   sample_->flags &= ~AudioSample::kStopped;
   sample_->sound = sound;
   sample_->amplitude = amplitude;

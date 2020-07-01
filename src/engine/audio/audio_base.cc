@@ -35,21 +35,22 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
   for (auto it = samples_[1].begin(); it != samples_[1].end();) {
     AudioSample* sample = it->get();
 
+    auto sound = sample->sound.get();
     unsigned flags = sample->flags;
     bool remove = false;
 
     if (flags & AudioSample::kStopped) {
       remove = true;
+    } else if (!sound->IsDataValid()) {
+      if (!sound->IsStreamingInProgress())
+        sound->RecoverStream();
     } else {
-      auto sound = sample->sound.get();
-
       const float* src[2] = {const_cast<const Sound*>(sound)->GetBuffer(0),
                              const_cast<const Sound*>(sound)->GetBuffer(1)};
       if (!src[1])
         src[1] = src[0];  // mono.
 
       size_t num_samples = sound->GetNumSamples();
-      size_t num_channels = sound->num_channels();
       size_t src_index = sample->src_index;
       size_t step = sample->step;
       size_t accumulator = sample->accumulator;

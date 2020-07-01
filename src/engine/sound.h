@@ -27,11 +27,15 @@ class Sound {
   Sound();
   ~Sound();
 
-  bool Load(const std::string& file_name);
+  bool Load(const std::string& file_name, bool stream);
 
   bool Stream(bool loop);
 
   void SwapBuffers();
+
+  void ResetStream();
+
+  void RecoverStream();
 
   size_t IsStreamingInProgress() const;
 
@@ -43,14 +47,14 @@ class Sound {
   }
   float* GetBuffer(int channel);
 
-  bool IsValid() const { return !!front_buffer_[0]; }
+  bool IsDataValid() const { return is_data_valid_; }
 
   size_t GetNumSamples() const { return num_samples_front_; }
 
   size_t num_channels() const { return num_channels_; }
   size_t hz() const { return hz_; }
 
-  bool is_streaming_sound() { return is_streaming_sound_; }
+  bool is_streaming_sound() const { return is_streaming_sound_; }
 
   bool eof() const { return eof_; }
 
@@ -74,6 +78,8 @@ class Sound {
   std::atomic<bool> streaming_in_progress_ = false;
 
   bool is_streaming_sound_ = false;
+
+  bool is_data_valid_ = false;
 
   bool StreamInternal(size_t num_samples, bool loop);
 

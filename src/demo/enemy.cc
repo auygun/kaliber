@@ -57,7 +57,7 @@ Enemy::~Enemy() = default;
 
 bool Enemy::Initialize() {
   explosion_sound_ = std::make_shared<Sound>();
-  if (!explosion_sound_->Load("explosion.mp3"))
+  if (!explosion_sound_->Load("explosion.mp3", false))
     return false;
 
   return CreateRenderResources();
