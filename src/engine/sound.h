@@ -16,12 +16,8 @@ namespace eng {
 
 // Class for streaming and non-streaming sound assets. Loads and decodes mp3
 // files. Resamples the decoded audio to match the system sample rate if
-// necessary. Can be shared between multiple audio resources and played
-// simultaneously.
-//
-// Streaming starts automatically for big files and it's done from memory. It
-// loads the entire mp3 file and decodes small chunks on demand. Streaming sound
-// cannot be shared between multiple audio resources.
+// necessary. Non-streaming sounds Can be shared between multiple audio
+// resources and played simultaneously.
 class Sound {
  public:
   Sound();
@@ -35,19 +31,12 @@ class Sound {
 
   void ResetStream();
 
-  void RecoverStream();
-
   size_t IsStreamingInProgress() const;
-
-  // Buffer size per channel.
-  size_t GetSize() const;
 
   const float* GetBuffer(int channel) const {
     return front_buffer_[channel].get();
   }
   float* GetBuffer(int channel);
-
-  bool IsDataValid() const { return is_data_valid_; }
 
   size_t GetNumSamples() const { return num_samples_front_; }
 
@@ -59,11 +48,13 @@ class Sound {
   bool eof() const { return eof_; }
 
  private:
+  // Buffer holding decoded audio.
   std::unique_ptr<float[]> back_buffer_[2];
   std::unique_ptr<float[]> front_buffer_[2];
 
   size_t num_samples_back_ = 0;
   size_t num_samples_front_ = 0;
+  size_t max_samples_ = 0;
 
   size_t num_channels_ = 0;
   size_t hz_ = 0;
@@ -78,8 +69,6 @@ class Sound {
   std::atomic<bool> streaming_in_progress_ = false;
 
   bool is_streaming_sound_ = false;
-
-  bool is_data_valid_ = false;
 
   bool StreamInternal(size_t num_samples, bool loop);
 
