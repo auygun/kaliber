@@ -41,7 +41,7 @@ class SkyQuad : public eng::Animatable {
   const base::Vector4& nebula_color() { return nebula_color_; }
 
  private:
-  std::shared_ptr<eng::Shader> shader_;
+  std::unique_ptr<eng::Shader> shader_;
 
   base::Vector2 sky_offset_ = {0, 0};
   base::Vector2 last_sky_offset_ = {0, 0};

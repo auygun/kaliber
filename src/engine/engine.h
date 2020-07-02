@@ -51,22 +51,23 @@ class Engine {
   base::Vector2 ToPosition(const base::Vector2& vec);
 
   template <typename T>
-  std::shared_ptr<T> CreateRenderResource() {
+  std::unique_ptr<T> CreateRenderResource() {
     RenderResourceFactory<T> factory;
-    return std::dynamic_pointer_cast<T>(CreateRenderResourceInternal(factory));
+    std::unique_ptr<RenderResource> resource = CreateRenderResourceInternal(factory);
+    return std::unique_ptr<T>(static_cast<T*>(resource.release()));
   }
 
-  std::shared_ptr<AudioResource> CreateAudioResource();
+  std::unique_ptr<AudioResource> CreateAudioResource();
 
   void AddInputEvent(std::unique_ptr<InputEvent> event);
   std::unique_ptr<InputEvent> GetNextInputEvent();
 
   // Access to the render resources.
-  std::shared_ptr<Geometry> GetQuad() { return quad_; }
-  std::shared_ptr<Shader> GetPassThroughShader() {
-    return pass_through_shader_;
+  Geometry* GetQuad() { return quad_.get(); }
+  Shader* GetPassThroughShader() {
+    return pass_through_shader_.get();
   }
-  std::shared_ptr<Shader> GetSolidShader() { return solid_shader_; }
+  Shader* GetSolidShader() { return solid_shader_.get(); }
 
   const Font* GetSystemFont() { return system_font_.get(); }
 
@@ -106,9 +107,9 @@ class Engine {
 
   std::unique_ptr<Game> game_;
 
-  std::shared_ptr<Geometry> quad_;
-  std::shared_ptr<Shader> pass_through_shader_;
-  std::shared_ptr<Shader> solid_shader_;
+  std::unique_ptr<Geometry> quad_;
+  std::unique_ptr<Shader> pass_through_shader_;
+  std::unique_ptr<Shader> solid_shader_;
 
   base::Vector2 screen_size_ = {0, 0};
   base::Matrix4x4 projection_;
@@ -129,7 +130,7 @@ class Engine {
 
   base::Random random_;
 
-  std::shared_ptr<RenderResource> CreateRenderResourceInternal(
+  std::unique_ptr<RenderResource> CreateRenderResourceInternal(
       RenderResourceFactoryBase& factory);
 
   void ContextLost();

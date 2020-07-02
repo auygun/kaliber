@@ -52,11 +52,11 @@ bool Demo::Initialize() {
     return false;
   }
 
-  auto sound = std::make_shared<Sound>();
+  auto sound = std::make_unique<Sound>();
   if (!sound->Load("file_example_MP3_700KB.mp3", true))
     return false;
 
-  music_.SetSound(sound);
+  music_.SetSound(std::move(sound));
   music_.SetMaxAplitude(0.4f);
   music_.Play(true);
 
