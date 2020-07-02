@@ -1,6 +1,7 @@
 #include "sound_player.h"
 
 #include "../base/interpolation.h"
+#include "../base/log.h"
 #include "audio/audio_resource.h"
 #include "engine.h"
 #include "sound.h"
@@ -14,13 +15,23 @@ SoundPlayer::SoundPlayer() : resource_(Engine::Get().CreateAudioResource()) {}
 SoundPlayer::~SoundPlayer() = default;
 
 void SoundPlayer::SetSound(std::shared_ptr<Sound> sound) {
+  if (sound->is_streaming_sound()) {
+    LOG << "Fata error! Streaming sound cannot be shared.";
+    Engine::Get().Exit();
+  }
   sound_ = sound;
 }
 
+void SoundPlayer::SetSound(std::unique_ptr<Sound> sound) {
+  sound_ = std::move(sound);
+}
+
 void SoundPlayer::Play(bool loop) {
-  resource_->SetAmplitudeInc(0);
-  resource_->SetLoop(loop);
-  resource_->Play(sound_, max_amplitude_, true);
+  if (sound_) {
+    resource_->SetAmplitudeInc(0);
+    resource_->SetLoop(loop);
+    resource_->Play(sound_, max_amplitude_, true);
+  }
 }
 
 void SoundPlayer::Resume(bool fade_in) {

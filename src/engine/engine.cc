@@ -156,8 +156,8 @@ Vector2 Engine::ToPosition(const Vector2& vec) {
   return ToScale(vec) - GetScreenSize() / 2.0f;
 }
 
-std::shared_ptr<AudioResource> Engine::CreateAudioResource() {
-  return std::make_shared<AudioResource>(audio_);
+std::unique_ptr<AudioResource> Engine::CreateAudioResource() {
+  return std::make_unique<AudioResource>(audio_);
 }
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
@@ -229,7 +229,7 @@ bool Engine::IsMobile() const {
   return platform_->mobile_device();
 }
 
-std::shared_ptr<RenderResource> Engine::CreateRenderResourceInternal(
+std::unique_ptr<RenderResource> Engine::CreateRenderResourceInternal(
     RenderResourceFactoryBase& factory) {
   return renderer_->CreateResource(factory);
 }

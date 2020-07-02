@@ -39,7 +39,7 @@ class SkyQuad : public eng::Animatable {
   void SwitchColor(const base::Vector4& color);
 
  private:
-  std::shared_ptr<eng::Shader> shader_;
+  std::unique_ptr<eng::Shader> shader_;
 
   base::Vector2 sky_offset_ = {0, 0};
   base::Vector2 last_sky_offset_ = {0, 0};

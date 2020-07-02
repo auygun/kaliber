@@ -49,8 +49,7 @@ void ImageQuad::Draw() {
   Vector2 tex_scale = {GetFrameWidth() / texture_->GetWidth(),
                        GetFrameHeight() / texture_->GetHeight()};
 
-  std::shared_ptr<Geometry> quad = Engine::Get().GetQuad();
-  std::shared_ptr<Shader> shader = Engine::Get().GetPassThroughShader();
+  Shader* shader = Engine::Get().GetPassThroughShader();
 
   shader->Activate();
   shader->SetUniform("offset", offset_);
@@ -63,7 +62,7 @@ void ImageQuad::Draw() {
   shader->SetUniform("color", color_);
   shader->SetUniform("texture", 0);
 
-  quad->Draw();
+  Engine::Get().GetQuad()->Draw();
 }
 
 float ImageQuad::GetFrameWidth() const {

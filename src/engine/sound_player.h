@@ -16,6 +16,7 @@ class SoundPlayer {
   ~SoundPlayer();
 
   void SetSound(std::shared_ptr<Sound> sound);
+  void SetSound(std::unique_ptr<Sound> sound);
 
   void Play(bool loop);
 
@@ -36,7 +37,7 @@ class SoundPlayer {
   void SetEndCallback(base::Closure cb);
 
  private:
-  std::shared_ptr<AudioResource> resource_;
+  std::unique_ptr<AudioResource> resource_;
   std::shared_ptr<Sound> sound_;
 
   float max_amplitude_ = 1.0f;
