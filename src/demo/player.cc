@@ -35,10 +35,6 @@ Player::Player()
 Player::~Player() = default;
 
 bool Player::Initialize() {
-  font_ = Engine::Get().GetAsset<Font>("PixelCaps!.ttf");
-  if (!font_)
-    return false;
-
   if (!CreateRenderResources())
     return false;
 
@@ -449,43 +445,46 @@ void Player::NavigateBack() {
 }
 
 bool Player::CreateRenderResources() {
-  Engine& engine = Engine::Get();
-
-  auto weapon_image = engine.GetAsset<Image>("enemy_anims_flare_ok.png");
-  auto beam_image = engine.GetAsset<Image>("enemy_ray_ok.png");
-  auto nuke_image = engine.GetAsset<Image>("nuke.png");
-  if (!weapon_image || !beam_image || !nuke_image)
+  auto weapon_image = std::make_unique<Image>();
+  if (!weapon_image->Load("enemy_anims_flare_ok.png"))
+    return false;
+  auto beam_image = std::make_unique<Image>();
+  if (!beam_image->Load("enemy_ray_ok.png"))
+    return false;
+  auto nuke_image = std::make_unique<Image>();
+  if (!nuke_image->Load("nuke.png"))
     return false;
 
   weapon_image->Compress();
   beam_image->Compress();
 
-  weapon_tex_->Update(weapon_image);
-  beam_tex_->Update(beam_image);
+  weapon_tex_->Update(std::move(weapon_image));
+  beam_tex_->Update(std::move(beam_image));
 
-  auto current_mip = nuke_image;
   for (int i = 0; i < 3; ++i) {
-    auto next_mip = std::make_shared<Image>();
-    next_mip->CreateMip(*current_mip);
-    current_mip = next_mip;
+    auto next_mip = std::make_unique<Image>();
+    next_mip->CreateMip(*nuke_image);
+    nuke_image = std::move(next_mip);
   }
-  current_mip->Compress();
-  nuke_symbol_tex_->Update(current_mip);
+  nuke_image->Compress();
+  nuke_symbol_tex_->Update(std::move(nuke_image));
   nuke_counter_tex_->Update(GetNukeCounterImage(nuke_count_));
 
   return true;
 }
 
-std::shared_ptr<Image> Player::GetNukeCounterImage(int n) {
+std::unique_ptr<Image> Player::GetNukeCounterImage(int n) {
+  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+
   std::string text = std::to_string(n);
   int width, height;
-  font_->CalculateBoundingBox(text.c_str(), width, height);
+  font.CalculateBoundingBox(text.c_str(), width, height);
 
-  auto image = std::make_shared<Image>();
+  auto image = std::make_unique<Image>();
   image->Create(width, height);
   image->Clear({1, 1, 1, 0});
 
-  font_->Print(0, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
+  font.Print(0, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
 
   image->Compress();
   return image;

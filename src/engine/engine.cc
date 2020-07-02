@@ -77,13 +77,8 @@ bool Engine::Initialize() {
         TextureCompressor::Create(TextureCompressor::kFormatETC1);
   }
 
-  system_font_ = GetAsset<Font>("engine/RobotoMono-Regular.ttf");
-  if (!system_font_) {
-    // Do not fail. Just create a null-font.
-    auto font = std::make_shared<Font>();
-    font->SetImmutable();
-    system_font_ = font;
-  }
+  system_font_ = std::make_unique<Font>();
+  system_font_->Load("engine/RobotoMono-Regular.ttf");
 
   if (!CreateRenderResources())
     return false;
@@ -146,11 +141,6 @@ void Engine::LostFocus() {
 void Engine::GainedFocus() {
   if (game_)
     game_->GainedFocus();
-}
-
-void Engine::TrimMemory() {
-  LOG << "Trimming memory.";
-  assets_.clear();
 }
 
 void Engine::Exit() {
@@ -244,19 +234,6 @@ std::shared_ptr<RenderResource> Engine::CreateRenderResourceInternal(
   return renderer_->CreateResource(factory);
 }
 
-std::shared_ptr<Asset> Engine::GetAssetInternal(AssetFactoryBase& factory) {
-  auto it = assets_.find(factory.name());
-  if (it != assets_.end())
-    return it->second;
-
-  auto asset = factory.Create();
-  if (!asset->Load(factory.name().c_str()))
-    return nullptr;
-
-  assets_[factory.name()] = asset;
-  return asset;
-}
-
 void Engine::ContextLost() {
   CreateRenderResources();
 
@@ -265,28 +242,28 @@ void Engine::ContextLost() {
 
 bool Engine::CreateRenderResources() {
   // Create the quad geometry we can reuse for all sprites.
-  auto quad_mesh = GetAsset<Mesh>("engine/quad.mesh");
-  if (!quad_mesh) {
+  auto quad_mesh = std::make_unique<Mesh>();
+  if (!quad_mesh->Load("engine/quad.mesh")) {
     LOG << "Could not create quad mesh.";
     return false;
   }
-  quad_->Create(quad_mesh);
+  quad_->Create(std::move(quad_mesh));
 
   // Create the shader we can reuse for texture rendering.
-  auto pts_source = GetAsset<ShaderSource>("engine/pass_through.glsl");
-  if (!pts_source) {
+  auto source = std::make_unique<ShaderSource>();
+  if (!source->Load("engine/pass_through.glsl")) {
     LOG << "Could not create pass through shader.";
     return false;
   }
-  pass_through_shader_->Create(pts_source, quad_->vertex_description());
+  pass_through_shader_->Create(std::move(source), quad_->vertex_description());
 
   // Create the shader we can reuse for solid rendering.
-  auto ss_source = GetAsset<ShaderSource>("engine/solid.glsl");
-  if (!ss_source) {
+  source = std::make_unique<ShaderSource>();
+  if (!source->Load("engine/solid.glsl")) {
     LOG << "Could not create solid shader.";
     return false;
   }
-  solid_shader_->Create(ss_source, quad_->vertex_description());
+  solid_shader_->Create(std::move(source), quad_->vertex_description());
 
   return true;
 }
@@ -316,21 +293,21 @@ void Engine::PrintStats() {
   int image_width = width + margin * 2;
   int image_height = (line_height + margin) * lines.size() + margin;
 
-  auto image = std::make_shared<Image>();
+  auto image = std::make_unique<Image>();
   image->Create(image_width, image_height);
   image->Clear({1, 1, 1, 0.08f});
 
   Worker worker(2);
   int y = margin;
   for (auto& text : lines) {
-    worker.Enqueue(std::bind(&Font::Print, system_font_, margin, y,
+    worker.Enqueue(std::bind(&Font::Print, system_font_.get(), margin, y,
                              text.c_str(), image->GetBuffer(),
                              image->GetWidth()));
     y += line_height + margin;
   }
   worker.Join();
 
-  stats_.GetTexture()->Update(image);
+  stats_.GetTexture()->Update(std::move(image));
   stats_.AutoScale();
 }
 

@@ -1,5 +1,6 @@
 #include "audio_base.h"
 
+#include <cassert>
 #include <cstring>
 
 #include "../../base/log.h"
@@ -11,7 +12,9 @@ namespace eng {
 
 AudioBase::AudioBase() = default;
 
-AudioBase::~AudioBase() = default;
+AudioBase::~AudioBase() {
+  worker_.Join();
+}
 
 void AudioBase::Play(std::shared_ptr<AudioSample> sample) {
   std::unique_lock<std::mutex> scoped_lock(mutex_);
@@ -33,21 +36,19 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
   for (auto it = samples_[1].begin(); it != samples_[1].end();) {
     AudioSample* sample = it->get();
 
+    auto sound = sample->sound.get();
     unsigned flags = sample->flags;
     bool remove = false;
 
     if (flags & AudioSample::kStopped) {
       remove = true;
     } else {
-      auto sound = sample->sound.get();
-
       const float* src[2] = {const_cast<const Sound*>(sound)->GetBuffer(0),
                              const_cast<const Sound*>(sound)->GetBuffer(1)};
       if (!src[1])
         src[1] = src[0];  // mono.
 
       size_t num_samples = sound->GetNumSamples();
-      size_t num_channels = sound->num_channels();
       size_t src_index = sample->src_index;
       size_t step = sample->step;
       size_t accumulator = sample->accumulator;
@@ -56,64 +57,74 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
       float max_amplitude = sample->max_amplitude;
 
       size_t channel_offset =
-          (flags & AudioSample::kSimulateStereo) && num_channels == 1
+          (flags & AudioSample::kSimulateStereo) && !sound->is_streaming_sound()
               ? sound->hz() / 10
               : 0;
 
+      // Sound must contain valid audio data unless it's a streaming sound.
+      // Streaming sound becomes invalid after a seek operation.
+      assert(num_samples || sound->is_streaming_sound());
+
       for (size_t i = 0; i < num_frames * kChannelCount;) {
-        // Mix the 1st channel.
-        output_buffer[i++] += src[0][src_index] * amplitude;
+        if (num_samples) {
+          // Mix the 1st channel.
+          output_buffer[i++] += src[0][src_index] * amplitude;
 
-        // Mix the 2nd channel. Offset the source index for stereo simulation.
-        size_t ind = channel_offset + src_index;
-        if (ind < num_samples)
-          output_buffer[i++] += src[1][ind] * amplitude;
-        else if (flags & AudioSample::kLoop)
-          output_buffer[i++] += src[1][ind % num_samples] * amplitude;
-        else
-          i++;
+          // Mix the 2nd channel. Offset the source index for stereo simulation.
+          size_t ind = channel_offset + src_index;
+          if (ind < num_samples)
+            output_buffer[i++] += src[1][ind] * amplitude;
+          else if (flags & AudioSample::kLoop)
+            output_buffer[i++] += src[1][ind % num_samples] * amplitude;
+          else
+            i++;
 
-        // Apply amplitude modification.
-        amplitude += amplitude_inc;
-        if (amplitude <= 0) {
-          remove = true;
-          break;
-        } else if (amplitude > max_amplitude) {
-          amplitude = max_amplitude;
+          // Apply amplitude modification.
+          amplitude += amplitude_inc;
+          if (amplitude <= 0) {
+            remove = true;
+            break;
+          } else if (amplitude > max_amplitude) {
+            amplitude = max_amplitude;
+          }
+
+          // Basic resampling for variations.
+          accumulator += step;
+          src_index += accumulator / 10;
+          accumulator %= 10;
         }
-
-        // Basic resampling for variations.
-        accumulator += step;
-        src_index += accumulator / 10;
-        accumulator %= 10;
 
         // Advance source index.
         if (src_index >= num_samples) {
           if (!sound->is_streaming_sound()) {
-            if (flags & AudioSample::kLoop) {
-              src_index %= num_samples;
-            } else {
+            src_index %= num_samples;
+
+            if (!(flags & AudioSample::kLoop)) {
               remove = true;
               break;
             }
           } else if (!sound->IsStreamingInProgress()) {
+            if (num_samples)
+              src_index %= num_samples;
+
             if (sound->eof()) {
               remove = true;
               break;
             }
 
-            src_index = 0;
-
             // Swap buffers and start streaming in background.
             sound->SwapBuffers();
             src[0] = const_cast<const Sound*>(sound)->GetBuffer(0);
             src[1] = const_cast<const Sound*>(sound)->GetBuffer(1);
+            if (!src[1])
+              src[1] = src[0];  // mono.
+            num_samples = sound->GetNumSamples();
 
             worker_.Enqueue(std::bind(&Sound::Stream, sample->sound,
                                       flags & AudioSample::kLoop));
-          } else {
+          } else if (num_samples) {
             LOG << "Buffer underrun!";
-            src_index = 0;
+            src_index %= num_samples;
           }
         }
       }

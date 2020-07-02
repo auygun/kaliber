@@ -11,7 +11,6 @@
 #include "damage_type.h"
 
 namespace eng {
-class Font;
 class Image;
 class InputEvent;
 }  //  namespace eng
@@ -62,8 +61,6 @@ class Player {
   eng::ImageQuad nuke_symbol_;
   eng::ImageQuad nuke_counter_;
 
-  std::shared_ptr<const eng::Font> font_;
-
   int nuke_count_ = 0;
 
   int total_health_ = 3;
@@ -101,7 +98,7 @@ class Player {
 
   bool CreateRenderResources();
 
-  std::shared_ptr<eng::Image> GetNukeCounterImage(int n);
+  std::unique_ptr<eng::Image> GetNukeCounterImage(int n);
 };
 
 #endif  // PLAYER_H

@@ -1,6 +1,5 @@
 #include "shader_source.h"
 
-#include <cassert>
 #include <cstring>
 
 #include "../base/log.h"
@@ -10,8 +9,6 @@
 namespace eng {
 
 bool ShaderSource::Load(const std::string& name) {
-  assert(!IsImmutable());
-
   Engine& engine = Engine::Get();
 
   size_t size = 0;

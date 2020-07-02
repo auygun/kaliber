@@ -21,10 +21,10 @@ bool AudioAlsa::Initialize() {
   // Contains information about the hardware.
   snd_pcm_hw_params_t* hw_params;
 
-  // "default" is usualy PulseAudio. Use "plug:hw" instead for direct hardware
-  // device with software format conversion.
-  if ((err = snd_pcm_open(&pcm_handle_, "plug:hw", SND_PCM_STREAM_PLAYBACK,
-                          0)) < 0) {
+  // "default" is usualy PulseAudio. Use "plughw:CARD=PCH" instead for direct
+  // hardware device with software format conversion.
+  if ((err = snd_pcm_open(&pcm_handle_, "plughw:CARD=PCH",
+                          SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
     LOG << "Cannot open audio device. Error: " << snd_strerror(err);
     return false;
   }
@@ -147,7 +147,7 @@ size_t AudioAlsa::GetSampleRate() {
 }
 
 bool AudioAlsa::StartWorker() {
-  LOG << "Strating audio thread.";
+  LOG << "Starting audio thread.";
 
   std::promise<bool> promise;
   std::future<bool> future = promise.get_future();
@@ -172,10 +172,8 @@ void AudioAlsa::WorkerMain(std::promise<bool> promise) {
   auto buffer = std::make_unique<float[]>(num_frames * 2);
 
   for (;;) {
-    if (terminate_worker_) {
-      worker_.Join();
+    if (terminate_worker_)
       return;
-    }
 
     RenderAudio(buffer.get(), num_frames);
 

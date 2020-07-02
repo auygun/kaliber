@@ -19,7 +19,7 @@ class Texture : public RenderResource {
   ~Texture() override;
 
   // Uploads image.
-  void Update(std::shared_ptr<Image> image);
+  void Update(std::unique_ptr<Image> image);
 
   void Destroy() override;
 

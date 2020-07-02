@@ -17,15 +17,12 @@ AudioResource::~AudioResource() {
 void AudioResource::Play(std::shared_ptr<Sound> sound,
                          float amplitude,
                          bool reset_pos) {
-  if (!sound->IsImmutable() && !sound->is_streaming_sound())
-    sound->SetImmutable();
-
   if (sample_->active)
     return;
 
   if (reset_pos) {
     sample_->src_index = 0;
-    sample_->accumulator = 0;
+    sound->ResetStream();
   }
   sample_->flags &= ~AudioSample::kStopped;
   sample_->sound = sound;
@@ -58,6 +55,7 @@ void AudioResource::SetSimulateStereo(bool simulate) {
 
 void AudioResource::SetResampleStep(size_t step) {
   sample_->step = step + 10;
+  sample_->accumulator = 0;
 }
 
 void AudioResource::SetMaxAmplitude(float max_amplitude) {

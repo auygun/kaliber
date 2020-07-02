@@ -3,16 +3,15 @@
 
 #include <memory>
 #include <string>
-#include "asset.h"
 
 namespace eng {
 
-class ShaderSource : public Asset {
+class ShaderSource {
  public:
   ShaderSource() = default;
-  ~ShaderSource() override = default;
+  ~ShaderSource() = default;
 
-  bool Load(const std::string& name) override;
+  bool Load(const std::string& name);
 
   const char* GetVertexSource() const { return vertex_source_.get(); }
   const char* GetFragmentSource() const { return fragment_source_.get(); }

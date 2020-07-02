@@ -6,8 +6,6 @@
 #include <memory>
 #include <string>
 
-#include "asset.h"
-
 typedef struct mp3dec_ex mp3dec_ex_t;
 
 namespace r8b {
@@ -18,53 +16,45 @@ namespace eng {
 
 // Class for streaming and non-streaming sound assets. Loads and decodes mp3
 // files. Resamples the decoded audio to match the system sample rate if
-// necessary.
-//
-// Streaming starts automatically for big files and it's done from memory. It
-// loads the entire mp3 file and decodes small chunks on demand.
-// Instances of this class with streaming support cannot be set as immutable.
-//
-// A non-streaming sound can be shared between multiple audio resources and can
-// be played simultaneously. A streaming sound cannot be shared between multiple
-// audio resources. There can be only one audio track playing at a time.
-class Sound : public Asset {
+// necessary. Non-streaming sounds Can be shared between multiple audio
+// resources and played simultaneously.
+class Sound {
  public:
   Sound();
-  ~Sound() override;
+  ~Sound();
 
-  bool Load(const std::string& file_name) override;
+  bool Load(const std::string& file_name, bool stream);
 
   bool Stream(bool loop);
 
   void SwapBuffers();
 
-  size_t IsStreamingInProgress() const;
+  void ResetStream();
 
-  // Buffer size per channel.
-  size_t GetSize() const;
+  size_t IsStreamingInProgress() const;
 
   const float* GetBuffer(int channel) const {
     return front_buffer_[channel].get();
   }
   float* GetBuffer(int channel);
 
-  bool IsValid() const { return !!front_buffer_[0]; }
-
   size_t GetNumSamples() const { return num_samples_front_; }
 
   size_t num_channels() const { return num_channels_; }
   size_t hz() const { return hz_; }
 
-  bool is_streaming_sound() { return is_streaming_sound_; }
+  bool is_streaming_sound() const { return is_streaming_sound_; }
 
   bool eof() const { return eof_; }
 
  private:
+  // Buffer holding decoded audio.
   std::unique_ptr<float[]> back_buffer_[2];
   std::unique_ptr<float[]> front_buffer_[2];
 
   size_t num_samples_back_ = 0;
   size_t num_samples_front_ = 0;
+  size_t max_samples_ = 0;
 
   size_t num_channels_ = 0;
   size_t hz_ = 0;

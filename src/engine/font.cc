@@ -1,7 +1,5 @@
 #include "font.h"
 
-#include <cassert>
-
 #include "../base/log.h"
 #include "engine.h"
 #include "platform/asset_file.h"
@@ -12,10 +10,6 @@
 namespace eng {
 
 bool Font::Load(const std::string& file_name) {
-  assert(!IsImmutable());
-
-  SetName(file_name);
-
   // Read the font file.
   size_t buffer_size = 0;
   auto buffer = AssetFile::ReadWholeFile(
@@ -25,7 +19,6 @@ bool Font::Load(const std::string& file_name) {
     return false;
   }
 
-  bool result = false;
   do {
     // Allocate a cache bitmap for the glyphs.
     // This is one 8 bit channel intensity data.
@@ -41,20 +34,22 @@ bool Font::Load(const std::string& file_name) {
     if (stbtt_BakeFontBitmap((unsigned char*)buffer.get(), 0, kFontHeight,
                              glyph_cache_.get(), kGlyphSize, kGlyphSize,
                              kFirstChar, kNumChars, glyph_info_) <= 0) {
-      LOG << "Failed to bake the glyph cache: " << result;
+      LOG << "Failed to bake the glyph cache: ";
       glyph_cache_.reset();
       break;
     }
 
-    result = true;
-  } while (0);
+    int x0, y0, x1, y1;
+    CalculateBoundingBox("`IlfKgjy_{)", x0, y0, x1, y1);
+    line_height_ = y1 - y0;
+    yoff_ = -y0;
 
-  int x0, y0, x1, y1;
-  CalculateBoundingBox("`IlfKgjy_{)", x0, y0, x1, y1);
-  line_height_ = y1 - y0;
-  yoff_ = -y0;
+    return true;
+  } while (false);
 
-  return result;
+  glyph_cache_.reset();
+
+  return false;
 }
 
 static void StretchBlit_I8_to_RGBA32(int dst_x0,

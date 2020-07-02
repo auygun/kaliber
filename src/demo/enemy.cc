@@ -90,12 +90,9 @@ Enemy::Enemy()
 Enemy::~Enemy() = default;
 
 bool Enemy::Initialize() {
-  font_ = Engine::Get().GetAsset<Font>("PixelCaps!.ttf");
-  if (!font_)
+  explosion_sound_ = std::make_shared<Sound>();
+  if (!explosion_sound_->Load("explosion.mp3", false))
     return false;
-
-  // Precache assets.
-  Engine::Get().GetAsset<Sound>("explosion.mp3");
 
   if (!CreateRenderResources())
     return false;
@@ -506,7 +503,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.movement_animator.Attach(&e.score);
   e.movement_animator.Play(Animator::kMovement, false);
 
-  e.explosion_.SetSound(engine.GetAsset<Sound>("explosion.mp3"));
+  e.explosion_.SetSound(explosion_sound_);
   e.explosion_.SetVariate(true);
   e.explosion_.SetSimulateStereo(true);
 }
@@ -789,31 +786,38 @@ int Enemy::GetScore(EnemyType enemy_type) {
   return enemy_scores[enemy_type];
 }
 
-std::shared_ptr<Image> Enemy::GetScoreImage(int score) {
+std::unique_ptr<Image> Enemy::GetScoreImage(int score) {
+  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+
   std::string text = std::to_string(score);
   int width, height;
-  font_->CalculateBoundingBox(text.c_str(), width, height);
+  font.CalculateBoundingBox(text.c_str(), width, height);
 
-  auto image = std::make_shared<Image>();
+  auto image = std::make_unique<Image>();
   image->Create(width, height);
   image->Clear({1, 1, 1, 0});
 
-  font_->Print(0, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
+  font.Print(0, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
 
   image->Compress();
   return image;
 }
 
 bool Enemy::CreateRenderResources() {
-  Engine& engine = Engine::Get();
-
-  auto skull_image = engine.GetAsset<Image>("enemy_anims_01_frames_ok.png");
-  auto bug_image = engine.GetAsset<Image>("enemy_anims_02_frames_ok.png");
-  auto boss_image = engine.GetAsset<Image>("Boss_ok.png");
-  auto target_image = engine.GetAsset<Image>("enemy_target_single_ok.png");
-  auto blast_image = engine.GetAsset<Image>("enemy_anims_blast_ok.png");
-  if (!skull_image || !bug_image || !boss_image || !target_image ||
-      !blast_image)
+  auto skull_image = std::make_unique<Image>();
+  if (!skull_image->Load("enemy_anims_01_frames_ok.png"))
+    return false;
+  auto bug_image = std::make_unique<Image>();
+  if (!bug_image->Load("enemy_anims_02_frames_ok.png"))
+    return false;
+  auto boss_image = std::make_unique<Image>();
+  if (!bug_image->Load("Boss_ok.png"))
+    return false;
+  auto target_image = std::make_unique<Image>();
+  if (!target_image->Load("enemy_target_single_ok.png"))
+    return false;
+  auto blast_image = std::make_unique<Image>();
+  if (!blast_image->Load("enemy_anims_blast_ok.png"))
     return false;
 
   skull_image->Compress();
@@ -822,11 +826,11 @@ bool Enemy::CreateRenderResources() {
   target_image->Compress();
   blast_image->Compress();
 
-  skull_tex_->Update(skull_image);
-  bug_tex_->Update(bug_image);
-  boss_tex_->Update(boss_image);
-  target_tex_->Update(target_image);
-  blast_tex_->Update(blast_image);
+  skull_tex_->Update(std::move(skull_image));
+  bug_tex_->Update(std::move(bug_image));
+  boss_tex_->Update(std::move(boss_image));
+  target_tex_->Update(std::move(target_image));
+  blast_tex_->Update(std::move(blast_image));
 
   for (int i = 0; i < kEnemyType_Max; ++i)
     score_tex_[i]->Update(GetScoreImage(GetScore((EnemyType)i)));

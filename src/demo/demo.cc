@@ -19,6 +19,9 @@ using namespace base;
 using namespace eng;
 
 bool Demo::Initialize() {
+  if (!font_.Load("PixelCaps!.ttf"))
+    return false;
+
   if (!sky_.Create()) {
     LOG << "Could not create the sky.";
     return false;
@@ -49,7 +52,11 @@ bool Demo::Initialize() {
     return false;
   }
 
-  music_.SetSound(Engine::Get().GetAsset<Sound>("file_example_MP3_700KB.mp3"));
+  auto sound = std::make_shared<Sound>();
+  if (!sound->Load("file_example_MP3_700KB.mp3", true))
+    return false;
+
+  music_.SetSound(sound);
   music_.SetMaxAplitude(0.4f);
   music_.Play(true);
 
@@ -272,8 +279,8 @@ void Demo::StartNextStage(bool boss) {
         float weights[3] = {0, 0, 0};
         weights[dominant_channel] = 1;
         Vector4 c = {Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[0],
-                      Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[1],
-                      Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[2], 1};
+                     Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[1],
+                     Lerp(0.75f, 0.95f, rnd.GetFloat()) * weights[2], 1};
         c += {Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[0]),
               Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[1]),
               Lerp(0.1f, 0.5f, rnd.GetFloat()) * (1 - weights[2]), 1};

@@ -21,8 +21,6 @@ bool Mesh::Create(Primitive primitive,
                   DataType index_description,
                   size_t num_indices,
                   const void* indices) {
-  assert(!IsImmutable());
-
   primitive_ = primitive;
   num_vertices_ = num_vertices;
   index_description_ = index_description;
@@ -52,10 +50,6 @@ bool Mesh::Create(Primitive primitive,
 }
 
 bool Mesh::Load(const std::string& file_name) {
-  assert(!IsImmutable());
-
-  SetName(file_name);
-
   size_t buffer_size = 0;
   auto json_mesh = AssetFile::ReadWholeFile(file_name.c_str(),
                                             Engine::Get().GetRootPath().c_str(),

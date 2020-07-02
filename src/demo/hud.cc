@@ -7,6 +7,7 @@
 #include "../engine/font.h"
 #include "../engine/image.h"
 #include "../engine/renderer/texture.h"
+#include "demo.h"
 
 using namespace base;
 using namespace eng;
@@ -32,18 +33,15 @@ Hud::~Hud() = default;
 
 bool Hud::Initialize() {
   Engine& engine = Engine::Get();
-
-  font_ = engine.GetAsset<Font>("PixelCaps!.ttf");
-  if (!font_)
-    return false;
+  const Font& font = static_cast<Demo*>(engine.GetGame())->GetFont();
 
   int tmp;
-  font_->CalculateBoundingBox("big_enough_text", max_text_width_, tmp);
-
-  auto image = CreateImage();
+  font.CalculateBoundingBox("big_enough_text", max_text_width_, tmp);
 
   for (int i = 0; i < 2; ++i) {
-    text_[i].GetTexture()->Update(image);
+    auto image = CreateImage();
+
+    text_[i].GetTexture()->Update(std::move(image));
     text_[i].AutoScale();
     text_[i].SetColor(kTextColor);
 
@@ -189,19 +187,21 @@ void Hud::SetProgress(float progress) {
 }
 
 void Hud::PrintMessage(const std::string& text, float duration) {
-  auto image = std::make_shared<Image>();
-  image->Create(max_text_width_, font_->GetLineHeight());
+  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+
+  auto image = std::make_unique<Image>();
+  image->Create(max_text_width_, font.GetLineHeight());
   image->GradientV({1.0f, 1.0f, 1.0f, 0}, {.0f, .0f, 1.0f, 0},
-                   font_->GetLineHeight());
+                   font.GetLineHeight());
 
   int w, h;
-  font_->CalculateBoundingBox(text.c_str(), w, h);
+  font.CalculateBoundingBox(text.c_str(), w, h);
   float x = (image->GetWidth() - w) / 2;
 
-  font_->Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
+  font.Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
   image->Compress();
 
-  message_.GetTexture()->Update(image);
+  message_.GetTexture()->Update(std::move(image));
   message_.AutoScale();
   message_.Scale(1.5f);
   message_.SetColor({1, 1, 1, 0});
@@ -217,23 +217,27 @@ void Hud::PrintMessage(const std::string& text, float duration) {
 }
 
 void Hud::Print(int i, const std::string& text) {
+  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+
   auto image = CreateImage();
 
   float x = 0;
   if (i == 1) {
     int w, h;
-    font_->CalculateBoundingBox(text.c_str(), w, h);
+    font.CalculateBoundingBox(text.c_str(), w, h);
     x = image->GetWidth() - w;
   }
 
-  font_->Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
+  font.Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
 
-  text_[i].GetTexture()->Update(image);
+  text_[i].GetTexture()->Update(std::move(image));
 }
 
-std::shared_ptr<Image> Hud::CreateImage() {
-  auto image = std::make_shared<Image>();
-  image->Create(max_text_width_, font_->GetLineHeight());
+std::unique_ptr<Image> Hud::CreateImage() {
+  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+
+  auto image = std::make_unique<Image>();
+  image->Create(max_text_width_, font.GetLineHeight());
   image->Clear({1, 1, 1, 0});
   return image;
 }

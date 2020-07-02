@@ -17,16 +17,13 @@ Texture::~Texture() {
   Destroy();
 }
 
-void Texture::Update(std::shared_ptr<Image> image) {
-  if (!image->IsImmutable())
-    image->SetImmutable();
-
+void Texture::Update(std::unique_ptr<Image> image) {
   valid_ = true;
   width_ = image->GetWidth();
   height_ = image->GetHeight();
 
   auto cmd = std::make_unique<CmdUpdateTexture>();
-  cmd->image = image;
+  cmd->image = std::move(image);
   cmd->impl_data = impl_data_;
   renderer_->EnqueueCommand(std::move(cmd));
 }

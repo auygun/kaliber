@@ -19,7 +19,7 @@ class Geometry : public RenderResource {
            Renderer* renderer);
   ~Geometry() override;
 
-  void Create(std::shared_ptr<Mesh> mesh);
+  void Create(std::unique_ptr<Mesh> mesh);
 
   void Destroy() override;
 

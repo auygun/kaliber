@@ -93,6 +93,7 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/platform/platform_linux.cc \
   $(SRC_ROOT)/engine/platform/platform.cc \
   $(SRC_ROOT)/engine/renderer/geometry.cc \
+  $(SRC_ROOT)/engine/renderer/render_command.cc \
   $(SRC_ROOT)/engine/renderer/render_resource.cc \
   $(SRC_ROOT)/engine/renderer/renderer_linux.cc \
   $(SRC_ROOT)/engine/renderer/renderer_types.cc \

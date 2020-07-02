@@ -75,8 +75,6 @@ Image& Image::operator=(const Image& other) {
 }
 
 bool Image::Create(int w, int h) {
-  assert(!IsImmutable());
-
   width_ = w;
   height_ = h;
 
@@ -86,8 +84,6 @@ bool Image::Create(int w, int h) {
 }
 
 void Image::Copy(const Image& other) {
-  assert(!IsImmutable());
-
   if (other.buffer_) {
     int size = other.GetSize();
     buffer_.reset((uint8_t*)AlignedAlloc<16>(size));
@@ -99,8 +95,6 @@ void Image::Copy(const Image& other) {
 }
 
 bool Image::CreateMip(const Image& other) {
-  assert(!IsImmutable());
-
   if (other.width_ <= 1 || other.height_ <= 1 || other.GetFormat() != kRGBA32)
     return false;
 
@@ -141,10 +135,6 @@ bool Image::CreateMip(const Image& other) {
 }
 
 bool Image::Load(const std::string& file_name) {
-  assert(!IsImmutable());
-
-  SetName(file_name);
-
   size_t buffer_size = 0;
   auto file_buffer = AssetFile::ReadWholeFile(
       file_name.c_str(), Engine::Get().GetRootPath().c_str(), &buffer_size);
@@ -243,8 +233,8 @@ void Image::ConvertToPow2() {
   int new_width = RoundUpToPow2(width_);
   int new_height = RoundUpToPow2(height_);
   if ((new_width != width_) || (new_height != height_)) {
-    LOG << "Converting image " << GetName() << " from (" << width_ << ", "
-        << height_ << ") to (" << new_width << ", " << new_height << ")";
+    LOG << "Converting image from (" << width_ << ", " << height_ << ") to ("
+        << new_width << ", " << new_height << ")";
 
     int bigger_size = new_width * new_height * 4 * sizeof(uint8_t);
     uint8_t* bigger_buffer = (uint8_t*)AlignedAlloc<16>(bigger_size);
@@ -301,7 +291,7 @@ bool Image::Compress() {
       return false;
   }
 
-  LOG << "Compressing image " << GetName() << ". Format: " << format_;
+  LOG << "Compressing image. Format: " << format_;
 
   unsigned compressedSize = GetSize();
   uint8_t* compressedBuffer =
@@ -317,14 +307,10 @@ bool Image::Compress() {
 }
 
 uint8_t* Image::GetBuffer() {
-  assert(!IsImmutable());
-
   return buffer_.get();
 }
 
 void Image::Clear(Vector4 rgba) {
-  assert(!IsImmutable());
-
   // Quantize the color to target resolution.
   uint8_t r = (uint8_t)(rgba.x * 255.0f), g = (uint8_t)(rgba.y * 255.0f),
           b = (uint8_t)(rgba.z * 255.0f), a = (uint8_t)(rgba.w * 255.0f);
@@ -343,8 +329,6 @@ void Image::Clear(Vector4 rgba) {
 }
 
 void Image::GradientH() {
-  assert(!IsImmutable());
-
   // Fill out the first line manually.
   for (int x = 0; x < width_; ++x) {
     uint8_t intensity = x > 255 ? 255 : x;
@@ -360,8 +344,6 @@ void Image::GradientH() {
 }
 
 void Image::GradientV(const Vector4& c1, const Vector4& c2, int height) {
-  assert(!IsImmutable());
-
   // Fill each section with gradient.
   for (int h = 0; h < height_; ++h) {
     Vector4 c = Lerp(c1, c2, fmod(h, height) / (float)height);

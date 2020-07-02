@@ -17,8 +17,7 @@ using namespace base;
 
 namespace {
 
-constexpr size_t kMinSamplesForStreaming = 500000;
-constexpr size_t kMaxSamplesPerDecode = MINIMP3_MAX_SAMPLES_PER_FRAME * 50;
+constexpr size_t kMaxSamplesPerChunk = MINIMP3_MAX_SAMPLES_PER_FRAME * 10;
 
 }  // namespace
 
@@ -31,11 +30,7 @@ Sound::~Sound() {
     mp3dec_ex_close(mp3_dec_.get());
 }
 
-bool Sound::Load(const std::string& file_name) {
-  assert(!IsImmutable());
-
-  SetName(file_name);
-
+bool Sound::Load(const std::string& file_name, bool stream) {
   size_t buffer_size = 0;
   encoded_data_ = AssetFile::ReadWholeFile(file_name.c_str(),
                                            Engine::Get().GetRootPath().c_str(),
@@ -47,7 +42,8 @@ bool Sound::Load(const std::string& file_name) {
 
   if (mp3_dec_)
     mp3dec_ex_close(mp3_dec_.get());
-  mp3_dec_ = std::make_unique<mp3dec_ex_t>();
+  else
+    mp3_dec_ = std::make_unique<mp3dec_ex_t>();
 
   int err = mp3dec_ex_open_buf(mp3_dec_.get(),
                                reinterpret_cast<uint8_t*>(encoded_data_.get()),
@@ -57,12 +53,9 @@ bool Sound::Load(const std::string& file_name) {
     return false;
   }
 
-  is_streaming_sound_ =
-      mp3_dec_->samples / mp3_dec_->info.channels > kMinSamplesForStreaming
-          ? true
-          : false;
+  is_streaming_sound_ = stream;
 
-  LOG << (is_streaming_sound_ ? "Streaming " : "Loading ") << GetName() << ". "
+  LOG << (is_streaming_sound_ ? "Streaming " : "Loading ") << file_name << ". "
       << mp3_dec_->samples << " samples, " << mp3_dec_->info.channels
       << " channels, " << mp3_dec_->info.hz << " hz, "
       << "layer " << mp3_dec_->info.layer << ", "
@@ -77,23 +70,35 @@ bool Sound::Load(const std::string& file_name) {
 
   size_t system_hz = Engine::Get().GetAudioSampleRate();
 
-  // Fill up buffers.
   if (is_streaming_sound_) {
     resampler_ = std::make_unique<r8b::CDSPResampler16>(hz_, system_hz,
-                                                        kMaxSamplesPerDecode);
+                                                        kMaxSamplesPerChunk);
 
-    StreamInternal(kMaxSamplesPerDecode, false);
+    // Fill up buffers.
+    StreamInternal(kMaxSamplesPerChunk, false);
     SwapBuffersInternal();
-    StreamInternal(kMaxSamplesPerDecode, false);
+    StreamInternal(kMaxSamplesPerChunk, false);
+
+    if (eof_) {
+      // Sample is smaller than buffer. No need to stream.
+      is_streaming_sound_ = false;
+      mp3dec_ex_close(mp3_dec_.get());
+      mp3_dec_.reset();
+      encoded_data_.reset();
+      resampler_.reset();
+    }
   } else {
     resampler_ = std::make_unique<r8b::CDSPResampler16>(hz_, system_hz,
                                                         mp3_dec_->samples);
 
+    // Decode entire file.
     StreamInternal(mp3_dec_->samples, false);
     SwapBuffersInternal();
     eof_ = true;
 
     // We are done with decoding for non-streaming sound.
+    mp3dec_ex_close(mp3_dec_.get());
+    mp3_dec_.reset();
     encoded_data_.reset();
     resampler_.reset();
   }
@@ -102,21 +107,32 @@ bool Sound::Load(const std::string& file_name) {
 }
 
 bool Sound::Stream(bool loop) {
-  assert(!IsImmutable());
   assert(is_streaming_sound_);
 
-  return StreamInternal(kMaxSamplesPerDecode, loop);
+  bool result = StreamInternal(kMaxSamplesPerChunk, loop);
+
+  // Memory barrier to ensure all memory writes become visible to the audio
+  // thread.
+  streaming_in_progress_.store(false, std::memory_order_release);
+
+  return result;
 }
 
 void Sound::SwapBuffers() {
-  assert(!IsImmutable());
   assert(is_streaming_sound_);
 
   SwapBuffersInternal();
 
-  // Memory barrier to ensure all memory writes become visible to the decoder
-  // thread.
-  streaming_in_progress_.store(true, std::memory_order_release);
+  streaming_in_progress_.store(true, std::memory_order_relaxed);
+}
+
+void Sound::ResetStream() {
+  if (is_streaming_sound_) {
+    // Seek to 0 and ivalidate decoded data.
+    mp3dec_ex_seek(mp3_dec_.get(), 0);
+    eof_ = false;
+    num_samples_back_ = num_samples_front_ = 0;
+  }
 }
 
 size_t Sound::IsStreamingInProgress() const {
@@ -125,13 +141,7 @@ size_t Sound::IsStreamingInProgress() const {
   return streaming_in_progress_.load(std::memory_order_acquire);
 }
 
-size_t Sound::GetSize() const {
-  return num_samples_front_ * sizeof(mp3d_sample_t);
-}
-
 float* Sound::GetBuffer(int channel) {
-  assert(!IsImmutable());
-
   return front_buffer_[channel].get();
 }
 
@@ -160,10 +170,6 @@ bool Sound::StreamInternal(size_t num_samples, bool loop) {
   else
     eof_ = true;
 
-  // Memory barrier to ensure all memory writes become visible to the audio
-  // thread.
-  streaming_in_progress_.store(false, std::memory_order_release);
-
   return true;
 }
 
@@ -176,9 +182,9 @@ void Sound::SwapBuffersInternal() {
 }
 
 void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {
+  // r8b resampler supports only double floating point type.
   std::unique_ptr<double[]> channels[2];
 
-  // r8b resampler supports only double floating point type.
   if (num_channels_ == 1) {
     // Single channel.
     channels[0] = std::make_unique<double[]>(num_samples_back_);
@@ -199,9 +205,11 @@ void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {
       ((float)system_hz / (float)hz_) * num_samples_back_;
 
   if (!back_buffer_[0]) {
-    back_buffer_[0] = std::make_unique<float[]>(resampled_num_samples);
+    if (max_samples_ < resampled_num_samples)
+      max_samples_ = resampled_num_samples;
+    back_buffer_[0] = std::make_unique<float[]>(max_samples_);
     if (num_channels_ == 2)
-      back_buffer_[1] = std::make_unique<float[]>(resampled_num_samples);
+      back_buffer_[1] = std::make_unique<float[]>(max_samples_);
   }
 
   // Resample to match the system sample rate if needed. Output from the

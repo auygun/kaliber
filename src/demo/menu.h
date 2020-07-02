@@ -12,7 +12,6 @@
 namespace eng {
 class Image;
 class InputEvent;
-class Font;
 class Texture;
 }  // namespace eng
 
@@ -59,14 +58,13 @@ class Menu {
 
   Item items_[kOption_Max];
 
-  std::shared_ptr<const eng::Font> font_;
   int max_text_width_ = 0;
 
   Option selected_option_ = kOption_Invalid;
 
   base::Vector2 tap_pos_[2] = {{0, 0}, {0, 0}};
 
-  std::shared_ptr<eng::Image> CreateImage();
+  std::unique_ptr<eng::Image> CreateImage();
 
   bool IsAnimating();
 };

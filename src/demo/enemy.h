@@ -14,7 +14,7 @@
 
 namespace eng {
 class Image;
-class Font;
+class Sound;
 class Texture;
 }  // namespace eng
 
@@ -96,7 +96,7 @@ class Enemy {
   eng::ImageQuad boss_;
   eng::Animator boss_animator_;
 
-  std::shared_ptr<const eng::Font> font_;
+  std::shared_ptr<eng::Sound> explosion_sound_;
 
   std::list<EnemyUnit> enemies_;
 
@@ -135,7 +135,7 @@ class Enemy {
 
   int GetScore(EnemyType enemy_type);
 
-  std::shared_ptr<eng::Image> GetScoreImage(int score);
+  std::unique_ptr<eng::Image> GetScoreImage(int score);
 
   bool CreateRenderResources();
 
