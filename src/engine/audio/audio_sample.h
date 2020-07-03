@@ -1,6 +1,7 @@
 #ifndef AUDIO_SAMPLE_H
 #define AUDIO_SAMPLE_H
 
+#include <atomic>
 #include <memory>
 
 #include "../../base/closure.h"
@@ -11,6 +12,8 @@ class Sound;
 
 struct AudioSample {
   enum SampleFlags { kLoop = 1, kStopped = 2, kSimulateStereo = 4 };
+
+  std::atomic<bool> active = false;
 
   // Read-only accessed by the audio thread.
   std::shared_ptr<Sound> sound;
@@ -24,7 +27,6 @@ struct AudioSample {
   size_t src_index = 0;
   size_t accumulator = 0;
   float amplitude = 1.0f;
-  bool active = false;
 };
 
 }  // namespace eng

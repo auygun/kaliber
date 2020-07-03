@@ -17,23 +17,26 @@ AudioResource::~AudioResource() {
 void AudioResource::Play(std::shared_ptr<Sound> sound,
                          float amplitude,
                          bool reset_pos) {
-  if (sample_->active)
+  if (sample_->active.load(std::memory_order_acquire))
     return;
 
+  AudioSample* sample = sample_.get();
+
+  sample->active.store(true, std::memory_order_relaxed);
+
   if (reset_pos) {
-    sample_->src_index = 0;
+    sample->src_index = 0;
     sound->ResetStream();
   }
-  sample_->flags &= ~AudioSample::kStopped;
-  sample_->sound = sound;
-  sample_->amplitude = amplitude;
-  sample_->active = true;
+  sample->flags &= ~AudioSample::kStopped;
+  sample->sound = sound;
+  sample->amplitude = amplitude;
 
   audio_->Play(sample_);
 }
 
 void AudioResource::Stop() {
-  if (!sample_->active)
+  if (!sample_->active.load(std::memory_order_acquire))
     return;
 
   sample_->flags |= AudioSample::kStopped;

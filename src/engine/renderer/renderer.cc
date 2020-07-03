@@ -272,17 +272,12 @@ void Renderer::WorkerMain(std::promise<bool> promise) {
     LOG << "draw queue size: " << (int)cq[1].size();
 #endif
 
-    while (!cq[0].empty()) {
-      std::unique_ptr<RenderCommand> cmd;
-      cmd.swap(cq[0].front());
-      cq[0].pop_front();
-      ProcessCommand(cmd.get());
-    }
-    while (!cq[1].empty()) {
-      std::unique_ptr<RenderCommand> cmd;
-      cmd.swap(cq[1].front());
-      cq[1].pop_front();
-      ProcessCommand(cmd.get());
+    for (int i = 0; i < 2; ++i) {
+      while (!cq[i].empty()) {
+        std::unique_ptr<RenderCommand> cmd;
+        ProcessCommand(cq[i].front().get());
+        cq[i].pop_front();
+      }
     }
   }
 }

@@ -135,8 +135,14 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
     }
 
     if (remove) {
-      task_runner_.Enqueue(sample->end_cb);
-      sample->active = false;
+      if (sample->end_cb) {
+        task_runner_.Enqueue(sample->end_cb);
+        sample->active.store(false, std::memory_order_relaxed);
+      } else {
+        // Memory barrier to ensure all memory writes become visible to the main
+        // thread.
+        sample->active.store(false, std::memory_order_release);
+      }
       it = samples_[1].erase(it);
     } else {
       ++it;

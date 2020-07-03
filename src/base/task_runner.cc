@@ -1,8 +1,12 @@
 #include "task_runner.h"
 
+#include <cassert>
+
 namespace base {
 
 void TaskRunner::Enqueue(base::Closure task) {
+  assert(task);
+
   std::unique_lock<std::mutex> scoped_lock(mutex_);
   thread_tasks_.emplace_back(std::move(task));
 }
