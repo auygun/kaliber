@@ -811,7 +811,7 @@ bool Enemy::CreateRenderResources() {
   if (!bug_image->Load("enemy_anims_02_frames_ok.png"))
     return false;
   auto boss_image = std::make_unique<Image>();
-  if (!bug_image->Load("Boss_ok.png"))
+  if (!boss_image->Load("Boss_ok.png"))
     return false;
   auto target_image = std::make_unique<Image>();
   if (!target_image->Load("enemy_target_single_ok.png"))
