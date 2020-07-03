@@ -53,7 +53,8 @@ class Engine {
   template <typename T>
   std::unique_ptr<T> CreateRenderResource() {
     RenderResourceFactory<T> factory;
-    std::unique_ptr<RenderResource> resource = CreateRenderResourceInternal(factory);
+    std::unique_ptr<RenderResource> resource =
+        CreateRenderResourceInternal(factory);
     return std::unique_ptr<T>(static_cast<T*>(resource.release()));
   }
 
@@ -64,9 +65,7 @@ class Engine {
 
   // Access to the render resources.
   Geometry* GetQuad() { return quad_.get(); }
-  Shader* GetPassThroughShader() {
-    return pass_through_shader_.get();
-  }
+  Shader* GetPassThroughShader() { return pass_through_shader_.get(); }
   Shader* GetSolidShader() { return solid_shader_.get(); }
 
   const Font* GetSystemFont() { return system_font_.get(); }
