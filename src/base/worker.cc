@@ -1,4 +1,7 @@
 #include "worker.h"
+
+#include <cassert>
+
 #include "log.h"
 
 namespace base {
@@ -15,6 +18,8 @@ Worker::Worker(unsigned max_concurrency) : max_concurrency_(max_concurrency) {
 Worker::~Worker() = default;
 
 void Worker::Enqueue(base::Closure task) {
+  assert(task);
+
   if (!active_) {
     unsigned concurrency = max_concurrency_;
     while (concurrency--)
