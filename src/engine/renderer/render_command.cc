@@ -14,8 +14,6 @@
 
 namespace eng {
 
-RENDER_COMMAND_IMPL(CmdEableBlend, false);
-RENDER_COMMAND_IMPL(CmdClear, false);
 RENDER_COMMAND_IMPL(CmdPresent, false);
 RENDER_COMMAND_IMPL(CmdUpdateTexture, true);
 RENDER_COMMAND_IMPL(CmdDestoryTexture, true);

@@ -44,13 +44,6 @@ struct RenderCommand {
 #endif
 };
 
-RENDER_COMMAND_BEGIN(CmdEableBlend)
-RENDER_COMMAND_END
-
-RENDER_COMMAND_BEGIN(CmdClear)
-  std::array<float, 4> rgba;
-RENDER_COMMAND_END
-
 RENDER_COMMAND_BEGIN(CmdPresent)
 RENDER_COMMAND_END
 

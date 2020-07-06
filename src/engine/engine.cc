@@ -120,11 +120,6 @@ void Engine::Update(float delta_time) {
 }
 
 void Engine::Draw(float frame_frac) {
-  auto cmd = std::make_unique<CmdClear>();
-  cmd->rgba = {0, 0, 0, 1};
-  renderer_->EnqueueCommand(std::move(cmd));
-  renderer_->EnqueueCommand(std::make_unique<CmdEableBlend>());
-
   game_->Draw(frame_frac);
 
   if (stats_.IsVisible())

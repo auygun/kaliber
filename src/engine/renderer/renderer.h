@@ -187,8 +187,6 @@ class Renderer {
 
   void ProcessCommand(RenderCommand* cmd);
 
-  void HandleCmdEnableBlend(RenderCommand* cmd);
-  void HandleCmdClear(RenderCommand* cmd);
   void HandleCmdPresent(RenderCommand* cmd);
   void HandleCmdUpdateTexture(RenderCommand* cmd);
   void HandleCmdDestoryTexture(RenderCommand* cmd);
