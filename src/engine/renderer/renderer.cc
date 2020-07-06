@@ -201,6 +201,11 @@ bool Renderer::InitCommon() {
 
   glViewport(0, 0, screen_width_, screen_height_);
 
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  glClearColor(0, 0, 0, 1);
+
   return true;
 }
 
@@ -274,7 +279,6 @@ void Renderer::WorkerMain(std::promise<bool> promise) {
 
     for (int i = 0; i < 2; ++i) {
       while (!cq[i].empty()) {
-        std::unique_ptr<RenderCommand> cmd;
         ProcessCommand(cq[i].front().get());
         cq[i].pop_front();
       }
@@ -290,12 +294,6 @@ void Renderer::ProcessCommand(RenderCommand* cmd) {
 #endif
 
   switch (cmd->cmd_id) {
-    case HHASH("CmdEableBlend"):
-      HandleCmdEnableBlend(cmd);
-      break;
-    case HHASH("CmdClear"):
-      HandleCmdClear(cmd);
-      break;
     case HHASH("CmdPresent"):
       HandleCmdPresent(cmd);
       break;
@@ -348,17 +346,6 @@ void Renderer::ProcessCommand(RenderCommand* cmd) {
       assert(false);
       break;
   }
-}
-
-void Renderer::HandleCmdEnableBlend(RenderCommand* cmd) {
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-}
-
-void Renderer::HandleCmdClear(RenderCommand* cmd) {
-  auto* c = static_cast<CmdClear*>(cmd);
-  glClearColor(c->rgba[0], c->rgba[1], c->rgba[2], c->rgba[3]);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {

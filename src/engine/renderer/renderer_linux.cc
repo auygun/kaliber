@@ -91,8 +91,10 @@ void Renderer::ShutdownInternal() {
 }
 
 void Renderer::HandleCmdPresent(RenderCommand* cmd) {
-  if (display_)
+  if (display_) {
     glXSwapBuffers(display_, window_);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  }
 }
 
 }  // namespace eng
