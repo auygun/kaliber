@@ -25,7 +25,7 @@ INTERMEDIATE_DIR := $(OUTPUT_DIR)/obj
 BUILD_DIR := $(INTERMEDIATE_DIR)/$(BUILD)
 
 ARFLAGS = r
-LDFLAGS = -lX11 -lGL -lz -pthread -lasound
+LDFLAGS = -lX11 -lGL -pthread -lasound
 
 # Always enable debug information.
 CFLAGS += -g
@@ -106,8 +106,6 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/sound.cc \
   $(SRC_ROOT)/third_party/glew/glew.c \
   $(SRC_ROOT)/third_party/jsoncpp/jsoncpp.cc \
-  $(SRC_ROOT)/third_party/minizip/ioapi.c \
-  $(SRC_ROOT)/third_party/minizip/unzip.c \
   $(SRC_ROOT)/third_party/r8b/pffft.cpp \
   $(SRC_ROOT)/third_party/r8b/r8bbase.cpp \
   $(SRC_ROOT)/third_party/texture_compressor/dxt_encoder_internals.cc \
