@@ -121,7 +121,7 @@ void Enemy::Update(float delta_time) {
   Random& rnd = Engine::Get().GetRandomGenerator();
 
   // Update enemy units.
-  for (auto it = enemies_.begin(); it != enemies_.end(); ++it) {
+  for (auto it = enemies_.begin(); it != enemies_.end();) {
     if (it->marked_for_removal) {
       it = enemies_.erase(it);
       continue;
@@ -154,6 +154,8 @@ void Enemy::Update(float delta_time) {
     it->health_animator.Update(delta_time);
     it->score_animator.Update(delta_time);
     it->movement_animator.Update(delta_time);
+
+    it++;
   }
 }
 
@@ -367,7 +369,7 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   num_enemies_killed_in_current_wave_ = 0;
   seconds_since_last_spawn_ = {0, 0, 0, 0};
   seconds_to_next_spawn_ = {0, 0, 0, 0};
-  spawn_factor_ = 1 / (log10(0.25f * ((wave + 4) * 0.8f) + 1.468f) * 6);
+  spawn_factor_ = 1 / (log10(0.25f * ((wave + 7) * 0.8f) + 1.468f) * 6);
   spawn_factor_interpolator_ = 0;
   boss_spawn_cooldown_ = 5;
   boss_spawn_duration_ = 0;
@@ -406,7 +408,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
       e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
       break;
     case kEnemyType_Bug:
-      e.total_health = e.hit_points = 2;
+      e.total_health = e.hit_points = 3;
       e.sprite.Create(bug_tex_, {10, 4});
       break;
     default:
