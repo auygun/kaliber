@@ -104,6 +104,7 @@ void Engine::Shutdown() {
 void Engine::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
 
+  platform_->Update();
   audio_->Update();
   renderer_->Update();
 

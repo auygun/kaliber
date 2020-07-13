@@ -1,4 +1,4 @@
-#include "platform.h"
+#include "platform_linux.h"
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -14,10 +14,10 @@ using namespace base;
 
 namespace eng {
 
-Platform::Platform() = default;
-Platform::~Platform() = default;
+PlatformLinux::PlatformLinux() = default;
+PlatformLinux::~PlatformLinux() = default;
 
-void Platform::Initialize() {
+void PlatformLinux::Initialize() {
   root_path_ = "../../";
   LOG << "Root path: " << root_path_.c_str();
 
@@ -41,9 +41,11 @@ void Platform::Initialize() {
       KeyPressMask | Button1MotionMask | ButtonPressMask | ButtonReleaseMask);
   Atom WM_DELETE_WINDOW = XInternAtom(display, "WM_DELETE_WINDOW", false);
   XSetWMProtocols(display, window, &WM_DELETE_WINDOW, 1);
+
+  engine_ = std::make_unique<Engine>(this, renderer_.get(), audio_.get());
 }
 
-void Platform::Update() {
+void PlatformLinux::Update() {
   if (!engine_)
     return;
 
@@ -97,19 +99,19 @@ void Platform::Update() {
   }
 }
 
-void Platform::Exit() {
+void PlatformLinux::Exit() {
   should_exit_ = true;
 }
 
 }  // namespace eng
 
 int main(int argc, char** argv) {
-  eng::Platform platform;
+  eng::PlatformLinux platform;
   try {
     platform.Initialize();
     platform.RunMainLoop();
     platform.Shutdown();
-  } catch (eng::Platform::InternalError& e) {
+  } catch (eng::PlatformBase::InternalError& e) {
     return -1;
   }
   return 0;

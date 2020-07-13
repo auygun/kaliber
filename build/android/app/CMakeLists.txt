@@ -74,7 +74,7 @@ add_library(native-activity SHARED
     ../../../src/engine/platform/asset_file_android.cc
     ../../../src/engine/platform/asset_file.cc
     ../../../src/engine/platform/platform_android.cc
-    ../../../src/engine/platform/platform.cc
+    ../../../src/engine/platform/platform_base.cc
     ../../../src/engine/renderer/geometry.cc
     ../../../src/engine/renderer/render_command.cc
     ../../../src/engine/renderer/render_resource.cc

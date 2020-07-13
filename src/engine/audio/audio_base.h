@@ -34,6 +34,9 @@ class AudioBase {
   ~AudioBase();
 
   void RenderAudio(float* output_buffer, size_t num_frames);
+
+  AudioBase(const AudioBase&) = delete;
+  AudioBase& operator=(const AudioBase&) = delete;
 };
 
 }  // namespace eng

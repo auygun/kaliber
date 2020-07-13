@@ -1,11 +1,11 @@
-#include "platform.h"
+#include "platform_android.h"
 
 #include <android_native_app_glue.h>
 #include <unistd.h>
 #include <string>
 
-#include "../../base/file.h"
 #include "../../base/log.h"
+#include "../../base/vecmath.h"
 #include "../../third_party/android/gestureDetector.h"
 #include "../audio/audio_oboe.h"
 #include "../engine.h"
@@ -56,11 +56,11 @@ int32_t getDensityDpi(android_app* app) {
 
 namespace eng {
 
-Platform::Platform() = default;
-Platform::~Platform() = default;
+PlatformAndroid::PlatformAndroid() = default;
+PlatformAndroid::~PlatformAndroid() = default;
 
-int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
-  Platform* platform = reinterpret_cast<Platform*>(app->userData);
+int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
+  PlatformAndroid* platform = reinterpret_cast<PlatformAndroid*>(app->userData);
 
   if (!platform->engine_)
     return 0;
@@ -153,8 +153,8 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
   return 0;
 }
 
-void Platform::HandleCmd(android_app* app, int32_t cmd) {
-  Platform* platform = reinterpret_cast<Platform*>(app->userData);
+void PlatformAndroid::HandleCmd(android_app* app, int32_t cmd) {
+  PlatformAndroid* platform = reinterpret_cast<PlatformAndroid*>(app->userData);
 
   switch (cmd) {
     case APP_CMD_SAVE_STATE:
@@ -216,7 +216,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
   }
 }
 
-void Platform::Initialize(android_app* app) {
+void PlatformAndroid::Initialize(android_app* app) {
   LOG << "Initializing platform.";
   app_ = app;
 
@@ -245,13 +245,15 @@ void Platform::Initialize(android_app* app) {
   LOG << "Device DPI: " << device_dpi_;
 
   app->userData = reinterpret_cast<void*>(this);
-  app->onAppCmd = Platform::HandleCmd;
-  app->onInputEvent = Platform::HandleInput;
+  app->onAppCmd = PlatformAndroid::HandleCmd;
+  app->onInputEvent = PlatformAndroid::HandleInput;
+
+  engine_ = std::make_unique<Engine>(this, renderer_.get(), audio_.get());
 
   Update();
 }
 
-void Platform::Update() {
+void PlatformAndroid::Update() {
   int id;
   int events;
   android_poll_source* source;
@@ -270,19 +272,19 @@ void Platform::Update() {
   }
 }
 
-void Platform::Exit() {
+void PlatformAndroid::Exit() {
   ANativeActivity_finish(app_->activity);
 }
 
 }  // namespace eng
 
 void android_main(android_app* app) {
-  eng::Platform platform;
+  eng::PlatformAndroid platform;
   try {
     platform.Initialize(app);
     platform.RunMainLoop();
     platform.Shutdown();
-  } catch (eng::Platform::InternalError& e) {
+  } catch (eng::PlatformBase::InternalError& e) {
   }
   _exit(0);
 }

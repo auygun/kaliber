@@ -8,6 +8,7 @@
 #include "../base/random.h"
 #include "../base/vecmath.h"
 #include "audio/audio_forward.h"
+#include "platform/platform_forward.h"
 #include "image_quad.h"
 #include "renderer/render_resource.h"
 
@@ -21,7 +22,6 @@ class Game;
 class InputEvent;
 class Renderer;
 struct RenderCommand;
-class Platform;
 class Geometry;
 class Shader;
 

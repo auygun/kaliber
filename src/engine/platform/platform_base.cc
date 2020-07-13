@@ -1,4 +1,4 @@
-#include "platform.h"
+#include "platform_base.h"
 
 #include <thread>
 
@@ -12,16 +12,19 @@
 
 namespace eng {
 
-Platform::InternalError Platform::internal_error;
+PlatformBase::InternalError PlatformBase::internal_error;
 
-void Platform::Shutdown() {
+PlatformBase::PlatformBase() = default;
+
+PlatformBase::~PlatformBase() = default;
+
+void PlatformBase::Shutdown() {
   LOG << "Shutting down platform.";
   audio_->Shutdown();
   renderer_->Shutdown();
 }
 
-void Platform::RunMainLoop() {
-  engine_ = std::make_unique<Engine>(this, renderer_.get(), audio_.get());
+void PlatformBase::RunMainLoop() {
   if (!engine_->Initialize()) {
     LOG << "Failed to initialize the engine.";
     throw internal_error;
@@ -59,13 +62,13 @@ void Platform::RunMainLoop() {
 
     // Subdivide the frame time.
     while (accumulator >= time_step) {
-      Update();
+      // Update();
+      engine_->Update(time_step);
       if (should_exit_) {
         engine_->Shutdown();
         engine_.reset();
         return;
       }
-      engine_->Update(time_step);
       accumulator -= time_step;
     };
 
