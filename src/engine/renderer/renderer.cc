@@ -389,7 +389,16 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
                            c->image->GetHeight(), 0, c->image->GetSize(),
                            c->image->GetBuffer());
 
+    // Sometimes the first glCompressedTexImage2D call after context-lost
+    // generates GL_INVALID_VALUE.
     GLenum err = glGetError();
+    if (err == GL_INVALID_VALUE) {
+      glCompressedTexImage2D(GL_TEXTURE_2D, 0, format, c->image->GetWidth(),
+                            c->image->GetHeight(), 0, c->image->GetSize(),
+                            c->image->GetBuffer());
+      err = glGetError();
+    }
+
     if (err != GL_NO_ERROR)
       LOG << "GL ERROR after glCompressedTexImage2D: " << (int)err;
   } else {
