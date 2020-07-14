@@ -59,6 +59,7 @@ void Renderer::ContextLost() {
   InvalidateAllResources();
 
 #ifdef THREADED_RENDERING
+  assert(!task_runner_.IsBoundToCurrentThread());
   task_runner_.Enqueue(context_lost_cb_);
 #else
   context_lost_cb_();
@@ -210,9 +211,8 @@ bool Renderer::InitCommon() {
 }
 
 void Renderer::InvalidateAllResources() {
-  for (auto& r : resources_) {
-      r.second->Destroy();
-  }
+  for (auto& r : resources_)
+    r.second->Destroy();
 }
 
 bool Renderer::StartWorker() {

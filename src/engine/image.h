@@ -50,8 +50,6 @@ class Image {
   int width_ = 0;
   int height_ = 0;
   Format format_ = kRGBA32;
-
-  std::string name_;
 };
 
 }  // namespace eng

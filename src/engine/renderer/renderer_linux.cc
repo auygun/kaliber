@@ -1,9 +1,6 @@
 #include "renderer.h"
 
-#include <X11/Xutil.h>
-
 #include "../../base/log.h"
-#include "../../third_party/glew/glew.h"
 
 namespace eng {
 

@@ -20,7 +20,6 @@
 
 #include "opengl.h"
 #if defined(__linux__) && !defined(__ANDROID__)
-#include <X11/Xlib.h>
 #include "../../third_party/glew/glxew.h"
 #endif
 
