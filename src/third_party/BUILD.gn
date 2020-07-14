@@ -2,6 +2,8 @@ source_set("third_party") {
   sources = [
     "jsoncpp/json.h",
     "jsoncpp/jsoncpp.cc",
+    "minimp3/minimp3_ex.h",
+    "minimp3/minimp3.h",
     "stb/stb_image.h",
     "stb/stb_truetype.h",
     "texture_compressor/dxt_encoder_implementation_autogen.h",
@@ -13,6 +15,60 @@ source_set("third_party") {
     "texture_compressor/texture_compressor_etc1.h",
     "texture_compressor/texture_compressor.cc",
     "texture_compressor/texture_compressor.h",
+    "glslang/glslang/CInterface/glslang_c_interface.cpp",
+    "glslang/glslang/GenericCodeGen/CodeGen.cpp",
+    "glslang/glslang/GenericCodeGen/Link.cpp",
+    "glslang/glslang/MachineIndependent/attribute.cpp",
+    "glslang/glslang/MachineIndependent/Constant.cpp",
+    "glslang/glslang/MachineIndependent/glslang_tab.cpp",
+    "glslang/glslang/MachineIndependent/InfoSink.cpp",
+    "glslang/glslang/MachineIndependent/Initialize.cpp",
+    "glslang/glslang/MachineIndependent/Intermediate.cpp",
+    "glslang/glslang/MachineIndependent/intermOut.cpp",
+    "glslang/glslang/MachineIndependent/IntermTraverse.cpp",
+    "glslang/glslang/MachineIndependent/iomapper.cpp",
+    "glslang/glslang/MachineIndependent/limits.cpp",
+    "glslang/glslang/MachineIndependent/linkValidate.cpp",
+    "glslang/glslang/MachineIndependent/parseConst.cpp",
+    "glslang/glslang/MachineIndependent/ParseContextBase.cpp",
+    "glslang/glslang/MachineIndependent/ParseHelper.cpp",
+    "glslang/glslang/MachineIndependent/PoolAlloc.cpp",
+    "glslang/glslang/MachineIndependent/preprocessor/Pp.cpp",
+    "glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp",
+    "glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp",
+    "glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp",
+    "glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp",
+    "glslang/glslang/MachineIndependent/propagateNoContraction.cpp",
+    "glslang/glslang/MachineIndependent/reflection.cpp",
+    "glslang/glslang/MachineIndependent/RemoveTree.cpp",
+    "glslang/glslang/MachineIndependent/Scan.cpp",
+    "glslang/glslang/MachineIndependent/ShaderLang.cpp",
+    "glslang/glslang/MachineIndependent/SymbolTable.cpp",
+    "glslang/glslang/MachineIndependent/Versions.cpp",
+    "glslang/glslang/OSDependent/Unix/ossource.cpp",
+    "glslang/OGLCompilersDLL/InitializeDll.cpp",
+    "glslang/SPIRV/CInterface/spirv_c_interface.cpp",
+    "glslang/SPIRV/disassemble.cpp",
+    "glslang/SPIRV/doc.cpp",
+    "glslang/SPIRV/GlslangToSpv.cpp",
+    "glslang/SPIRV/InReadableOrder.cpp",
+    "glslang/SPIRV/Logger.cpp",
+    "glslang/SPIRV/SpvBuilder.cpp",
+    "glslang/SPIRV/SpvPostProcess.cpp",
+    "glslang/SPIRV/SPVRemapper.cpp",
+    "glslang/SPIRV/SpvTools.cpp",
+    "glslang/StandAlone/ResourceLimits.cpp",
+    "spirv-reflect/spirv_reflect.c",
+    "vma/vk_mem_alloc.cpp",
+  ]
+
+  defines = [
+    "VK_USE_PLATFORM_XLIB_KHR",
+    "VULKAN_NON_CMAKE_BUILD",
+    "SYSCONFDIR=\"/etc\"",
+    "FALLBACK_DATA_DIRS=\"/usr/local/share:/usr/share\"",
+    "FALLBACK_CONFIG_DIRS=\"/etc/xdg\"",
+    "HAVE_SECURE_GETENV",
   ]
 
 #  ldflags = []
@@ -23,11 +79,21 @@ source_set("third_party") {
       "glew/glew.c",
       "glew/glew.h",
       "glew/glxew.h",
+      "vulkan/loader/cJSON.c",
+      "vulkan/loader/debug_utils.c",
+      "vulkan/loader/dev_ext_trampoline.c",
+      "vulkan/loader/extension_manual.c",
+      "vulkan/loader/loader.c",
+      "vulkan/loader/murmurhash.c",
+      "vulkan/loader/phys_dev_ext.c",
+      "vulkan/loader/trampoline.c",
+      "vulkan/loader/unknown_ext_chain.c",
+      "vulkan/loader/wsi.c",
     ]
 
 #    ldflags += [ "-L/usr/X11R6/lib" ]
 
-#    libs += [ "X11", "rt", "pthread" ]
+    libs = [ "dl" ]
   }
 
   if (target_os == "android") {
@@ -36,8 +102,6 @@ source_set("third_party") {
       "android/gl3stub.h",
       "android/GLContext.cpp",
       "android/GLContext.h",
-      "minimp3/minimp3_ex.h",
-      "minimp3/minimp3.h",
       "minizip/ioapi.c",
       "minizip/ioapi.h",
       "minizip/unzip.c",
@@ -155,10 +219,6 @@ source_set("third_party") {
       "texture_compressor/texture_compressor_etc1_neon.cc",
       "texture_compressor/texture_compressor_etc1_neon.h",
     ]
-
-    ldflags += [ "-L/usr/X11R6/lib" ]
-
-    libs += [ "X11", "rt", "pthread" ]
   }
 
   deps = []
