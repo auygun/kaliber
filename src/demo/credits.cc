@@ -16,11 +16,11 @@ using namespace eng;
 namespace {
 
 constexpr char kCreditsLines[Credits::kNumLines][20] = {
-    "Credits", "Code", "Attila Uygun", "Graphics", "Erkan Erturk",
-    "Special thanks", "Peter Pettersson"};
+    "Credits", "Code", "Attila Uygun", "Design & Graphics", "Erkan Erturk",
+    "Music", "Patrik Haggblad", "Special thanks", "Peter Pettersson"};
 
 constexpr float kLineSpaces[Credits::kNumLines - 1] = {
-    1.5f, 0.5f, 1.5f, 0.5f, 1.5f, 0.5f};
+    1.5f, 0.5f, 1.5f, 0.5f, 1.5f, 0.5f, 1.5f, 0.5f};
 
 const Vector4 kTextColor = {0.3f, 0.55f, 1.0f, 1};
 constexpr float kFadeSpeed = 0.2f;

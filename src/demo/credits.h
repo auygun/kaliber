@@ -15,7 +15,7 @@ class Texture;
 
 class Credits {
  public:
-  static constexpr int kNumLines = 7;
+  static constexpr int kNumLines = 9;
 
   Credits();
   ~Credits();
