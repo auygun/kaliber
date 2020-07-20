@@ -86,7 +86,7 @@ class Player {
 
   void UpdateTarget();
 
-  void Nuke();
+  void Nuke(const base::Vector2& pos);
 
   void DragStart(const base::Vector2& pos);
   void Drag(const base::Vector2& pos);

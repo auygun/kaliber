@@ -41,7 +41,7 @@ bool Player::Initialize() {
   SetupWeapons();
 
   Vector2 hb_pos = Engine::Get().GetScreenSize() /
-                   Vector2(2, -2) + Vector2(0, weapon_[0].GetScale().y / 2);
+                   Vector2(2, -2) + Vector2(0, weapon_[0].GetScale().y * 0.4f);
   Vector2 hb_scale = {((weapon_[0].GetOffset() - weapon_[1].GetOffset())
                        .Magnitude() - weapon_[0].GetScale().x) * 1.1f,
                       weapon_[0].GetScale().y * 0.04f};
@@ -58,13 +58,11 @@ bool Player::Initialize() {
 
   nuke_symbol_.Create(nuke_symbol_tex_);
   nuke_symbol_.AutoScale();
-  nuke_symbol_.PlaceToTopOf(health_bar_[0]);
-  nuke_symbol_.Translate(hb_pos * Vector2(0, 1));
-  nuke_symbol_.Translate(nuke_symbol_.GetScale() * Vector2(-0.5f, 1));
+  nuke_symbol_.SetOffset({0, weapon_[0].GetOffset().y});
   nuke_symbol_.SetVisible(true);
 
-  nuke_counter_.PlaceToTopOf(health_bar_[0]);
-  nuke_counter_.SetOffset(nuke_symbol_.GetOffset());
+  nuke_counter_.SetOffset(nuke_symbol_.GetOffset() -
+                          nuke_symbol_.GetScale() * Vector2(0.0f, 0.25f));
   nuke_counter_.PlaceToRightOf(nuke_symbol_);
   nuke_counter_.SetColor({1, 1, 1, 1});
   nuke_counter_.SetVisible(true);
@@ -98,7 +96,7 @@ void Player::OnInputEvent(std::unique_ptr<InputEvent> event) {
   if (event->GetType() == InputEvent::kNavigateBack)
     NavigateBack();
   else if (event->GetType() == InputEvent::kTap)
-    Nuke();
+    Nuke(event->GetVector(0));
   else if (event->GetType() == InputEvent::kDragStart)
     DragStart(event->GetVector(0));
   else if (event->GetType() == InputEvent::kDrag)
@@ -165,7 +163,7 @@ DamageType Player::GetWeaponType(const Vector2& pos) {
   }
 
   assert(closest_weapon != kDamageType_Invalid);
-  if (closest_dist < weapon_[closest_weapon].GetScale().x * 0.7f)
+  if (closest_dist < weapon_[closest_weapon].GetScale().x * 0.5f)
     return closest_weapon;
   return kDamageType_Invalid;
 }
@@ -307,8 +305,12 @@ void Player::UpdateTarget() {
   }
 }
 
-void Player::Nuke() {
+void Player::Nuke(const Vector2& pos) {
   if (nuke_count_ <= 0)
+    return;
+
+  float dist = (pos - nuke_symbol_.GetOffset()).Magnitude();
+  if (dist > nuke_symbol_.GetScale().x * 0.7f)
     return;
 
   Engine& engine = Engine::Get();
@@ -461,11 +463,6 @@ bool Player::CreateRenderResources() {
   weapon_tex_->Update(std::move(weapon_image));
   beam_tex_->Update(std::move(beam_image));
 
-  for (int i = 0; i < 3; ++i) {
-    auto next_mip = std::make_unique<Image>();
-    next_mip->CreateMip(*nuke_image);
-    nuke_image = std::move(next_mip);
-  }
   nuke_image->Compress();
   nuke_symbol_tex_->Update(std::move(nuke_image));
   nuke_counter_tex_->Update(GetNukeCounterImage(nuke_count_));
