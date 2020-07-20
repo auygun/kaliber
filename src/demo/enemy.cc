@@ -459,10 +459,10 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
                                   [&]() -> void { e.blast.SetVisible(false); });
   if (damage_type == kDamageType_Green) {
     e.blast.SetFrame(0);
-    e.blast_animator.SetFrames(6, 28);
+    e.blast_animator.SetFrames(6, 18);
   } else {
     e.blast.SetFrame(6);
-    e.blast_animator.SetFrames(6, 28);
+    e.blast_animator.SetFrames(6, 18);
   }
   e.blast_animator.Attach(&e.blast);
 
