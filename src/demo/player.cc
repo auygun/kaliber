@@ -133,10 +133,16 @@ void Player::TakeDamage(int damage) {
     static_cast<Demo*>(Engine::Get().GetGame())->EnterGameOverState();
 }
 
+void Player::AddNuke(int n) {
+  nuke_count_ = std::min(nuke_count_ + n, 3);
+  nuke_counter_tex_->Update(GetNukeCounterImage(nuke_count_));
+  nuke_counter_.AutoScale();
+}
+
 void Player::Reset() {
   TakeDamage(-total_health_);
 
-  nuke_count_ = 3;
+  nuke_count_ = 1;
   nuke_counter_tex_->Update(GetNukeCounterImage(nuke_count_));
   nuke_counter_.AutoScale();
 }
@@ -306,7 +312,7 @@ void Player::UpdateTarget() {
 }
 
 void Player::Nuke(const Vector2& pos) {
-  if (nuke_count_ <= 0)
+  if (nuke_count_ <= 0 || nuke_animator_.IsPlaying(Animator::kBlending))
     return;
 
   float dist = (pos - nuke_symbol_.GetOffset()).Magnitude();

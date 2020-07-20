@@ -32,6 +32,8 @@ class Player {
 
   void TakeDamage(int damage);
 
+  void AddNuke(int n);
+
   void Reset();
 
   base::Vector2 GetWeaponPos(DamageType type) const;
