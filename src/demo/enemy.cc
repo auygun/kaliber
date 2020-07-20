@@ -626,7 +626,9 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
     target->health_animator.Stop(Animator::kTimer | Animator::kBlending);
     target->health_animator.Play(Animator::kTimer, false);
 
-    if (target->enemy_type == kEnemyType_Bug) {
+    if (target->enemy_type == kEnemyType_Bug &&
+        target->hit_points == target->total_health - 1) {
+      // Stealth and teleport.
       target->stealth = true;
       target->movement_animator.Pause(Animator::kMovement);
       target->sprite_animator.Pause(Animator::kFrames);
@@ -652,7 +654,10 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
       target->sprite_animator.SetBlending({1, 1, 1, 0}, 1.5f);
       target->sprite_animator.Play(Animator::kBlending | Animator::kTimer,
                                    false);
-    } else if (target->enemy_type == kEnemyType_Boss) {
+    }
+
+    if (target->enemy_type == kEnemyType_Boss) {
+      // Play damage animation.
       boss_animator_.Stop(Animator::kFrames);
       boss_.SetFrame(8);
       boss_animator_.SetFrames(1, 1);
