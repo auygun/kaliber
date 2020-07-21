@@ -371,7 +371,7 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   seconds_to_next_spawn_ = {0, 0, 0, 0};
   spawn_factor_ = 1 / (log10(0.25f * ((wave + 7) * 0.8f) + 1.468f) * 6);
   spawn_factor_interpolator_ = 0;
-  boss_spawn_cooldown_ = 5;
+  boss_spawn_cooldown_ = 7;
   boss_spawn_duration_ = 0;
   last_spawn_col_ = 0;
   paused_ = false;
@@ -521,11 +521,15 @@ void Enemy::SpawnBoss() {
   boss_animator_.SetFrames(8, 16);
 
   boss_animator_.SetEndCallback(Animator::kMovement, [&]() -> void {
+    Engine& engine = Engine::Get();
+    Demo* game = static_cast<Demo*>(engine.GetGame());
+
     // Spwawn a stationary enemy unit for the boss.
     auto& e = enemies_.emplace_front();
     e.enemy_type = kEnemyType_Boss;
     e.damage_type = kDamageType_Any;
-    e.total_health = e.hit_points = 40;
+    e.total_health = e.hit_points = 40 + 10 * (game->wave() / 3);
+    DLOG << " Boss health: " << e.total_health;
 
     Vector2 hit_box_pos = boss_.GetOffset() - boss_.GetScale() * Vector2(0, 0.2f);
 
@@ -730,12 +734,19 @@ void Enemy::UpdateBoss(float delta_time) {
     boss_spawn_cooldown_ -= delta_time;
     if (boss_spawn_cooldown_ > 0)
       return;
-    boss_spawn_duration_ = 6;
+    boss_spawn_duration_ = 3;
+    DLOG << "boss_spawn_duration_: " << boss_spawn_duration_;
   }
 
   boss_spawn_duration_ -= delta_time;
   if (boss_spawn_duration_ <= 0) {
-    boss_spawn_cooldown_ = 5;
+    if (spawn_factor_interpolator_ < 1) {
+      spawn_factor_interpolator_ += delta_time * 9.0f;
+      if (spawn_factor_interpolator_ > 1)
+        spawn_factor_interpolator_ = 1;
+    }
+    boss_spawn_cooldown_ = 10.1f - Lerp(1.0f, 10.0f, spawn_factor_interpolator_);
+    DLOG << "boss_spawn_cooldown_: " << boss_spawn_cooldown_;
     return;
   }
 
@@ -754,8 +765,8 @@ void Enemy::UpdateBoss(float delta_time) {
 
       seconds_since_last_spawn_[i] = 0;
       seconds_to_next_spawn_[i] =
-          Lerp(kSpawnPeriodBoss[i][0] * spawn_factor_ * 0.8f,
-               kSpawnPeriodBoss[i][1] * spawn_factor_ * 0.8f,
+          Lerp(kSpawnPeriodBoss[i][0] * 0.15f,
+               kSpawnPeriodBoss[i][1] * 0.15f,
                rnd.GetFloat());
       break;
     }
