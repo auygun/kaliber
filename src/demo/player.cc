@@ -146,7 +146,7 @@ void Player::TakeDamage(int damage) {
 }
 
 void Player::AddNuke(int n) {
-  nuke_count_ = std::min(nuke_count_ + n, 3);
+  nuke_count_ = std::max(std::min(nuke_count_ + n, 3), 0);
   nuke_counter_tex_->Update(GetNukeCounterImage(nuke_count_));
   nuke_counter_.AutoScale();
 
@@ -337,8 +337,7 @@ void Player::Nuke(const Vector2& pos) {
   Engine& engine = Engine::Get();
   Demo* game = static_cast<Demo*>(engine.GetGame());
 
-  nuke_counter_tex_->Update(GetNukeCounterImage(--nuke_count_));
-  nuke_counter_.AutoScale();
+  AddNuke(-1);
 
   nuke_animator_.SetEndCallback(Animator::kBlending, [&, game]() -> void {
     nuke_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
