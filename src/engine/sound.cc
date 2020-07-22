@@ -1,5 +1,6 @@
 #include "sound.h"
 
+#include <array>
 #include <cassert>
 
 #include "../base/log.h"
@@ -18,6 +19,30 @@ using namespace base;
 namespace {
 
 constexpr size_t kMaxSamplesPerChunk = MINIMP3_MAX_SAMPLES_PER_FRAME * 10;
+
+template <typename T>
+std::array<std::unique_ptr<T[]>, 2> Deinterleave(size_t num_channels,
+                                                 size_t num_samples,
+                                                 float* input_buffer) {
+  std::array<std::unique_ptr<T[]>, 2> channels;
+
+  if (num_channels == 1) {
+    // Single channel.
+    channels[0] = std::make_unique<T[]>(num_samples);
+    for (int i = 0; i < num_samples; ++i)
+      channels[0].get()[i] = input_buffer[i];
+  } else {
+    // Deinterleave into separate channels.
+    channels[0] = std::make_unique<T[]>(num_samples);
+    channels[1] = std::make_unique<T[]>(num_samples);
+    for (int i = 0, j = 0; i < num_samples * 2; i += 2) {
+      channels[0].get()[j] = input_buffer[i];
+      channels[1].get()[j++] = input_buffer[i + 1];
+    }
+  }
+
+  return channels;
+}
 
 }  // namespace
 
@@ -182,43 +207,39 @@ void Sound::SwapBuffersInternal() {
 }
 
 void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {
-  // r8b resampler supports only double floating point type.
-  std::unique_ptr<double[]> channels[2];
-
-  if (num_channels_ == 1) {
-    // Single channel.
-    channels[0] = std::make_unique<double[]>(num_samples_back_);
-    for (int i = 0; i < num_samples_back_; ++i)
-      channels[0].get()[i] = input_buffer.get()[i];
-  } else {
-    // Deinterleave into separate channels.
-    channels[0] = std::make_unique<double[]>(num_samples_back_);
-    channels[1] = std::make_unique<double[]>(num_samples_back_);
-    for (int i = 0, j = 0; i < num_samples_back_ * 2; i += 2) {
-      channels[0].get()[j] = input_buffer.get()[i];
-      channels[1].get()[j++] = input_buffer.get()[i + 1];
-    }
-  }
-
   size_t system_hz = Engine::Get().GetAudioSampleRate();
-  size_t resampled_num_samples =
-      ((float)system_hz / (float)hz_) * num_samples_back_;
 
-  if (!back_buffer_[0]) {
-    if (max_samples_ < resampled_num_samples)
-      max_samples_ = resampled_num_samples;
-    back_buffer_[0] = std::make_unique<float[]>(max_samples_);
+  if (system_hz == hz_) {
+    auto channels = Deinterleave<float>(num_channels_, num_samples_back_,
+                                        input_buffer.get());
+
+    // No need for resmapling.
+    back_buffer_[0] = std::move(channels[0]);
     if (num_channels_ == 2)
-      back_buffer_[1] = std::make_unique<float[]>(max_samples_);
-  }
+      back_buffer_[1] = std::move(channels[1]);
+  } else {
+    // r8b resampler supports only double floating point type.
+    auto channels = Deinterleave<double>(num_channels_, num_samples_back_,
+                                         input_buffer.get());
 
-  // Resample to match the system sample rate if needed. Output from the
-  // resampler is converted from double to float.
-  for (int i = 0; i < num_channels_; ++i) {
-    resampler_->oneshot(channels[i].get(), num_samples_back_,
-                        back_buffer_[i].get(), resampled_num_samples);
+    size_t resampled_num_samples =
+        ((float)system_hz / (float)hz_) * num_samples_back_;
+
+    if (!back_buffer_[0]) {
+      if (max_samples_ < resampled_num_samples)
+        max_samples_ = resampled_num_samples;
+      back_buffer_[0] = std::make_unique<float[]>(max_samples_);
+      if (num_channels_ == 2)
+        back_buffer_[1] = std::make_unique<float[]>(max_samples_);
+    }
+
+    // Resample to match the system sample rate.
+    for (int i = 0; i < num_channels_; ++i) {
+      resampler_->oneshot(channels[i].get(), num_samples_back_,
+                          back_buffer_[i].get(), resampled_num_samples);
+    }
+    num_samples_back_ = resampled_num_samples;
   }
-  num_samples_back_ = resampled_num_samples;
 }
 
 }  // namespace eng
