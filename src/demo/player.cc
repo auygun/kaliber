@@ -72,6 +72,8 @@ bool Player::Initialize() {
 
   nuke_animator_.Attach(&nuke_);
 
+  nuke_symbol_animator_.Attach(&nuke_symbol_);
+
   return true;
 }
 
@@ -87,6 +89,7 @@ void Player::Update(float delta_time) {
     spark_animator_[i].Update(delta_time);
   }
   nuke_animator_.Update(delta_time);
+  nuke_symbol_animator_.Update(delta_time);
 
   if (active_weapon_ != kDamageType_Invalid)
     UpdateTarget();
@@ -137,6 +140,9 @@ void Player::AddNuke(int n) {
   nuke_count_ = std::min(nuke_count_ + n, 3);
   nuke_counter_tex_->Update(GetNukeCounterImage(nuke_count_));
   nuke_counter_.AutoScale();
+
+  nuke_symbol_animator_.SetRotation(M_PI * 5, 2, std::bind(SmootherStep, std::placeholders::_1));
+  nuke_symbol_animator_.Play(Animator::kRotation, false);
 }
 
 void Player::Reset() {

@@ -62,6 +62,7 @@ class Player {
   std::shared_ptr<eng::Texture> nuke_counter_tex_;
   eng::ImageQuad nuke_symbol_;
   eng::ImageQuad nuke_counter_;
+  eng::Animator nuke_symbol_animator_;
 
   int nuke_count_ = 0;
 
