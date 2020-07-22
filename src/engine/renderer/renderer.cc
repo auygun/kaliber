@@ -175,7 +175,8 @@ bool Renderer::InitCommon() {
   if (extensions.find("GL_OES_vertex_array_object") != extensions.end()) {
     // This extension seems to be broken on older PowerVR drivers.
     if (!strstr(renderer, "PowerVR SGX 53") &&
-        !strstr(renderer, "PowerVR SGX 54")) {
+        !strstr(renderer, "PowerVR SGX 54") &&
+        !strstr(renderer, "Android Emulator")) {
       vertex_array_objects_ = true;
     }
   }
