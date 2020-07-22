@@ -8,6 +8,7 @@
 #include "../engine/font.h"
 #include "../engine/image.h"
 #include "../engine/input_event.h"
+#include "../engine/sound.h"
 #include "demo.h"
 
 using namespace base;
@@ -39,6 +40,10 @@ bool Player::Initialize() {
     return false;
 
   SetupWeapons();
+
+  nuke_explosion_sound_ = std::make_shared<Sound>();
+  if (!nuke_explosion_sound_->Load("nuke.mp3", false))
+    return false;
 
   Vector2 hb_pos = Engine::Get().GetScreenSize() /
                    Vector2(2, -2) + Vector2(0, weapon_[0].GetScale().y * 0.4f);
@@ -73,6 +78,10 @@ bool Player::Initialize() {
   nuke_animator_.Attach(&nuke_);
 
   nuke_symbol_animator_.Attach(&nuke_symbol_);
+
+  nuke_explosion_.SetSound(nuke_explosion_sound_);
+  nuke_explosion_.SetVariate(false);
+  nuke_explosion_.SetSimulateStereo(false);
 
   return true;
 }
@@ -351,6 +360,8 @@ void Player::Nuke(const Vector2& pos) {
 
   game->GetEnemy().PauseProgress();
   game->GetEnemy().StopAllEnemyUnits();
+
+  nuke_explosion_.Play(false);
 }
 
 void Player::DragStart(const Vector2& pos) {

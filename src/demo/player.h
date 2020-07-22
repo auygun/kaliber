@@ -7,12 +7,14 @@
 #include "../engine/animator.h"
 #include "../engine/image_quad.h"
 #include "../engine/solid_quad.h"
+#include "../engine/sound_player.h"
 #include "../engine/renderer/texture.h"
 #include "damage_type.h"
 
 namespace eng {
 class Image;
 class InputEvent;
+class Sound;
 }  //  namespace eng
 
 class Player {
@@ -43,6 +45,8 @@ class Player {
   std::shared_ptr<eng::Texture> weapon_tex_;
   std::shared_ptr<eng::Texture> beam_tex_;
 
+  std::shared_ptr<eng::Sound> nuke_explosion_sound_;
+
   eng::ImageQuad drag_sign_[2];
   eng::ImageQuad weapon_[2];
   eng::ImageQuad beam_[2];
@@ -57,6 +61,7 @@ class Player {
 
   eng::SolidQuad nuke_;
   eng::Animator nuke_animator_;
+  eng::SoundPlayer nuke_explosion_;
 
   std::shared_ptr<eng::Texture> nuke_symbol_tex_;
   std::shared_ptr<eng::Texture> nuke_counter_tex_;

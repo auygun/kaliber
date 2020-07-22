@@ -90,8 +90,20 @@ Enemy::Enemy()
 Enemy::~Enemy() = default;
 
 bool Enemy::Initialize() {
+  boss_intro_sound_ = std::make_shared<Sound>();
+  if (!boss_intro_sound_->Load("boss_intro.mp3", false))
+    return false;
+
+  boss_explosion_sound_ = std::make_shared<Sound>();
+  if (!boss_explosion_sound_->Load("boss_explosion.mp3", false))
+    return false;
+
   explosion_sound_ = std::make_shared<Sound>();
   if (!explosion_sound_->Load("explosion.mp3", false))
+    return false;
+
+  stealth_sound_ = std::make_shared<Sound>();
+  if (!stealth_sound_->Load("stealth.mp3", false))
     return false;
 
   if (!CreateRenderResources())
@@ -100,6 +112,10 @@ bool Enemy::Initialize() {
   boss_.Create(boss_tex_, {4, 3});
   boss_.AutoScale();
   boss_animator_.Attach(&boss_);
+
+  boss_intro_.SetSound(boss_intro_sound_);
+  boss_intro_.SetVariate(false);
+  boss_intro_.SetSimulateStereo(false);
 
   return true;
 }
@@ -508,6 +524,10 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.explosion_.SetSound(explosion_sound_);
   e.explosion_.SetVariate(true);
   e.explosion_.SetSimulateStereo(true);
+
+  e.stealth_.SetSound(stealth_sound_);
+  e.stealth_.SetVariate(false);
+  e.stealth_.SetSimulateStereo(false);
 }
 
 void Enemy::SpawnBoss() {
@@ -569,9 +589,15 @@ void Enemy::SpawnBoss() {
     e.score_animator.SetEndCallback(
         Animator::kMovement, [&]() -> void { e.marked_for_removal = true; });
     e.score_animator.Attach(&e.score);
+
+    e.explosion_.SetSound(boss_explosion_sound_);
+    e.explosion_.SetVariate(false);
+    e.explosion_.SetSimulateStereo(false);
   });
   boss_animator_.Play(Animator::kFrames, true);
   boss_animator_.Play(Animator::kMovement, false);
+
+  boss_intro_.Play(false);
 }
 
 void Enemy::TakeDamage(EnemyUnit* target, int damage) {
@@ -658,6 +684,8 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
       target->sprite_animator.SetBlending({1, 1, 1, 0}, 1.5f);
       target->sprite_animator.Play(Animator::kBlending | Animator::kTimer,
                                    false);
+
+      target->stealth_.Play(false);
     }
 
     if (target->enemy_type == kEnemyType_Boss) {

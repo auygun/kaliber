@@ -84,6 +84,7 @@ class Enemy {
     eng::Animator score_animator;
 
     eng::SoundPlayer explosion_;
+    eng::SoundPlayer stealth_;
   };
 
   std::shared_ptr<eng::Texture> skull_tex_;
@@ -95,8 +96,12 @@ class Enemy {
 
   eng::ImageQuad boss_;
   eng::Animator boss_animator_;
+  eng::SoundPlayer boss_intro_;
 
+  std::shared_ptr<eng::Sound> boss_intro_sound_;
+  std::shared_ptr<eng::Sound> boss_explosion_sound_;
   std::shared_ptr<eng::Sound> explosion_sound_;
+  std::shared_ptr<eng::Sound> stealth_sound_;
 
   std::list<EnemyUnit> enemies_;
 
