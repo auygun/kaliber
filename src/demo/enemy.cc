@@ -182,6 +182,18 @@ void Enemy::Update(float delta_time) {
 void Enemy::Draw(float frame_frac) {
   boss_.Draw();
   for (auto& e : enemies_) {
+    if (e.hit_points <= 0)
+      continue;
+    e.sprite.Draw();
+    e.target.Draw();
+    e.blast.Draw();
+    e.health_base.Draw();
+    e.health_bar.Draw();
+    e.score.Draw();
+  }
+  for (auto& e : enemies_) {
+    if (e.hit_points > 0)
+      continue;
     e.sprite.Draw();
     e.target.Draw();
     e.blast.Draw();
