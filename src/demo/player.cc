@@ -150,7 +150,11 @@ void Player::TakeDamage(int damage) {
 }
 
 void Player::AddNuke(int n) {
-  nuke_count_ = std::max(std::min(nuke_count_ + n, 3), 0);
+  int new_nuke_count = std::max(std::min(nuke_count_ + n, 3), 0);
+  if (new_nuke_count == nuke_count_)
+    return;
+
+  nuke_count_ = new_nuke_count;
   nuke_counter_tex_->Update(GetNukeCounterImage(nuke_count_));
   nuke_counter_.AutoScale();
 
