@@ -45,17 +45,11 @@ constexpr int idle_frame_speed = 12;
 
 constexpr int enemy_scores[] = {100, 150, 300, 200, 500};
 
-// Enemy units spawn speed for waves.
-constexpr float kSpawnPeriodWave[kEnemyType_Unit_Last + 1][2] = {{2, 5},
-                                                                {15, 25},
-                                                                {110, 130},
-                                                                {70, 100}};
-
-// Enemy units (adds) spawn speed for boss.
-constexpr float kSpawnPeriodBoss[kEnemyType_Unit_Last + 1][2] = {{2, 5},
-                                                                {15, 25},
-                                                                {110, 130},
-                                                                {70, 100}};
+// Enemy units spawn speed.
+constexpr float kSpawnPeriod[kEnemyType_Unit_Last + 1][2] = {{2, 5},
+                                                             {15, 25},
+                                                             {110, 130},
+                                                             {70, 100}};
 
 void SetupFadeOutAnim(Animator& animator, float delay) {
   animator.SetEndCallback(Animator::kTimer, [&]() -> void {
@@ -700,7 +694,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
             target->sprite_animator.SetEndCallback(Animator::kBlending,
                 [&, target]() -> void {
                   target->stealth = false;
-                  target->movement_animator.Play(Animator::kMovement, true);
+                  target->movement_animator.Play(Animator::kMovement, false);
                   target->sprite_animator.Play(Animator::kFrames, false);
                 });
             target->sprite_animator.SetBlending({1, 1, 1, 1}, 1.0f);
@@ -757,8 +751,8 @@ void Enemy::UpdateWave(float delta_time) {
 
       seconds_since_last_spawn_[i] = 0;
       seconds_to_next_spawn_[i] =
-          Lerp(kSpawnPeriodWave[i][0] * factor,
-               kSpawnPeriodWave[i][1] * factor,
+          Lerp(kSpawnPeriod[i][0] * factor,
+               kSpawnPeriod[i][1] * factor,
                rnd.GetFloat());
       break;
     }
@@ -822,8 +816,8 @@ void Enemy::UpdateBoss(float delta_time) {
 
       seconds_since_last_spawn_[i] = 0;
       seconds_to_next_spawn_[i] =
-          Lerp(kSpawnPeriodBoss[i][0] * 0.15f,
-               kSpawnPeriodBoss[i][1] * 0.15f,
+          Lerp(kSpawnPeriod[i][0] * 0.15f,
+               kSpawnPeriod[i][1] * 0.15f,
                rnd.GetFloat());
       break;
     }
