@@ -46,11 +46,14 @@ class Player {
   std::shared_ptr<eng::Texture> beam_tex_;
 
   std::shared_ptr<eng::Sound> nuke_explosion_sound_;
+  std::shared_ptr<eng::Sound> laser_shot_sound_;
 
   eng::ImageQuad drag_sign_[2];
   eng::ImageQuad weapon_[2];
   eng::ImageQuad beam_[2];
   eng::ImageQuad beam_spark_[2];
+
+  eng::SoundPlayer laser_shot_[2];
 
   eng::Animator warmup_animator_[2];
   eng::Animator cooldown_animator_[2];

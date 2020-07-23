@@ -39,11 +39,15 @@ bool Player::Initialize() {
   if (!CreateRenderResources())
     return false;
 
-  SetupWeapons();
+  laser_shot_sound_ = std::make_shared<Sound>();
+  if (!laser_shot_sound_->Load("laser.mp3", false))
+    return false;
 
   nuke_explosion_sound_ = std::make_shared<Sound>();
   if (!nuke_explosion_sound_->Load("nuke.mp3", false))
     return false;
+
+  SetupWeapons();
 
   Vector2 hb_pos = Engine::Get().GetScreenSize() /
                    Vector2(2, -2) + Vector2(0, weapon_[0].GetScale().y * 0.4f);
@@ -237,6 +241,8 @@ void Player::Fire(DamageType type, Vector2 dir) {
   float speed = 1.0f / (18.0f / length);
   spark_animator_[type].SetMovement(movement, speed);
   spark_animator_[type].Play(Animator::kMovement, false);
+
+  laser_shot_[type].Play(false);
 }
 
 bool Player::IsFiring(DamageType type) {
@@ -307,6 +313,11 @@ void Player::SetupWeapons() {
         Animator::kBlending, [&, i]() -> void { beam_[i].SetVisible(false); });
     beam_animator_[i].SetBlending({1, 1, 1, 0}, 0.16f);
     beam_animator_[i].Attach(&beam_[i]);
+
+    laser_shot_[i].SetSound(laser_shot_sound_);
+    laser_shot_[i].SetVariate(true);
+    laser_shot_[i].SetSimulateStereo(false);
+    laser_shot_[i].SetMaxAplitude(0.5f);
   }
 }
 
