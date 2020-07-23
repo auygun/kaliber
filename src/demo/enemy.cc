@@ -106,6 +106,10 @@ bool Enemy::Initialize() {
   if (!stealth_sound_->Load("stealth.mp3", false))
     return false;
 
+  hit_sound_ = std::make_shared<Sound>();
+  if (!hit_sound_->Load("hit.mp3", false))
+    return false;
+
   if (!CreateRenderResources())
     return false;
 
@@ -529,6 +533,11 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.stealth_.SetVariate(false);
   e.stealth_.SetSimulateStereo(false);
   e.stealth_.SetMaxAplitude(0.7f);
+
+  e.hit_.SetSound(hit_sound_);
+  e.hit_.SetVariate(true);
+  e.hit_.SetSimulateStereo(false);
+  e.hit_.SetMaxAplitude(0.5f);
 }
 
 void Enemy::SpawnBoss() {
@@ -594,6 +603,11 @@ void Enemy::SpawnBoss() {
     e.explosion_.SetSound(boss_explosion_sound_);
     e.explosion_.SetVariate(false);
     e.explosion_.SetSimulateStereo(false);
+
+    e.hit_.SetSound(hit_sound_);
+    e.hit_.SetVariate(true);
+    e.hit_.SetSimulateStereo(false);
+    e.hit_.SetMaxAplitude(0.5f);
   });
   boss_animator_.Play(Animator::kFrames, true);
   boss_animator_.Play(Animator::kMovement, false);
@@ -687,6 +701,8 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
                                    false);
 
       target->stealth_.Play(false);
+    } else {
+      target->hit_.Play(false);
     }
 
     if (target->enemy_type == kEnemyType_Boss) {

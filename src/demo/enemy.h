@@ -85,6 +85,7 @@ class Enemy {
 
     eng::SoundPlayer explosion_;
     eng::SoundPlayer stealth_;
+    eng::SoundPlayer hit_;
   };
 
   std::shared_ptr<eng::Texture> skull_tex_;
@@ -102,6 +103,7 @@ class Enemy {
   std::shared_ptr<eng::Sound> boss_explosion_sound_;
   std::shared_ptr<eng::Sound> explosion_sound_;
   std::shared_ptr<eng::Sound> stealth_sound_;
+  std::shared_ptr<eng::Sound> hit_sound_;
 
   std::list<EnemyUnit> enemies_;
 
