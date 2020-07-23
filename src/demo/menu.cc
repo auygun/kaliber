@@ -12,6 +12,7 @@
 #include "../engine/font.h"
 #include "../engine/image.h"
 #include "../engine/input_event.h"
+#include "../engine/sound.h"
 #include "../engine/renderer/texture.h"
 #include "demo.h"
 
@@ -39,6 +40,10 @@ Menu::Menu() : tex_(Engine::Get().CreateRenderResource<Texture>()) {}
 Menu::~Menu() = default;
 
 bool Menu::Initialize() {
+  click_sound_ = std::make_shared<Sound>();
+  if (!click_sound_->Load("menu_click.mp3", false))
+    return false;
+
   const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
 
   max_text_width_ = -1;
@@ -73,6 +78,11 @@ bool Menu::Initialize() {
   }
   // Get the item positions calculated.
   SetOptionEnabled(kContinue, true);
+
+  click_.SetSound(click_sound_);
+  click_.SetVariate(false);
+  click_.SetSimulateStereo(false);
+  click_.SetMaxAplitude(1.5f);
 
   return true;
 }
@@ -112,6 +122,8 @@ void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
                                             items_[i].select_item_cb_);
     items_[i].text_animator.SetBlending(kColorHighlight, kBlendingSpeed);
     items_[i].text_animator.Play(Animator::kBlending, false);
+
+    click_.Play(false);
   }
 }
 

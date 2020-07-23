@@ -528,6 +528,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.stealth_.SetSound(stealth_sound_);
   e.stealth_.SetVariate(false);
   e.stealth_.SetSimulateStereo(false);
+  e.stealth_.SetMaxAplitude(0.7f);
 }
 
 void Enemy::SpawnBoss() {

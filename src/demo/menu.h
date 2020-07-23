@@ -8,10 +8,12 @@
 #include "../base/vecmath.h"
 #include "../engine/animator.h"
 #include "../engine/image_quad.h"
+#include "../engine/sound_player.h"
 
 namespace eng {
 class Image;
 class InputEvent;
+class Sound;
 class Texture;
 }  // namespace eng
 
@@ -55,6 +57,10 @@ class Menu {
   };
 
   std::shared_ptr<eng::Texture> tex_;
+
+  std::shared_ptr<eng::Sound> click_sound_;
+
+  eng::SoundPlayer click_;
 
   Item items_[kOption_Max];
 
