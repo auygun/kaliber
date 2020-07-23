@@ -548,7 +548,7 @@ void Enemy::SpawnBoss() {
     auto& e = enemies_.emplace_front();
     e.enemy_type = kEnemyType_Boss;
     e.damage_type = kDamageType_Any;
-    e.total_health = e.hit_points = 40 + 10 * (game->wave() / 3);
+    e.total_health = e.hit_points = 40 + 5 * (game->wave() / 3);
     DLOG << " Boss health: " << e.total_health;
 
     Vector2 hit_box_pos = boss_.GetOffset() - boss_.GetScale() * Vector2(0, 0.2f);
