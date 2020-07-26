@@ -56,7 +56,11 @@ class Menu {
     bool hide = false;
   };
 
-  std::shared_ptr<eng::Texture> tex_;
+  std::shared_ptr<eng::Texture> logo_tex_[2];
+  eng::ImageQuad logo_[2];
+  eng::Animator logo_animator_[2];
+
+  std::shared_ptr<eng::Texture> menu_tex_;
 
   std::shared_ptr<eng::Sound> click_sound_;
 
@@ -69,6 +73,8 @@ class Menu {
   Option selected_option_ = kOption_Invalid;
 
   base::Vector2 tap_pos_[2] = {{0, 0}, {0, 0}};
+
+  bool CreateRenderResources();
 
   std::unique_ptr<eng::Image> CreateImage();
 
