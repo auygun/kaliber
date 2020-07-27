@@ -46,7 +46,7 @@ endif ()
 set(CMAKE_SHARED_LINKER_FLAGS
     "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate")
 
-add_library(native-activity SHARED
+add_library(woom SHARED
     ../../../src/base/collusion_test.cc
     ../../../src/base/log.cc
     ../../../src/base/random.cc
@@ -102,24 +102,24 @@ add_library(native-activity SHARED
 )
 
 if (ANDROID_ABI STREQUAL armeabi-v7a)
-    target_sources(native-activity PRIVATE ../../../src/third_party/texture_compressor/dxt_encoder_neon.cc)
-    target_sources(native-activity PRIVATE ../../../src/third_party/texture_compressor/texture_compressor_etc1_neon.cc)
+    target_sources(woom PRIVATE ../../../src/third_party/texture_compressor/dxt_encoder_neon.cc)
+    target_sources(woom PRIVATE ../../../src/third_party/texture_compressor/texture_compressor_etc1_neon.cc)
     set_source_files_properties(../../../src/third_party/r8b/pffft.cpp PROPERTIES COMPILE_FLAGS -mfpu=neon)
     set_source_files_properties(../../../src/third_party/texture_compressor/dxt_encoder_neon.cc PROPERTIES COMPILE_FLAGS -mfpu=neon)
     set_source_files_properties(../../../src/third_party/texture_compressor/texture_compressor_etc1_neon.cc PROPERTIES COMPILE_FLAGS -mfpu=neon)
 endif()
 
 if (ANDROID_ABI STREQUAL arm64-v8a)
-    target_sources(native-activity PRIVATE ../../../src/third_party/texture_compressor/dxt_encoder_neon.cc)
-    target_sources(native-activity PRIVATE ../../../src/third_party/texture_compressor/texture_compressor_etc1_neon.cc)
+    target_sources(woom PRIVATE ../../../src/third_party/texture_compressor/dxt_encoder_neon.cc)
+    target_sources(woom PRIVATE ../../../src/third_party/texture_compressor/texture_compressor_etc1_neon.cc)
 endif()
 
-target_include_directories(native-activity PRIVATE
+target_include_directories(woom PRIVATE
     ${ANDROID_NDK}/sources/android/native_app_glue
     )
 
 # add lib dependencies
-target_link_libraries(native-activity
+target_link_libraries(woom
     android
     native_app_glue
     oboe

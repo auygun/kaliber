@@ -4,7 +4,7 @@ android {
     compileSdkVersion 29
 
     defaultConfig {
-        applicationId = 'com.example.native_activity'
+        applicationId = 'com.woom.game'
         minSdkVersion 14
         targetSdkVersion 28
         externalNativeBuild {
