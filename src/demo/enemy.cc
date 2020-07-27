@@ -623,12 +623,15 @@ void Enemy::SpawnBoss() {
 
 void Enemy::TakeDamage(EnemyUnit* target, int damage) {
   assert(!target->marked_for_removal);
-  assert(target->hit_points > 0);
+
+  if (target->hit_points <= 0)
+    return;
+
+  target->hit_points -= damage;
 
   target->blast.SetVisible(true);
   target->blast_animator.Play(Animator::kFrames, false);
 
-  target->hit_points -= damage;
   if (target->hit_points <= 0) {
     ++num_enemies_killed_in_current_wave_;
 
@@ -648,6 +651,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
 
     if (target->enemy_type == kEnemyType_Boss) {
       // Play dead animation and move away the boss.
+      boss_animator_.Stop(Animator::kFrames | Animator::kTimer);
       boss_animator_.SetEndCallback(Animator::kMovement, [&]() -> void {
         boss_animator_.SetVisible(false);
       });
@@ -713,7 +717,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
 
     if (target->enemy_type == kEnemyType_Boss) {
       // Play damage animation.
-      boss_animator_.Stop(Animator::kFrames);
+      boss_animator_.Stop(Animator::kFrames | Animator::kTimer);
       boss_.SetFrame(8);
       boss_animator_.SetFrames(1, 1);
       boss_animator_.SetEndCallback(Animator::kTimer, [&]() -> void {
