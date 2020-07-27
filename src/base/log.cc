@@ -30,20 +30,17 @@ Log::~Log() {
 #endif
 }
 
-template <>
-Log& Log::operator<<<bool>(const bool& arg) {
+Log& Log::operator<<(const bool& arg) {
   stream_ << (arg ? "true" : "false");
   return *this;
 }
 
-template <>
-Log& Log::operator<<<Vector2>(const Vector2& arg) {
+Log& Log::operator<<(const Vector2& arg) {
   stream_ << "(" << arg.x << ", " << arg.y << ")";
   return *this;
 }
 
-template <>
-Log& Log::operator<<<Vector4>(const Vector4& arg) {
+Log& Log::operator<<(const Vector4& arg) {
   stream_ << "(" << arg.x << ", " << arg.y << ", " << arg.z << ", " << arg.w
           << ")";
   return *this;

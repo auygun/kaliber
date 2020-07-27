@@ -36,6 +36,10 @@ class Log {
     return *this;
   }
 
+  Log& operator<<(const bool& arg);
+  Log& operator<<(const Vector2& arg);
+  Log& operator<<(const Vector4& arg);
+
   static Log* swallow_stream;
 
  private:
