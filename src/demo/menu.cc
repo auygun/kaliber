@@ -100,19 +100,23 @@ bool Menu::Initialize() {
   logo_animator_[0].SetEndCallback(Animator::kFrames, [&]() -> void {
     logo_[0].SetVisible(false);
     logo_[1].SetVisible(true);
-    logo_animator_[1].Play(Animator::kTimer, false);
+    logo_animator_[1].SetFrames(12, 20);
+    logo_animator_[1].SetTimer(Lerp(3.0f, 8.0f, Engine::Get().GetRandomGenerator().GetFloat()));
+    logo_animator_[1].Play(Animator::kFrames | Animator::kTimer, true);
   });
 
   logo_animator_[1].Attach(&logo_[1]);
-  logo_animator_[1].SetTimer(Lerp(2.0f, 4.0f, Engine::Get().GetRandomGenerator().GetFloat()));
   logo_animator_[1].SetEndCallback(Animator::kTimer, [&]() -> void {
-    logo_[1].SetFrame((Engine::Get().GetRandomGenerator().Roll(2) - 1) * 9);
-    logo_animator_[1].SetFrames(12, 20);
-    logo_animator_[1].Play(Animator::kFrames, false);
+    logo_animator_[1].Stop(Animator::kFrames);
+    logo_[1].SetFrame(12);
+    logo_animator_[1].SetFrames(9, 30);
+    logo_animator_[1].SetTimer(Lerp(3.0f, 8.0f, Engine::Get().GetRandomGenerator().GetFloat()));
+    logo_animator_[1].Play(Animator::kFrames | Animator::kTimer, false);
   });
   logo_animator_[1].SetEndCallback(Animator::kFrames, [&]() -> void {
-    logo_animator_[1].SetTimer(Lerp(2.0f, 4.0f, Engine::Get().GetRandomGenerator().GetFloat()));
-    logo_animator_[1].Play(Animator::kTimer, false);
+    logo_[1].SetFrame(0);
+    logo_animator_[1].SetFrames(12, 20);
+    logo_animator_[1].Play(Animator::kFrames, true);
   });
 
   return true;
@@ -221,9 +225,9 @@ void Menu::Show() {
 
 void Menu::Hide() {
   for (int i = 0; i < 2; ++i) {
-    logo_animator_[i].Stop(Animator::kFrames);
     logo_animator_[i].SetBlending(kColorFadeOut, kFadeSpeed);
     logo_animator_[i].SetEndCallback(Animator::kBlending, [&, i]() -> void {
+      logo_animator_[i].Stop(Animator::kAllAnimations | Animator::kTimer);
       logo_animator_[i].SetEndCallback(Animator::kBlending, nullptr);
       logo_animator_[i].SetVisible(false);
     });
