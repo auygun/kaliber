@@ -73,134 +73,55 @@ int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
       platform->engine_->AddInputEvent(std::move(input_event));
     }
     return 1;
-  }
-
-  // if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
-  //   ndk_helper::GESTURE_STATE tap_state =
-  //       platform->tap_detector_->Detect(event);
-  //   ndk_helper::GESTURE_STATE drag_state =
-  //       platform->drag_detector_->Detect(event);
-  //   ndk_helper::GESTURE_STATE pinch_state =
-  //       platform->pinch_detector_->Detect(event);
-
-  //   // Tap detector has a priority over other detectors
-  //   if (tap_state == ndk_helper::GESTURE_STATE_ACTION) {
-  //     platform->engine_->AddInputEvent(
-  //         std::make_unique<InputEvent>(InputEvent::kDragCancel));
-  //     // Detect tap
-  //     Vector2 v;
-  //     platform->tap_detector_->GetPointer(v);
-  //     v = platform->engine_->ToPosition(v);
-  //     // DLOG << "Tap: " << v;
-  //     auto input_event =
-  //         std::make_unique<InputEvent>(InputEvent::kTap, v * Vector2(1, -1));
-  //     platform->engine_->AddInputEvent(std::move(input_event));
-  //   } else {
-  //     // Handle drag state
-  //     if (drag_state & ndk_helper::GESTURE_STATE_START) {
-  //       // Otherwise, start dragging
-  //       Vector2 v;
-  //       platform->drag_detector_->GetPointer(v);
-  //       v = platform->engine_->ToPosition(v);
-  //       // DLOG << "drag-start: " << v;
-  //       auto input_event = std::make_unique<InputEvent>(InputEvent::kDragStart,
-  //                                                       v * Vector2(1, -1));
-  //       platform->engine_->AddInputEvent(std::move(input_event));
-  //     } else if (drag_state & ndk_helper::GESTURE_STATE_MOVE) {
-  //       Vector2 v;
-  //       platform->drag_detector_->GetPointer(v);
-  //       v = platform->engine_->ToPosition(v);
-  //       // DLOG << "drag: " << v;
-  //       auto input_event =
-  //           std::make_unique<InputEvent>(InputEvent::kDrag, v * Vector2(1, -1));
-  //       platform->engine_->AddInputEvent(std::move(input_event));
-  //     } else if (drag_state & ndk_helper::GESTURE_STATE_END) {
-  //       // DLOG << "drag-end!";
-  //       auto input_event = std::make_unique<InputEvent>(InputEvent::kDragEnd);
-  //       platform->engine_->AddInputEvent(std::move(input_event));
-  //     }
-
-  //     // Handle pinch state
-  //     if (pinch_state & ndk_helper::GESTURE_STATE_START) {
-  //       platform->engine_->AddInputEvent(
-  //           std::make_unique<InputEvent>(InputEvent::kDragCancel));
-  //       // Start new pinch
-  //       Vector2 v1;
-  //       Vector2 v2;
-  //       platform->pinch_detector_->GetPointers(v1, v2);
-  //       v1 = platform->engine_->ToPosition(v1);
-  //       v2 = platform->engine_->ToPosition(v2);
-  //       // DLOG << "pinch-start: " << v1 << " " << v2;
-  //       auto input_event = std::make_unique<InputEvent>(
-  //           InputEvent::kPinchStart, v1 * Vector2(1, -1), v2 * Vector2(1, -1));
-  //       platform->engine_->AddInputEvent(std::move(input_event));
-  //     } else if (pinch_state & ndk_helper::GESTURE_STATE_MOVE) {
-  //       // Multi touch
-  //       // Start new pinch
-  //       Vector2 v1;
-  //       Vector2 v2;
-  //       platform->pinch_detector_->GetPointers(v1, v2);
-  //       v1 = platform->engine_->ToPosition(v1);
-  //       v2 = platform->engine_->ToPosition(v2);
-  //       // DLOG << "pinch: " << v1 << " " << v2;
-  //       auto input_event = std::make_unique<InputEvent>(
-  //           InputEvent::kPinch, v1 * Vector2(1, -1), v2 * Vector2(1, -1));
-  //       platform->engine_->AddInputEvent(std::move(input_event));
-  //     }
-  //   }
-  //   return 1;
-  // }
-
-  if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
+  } else if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
     int32_t action = AMotionEvent_getAction(event);
     int32_t index = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >>
                     AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
     uint32_t flags = action & AMOTION_EVENT_ACTION_MASK;
-    int32_t count = AMotionEvent_getPointerCount(event);
     int32_t pointer_id = AMotionEvent_getPointerId(event, index);
     Vector2 pos = {AMotionEvent_getX(event, index),
                   AMotionEvent_getY(event, index)};
     pos = platform->engine_->ToPosition(pos);
-    // LOG << "pos: " << pos;
 
     if (pointer_id >= 2)
       return 0;
 
+    std::unique_ptr<InputEvent> input_event;
+
     switch (flags) {
-      case AMOTION_EVENT_ACTION_DOWN: {
-        LOG << "AMOTION_EVENT_ACTION_DOWN -         pointer_id: " << pointer_id << ", count: " << count;
-        auto input_event = std::make_unique<InputEvent>(InputEvent::kDragStart, pointer_id,
+      case AMOTION_EVENT_ACTION_DOWN:
+        DLOG << "AMOTION_EVENT_ACTION_DOWN -         pointer_id: " << pointer_id;
+        input_event = std::make_unique<InputEvent>(InputEvent::kDragStart, pointer_id,
                                                         pos * Vector2(1, -1));
-        platform->engine_->AddInputEvent(std::move(input_event));
-        return 1;
-      }
+        break;
 
       case AMOTION_EVENT_ACTION_POINTER_DOWN:
-        LOG << "AMOTION_EVENT_ACTION_POINTER_DOWN - pointer_id: " << pointer_id << ", count: " << count;
+        DLOG << "AMOTION_EVENT_ACTION_POINTER_DOWN - pointer_id: " << pointer_id;
         break;
 
-      case AMOTION_EVENT_ACTION_UP: {
-        --count;
-        LOG << "AMOTION_EVENT_ACTION_UP -           pointer_id: " << pointer_id << ", count: " << count;
-        auto input_event = std::make_unique<InputEvent>(InputEvent::kDragEnd, (size_t)pointer_id);
-        platform->engine_->AddInputEvent(std::move(input_event));
-        return 1;
-      }
+      case AMOTION_EVENT_ACTION_UP:
+        DLOG << "AMOTION_EVENT_ACTION_UP -           pointer_id: " << pointer_id;
+        input_event = std::make_unique<InputEvent>(InputEvent::kDragEnd, (size_t)pointer_id);
+        break;
 
       case AMOTION_EVENT_ACTION_POINTER_UP: 
-        --count;
-        LOG << "AMOTION_EVENT_ACTION_POINTER_UP -   pointer_id: " << pointer_id << ", count: " << count;
+        DLOG << "AMOTION_EVENT_ACTION_POINTER_UP -   pointer_id: " << pointer_id;
         break;
 
-      case AMOTION_EVENT_ACTION_MOVE: {
-        auto input_event =
+      case AMOTION_EVENT_ACTION_MOVE:
+        input_event =
             std::make_unique<InputEvent>(InputEvent::kDrag, pointer_id, pos * Vector2(1, -1));
-        platform->engine_->AddInputEvent(std::move(input_event));
-        return 1;
-      }
+        break;
 
       case AMOTION_EVENT_ACTION_CANCEL:
+        input_event =
+            std::make_unique<InputEvent>(InputEvent::kDragCancel);
         break;
+    }
+
+    if (input_event) {
+      platform->engine_->AddInputEvent(std::move(input_event));
+      return 1;
     }
   }
 
