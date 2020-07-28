@@ -5,7 +5,6 @@
 #include <string>
 
 #include "../../base/log.h"
-#include "../../base/vecmath.h"
 #include "../audio/audio_oboe.h"
 #include "../engine.h"
 #include "../input_event.h"
@@ -77,10 +76,15 @@ int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
     int32_t index = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >>
                     AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
     uint32_t flags = action & AMOTION_EVENT_ACTION_MASK;
+    int32_t count = AMotionEvent_getPointerCount(event);
     int32_t pointer_id = AMotionEvent_getPointerId(event, index);
-    Vector2 pos = {AMotionEvent_getX(event, index),
-                   AMotionEvent_getY(event, index)};
-    pos = platform->engine_->ToPosition(pos);
+    Vector2 pos[2] = {platform->pointer_pos_[0], platform->pointer_pos_[1]};
+    for (auto i = 0; i < count; ++i) {
+      int32_t id = AMotionEvent_getPointerId(event, i);
+      pos[id] = {AMotionEvent_getX(event, i),
+                 AMotionEvent_getY(event, i)};
+      pos[id] = platform->engine_->ToPosition(pos[id]);
+    }
 
     if (pointer_id >= 2)
       return 0;
@@ -91,20 +95,32 @@ int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
       case AMOTION_EVENT_ACTION_DOWN:
       case AMOTION_EVENT_ACTION_POINTER_DOWN:
         DLOG << "AMOTION_EVENT_ACTION_DOWN - pointer_id: " << pointer_id;
+        platform->pointer_pos_[pointer_id] = pos[pointer_id];
+        platform->pointer_down_[pointer_id] = true;
         input_event = std::make_unique<InputEvent>(
-            InputEvent::kDragStart, pointer_id, pos * Vector2(1, -1));
+            InputEvent::kDragStart, pointer_id, pos[pointer_id] * Vector2(1, -1));
         break;
 
       case AMOTION_EVENT_ACTION_UP:
       case AMOTION_EVENT_ACTION_POINTER_UP:
         DLOG << "AMOTION_EVENT_ACTION_UP -   pointer_id: " << pointer_id;
+        platform->pointer_pos_[pointer_id] = pos[pointer_id];
+        platform->pointer_down_[pointer_id] = false;
         input_event = std::make_unique<InputEvent>(
-            InputEvent::kDragEnd, pointer_id, pos * Vector2(1, -1));
+            InputEvent::kDragEnd, pointer_id, pos[pointer_id] * Vector2(1, -1));
         break;
 
       case AMOTION_EVENT_ACTION_MOVE:
-        input_event = std::make_unique<InputEvent>(
-            InputEvent::kDrag, pointer_id, pos * Vector2(1, -1));
+        if (platform->pointer_down_[0] && pos[0] != platform->pointer_pos_[0]) {
+          platform->pointer_pos_[0] = pos[0];
+          input_event = std::make_unique<InputEvent>(
+              InputEvent::kDrag, 0, pos[0] * Vector2(1, -1));
+        }
+        if (platform->pointer_down_[1] && pos[1] != platform->pointer_pos_[1]) {
+          platform->pointer_pos_[1] = pos[1];
+          input_event = std::make_unique<InputEvent>(
+              InputEvent::kDrag, 1, pos[1] * Vector2(1, -1));
+        }
         break;
 
       case AMOTION_EVENT_ACTION_CANCEL:
