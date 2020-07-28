@@ -88,7 +88,6 @@ add_library(woom SHARED
     ../../../src/engine/solid_quad.cc
     ../../../src/engine/sound_player.cc
     ../../../src/engine/sound.cc
-    ../../../src/third_party/android/gestureDetector.cpp
     ../../../src/third_party/android/gl3stub.c
     ../../../src/third_party/android/GLContext.cpp
     ../../../src/third_party/jsoncpp/jsoncpp.cc

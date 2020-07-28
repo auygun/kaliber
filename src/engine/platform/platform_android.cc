@@ -6,7 +6,6 @@
 
 #include "../../base/log.h"
 #include "../../base/vecmath.h"
-#include "../../third_party/android/gestureDetector.h"
 #include "../audio/audio_oboe.h"
 #include "../engine.h"
 #include "../input_event.h"
@@ -80,7 +79,7 @@ int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
     uint32_t flags = action & AMOTION_EVENT_ACTION_MASK;
     int32_t pointer_id = AMotionEvent_getPointerId(event, index);
     Vector2 pos = {AMotionEvent_getX(event, index),
-                  AMotionEvent_getY(event, index)};
+                   AMotionEvent_getY(event, index)};
     pos = platform->engine_->ToPosition(pos);
 
     if (pointer_id >= 2)
@@ -92,24 +91,24 @@ int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
       case AMOTION_EVENT_ACTION_DOWN:
       case AMOTION_EVENT_ACTION_POINTER_DOWN:
         DLOG << "AMOTION_EVENT_ACTION_DOWN - pointer_id: " << pointer_id;
-        input_event = std::make_unique<InputEvent>(InputEvent::kDragStart, pointer_id,
-                                                        pos * Vector2(1, -1));
+        input_event = std::make_unique<InputEvent>(
+            InputEvent::kDragStart, pointer_id, pos * Vector2(1, -1));
         break;
 
       case AMOTION_EVENT_ACTION_UP:
-      case AMOTION_EVENT_ACTION_POINTER_UP: 
+      case AMOTION_EVENT_ACTION_POINTER_UP:
         DLOG << "AMOTION_EVENT_ACTION_UP -   pointer_id: " << pointer_id;
-        input_event = std::make_unique<InputEvent>(InputEvent::kDragEnd, pointer_id, pos * Vector2(1, -1));
+        input_event = std::make_unique<InputEvent>(
+            InputEvent::kDragEnd, pointer_id, pos * Vector2(1, -1));
         break;
 
       case AMOTION_EVENT_ACTION_MOVE:
-        input_event =
-            std::make_unique<InputEvent>(InputEvent::kDrag, pointer_id, pos * Vector2(1, -1));
+        input_event = std::make_unique<InputEvent>(
+            InputEvent::kDrag, pointer_id, pos * Vector2(1, -1));
         break;
 
       case AMOTION_EVENT_ACTION_CANCEL:
-        input_event =
-            std::make_unique<InputEvent>(InputEvent::kDragCancel);
+        input_event = std::make_unique<InputEvent>(InputEvent::kDragCancel);
         break;
     }
 

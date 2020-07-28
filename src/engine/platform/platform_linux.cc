@@ -57,7 +57,7 @@ void PlatformLinux::Update() {
       case KeyPress: {
         KeySym key = XLookupKeysym(&e.xkey, 0);
         auto input_event =
-            std::make_unique<InputEvent>(InputEvent::kKeyPress, key);
+            std::make_unique<InputEvent>(InputEvent::kKeyPress, (char)key);
         engine_->AddInputEvent(std::move(input_event));
         // TODO: e.xkey.state & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask))
         break;
@@ -66,8 +66,8 @@ void PlatformLinux::Update() {
         Vector2 v(e.xmotion.x, e.xmotion.y);
         v = engine_->ToPosition(v);
         // DLOG << "drag: " << v;
-        auto input_event =
-            std::make_unique<InputEvent>(InputEvent::kDrag, v * Vector2(1, -1));
+        auto input_event = std::make_unique<InputEvent>(InputEvent::kDrag, 0,
+                                                        v * Vector2(1, -1));
         engine_->AddInputEvent(std::move(input_event));
         break;
       }
@@ -77,15 +77,18 @@ void PlatformLinux::Update() {
           v = engine_->ToPosition(v);
           // DLOG << "drag-start: " << v;
           auto input_event = std::make_unique<InputEvent>(
-              InputEvent::kDragStart, v * Vector2(1, -1));
+              InputEvent::kDragStart, 0, v * Vector2(1, -1));
           engine_->AddInputEvent(std::move(input_event));
         }
         break;
       }
       case ButtonRelease: {
         if (e.xbutton.button == 1) {
+          Vector2 v(e.xbutton.x, e.xbutton.y);
+          v = engine_->ToPosition(v);
           // DLOG << "drag-end!";
-          auto input_event = std::make_unique<InputEvent>(InputEvent::kDragEnd);
+          auto input_event = std::make_unique<InputEvent>(
+              InputEvent::kDragEnd, 0, v * Vector2(1, -1));
           engine_->AddInputEvent(std::move(input_event));
         }
         break;
