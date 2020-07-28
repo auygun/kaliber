@@ -90,22 +90,16 @@ int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
 
     switch (flags) {
       case AMOTION_EVENT_ACTION_DOWN:
-        DLOG << "AMOTION_EVENT_ACTION_DOWN -         pointer_id: " << pointer_id;
+      case AMOTION_EVENT_ACTION_POINTER_DOWN:
+        DLOG << "AMOTION_EVENT_ACTION_DOWN - pointer_id: " << pointer_id;
         input_event = std::make_unique<InputEvent>(InputEvent::kDragStart, pointer_id,
                                                         pos * Vector2(1, -1));
         break;
 
-      case AMOTION_EVENT_ACTION_POINTER_DOWN:
-        DLOG << "AMOTION_EVENT_ACTION_POINTER_DOWN - pointer_id: " << pointer_id;
-        break;
-
       case AMOTION_EVENT_ACTION_UP:
-        DLOG << "AMOTION_EVENT_ACTION_UP -           pointer_id: " << pointer_id;
-        input_event = std::make_unique<InputEvent>(InputEvent::kDragEnd, (size_t)pointer_id);
-        break;
-
       case AMOTION_EVENT_ACTION_POINTER_UP: 
-        DLOG << "AMOTION_EVENT_ACTION_POINTER_UP -   pointer_id: " << pointer_id;
+        DLOG << "AMOTION_EVENT_ACTION_UP -   pointer_id: " << pointer_id;
+        input_event = std::make_unique<InputEvent>(InputEvent::kDragEnd, pointer_id, pos * Vector2(1, -1));
         break;
 
       case AMOTION_EVENT_ACTION_MOVE:

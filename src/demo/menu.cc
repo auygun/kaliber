@@ -134,14 +134,12 @@ void Menu::Update(float delta_time) {
 }
 
 void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
-  if (event->GetType() == InputEvent::kTap ||
-      event->GetType() == InputEvent::kDragStart)
+  if (event->GetType() == InputEvent::kDragStart)
     tap_pos_[0] = tap_pos_[1] = event->GetVector(0);
   else if (event->GetType() == InputEvent::kDrag)
     tap_pos_[1] = event->GetVector(0);
 
-  if ((event->GetType() != InputEvent::kTap &&
-       event->GetType() != InputEvent::kDragEnd) || IsAnimating())
+  if (event->GetType() != InputEvent::kDragEnd || IsAnimating())
     return;
 
   for (int i = 0; i < kOption_Max; ++i) {

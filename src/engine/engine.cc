@@ -158,12 +158,11 @@ std::unique_ptr<AudioResource> Engine::CreateAudioResource() {
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
   switch (event->GetType()) {
-    case InputEvent::kTap:
+    case InputEvent::kDragEnd:
       if (((GetScreenSize() / 2) * 0.9f - event->GetVector(0)).Magnitude() <=
           0.25f) {
         SetSatsVisible(!stats_.IsVisible());
-        // Consume event.
-        return;
+        // TODO: Enqueue DragCancel so we can consume this event.
       }
       break;
     case InputEvent::kKeyPress:

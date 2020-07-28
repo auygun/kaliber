@@ -112,8 +112,8 @@ void Player::Update(float delta_time) {
 void Player::OnInputEvent(std::unique_ptr<InputEvent> event) {
   if (event->GetType() == InputEvent::kNavigateBack)
     NavigateBack();
-  else if (event->GetType() == InputEvent::kTap)
-    Nuke(event->GetVector(0));
+  // else if (event->GetType() == InputEvent::kTap)
+  //   Nuke(event->GetVector(0));
   else if (event->GetType() == InputEvent::kDragStart)
     DragStart(event->GetVector(0));
   else if (event->GetType() == InputEvent::kDrag)

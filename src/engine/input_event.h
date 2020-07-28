@@ -10,14 +10,10 @@ class InputEvent {
  public:
   enum Type {
     kInvalid,
-    kTap,
-    kDoubleTap,
     kDragStart,
     kDrag,
     kDragEnd,
     kDragCancel,
-    kPinchStart,
-    kPinch,
     kNavigateBack,
     kKeyPress,
     kType_Max  // Not a type.

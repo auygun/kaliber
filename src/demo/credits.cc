@@ -53,8 +53,7 @@ void Credits::Update(float delta_time) {
 }
 
 void Credits::OnInputEvent(std::unique_ptr<InputEvent> event) {
-  if ((event->GetType() == InputEvent::kTap ||
-       event->GetType() == InputEvent::kDragEnd ||
+  if ((event->GetType() == InputEvent::kDragEnd ||
        event->GetType() == InputEvent::kNavigateBack) &&
       !text_animator_.IsPlaying(Animator::kBlending)) {
     Hide();
