@@ -20,9 +20,10 @@ cmake_minimum_required(VERSION 3.4.1)
 set (OBOE_DIR ../../../src/third_party/oboe)
 add_subdirectory(${OBOE_DIR} ./oboe-bin)
 
-
-include(AndroidNdkModules)
-android_ndk_import_module_cpufeatures()
+# cpufeatures
+include_directories(${ANDROID_NDK}/sources/android/cpufeatures)
+add_library(cpufeatures STATIC
+    ${ANDROID_NDK}/sources/android/cpufeatures/cpu-features.c)
 
 # build native_app_glue as a static lib
 if (CMAKE_BUILD_TYPE MATCHES Debug)
