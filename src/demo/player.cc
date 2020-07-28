@@ -114,8 +114,6 @@ void Player::Update(float delta_time) {
 void Player::OnInputEvent(std::unique_ptr<InputEvent> event) {
   if (event->GetType() == InputEvent::kNavigateBack)
     NavigateBack();
-  // else if (event->GetType() == InputEvent::kTap)
-  //   Nuke(event->GetVector(0));
   else if (event->GetType() == InputEvent::kDragStart)
     DragStart(event->GetPointerId(), event->GetVector(0));
   else if (event->GetType() == InputEvent::kDrag)
@@ -346,12 +344,8 @@ void Player::UpdateTarget(DamageType weapon) {
   }
 }
 
-void Player::Nuke(const Vector2& pos) {
+void Player::Nuke() {
   if (nuke_count_ <= 0 || nuke_animator_.IsPlaying(Animator::kBlending))
-    return;
-
-  float dist = (pos - nuke_symbol_.GetOffset()).Magnitude();
-  if (dist > nuke_symbol_.GetScale().x * 0.7f)
     return;
 
   Engine& engine = Engine::Get();
@@ -385,8 +379,11 @@ void Player::Nuke(const Vector2& pos) {
 
 void Player::DragStart(int i, const Vector2& pos) {
   drag_weapon_[i] = GetWeaponType(pos);
-  if (drag_weapon_[i] == kDamageType_Invalid)
+  if (drag_weapon_[i] == kDamageType_Invalid) {
+    float dist = (pos - nuke_symbol_.GetOffset()).Magnitude();
+    drag_nuke_[i] = dist <= nuke_symbol_.GetScale().x * 0.7f;
     return;
+  }
 
   weapon_drag_ind[drag_weapon_[i]] = i;
   drag_start_[i] = drag_end_[i] = pos;
@@ -414,8 +411,13 @@ void Player::Drag(int i, const Vector2& pos) {
 }
 
 void Player::DragEnd(int i) {
-  if (drag_weapon_[i] == kDamageType_Invalid)
+  if (drag_weapon_[i] == kDamageType_Invalid) {
+    if (drag_nuke_[i]) {
+      drag_nuke_[i] = false;
+      Nuke();
+    }
     return;
+  }
 
   UpdateTarget(drag_weapon_[i]);
 

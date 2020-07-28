@@ -83,6 +83,8 @@ class Player {
   bool drag_valid_[2] = {false, false};
   int weapon_drag_ind[2] = {0, 0};
 
+  bool drag_nuke_[2] = {false, false};
+
   DamageType GetWeaponType(const base::Vector2& pos);
 
   void SetBeamLength(DamageType type, float len);
@@ -97,7 +99,7 @@ class Player {
 
   void UpdateTarget(DamageType weapon);
 
-  void Nuke(const base::Vector2& pos);
+  void Nuke();
 
   void DragStart(int i, const base::Vector2& pos);
   void Drag(int i, const base::Vector2& pos);
