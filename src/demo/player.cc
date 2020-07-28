@@ -105,8 +105,10 @@ void Player::Update(float delta_time) {
   nuke_animator_.Update(delta_time);
   nuke_symbol_animator_.Update(delta_time);
 
-  if (active_weapon_ != kDamageType_Invalid)
-    UpdateTarget();
+  for (int i = 0; i < 2; ++i) {
+    if (drag_weapon_[i] != kDamageType_Invalid)
+      UpdateTarget(drag_weapon_[i]);
+  }
 }
 
 void Player::OnInputEvent(std::unique_ptr<InputEvent> event) {
@@ -115,13 +117,13 @@ void Player::OnInputEvent(std::unique_ptr<InputEvent> event) {
   // else if (event->GetType() == InputEvent::kTap)
   //   Nuke(event->GetVector(0));
   else if (event->GetType() == InputEvent::kDragStart)
-    DragStart(event->GetVector(0));
+    DragStart(event->GetPointerId(), event->GetVector(0));
   else if (event->GetType() == InputEvent::kDrag)
-    Drag(event->GetVector(0));
+    Drag(event->GetPointerId(), event->GetVector(0));
   else if (event->GetType() == InputEvent::kDragEnd)
-    DragEnd();
+    DragEnd(event->GetPointerId());
   else if (event->GetType() == InputEvent::kDragCancel)
-    DragCancel();
+    DragCancel(event->GetPointerId());
 }
 
 void Player::Draw(float frame_frac) {
@@ -326,19 +328,21 @@ void Player::SetupWeapons() {
   }
 }
 
-void Player::UpdateTarget() {
-  if (IsFiring(active_weapon_))
+void Player::UpdateTarget(DamageType weapon) {
+  if (IsFiring(weapon))
     return;
 
   Engine& engine = Engine::Get();
   Demo* game = static_cast<Demo*>(engine.GetGame());
 
-  if (drag_valid_) {
-    Vector2 origin = weapon_[active_weapon_].GetOffset();
-    Vector2 dir = (drag_end_ - drag_start_).Normalize();
-    game->GetEnemy().SelectTarget(active_weapon_, origin, dir);
+  int i = weapon_drag_ind[weapon];
+
+  if (drag_valid_[i]) {
+    Vector2 origin = weapon_[weapon].GetOffset();
+    Vector2 dir = (drag_end_[i] - drag_start_[i]).Normalize();
+    game->GetEnemy().SelectTarget(weapon, origin, dir);
   } else {
-    game->GetEnemy().DeselectTarget(active_weapon_);
+    game->GetEnemy().DeselectTarget(weapon);
   }
 }
 
@@ -379,48 +383,49 @@ void Player::Nuke(const Vector2& pos) {
   nuke_explosion_.Play(false);
 }
 
-void Player::DragStart(const Vector2& pos) {
-  active_weapon_ = GetWeaponType(pos);
-  if (active_weapon_ == kDamageType_Invalid)
+void Player::DragStart(int i, const Vector2& pos) {
+  drag_weapon_[i] = GetWeaponType(pos);
+  if (drag_weapon_[i] == kDamageType_Invalid)
     return;
 
-  drag_start_ = drag_end_ = pos;
+  weapon_drag_ind[drag_weapon_[i]] = i;
+  drag_start_[i] = drag_end_[i] = pos;
 
-  drag_sign_[active_weapon_].SetOffset(drag_start_);
-  drag_sign_[active_weapon_].SetVisible(true);
+  drag_sign_[drag_weapon_[i]].SetOffset(pos);
+  drag_sign_[drag_weapon_[i]].SetVisible(true);
 }
 
-void Player::Drag(const Vector2& pos) {
-  if (active_weapon_ == kDamageType_Invalid)
+void Player::Drag(int i, const Vector2& pos) {
+  if (drag_weapon_[i] == kDamageType_Invalid)
     return;
 
-  drag_end_ = pos;
-  drag_sign_[active_weapon_].SetOffset(drag_end_);
+  drag_end_[i] = pos;
+  drag_sign_[drag_weapon_[i]].SetOffset(pos);
 
-  if (ValidateDrag()) {
-    if (!drag_valid_ && !IsFiring(active_weapon_))
-      WarmupWeapon(active_weapon_);
-    drag_valid_ = true;
+  if (ValidateDrag(i)) {
+    if (!drag_valid_[i] && !IsFiring(drag_weapon_[i]))
+      WarmupWeapon(drag_weapon_[i]);
+    drag_valid_[i] = true;
   } else {
-    if (drag_valid_ && !IsFiring(active_weapon_))
-      CooldownWeapon(active_weapon_);
-    drag_valid_ = false;
+    if (drag_valid_[i] && !IsFiring(drag_weapon_[i]))
+      CooldownWeapon(drag_weapon_[i]);
+    drag_valid_[i] = false;
   }
 }
 
-void Player::DragEnd() {
-  if (active_weapon_ == kDamageType_Invalid)
+void Player::DragEnd(int i) {
+  if (drag_weapon_[i] == kDamageType_Invalid)
     return;
 
-  UpdateTarget();
+  UpdateTarget(drag_weapon_[i]);
 
-  DamageType type = active_weapon_;
-  active_weapon_ = kDamageType_Invalid;
+  DamageType type = drag_weapon_[i];
+  drag_weapon_[i] = kDamageType_Invalid;
   drag_sign_[type].SetVisible(false);
 
-  Vector2 fire_dir = (drag_start_ - drag_end_).Normalize();
+  Vector2 fire_dir = (drag_start_[i] - drag_end_[i]).Normalize();
 
-  if (drag_valid_ && !IsFiring(type)) {
+  if (drag_valid_[i] && !IsFiring(type)) {
     if (warmup_animator_[type].IsPlaying(Animator::kFrames)) {
       warmup_animator_[type].SetEndCallback(
           Animator::kFrames, [&, type, fire_dir]() -> void {
@@ -434,24 +439,24 @@ void Player::DragEnd() {
     }
   }
 
-  drag_valid_ = false;
-  drag_start_ = drag_end_ = {0, 0};
+  drag_valid_[i] = false;
+  drag_start_[i] = drag_end_[i] = {0, 0};
 }
 
-void Player::DragCancel() {
-  if (active_weapon_ == kDamageType_Invalid)
+void Player::DragCancel(int i) {
+  if (drag_weapon_[i] == kDamageType_Invalid)
     return;
 
   Engine& engine = Engine::Get();
   Demo* game = static_cast<Demo*>(engine.GetGame());
 
-  game->GetEnemy().DeselectTarget(active_weapon_);
+  game->GetEnemy().DeselectTarget(drag_weapon_[i]);
 
-  DamageType type = active_weapon_;
-  active_weapon_ = kDamageType_Invalid;
+  DamageType type = drag_weapon_[i];
+  drag_weapon_[i] = kDamageType_Invalid;
   drag_sign_[type].SetVisible(false);
 
-  if (drag_valid_ && !IsFiring(type)) {
+  if (drag_valid_[i] && !IsFiring(type)) {
     if (warmup_animator_[type].IsPlaying(Animator::kFrames)) {
       warmup_animator_[type].SetEndCallback(
           Animator::kFrames, [&, type]() -> void {
@@ -463,15 +468,15 @@ void Player::DragCancel() {
     }
   }
 
-  drag_valid_ = false;
-  drag_start_ = drag_end_ = {0, 0};
+  drag_valid_[i] = false;
+  drag_start_[i] = drag_end_[i] = {0, 0};
 }
 
-bool Player::ValidateDrag() {
-  Vector2 dir = drag_end_ - drag_start_;
+bool Player::ValidateDrag(int i) {
+  Vector2 dir = drag_end_[i] - drag_start_[i];
   float len = dir.Magnitude();
   dir.Normalize();
-  if (len < weapon_[active_weapon_].GetScale().y / 3)
+  if (len < weapon_[0].GetScale().y / 3)
     return false;
   if (dir.DotProduct(Vector2(0, 1)) < 0)
     return false;
@@ -479,7 +484,8 @@ bool Player::ValidateDrag() {
 }
 
 void Player::NavigateBack() {
-  DragCancel();
+  DragCancel(0);
+  DragCancel(1);
   Engine& engine = Engine::Get();
   static_cast<Demo*>(engine.GetGame())->EnterMenuState();
 }

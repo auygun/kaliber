@@ -77,11 +77,11 @@ class Player {
   int total_health_ = 3;
   int hit_points_ = 0;
 
-  DamageType active_weapon_ = kDamageType_Invalid;
-
-  base::Vector2 drag_start_ = {0, 0};
-  base::Vector2 drag_end_ = {0, 0};
-  bool drag_valid_ = false;
+  base::Vector2 drag_start_[2] = {{0, 0}, {0, 0}};
+  base::Vector2 drag_end_[2] = {{0, 0}, {0, 0}};
+  DamageType drag_weapon_[2] = {kDamageType_Invalid, kDamageType_Invalid};
+  bool drag_valid_[2] = {false, false};
+  int weapon_drag_ind[2] = {0, 0};
 
   DamageType GetWeaponType(const base::Vector2& pos);
 
@@ -95,15 +95,15 @@ class Player {
 
   void SetupWeapons();
 
-  void UpdateTarget();
+  void UpdateTarget(DamageType weapon);
 
   void Nuke(const base::Vector2& pos);
 
-  void DragStart(const base::Vector2& pos);
-  void Drag(const base::Vector2& pos);
-  void DragEnd();
-  void DragCancel();
-  bool ValidateDrag();
+  void DragStart(int i, const base::Vector2& pos);
+  void Drag(int i, const base::Vector2& pos);
+  void DragEnd(int i);
+  void DragCancel(int i);
+  bool ValidateDrag(int i);
 
   void NavigateBack();
 
