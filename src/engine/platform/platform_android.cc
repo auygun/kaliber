@@ -81,8 +81,7 @@ int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
     Vector2 pos[2] = {platform->pointer_pos_[0], platform->pointer_pos_[1]};
     for (auto i = 0; i < count; ++i) {
       int32_t id = AMotionEvent_getPointerId(event, i);
-      pos[id] = {AMotionEvent_getX(event, i),
-                 AMotionEvent_getY(event, i)};
+      pos[id] = {AMotionEvent_getX(event, i), AMotionEvent_getY(event, i)};
       pos[id] = platform->engine_->ToPosition(pos[id]);
     }
 
@@ -97,8 +96,9 @@ int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
         DLOG << "AMOTION_EVENT_ACTION_DOWN - pointer_id: " << pointer_id;
         platform->pointer_pos_[pointer_id] = pos[pointer_id];
         platform->pointer_down_[pointer_id] = true;
-        input_event = std::make_unique<InputEvent>(
-            InputEvent::kDragStart, pointer_id, pos[pointer_id] * Vector2(1, -1));
+        input_event =
+            std::make_unique<InputEvent>(InputEvent::kDragStart, pointer_id,
+                                         pos[pointer_id] * Vector2(1, -1));
         break;
 
       case AMOTION_EVENT_ACTION_UP:
@@ -113,13 +113,13 @@ int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
       case AMOTION_EVENT_ACTION_MOVE:
         if (platform->pointer_down_[0] && pos[0] != platform->pointer_pos_[0]) {
           platform->pointer_pos_[0] = pos[0];
-          input_event = std::make_unique<InputEvent>(
-              InputEvent::kDrag, 0, pos[0] * Vector2(1, -1));
+          input_event = std::make_unique<InputEvent>(InputEvent::kDrag, 0,
+                                                     pos[0] * Vector2(1, -1));
         }
         if (platform->pointer_down_[1] && pos[1] != platform->pointer_pos_[1]) {
           platform->pointer_pos_[1] = pos[1];
-          input_event = std::make_unique<InputEvent>(
-              InputEvent::kDrag, 1, pos[1] * Vector2(1, -1));
+          input_event = std::make_unique<InputEvent>(InputEvent::kDrag, 1,
+                                                     pos[1] * Vector2(1, -1));
         }
         break;
 
