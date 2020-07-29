@@ -627,6 +627,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
   if (target->hit_points <= 0)
     return;
 
+  target->targetted_by_weapon_ = kDamageType_Invalid;
   target->hit_points -= damage;
 
   target->blast.SetVisible(true);
@@ -638,6 +639,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
     target->sprite.SetVisible(false);
     target->health_base.SetVisible(false);
     target->health_bar.SetVisible(false);
+    target->target.SetVisible(false);
     target->score.SetVisible(true);
 
     target->score_animator.Play(Animator::kTimer | Animator::kMovement, false);
@@ -667,8 +669,6 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
       boss_animator_.Play(Animator::kFrames | Animator::kTimer, true);
     }
   } else {
-    target->targetted_by_weapon_ = kDamageType_Invalid;
-
     Vector2 s = target->health_base.GetScale();
     s.x *= (float)target->hit_points / (float)target->total_health;
     float t = (s.x - target->health_bar.GetScale().x) / 2;
