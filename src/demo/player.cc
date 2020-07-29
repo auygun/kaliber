@@ -138,6 +138,9 @@ void Player::Draw(float frame_frac) {
 }
 
 void Player::TakeDamage(int damage) {
+  if (damage > 0)
+    Engine::Get().Vibrate(250);
+
   hit_points_ = std::min(total_health_, std::max(0, hit_points_ - damage));
 
   Vector2 s = health_bar_[0].GetScale();

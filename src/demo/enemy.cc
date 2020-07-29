@@ -634,6 +634,8 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
 
   target->targetted_by_weapon_ = kDamageType_Invalid;
 
+  Engine::Get().Vibrate(30);
+
   if (target->shield) {
     target->shield = false;
     target->sprite.AutoScale();
