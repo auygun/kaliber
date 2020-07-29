@@ -231,6 +231,8 @@ void Enemy::SelectTarget(DamageType damage_type,
       e.targetted_by_weapon_ = kDamageType_Invalid;
       e.target.SetVisible(false);
       e.target_animator.Stop(Animator::kAllAnimations);
+    } else if (e.targetted_by_weapon_ != kDamageType_Invalid) {
+      return;
     }
 
     Vector2 weapon_enemy_dir = e.sprite.GetOffset() - origin;
@@ -322,6 +324,7 @@ void Enemy::HitTarget(DamageType damage_type) {
 
   target->target.SetVisible(false);
   target->target_animator.Stop(Animator::kAllAnimations);
+  target->targetted_by_weapon_ = kDamageType_Invalid;
 
   if ((target->damage_type != kDamageType_Any &&
        target->damage_type != damage_type)) {
