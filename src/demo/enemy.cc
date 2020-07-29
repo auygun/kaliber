@@ -101,6 +101,10 @@ bool Enemy::Initialize() {
   if (!stealth_sound_->Load("stealth.mp3", false))
     return false;
 
+  shield_on_sound_ = std::make_shared<Sound>();
+  if (!shield_on_sound_->Load("shield.mp3", false))
+    return false;
+
   hit_sound_ = std::make_shared<Sound>();
   if (!hit_sound_->Load("hit.mp3", false))
     return false;
@@ -347,6 +351,7 @@ void Enemy::HitTarget(DamageType damage_type) {
         target->shield_animator.SetEndCallback(Animator::kFrames, nullptr);
       });
 
+      target->shield_on.Play(false);
     }
     return;
   }
@@ -575,6 +580,11 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.stealth.SetVariate(false);
   e.stealth.SetSimulateStereo(false);
   e.stealth.SetMaxAplitude(0.7f);
+
+  e.shield_on.SetSound(shield_on_sound_);
+  e.shield_on.SetVariate(false);
+  e.shield_on.SetSimulateStereo(false);
+  e.shield_on.SetMaxAplitude(0.4f);
 
   e.hit.SetSound(hit_sound_);
   e.hit.SetVariate(true);

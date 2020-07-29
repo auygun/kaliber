@@ -89,6 +89,7 @@ class Enemy {
 
     eng::SoundPlayer explosion;
     eng::SoundPlayer stealth;
+    eng::SoundPlayer shield_on;
     eng::SoundPlayer hit;
   };
 
@@ -108,6 +109,7 @@ class Enemy {
   std::shared_ptr<eng::Sound> boss_explosion_sound_;
   std::shared_ptr<eng::Sound> explosion_sound_;
   std::shared_ptr<eng::Sound> stealth_sound_;
+  std::shared_ptr<eng::Sound> shield_on_sound_;
   std::shared_ptr<eng::Sound> hit_sound_;
 
   std::list<EnemyUnit> enemies_;
