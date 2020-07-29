@@ -63,6 +63,9 @@ class Engine {
   void AddInputEvent(std::unique_ptr<InputEvent> event);
   std::unique_ptr<InputEvent> GetNextInputEvent();
 
+  // Vibrate (if supported by the platform) for the specified duration.
+  void Vibrate(int duration);
+
   // Access to the render resources.
   Geometry* GetQuad() { return quad_.get(); }
   Shader* GetPassThroughShader() { return pass_through_shader_.get(); }

@@ -196,6 +196,10 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
   return event;
 }
 
+void Engine::Vibrate(int duration) {
+  platform_->Vibrate(duration);
+}
+
 TextureCompressor* Engine::GetTextureCompressor(bool opacity) {
   return opacity ? tex_comp_alpha_.get() : tex_comp_opaque_.get();
 }

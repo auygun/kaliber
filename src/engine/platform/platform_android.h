@@ -22,6 +22,8 @@ class PlatformAndroid : public PlatformBase {
 
   void Exit();
 
+  void Vibrate(int duration);
+
  private:
   android_app* app_ = nullptr;
 

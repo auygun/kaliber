@@ -42,6 +42,39 @@ std::string GetApkPath(ANativeActivity* activity) {
   return apk_path;
 }
 
+void Vibrate(ANativeActivity* activity, int duration) {
+  JNIEnv* env = nullptr;
+  activity->vm->AttachCurrentThread(&env, nullptr);
+
+  jclass activity_clazz = env->GetObjectClass(activity->clazz);
+  jclass context_clazz = env->FindClass("android/content/Context");
+
+  jfieldID vibrator_service_id = env->GetStaticFieldID(
+      context_clazz, "VIBRATOR_SERVICE", "Ljava/lang/String;");
+  jobject vibrator_service_str =
+      env->GetStaticObjectField(context_clazz, vibrator_service_id);
+
+  jmethodID get_system_service_id =
+      env->GetMethodID(activity_clazz, "getSystemService",
+                       "(Ljava/lang/String;)Ljava/lang/Object;");
+  jobject vibrator_service_obj = env->CallObjectMethod(
+      activity->clazz, get_system_service_id, vibrator_service_str);
+
+  jclass vibrator_service_clazz = env->GetObjectClass(vibrator_service_obj);
+  jmethodID vibrate_id =
+      env->GetMethodID(vibrator_service_clazz, "vibrate", "(J)V");
+
+  jlong length = duration;
+  env->CallVoidMethod(vibrator_service_obj, vibrate_id, length);
+
+  env->DeleteLocalRef(vibrator_service_obj);
+  env->DeleteLocalRef(vibrator_service_clazz);
+  env->DeleteLocalRef(vibrator_service_str);
+  env->DeleteLocalRef(context_clazz);
+  env->DeleteLocalRef(activity_clazz);
+  activity->vm->DetachCurrentThread();
+}
+
 int32_t getDensityDpi(android_app* app) {
   AConfiguration* config = AConfiguration_new();
   AConfiguration_fromAssetManager(config, app->activity->assetManager);
@@ -250,6 +283,10 @@ void PlatformAndroid::Update() {
 
 void PlatformAndroid::Exit() {
   ANativeActivity_finish(app_->activity);
+}
+
+void PlatformAndroid::Vibrate(int duration) {
+  ::Vibrate(app_->activity, duration);
 }
 
 }  // namespace eng

@@ -18,6 +18,8 @@ class PlatformLinux : public PlatformBase {
 
   void Exit();
 
+  void Vibrate(int duration) {}
+
  private:
 };
 
