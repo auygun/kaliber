@@ -67,7 +67,7 @@ class Enemy {
     int hit_points = 0;
 
     bool idle2_anim = false;
-    bool stealth = false;
+    bool stealth_active = false;
 
     bool shield_active = false;
 
@@ -87,9 +87,9 @@ class Enemy {
     eng::Animator health_animator;
     eng::Animator score_animator;
 
-    eng::SoundPlayer explosion_;
-    eng::SoundPlayer stealth_;
-    eng::SoundPlayer hit_;
+    eng::SoundPlayer explosion;
+    eng::SoundPlayer stealth;
+    eng::SoundPlayer hit;
   };
 
   std::shared_ptr<eng::Texture> skull_tex_;

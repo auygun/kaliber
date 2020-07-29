@@ -228,7 +228,7 @@ void Enemy::SelectTarget(DamageType damage_type,
   std::vector<std::tuple<EnemyUnit*, float, float>> candidates;
 
   for (auto& e : enemies_) {
-    if (e.hit_points <= 0 || e.marked_for_removal || e.stealth)
+    if (e.hit_points <= 0 || e.marked_for_removal || e.stealth_active)
       continue;
 
     if (e.targetted_by_weapon_ == damage_type) {
@@ -372,7 +372,7 @@ void Enemy::StopAllEnemyUnits() {
       continue;
     if (!e.marked_for_removal && e.hit_points > 0)
       e.movement_animator.Pause(Animator::kMovement);
-    if (e.stealth) {
+    if (e.stealth_active) {
       e.sprite_animator.Stop(Animator::kAllAnimations);
       e.sprite_animator.SetEndCallback(Animator::kBlending, nullptr);
       e.sprite_animator.SetBlending({1, 1, 1, 1}, 0.5f);
@@ -567,19 +567,19 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.movement_animator.Attach(&e.score);
   e.movement_animator.Play(Animator::kMovement, false);
 
-  e.explosion_.SetSound(explosion_sound_);
-  e.explosion_.SetVariate(true);
-  e.explosion_.SetSimulateStereo(true);
+  e.explosion.SetSound(explosion_sound_);
+  e.explosion.SetVariate(true);
+  e.explosion.SetSimulateStereo(true);
 
-  e.stealth_.SetSound(stealth_sound_);
-  e.stealth_.SetVariate(false);
-  e.stealth_.SetSimulateStereo(false);
-  e.stealth_.SetMaxAplitude(0.7f);
+  e.stealth.SetSound(stealth_sound_);
+  e.stealth.SetVariate(false);
+  e.stealth.SetSimulateStereo(false);
+  e.stealth.SetMaxAplitude(0.7f);
 
-  e.hit_.SetSound(hit_sound_);
-  e.hit_.SetVariate(true);
-  e.hit_.SetSimulateStereo(false);
-  e.hit_.SetMaxAplitude(0.5f);
+  e.hit.SetSound(hit_sound_);
+  e.hit.SetVariate(true);
+  e.hit.SetSimulateStereo(false);
+  e.hit.SetMaxAplitude(0.5f);
 }
 
 void Enemy::SpawnBoss() {
@@ -642,14 +642,14 @@ void Enemy::SpawnBoss() {
         Animator::kMovement, [&]() -> void { e.marked_for_removal = true; });
     e.score_animator.Attach(&e.score);
 
-    e.explosion_.SetSound(boss_explosion_sound_);
-    e.explosion_.SetVariate(false);
-    e.explosion_.SetSimulateStereo(false);
+    e.explosion.SetSound(boss_explosion_sound_);
+    e.explosion.SetVariate(false);
+    e.explosion.SetSimulateStereo(false);
 
-    e.hit_.SetSound(hit_sound_);
-    e.hit_.SetVariate(true);
-    e.hit_.SetSimulateStereo(false);
-    e.hit_.SetMaxAplitude(0.5f);
+    e.hit.SetSound(hit_sound_);
+    e.hit.SetVariate(true);
+    e.hit.SetSimulateStereo(false);
+    e.hit.SetMaxAplitude(0.5f);
   });
   boss_animator_.Play(Animator::kFrames, true);
   boss_animator_.Play(Animator::kMovement, false);
@@ -697,7 +697,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
     Demo* game = static_cast<Demo*>(engine.GetGame());
     game->AddScore(GetScore(target->enemy_type));
 
-    target->explosion_.Play(false);
+    target->explosion.Play(false);
 
     if (target->enemy_type == kEnemyType_Boss) {
       // Play dead animation and move away the boss.
@@ -732,7 +732,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
     if (target->enemy_type == kEnemyType_Bug &&
         target->hit_points == target->total_health - 1) {
       // Stealth and teleport.
-      target->stealth = true;
+      target->stealth_active = true;
       target->movement_animator.Pause(Animator::kMovement);
       target->sprite_animator.Pause(Animator::kFrames);
 
@@ -745,7 +745,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
 
             target->sprite_animator.SetEndCallback(Animator::kBlending,
                 [&, target]() -> void {
-                  target->stealth = false;
+                  target->stealth_active = false;
                   target->movement_animator.Play(Animator::kMovement, false);
                   target->sprite_animator.Play(Animator::kFrames, false);
                 });
@@ -758,9 +758,9 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
       target->sprite_animator.Play(Animator::kBlending | Animator::kTimer,
                                    false);
 
-      target->stealth_.Play(false);
+      target->stealth.Play(false);
     } else {
-      target->hit_.Play(false);
+      target->hit.Play(false);
     }
 
     if (target->enemy_type == kEnemyType_Boss) {
