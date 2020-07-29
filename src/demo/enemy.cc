@@ -324,8 +324,13 @@ void Enemy::HitTarget(DamageType damage_type) {
   target->target_animator.Stop(Animator::kAllAnimations);
 
   if ((target->damage_type != kDamageType_Any &&
-       target->damage_type != damage_type))
+       target->damage_type != damage_type)) {
+    if (!target->shield) {
+      target->shield = true;
+      target->sprite.Scale(1.3f);
+    }
     return;
+  }
 
   TakeDamage(target, 1);
 }
@@ -628,6 +633,14 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
     return;
 
   target->targetted_by_weapon_ = kDamageType_Invalid;
+
+  if (target->shield) {
+    target->shield = false;
+    target->sprite.AutoScale();
+    if (damage == 1)
+      return;
+  }
+
   target->hit_points -= damage;
 
   target->blast.SetVisible(true);

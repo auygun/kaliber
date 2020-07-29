@@ -69,6 +69,8 @@ class Enemy {
     bool idle2_anim = false;
     bool stealth = false;
 
+    bool shield = false;
+
     eng::ImageQuad sprite;
     eng::ImageQuad target;
     eng::ImageQuad blast;
