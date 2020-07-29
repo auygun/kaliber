@@ -75,6 +75,7 @@ Enemy::Enemy()
       boss_tex_(Engine::Get().CreateRenderResource<Texture>()),
       target_tex_(Engine::Get().CreateRenderResource<Texture>()),
       blast_tex_(Engine::Get().CreateRenderResource<Texture>()),
+      shield_tex_(Engine::Get().CreateRenderResource<Texture>()),
       score_tex_{Engine::Get().CreateRenderResource<Texture>(),
                  Engine::Get().CreateRenderResource<Texture>(),
                  Engine::Get().CreateRenderResource<Texture>(),
@@ -165,6 +166,7 @@ void Enemy::Update(float delta_time) {
     it->sprite_animator.Update(delta_time);
     it->target_animator.Update(delta_time);
     it->blast_animator.Update(delta_time);
+    it->shield_animator.Update(delta_time);
     it->health_animator.Update(delta_time);
     it->score_animator.Update(delta_time);
     it->movement_animator.Update(delta_time);
@@ -181,6 +183,7 @@ void Enemy::Draw(float frame_frac) {
     e.sprite.Draw();
     e.target.Draw();
     e.blast.Draw();
+    e.shield.Draw();
     e.health_base.Draw();
     e.health_bar.Draw();
     e.score.Draw();
@@ -191,6 +194,7 @@ void Enemy::Draw(float frame_frac) {
     e.sprite.Draw();
     e.target.Draw();
     e.blast.Draw();
+    e.shield.Draw();
     e.health_base.Draw();
     e.health_bar.Draw();
     e.score.Draw();
@@ -328,9 +332,21 @@ void Enemy::HitTarget(DamageType damage_type) {
 
   if ((target->damage_type != kDamageType_Any &&
        target->damage_type != damage_type)) {
-    if (!target->shield) {
-      target->shield = true;
-      target->sprite.Scale(1.3f);
+    if (!target->shield_active) {
+      target->shield_active = true;
+      target->shield.SetVisible(true);
+
+      target->shield_animator.Stop(Animator::kFrames);
+      target->shield.SetFrame(0);
+      target->shield_animator.SetFrames(4, 12);
+      target->shield_animator.Play(Animator::kFrames, false);
+      target->shield_animator.SetEndCallback(Animator::kFrames, [&, target]() -> void {
+        target->shield.SetFrame(4);
+        target->shield_animator.SetFrames(4, 12);
+        target->shield_animator.Play(Animator::kFrames, true);
+        target->shield_animator.SetEndCallback(Animator::kFrames, nullptr);
+      });
+
     }
     return;
   }
@@ -472,6 +488,10 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.blast.AutoScale();
   e.blast.SetOffset(spawn_pos);
 
+  e.shield.Create(shield_tex_, {4, 2});
+  e.shield.AutoScale();
+  e.shield.SetOffset(spawn_pos);
+
   e.health_base.Scale(e.sprite.GetScale() * Vector2(0.6f, 0.01f));
   e.health_base.SetOffset(spawn_pos);
   e.health_base.PlaceToBottomOf(e.sprite);
@@ -499,6 +519,13 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
     e.blast_animator.SetFrames(6, 18);
   }
   e.blast_animator.Attach(&e.blast);
+
+  e.shield_animator.Attach(&e.shield);
+  e.shield_animator.SetBlending({1, 1, 1, 0}, 0.2f, nullptr);
+  e.shield_animator.SetEndCallback(Animator::kBlending, [&]() -> void {
+    e.shield_animator.Stop(Animator::kAllAnimations);
+    e.shield.SetVisible(false);
+  });
 
   SetupFadeOutAnim(e.health_animator, 1);
   e.health_animator.Attach(&e.health_base);
@@ -534,6 +561,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.movement_animator.Attach(&e.sprite);
   e.movement_animator.Attach(&e.target);
   e.movement_animator.Attach(&e.blast);
+  e.movement_animator.Attach(&e.shield);
   e.movement_animator.Attach(&e.health_base);
   e.movement_animator.Attach(&e.health_bar);
   e.movement_animator.Attach(&e.score);
@@ -639,9 +667,11 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
 
   Engine::Get().Vibrate(30);
 
-  if (target->shield) {
-    target->shield = false;
+  if (target->shield_active) {
+    target->shield_active = false;
     target->sprite.AutoScale();
+    target->shield_animator.Play(Animator::kBlending, false);
+
     if (damage == 1)
       return;
   }
@@ -910,18 +940,23 @@ bool Enemy::CreateRenderResources() {
   auto blast_image = std::make_unique<Image>();
   if (!blast_image->Load("enemy_anims_blast_ok.png"))
     return false;
+  auto shield_image = std::make_unique<Image>();
+  if (!shield_image->Load("woom_enemy_shield.png"))
+    return false;
 
   skull_image->Compress();
   bug_image->Compress();
   boss_image->Compress();
   target_image->Compress();
   blast_image->Compress();
+  shield_image->Compress();
 
   skull_tex_->Update(std::move(skull_image));
   bug_tex_->Update(std::move(bug_image));
   boss_tex_->Update(std::move(boss_image));
   target_tex_->Update(std::move(target_image));
   blast_tex_->Update(std::move(blast_image));
+  shield_tex_->Update(std::move(shield_image));
 
   for (int i = 0; i < kEnemyType_Max; ++i)
     score_tex_[i]->Update(GetScoreImage(GetScore((EnemyType)i)));
@@ -933,6 +968,7 @@ void Enemy::TranslateEnemyUnit(EnemyUnit& e, const Vector2& delta) {
   e.sprite.Translate(delta);
   e.target.Translate(delta);
   e.blast.Translate(delta);
+  e.shield.Translate(delta);
   e.health_base.Translate(delta);
   e.health_bar.Translate(delta);
   e.score.Translate(delta);

@@ -69,11 +69,12 @@ class Enemy {
     bool idle2_anim = false;
     bool stealth = false;
 
-    bool shield = false;
+    bool shield_active = false;
 
     eng::ImageQuad sprite;
     eng::ImageQuad target;
     eng::ImageQuad blast;
+    eng::ImageQuad shield;
     eng::ImageQuad score;
     eng::SolidQuad health_base;
     eng::SolidQuad health_bar;
@@ -82,6 +83,7 @@ class Enemy {
     eng::Animator sprite_animator;
     eng::Animator target_animator;
     eng::Animator blast_animator;
+    eng::Animator shield_animator;
     eng::Animator health_animator;
     eng::Animator score_animator;
 
@@ -95,6 +97,7 @@ class Enemy {
   std::shared_ptr<eng::Texture> boss_tex_;
   std::shared_ptr<eng::Texture> target_tex_;
   std::shared_ptr<eng::Texture> blast_tex_;
+  std::shared_ptr<eng::Texture> shield_tex_;
   std::shared_ptr<eng::Texture> score_tex_[kEnemyType_Max];
 
   eng::ImageQuad boss_;
