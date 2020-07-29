@@ -21,10 +21,10 @@ bool AudioAlsa::Initialize() {
   // Contains information about the hardware.
   snd_pcm_hw_params_t* hw_params;
 
-  // "default" is usualy PulseAudio. Use "plughw:CARD=PCH" instead for direct
-  // hardware device with software format conversion.
-  if ((err = snd_pcm_open(&pcm_handle_, "plughw:CARD=PCH",
-                          SND_PCM_STREAM_PLAYBACK, 0)) < 0) {
+  // "default" is usualy PulseAudio. Use "plughw" instead for direct hardware
+  // device with software format conversion.
+  if ((err = snd_pcm_open(&pcm_handle_, "plughw", SND_PCM_STREAM_PLAYBACK, 0)) <
+      0) {
     LOG << "Cannot open audio device. Error: " << snd_strerror(err);
     return false;
   }
