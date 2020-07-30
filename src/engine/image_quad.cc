@@ -26,9 +26,10 @@ void ImageQuad::Destory() {
 }
 
 void ImageQuad::AutoScale() {
+  auto& engine = Engine::Get();
   Vector2 dimensions = {GetFrameWidth(), GetFrameHeight()};
-  SetScale(Engine::Get().ToScale(dimensions));
-  Scale((float)Engine::Get().GetDeviceDpi() / 200.0f);
+  SetScale(engine.ToScale(dimensions));
+  Scale((float)engine.GetDeviceDpi() / engine.image_dpi());
 }
 
 void ImageQuad::SetFrame(size_t frame) {

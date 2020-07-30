@@ -66,6 +66,8 @@ class Engine {
   // Vibrate (if supported by the platform) for the specified duration.
   void Vibrate(int duration);
 
+  void SetImageDpi(float dpi) { image_dpi_ = dpi; }
+
   // Access to the render resources.
   Geometry* GetQuad() { return quad_.get(); }
   Shader* GetPassThroughShader() { return pass_through_shader_.get(); }
@@ -98,6 +100,8 @@ class Engine {
 
   float seconds_accumulated() const { return seconds_accumulated_; }
 
+  float image_dpi() const { return image_dpi_; }
+
  private:
   static Engine* singleton;
 
@@ -127,6 +131,8 @@ class Engine {
   int fps_ = 0;
 
   float seconds_accumulated_ = 0.0f;
+
+  float image_dpi_ = 200;
 
   std::deque<std::unique_ptr<InputEvent>> input_queue_;
 
