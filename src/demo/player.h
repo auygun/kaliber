@@ -30,8 +30,6 @@ class Player {
 
   void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
 
-  void Draw(float frame_frac);
-
   void TakeDamage(int damage);
 
   void AddNuke(int n);

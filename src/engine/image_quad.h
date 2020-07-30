@@ -32,7 +32,8 @@ class ImageQuad : public Animatable {
   void SetColor(const base::Vector4& color) override { color_ = color; }
   base::Vector4 GetColor() const override { return color_; }
 
-  void Draw();
+  // Drawable interface.
+  void Draw(float frame_frac) override;
 
   std::shared_ptr<Texture> GetTexture() { return texture_; }
 

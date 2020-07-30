@@ -61,6 +61,7 @@ bool Menu::Initialize() {
 
   for (int i = 0; i < kOption_Max; ++i) {
     items_[i].text.Create(menu_tex_, {1, 4});
+    items_[i].text.SetZOrder(40);
     items_[i].text.AutoScale();
     items_[i].text.Scale(1.5f);
     items_[i].text.SetColor(kColorFadeOut);
@@ -88,10 +89,12 @@ bool Menu::Initialize() {
   click_.SetMaxAplitude(1.5f);
 
   logo_[0].Create(logo_tex_[0], {3, 8});
+  logo_[0].SetZOrder(40);
   logo_[0].AutoScale();
   logo_[0].SetOffset(Engine::Get().GetScreenSize() * Vector2(0, 0.25f));
 
   logo_[1].Create(logo_tex_[1], {3, 7});
+  logo_[1].SetZOrder(40);
   logo_[1].AutoScale();
   logo_[1].SetOffset(Engine::Get().GetScreenSize() * Vector2(0, 0.25f));
 
@@ -161,14 +164,6 @@ void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
 
     click_.Play(false);
   }
-}
-
-void Menu::Draw() {
-  logo_[0].Draw();
-  logo_[1].Draw();
-
-  for (int i = 0; i < kOption_Max; ++i)
-    items_[i].text.Draw();
 }
 
 void Menu::ContextLost() {

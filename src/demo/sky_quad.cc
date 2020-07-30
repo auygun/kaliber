@@ -31,6 +31,8 @@ bool SkyQuad::Create() {
 
   color_animator_.Attach(this);
 
+  SetVisible(true);
+
   return true;
 }
 

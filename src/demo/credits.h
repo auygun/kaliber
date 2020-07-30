@@ -26,8 +26,6 @@ class Credits {
 
   void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
 
-  void Draw();
-
   void ContextLost();
 
   void Show();

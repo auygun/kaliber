@@ -41,8 +41,10 @@ size_t ImageQuad::GetNumFrames() const {
   return num_frames_[0] * num_frames_[1];
 }
 
-void ImageQuad::Draw() {
-  if (!IsVisible() || !texture_ || !texture_->IsValid())
+void ImageQuad::Draw(float frame_frac) {
+  assert(IsVisible());
+
+  if (!texture_ || !texture_->IsValid())
     return;
 
   texture_->Activate();

@@ -113,6 +113,7 @@ bool Enemy::Initialize() {
     return false;
 
   boss_.Create(boss_tex_, {4, 3});
+  boss_.SetZOrder(10);
   boss_.AutoScale();
   boss_animator_.Attach(&boss_);
 
@@ -176,32 +177,6 @@ void Enemy::Update(float delta_time) {
     it->movement_animator.Update(delta_time);
 
     it++;
-  }
-}
-
-void Enemy::Draw(float frame_frac) {
-  boss_.Draw();
-  for (auto& e : enemies_) {
-    if (e.hit_points <= 0)
-      continue;
-    e.sprite.Draw();
-    e.target.Draw();
-    e.blast.Draw();
-    e.shield.Draw();
-    e.health_base.Draw();
-    e.health_bar.Draw();
-    e.score.Draw();
-  }
-  for (auto& e : enemies_) {
-    if (e.hit_points > 0)
-      continue;
-    e.sprite.Draw();
-    e.target.Draw();
-    e.blast.Draw();
-    e.shield.Draw();
-    e.health_base.Draw();
-    e.health_bar.Draw();
-    e.score.Draw();
   }
 }
 
@@ -469,6 +444,8 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
     default:
       assert(false);
   }
+
+  e.sprite.SetZOrder(11);
   e.sprite.AutoScale();
   e.sprite.SetVisible(true);
   Vector2 spawn_pos = pos + Vector2(0, e.sprite.GetScale().y / 2);
@@ -486,28 +463,34 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.sprite_animator.Play(Animator::kFrames, true);
 
   e.target.Create(target_tex_, {6, 2});
+  e.target.SetZOrder(12);
   e.target.AutoScale();
   e.target.SetOffset(spawn_pos);
 
   e.blast.Create(blast_tex_, {6, 2});
+  e.blast.SetZOrder(12);
   e.blast.AutoScale();
   e.blast.SetOffset(spawn_pos);
 
   e.shield.Create(shield_tex_, {4, 2});
+  e.shield.SetZOrder(11);
   e.shield.AutoScale();
   e.shield.SetOffset(spawn_pos);
 
+  e.health_base.SetZOrder(11);
   e.health_base.Scale(e.sprite.GetScale() * Vector2(0.6f, 0.01f));
   e.health_base.SetOffset(spawn_pos);
   e.health_base.PlaceToBottomOf(e.sprite);
   e.health_base.SetColor({0.5f, 0.5f, 0.5f, 1});
 
+  e.health_bar.SetZOrder(11);
   e.health_bar.Scale(e.sprite.GetScale() * Vector2(0.6f, 0.01f));
   e.health_bar.SetOffset(spawn_pos);
   e.health_bar.PlaceToBottomOf(e.sprite);
   e.health_bar.SetColor({0.161f, 0.89f, 0.322f, 1});
 
   e.score.Create(score_tex_[e.enemy_type]);
+  e.score.SetZOrder(12);
   e.score.AutoScale();
   e.score.SetColor({1, 1, 1, 1});
   e.score.SetOffset(spawn_pos);
@@ -620,18 +603,21 @@ void Enemy::SpawnBoss() {
     e.sprite.SetScale(boss_.GetScale() * 0.3f);
 
     e.target.Create(target_tex_, {6, 2});
+    e.target.SetZOrder(12);
     e.target.AutoScale();
     e.target.SetOffset(hit_box_pos);
 
     Vector2 health_bar_offset = boss_.GetScale() * Vector2(0, 0.2f);
 
     // A thicker and always visible health bar.
+    e.health_base.SetZOrder(10);
     e.health_base.Scale(e.sprite.GetScale() * Vector2(0.7f, 0.08f));
     e.health_base.SetOffset(hit_box_pos + health_bar_offset);
     e.health_base.PlaceToBottomOf(boss_);
     e.health_base.SetColor({0.5f, 0.5f, 0.5f, 1});
     e.health_base.SetVisible(true);
 
+    e.health_bar.SetZOrder(10);
     e.health_bar.Scale(e.sprite.GetScale() * Vector2(0.7f, 0.08f));
     e.health_bar.SetOffset(hit_box_pos + health_bar_offset);
     e.health_bar.PlaceToBottomOf(boss_);
@@ -639,6 +625,7 @@ void Enemy::SpawnBoss() {
     e.health_bar.SetVisible(true);
 
     e.score.Create(score_tex_[e.enemy_type]);
+    e.score.SetZOrder(12);
     e.score.AutoScale();
     e.score.SetColor({1, 1, 1, 1});
     e.score.SetOffset(hit_box_pos);

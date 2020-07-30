@@ -67,6 +67,7 @@ add_library(woom SHARED
     ../../../src/engine/audio/audio_base.cc
     ../../../src/engine/audio/audio_oboe.cc
     ../../../src/engine/audio/audio_resource.cc
+    ../../../src/engine/drawable.cc
     ../../../src/engine/engine.cc
     ../../../src/engine/font.cc
     ../../../src/engine/image_quad.cc

@@ -62,11 +62,6 @@ void Credits::OnInputEvent(std::unique_ptr<InputEvent> event) {
   }
 }
 
-void Credits::Draw() {
-  for (int i = 0; i < kNumLines; ++i)
-    text_[i].Draw();
-}
-
 void Credits::ContextLost() {
   if (tex_)
     tex_->Update(CreateImage());
@@ -78,6 +73,7 @@ void Credits::Show() {
 
   for (int i = 0; i < kNumLines; ++i) {
     text_[i].Create(tex_, {1, kNumLines});
+    text_[i].SetZOrder(50);
     text_[i].SetOffset({0, 0});
     text_[i].SetScale({1, 1});
     text_[i].AutoScale();

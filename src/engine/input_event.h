@@ -19,7 +19,8 @@ class InputEvent {
     kType_Max  // Not a type.
   };
 
-  InputEvent(Type type, size_t pointer_id) : type_(type), pointer_id_(pointer_id) {}
+  InputEvent(Type type, size_t pointer_id)
+      : type_(type), pointer_id_(pointer_id) {}
   InputEvent(Type type, size_t pointer_id, const base::Vector2& vec)
       : type_(type), pointer_id_(pointer_id), vec_(vec) {}
   InputEvent(Type type) : type_(type) {}
@@ -40,7 +41,7 @@ class InputEvent {
  private:
   Type type_ = kInvalid;
   size_t pointer_id_ = 0;
-  base::Vector2 vec_= {0, 0};
+  base::Vector2 vec_ = {0, 0};
   char key_ = 0;
 };
 

@@ -41,6 +41,7 @@ bool Hud::Initialize() {
   for (int i = 0; i < 2; ++i) {
     auto image = CreateImage();
 
+    text_[i].SetZOrder(30);
     text_[i].GetTexture()->Update(std::move(image));
     text_[i].AutoScale();
     text_[i].SetColor(kTextColor);
@@ -52,6 +53,7 @@ bool Hud::Initialize() {
     scale -= engine.GetScreenSize() * Vector2(kHorizontalMargin * 4, 0);
     scale += text_[0].GetScale() * Vector2(0, 0.3f);
 
+    progress_bar_[i].SetZOrder(30);
     progress_bar_[i].Scale(scale);
     progress_bar_[i].Translate(pos * Vector2(0, 1));
     progress_bar_[i].SetColor(kPprogressBarColor[i] * Vector4(1, 1, 1, 0));
@@ -69,6 +71,8 @@ bool Hud::Initialize() {
     };
     text_animator_[i].Attach(&text_[i]);
   }
+
+  message_.SetZOrder(30);
 
   message_animator_.SetEndCallback(Animator::kTimer, [&]() -> void {
     message_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
@@ -88,14 +92,6 @@ void Hud::Update(float delta_time) {
     progress_bar_animator_[i].Update(delta_time);
   }
   message_animator_.Update(delta_time);
-}
-
-void Hud::Draw() {
-  for (int i = 0; i < 2; ++i) {
-    progress_bar_[i].Draw();
-    text_[i].Draw();
-  }
-  message_.Draw();
 }
 
 void Hud::ContextLost() {

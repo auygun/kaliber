@@ -1,5 +1,6 @@
 #include "solid_quad.h"
 
+#include <cassert>
 #include <memory>
 
 #include "engine.h"
@@ -8,9 +9,8 @@
 
 namespace eng {
 
-void SolidQuad::Draw() {
-  if (!IsVisible())
-    return;
+void SolidQuad::Draw(float frame_frac) {
+  assert(IsVisible());
 
   Shader* shader = Engine::Get().GetSolidShader();
 

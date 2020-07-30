@@ -5,10 +5,12 @@
 #include "../third_party/texture_compressor/texture_compressor.h"
 #include "audio/audio.h"
 #include "audio/audio_resource.h"
+#include "drawable.h"
 #include "font.h"
 #include "game.h"
 #include "game_factory.h"
 #include "image.h"
+#include "image_quad.h"
 #include "input_event.h"
 #include "mesh.h"
 #include "platform/platform.h"
@@ -35,9 +37,15 @@ Engine::Engine(Platform* platform, Renderer* renderer, Audio* audio)
   quad_ = CreateRenderResource<Geometry>();
   pass_through_shader_ = CreateRenderResource<Shader>();
   solid_shader_ = CreateRenderResource<Shader>();
+
+  stats_ = std::make_unique<ImageQuad>();
+  stats_->SetZOrder(std::numeric_limits<int>::max());
 }
 
 Engine::~Engine() {
+  game_.reset();
+  stats_.reset();
+
   singleton = nullptr;
 }
 
@@ -116,15 +124,18 @@ void Engine::Update(float delta_time) {
     fps_seconds_ = 0;
   }
 
-  if (stats_.IsVisible())
+  if (stats_->IsVisible())
     PrintStats();
 }
 
 void Engine::Draw(float frame_frac) {
-  game_->Draw(frame_frac);
+  drawables_.sort(
+      [](auto& a, auto& b) { return a->GetZOrder() < b->GetZOrder(); });
 
-  if (stats_.IsVisible())
-    stats_.Draw();
+  for (auto d : drawables_) {
+    if (d->IsVisible())
+      d->Draw(frame_frac);
+  }
 
   renderer_->EnqueueCommand(std::make_unique<CmdPresent>());
 }
@@ -137,6 +148,20 @@ void Engine::LostFocus() {
 void Engine::GainedFocus() {
   if (game_)
     game_->GainedFocus();
+}
+
+void Engine::AddDrawable(Drawable* drawable) {
+  assert(std::find(drawables_.begin(), drawables_.end(), drawable) ==
+         drawables_.end());
+  drawables_.push_back(drawable);
+}
+
+void Engine::RemoveDrawable(Drawable* drawable) {
+  auto it = std::find(drawables_.begin(), drawables_.end(), drawable);
+  if (it != drawables_.end()) {
+    drawables_.erase(it);
+    return;
+  }
 }
 
 void Engine::Exit() {
@@ -161,22 +186,22 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
     case InputEvent::kDragEnd:
       if (((GetScreenSize() / 2) * 0.9f - event->GetVector(0)).Magnitude() <=
           0.25f) {
-        SetSatsVisible(!stats_.IsVisible());
+        SetSatsVisible(!stats_->IsVisible());
         // TODO: Enqueue DragCancel so we can consume this event.
       }
       break;
     case InputEvent::kKeyPress:
       if (event->GetKeyPress() == 's') {
-        SetSatsVisible(!stats_.IsVisible());
+        SetSatsVisible(!stats_->IsVisible());
         // Consume event.
         return;
       }
       break;
     case InputEvent::kDrag:
-      if (stats_.IsVisible()) {
-        if ((stats_.GetOffset() - event->GetVector(0)).Magnitude() <=
-            stats_.GetScale().y)
-          stats_.SetOffset(event->GetVector(0));
+      if (stats_->IsVisible()) {
+        if ((stats_->GetOffset() - event->GetVector(0)).Magnitude() <=
+            stats_->GetScale().y)
+          stats_->SetOffset(event->GetVector(0));
         // TODO: Enqueue DragCancel so we can consume this event.
       }
       break;
@@ -268,11 +293,11 @@ bool Engine::CreateRenderResources() {
 }
 
 void Engine::SetSatsVisible(bool visible) {
-  stats_.SetVisible(visible);
+  stats_->SetVisible(visible);
   if (visible)
-    stats_.Create(CreateRenderResource<Texture>());
+    stats_->Create(CreateRenderResource<Texture>());
   else
-    stats_.Destory();
+    stats_->Destory();
 }
 
 void Engine::PrintStats() {
@@ -306,8 +331,8 @@ void Engine::PrintStats() {
   }
   worker.Join();
 
-  stats_.GetTexture()->Update(std::move(image));
-  stats_.AutoScale();
+  stats_->GetTexture()->Update(std::move(image));
+  stats_->AutoScale();
 }
 
 }  // namespace eng

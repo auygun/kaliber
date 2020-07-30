@@ -29,8 +29,6 @@ class Enemy {
 
   void Update(float delta_time);
 
-  void Draw(float frame_frac);
-
   bool HasTarget(DamageType damage_type);
   base::Vector2 GetTargetPos(DamageType damage_type);
 

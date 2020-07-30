@@ -2,6 +2,7 @@
 #define ENGINE_H
 
 #include <deque>
+#include <list>
 #include <memory>
 #include <unordered_map>
 
@@ -9,7 +10,6 @@
 #include "../base/vecmath.h"
 #include "audio/audio_forward.h"
 #include "platform/platform_forward.h"
-#include "image_quad.h"
 #include "renderer/render_resource.h"
 
 class TextureCompressor;
@@ -19,7 +19,9 @@ namespace eng {
 class AudioResource;
 class Font;
 class Game;
+class Drawable;
 class InputEvent;
+class ImageQuad;
 class Renderer;
 struct RenderCommand;
 class Geometry;
@@ -41,6 +43,9 @@ class Engine {
 
   void LostFocus();
   void GainedFocus();
+
+  void AddDrawable(Drawable* drawable);
+  void RemoveDrawable(Drawable* drawable);
 
   void Exit();
 
@@ -125,7 +130,9 @@ class Engine {
   std::unique_ptr<TextureCompressor> tex_comp_opaque_;
   std::unique_ptr<TextureCompressor> tex_comp_alpha_;
 
-  ImageQuad stats_;
+  std::list<Drawable*> drawables_;
+
+  std::unique_ptr<ImageQuad> stats_;
 
   float fps_seconds_ = 0;
   int fps_ = 0;

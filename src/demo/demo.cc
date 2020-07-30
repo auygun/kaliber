@@ -95,15 +95,6 @@ void Demo::Update(float delta_time) {
     UpdateGameState(delta_time);
 }
 
-void Demo::Draw(float frame_frac) {
-  sky_.Draw(frame_frac);
-  enemy_.Draw(frame_frac);
-  player_.Draw(frame_frac);
-  hud_.Draw();
-  menu_.Draw();
-  credits_.Draw();
-}
-
 void Demo::ContextLost() {
   enemy_.ContextLost();
   player_.ContextLost();

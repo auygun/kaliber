@@ -22,8 +22,6 @@ class Hud {
 
   void Update(float delta_time);
 
-  void Draw();
-
   void ContextLost();
 
   void Show();

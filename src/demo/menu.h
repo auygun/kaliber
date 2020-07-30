@@ -37,8 +37,6 @@ class Menu {
 
   void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
 
-  void Draw();
-
   void ContextLost();
 
   void SetOptionEnabled(Option o, bool enable);

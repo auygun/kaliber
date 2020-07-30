@@ -33,7 +33,9 @@ class SkyQuad : public eng::Animatable {
   void SetColor(const base::Vector4& color) override { nebula_color_ = color; }
   base::Vector4 GetColor() const override { return nebula_color_; }
 
-  void Draw(float frame_frac);
+  // Drawable interface.
+  void Draw(float frame_frac) override;
+
   void ContextLost();
 
   void SwitchColor(const base::Vector4& color);
