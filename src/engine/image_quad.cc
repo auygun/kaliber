@@ -10,11 +10,12 @@ using namespace base;
 
 namespace eng {
 
-void ImageQuad::Create(std::shared_ptr<Texture> texture,
+void ImageQuad::Create(const std::string& asset_name,
                        std::array<int, 2> num_frames,
                        int frame_width,
                        int frame_height) {
-  texture_ = texture;
+  texture_ = Engine::Get().GetTexture(asset_name);
+
   num_frames_ = std::move(num_frames);
   frame_width_ = frame_width;
   frame_height_ = frame_height;

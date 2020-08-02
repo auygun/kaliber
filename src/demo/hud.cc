@@ -6,8 +6,9 @@
 #include "../engine/engine.h"
 #include "../engine/font.h"
 #include "../engine/image.h"
-#include "../engine/renderer/texture.h"
 #include "demo.h"
+
+using namespace std::string_literals;
 
 using namespace base;
 using namespace eng;
@@ -23,11 +24,7 @@ const Vector4 kTextColor = {0.895f, 0.692f, 0.24f, 1};
 
 }  // namespace
 
-Hud::Hud() {
-  text_[0].Create(Engine::Get().CreateRenderResource<Texture>());
-  text_[1].Create(Engine::Get().CreateRenderResource<Texture>());
-  message_.Create(Engine::Get().CreateRenderResource<Texture>());
-}
+Hud::Hud() = default;
 
 Hud::~Hud() = default;
 
@@ -38,13 +35,15 @@ bool Hud::Initialize() {
   int tmp;
   font.CalculateBoundingBox("big_enough_text", max_text_width_, tmp);
 
-  for (int i = 0; i < 2; ++i) {
-    auto image = CreateImage();
+  Engine::Get().SetImageSource("text0", std::bind(&Hud::CreateScoreImage, this));
+  Engine::Get().SetImageSource("text1", std::bind(&Hud::CreateWaveImage, this));
+  Engine::Get().SetImageSource("message", std::bind(&Hud::CreateMessageImage, this));
 
+  for (int i = 0; i < 2; ++i) {
+    text_[i].Create("text"s + std::to_string(i));
     text_[i].SetZOrder(30);
-    text_[i].GetTexture()->Update(std::move(image));
     text_[i].AutoScale();
-    text_[i].SetColor(kTextColor);
+    text_[i].SetColor(kTextColor * Vector4(1, 1, 1, 0));
 
     Vector2 pos = (engine.GetScreenSize() / 2 - text_[i].GetScale() / 2);
     pos -= engine.GetScreenSize() * Vector2(kHorizontalMargin, kVerticalMargin);
@@ -72,6 +71,7 @@ bool Hud::Initialize() {
     text_animator_[i].Attach(&text_[i]);
   }
 
+  message_.Create("message");
   message_.SetZOrder(30);
 
   message_animator_.SetEndCallback(Animator::kTimer, [&]() -> void {
@@ -92,12 +92,6 @@ void Hud::Update(float delta_time) {
     progress_bar_animator_[i].Update(delta_time);
   }
   message_animator_.Update(delta_time);
-}
-
-void Hud::ContextLost() {
-  PrintScore(last_score_, false);
-  PrintWave(last_wave_, false);
-  message_.SetVisible(false);
 }
 
 void Hud::Show() {
@@ -147,9 +141,9 @@ void Hud::HideProgress() {
   }
 }
 
-void Hud::PrintScore(int score, bool flash) {
+void Hud::SetScore(int score, bool flash) {
   last_score_ = score;
-  Print(0, std::to_string(score));
+  Engine::Get().RefreshImage("text0");
 
   if (flash) {
     text_animator_[0].SetEndCallback(Animator::kBlending, text_animator_cb_[0]);
@@ -159,11 +153,9 @@ void Hud::PrintScore(int score, bool flash) {
   }
 }
 
-void Hud::PrintWave(int wave, bool flash) {
+void Hud::SetWave(int wave, bool flash) {
   last_wave_ = wave;
-  std::string text = "wave ";
-  text += std::to_string(wave);
-  Print(1, text.c_str());
+  Engine::Get().RefreshImage("text1");
 
   if (flash) {
     text_animator_[1].SetEndCallback(Animator::kBlending, text_animator_cb_[1]);
@@ -182,22 +174,10 @@ void Hud::SetProgress(float progress) {
   progress_bar_[1].Translate({t, 0});
 }
 
-void Hud::PrintMessage(const std::string& text, float duration) {
-  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+void Hud::ShowMessage(const std::string& text, float duration) {
+  message_text_ = text;
+  Engine::Get().RefreshImage("message");
 
-  auto image = std::make_unique<Image>();
-  image->Create(max_text_width_, font.GetLineHeight());
-  image->GradientV({1.0f, 1.0f, 1.0f, 0}, {.0f, .0f, 1.0f, 0},
-                   font.GetLineHeight());
-
-  int w, h;
-  font.CalculateBoundingBox(text.c_str(), w, h);
-  float x = (image->GetWidth() - w) / 2;
-
-  font.Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
-  image->Compress();
-
-  message_.GetTexture()->Update(std::move(image));
   message_.AutoScale();
   message_.Scale(1.5f);
   message_.SetColor({1, 1, 1, 0});
@@ -212,7 +192,33 @@ void Hud::PrintMessage(const std::string& text, float duration) {
   message_animator_.Play(Animator::kBlending, false);
 }
 
-void Hud::Print(int i, const std::string& text) {
+std::unique_ptr<eng::Image> Hud::CreateScoreImage() {
+  return Print(0, std::to_string(last_score_));
+}
+
+std::unique_ptr<eng::Image> Hud::CreateWaveImage() {
+  return Print(1, "wave "s + std::to_string(last_wave_));
+}
+
+std::unique_ptr<Image> Hud::CreateMessageImage() {
+  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+
+  auto image = std::make_unique<Image>();
+  image->Create(max_text_width_, font.GetLineHeight());
+  image->GradientV({1.0f, 1.0f, 1.0f, 0}, {.0f, .0f, 1.0f, 0},
+                   font.GetLineHeight());
+
+  int w, h;
+  font.CalculateBoundingBox(message_text_.c_str(), w, h);
+  float x = (image->GetWidth() - w) / 2;
+
+  font.Print(x, 0, message_text_.c_str(), image->GetBuffer(), image->GetWidth());
+  image->Compress();
+
+  return image;
+}
+
+std::unique_ptr<Image> Hud::Print(int i, const std::string& text) {
   const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
 
   auto image = CreateImage();
@@ -226,7 +232,7 @@ void Hud::Print(int i, const std::string& text) {
 
   font.Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
 
-  text_[i].GetTexture()->Update(std::move(image));
+  return image;
 }
 
 std::unique_ptr<Image> Hud::CreateImage() {

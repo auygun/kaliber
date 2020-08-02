@@ -15,7 +15,6 @@
 namespace eng {
 class Image;
 class Sound;
-class Texture;
 }  // namespace eng
 
 class Enemy {
@@ -24,8 +23,6 @@ class Enemy {
   ~Enemy();
 
   bool Initialize();
-
-  void ContextLost();
 
   void Update(float delta_time);
 
@@ -93,14 +90,6 @@ class Enemy {
     eng::SoundPlayer hit;
   };
 
-  std::shared_ptr<eng::Texture> skull_tex_;
-  std::shared_ptr<eng::Texture> bug_tex_;
-  std::shared_ptr<eng::Texture> boss_tex_;
-  std::shared_ptr<eng::Texture> target_tex_;
-  std::shared_ptr<eng::Texture> blast_tex_;
-  std::shared_ptr<eng::Texture> shield_tex_;
-  std::shared_ptr<eng::Texture> score_tex_[kEnemyType_Max];
-
   eng::ImageQuad boss_;
   eng::Animator boss_animator_;
   eng::SoundPlayer boss_intro_;
@@ -149,7 +138,7 @@ class Enemy {
 
   int GetScore(EnemyType enemy_type);
 
-  std::unique_ptr<eng::Image> GetScoreImage(int score);
+  std::unique_ptr<eng::Image> GetScoreImage(EnemyType enemy_type);
 
   bool CreateRenderResources();
 

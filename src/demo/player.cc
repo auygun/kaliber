@@ -26,11 +26,7 @@ const Vector4 kHealthBarColor[2] = {{0.5f, 0.5f, 0.5f, 1},
 
 }  // namespace
 
-Player::Player()
-    : weapon_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      beam_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      nuke_symbol_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      nuke_counter_tex_(Engine::Get().CreateRenderResource<Texture>()) {}
+Player::Player() = default;
 
 Player::~Player() = default;
 
@@ -62,11 +58,11 @@ bool Player::Initialize() {
     health_bar_[i].SetVisible(true);
   }
 
-  nuke_counter_.Create(nuke_counter_tex_);
+  nuke_counter_.Create("nuke_counter_tex");
   nuke_counter_.SetZOrder(29);
   nuke_counter_.AutoScale();
 
-  nuke_symbol_.Create(nuke_symbol_tex_, {3, 1});
+  nuke_symbol_.Create("nuke_symbol_tex", {3, 1});
   nuke_symbol_.SetZOrder(29);
   nuke_symbol_.AutoScale();
   nuke_symbol_.SetOffset({0, weapon_[0].GetOffset().y});
@@ -96,10 +92,6 @@ bool Player::Initialize() {
   nuke_explosion_.SetMaxAplitude(0.8f);
 
   return true;
-}
-
-void Player::ContextLost() {
-  CreateRenderResources();
 }
 
 void Player::Update(float delta_time) {
@@ -153,7 +145,8 @@ void Player::AddNuke(int n) {
     return;
 
   nuke_count_ = new_nuke_count;
-  nuke_counter_tex_->Update(GetNukeCounterImage(nuke_count_));
+  Engine::Get().RefreshImage("nuke_counter_tex");
+
   nuke_counter_.AutoScale();
 
   nuke_symbol_animator_.SetRotation(M_PI * 5, 2, std::bind(SmootherStep, std::placeholders::_1));
@@ -164,7 +157,8 @@ void Player::Reset() {
   TakeDamage(-total_health_);
 
   nuke_count_ = 2;
-  nuke_counter_tex_->Update(GetNukeCounterImage(nuke_count_));
+  Engine::Get().RefreshImage("nuke_counter_tex");
+
   nuke_counter_.AutoScale();
 
   nuke_symbol_.SetFrame(0);
@@ -257,20 +251,20 @@ bool Player::IsFiring(DamageType type) {
 void Player::SetupWeapons() {
   for (int i = 0; i < 2; ++i) {
     // Setup draw sign.
-    drag_sign_[i].Create(weapon_tex_, {8, 2});
+    drag_sign_[i].Create("weapon_tex", {8, 2});
     drag_sign_[i].SetZOrder(21);
     drag_sign_[i].AutoScale();
     drag_sign_[i].SetFrame(i * 8);
 
     // Setup weapon.
-    weapon_[i].Create(weapon_tex_, {8, 2});
+    weapon_[i].Create("weapon_tex", {8, 2});
     weapon_[i].SetZOrder(24);
     weapon_[i].AutoScale();
     weapon_[i].SetVisible(true);
     weapon_[i].SetFrame(wepon_warmup_frame[i]);
 
     // Setup beam.
-    beam_[i].Create(beam_tex_, {1, 2});
+    beam_[i].Create("beam_tex", {1, 2});
     beam_[i].SetZOrder(22);
     beam_[i].AutoScale();
     beam_[i].SetFrame(i);
@@ -279,7 +273,7 @@ void Player::SetupWeapons() {
     beam_[i].SetPivot(beam_[i].GetOffset());
 
     // Setup beam spark.
-    beam_spark_[i].Create(weapon_tex_, {8, 2});
+    beam_spark_[i].Create("weapon_tex", {8, 2});
     beam_spark_[i].SetZOrder(23);
     beam_spark_[i].AutoScale();
     beam_spark_[i].SetFrame(i * 8 + 1);
@@ -496,33 +490,18 @@ void Player::NavigateBack() {
 }
 
 bool Player::CreateRenderResources() {
-  auto weapon_image = std::make_unique<Image>();
-  if (!weapon_image->Load("enemy_anims_flare_ok.png"))
-    return false;
-  auto beam_image = std::make_unique<Image>();
-  if (!beam_image->Load("enemy_ray_ok.png"))
-    return false;
-  auto nuke_image = std::make_unique<Image>();
-  if (!nuke_image->Load("nuke_frames.png"))
-    return false;
-
-  weapon_image->Compress();
-  beam_image->Compress();
-
-  weapon_tex_->Update(std::move(weapon_image));
-  beam_tex_->Update(std::move(beam_image));
-
-  nuke_image->Compress();
-  nuke_symbol_tex_->Update(std::move(nuke_image));
-  nuke_counter_tex_->Update(GetNukeCounterImage(nuke_count_));
+  Engine::Get().SetImageSource("weapon_tex", "enemy_anims_flare_ok.png", true);
+  Engine::Get().SetImageSource("beam_tex", "enemy_ray_ok.png", true);
+  Engine::Get().SetImageSource("nuke_symbol_tex", "nuke_frames.png", true);
+  Engine::Get().SetImageSource("nuke_counter_tex", std::bind(&Player::GetNukeCounterImage, this));
 
   return true;
 }
 
-std::unique_ptr<Image> Player::GetNukeCounterImage(int n) {
+std::unique_ptr<Image> Player::GetNukeCounterImage() {
   const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
 
-  std::string text = std::to_string(n);
+  std::string text = std::to_string(nuke_count_);
   int width, height;
   font.CalculateBoundingBox(text.c_str(), width, height);
 

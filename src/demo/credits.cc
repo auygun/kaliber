@@ -7,7 +7,6 @@
 #include "../engine/font.h"
 #include "../engine/image.h"
 #include "../engine/input_event.h"
-#include "../engine/renderer/texture.h"
 #include "demo.h"
 
 using namespace base;
@@ -42,6 +41,8 @@ bool Credits::Initialize() {
       max_text_width_ = width;
   }
 
+  Engine::Get().SetImageSource("credits", std::bind(&Credits::CreateImage, this));
+
   for (int i = 0; i < kNumLines; ++i)
     text_animator_.Attach(&text_[i]);
 
@@ -62,17 +63,11 @@ void Credits::OnInputEvent(std::unique_ptr<InputEvent> event) {
   }
 }
 
-void Credits::ContextLost() {
-  if (tex_)
-    tex_->Update(CreateImage());
-}
-
 void Credits::Show() {
-  tex_ = Engine::Get().CreateRenderResource<Texture>();
-  tex_->Update(CreateImage());
+  Engine::Get().RefreshImage("credits");
 
   for (int i = 0; i < kNumLines; ++i) {
-    text_[i].Create(tex_, {1, kNumLines});
+    text_[i].Create("credits", {1, kNumLines});
     text_[i].SetZOrder(50);
     text_[i].SetOffset({0, 0});
     text_[i].SetScale({1, 1});
@@ -104,7 +99,6 @@ void Credits::Hide() {
   text_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
     for (int i = 0; i < kNumLines; ++i)
       text_[i].Destory();
-    tex_.reset();
     text_animator_.SetEndCallback(Animator::kBlending, nullptr);
     text_animator_.SetVisible(false);
   });

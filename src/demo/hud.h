@@ -22,17 +22,15 @@ class Hud {
 
   void Update(float delta_time);
 
-  void ContextLost();
-
   void Show();
   void Hide();
   void HideProgress();
 
-  void PrintScore(int score, bool flash);
-  void PrintWave(int wave, bool flash);
+  void SetScore(int score, bool flash);
+  void SetWave(int wave, bool flash);
   void SetProgress(float progress);
 
-  void PrintMessage(const std::string& text, float duration);
+  void ShowMessage(const std::string& text, float duration);
 
  private:
   eng::SolidQuad progress_bar_[2];
@@ -50,7 +48,13 @@ class Hud {
   int last_wave_ = 0;
   float last_progress_ = 0;
 
-  void Print(int i, const std::string& text);
+  std::string message_text_;
+
+  std::unique_ptr<eng::Image> CreateScoreImage();
+  std::unique_ptr<eng::Image> CreateWaveImage();
+  std::unique_ptr<eng::Image> CreateMessageImage();
+
+  std::unique_ptr<eng::Image> Print(int i, const std::string& text);
 
   std::unique_ptr<eng::Image> CreateImage();
 };

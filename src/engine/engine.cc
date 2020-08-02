@@ -91,6 +91,8 @@ bool Engine::Initialize() {
   if (!CreateRenderResources())
     return false;
 
+  SetImageSource("stats_tex", std::bind(&Engine::PrintStats, this));
+
   game_ = GameFactoryBase::CreateGame("");
   if (!game_) {
     printf("No game found to run.\n");
@@ -118,14 +120,22 @@ void Engine::Update(float delta_time) {
 
   game_->Update(delta_time);
 
+  // Destroy unused textures.
+  for (auto& t : textures_) {
+    if (!t.second.persistent && t.second.texture.use_count() == 1)
+      t.second.texture->Destroy();
+  }
+
   fps_seconds_ += delta_time;
   if (fps_seconds_ >= 1) {
     fps_ = renderer_->GetAndResetFPS();
     fps_seconds_ = 0;
   }
 
-  if (stats_->IsVisible())
-    PrintStats();
+  if (stats_->IsVisible()) {
+    RefreshImage("stats_tex");
+    stats_->AutoScale();
+  }
 }
 
 void Engine::Draw(float frame_frac) {
@@ -175,6 +185,93 @@ Vector2 Engine::ToScale(const Vector2& vec) {
 
 Vector2 Engine::ToPosition(const Vector2& vec) {
   return ToScale(vec) - GetScreenSize() / 2.0f;
+}
+
+bool Engine::SetImageSource(const std::string& asset_name,
+                            const std::string& file_name,
+                            bool persistent) {
+  auto image = std::make_unique<Image>();
+  if (!image->Load(file_name))
+    return false;
+
+  image->Compress();
+
+  std::shared_ptr<Texture> texture;
+  auto it = textures_.find(asset_name);
+  if (it != textures_.end()) {
+    texture = it->second.texture;
+    it->second.asset_file = file_name;
+    it->second.create_image = nullptr;
+  } else {
+    texture = CreateRenderResource<Texture>();
+    textures_[asset_name] = {texture, file_name, nullptr, persistent};
+  }
+
+  if (persistent)
+    texture->Update(std::move(image));
+
+  return true;
+}
+
+void Engine::SetImageSource(const std::string& asset_name,
+                            CreateImageCB create_image,
+                            bool persistent) {
+  auto image = create_image();
+
+  std::shared_ptr<Texture> texture;
+  auto it = textures_.find(asset_name);
+  if (it != textures_.end()) {
+    texture = it->second.texture;
+    it->second.create_image = create_image;
+    it->second.asset_file.clear();
+  } else {
+    texture = CreateRenderResource<Texture>();
+    textures_[asset_name] = {texture, "", create_image, persistent};
+  }
+
+  if (persistent) {
+    if (image)
+      texture->Update(std::move(image));
+    else
+      texture->Destroy();
+  }
+}
+
+bool Engine::RefreshImage(const std::string& asset_name) {
+  auto it = textures_.find(asset_name);
+  if (it == textures_.end())
+    return false;
+
+  std::unique_ptr<Image> image;
+  if (!it->second.asset_file.empty()) {
+    image = std::make_unique<Image>();
+    if (!image->Load(it->second.asset_file))
+      return false;
+    image->Compress();
+  } else if (it->second.create_image) {
+    image = it->second.create_image();
+  }
+
+  if (image)
+    it->second.texture->Update(std::move(image));
+  else
+    it->second.texture->Destroy();
+
+  return true;
+}
+
+std::shared_ptr<Texture> Engine::GetTexture(const std::string& asset_name) {
+  auto it = textures_.find(asset_name);
+  if (it != textures_.end()) {
+    if (!it->second.texture->IsValid())
+      RefreshImage(it->first);
+    return it->second.texture;
+  }
+
+  std::shared_ptr<Texture> texture = CreateRenderResource<Texture>();
+  textures_[asset_name] = {texture};
+
+  return texture;
 }
 
 std::unique_ptr<AudioResource> Engine::CreateAudioResource() {
@@ -261,6 +358,9 @@ std::unique_ptr<RenderResource> Engine::CreateRenderResourceInternal(
 void Engine::ContextLost() {
   CreateRenderResources();
 
+  for (auto& t : textures_)
+    RefreshImage(t.first);
+
   game_->ContextLost();
 }
 
@@ -295,12 +395,15 @@ bool Engine::CreateRenderResources() {
 void Engine::SetSatsVisible(bool visible) {
   stats_->SetVisible(visible);
   if (visible)
-    stats_->Create(CreateRenderResource<Texture>());
+    stats_->Create("stats_tex");
   else
     stats_->Destory();
 }
 
-void Engine::PrintStats() {
+std::unique_ptr<Image> Engine::PrintStats() {
+  if (!stats_->IsVisible())
+    return nullptr;
+
   constexpr int width = 200;
   std::vector<std::string> lines;
   std::string line;
@@ -331,8 +434,7 @@ void Engine::PrintStats() {
   }
   worker.Join();
 
-  stats_->GetTexture()->Update(std::move(image));
-  stats_->AutoScale();
+  return image;
 }
 
 }  // namespace eng

@@ -6,6 +6,7 @@
 
 #include <array>
 #include <memory>
+#include <string>
 
 namespace eng {
 
@@ -16,7 +17,7 @@ class ImageQuad : public Animatable {
   ImageQuad() = default;
   ~ImageQuad() override = default;
 
-  void Create(std::shared_ptr<Texture> texture,
+  void Create(const std::string& asset_name,
               std::array<int, 2> num_frames = {1, 1},
               int frame_width = 0,
               int frame_height = 0);
@@ -34,8 +35,6 @@ class ImageQuad : public Animatable {
 
   // Drawable interface.
   void Draw(float frame_frac) override;
-
-  std::shared_ptr<Texture> GetTexture() { return texture_; }
 
  private:
   std::shared_ptr<Texture> texture_;

@@ -14,7 +14,6 @@ namespace eng {
 class Image;
 class InputEvent;
 class Sound;
-class Texture;
 }  // namespace eng
 
 class Menu {
@@ -37,8 +36,6 @@ class Menu {
 
   void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
 
-  void ContextLost();
-
   void SetOptionEnabled(Option o, bool enable);
 
   void Show();
@@ -54,11 +51,8 @@ class Menu {
     bool hide = false;
   };
 
-  std::shared_ptr<eng::Texture> logo_tex_[2];
   eng::ImageQuad logo_[2];
   eng::Animator logo_animator_[2];
-
-  std::shared_ptr<eng::Texture> menu_tex_;
 
   std::shared_ptr<eng::Sound> click_sound_;
 

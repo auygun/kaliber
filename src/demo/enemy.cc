@@ -13,8 +13,9 @@
 #include "../engine/font.h"
 #include "../engine/image.h"
 #include "../engine/sound.h"
-#include "../engine/renderer/texture.h"
 #include "demo.h"
+
+using namespace std::string_literals;
 
 using namespace base;
 using namespace eng;
@@ -68,18 +69,7 @@ float SnapSpawnPosX(int col) {
 
 }  // namespace
 
-Enemy::Enemy()
-    : skull_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      bug_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      boss_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      target_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      blast_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      shield_tex_(Engine::Get().CreateRenderResource<Texture>()),
-      score_tex_{Engine::Get().CreateRenderResource<Texture>(),
-                 Engine::Get().CreateRenderResource<Texture>(),
-                 Engine::Get().CreateRenderResource<Texture>(),
-                 Engine::Get().CreateRenderResource<Texture>(),
-                 Engine::Get().CreateRenderResource<Texture>()} {}
+Enemy::Enemy() = default;
 
 Enemy::~Enemy() = default;
 
@@ -111,7 +101,7 @@ bool Enemy::Initialize() {
   if (!CreateRenderResources())
     return false;
 
-  boss_.Create(boss_tex_, {4, 3});
+  boss_.Create("boss_tex", {4, 3});
   boss_.SetZOrder(10);
   boss_.AutoScale();
   boss_animator_.Attach(&boss_);
@@ -121,10 +111,6 @@ bool Enemy::Initialize() {
   boss_intro_.SetSimulateStereo(false);
 
   return true;
-}
-
-void Enemy::ContextLost() {
-  CreateRenderResources();
 }
 
 void Enemy::Update(float delta_time) {
@@ -451,19 +437,19 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   switch (enemy_type) {
     case kEnemyType_LightSkull:
       e.total_health = e.hit_points = 1;
-      e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
+      e.sprite.Create("skull_tex", {10, 13}, 100, 100);
       break;
     case kEnemyType_DarkSkull:
       e.total_health = e.hit_points = 2;
-      e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
+      e.sprite.Create("skull_tex", {10, 13}, 100, 100);
       break;
     case kEnemyType_Tank:
       e.total_health = e.hit_points = 6;
-      e.sprite.Create(skull_tex_, {10, 13}, 100, 100);
+      e.sprite.Create("skull_tex", {10, 13}, 100, 100);
       break;
     case kEnemyType_Bug:
       e.total_health = e.hit_points = 3;
-      e.sprite.Create(bug_tex_, {10, 4});
+      e.sprite.Create("bug_tex", {10, 4});
       break;
     default:
       NOTREACHED << "- Unkown enemy type: " << enemy_type;
@@ -486,17 +472,17 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.sprite_animator.Play(Animator::kBlending, false);
   e.sprite_animator.Play(Animator::kFrames, true);
 
-  e.target.Create(target_tex_, {6, 2});
+  e.target.Create("target_tex", {6, 2});
   e.target.SetZOrder(12);
   e.target.AutoScale();
   e.target.SetOffset(spawn_pos);
 
-  e.blast.Create(blast_tex_, {6, 2});
+  e.blast.Create("blast_tex", {6, 2});
   e.blast.SetZOrder(12);
   e.blast.AutoScale();
   e.blast.SetOffset(spawn_pos);
 
-  e.shield.Create(shield_tex_, {4, 2});
+  e.shield.Create("shield_tex", {4, 2});
   e.shield.SetZOrder(11);
   e.shield.AutoScale();
   e.shield.SetOffset(spawn_pos);
@@ -513,7 +499,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.health_bar.PlaceToBottomOf(e.sprite);
   e.health_bar.SetColor({0.161f, 0.89f, 0.322f, 1});
 
-  e.score.Create(score_tex_[e.enemy_type]);
+  e.score.Create("score_tex"s + std::to_string(e.enemy_type));
   e.score.SetZOrder(12);
   e.score.AutoScale();
   e.score.SetColor({1, 1, 1, 1});
@@ -626,7 +612,7 @@ void Enemy::SpawnBoss() {
     e.sprite.SetOffset(hit_box_pos);
     e.sprite.SetScale(boss_.GetScale() * 0.3f);
 
-    e.target.Create(target_tex_, {6, 2});
+    e.target.Create("target_tex", {6, 2});
     e.target.SetZOrder(12);
     e.target.AutoScale();
     e.target.SetOffset(hit_box_pos);
@@ -648,7 +634,7 @@ void Enemy::SpawnBoss() {
     e.health_bar.SetColor({0.161f, 0.89f, 0.322f, 1});
     e.health_bar.SetVisible(true);
 
-    e.score.Create(score_tex_[e.enemy_type]);
+    e.score.Create("score_tex"s + std::to_string(e.enemy_type));
     e.score.SetZOrder(12);
     e.score.AutoScale();
     e.score.SetColor({1, 1, 1, 1});
@@ -929,9 +915,10 @@ int Enemy::GetScore(EnemyType enemy_type) {
   return enemy_scores[enemy_type];
 }
 
-std::unique_ptr<Image> Enemy::GetScoreImage(int score) {
+std::unique_ptr<Image> Enemy::GetScoreImage(EnemyType enemy_type) {
   const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
 
+  int score = GetScore(enemy_type);
   std::string text = std::to_string(score);
   int width, height;
   font.CalculateBoundingBox(text.c_str(), width, height);
@@ -947,41 +934,15 @@ std::unique_ptr<Image> Enemy::GetScoreImage(int score) {
 }
 
 bool Enemy::CreateRenderResources() {
-  auto skull_image = std::make_unique<Image>();
-  if (!skull_image->Load("enemy_anims_01_frames_ok.png"))
-    return false;
-  auto bug_image = std::make_unique<Image>();
-  if (!bug_image->Load("enemy_anims_02_frames_ok.png"))
-    return false;
-  auto boss_image = std::make_unique<Image>();
-  if (!boss_image->Load("Boss_ok.png"))
-    return false;
-  auto target_image = std::make_unique<Image>();
-  if (!target_image->Load("enemy_target_single_ok.png"))
-    return false;
-  auto blast_image = std::make_unique<Image>();
-  if (!blast_image->Load("enemy_anims_blast_ok.png"))
-    return false;
-  auto shield_image = std::make_unique<Image>();
-  if (!shield_image->Load("woom_enemy_shield.png"))
-    return false;
-
-  skull_image->Compress();
-  bug_image->Compress();
-  boss_image->Compress();
-  target_image->Compress();
-  blast_image->Compress();
-  shield_image->Compress();
-
-  skull_tex_->Update(std::move(skull_image));
-  bug_tex_->Update(std::move(bug_image));
-  boss_tex_->Update(std::move(boss_image));
-  target_tex_->Update(std::move(target_image));
-  blast_tex_->Update(std::move(blast_image));
-  shield_tex_->Update(std::move(shield_image));
+  Engine::Get().SetImageSource("skull_tex", "enemy_anims_01_frames_ok.png", true);
+  Engine::Get().SetImageSource("bug_tex", "enemy_anims_02_frames_ok.png", true);
+  Engine::Get().SetImageSource("boss_tex", "Boss_ok.png", true);
+  Engine::Get().SetImageSource("target_tex", "enemy_target_single_ok.png", true);
+  Engine::Get().SetImageSource("blast_tex", "enemy_anims_blast_ok.png", true);
+  Engine::Get().SetImageSource("shield_tex", "woom_enemy_shield.png", true);
 
   for (int i = 0; i < kEnemyType_Max; ++i)
-    score_tex_[i]->Update(GetScoreImage(GetScore((EnemyType)i)));
+    Engine::Get().SetImageSource("score_tex"s + std::to_string(i), std::bind(&Enemy::GetScoreImage, this, (EnemyType)i), true);
 
   return true;
 }

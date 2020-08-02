@@ -2,6 +2,7 @@
 #define ENGINE_H
 
 #include <deque>
+#include <functional>
 #include <list>
 #include <memory>
 #include <unordered_map>
@@ -21,14 +22,18 @@ class Font;
 class Game;
 class Drawable;
 class InputEvent;
+class Image;
 class ImageQuad;
 class Renderer;
 struct RenderCommand;
 class Geometry;
 class Shader;
+class Texture;
 
 class Engine {
  public:
+  using CreateImageCB = std::function<std::unique_ptr<Image>()>;
+
   Engine(Platform* platform, Renderer* renderer, Audio* audio);
   ~Engine();
 
@@ -62,6 +67,17 @@ class Engine {
         CreateRenderResourceInternal(factory);
     return std::unique_ptr<T>(static_cast<T*>(resource.release()));
   }
+
+  bool SetImageSource(const std::string& asset_name,
+                      const std::string& file_name,
+                      bool persistent = false);
+  void SetImageSource(const std::string& asset_name,
+                      CreateImageCB create_image,
+                      bool persistent = false);
+
+  bool RefreshImage(const std::string& asset_name);
+
+  std::shared_ptr<Texture> GetTexture(const std::string& asset_name);
 
   std::unique_ptr<AudioResource> CreateAudioResource();
 
@@ -108,6 +124,16 @@ class Engine {
   float image_dpi() const { return image_dpi_; }
 
  private:
+  // Class holding information about texture resources managed by engine.
+  // Texture is created from an image asset if asset_file is valid. Otherwise
+  // texture is created from the image returned by create_image callback.
+  struct TextureResource {
+    std::shared_ptr<Texture> texture;
+    std::string asset_file;
+    CreateImageCB create_image;
+    bool persistent = false;
+  };
+
   static Engine* singleton;
 
   Platform* platform_ = nullptr;
@@ -132,6 +158,9 @@ class Engine {
 
   std::list<Drawable*> drawables_;
 
+  // Textures mapped by asset name.
+  std::unordered_map<std::string, TextureResource> textures_;
+
   std::unique_ptr<ImageQuad> stats_;
 
   float fps_seconds_ = 0;
@@ -153,7 +182,7 @@ class Engine {
   bool CreateRenderResources();
 
   void SetSatsVisible(bool visible);
-  void PrintStats();
+  std::unique_ptr<Image> PrintStats();
 
   Engine(const Engine&) = delete;
   Engine& operator=(const Engine&) = delete;

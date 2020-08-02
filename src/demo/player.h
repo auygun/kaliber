@@ -8,7 +8,6 @@
 #include "../engine/image_quad.h"
 #include "../engine/solid_quad.h"
 #include "../engine/sound_player.h"
-#include "../engine/renderer/texture.h"
 #include "damage_type.h"
 
 namespace eng {
@@ -24,8 +23,6 @@ class Player {
 
   bool Initialize();
 
-  void ContextLost();
-
   void Update(float delta_time);
 
   void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
@@ -40,9 +37,6 @@ class Player {
   base::Vector2 GetWeaponScale() const;
 
  private:
-  std::shared_ptr<eng::Texture> weapon_tex_;
-  std::shared_ptr<eng::Texture> beam_tex_;
-
   std::shared_ptr<eng::Sound> nuke_explosion_sound_;
   std::shared_ptr<eng::Sound> laser_shot_sound_;
 
@@ -64,8 +58,6 @@ class Player {
   eng::Animator nuke_animator_;
   eng::SoundPlayer nuke_explosion_;
 
-  std::shared_ptr<eng::Texture> nuke_symbol_tex_;
-  std::shared_ptr<eng::Texture> nuke_counter_tex_;
   eng::ImageQuad nuke_symbol_;
   eng::ImageQuad nuke_counter_;
   eng::Animator nuke_symbol_animator_;
@@ -109,7 +101,7 @@ class Player {
 
   bool CreateRenderResources();
 
-  std::unique_ptr<eng::Image> GetNukeCounterImage(int n);
+  std::unique_ptr<eng::Image> GetNukeCounterImage();
 };
 
 #endif  // PLAYER_H

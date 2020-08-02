@@ -96,11 +96,6 @@ void Demo::Update(float delta_time) {
 }
 
 void Demo::ContextLost() {
-  enemy_.ContextLost();
-  player_.ContextLost();
-  hud_.ContextLost();
-  menu_.ContextLost();
-  credits_.ContextLost();
   sky_.ContextLost();
 }
 
@@ -153,7 +148,7 @@ void Demo::EnterGameOverState() {
   enemy_.PauseProgress();
   enemy_.StopAllEnemyUnits();
   sky_.SwitchColor({0, 0, 0, 1});
-  hud_.PrintMessage("Game Over", 3);
+  hud_.ShowMessage("Game Over", 3);
   state_ = kGameOver;
 
   SetDelayedWork(1, [&]() -> void {
@@ -194,7 +189,7 @@ void Demo::UpdateGameState(float delta_time) {
   if (add_score_ > 0) {
     score_ += add_score_;
     add_score_ = 0;
-    hud_.PrintScore(score_, true);
+    hud_.SetScore(score_, true);
   }
 
   hud_.Update(delta_time);
@@ -292,8 +287,8 @@ void Demo::StartNextStage(bool boss) {
         DLOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
       }
 
-      hud_.PrintScore(score_, true);
-      hud_.PrintWave(wave_, true);
+      hud_.SetScore(score_, true);
+      hud_.SetWave(wave_, true);
 
       enemy_.OnWaveStarted(wave_, boss);
 

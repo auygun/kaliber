@@ -12,7 +12,6 @@
 #include "../engine/image.h"
 #include "../engine/input_event.h"
 #include "../engine/sound.h"
-#include "../engine/renderer/texture.h"
 #include "demo.h"
 
 using namespace base;
@@ -34,9 +33,7 @@ constexpr float kFadeSpeed = 0.2f;
 
 }  // namespace
 
-Menu::Menu() : logo_tex_{Engine::Get().CreateRenderResource<Texture>(),
-                         Engine::Get().CreateRenderResource<Texture>()}
-             , menu_tex_(Engine::Get().CreateRenderResource<Texture>()) {}
+Menu::Menu() = default;
 
 Menu::~Menu() = default;
 
@@ -59,7 +56,7 @@ bool Menu::Initialize() {
     return false;
 
   for (int i = 0; i < kOption_Max; ++i) {
-    items_[i].text.Create(menu_tex_, {1, 4});
+    items_[i].text.Create("menu_tex", {1, 4});
     items_[i].text.SetZOrder(40);
     items_[i].text.AutoScale();
     items_[i].text.Scale(1.5f);
@@ -87,12 +84,12 @@ bool Menu::Initialize() {
   click_.SetSimulateStereo(false);
   click_.SetMaxAplitude(1.5f);
 
-  logo_[0].Create(logo_tex_[0], {3, 8});
+  logo_[0].Create("logo_tex0", {3, 8});
   logo_[0].SetZOrder(40);
   logo_[0].AutoScale();
   logo_[0].SetOffset(Engine::Get().GetScreenSize() * Vector2(0, 0.25f));
 
-  logo_[1].Create(logo_tex_[1], {3, 7});
+  logo_[1].Create("logo_tex1", {3, 7});
   logo_[1].SetZOrder(40);
   logo_[1].AutoScale();
   logo_[1].SetOffset(Engine::Get().GetScreenSize() * Vector2(0, 0.25f));
@@ -163,10 +160,6 @@ void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
 
     click_.Play(false);
   }
-}
-
-void Menu::ContextLost() {
-  CreateRenderResources();
 }
 
 void Menu::SetOptionEnabled(Option o, bool enable) {
@@ -241,21 +234,9 @@ void Menu::Hide() {
 }
 
 bool Menu::CreateRenderResources() {
-  menu_tex_->Update(CreateImage());
-
-  auto logo1_image = std::make_unique<Image>();
-  if (!logo1_image->Load("woom_logo_start_frames_01.png"))
-    return false;
-
-  auto logo2_image = std::make_unique<Image>();
-  if (!logo2_image->Load("woom_logo_start_frames_02-03.png"))
-    return false;
-
-  logo1_image->Compress();
-  logo2_image->Compress();
-
-  logo_tex_[0]->Update(std::move(logo1_image));
-  logo_tex_[1]->Update(std::move(logo2_image));
+  Engine::Get().SetImageSource("menu_tex", std::bind(&Menu::CreateImage, this));
+  Engine::Get().SetImageSource("logo_tex0", "woom_logo_start_frames_01.png");
+  Engine::Get().SetImageSource("logo_tex1", "woom_logo_start_frames_02-03.png");
 
   return true;
 }
