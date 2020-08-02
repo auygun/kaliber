@@ -67,10 +67,11 @@ bool Player::Initialize() {
   nuke_counter_.SetZOrder(29);
   nuke_counter_.AutoScale();
 
-  nuke_symbol_.Create(nuke_symbol_tex_);
+  nuke_symbol_.Create(nuke_symbol_tex_, {3, 1});
   nuke_symbol_.SetZOrder(29);
   nuke_symbol_.AutoScale();
   nuke_symbol_.SetOffset({0, weapon_[0].GetOffset().y});
+  nuke_symbol_.SetFrame(2);
   nuke_symbol_.SetVisible(true);
 
   nuke_counter_.SetOffset(nuke_symbol_.GetOffset() -
@@ -86,6 +87,9 @@ bool Player::Initialize() {
   nuke_animator_.Attach(&nuke_);
 
   nuke_symbol_animator_.Attach(&nuke_symbol_);
+  nuke_symbol_animator_.SetEndCallback(Animator::kRotation, [&]() -> void {
+    nuke_symbol_.SetFrame(nuke_count_ > 0 ? 0 : 2);
+  });
 
   nuke_explosion_.SetSound(nuke_explosion_sound_);
   nuke_explosion_.SetVariate(false);
@@ -163,6 +167,8 @@ void Player::Reset() {
   nuke_count_ = 2;
   nuke_counter_tex_->Update(GetNukeCounterImage(nuke_count_));
   nuke_counter_.AutoScale();
+
+  nuke_symbol_.SetFrame(0);
 }
 
 Vector2 Player::GetWeaponPos(DamageType type) const {
@@ -498,7 +504,7 @@ bool Player::CreateRenderResources() {
   if (!beam_image->Load("enemy_ray_ok.png"))
     return false;
   auto nuke_image = std::make_unique<Image>();
-  if (!nuke_image->Load("nuke.png"))
+  if (!nuke_image->Load("nuke_frames.png"))
     return false;
 
   weapon_image->Compress();
