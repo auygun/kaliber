@@ -64,6 +64,8 @@ class Enemy {
     int total_health = 0;
     int hit_points = 0;
 
+    float kill_timer = 0;
+
     bool idle2_anim = false;
     bool stealth_active = false;
 

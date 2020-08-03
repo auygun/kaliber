@@ -147,11 +147,15 @@ void Enemy::Update(float delta_time) {
       continue;
     }
 
-    // Play random idle animation.
-    if ((it->enemy_type == kEnemyType_LightSkull ||
-         it->enemy_type == kEnemyType_DarkSkull ||
-         it->enemy_type == kEnemyType_Tank) &&
-        !it->idle2_anim && rnd.Roll(200) == 1) {
+    if (it->kill_timer > 0) {
+      it->kill_timer -= delta_time;
+      if (it->kill_timer <= 0)
+        TakeDamage(&*it, 100);
+    } else if ((it->enemy_type == kEnemyType_LightSkull ||
+                it->enemy_type == kEnemyType_DarkSkull ||
+                it->enemy_type == kEnemyType_Tank) &&
+               !it->idle2_anim && rnd.Roll(200) == 1) {
+      // Play random idle animation.
       it->idle2_anim = true;
       it->sprite_animator.Stop(Animator::kFrames);
       it->sprite.SetFrame(idle2_frame_start[it->enemy_type][it->damage_type]);
@@ -379,10 +383,15 @@ void Enemy::StopAllEnemyUnits() {
 }
 
 void Enemy::KillAllEnemyUnits() {
+  Engine& engine = Engine::Get();
+  Demo* game = static_cast<Demo*>(engine.GetGame());
+
   for (auto& e : enemies_) {
     if (!e.marked_for_removal && e.hit_points > 0 &&
         e.enemy_type != kEnemyType_Boss) {
-      TakeDamage(&e, 100);
+      float dist = e.sprite.GetOffset().y -
+                   game->GetPlayer().GetWeaponPos(kDamageType_Green).y;
+      e.kill_timer = dist * 0.08f;
     }
   }
 }
