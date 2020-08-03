@@ -1,24 +1,24 @@
 #ifdef GL_ES
-precision mediump float;
+precision highp float;
 #else
 #define lowp
 #define mediump
 #define highp
 #endif
 
-uniform highp vec2 sky_offset;
+uniform vec2 sky_offset;
 uniform vec3 nebula_color;
 
-varying highp vec2 tex_coord_0;
+varying vec2 tex_coord_0;
 
-float random(highp vec2 p) {
-  highp float sd = sin(dot(p, vec2(54.90898, 18.233)));
+float random(vec2 p) {
+  float sd = sin(dot(p, vec2(54.90898, 18.233)));
   return fract(sd * 2671.6182);
 }
 
-float nebula(in highp vec2 p) {
-  highp vec2 i = floor(p);
-  highp vec2 f = fract(p);
+float nebula(in vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
 
   float a = random(i);
   float b = random(i + vec2(1.0, 0.0));
@@ -32,9 +32,9 @@ float nebula(in highp vec2 p) {
       (d - b) * u.x * u.y;
 }
 
-float stars(in highp vec2 p, float num_cells, float size) {
-  highp vec2 n = p * num_cells;
-  highp vec2 i = floor(n);
+float stars(in vec2 p, float num_cells, float size) {
+  vec2 n = p * num_cells;
+  vec2 i = floor(n);
 
   vec2 a = n - i - random(i);
   a /= num_cells * size;
@@ -44,9 +44,9 @@ float stars(in highp vec2 p, float num_cells, float size) {
 }
 
 void main() {
-  highp vec2 layer1_coord = tex_coord_0 + sky_offset;
-  highp vec2 layer2_coord = tex_coord_0 + sky_offset  * 0.7;
-  vec3 result = vec3(0.);
+  vec2 layer1_coord = tex_coord_0 + sky_offset;
+  vec2 layer2_coord = tex_coord_0 + sky_offset  * 0.7;
+  mediump vec3 result = vec3(0.);
 
   float c = nebula(layer2_coord * 3.0) * 0.35 - 0.05;
   result += nebula_color * floor(c * 60.0) / 60.0;
