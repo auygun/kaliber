@@ -315,18 +315,34 @@ void Enemy::HitTarget(DamageType damage_type) {
       target->shield_active = true;
       target->shield.SetVisible(true);
 
-      target->shield_animator.Stop(Animator::kFrames);
+      // Play intro anim and start shield timer.
+      target->shield_animator.Stop(Animator::kAllAnimations);
       target->shield.SetFrame(0);
       target->shield_animator.SetFrames(4, 12);
-      target->shield_animator.Play(Animator::kFrames, false);
+      target->shield_animator.SetTimer(0.6f);
+      target->shield_animator.Play(Animator::kFrames | Animator::kTimer, false);
       target->shield_animator.SetEndCallback(Animator::kFrames, [&, target]() -> void {
+        // Play loop anim.
         target->shield.SetFrame(4);
         target->shield_animator.SetFrames(4, 12);
         target->shield_animator.Play(Animator::kFrames, true);
         target->shield_animator.SetEndCallback(Animator::kFrames, nullptr);
       });
+      target->shield_animator.SetEndCallback(Animator::kTimer, [&, target]() -> void {
+        // Timeout. Remove shield if sill active.
+        if (target->shield_active) {
+          target->shield_active = false;
+          target->shield_animator.Stop(Animator::kFrames);
+          target->shield_animator.Play(Animator::kBlending, false);
+        }
+      });
 
       target->shield_on.Play(false);
+    } else {
+      // Restart shield timer.
+      target->shield_animator.Stop(Animator::kTimer);
+      target->shield_animator.SetTimer(0.6f);
+      target->shield_animator.Play(Animator::kTimer, false);
     }
     return;
   }
@@ -509,9 +525,9 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.blast_animator.Attach(&e.blast);
 
   e.shield_animator.Attach(&e.shield);
-  e.shield_animator.SetBlending({1, 1, 1, 0}, 0.2f, nullptr);
+  e.shield_animator.SetBlending({1, 1, 1, 0}, 0.15f, nullptr);
   e.shield_animator.SetEndCallback(Animator::kBlending, [&]() -> void {
-    e.shield_animator.Stop(Animator::kAllAnimations);
+    e.shield_animator.Stop(Animator::kAllAnimations | Animator::kTimer);
     e.shield.SetVisible(false);
   });
 
@@ -665,11 +681,12 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
   Engine::Get().Vibrate(30);
 
   if (target->shield_active) {
+    // Remove shield.
     target->shield_active = false;
-    target->sprite.AutoScale();
+    target->shield_animator.Stop(Animator::kFrames | Animator::kTimer);
     target->shield_animator.Play(Animator::kBlending, false);
 
-    if (damage == 1)
+    if (--damage == 0)
       return;
   }
 
