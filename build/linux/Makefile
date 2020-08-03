@@ -36,6 +36,7 @@ CFLAGS += -MD -MP -MT $@
 # Predefined flags.
 ifeq ($(BUILD), debug)
   CFLAGS += -D_DEBUG
+  CFLAGS += -D_GLIBCXX_DEBUG
 endif
 
 # Enable compiler optimizations for everything except debug.
