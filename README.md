@@ -1,5 +1,5 @@
-A simple, cross-platform, multi-threaded 2D game engine with OpenGL renderer written in modern
-C++. Supports Linux and Android platforms.
+A simple, cross-platform 2D game engine with OpenGL renderer. Supports Linux and
+Android platforms.
 
 Build for Linux (gcc or clang):
 
@@ -11,7 +11,7 @@ Build for Android:
 cd build/android  
 ./gradlew :app:assembleRelease
 
-Build for Android and install (debug):
+Build using GN (linux only for now):
 
-cd build/android  
-./gradlew :app:installDebug
+gn gen --args='is_debug=false' out/release  
+ninja -C out/release

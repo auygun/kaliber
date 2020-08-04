@@ -1,0 +1,35 @@
+source_set("base") {
+  sources = [
+    "closure.h",
+    "collusion_test.cc",
+    "collusion_test.h",
+    "file.h",
+    "hash.h",
+    "interpolation.h",
+    "log.cc",
+    "log.h",
+    "mem.h",
+    "misc.h",
+    "random.cc",
+    "random.h",
+    "task_runner.cc",
+    "task_runner.h",
+    "timer.cc",
+    "timer.h",
+    "vecmath.cc",
+    "vecmath.h",
+    "worker.cc",
+    "worker.h",
+  ]
+
+#  ldflags = []
+#  libs = []
+
+  if (target_os == "linux") {
+#    ldflags += [ "-L/usr/X11R6/lib" ]
+
+#    libs += [ "X11", "rt", "pthread" ]
+  }
+
+  deps = []
+}
