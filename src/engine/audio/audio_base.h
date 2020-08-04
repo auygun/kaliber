@@ -37,6 +37,9 @@ class AudioBase {
 
   AudioBase(const AudioBase&) = delete;
   AudioBase& operator=(const AudioBase&) = delete;
+
+ private:
+  void EndCallback(std::shared_ptr<AudioSample> sample);
 };
 
 }  // namespace eng

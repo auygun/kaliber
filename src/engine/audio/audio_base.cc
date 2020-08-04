@@ -135,19 +135,29 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
     }
 
     if (remove) {
-      if (sample->end_cb) {
-        task_runner_.Enqueue(sample->end_cb);
-        sample->active.store(false, std::memory_order_relaxed);
-      } else {
-        // Memory barrier to ensure all memory writes become visible to the main
-        // thread.
-        sample->active.store(false, std::memory_order_release);
-      }
+      task_runner_.Enqueue(std::bind(&AudioBase::EndCallback, this, *it));
       it = samples_[1].erase(it);
     } else {
       ++it;
     }
   }
+}
+
+void AudioBase::EndCallback(std::shared_ptr<AudioSample> sample_) {
+  AudioSample* sample = sample_.get();
+
+  if (sample->flags & AudioSample::kReset) {
+    sample->flags &= ~(AudioSample::kReset | AudioSample::kStopped);
+    sample->src_index = 0;
+    sample->sound->ResetStream();
+    Play(sample_);
+    return;
+  }
+
+  sample->active = false;
+
+  if (sample->end_cb)
+    sample->end_cb();
 }
 
 }  // namespace eng

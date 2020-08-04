@@ -19,16 +19,18 @@ void AudioResource::Play(std::shared_ptr<Sound> sound,
                          bool reset_pos) {
   AudioSample* sample = sample_.get();
 
+  if (sample_->active) {
+    if (reset_pos)
+      sample_->flags |= (AudioSample::kReset | AudioSample::kStopped);
+    return;
+  }
+
   if (reset_pos) {
     sample->src_index = 0;
     sound->ResetStream();
   }
 
-  if (sample_->active.load(std::memory_order_acquire))
-    return;
-
-  sample->active.store(true, std::memory_order_relaxed);
-
+  sample->active = true;
   sample->flags &= ~AudioSample::kStopped;
   sample->sound = sound;
   sample->amplitude = amplitude;
@@ -37,7 +39,7 @@ void AudioResource::Play(std::shared_ptr<Sound> sound,
 }
 
 void AudioResource::Stop() {
-  if (!sample_->active.load(std::memory_order_acquire))
+  if (!sample_->active)
     return;
 
   sample_->flags |= AudioSample::kStopped;
