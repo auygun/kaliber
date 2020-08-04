@@ -28,6 +28,8 @@ void SoundPlayer::SetSound(std::unique_ptr<Sound> sound) {
 
 void SoundPlayer::Play(bool loop) {
   if (sound_) {
+    int step = variate_ ? Engine::Get().GetRandomGenerator().Roll(3) - 2 : 0;
+    resource_->SetResampleStep(step);
     resource_->SetAmplitudeInc(0);
     resource_->SetLoop(loop);
     resource_->Play(sound_, max_amplitude_, true);
@@ -48,8 +50,7 @@ void SoundPlayer::Stop(bool fade_out) {
 }
 
 void SoundPlayer::SetVariate(bool variate) {
-  int step = variate ? Engine::Get().GetRandomGenerator().Roll(3) - 2 : 0;
-  resource_->SetResampleStep(step);
+  variate_ = variate;
 }
 
 void SoundPlayer::SetSimulateStereo(bool simulate) {

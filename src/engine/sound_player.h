@@ -42,6 +42,8 @@ class SoundPlayer {
 
   float max_amplitude_ = 1.0f;
 
+  bool variate_ = false;
+
   SoundPlayer(const SoundPlayer&) = delete;
   SoundPlayer& operator=(const SoundPlayer&) = delete;
 };
