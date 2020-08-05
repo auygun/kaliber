@@ -8,44 +8,78 @@
   true ? (void)0 : base::Log::Voidify() & (*base::Log::swallow_stream)
 
 #define LOG base::Log(__FILE__, __LINE__)
+#define CHECK(condition) \
+  base::Check(__FILE__, __LINE__, condition, false, #condition)
+#define NOTREACHED base::NotReached(__FILE__, __LINE__)
 
 #ifdef _DEBUG
 #define DLOG base::Log(__FILE__, __LINE__)
+#define DCHECK(condition) \
+  base::Check(__FILE__, __LINE__, condition, true, #condition)
 #else
 #define DLOG EAT_STREAM_PARAMETERS
+#define DCHECK(condition) EAT_STREAM_PARAMETERS
 #endif
 
 namespace base {
 
-class Log {
+class LogBase {
  public:
   class Voidify {
    public:
     Voidify() = default;
     // This has to be an operator with a precedence lower than << but
     // higher than ?:
-    void operator&(Log&) {}
+    void operator&(LogBase&) {}
   };
 
-  Log(const char* file, int line);
-  ~Log();
+  LogBase(const char* file, int line);
+  ~LogBase();
 
   template <typename T>
-  Log& operator<<(const T& arg) {
+  LogBase& operator<<(const T& arg) {
     stream_ << arg;
     return *this;
   }
 
-  Log& operator<<(const bool& arg);
-  Log& operator<<(const Vector2& arg);
-  Log& operator<<(const Vector4& arg);
+  LogBase& operator<<(const bool& arg);
+  LogBase& operator<<(const Vector2& arg);
+  LogBase& operator<<(const Vector4& arg);
 
-  static Log* swallow_stream;
+  static LogBase* swallow_stream;
+
+ protected:
+  void Flush();
 
  private:
   const char* file_;
   const int line_;
   std::ostringstream stream_;
+};
+
+class Log : public LogBase {
+ public:
+  Log(const char* file, int line);
+  ~Log();
+};
+
+class Check : public LogBase {
+ public:
+  Check(const char* file,
+        int line,
+        bool condition,
+        bool debug,
+        const char* condition_str);
+  ~Check();
+
+ private:
+  bool condition_;
+};
+
+class NotReached : public LogBase {
+ public:
+  NotReached(const char* file, int line);
+  ~NotReached();
 };
 
 }  // namespace base
