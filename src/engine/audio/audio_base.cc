@@ -148,6 +148,7 @@ void AudioBase::EndCallback(std::shared_ptr<AudioSample> sample_) {
 
   if (sample->flags & AudioSample::kReset) {
     sample->flags &= ~(AudioSample::kReset | AudioSample::kStopped);
+    sample->accumulator = 0;
     sample->src_index = 0;
     sample->sound->ResetStream();
     Play(sample_);

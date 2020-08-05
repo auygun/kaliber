@@ -34,15 +34,14 @@ void AudioResource::Play(std::shared_ptr<Sound> sound,
   sample->flags &= ~AudioSample::kStopped;
   sample->sound = sound;
   sample->amplitude = amplitude;
+  sample_->accumulator = 0;
 
   audio_->Play(sample_);
 }
 
 void AudioResource::Stop() {
-  if (!sample_->active)
-    return;
-
-  sample_->flags |= AudioSample::kStopped;
+  if (sample_->active)
+    sample_->flags |= AudioSample::kStopped;
 }
 
 void AudioResource::SetLoop(bool loop) {
@@ -61,7 +60,6 @@ void AudioResource::SetSimulateStereo(bool simulate) {
 
 void AudioResource::SetResampleStep(size_t step) {
   sample_->step = step + 10;
-  sample_->accumulator = 0;
 }
 
 void AudioResource::SetMaxAmplitude(float max_amplitude) {
