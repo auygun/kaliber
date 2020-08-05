@@ -16,8 +16,8 @@ SoundPlayer::~SoundPlayer() = default;
 
 void SoundPlayer::SetSound(std::shared_ptr<Sound> sound) {
   if (sound->is_streaming_sound()) {
-    LOG << "Fata error! Streaming sound cannot be shared.";
-    Engine::Get().Exit();
+    LOG << "Error! Streaming sound cannot be shared.";
+    return;
   }
   sound_ = sound;
 }

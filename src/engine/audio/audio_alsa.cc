@@ -179,7 +179,7 @@ void AudioAlsa::WorkerMain(std::promise<bool> promise) {
 
     while (snd_pcm_writei(pcm_handle_, buffer.get(), num_frames) < 0) {
       snd_pcm_prepare(pcm_handle_);
-      LOG << "Audio buffer underrun!";
+      DLOG << "Audio buffer underrun!";
     }
   }
 }

@@ -1,7 +1,6 @@
 #ifndef AUDIO_SAMPLE_H
 #define AUDIO_SAMPLE_H
 
-#include <atomic>
 #include <memory>
 
 #include "../../base/closure.h"

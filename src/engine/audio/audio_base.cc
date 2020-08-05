@@ -123,7 +123,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
             worker_.Enqueue(std::bind(&Sound::Stream, sample->sound,
                                       flags & AudioSample::kLoop));
           } else if (num_samples) {
-            LOG << "Buffer underrun!";
+            DLOG << "Buffer underrun!";
             src_index %= num_samples;
           }
         }

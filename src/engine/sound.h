@@ -33,10 +33,7 @@ class Sound {
 
   size_t IsStreamingInProgress() const;
 
-  const float* GetBuffer(int channel) const {
-    return front_buffer_[channel].get();
-  }
-  float* GetBuffer(int channel);
+  float* GetBuffer(int channel) const;
 
   size_t GetNumSamples() const { return num_samples_front_; }
 

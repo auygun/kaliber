@@ -166,7 +166,7 @@ size_t Sound::IsStreamingInProgress() const {
   return streaming_in_progress_.load(std::memory_order_acquire);
 }
 
-float* Sound::GetBuffer(int channel) {
+float* Sound::GetBuffer(int channel) const {
   return front_buffer_[channel].get();
 }
 
