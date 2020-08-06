@@ -1,6 +1,5 @@
 #include "menu.h"
 
-#include <cassert>
 #include <cmath>
 #include <vector>
 

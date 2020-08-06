@@ -1,7 +1,6 @@
 #include "image_quad.h"
 
-#include <cassert>
-
+#include "../base/log.h"
 #include "engine.h"
 #include "renderer/geometry.h"
 #include "renderer/shader.h"
@@ -33,7 +32,7 @@ void ImageQuad::AutoScale() {
 }
 
 void ImageQuad::SetFrame(size_t frame) {
-  assert(frame < GetNumFrames());
+  DCHECK(frame < GetNumFrames());
   current_frame_ = frame;
 }
 
@@ -42,7 +41,7 @@ size_t ImageQuad::GetNumFrames() const {
 }
 
 void ImageQuad::Draw(float frame_frac) {
-  assert(IsVisible());
+  DCHECK(IsVisible());
 
   if (!texture_ || !texture_->IsValid())
     return;
@@ -80,7 +79,7 @@ float ImageQuad::GetFrameHeight() const {
 
 // Return the uv offset for the given frame.
 Vector2 ImageQuad::GetUVOffset(int frame) const {
-  assert(frame < num_frames_[0] * num_frames_[1]);
+  DCHECK(frame < num_frames_[0] * num_frames_[1]);
   if (num_frames_[0] == 1 && num_frames_[1] == 1)
     return {0, 0};
   return {(float)(frame % num_frames_[0]), (float)(frame / num_frames_[0])};

@@ -1,7 +1,6 @@
 #include "sound.h"
 
 #include <array>
-#include <cassert>
 
 #include "../base/log.h"
 #define MINIMP3_ONLY_MP3
@@ -91,7 +90,7 @@ bool Sound::Load(const std::string& file_name, bool stream) {
   num_samples_back_ = 0;
   eof_ = false;
 
-  assert(num_channels_ > 0 && num_channels_ <= 2);
+  DCHECK(num_channels_ > 0 && num_channels_ <= 2);
 
   size_t system_hz = Engine::Get().GetAudioSampleRate();
 
@@ -132,7 +131,7 @@ bool Sound::Load(const std::string& file_name, bool stream) {
 }
 
 bool Sound::Stream(bool loop) {
-  assert(is_streaming_sound_);
+  DCHECK(is_streaming_sound_);
 
   bool result = StreamInternal(kMaxSamplesPerChunk, loop);
 
@@ -144,7 +143,7 @@ bool Sound::Stream(bool loop) {
 }
 
 void Sound::SwapBuffers() {
-  assert(is_streaming_sound_);
+  DCHECK(is_streaming_sound_);
 
   SwapBuffersInternal();
 
@@ -161,7 +160,7 @@ void Sound::ResetStream() {
 }
 
 size_t Sound::IsStreamingInProgress() const {
-  assert(is_streaming_sound_);
+  DCHECK(is_streaming_sound_);
 
   return streaming_in_progress_.load(std::memory_order_acquire);
 }

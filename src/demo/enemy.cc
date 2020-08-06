@@ -1,7 +1,6 @@
 #include "enemy.h"
 
 #include <algorithm>
-#include <cassert>
 #include <functional>
 #include <limits>
 #include <tuple>
@@ -185,13 +184,13 @@ void Enemy::Update(float delta_time) {
 }
 
 bool Enemy::HasTarget(DamageType damage_type) {
-  assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
+  DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
   return GetTarget(damage_type) ? true : false;
 }
 
 Vector2 Enemy::GetTargetPos(DamageType damage_type) {
-  assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
+  DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
   EnemyUnit* target = GetTarget(damage_type);
   if (target)
@@ -203,7 +202,7 @@ Vector2 Enemy::GetTargetPos(DamageType damage_type) {
 void Enemy::SelectTarget(DamageType damage_type,
                          const Vector2& origin,
                          const Vector2& dir) {
-  assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
+  DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
   if (paused_)
     return;
@@ -288,7 +287,7 @@ void Enemy::SelectTarget(DamageType damage_type,
 }
 
 void Enemy::DeselectTarget(DamageType damage_type) {
-  assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
+  DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
   EnemyUnit* target = GetTarget(damage_type);
   if (target) {
@@ -299,7 +298,7 @@ void Enemy::DeselectTarget(DamageType damage_type) {
 }
 
 void Enemy::HitTarget(DamageType damage_type) {
-  assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
+  DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
   if (paused_)
     return;
@@ -440,8 +439,8 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
                       DamageType damage_type,
                       const Vector2& pos,
                       float speed) {
-  assert(enemy_type > kEnemyType_Invalid && enemy_type < kEnemyType_Unit_Last + 1);
-  assert(damage_type > kDamageType_Invalid && damage_type < kDamageType_Max);
+  DCHECK(enemy_type > kEnemyType_Invalid && enemy_type < kEnemyType_Unit_Last + 1);
+  DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Max);
 
   Engine& engine = Engine::Get();
   Demo* game = static_cast<Demo*>(engine.GetGame());
@@ -467,7 +466,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
       e.sprite.Create(bug_tex_, {10, 4});
       break;
     default:
-      assert(false);
+      NOTREACHED << "- Unkown enemy type: " << enemy_type;
   }
 
   e.sprite.SetZOrder(11);
@@ -680,7 +679,7 @@ void Enemy::SpawnBoss() {
 }
 
 void Enemy::TakeDamage(EnemyUnit* target, int damage) {
-  assert(!target->marked_for_removal);
+  DCHECK(!target->marked_for_removal);
 
   if (target->hit_points <= 0)
     return;
@@ -926,7 +925,7 @@ Enemy::EnemyUnit* Enemy::GetTarget(DamageType damage_type) {
 }
 
 int Enemy::GetScore(EnemyType enemy_type) {
-  assert(enemy_type > kEnemyType_Invalid && enemy_type < kEnemyType_Max);
+  DCHECK(enemy_type > kEnemyType_Invalid && enemy_type < kEnemyType_Max);
   return enemy_scores[enemy_type];
 }
 

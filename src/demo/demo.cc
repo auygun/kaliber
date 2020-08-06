@@ -186,7 +186,7 @@ void Demo::UpdateMenuState(float delta_time) {
       Engine::Get().Exit();
       break;
     default:
-      assert(false);
+      NOTREACHED << "- Unknown menu option: " << menu_.selected_option();
   }
 }
 
@@ -303,7 +303,7 @@ void Demo::StartNextStage(bool boss) {
 }
 
 void Demo::SetDelayedWork(float seconds, base::Closure cb) {
-  assert(delayed_work_cb_ == nullptr);
+  DCHECK(delayed_work_cb_ == nullptr);
   delayed_work_cb_ = std::move(cb);
   delayed_work_timer_ = seconds;
 }

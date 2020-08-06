@@ -1,7 +1,5 @@
 #include "texture.h"
 
-#include <cassert>
-
 #include "../../engine/image.h"
 #include "render_command.h"
 #include "renderer.h"

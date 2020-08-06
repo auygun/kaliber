@@ -1,7 +1,6 @@
 #include "renderer.h"
 
 #include <algorithm>
-#include <cassert>
 #include <cstring>
 #include <sstream>
 
@@ -59,7 +58,7 @@ void Renderer::ContextLost() {
   InvalidateAllResources();
 
 #ifdef THREADED_RENDERING
-  assert(!task_runner_.IsBoundToCurrentThread());
+  DCHECK(!task_runner_.IsBoundToCurrentThread());
   task_runner_.Enqueue(context_lost_cb_);
 #else
   context_lost_cb_();
@@ -80,7 +79,7 @@ std::unique_ptr<RenderResource> Renderer::CreateResource(
   else if (factory.IsTypeOf<Texture>())
     impl_data = std::make_shared<TextureOpenGL>();
   else
-    assert(false);
+    NOTREACHED << "- Unknown resource type.";
 
   unsigned resource_id = ++last_id;
   auto resource = factory.Create(resource_id, impl_data, this);
@@ -344,8 +343,7 @@ void Renderer::ProcessCommand(RenderCommand* cmd) {
       HandleCmdSetUniformInt(cmd);
       break;
     default:
-      assert(false);
-      break;
+      NOTREACHED << "- Unknown render command: " << cmd->cmd_id;
   }
 }
 
@@ -362,7 +360,7 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
 
   glBindTexture(GL_TEXTURE_2D, gl_id);
   if (c->image->IsCompressed()) {
-    GLenum format;
+    GLenum format = 0;
     switch (c->image->GetFormat()) {
       case Image::kDXT1:
         format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
@@ -382,8 +380,7 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
         break;
 #endif
       default:
-        assert(false);
-        return;
+        NOTREACHED << "- Unhandled texure format: " << c->image->GetFormat();
     }
 
     glCompressedTexImage2D(GL_TEXTURE_2D, 0, format, c->image->GetWidth(),
@@ -395,8 +392,8 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
     GLenum err = glGetError();
     if (err == GL_INVALID_VALUE) {
       glCompressedTexImage2D(GL_TEXTURE_2D, 0, format, c->image->GetWidth(),
-                            c->image->GetHeight(), 0, c->image->GetSize(),
-                            c->image->GetBuffer());
+                             c->image->GetHeight(), 0, c->image->GetSize(),
+                             c->image->GetBuffer());
       err = glGetError();
     }
 

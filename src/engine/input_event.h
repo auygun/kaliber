@@ -1,7 +1,7 @@
 #ifndef INPUT_EVENT_H
 #define INPUT_EVENT_H
 
-#include <cassert>
+#include "../base/log.h"
 #include "../base/vecmath.h"
 
 namespace eng {
@@ -32,7 +32,7 @@ class InputEvent {
   size_t GetPointerId() const { return pointer_id_; }
 
   base::Vector2 GetVector(size_t i) const {
-    assert(i < 2);
+    DCHECK(i < 2);
     return vec_;
   }
 

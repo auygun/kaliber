@@ -1,7 +1,5 @@
 #include "geometry.h"
 
-#include <cassert>
-
 #include "../engine.h"
 #include "../mesh.h"
 #include "render_command.h"

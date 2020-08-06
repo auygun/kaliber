@@ -1,6 +1,5 @@
 #include "audio_base.h"
 
-#include <cassert>
 #include <cstring>
 
 #include "../../base/log.h"
@@ -61,9 +60,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
               ? sound->hz() / 10
               : 0;
 
-      // Sound must contain valid audio data unless it's a streaming sound.
-      // Streaming sound becomes invalid after a seek operation.
-      assert(num_samples || sound->is_streaming_sound());
+      DCHECK(num_samples || sound->is_streaming_sound());
 
       for (size_t i = 0; i < num_frames * kChannelCount;) {
         if (num_samples) {

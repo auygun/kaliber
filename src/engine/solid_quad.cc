@@ -1,8 +1,8 @@
 #include "solid_quad.h"
 
-#include <cassert>
 #include <memory>
 
+#include "../base/log.h"
 #include "engine.h"
 #include "renderer/geometry.h"
 #include "renderer/shader.h"
@@ -10,7 +10,7 @@
 namespace eng {
 
 void SolidQuad::Draw(float frame_frac) {
-  assert(IsVisible());
+  DCHECK(IsVisible());
 
   Shader* shader = Engine::Get().GetSolidShader();
 

@@ -29,7 +29,7 @@ Engine* Engine::singleton = nullptr;
 
 Engine::Engine(Platform* platform, Renderer* renderer, Audio* audio)
     : platform_(platform), renderer_(renderer), audio_(audio) {
-  assert(!singleton);
+  DCHECK(!singleton);
   singleton = this;
 
   renderer_->SetContextLostCB(std::bind(&Engine::ContextLost, this));
@@ -151,7 +151,7 @@ void Engine::GainedFocus() {
 }
 
 void Engine::AddDrawable(Drawable* drawable) {
-  assert(std::find(drawables_.begin(), drawables_.end(), drawable) ==
+  DCHECK(std::find(drawables_.begin(), drawables_.end(), drawable) ==
          drawables_.end());
   drawables_.push_back(drawable);
 }

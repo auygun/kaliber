@@ -1,7 +1,6 @@
 #include "mesh.h"
 
 #include <string.h>
-#include <cassert>
 
 #include "../base/log.h"
 #include "../third_party/jsoncpp/json.h"
@@ -134,8 +133,7 @@ bool Mesh::Load(const std::string& file_name) {
             *((unsigned short*)dst) = (unsigned short)vertices[i].asUInt();
             break;
           default:
-            assert(false);
-            return false;
+            NOTREACHED << "- Unknown data type: " << data_type;
         }
         dst += type_size;
         ++i;
