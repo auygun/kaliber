@@ -17,15 +17,14 @@ GN (linux only for now):
 gn gen --args='is_debug=false' out/release
 ninja -C out/release
 ```
-#### TODO
-* IOS platform.
-* Vulkan renderer.
+#### Todo
+IOS platform support and Vulkan renderer.
 #### Third-party libraries:
-- [nigels-com/glew](https://github.com/nigels-com/glew)
-- [open-source-parsers/jsoncpp](https://github.com/open-source-parsers/jsoncpp)
-- [lieff/minimp3](https://github.com/lieff/minimp3)
-- [google/oboe](https://github.com/google/oboe)
-- [avaneev/r8brain-free-src](https://github.com/avaneev/r8brain-free-src)
-- [nothings/stb](https://github.com/nothings/stb)
-- [texture-compressor](https://github.com/chromium/chromium)
-- [minizip](https://github.com/madler/zlib/tree/master/contrib/minizip)
+[nigels-com/glew](https://github.com/nigels-com/glew),
+[open-source-parsers/jsoncpp](https://github.com/open-source-parsers/jsoncpp),
+[lieff/minimp3](https://github.com/lieff/minimp3),
+[google/oboe](https://github.com/google/oboe),
+[avaneev/r8brain-free-src](https://github.com/avaneev/r8brain-free-src),
+[nothings/stb](https://github.com/nothings/stb),
+[texture-compressor](https://github.com/chromium/chromium),
+[minizip](https://github.com/madler/zlib/tree/master/contrib/minizip)
