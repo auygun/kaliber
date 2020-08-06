@@ -1,5 +1,5 @@
 A simple, cross-platform 2D game engine with OpenGL renderer. Supports Linux and
-Android (lolipop+) platforms, compressed textures (ATC, DXT and ETC1) and streaming audio.
+Android (lolipop+) platforms, real-time texture compression (ATC, DXT and ETC1) and streaming audio.
 Supported asset formats: PNG and JPEG for images, MP3 for sounds, TTF for text rendering.
 #### Building the demo
 Linux (gcc or clang):
