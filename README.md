@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.org/auygun/kaliber.svg?branch=master)](https://travis-ci.org/auygun/kaliber)
-
 A simple, cross-platform 2D game engine with OpenGL renderer. Supports Linux and
 Android (lolipop+) platforms, real-time texture compression (ATC, DXT and ETC1) and streaming audio.
 Supported asset formats: PNG and JPEG for images, MP3 for sounds, TTF for text rendering.
@@ -30,3 +28,5 @@ IOS platform support and Vulkan renderer.
 [nothings/stb](https://github.com/nothings/stb),
 [texture-compressor](https://github.com/chromium/chromium),
 [minizip](https://github.com/madler/zlib/tree/master/contrib/minizip)
+
+[![Build Status](https://travis-ci.org/auygun/kaliber.svg?branch=master)](https://travis-ci.org/auygun/kaliber)
