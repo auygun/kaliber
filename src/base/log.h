@@ -8,17 +8,17 @@
   true ? (void)0 : base::Log::Voidify() & (*base::Log::swallow_stream)
 
 #define LOG base::Log(__FILE__, __LINE__)
-#define CHECK(condition) \
-  base::Check(__FILE__, __LINE__, condition, false, #condition)
+#define CHECK(expr) \
+  base::Check(__FILE__, __LINE__, static_cast<bool>(expr), false, #expr)
 #define NOTREACHED base::NotReached(__FILE__, __LINE__)
 
 #ifdef _DEBUG
 #define DLOG base::Log(__FILE__, __LINE__)
-#define DCHECK(condition) \
-  base::Check(__FILE__, __LINE__, condition, true, #condition)
+#define DCHECK(expr) \
+  base::Check(__FILE__, __LINE__, static_cast<bool>(expr), true, #expr)
 #else
 #define DLOG EAT_STREAM_PARAMETERS
-#define DCHECK(condition) EAT_STREAM_PARAMETERS
+#define DCHECK(expr) EAT_STREAM_PARAMETERS
 #endif
 
 namespace base {
@@ -67,7 +67,7 @@ class Check : public LogBase {
  public:
   Check(const char* file,
         int line,
-        bool condition,
+        bool expr,
         bool debug,
         const char* condition_str);
   ~Check();
