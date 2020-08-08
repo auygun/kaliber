@@ -2,7 +2,6 @@
 #define LOG_H
 
 #include <sstream>
-#include "vecmath.h"
 
 #define EAT_STREAM_PARAMETERS \
   true ? (void)0 : base::Log::Voidify() & (*base::Log::swallow_stream)
@@ -22,6 +21,9 @@
 #endif
 
 namespace base {
+
+struct Vector2;
+struct Vector4;
 
 class LogBase {
  public:
@@ -67,7 +69,7 @@ class Check : public LogBase {
  public:
   Check(const char* file,
         int line,
-        bool expr,
+        bool condition,
         bool debug,
         const char* condition_str);
   ~Check();

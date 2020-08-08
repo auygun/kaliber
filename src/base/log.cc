@@ -7,6 +7,8 @@
 #endif
 #include <cstdlib>
 
+#include "vecmath.h"
+
 namespace base {
 
 // This is never instantiated, it's just used for EAT_STREAM_PARAMETERS to have
