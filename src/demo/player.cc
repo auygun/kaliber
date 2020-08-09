@@ -305,7 +305,7 @@ void Player::SetupWeapons() {
     laser_shot_[i].SetSound(laser_shot_sound_);
     laser_shot_[i].SetVariate(true);
     laser_shot_[i].SetSimulateStereo(false);
-    laser_shot_[i].SetMaxAplitude(0.3f);
+    laser_shot_[i].SetMaxAplitude(0.4f);
   }
 }
 

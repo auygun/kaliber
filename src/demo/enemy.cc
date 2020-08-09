@@ -366,7 +366,7 @@ void Enemy::KillAllEnemyUnits() {
         e.enemy_type != kEnemyType_Boss) {
       float dist = e.sprite.GetOffset().y -
                    game->GetPlayer().GetWeaponPos(kDamageType_Green).y;
-      e.kill_timer = dist * 0.08f;
+      e.kill_timer = dist * 0.15f;
     }
   }
 }
@@ -552,6 +552,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.explosion.SetSound(explosion_sound_);
   e.explosion.SetVariate(true);
   e.explosion.SetSimulateStereo(true);
+  e.explosion.SetMaxAplitude(0.9f);
 
   e.stealth.SetSound(stealth_sound_);
   e.stealth.SetVariate(false);
@@ -561,7 +562,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.shield_on.SetSound(shield_on_sound_);
   e.shield_on.SetVariate(false);
   e.shield_on.SetSimulateStereo(false);
-  e.shield_on.SetMaxAplitude(0.4f);
+  e.shield_on.SetMaxAplitude(0.5f);
 
   e.hit.SetSound(hit_sound_);
   e.hit.SetVariate(true);
