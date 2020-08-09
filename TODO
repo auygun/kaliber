@@ -1,5 +1,14 @@
-- Limit beam angle when firing direction is (x, -1)
-- stealth nenemy health 3
-- Save progress. Start from specific wave option. Fix starting score.
-
-- Move base and third_part to engine
+- Harder and shorter waves.
+- Harder boss.
+- Stealth enemy jumps/moves after nuke.
+- Teleport stealth enemy vertically as well.
+- Tank should move faster.
+- Change shield sound.
+- Music and vibration on/off buttons.
+- Change targetted_by_weapon_ to bool targetted_by_weapon_[2].
+- Music should not stop when switching to menu state.
+- Make fadein and fadeout duration longer for music.
+- Change font and background for creadits.
+- Add 3rd party libs to credits.
+- Test 30 fps
+- Do benchmark at startup and switch to low qualiy sky for slow devices.
