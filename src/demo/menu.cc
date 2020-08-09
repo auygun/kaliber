@@ -58,7 +58,6 @@ bool Menu::Initialize() {
   for (int i = 0; i < kOption_Max; ++i) {
     items_[i].text.Create("menu_tex", {1, 4});
     items_[i].text.SetZOrder(40);
-    items_[i].text.AutoScale();
     items_[i].text.Scale(1.5f);
     items_[i].text.SetColor(kColorFadeOut);
     items_[i].text.SetVisible(false);
@@ -86,12 +85,10 @@ bool Menu::Initialize() {
 
   logo_[0].Create("logo_tex0", {3, 8});
   logo_[0].SetZOrder(40);
-  logo_[0].AutoScale();
   logo_[0].SetOffset(Engine::Get().GetScreenSize() * Vector2(0, 0.25f));
 
   logo_[1].Create("logo_tex1", {3, 7});
   logo_[1].SetZOrder(40);
-  logo_[1].AutoScale();
   logo_[1].SetOffset(Engine::Get().GetScreenSize() * Vector2(0, 0.25f));
 
   logo_animator_[0].Attach(&logo_[0]);

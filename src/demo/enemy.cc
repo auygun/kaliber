@@ -103,7 +103,6 @@ bool Enemy::Initialize() {
 
   boss_.Create("boss_tex", {4, 3});
   boss_.SetZOrder(10);
-  boss_.AutoScale();
   boss_animator_.Attach(&boss_);
 
   boss_intro_.SetSound(boss_intro_sound_);
@@ -446,7 +445,6 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   }
 
   e.sprite.SetZOrder(11);
-  e.sprite.AutoScale();
   e.sprite.SetVisible(true);
   Vector2 spawn_pos = pos + Vector2(0, e.sprite.GetScale().y / 2);
   e.sprite.SetOffset(spawn_pos);
@@ -464,17 +462,14 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
 
   e.target.Create("target_tex", {6, 2});
   e.target.SetZOrder(12);
-  e.target.AutoScale();
   e.target.SetOffset(spawn_pos);
 
   e.blast.Create("blast_tex", {6, 2});
   e.blast.SetZOrder(12);
-  e.blast.AutoScale();
   e.blast.SetOffset(spawn_pos);
 
   e.shield.Create("shield_tex", {4, 2});
   e.shield.SetZOrder(11);
-  e.shield.AutoScale();
   e.shield.SetOffset(spawn_pos);
 
   e.health_base.SetZOrder(11);
@@ -491,7 +486,6 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
 
   e.score.Create("score_tex"s + std::to_string(e.enemy_type));
   e.score.SetZOrder(12);
-  e.score.AutoScale();
   e.score.SetColor({1, 1, 1, 1});
   e.score.SetOffset(spawn_pos);
 
@@ -604,7 +598,6 @@ void Enemy::SpawnBoss() {
 
     e.target.Create("target_tex", {6, 2});
     e.target.SetZOrder(12);
-    e.target.AutoScale();
     e.target.SetOffset(hit_box_pos);
 
     Vector2 health_bar_offset = boss_.GetScale() * Vector2(0, 0.2f);
@@ -626,7 +619,6 @@ void Enemy::SpawnBoss() {
 
     e.score.Create("score_tex"s + std::to_string(e.enemy_type));
     e.score.SetZOrder(12);
-    e.score.AutoScale();
     e.score.SetColor({1, 1, 1, 1});
     e.score.SetOffset(hit_box_pos);
 

@@ -42,7 +42,6 @@ bool Hud::Initialize() {
   for (int i = 0; i < 2; ++i) {
     text_[i].Create("text"s + std::to_string(i));
     text_[i].SetZOrder(30);
-    text_[i].AutoScale();
     text_[i].SetColor(kTextColor * Vector4(1, 1, 1, 0));
 
     Vector2 pos = (engine.GetScreenSize() / 2 - text_[i].GetScale() / 2);

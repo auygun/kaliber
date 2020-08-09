@@ -19,6 +19,9 @@ void ImageQuad::Create(const std::string& asset_name,
   num_frames_ = std::move(num_frames);
   frame_width_ = frame_width;
   frame_height_ = frame_height;
+
+  if ((frame_width_ > 0 && frame_height_ > 0) || texture_->IsValid())
+    AutoScale();
 }
 
 void ImageQuad::Destory() {

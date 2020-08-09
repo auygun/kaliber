@@ -66,8 +66,6 @@ void Credits::Show() {
     text_[i].Create("credits", {1, kNumLines});
     text_[i].SetZOrder(50);
     text_[i].SetOffset({0, 0});
-    text_[i].SetScale({1, 1});
-    text_[i].AutoScale();
     text_[i].SetColor(kTextColor * Vector4(1, 1, 1, 0));
     text_[i].SetFrame(i);
 

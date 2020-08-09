@@ -60,11 +60,9 @@ bool Player::Initialize() {
 
   nuke_counter_.Create("nuke_counter_tex");
   nuke_counter_.SetZOrder(29);
-  nuke_counter_.AutoScale();
 
   nuke_symbol_.Create("nuke_symbol_tex", {3, 1});
   nuke_symbol_.SetZOrder(29);
-  nuke_symbol_.AutoScale();
   nuke_symbol_.SetOffset({0, weapon_[0].GetOffset().y});
   nuke_symbol_.SetFrame(2);
   nuke_symbol_.SetVisible(true);
@@ -151,7 +149,6 @@ void Player::Reset() {
   Engine::Get().RefreshImage("nuke_counter_tex");
 
   nuke_counter_.AutoScale();
-
   nuke_symbol_.SetFrame(0);
 }
 
@@ -244,20 +241,17 @@ void Player::SetupWeapons() {
     // Setup draw sign.
     drag_sign_[i].Create("weapon_tex", {8, 2});
     drag_sign_[i].SetZOrder(21);
-    drag_sign_[i].AutoScale();
     drag_sign_[i].SetFrame(i * 8);
 
     // Setup weapon.
     weapon_[i].Create("weapon_tex", {8, 2});
     weapon_[i].SetZOrder(24);
-    weapon_[i].AutoScale();
     weapon_[i].SetVisible(true);
     weapon_[i].SetFrame(wepon_warmup_frame[i]);
 
     // Setup beam.
     beam_[i].Create("beam_tex", {1, 2});
     beam_[i].SetZOrder(22);
-    beam_[i].AutoScale();
     beam_[i].SetFrame(i);
     beam_[i].PlaceToRightOf(weapon_[i]);
     beam_[i].Translate(weapon_[i].GetScale() * Vector2(-0.5f, 0));
@@ -266,7 +260,6 @@ void Player::SetupWeapons() {
     // Setup beam spark.
     beam_spark_[i].Create("weapon_tex", {8, 2});
     beam_spark_[i].SetZOrder(23);
-    beam_spark_[i].AutoScale();
     beam_spark_[i].SetFrame(i * 8 + 1);
     beam_spark_[i].PlaceToRightOf(weapon_[i]);
     beam_spark_[i].Translate(weapon_[i].GetScale() * Vector2(-0.5f, 0));
