@@ -97,7 +97,8 @@ bool Menu::Initialize() {
     logo_[0].SetVisible(false);
     logo_[1].SetVisible(true);
     logo_animator_[1].SetFrames(12, 20);
-    logo_animator_[1].SetTimer(Lerp(3.0f, 8.0f, Engine::Get().GetRandomGenerator().GetFloat()));
+    logo_animator_[1].SetTimer(
+        Lerp(3.0f, 8.0f, Engine::Get().GetRandomGenerator().GetFloat()));
     logo_animator_[1].Play(Animator::kFrames | Animator::kTimer, true);
   });
 
@@ -106,7 +107,8 @@ bool Menu::Initialize() {
     logo_animator_[1].Stop(Animator::kFrames);
     logo_[1].SetFrame(12);
     logo_animator_[1].SetFrames(9, 30);
-    logo_animator_[1].SetTimer(Lerp(3.0f, 8.0f, Engine::Get().GetRandomGenerator().GetFloat()));
+    logo_animator_[1].SetTimer(
+        Lerp(3.0f, 8.0f, Engine::Get().GetRandomGenerator().GetFloat()));
     logo_animator_[1].Play(Animator::kFrames | Animator::kTimer, false);
   });
   logo_animator_[1].SetEndCallback(Animator::kFrames, [&]() -> void {
@@ -131,16 +133,16 @@ void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
     if (items_[i].hide)
       continue;
     if (!Intersection(items_[i].text.GetOffset(),
-                     items_[i].text.GetScale() * Vector2(1.2f, 2),
-                     tap_pos_[0]))
+                      items_[i].text.GetScale() * Vector2(1.2f, 2),
+                      tap_pos_[0]))
       continue;
     if (!Intersection(items_[i].text.GetOffset(),
-                     items_[i].text.GetScale() * Vector2(1.2f, 2),
-                     tap_pos_[1]))
+                      items_[i].text.GetScale() * Vector2(1.2f, 2),
+                      tap_pos_[1]))
       continue;
 
     items_[i].text_animator.SetEndCallback(Animator::kBlending,
-                                            items_[i].select_item_cb_);
+                                           items_[i].select_item_cb_);
     items_[i].text_animator.SetBlending(kColorHighlight, kBlendingSpeed);
     items_[i].text_animator.Play(Animator::kBlending, false);
 

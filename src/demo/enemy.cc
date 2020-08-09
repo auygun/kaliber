@@ -218,8 +218,8 @@ void Enemy::SelectTarget(DamageType damage_type,
         continue;
 
       if (base::Intersection(other_enemy->sprite.GetOffset(),
-                              other_enemy->sprite.GetScale() * 1.2f,
-                              origin, dir)) {
+                             other_enemy->sprite.GetScale() * 1.2f, origin,
+                             dir)) {
         break;
       }
     }
@@ -232,9 +232,8 @@ void Enemy::SelectTarget(DamageType damage_type,
   if (candidates.empty())
     return;
 
-  std::sort(candidates.begin(), candidates.end(), [](auto& a, auto& b) {
-    return std::get<1>(a) > std::get<1>(b);
-  });
+  std::sort(candidates.begin(), candidates.end(),
+            [](auto& a, auto& b) { return std::get<1>(a) > std::get<1>(b); });
 
   EnemyUnit* best_enemy = nullptr;
   for (auto& cand : candidates) {
@@ -299,21 +298,23 @@ void Enemy::HitTarget(DamageType damage_type) {
       target->shield_animator.SetFrames(4, 12);
       target->shield_animator.SetTimer(0.6f);
       target->shield_animator.Play(Animator::kFrames | Animator::kTimer, false);
-      target->shield_animator.SetEndCallback(Animator::kFrames, [&, target]() -> void {
-        // Play loop anim.
-        target->shield.SetFrame(4);
-        target->shield_animator.SetFrames(4, 12);
-        target->shield_animator.Play(Animator::kFrames, true);
-        target->shield_animator.SetEndCallback(Animator::kFrames, nullptr);
-      });
-      target->shield_animator.SetEndCallback(Animator::kTimer, [&, target]() -> void {
-        // Timeout. Remove shield if sill active.
-        if (target->shield_active) {
-          target->shield_active = false;
-          target->shield_animator.Stop(Animator::kFrames);
-          target->shield_animator.Play(Animator::kBlending, false);
-        }
-      });
+      target->shield_animator.SetEndCallback(
+          Animator::kFrames, [&, target]() -> void {
+            // Play loop anim.
+            target->shield.SetFrame(4);
+            target->shield_animator.SetFrames(4, 12);
+            target->shield_animator.Play(Animator::kFrames, true);
+            target->shield_animator.SetEndCallback(Animator::kFrames, nullptr);
+          });
+      target->shield_animator.SetEndCallback(
+          Animator::kTimer, [&, target]() -> void {
+            // Timeout. Remove shield if sill active.
+            if (target->shield_active) {
+              target->shield_active = false;
+              target->shield_animator.Stop(Animator::kFrames);
+              target->shield_animator.Play(Animator::kBlending, false);
+            }
+          });
 
       target->shield_on.Play(false);
     } else {
@@ -375,9 +376,8 @@ void Enemy::RemoveAll() {
     if (e.enemy_type == kEnemyType_Boss) {
       e.marked_for_removal = true;
     } else if (!e.marked_for_removal && e.hit_points > 0) {
-      e.sprite_animator.SetEndCallback(Animator::kBlending, [&]() -> void {
-        e.marked_for_removal = true;
-      });
+      e.sprite_animator.SetEndCallback(
+          Animator::kBlending, [&]() -> void { e.marked_for_removal = true; });
       e.sprite_animator.SetBlending({1, 1, 1, 0}, 0.3f);
       e.sprite_animator.Play(Animator::kBlending, false);
     }
@@ -414,7 +414,8 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
                       DamageType damage_type,
                       const Vector2& pos,
                       float speed) {
-  DCHECK(enemy_type > kEnemyType_Invalid && enemy_type < kEnemyType_Unit_Last + 1);
+  DCHECK(enemy_type > kEnemyType_Invalid &&
+         enemy_type < kEnemyType_Unit_Last + 1);
   DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Max);
 
   Engine& engine = Engine::Get();
@@ -534,9 +535,8 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
     e.target.SetVisible(false);
     e.blast.SetVisible(false);
     static_cast<Demo*>(engine.GetGame())->GetPlayer().TakeDamage(1);
-    e.sprite_animator.SetEndCallback(Animator::kBlending, [&]() -> void {
-      e.marked_for_removal = true;
-    });
+    e.sprite_animator.SetEndCallback(
+        Animator::kBlending, [&]() -> void { e.marked_for_removal = true; });
     e.sprite_animator.SetBlending({1, 1, 1, 0}, 0.3f);
     e.sprite_animator.Play(Animator::kBlending, false);
   });
@@ -574,7 +574,8 @@ void Enemy::SpawnBoss() {
   boss_.SetVisible(true);
   boss_.SetOffset(Engine::Get().GetScreenSize() * Vector2(0, 0.5f) +
                   boss_.GetScale() * Vector2(0, 2.0f));
-  boss_animator_.SetMovement({0, boss_.GetScale().y * -2.4f}, 5,
+  boss_animator_.SetMovement(
+      {0, boss_.GetScale().y * -2.4f}, 5,
       std::bind(Acceleration, std::placeholders::_1, -1));
   boss_.SetFrame(0);
   boss_animator_.SetFrames(8, 16);
@@ -590,7 +591,8 @@ void Enemy::SpawnBoss() {
     e.total_health = e.hit_points = 40 + 5 * (game->wave() / 3);
     DLOG << " Boss health: " << e.total_health;
 
-    Vector2 hit_box_pos = boss_.GetOffset() - boss_.GetScale() * Vector2(0, 0.2f);
+    Vector2 hit_box_pos =
+        boss_.GetOffset() - boss_.GetScale() * Vector2(0, 0.2f);
 
     // Just a hit box, no visual sprite.
     e.sprite.SetOffset(hit_box_pos);
@@ -728,13 +730,13 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
 
       Random& rnd = Engine::Get().GetRandomGenerator();
       float stealth_timer = Lerp(2.0f, 5.0f, rnd.GetFloat());
-      target->sprite_animator.SetEndCallback(Animator::kTimer,
-          [&, target]() -> void {
+      target->sprite_animator.SetEndCallback(
+          Animator::kTimer, [&, target]() -> void {
             float x = SnapSpawnPosX(rnd.Roll(4) - 1);
-            TranslateEnemyUnit(*target, {x - target->sprite.GetOffset().x,0});
+            TranslateEnemyUnit(*target, {x - target->sprite.GetOffset().x, 0});
 
-            target->sprite_animator.SetEndCallback(Animator::kBlending,
-                [&, target]() -> void {
+            target->sprite_animator.SetEndCallback(
+                Animator::kBlending, [&, target]() -> void {
                   target->stealth_active = false;
                   target->movement_animator.Play(Animator::kMovement, false);
                   target->sprite_animator.Play(Animator::kFrames, false);
@@ -793,8 +795,7 @@ void Enemy::UpdateWave(float delta_time) {
 
       seconds_since_last_spawn_[i] = 0;
       seconds_to_next_spawn_[i] =
-          Lerp(kSpawnPeriod[i][0] * factor,
-               kSpawnPeriod[i][1] * factor,
+          Lerp(kSpawnPeriod[i][0] * factor, kSpawnPeriod[i][1] * factor,
                rnd.GetFloat());
       break;
     }
@@ -815,9 +816,8 @@ void Enemy::UpdateWave(float delta_time) {
   last_spawn_col_ = col;
   float x = SnapSpawnPosX(col);
   Vector2 pos = {x, s.y / 2};
-  float speed = enemy_type == kEnemyType_Tank
-                    ? 36.0f
-                    : (rnd.Roll(4) == 4 ? 6.0f : 10.0f);
+  float speed =
+      enemy_type == kEnemyType_Tank ? 36.0f : (rnd.Roll(4) == 4 ? 6.0f : 10.0f);
 
   SpawnUnit(enemy_type, damage_type, pos, speed);
 }
@@ -838,7 +838,8 @@ void Enemy::UpdateBoss(float delta_time) {
       if (spawn_factor_interpolator_ > 1)
         spawn_factor_interpolator_ = 1;
     }
-    boss_spawn_cooldown_ = 10.1f - Lerp(1.0f, 10.0f, spawn_factor_interpolator_);
+    boss_spawn_cooldown_ =
+        10.1f - Lerp(1.0f, 10.0f, spawn_factor_interpolator_);
     DLOG << "boss_spawn_cooldown_: " << boss_spawn_cooldown_;
     return;
   }
@@ -858,8 +859,7 @@ void Enemy::UpdateBoss(float delta_time) {
 
       seconds_since_last_spawn_[i] = 0;
       seconds_to_next_spawn_[i] =
-          Lerp(kSpawnPeriod[i][0] * 0.15f,
-               kSpawnPeriod[i][1] * 0.15f,
+          Lerp(kSpawnPeriod[i][0] * 0.15f, kSpawnPeriod[i][1] * 0.15f,
                rnd.GetFloat());
       break;
     }
@@ -873,12 +873,12 @@ void Enemy::UpdateBoss(float delta_time) {
                                : (DamageType)(rnd.Roll(2) - 1);
 
   int col = (last_spawn_col_++) % 2;
-  float offset = Lerp(boss_.GetScale().x * -0.12f, boss_.GetScale().x * 0.12f, rnd.GetFloat());
+  float offset = Lerp(boss_.GetScale().x * -0.12f, boss_.GetScale().x * 0.12f,
+                      rnd.GetFloat());
   float x = (boss_.GetScale().x / 3) * (col ? 1 : -1) + offset;
   Vector2 pos = {x, boss_.GetOffset().y - boss_.GetScale().y / 2};
-  float speed = enemy_type == kEnemyType_Tank
-                    ? 36.0f
-                    : (rnd.Roll(4) == 4 ? 6.0f : 10.0f);
+  float speed =
+      enemy_type == kEnemyType_Tank ? 36.0f : (rnd.Roll(4) == 4 ? 6.0f : 10.0f);
 
   SpawnUnit(enemy_type, damage_type, pos, speed);
 }
@@ -916,15 +916,19 @@ std::unique_ptr<Image> Enemy::GetScoreImage(EnemyType enemy_type) {
 }
 
 bool Enemy::CreateRenderResources() {
-  Engine::Get().SetImageSource("skull_tex", "enemy_anims_01_frames_ok.png", true);
+  Engine::Get().SetImageSource("skull_tex", "enemy_anims_01_frames_ok.png",
+                               true);
   Engine::Get().SetImageSource("bug_tex", "enemy_anims_02_frames_ok.png", true);
   Engine::Get().SetImageSource("boss_tex", "Boss_ok.png", true);
-  Engine::Get().SetImageSource("target_tex", "enemy_target_single_ok.png", true);
+  Engine::Get().SetImageSource("target_tex", "enemy_target_single_ok.png",
+                               true);
   Engine::Get().SetImageSource("blast_tex", "enemy_anims_blast_ok.png", true);
   Engine::Get().SetImageSource("shield_tex", "woom_enemy_shield.png", true);
 
   for (int i = 0; i < kEnemyType_Max; ++i)
-    Engine::Get().SetImageSource("score_tex"s + std::to_string(i), std::bind(&Enemy::GetScoreImage, this, (EnemyType)i), true);
+    Engine::Get().SetImageSource(
+        "score_tex"s + std::to_string(i),
+        std::bind(&Enemy::GetScoreImage, this, (EnemyType)i), true);
 
   return true;
 }

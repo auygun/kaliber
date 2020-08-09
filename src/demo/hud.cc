@@ -35,9 +35,11 @@ bool Hud::Initialize() {
   int tmp;
   font.CalculateBoundingBox("big_enough_text", max_text_width_, tmp);
 
-  Engine::Get().SetImageSource("text0", std::bind(&Hud::CreateScoreImage, this));
+  Engine::Get().SetImageSource("text0",
+                               std::bind(&Hud::CreateScoreImage, this));
   Engine::Get().SetImageSource("text1", std::bind(&Hud::CreateWaveImage, this));
-  Engine::Get().SetImageSource("message", std::bind(&Hud::CreateMessageImage, this));
+  Engine::Get().SetImageSource("message",
+                               std::bind(&Hud::CreateMessageImage, this));
 
   for (int i = 0; i < 2; ++i) {
     text_[i].Create("text"s + std::to_string(i));
@@ -120,8 +122,8 @@ void Hud::HideProgress() {
     return;
 
   for (int i = 0; i < 2; ++i) {
-    progress_bar_animator_[i].SetEndCallback(Animator::kBlending,
-        [&, i]() -> void {
+    progress_bar_animator_[i].SetEndCallback(
+        Animator::kBlending, [&, i]() -> void {
           progress_bar_animator_[i].SetEndCallback(Animator::kBlending,
                                                    nullptr);
           progress_bar_animator_[1].SetVisible(false);
@@ -174,11 +176,11 @@ void Hud::ShowMessage(const std::string& text, float duration) {
   message_.SetColor({1, 1, 1, 0});
   message_.SetVisible(true);
 
-  message_animator_.SetEndCallback(Animator::kBlending,
-    [&, duration]() -> void {
-      message_animator_.SetTimer(duration);
-      message_animator_.Play(Animator::kTimer, false);
-    });
+  message_animator_.SetEndCallback(
+      Animator::kBlending, [&, duration]() -> void {
+        message_animator_.SetTimer(duration);
+        message_animator_.Play(Animator::kTimer, false);
+      });
   message_animator_.SetBlending({1, 1, 1, 1}, 0.5f);
   message_animator_.Play(Animator::kBlending, false);
 }
@@ -203,7 +205,8 @@ std::unique_ptr<Image> Hud::CreateMessageImage() {
   font.CalculateBoundingBox(message_text_.c_str(), w, h);
   float x = (image->GetWidth() - w) / 2;
 
-  font.Print(x, 0, message_text_.c_str(), image->GetBuffer(), image->GetWidth());
+  font.Print(x, 0, message_text_.c_str(), image->GetBuffer(),
+             image->GetWidth());
   image->Compress();
 
   return image;

@@ -1,6 +1,5 @@
 #include "player.h"
 
-
 #include "../base/interpolation.h"
 #include "../base/log.h"
 #include "../engine/engine.h"
@@ -44,13 +43,15 @@ bool Player::Initialize() {
 
   SetupWeapons();
 
-  Vector2 hb_pos = Engine::Get().GetScreenSize() /
-                   Vector2(2, -2) + Vector2(0, weapon_[0].GetScale().y * 0.4f);
-  Vector2 hb_scale = {((weapon_[0].GetOffset() - weapon_[1].GetOffset())
-                       .Magnitude() - weapon_[0].GetScale().x) * 1.1f,
-                      weapon_[0].GetScale().y * 0.04f};
+  Vector2 hb_pos = Engine::Get().GetScreenSize() / Vector2(2, -2) +
+                   Vector2(0, weapon_[0].GetScale().y * 0.4f);
+  Vector2 hb_scale = {
+      ((weapon_[0].GetOffset() - weapon_[1].GetOffset()).Magnitude() -
+       weapon_[0].GetScale().x) *
+          1.1f,
+      weapon_[0].GetScale().y * 0.04f};
 
-  for (int i = 0; i < 2; ++ i) {
+  for (int i = 0; i < 2; ++i) {
     health_bar_[i].SetZOrder(25);
     health_bar_[i].Scale(hb_scale);
     health_bar_[i].Translate(hb_pos * Vector2(0, 1));
@@ -138,7 +139,8 @@ void Player::AddNuke(int n) {
 
   nuke_counter_.AutoScale();
 
-  nuke_symbol_animator_.SetRotation(M_PI * 5, 2, std::bind(SmootherStep, std::placeholders::_1));
+  nuke_symbol_animator_.SetRotation(
+      M_PI * 5, 2, std::bind(SmootherStep, std::placeholders::_1));
   nuke_symbol_animator_.Play(Animator::kRotation, false);
 }
 
@@ -335,9 +337,8 @@ void Player::Nuke() {
   AddNuke(-1);
 
   nuke_animator_.SetEndCallback(Animator::kBlending, [&, game]() -> void {
-    nuke_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
-      nuke_.SetVisible(false);
-    });
+    nuke_animator_.SetEndCallback(Animator::kBlending,
+                                  [&]() -> void { nuke_.SetVisible(false); });
     nuke_animator_.SetBlending(
         {1, 1, 1, 0}, 2, std::bind(Acceleration, std::placeholders::_1, -1));
     nuke_animator_.SetEndCallback(Animator::kTimer, [&, game]() -> void {
@@ -347,8 +348,8 @@ void Player::Nuke() {
     nuke_animator_.SetTimer(0.5f);
     nuke_animator_.Play(Animator::kBlending | Animator::kTimer, false);
   });
-  nuke_animator_.SetBlending(
-      {1, 1, 1, 1}, 0.1f, std::bind(Acceleration, std::placeholders::_1, 1));
+  nuke_animator_.SetBlending({1, 1, 1, 1}, 0.1f,
+                             std::bind(Acceleration, std::placeholders::_1, 1));
   nuke_animator_.Play(Animator::kBlending, false);
   nuke_.SetVisible(true);
 
@@ -477,7 +478,8 @@ bool Player::CreateRenderResources() {
   Engine::Get().SetImageSource("weapon_tex", "enemy_anims_flare_ok.png", true);
   Engine::Get().SetImageSource("beam_tex", "enemy_ray_ok.png", true);
   Engine::Get().SetImageSource("nuke_symbol_tex", "nuke_frames.png", true);
-  Engine::Get().SetImageSource("nuke_counter_tex", std::bind(&Player::GetNukeCounterImage, this));
+  Engine::Get().SetImageSource("nuke_counter_tex",
+                               std::bind(&Player::GetNukeCounterImage, this));
 
   return true;
 }

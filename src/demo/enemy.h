@@ -7,9 +7,9 @@
 
 #include "../base/vecmath.h"
 #include "../engine/animator.h"
-#include "../engine/sound_player.h"
 #include "../engine/image_quad.h"
 #include "../engine/solid_quad.h"
+#include "../engine/sound_player.h"
 #include "damage_type.h"
 
 namespace eng {
@@ -105,10 +105,10 @@ class Enemy {
 
   int num_enemies_killed_in_current_wave_ = 0;
 
-  std::array<float, kEnemyType_Unit_Last + 1> seconds_since_last_spawn_ =
-      {0, 0, 0, 0};
-  std::array<float, kEnemyType_Unit_Last + 1> seconds_to_next_spawn_ =
-      {0, 0, 0, 0};
+  std::array<float, kEnemyType_Unit_Last + 1> seconds_since_last_spawn_ = {
+      0, 0, 0, 0};
+  std::array<float, kEnemyType_Unit_Last + 1> seconds_to_next_spawn_ = {0, 0, 0,
+                                                                        0};
 
   float spawn_factor_ = 0;
   float spawn_factor_interpolator_ = 0;
