@@ -119,9 +119,6 @@ void Engine::Update(float delta_time) {
   audio_->Update();
   renderer_->Update();
 
-  for (auto d : animators_)
-    d->Update(delta_time);
-
   game_->Update(delta_time);
 
   // Destroy unused textures.
@@ -174,20 +171,6 @@ void Engine::RemoveDrawable(Drawable* drawable) {
   auto it = std::find(drawables_.begin(), drawables_.end(), drawable);
   if (it != drawables_.end()) {
     drawables_.erase(it);
-    return;
-  }
-}
-
-void Engine::AddAnimator(Animator* animator) {
-  DCHECK(std::find(animators_.begin(), animators_.end(), animator) ==
-         animators_.end());
-  animators_.push_back(animator);
-}
-
-void Engine::RemoveAnimator(Animator* animator) {
-  auto it = std::find(animators_.begin(), animators_.end(), animator);
-  if (it != animators_.end()) {
-    animators_.erase(it);
     return;
   }
 }

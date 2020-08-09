@@ -51,6 +51,10 @@ bool Credits::Initialize() {
   return true;
 }
 
+void Credits::Update(float delta_time) {
+  text_animator_.Update(delta_time);
+}
+
 void Credits::OnInputEvent(std::unique_ptr<InputEvent> event) {
   if ((event->GetType() == InputEvent::kDragEnd ||
        event->GetType() == InputEvent::kNavigateBack) &&

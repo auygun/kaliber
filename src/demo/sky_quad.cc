@@ -38,6 +38,7 @@ bool SkyQuad::Create() {
 
 void SkyQuad::Update(float delta_time) {
   sky_offset_ += {0, delta_time * 0.04f};
+  color_animator_.Update(delta_time);
 }
 
 void SkyQuad::Draw(float frame_frac) {

@@ -87,6 +87,14 @@ bool Hud::Initialize() {
   return true;
 }
 
+void Hud::Update(float delta_time) {
+  for (int i = 0; i < 2; ++i) {
+    text_animator_[i].Update(delta_time);
+    progress_bar_animator_[i].Update(delta_time);
+  }
+  message_animator_.Update(delta_time);
+}
+
 void Hud::Show() {
   if (text_[0].IsVisible() && text_[1].IsVisible() &&
       progress_bar_[0].IsVisible() && progress_bar_[1].IsVisible())

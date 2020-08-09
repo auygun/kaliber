@@ -95,6 +95,15 @@ bool Player::Initialize() {
 
 void Player::Update(float delta_time) {
   for (int i = 0; i < 2; ++i) {
+    warmup_animator_[i].Update(delta_time);
+    cooldown_animator_[i].Update(delta_time);
+    beam_animator_[i].Update(delta_time);
+    spark_animator_[i].Update(delta_time);
+  }
+  nuke_animator_.Update(delta_time);
+  nuke_symbol_animator_.Update(delta_time);
+
+  for (int i = 0; i < 2; ++i) {
     if (drag_weapon_[i] != kDamageType_Invalid)
       UpdateTarget(drag_weapon_[i]);
   }

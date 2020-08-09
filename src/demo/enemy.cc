@@ -120,6 +120,8 @@ void Enemy::Update(float delta_time) {
       UpdateWave(delta_time);
   }
 
+  boss_animator_.Update(delta_time);
+
   Random& rnd = Engine::Get().GetRandomGenerator();
 
   // Update enemy units.
@@ -153,6 +155,14 @@ void Enemy::Update(float delta_time) {
       });
       it->sprite_animator.Play(Animator::kFrames, false);
     }
+
+    it->sprite_animator.Update(delta_time);
+    it->target_animator.Update(delta_time);
+    it->blast_animator.Update(delta_time);
+    it->shield_animator.Update(delta_time);
+    it->health_animator.Update(delta_time);
+    it->score_animator.Update(delta_time);
+    it->movement_animator.Update(delta_time);
 
     it++;
   }

@@ -21,6 +21,8 @@ class Credits {
 
   bool Initialize();
 
+  void Update(float delta_time);
+
   void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
 
   void Show();

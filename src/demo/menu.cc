@@ -120,6 +120,17 @@ bool Menu::Initialize() {
   return true;
 }
 
+void Menu::Update(float delta_time) {
+  for (int i = 0; i < 2; ++i)
+    logo_animator_[i].Update(delta_time);
+
+  for (int i = 0; i < kOption_Max; ++i) {
+    if (items_[i].hide)
+      continue;
+    items_[i].text_animator.Update(delta_time);
+  }
+}
+
 void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
   if (event->GetType() == InputEvent::kDragStart)
     tap_pos_[0] = tap_pos_[1] = event->GetVector(0);

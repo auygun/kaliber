@@ -86,6 +86,9 @@ void Demo::Update(float delta_time) {
     }
   }
 
+  menu_.Update(delta_time);
+  credits_.Update(delta_time);
+
   if (state_ == kMenu)
     UpdateMenuState(delta_time);
   else if (state_ == kGame || state_ == kGameOver)
@@ -189,6 +192,7 @@ void Demo::UpdateGameState(float delta_time) {
     hud_.SetScore(score_, true);
   }
 
+  hud_.Update(delta_time);
   sky_.Update(delta_time);
   player_.Update(delta_time);
   enemy_.Update(delta_time);
