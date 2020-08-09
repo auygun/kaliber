@@ -17,6 +17,7 @@ class TextureCompressor;
 
 namespace eng {
 
+class Animator;
 class AudioResource;
 class Font;
 class Game;
@@ -51,6 +52,9 @@ class Engine {
 
   void AddDrawable(Drawable* drawable);
   void RemoveDrawable(Drawable* drawable);
+
+  void AddAnimator(Animator* animator);
+  void RemoveAnimator(Animator* animator);
 
   void Exit();
 
@@ -157,6 +161,8 @@ class Engine {
   std::unique_ptr<TextureCompressor> tex_comp_alpha_;
 
   std::list<Drawable*> drawables_;
+
+  std::list<Animator*> animators_;
 
   // Textures mapped by asset name.
   std::unordered_map<std::string, TextureResource> textures_;

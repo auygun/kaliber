@@ -3,10 +3,19 @@
 #include "../base/interpolation.h"
 #include "../base/log.h"
 #include "animatable.h"
+#include "engine.h"
 
 using namespace base;
 
 namespace eng {
+
+Animator::Animator() {
+  Engine::Get().AddAnimator(this);
+}
+
+Animator::~Animator() {
+  Engine::Get().RemoveAnimator(this);
+}
 
 void Animator::Attach(Animatable* animatable) {
   elements_.push_back({animatable,

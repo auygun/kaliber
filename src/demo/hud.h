@@ -20,8 +20,6 @@ class Hud {
 
   bool Initialize();
 
-  void Update(float delta_time);
-
   void Show();
   void Hide();
   void HideProgress();

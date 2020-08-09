@@ -25,8 +25,8 @@ class Animator {
 
   using Interpolator = std::function<float(float)>;
 
-  Animator() = default;
-  ~Animator() = default;
+  Animator();
+  ~Animator();
 
   // Attached the given animatable to this animator and sets the start values.
   void Attach(Animatable* animatable);
