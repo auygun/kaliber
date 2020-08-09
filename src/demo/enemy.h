@@ -44,7 +44,7 @@ class Enemy {
   void OnWaveStarted(int wave, bool boss_figt);
 
   void StopAllEnemyUnits();
-  void KillAllEnemyUnits();
+  void KillAllEnemyUnits(bool randomize_order = true);
   void RemoveAll();
 
   int num_enemies_killed_in_current_wave() const {

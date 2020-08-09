@@ -357,16 +357,21 @@ void Enemy::StopAllEnemyUnits() {
   }
 }
 
-void Enemy::KillAllEnemyUnits() {
+void Enemy::KillAllEnemyUnits(bool randomize_order) {
   Engine& engine = Engine::Get();
   Demo* game = static_cast<Demo*>(engine.GetGame());
 
   for (auto& e : enemies_) {
     if (!e.marked_for_removal && e.hit_points > 0 &&
         e.enemy_type != kEnemyType_Boss) {
-      float dist = e.sprite.GetOffset().y -
-                   game->GetPlayer().GetWeaponPos(kDamageType_Green).y;
-      e.kill_timer = dist * 0.15f;
+      if (randomize_order) {
+        e.kill_timer = Lerp(0.0f, engine.GetScreenSize().y * 0.15f,
+                            engine.GetRandomGenerator().GetFloat());
+      } else {
+        float dist = e.sprite.GetOffset().y -
+                     game->GetPlayer().GetWeaponPos(kDamageType_Green).y;
+        e.kill_timer = dist * 0.15f;
+      }
     }
   }
 }

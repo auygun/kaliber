@@ -342,7 +342,7 @@ void Player::Nuke() {
     nuke_animator_.SetBlending(
         {1, 1, 1, 0}, 2, std::bind(Acceleration, std::placeholders::_1, -1));
     nuke_animator_.SetEndCallback(Animator::kTimer, [&, game]() -> void {
-      game->GetEnemy().KillAllEnemyUnits();
+      game->GetEnemy().KillAllEnemyUnits(false);
       game->GetEnemy().ResumeProgress();
     });
     nuke_animator_.SetTimer(0.5f);
