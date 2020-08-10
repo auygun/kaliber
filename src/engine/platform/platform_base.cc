@@ -3,12 +3,15 @@
 #include <thread>
 
 #include "../../base/log.h"
+#include "../../base/worker.h"
 #include "../audio/audio.h"
 #include "../engine.h"
 #include "../renderer/renderer.h"
 
 // Save battery on mobile devices.
 #define USE_SLEEP
+
+using namespace base;
 
 namespace eng {
 
@@ -20,6 +23,7 @@ PlatformBase::~PlatformBase() = default;
 
 void PlatformBase::Shutdown() {
   LOG << "Shutting down platform.";
+
   audio_->Shutdown();
   renderer_->Shutdown();
 }
@@ -62,9 +66,9 @@ void PlatformBase::RunMainLoop() {
 
     // Subdivide the frame time.
     while (accumulator >= time_step) {
-      // Update();
       engine_->Update(time_step);
       if (should_exit_) {
+        Worker::Shutdown();
         engine_->Shutdown();
         engine_.reset();
         return;

@@ -26,7 +26,7 @@ class AudioBase {
   std::list<std::shared_ptr<AudioSample>> samples_[2];
   std::mutex mutex_;
 
-  base::Worker worker_{1};
+  base::Worker worker_;
 
   base::TaskRunner task_runner_;
 

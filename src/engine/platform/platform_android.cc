@@ -5,6 +5,7 @@
 #include <string>
 
 #include "../../base/log.h"
+#include "../../base/worker.h"
 #include "../audio/audio_oboe.h"
 #include "../engine.h"
 #include "../input_event.h"
@@ -235,6 +236,9 @@ void PlatformAndroid::HandleCmd(android_app* app, int32_t cmd) {
 
 void PlatformAndroid::Initialize(android_app* app) {
   LOG << "Initializing platform.";
+
+  Worker::Initialize();
+
   app_ = app;
 
   audio_ = std::make_unique<AudioOboe>();

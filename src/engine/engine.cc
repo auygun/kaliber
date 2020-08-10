@@ -425,7 +425,7 @@ std::unique_ptr<Image> Engine::PrintStats() {
   image->Create(image_width, image_height);
   image->Clear({1, 1, 1, 0.08f});
 
-  Worker worker(2);
+  Worker worker;
   int y = margin;
   for (auto& text : lines) {
     worker.Enqueue(std::bind(&Font::Print, system_font_.get(), margin, y,

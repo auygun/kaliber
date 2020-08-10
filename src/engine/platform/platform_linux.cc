@@ -5,6 +5,7 @@
 
 #include "../../base/log.h"
 #include "../../base/vecmath.h"
+#include "../../base/worker.h"
 #include "../audio/audio_alsa.h"
 #include "../engine.h"
 #include "../input_event.h"
@@ -18,6 +19,10 @@ PlatformLinux::PlatformLinux() = default;
 PlatformLinux::~PlatformLinux() = default;
 
 void PlatformLinux::Initialize() {
+  LOG << "Initializing platform.";
+
+  Worker::Initialize();
+
   root_path_ = "../../";
   LOG << "Root path: " << root_path_.c_str();
 

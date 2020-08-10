@@ -114,7 +114,7 @@ std::unique_ptr<Image> Credits::CreateImage() {
   image->Create(max_text_width_, line_height * kNumLines);
   image->Clear({1, 1, 1, 0});
 
-  Worker worker(kNumLines);
+  Worker worker;
   for (int i = 0; i < kNumLines; ++i) {
     int w, h;
     font.CalculateBoundingBox(kCreditsLines[i], w, h);

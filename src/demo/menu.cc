@@ -250,7 +250,7 @@ std::unique_ptr<Image> Menu::CreateImage() {
   // Fill the area of each menu item with gradient.
   image->GradientV({1.0f, 1.0f, 1.0f, 0}, {.0f, .0f, 1.0f, 0}, line_height);
 
-  base::Worker worker(kOption_Max);
+  base::Worker worker;
   for (int i = 0; i < kOption_Max; ++i) {
     int w, h;
     font.CalculateBoundingBox(kMenuOption[i], w, h);
