@@ -46,6 +46,8 @@ class ImageQuad : public Animatable {
 
   base::Vector4 color_ = {1, 1, 1, 1};
 
+  std::string asset_name_;
+
   float GetFrameWidth() const;
   float GetFrameHeight() const;
 

@@ -22,6 +22,8 @@ void ImageQuad::Create(const std::string& asset_name,
 
   if ((frame_width_ > 0 && frame_height_ > 0) || texture_->IsValid())
     AutoScale();
+
+  asset_name_ = asset_name;
 }
 
 void ImageQuad::Destory() {
@@ -36,7 +38,8 @@ void ImageQuad::AutoScale() {
 }
 
 void ImageQuad::SetFrame(size_t frame) {
-  DCHECK(frame < GetNumFrames());
+  DCHECK(frame < GetNumFrames())
+      << "asset: " << asset_name_ << " frame: " << frame;
   current_frame_ = frame;
 }
 
@@ -83,9 +86,8 @@ float ImageQuad::GetFrameHeight() const {
 
 // Return the uv offset for the given frame.
 Vector2 ImageQuad::GetUVOffset(int frame) const {
-  DCHECK(frame < num_frames_[0] * num_frames_[1]);
-  if (num_frames_[0] == 1 && num_frames_[1] == 1)
-    return {0, 0};
+  DCHECK(frame < GetNumFrames())
+      << "asset: " << asset_name_ << " frame: " << frame;
   return {(float)(frame % num_frames_[0]), (float)(frame / num_frames_[0])};
 }
 
