@@ -120,7 +120,7 @@ std::unique_ptr<Image> Credits::CreateImage() {
     font.CalculateBoundingBox(kCreditsLines[i], w, h);
     float x = (image->GetWidth() - w) / 2;
     float y = line_height * i;
-    worker.Enqueue(std::bind(&Font::Print, &font, x, y, kCreditsLines[i],
+    worker.Enqueue(HERE, std::bind(&Font::Print, &font, x, y, kCreditsLines[i],
                              image->GetBuffer(), image->GetWidth()));
   }
   worker.Join();

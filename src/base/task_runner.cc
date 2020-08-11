@@ -4,14 +4,16 @@
 
 namespace base {
 
-void TaskRunner::Enqueue(base::Closure task, base::Closure done_cb) {
+void TaskRunner::Enqueue(Location from,
+                         base::Closure task,
+                         base::Closure done_cb) {
   DCHECK(task);
 
   bool notify;
   {
     std::unique_lock<std::mutex> scoped_lock(mutex_);
     notify = blocking_ && tasks_.empty();
-    tasks_.emplace_back(std::make_pair(std::move(task), std::move(done_cb)));
+    tasks_.emplace_back(std::move(from), std::move(task), std::move(done_cb));
   }
   if (notify)
     cv_.notify_all();
@@ -33,19 +35,27 @@ void TaskRunner::Run() {
       }
     }
 
-    if (!task.first) {
+    auto [from, task_cb, done_cb] = task;
+
+    if (!task_cb) {
       DCHECK(!blocking_);
       break;
     }
 
-    task.first();
+#if 0
+    DLOG << "Task from: " << LOCATION(from);
+#endif
 
-    if (task.second)
-      task.second();
+    task_cb();
+
+    if (done_cb)
+      done_cb();
   }
 }
 
 void TaskRunner::QuitWhenIdle() {
+  DCHECK(blocking_);
+
   {
     std::unique_lock<std::mutex> scoped_lock(mutex_);
     quit_when_idle_ = true;

@@ -256,7 +256,7 @@ std::unique_ptr<Image> Menu::CreateImage() {
     font.CalculateBoundingBox(kMenuOption[i], w, h);
     float x = (image->GetWidth() - w) / 2;
     float y = line_height * i;
-    worker.Enqueue(std::bind(&Font::Print, &font, x, y, kMenuOption[i],
+    worker.Enqueue(HERE, std::bind(&Font::Print, &font, x, y, kMenuOption[i],
                              image->GetBuffer(), image->GetWidth()));
   }
   worker.Join();

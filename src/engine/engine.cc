@@ -428,9 +428,9 @@ std::unique_ptr<Image> Engine::PrintStats() {
   Worker worker;
   int y = margin;
   for (auto& text : lines) {
-    worker.Enqueue(std::bind(&Font::Print, system_font_.get(), margin, y,
-                             text.c_str(), image->GetBuffer(),
-                             image->GetWidth()));
+    worker.Enqueue(
+        HERE, std::bind(&Font::Print, system_font_.get(), margin, y,
+                        text.c_str(), image->GetBuffer(), image->GetWidth()));
     y += line_height + margin;
   }
   worker.Join();

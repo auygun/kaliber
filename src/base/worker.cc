@@ -11,7 +11,8 @@ namespace {
 class ThreadPool {
  public:
   ThreadPool() = default;
-  ~ThreadPool() = default;
+
+  ~ThreadPool() { Shutdown(); }
 
   void Initialize(unsigned max_concurrency) {
     if (max_concurrency > std::thread::hardware_concurrency() ||
@@ -66,12 +67,12 @@ TaskRunner& Worker::GetTaskRunner() {
   return g_thread_pool.GetTaskRunner();
 }
 
-void Worker::Enqueue(base::Closure task) {
+void Worker::Enqueue(Location from, base::Closure task) {
   DCHECK(task);
 
   lock_.fetch_add(1, std::memory_order_relaxed);
 
-  g_thread_pool.GetTaskRunner().Enqueue(std::move(task), [&]() -> void {
+  g_thread_pool.GetTaskRunner().Enqueue(from, std::move(task), [&]() -> void {
     lock_.fetch_sub(1, std::memory_order_release);
   });
 }

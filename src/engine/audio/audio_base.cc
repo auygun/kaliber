@@ -115,8 +115,9 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
               src[1] = src[0];  // mono.
             num_samples = sound->GetNumSamples();
 
-            Worker::GetTaskRunner().Enqueue(std::bind(
-                &Sound::Stream, sample->sound, flags & AudioSample::kLoop));
+            Worker::GetTaskRunner().Enqueue(
+                HERE, std::bind(&Sound::Stream, sample->sound,
+                                flags & AudioSample::kLoop));
           } else if (num_samples) {
             DLOG << "Buffer underrun!";
             src_index %= num_samples;
@@ -130,7 +131,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
     }
 
     if (remove) {
-      task_runner_.Enqueue(std::bind(&AudioBase::EndCallback, this, *it));
+      task_runner_.Enqueue(HERE, std::bind(&AudioBase::EndCallback, this, *it));
       it = samples_[1].erase(it);
     } else {
       ++it;
