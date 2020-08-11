@@ -7,7 +7,6 @@
 
 #include "../../base/closure.h"
 #include "../../base/task_runner.h"
-#include "../../base/worker.h"
 #include "audio_sample.h"
 
 namespace eng {
@@ -25,8 +24,6 @@ class AudioBase {
 
   std::list<std::shared_ptr<AudioSample>> samples_[2];
   std::mutex mutex_;
-
-  base::Worker worker_;
 
   base::TaskRunner task_runner_;
 

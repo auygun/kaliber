@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include "../../base/log.h"
+#include "../../base/worker.h"
 #include "../sound.h"
 
 using namespace base;
@@ -10,10 +11,7 @@ using namespace base;
 namespace eng {
 
 AudioBase::AudioBase() = default;
-
-AudioBase::~AudioBase() {
-  worker_.Join();
-}
+AudioBase::~AudioBase() = default;
 
 void AudioBase::Play(std::shared_ptr<AudioSample> sample) {
   std::unique_lock<std::mutex> scoped_lock(mutex_);
@@ -117,8 +115,8 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
               src[1] = src[0];  // mono.
             num_samples = sound->GetNumSamples();
 
-            worker_.Enqueue(std::bind(&Sound::Stream, sample->sound,
-                                      flags & AudioSample::kLoop));
+            Worker::GetTaskRunner().Enqueue(std::bind(
+                &Sound::Stream, sample->sound, flags & AudioSample::kLoop));
           } else if (num_samples) {
             DLOG << "Buffer underrun!";
             src_index %= num_samples;

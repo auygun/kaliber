@@ -58,7 +58,6 @@ void Renderer::ContextLost() {
   InvalidateAllResources();
 
 #ifdef THREADED_RENDERING
-  DCHECK(!task_runner_.IsBoundToCurrentThread());
   task_runner_.Enqueue(context_lost_cb_);
 #else
   context_lost_cb_();

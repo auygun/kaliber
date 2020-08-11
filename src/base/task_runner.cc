@@ -4,31 +4,53 @@
 
 namespace base {
 
-void TaskRunner::Enqueue(base::Closure task) {
+void TaskRunner::Enqueue(base::Closure task, base::Closure done_cb) {
   DCHECK(task);
 
-  std::unique_lock<std::mutex> scoped_lock(mutex_);
-  thread_tasks_.emplace_back(std::move(task));
+  bool notify;
+  {
+    std::unique_lock<std::mutex> scoped_lock(mutex_);
+    notify = blocking_ && tasks_.empty();
+    tasks_.emplace_back(std::make_pair(std::move(task), std::move(done_cb)));
+  }
+  if (notify)
+    cv_.notify_all();
 }
 
 void TaskRunner::Run() {
   for (;;) {
-    base::Closure task;
+    Task task;
     {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
-      if (!thread_tasks_.empty()) {
-        task.swap(thread_tasks_.front());
-        thread_tasks_.pop_front();
+      while (blocking_ && tasks_.empty()) {
+        if (quit_when_idle_)
+          return;
+        cv_.wait(scoped_lock);
+      }
+      if (!tasks_.empty()) {
+        task.swap(tasks_.front());
+        tasks_.pop_front();
       }
     }
-    if (!task)
+
+    if (!task.first) {
+      DCHECK(!blocking_);
       break;
-    task();
+    }
+
+    task.first();
+
+    if (task.second)
+      task.second();
   }
 }
 
-bool TaskRunner::IsBoundToCurrentThread() {
-  return thread_id_ == std::this_thread::get_id();
+void TaskRunner::QuitWhenIdle() {
+  {
+    std::unique_lock<std::mutex> scoped_lock(mutex_);
+    quit_when_idle_ = true;
+  }
+  cv_.notify_all();
 }
 
 }  // namespace base

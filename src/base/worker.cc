@@ -1,15 +1,10 @@
 #include "worker.h"
 
-#include <condition_variable>
-#include <deque>
-#include <mutex>
 #include <thread>
-#include <utility>
 #include <vector>
 
 #include "log.h"
-
-using Task = std::pair<base::Closure, base::Closure>;
+#include "task_runner.h"
 
 namespace {
 
@@ -31,54 +26,20 @@ class ThreadPool {
   }
 
   void Shutdown() {
-    {
-      std::unique_lock<std::mutex> scoped_lock(mutex_);
-      quit_when_idle_ = true;
-    }
-    cv_.notify_all();
+    task_runner_.QuitWhenIdle();
+
     for (auto& thread : threads_)
       thread.join();
     threads_.clear();
   }
 
-  void Enqueue(Task task) {
-    DCHECK(!threads_.empty());
-
-    bool notify;
-    {
-      std::unique_lock<std::mutex> scoped_lock(mutex_);
-      notify = tasks_.empty();
-      tasks_.push_back(std::move(task));
-    }
-    if (notify)
-      cv_.notify_all();
-  }
+  base::TaskRunner& GetTaskRunner() { return task_runner_; }
 
  private:
-  std::condition_variable cv_;
-  std::mutex mutex_;
   std::vector<std::thread> threads_;
-  std::deque<Task> tasks_;
-  bool quit_when_idle_;
+  base::TaskRunner task_runner_{true};
 
-  void WorkerMain() {
-    for (;;) {
-      std::pair<base::Closure, base::Closure> task;
-      {
-        std::unique_lock<std::mutex> scoped_lock(mutex_);
-        while (tasks_.empty()) {
-          if (quit_when_idle_)
-            return;
-          cv_.wait(scoped_lock);
-        }
-        task.swap(tasks_.front());
-        tasks_.pop_front();
-      }
-
-      task.first();
-      task.second();
-    }
-  }
+  void WorkerMain() { task_runner_.Run(); }
 };
 
 ThreadPool g_thread_pool;
@@ -101,13 +62,18 @@ void Worker::Shutdown() {
   g_thread_pool.Shutdown();
 }
 
+TaskRunner& Worker::GetTaskRunner() {
+  return g_thread_pool.GetTaskRunner();
+}
+
 void Worker::Enqueue(base::Closure task) {
   DCHECK(task);
 
   lock_.fetch_add(1, std::memory_order_relaxed);
-  g_thread_pool.Enqueue(std::make_pair(std::move(task), [&]() -> void {
+
+  g_thread_pool.GetTaskRunner().Enqueue(std::move(task), [&]() -> void {
     lock_.fetch_sub(1, std::memory_order_release);
-  }));
+  });
 }
 
 void Worker::Join() {
