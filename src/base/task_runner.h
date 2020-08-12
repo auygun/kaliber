@@ -17,17 +17,13 @@ namespace base {
 // thread.
 class TaskRunner {
  public:
-  using Task = std::tuple<Location, base::Closure, base::Closure>;
-
   // If blocking is true, Run method won't return until QuitWhenIdle is called.
   TaskRunner(bool blocking = false) : blocking_(blocking) {}
   ~TaskRunner() = default;
 
   // Enqueue the given task to be run. On completion, done_cb is called on the
   // same thread that ran the task.
-  void Enqueue(Location from,
-               base::Closure task,
-               base::Closure done_cb = nullptr);
+  void Enqueue(Location from, Closure task, Closure done_cb = nullptr);
 
   // Run all queued tasks and return upon completion if non-blocking. Otherwise,
   // wait for more tasks to run.
@@ -37,6 +33,8 @@ class TaskRunner {
   void QuitWhenIdle();
 
  private:
+  using Task = std::tuple<Location, Closure, Closure>;
+
   std::condition_variable cv_;
   std::mutex mutex_;
   std::deque<Task> tasks_;

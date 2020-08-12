@@ -4,9 +4,7 @@
 
 namespace base {
 
-void TaskRunner::Enqueue(Location from,
-                         base::Closure task,
-                         base::Closure done_cb) {
+void TaskRunner::Enqueue(Location from, Closure task, Closure done_cb) {
   DCHECK(task);
 
   bool notify;
@@ -29,18 +27,13 @@ void TaskRunner::Run() {
           return;
         cv_.wait(scoped_lock);
       }
-      if (!tasks_.empty()) {
-        task.swap(tasks_.front());
-        tasks_.pop_front();
-      }
+      if (tasks_.empty())
+        return;
+      task.swap(tasks_.front());
+      tasks_.pop_front();
     }
 
     auto [from, task_cb, done_cb] = task;
-
-    if (!task_cb) {
-      DCHECK(!blocking_);
-      break;
-    }
 
 #if 0
     DLOG << "Task from: " << LOCATION(from);

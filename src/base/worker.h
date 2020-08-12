@@ -29,7 +29,7 @@ class Worker {
   static TaskRunner& GetTaskRunner();
 
   // Enqueue a task to be called on any thread from the pool.
-  void Enqueue(Location from, base::Closure task);
+  void Enqueue(Location from, Closure task);
 
   // Wait for the tasks to complete.
   void Join();

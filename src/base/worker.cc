@@ -67,7 +67,7 @@ TaskRunner& Worker::GetTaskRunner() {
   return g_thread_pool.GetTaskRunner();
 }
 
-void Worker::Enqueue(Location from, base::Closure task) {
+void Worker::Enqueue(Location from, Closure task) {
   DCHECK(task);
 
   lock_.fetch_add(1, std::memory_order_relaxed);
