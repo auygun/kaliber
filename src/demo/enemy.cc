@@ -211,7 +211,8 @@ void Enemy::SelectTarget(DamageType damage_type,
     weapon_enemy_dir.Normalize();
     float cos_theta = weapon_enemy_dir.DotProduct(dir);
     if (cos_theta > 0.95f)
-      candidates.push_back(std::make_tuple(&e, cos_theta, weapon_enemy_dist, weapon_enemy_dir));
+      candidates.push_back(
+          std::make_tuple(&e, cos_theta, weapon_enemy_dist, weapon_enemy_dir));
   }
 
   if (candidates.empty())

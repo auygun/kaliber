@@ -257,7 +257,7 @@ std::unique_ptr<Image> Menu::CreateImage() {
     float x = (image->GetWidth() - w) / 2;
     float y = line_height * i;
     worker.Enqueue(HERE, std::bind(&Font::Print, &font, x, y, kMenuOption[i],
-                             image->GetBuffer(), image->GetWidth()));
+                                   image->GetBuffer(), image->GetWidth()));
   }
   worker.Join();
 
