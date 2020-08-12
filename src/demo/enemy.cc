@@ -192,7 +192,7 @@ void Enemy::SelectTarget(DamageType damage_type,
   if (paused_)
     return;
 
-  std::vector<std::tuple<EnemyUnit*, float, float>> candidates;
+  std::vector<std::tuple<EnemyUnit*, float, float, Vector2>> candidates;
 
   for (auto& e : enemies_) {
     if (e.hit_points <= 0 || e.marked_for_removal || e.stealth_active)
@@ -207,29 +207,29 @@ void Enemy::SelectTarget(DamageType damage_type,
     }
 
     Vector2 weapon_enemy_dir = e.sprite.GetOffset() - origin;
-    float enemy_weapon_dist = weapon_enemy_dir.Magnitude();
+    float weapon_enemy_dist = weapon_enemy_dir.Magnitude();
     weapon_enemy_dir.Normalize();
     float cos_theta = weapon_enemy_dir.DotProduct(dir);
     if (cos_theta > 0.95f)
-      candidates.push_back(std::make_tuple(&e, cos_theta, enemy_weapon_dist));
+      candidates.push_back(std::make_tuple(&e, cos_theta, weapon_enemy_dist, weapon_enemy_dir));
   }
 
   if (candidates.empty())
     return;
 
   for (auto it = candidates.begin(); it != candidates.end();) {
-    auto [cand_enemy, cand_cos_theta, cand_dist] = *it;
+    auto [cand_enemy, cand_cos_theta, cand_dist, cand_dir] = *it;
 
     auto oit = candidates.begin();
     for (; oit != candidates.end(); ++oit) {
-      auto [other_enemy, other_cos_theta, other_dist] = *oit;
+      auto [other_enemy, other_cos_theta, other_dist, orther_dir] = *oit;
 
       if (cand_enemy == other_enemy || cand_dist < other_dist)
         continue;
 
       if (base::Intersection(other_enemy->sprite.GetOffset(),
                              other_enemy->sprite.GetScale() * 1.2f, origin,
-                             dir)) {
+                             cand_dir)) {
         break;
       }
     }
