@@ -1,3 +1,4 @@
+TODO:
 - Harder and shorter waves.
 - Harder boss.
 - Stealth enemy jumps/moves after nuke.
@@ -12,3 +13,6 @@
 - Add 3rd party libs to credits.
 - Test 30 fps
 - Do benchmark at startup and switch to low qualiy sky for slow devices.
+
+DONE:
+- Fix intersection test in targetting code.
