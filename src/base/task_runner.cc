@@ -35,9 +35,7 @@ void TaskRunner::Run() {
 
     auto [from, task_cb, done_cb] = task;
 
-#if 0
-    DLOG << "Task from: " << LOCATION(from);
-#endif
+    DLOG_ONCE << "Task from: " << LOCATION(from);
 
     task_cb();
 

@@ -6,6 +6,9 @@
 #include <cstdio>
 #endif
 #include <cstdlib>
+#ifdef _DEBUG
+#include <unordered_set>
+#endif
 
 #include "vecmath.h"
 
@@ -57,14 +60,31 @@ Log::~Log() {
   Flush();
 }
 
+#ifdef _DEBUG
+
+LogOnce::LogOnce(const char* file, int line) : LogBase(file, line) {}
+
+LogOnce::~LogOnce() {
+  static std::unordered_set<std::string> count_set;
+
+  auto key = std::string(file_) + std::to_string(line_) + stream_.str();
+  auto it = count_set.find(key);
+  if (it == count_set.end()) {
+    count_set.insert(key);
+    Flush();
+  }
+}
+
+#endif
+
 Check::Check(const char* file,
              int line,
              bool condition,
              bool debug,
-             const char* condition_str)
+             const char* expr)
     : LogBase(file, line), condition_(condition) {
   if (!condition_)
-    *this << (debug ? "DCHECK: " : "CHECK: (") << condition_str << ") ";
+    *this << (debug ? "DCHECK: " : "CHECK: (") << expr << ") ";
 }
 
 Check::~Check() {
@@ -75,7 +95,7 @@ Check::~Check() {
 }
 
 NotReached::NotReached(const char* file, int line) : LogBase(file, line) {
-  *this << "UNREACHABLE CODE ";
+  *this << "NOTREACHED ";
 }
 
 NotReached::~NotReached() {

@@ -13,10 +13,12 @@
 
 #ifdef _DEBUG
 #define DLOG base::Log(__FILE__, __LINE__)
+#define DLOG_ONCE base::LogOnce(__FILE__, __LINE__)
 #define DCHECK(expr) \
   base::Check(__FILE__, __LINE__, static_cast<bool>(expr), true, #expr)
 #else
 #define DLOG EAT_STREAM_PARAMETERS
+#define DLOG_ONCE EAT_STREAM_PARAMETERS
 #define DCHECK(expr) EAT_STREAM_PARAMETERS
 #endif
 
@@ -35,9 +37,6 @@ class LogBase {
     void operator&(LogBase&) {}
   };
 
-  LogBase(const char* file, int line);
-  ~LogBase();
-
   template <typename T>
   LogBase& operator<<(const T& arg) {
     stream_ << arg;
@@ -51,12 +50,14 @@ class LogBase {
   static LogBase* swallow_stream;
 
  protected:
-  void Flush();
-
- private:
   const char* file_;
   const int line_;
   std::ostringstream stream_;
+
+  LogBase(const char* file, int line);
+  ~LogBase();
+
+  void Flush();
 };
 
 class Log : public LogBase {
@@ -65,13 +66,23 @@ class Log : public LogBase {
   ~Log();
 };
 
+#ifdef _DEBUG
+
+class LogOnce : public LogBase {
+ public:
+  LogOnce(const char* file, int line);
+  ~LogOnce();
+};
+
+#endif
+
 class Check : public LogBase {
  public:
   Check(const char* file,
         int line,
         bool condition,
         bool debug,
-        const char* condition_str);
+        const char* expr);
   ~Check();
 
  private:
