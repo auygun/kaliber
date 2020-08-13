@@ -20,9 +20,9 @@ class SoundPlayer {
 
   void Play(bool loop);
 
-  void Resume(bool fade_in);
+  void Resume(float fade_in_duration = 0);
 
-  void Stop(bool fade_out);
+  void Stop(float fade_out_duration = 0);
 
   // Picks a random variation of the sound or the original sound if "variate" is
   // false. Variations are obtained by slightly up or down sampling.

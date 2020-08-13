@@ -34,15 +34,15 @@ void SoundPlayer::Play(bool loop) {
   }
 }
 
-void SoundPlayer::Resume(bool fade_in) {
-  if (fade_in)
-    resource_->SetAmplitudeInc(0.0001f);
-  resource_->Play(sound_, fade_in ? 0 : max_amplitude_, false);
+void SoundPlayer::Resume(float fade_in_duration) {
+  if (fade_in_duration > 0)
+    resource_->SetAmplitudeInc(1.0f / (sound_->hz() * fade_in_duration));
+  resource_->Play(sound_, fade_in_duration > 0 ? 0 : max_amplitude_, false);
 }
 
-void SoundPlayer::Stop(bool fade_out) {
-  if (fade_out)
-    resource_->SetAmplitudeInc(-0.0001f);
+void SoundPlayer::Stop(float fade_out_duration) {
+  if (fade_out_duration > 0)
+    resource_->SetAmplitudeInc(-1.0f / (sound_->hz() * fade_out_duration));
   else
     resource_->Stop();
 }
