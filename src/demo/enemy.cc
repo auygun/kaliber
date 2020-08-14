@@ -359,7 +359,7 @@ void Enemy::StopAllEnemyUnits() {
     if (!e.marked_for_removal && e.hit_points > 0)
       e.movement_animator.Pause(Animator::kMovement);
     if (e.stealth_active) {
-      e.sprite_animator.Stop(Animator::kAllAnimations);
+      e.sprite_animator.Stop(Animator::kAllAnimations | Animator::kTimer);
       e.sprite_animator.SetEndCallback(Animator::kBlending, nullptr);
       e.sprite_animator.SetBlending({1, 1, 1, 1}, 0.5f);
       e.sprite_animator.Play(Animator::kBlending, false);
