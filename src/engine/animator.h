@@ -28,47 +28,39 @@ class Animator {
   Animator() = default;
   ~Animator() = default;
 
-  // Attached the given animatable to this animator and sets the start values.
   void Attach(Animatable* animatable);
 
   void Play(int animation, bool loop);
   void Pause(int animation);
   void Stop(int animation);
 
-  // Set callback for the given animations. It's called for each animation once
-  // it ends. Not that it's not called for looping animations.
+  // Get/set current time of the given animation.
+  float GetTime(int animation);
+  void SetTime(int animation, float time);
+
+  // Set callback ro be called once animation ends.
   void SetEndCallback(int animation, base::Closure cb);
 
-  // Set movement animation parameters. Movement is relative to the attached
-  // animatable's current position. Distance is calculated from the magnitude of
-  // direction vector. Duration is in seconds.
+  // Distance is the magnitude of direction vector. Duration is in seconds.
   void SetMovement(base::Vector2 direction,
                    float duration,
                    Interpolator interpolator = nullptr);
 
-  // Set rotation animation parameters. Rotation is relative to the attached
-  // animatable's current rotation. Duration is in seconds.
+  // Rotation is in radian. Duration is in seconds.
   void SetRotation(float target,
                    float duration,
                    Interpolator interpolator = nullptr);
 
-  // Set color blending animation parameters. Color blending animation is
-  // absolute. The absolute start colors are obtained from the attached
-  // animatables. Duration is in seconds.
   void SetBlending(base::Vector4 target,
                    float duration,
                    Interpolator interpolator = nullptr);
 
-  // Set frame playback animation parameters. Frame animation is absolute. The
-  // absolute start frames are obtained from the attached animatables. Plays
-  // count number of frames.
+  // Plays count number of frames.
   void SetFrames(int count,
                  int frames_per_second,
                  Interpolator interpolator = nullptr);
 
-  // Set Timer parameters. Timer doesn't play any animation. Usefull for
-  // triggering a callback after the given seconds passed. Loop parameter is
-  // ignored when played.
+  // Triggers a callback after the given seconds passed.
   void SetTimer(float duration);
 
   // Set visibility of all attached animatables.
