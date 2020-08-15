@@ -142,15 +142,6 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
 void AudioBase::EndCallback(std::shared_ptr<AudioSample> sample_) {
   AudioSample* sample = sample_.get();
 
-  if (sample->flags & AudioSample::kReset) {
-    sample->flags &= ~(AudioSample::kReset | AudioSample::kStopped);
-    sample->accumulator = 0;
-    sample->src_index = 0;
-    sample->sound->ResetStream();
-    Play(sample_);
-    return;
-  }
-
   sample->active = false;
 
   if (sample->end_cb)

@@ -10,7 +10,7 @@ namespace eng {
 class Sound;
 
 struct AudioSample {
-  enum SampleFlags { kLoop = 1, kStopped = 2, kSimulateStereo = 4, kReset = 8 };
+  enum SampleFlags { kLoop = 1, kStopped = 2, kSimulateStereo = 4 };
 
   // Accessed by main thread only.
   bool active = false;

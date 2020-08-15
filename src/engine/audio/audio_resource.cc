@@ -5,6 +5,8 @@
 #include "audio.h"
 #include "audio_sample.h"
 
+using namespace base;
+
 namespace eng {
 
 AudioResource::AudioResource(Audio* audio)
@@ -19,9 +21,18 @@ void AudioResource::Play(std::shared_ptr<Sound> sound,
                          bool reset_pos) {
   AudioSample* sample = sample_.get();
 
-  if (sample_->active) {
+  if (sample->active) {
     if (reset_pos)
-      sample_->flags |= (AudioSample::kReset | AudioSample::kStopped);
+      sample->flags = AudioSample::kStopped;
+
+    if (sample->flags & AudioSample::kStopped) {
+      Closure ocb = sample_->end_cb;
+      SetEndCallback([&, sound, amplitude, reset_pos, ocb]() -> void {
+        Play(sound, amplitude, reset_pos);
+        SetEndCallback(ocb);
+      });
+    }
+
     return;
   }
 
@@ -34,7 +45,7 @@ void AudioResource::Play(std::shared_ptr<Sound> sound,
   sample->flags &= ~AudioSample::kStopped;
   sample->sound = sound;
   sample->amplitude = amplitude;
-  sample_->accumulator = 0;
+  sample->accumulator = 0;
 
   audio_->Play(sample_);
 }
