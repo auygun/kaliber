@@ -100,12 +100,14 @@ void Demo::ContextLost() {
 }
 
 void Demo::LostFocus() {
-  music_.Stop(true);
+  music_.Stop();
   if (state_ == kGame)
     EnterMenuState();
 }
 
-void Demo::GainedFocus() {}
+void Demo::GainedFocus() {
+  music_.Resume();
+}
 
 void Demo::AddScore(int score) {
   add_score_ += score;
@@ -120,7 +122,6 @@ void Demo::EnterMenuState() {
   } else if (state_ == kGame) {
     menu_.SetOptionEnabled(Menu::kContinue, true);
     menu_.SetOptionEnabled(Menu::kNewGame, false);
-    music_.Stop(true);
   }
   menu_.Show();
   state_ = kMenu;
@@ -136,7 +137,6 @@ void Demo::EnterCreditsState() {
 void Demo::EnterGameState() {
   if (state_ == kGame)
     return;
-  music_.Resume(true);
   hud_.Show();
   state_ = kGame;
 }
