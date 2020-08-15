@@ -16,6 +16,9 @@ struct AudioSample {
   bool active = false;
   base::Closure end_cb;
 
+  // Accessed by audio thread only.
+  bool marked_for_removal = false;
+
   // Read-only accessed by the audio thread.
   std::shared_ptr<Sound> sound;
   unsigned flags = 0;

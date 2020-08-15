@@ -35,11 +35,10 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
 
     auto sound = sample->sound.get();
     unsigned flags = sample->flags;
-    bool remove = false;
 
     if (flags & AudioSample::kStopped) {
-      remove = true;
-    } else {
+      sample->marked_for_removal = true;
+    } else if (!sample->marked_for_removal) {
       const float* src[2] = {const_cast<const Sound*>(sound)->GetBuffer(0),
                              const_cast<const Sound*>(sound)->GetBuffer(1)};
       if (!src[1])
@@ -77,7 +76,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
           // Apply amplitude modification.
           amplitude += amplitude_inc;
           if (amplitude <= 0) {
-            remove = true;
+            sample->marked_for_removal = true;
             break;
           } else if (amplitude > max_amplitude) {
             amplitude = max_amplitude;
@@ -95,7 +94,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
             src_index %= num_samples;
 
             if (!(flags & AudioSample::kLoop)) {
-              remove = true;
+              sample->marked_for_removal = true;
               break;
             }
           } else if (!sound->IsStreamingInProgress()) {
@@ -103,7 +102,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
               src_index %= num_samples;
 
             if (sound->eof()) {
-              remove = true;
+              sample->marked_for_removal = true;
               break;
             }
 
@@ -130,7 +129,9 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
       sample->amplitude = amplitude;
     }
 
-    if (remove) {
+    if (sample->marked_for_removal &&
+        (!sound->is_streaming_sound() || !sound->IsStreamingInProgress())) {
+      sample->marked_for_removal = false;
       task_runner_.Enqueue(HERE, std::bind(&AudioBase::EndCallback, this, *it));
       it = samples_[1].erase(it);
     } else {
