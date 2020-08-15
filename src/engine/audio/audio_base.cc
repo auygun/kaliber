@@ -57,50 +57,43 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
               ? sound->hz() / 10
               : 0;
 
-      DCHECK(num_samples || sound->is_streaming_sound());
-
       for (size_t i = 0; i < num_frames * kChannelCount;) {
-        if (num_samples) {
-          // Mix the 1st channel.
-          output_buffer[i++] += src[0][src_index] * amplitude;
+        // Mix the 1st channel.
+        output_buffer[i++] += src[0][src_index] * amplitude;
 
-          // Mix the 2nd channel. Offset the source index for stereo simulation.
-          size_t ind = channel_offset + src_index;
-          if (ind < num_samples)
-            output_buffer[i++] += src[1][ind] * amplitude;
-          else if (flags & AudioSample::kLoop)
-            output_buffer[i++] += src[1][ind % num_samples] * amplitude;
-          else
-            i++;
+        // Mix the 2nd channel. Offset the source index for stereo simulation.
+        size_t ind = channel_offset + src_index;
+        if (ind < num_samples)
+          output_buffer[i++] += src[1][ind] * amplitude;
+        else if (flags & AudioSample::kLoop)
+          output_buffer[i++] += src[1][ind % num_samples] * amplitude;
+        else
+          i++;
 
-          // Apply amplitude modification.
-          amplitude += amplitude_inc;
-          if (amplitude <= 0) {
-            sample->marked_for_removal = true;
-            break;
-          } else if (amplitude > max_amplitude) {
-            amplitude = max_amplitude;
-          }
-
-          // Basic resampling for variations.
-          accumulator += step;
-          src_index += accumulator / 10;
-          accumulator %= 10;
+        // Apply amplitude modification.
+        amplitude += amplitude_inc;
+        if (amplitude <= 0) {
+          sample->marked_for_removal = true;
+          break;
+        } else if (amplitude > max_amplitude) {
+          amplitude = max_amplitude;
         }
+
+        // Basic resampling for variations.
+        accumulator += step;
+        src_index += accumulator / 10;
+        accumulator %= 10;
 
         // Advance source index.
         if (src_index >= num_samples) {
-          if (!sound->is_streaming_sound()) {
-            src_index %= num_samples;
+          src_index %= num_samples;
 
+          if (!sound->is_streaming_sound()) {
             if (!(flags & AudioSample::kLoop)) {
               sample->marked_for_removal = true;
               break;
             }
           } else if (!sound->IsStreamingInProgress()) {
-            if (num_samples)
-              src_index %= num_samples;
-
             if (sound->eof()) {
               sample->marked_for_removal = true;
               break;
@@ -117,9 +110,8 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
             Worker::GetTaskRunner().Enqueue(
                 HERE, std::bind(&Sound::Stream, sample->sound,
                                 flags & AudioSample::kLoop));
-          } else if (num_samples) {
+          } else {
             DLOG << "Buffer underrun!";
-            src_index %= num_samples;
           }
         }
       }
