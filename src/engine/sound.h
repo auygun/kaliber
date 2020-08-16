@@ -53,6 +53,9 @@ class Sound {
   size_t num_samples_front_ = 0;
   size_t max_samples_ = 0;
 
+  size_t cur_sample_front_ = 0;
+  size_t cur_sample_back_ = 0;
+
   size_t num_channels_ = 0;
   size_t hz_ = 0;
 

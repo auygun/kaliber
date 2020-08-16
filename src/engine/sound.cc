@@ -87,7 +87,7 @@ bool Sound::Load(const std::string& file_name, bool stream) {
 
   num_channels_ = mp3_dec_->info.channels;
   hz_ = mp3_dec_->info.hz;
-  num_samples_back_ = 0;
+  num_samples_back_ = cur_sample_back_ = 0;
   eof_ = false;
 
   DCHECK(num_channels_ > 0 && num_channels_ <= 2);
@@ -151,11 +151,12 @@ void Sound::SwapBuffers() {
 }
 
 void Sound::ResetStream() {
-  if (is_streaming_sound_) {
+  if (is_streaming_sound_ && cur_sample_front_ != 0) {
     // Seek to 0 and ivalidate decoded data.
     mp3dec_ex_seek(mp3_dec_.get(), 0);
     eof_ = false;
     num_samples_back_ = num_samples_front_ = 0;
+    cur_sample_front_ = cur_sample_back_ = 0;
   }
 }
 
@@ -172,10 +173,13 @@ float* Sound::GetBuffer(int channel) const {
 bool Sound::StreamInternal(size_t num_samples, bool loop) {
   auto buffer = std::make_unique<float[]>(num_samples);
 
+  cur_sample_back_ = mp3_dec_->cur_sample;
+
   for (;;) {
     size_t samples_read =
         mp3dec_ex_read(mp3_dec_.get(), buffer.get(), num_samples);
     if (samples_read != num_samples && mp3_dec_->last_error) {
+      LOG << "mp3 decode error: " << mp3_dec_->last_error;
       eof_ = true;
       return false;
     }
@@ -201,6 +205,7 @@ void Sound::SwapBuffersInternal() {
   front_buffer_[0].swap(back_buffer_[0]);
   front_buffer_[1].swap(back_buffer_[1]);
 
+  cur_sample_front_ = cur_sample_back_;
   num_samples_front_ = num_samples_back_;
   num_samples_back_ = 0;
 }
