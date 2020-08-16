@@ -15,7 +15,7 @@ class Sound;
 
 class AudioBase {
  public:
-  void Play(std::shared_ptr<AudioSample> impl_data);
+  void Play(std::shared_ptr<AudioSample> sample);
 
   void Update();
 
@@ -32,11 +32,11 @@ class AudioBase {
 
   void RenderAudio(float* output_buffer, size_t num_frames);
 
-  AudioBase(const AudioBase&) = delete;
-  AudioBase& operator=(const AudioBase&) = delete;
-
  private:
   void EndCallback(std::shared_ptr<AudioSample> sample);
+
+  AudioBase(const AudioBase&) = delete;
+  AudioBase& operator=(const AudioBase&) = delete;
 };
 
 }  // namespace eng

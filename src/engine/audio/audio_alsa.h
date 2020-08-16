@@ -2,7 +2,6 @@
 #define AUDIO_ALSA_H
 
 #include <future>
-#include <memory>
 #include <thread>
 
 #include "audio_base.h"
@@ -26,7 +25,7 @@ class AudioAlsa : public AudioBase {
 
  private:
   // Handle for the PCM device.
-  snd_pcm_t* pcm_handle_;
+  snd_pcm_t* device_;
 
   std::thread worker_thread_;
   bool terminate_worker_ = false;

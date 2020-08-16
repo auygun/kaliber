@@ -1,6 +1,7 @@
 #include "audio_alsa.h"
 
 #include <alsa/asoundlib.h>
+#include <memory>
 
 #include "../../base/log.h"
 #include "audio_resource.h"
@@ -23,8 +24,8 @@ bool AudioAlsa::Initialize() {
 
   // TODO: "default" is usualy PulseAudio. Select a device with "plughw" for
   // direct hardware device with software format conversion.
-  if ((err = snd_pcm_open(&pcm_handle_, "default", SND_PCM_STREAM_PLAYBACK,
-                          0)) < 0) {
+  if ((err = snd_pcm_open(&device_, "default", SND_PCM_STREAM_PLAYBACK, 0)) <
+      0) {
     LOG << "Cannot open audio device. Error: " << snd_strerror(err);
     return false;
   }
@@ -34,65 +35,65 @@ bool AudioAlsa::Initialize() {
     snd_pcm_hw_params_alloca(&hw_params);
 
     // Init hw_params with full configuration space.
-    if ((err = snd_pcm_hw_params_any(pcm_handle_, hw_params)) < 0) {
+    if ((err = snd_pcm_hw_params_any(device_, hw_params)) < 0) {
       LOG << "Cannot initialize hardware parameter structure. Error: "
           << snd_strerror(err);
       break;
     }
 
     if ((err = snd_pcm_hw_params_set_access(
-             pcm_handle_, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
+             device_, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
       LOG << "Cannot set access type. Error: " << snd_strerror(err);
       break;
     }
 
-    if ((err = snd_pcm_hw_params_set_format(pcm_handle_, hw_params,
+    if ((err = snd_pcm_hw_params_set_format(device_, hw_params,
                                             SND_PCM_FORMAT_FLOAT)) < 0) {
       LOG << "Cannot set sample format. Error: " << snd_strerror(err);
       break;
     }
 
     // Disable software resampler.
-    if ((err = snd_pcm_hw_params_set_rate_resample(pcm_handle_, hw_params, 0)) <
+    if ((err = snd_pcm_hw_params_set_rate_resample(device_, hw_params, 0)) <
         0) {
       LOG << "Cannot disbale software resampler. Error: " << snd_strerror(err);
       break;
     }
 
     unsigned sample_rate = 48000;
-    if ((err = snd_pcm_hw_params_set_rate_near(pcm_handle_, hw_params,
-                                               &sample_rate, 0)) < 0) {
+    if ((err = snd_pcm_hw_params_set_rate_near(device_, hw_params, &sample_rate,
+                                               0)) < 0) {
       LOG << "Cannot set sample rate. Error: " << snd_strerror(err);
       break;
     }
 
-    if ((err = snd_pcm_hw_params_set_channels(pcm_handle_, hw_params, 2)) < 0) {
+    if ((err = snd_pcm_hw_params_set_channels(device_, hw_params, 2)) < 0) {
       LOG << "Cannot set channel count. Error: " << snd_strerror(err);
       break;
     }
 
     // Set period time to 4 ms. The latency will be 12 ms for 3 perods.
     unsigned period_time = 4000;
-    if ((err = snd_pcm_hw_params_set_period_time_near(pcm_handle_, hw_params,
+    if ((err = snd_pcm_hw_params_set_period_time_near(device_, hw_params,
                                                       &period_time, 0)) < 0) {
       LOG << "Cannot set periods. Error: " << snd_strerror(err);
       break;
     }
 
     unsigned periods = 3;
-    if ((err = snd_pcm_hw_params_set_periods_near(pcm_handle_, hw_params,
-                                                  &periods, 0)) < 0) {
+    if ((err = snd_pcm_hw_params_set_periods_near(device_, hw_params, &periods,
+                                                  0)) < 0) {
       LOG << "Cannot set periods. Error: " << snd_strerror(err);
       break;
     }
 
     // Apply HW parameter settings to PCM device and prepare device.
-    if ((err = snd_pcm_hw_params(pcm_handle_, hw_params)) < 0) {
+    if ((err = snd_pcm_hw_params(device_, hw_params)) < 0) {
       LOG << "Cannot set parameters. Error: " << snd_strerror(err);
       break;
     }
 
-    if ((err = snd_pcm_prepare(pcm_handle_)) < 0) {
+    if ((err = snd_pcm_prepare(device_)) < 0) {
       LOG << "Cannot prepare audio interface for use. Error: "
           << snd_strerror(err);
       break;
@@ -131,15 +132,15 @@ bool AudioAlsa::Initialize() {
     return true;
   } while (false);
 
-  snd_pcm_close(pcm_handle_);
+  snd_pcm_close(device_);
   return false;
 }
 
 void AudioAlsa::Shutdown() {
   LOG << "Shutting down audio system.";
   TerminateWorker();
-  snd_pcm_drop(pcm_handle_);
-  snd_pcm_close(pcm_handle_);
+  snd_pcm_drop(device_);
+  snd_pcm_close(device_);
 }
 
 size_t AudioAlsa::GetSampleRate() {
@@ -177,8 +178,8 @@ void AudioAlsa::WorkerMain(std::promise<bool> promise) {
 
     RenderAudio(buffer.get(), num_frames);
 
-    while (snd_pcm_writei(pcm_handle_, buffer.get(), num_frames) < 0) {
-      snd_pcm_prepare(pcm_handle_);
+    while (snd_pcm_writei(device_, buffer.get(), num_frames) < 0) {
+      snd_pcm_prepare(device_);
       DLOG << "Audio buffer underrun!";
     }
   }

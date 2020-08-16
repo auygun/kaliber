@@ -140,13 +140,13 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
   }
 }
 
-void AudioBase::EndCallback(std::shared_ptr<AudioSample> sample_) {
-  AudioSample* sample = sample_.get();
+void AudioBase::EndCallback(std::shared_ptr<AudioSample> sample) {
+  AudioSample* s = sample.get();
 
-  sample->active = false;
+  s->active = false;
 
-  if (sample->end_cb)
-    sample->end_cb();
+  if (s->end_cb)
+    s->end_cb();
 }
 
 }  // namespace eng
