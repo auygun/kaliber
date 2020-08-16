@@ -4,7 +4,6 @@ TODO:
 - Change shield sound.
 - Music and vibration on/off buttons.
 - Change targetted_by_weapon_ to bool targetted_by_weapon_[2].
-- Make fadein and fadeout duration longer for music.
 - Change font and background for creadits.
 - Add 3rd party libs to credits.
 - Test 30 fps
