@@ -375,7 +375,7 @@ void Enemy::KillAllEnemyUnits(bool randomize_order) {
     if (!e.marked_for_removal && e.hit_points > 0 &&
         e.enemy_type != kEnemyType_Boss) {
       if (randomize_order) {
-        e.kill_timer = Lerp(0.0f, engine.GetScreenSize().y * 0.15f,
+        e.kill_timer = Lerp(0.0f, engine.GetScreenSize().y * 0.5f * 0.15f,
                             engine.GetRandomGenerator().GetFloat());
       } else {
         float dist = e.sprite.GetOffset().y -
