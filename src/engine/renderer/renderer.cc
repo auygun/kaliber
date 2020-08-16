@@ -32,9 +32,7 @@ namespace eng {
 
 Renderer::Renderer() = default;
 
-Renderer::~Renderer() {
-  TerminateWorker();
-}
+Renderer::~Renderer() = default;
 
 void Renderer::SetContextLostCB(base::Closure cb) {
   context_lost_cb_ = std::move(cb);
@@ -235,11 +233,11 @@ bool Renderer::StartWorker() {
 
 void Renderer::TerminateWorker() {
 #ifdef THREADED_RENDERING
+  DCHECK(!terminate_worker_);
+
   // Notify worker thread and wait for it to terminate.
   {
     std::unique_lock<std::mutex> scoped_lock(mutex_);
-    if (terminate_worker_)
-      return;
     terminate_worker_ = true;
   }
   cv_.notify_one();

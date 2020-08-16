@@ -5,12 +5,16 @@
 namespace eng {
 
 bool Renderer::Initialize() {
+  LOG << "Initializing renderer.";
+
   if (!CreateWindow())
     return false;
   return StartWorker();
 }
 
 void Renderer::Shutdown() {
+  LOG << "Shutting down renderer.";
+
   TerminateWorker();
   DestroyWindow();
 }

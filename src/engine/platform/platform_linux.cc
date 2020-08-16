@@ -37,7 +37,6 @@ void PlatformLinux::Initialize() {
     LOG << "Failed to initialize renderer.";
     throw internal_error;
   }
-  LOG << "Initialized the renderer.";
 
   Display* display = renderer_->display();
   Window window = renderer_->window();

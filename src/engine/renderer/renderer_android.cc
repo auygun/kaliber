@@ -2,16 +2,24 @@
 
 #include <android/native_window.h>
 
+#include "../../base/log.h"
 #include "../../third_party/android/GLContext.h"
 
 namespace eng {
 
 bool Renderer::Initialize(ANativeWindow* window) {
+  LOG << "Initializing renderer.";
+
   window_ = window;
   return StartWorker();
 }
 
 void Renderer::Shutdown() {
+  if (terminate_worker_)
+    return;
+
+  LOG << "Shutting down renderer.";
+
   TerminateWorker();
 }
 

@@ -1,4 +1,4 @@
-#include "platform_base.h"
+#include "platform.h"
 
 #include <thread>
 
@@ -66,7 +66,11 @@ void PlatformBase::RunMainLoop() {
 
     // Subdivide the frame time.
     while (accumulator >= time_step) {
+      static_cast<Platform*>(this)->Update();
+      audio_->Update();
+      renderer_->Update();
       engine_->Update(time_step);
+
       if (should_exit_) {
         Worker::Shutdown();
         engine_->Shutdown();
