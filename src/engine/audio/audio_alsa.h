@@ -21,6 +21,9 @@ class AudioAlsa : public AudioBase {
 
   void Shutdown();
 
+  void Suspend();
+  void Resume();
+
   size_t GetSampleRate();
 
  private:
@@ -29,6 +32,7 @@ class AudioAlsa : public AudioBase {
 
   std::thread worker_thread_;
   bool terminate_worker_ = false;
+  bool suspend_worker_ = false;
 
   size_t num_channels_ = 0;
   size_t sample_rate_ = 0;

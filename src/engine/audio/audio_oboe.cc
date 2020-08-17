@@ -24,6 +24,14 @@ void AudioOboe::Shutdown() {
   stream_->stop();
 }
 
+void AudioOboe::Suspend() {
+  stream_->pause();
+}
+
+void AudioOboe::Resume() {
+  stream_->start();
+}
+
 size_t AudioOboe::GetSampleRate() {
   return stream_->getSampleRate();
 }

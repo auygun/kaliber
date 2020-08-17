@@ -40,9 +40,9 @@ void PlatformLinux::Initialize() {
 
   Display* display = renderer_->display();
   Window window = renderer_->window();
-  XSelectInput(
-      display, window,
-      KeyPressMask | Button1MotionMask | ButtonPressMask | ButtonReleaseMask);
+  XSelectInput(display, window,
+               KeyPressMask | Button1MotionMask | ButtonPressMask |
+                   ButtonReleaseMask | FocusChangeMask);
   Atom WM_DELETE_WINDOW = XInternAtom(display, "WM_DELETE_WINDOW", false);
   XSetWMProtocols(display, window, &WM_DELETE_WINDOW, 1);
 
@@ -95,6 +95,14 @@ void PlatformLinux::Update() {
               InputEvent::kDragEnd, 0, v * Vector2(1, -1));
           engine_->AddInputEvent(std::move(input_event));
         }
+        break;
+      }
+      case FocusOut: {
+        engine_->LostFocus();
+        break;
+      }
+      case FocusIn: {
+        engine_->GainedFocus();
         break;
       }
       case ClientMessage: {

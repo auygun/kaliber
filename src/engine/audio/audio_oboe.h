@@ -20,6 +20,9 @@ class AudioOboe : public AudioBase {
 
   void Shutdown();
 
+  void Suspend();
+  void Resume();
+
   size_t GetSampleRate();
 
  private:

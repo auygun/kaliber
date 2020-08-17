@@ -148,11 +148,15 @@ void Engine::Draw(float frame_frac) {
 }
 
 void Engine::LostFocus() {
+  audio_->Suspend();
+
   if (game_)
     game_->LostFocus();
 }
 
 void Engine::GainedFocus() {
+  audio_->Resume();
+
   if (game_)
     game_->GainedFocus();
 }

@@ -143,6 +143,14 @@ void AudioAlsa::Shutdown() {
   snd_pcm_close(device_);
 }
 
+void AudioAlsa::Suspend() {
+  suspend_worker_ = true;
+}
+
+void AudioAlsa::Resume() {
+  suspend_worker_ = false;
+}
+
 size_t AudioAlsa::GetSampleRate() {
   return sample_rate_;
 }
@@ -159,6 +167,7 @@ bool AudioAlsa::StartWorker() {
 
 void AudioAlsa::TerminateWorker() {
   // Notify worker thread and wait for it to terminate.
+  suspend_worker_ = false;
   if (terminate_worker_)
     return;
   terminate_worker_ = true;
@@ -173,6 +182,9 @@ void AudioAlsa::WorkerMain(std::promise<bool> promise) {
   auto buffer = std::make_unique<float[]>(num_frames * 2);
 
   for (;;) {
+    while (suspend_worker_)
+      std::this_thread::yield();
+
     if (terminate_worker_)
       return;
 
