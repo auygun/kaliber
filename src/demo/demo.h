@@ -77,6 +77,7 @@ class Demo : public eng::Game {
   bool boss_fight_ = false;
 
   eng::SoundPlayer music_;
+  eng::SoundPlayer boss_music_;
 
   float delayed_work_timer_ = 0;
   base::Closure delayed_work_cb_;

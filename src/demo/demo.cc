@@ -53,12 +53,19 @@ bool Demo::Initialize() {
   }
 
   auto sound = std::make_unique<Sound>();
-  if (!sound->Load("Game_1.mp3", true))
+  if (!sound->Load("Game_2_Main.mp3", true))
+    return false;
+
+  auto boss_sound = std::make_unique<Sound>();
+  if (!boss_sound->Load("Game_2_Boss.mp3", true))
     return false;
 
   music_.SetSound(std::move(sound));
   music_.SetMaxAplitude(0.5f);
   music_.Play(true);
+
+  boss_music_.SetSound(std::move(boss_sound));
+  boss_music_.SetMaxAplitude(0.5f);
 
   EnterMenuState();
 
@@ -100,14 +107,11 @@ void Demo::ContextLost() {
 }
 
 void Demo::LostFocus() {
-  music_.Stop();
   if (state_ == kGame)
     EnterMenuState();
 }
 
-void Demo::GainedFocus() {
-  music_.Resume();
-}
+void Demo::GainedFocus() {}
 
 void Demo::AddScore(int score) {
   add_score_ += score;
@@ -241,6 +245,14 @@ void Demo::StartNextStage(bool boss) {
 
   enemy_.PauseProgress();
   enemy_.StopAllEnemyUnits();
+
+  if (boss) {
+    boss_music_.Play(true, 10);
+    music_.Stop(10);
+  } else if (boss_fight_) {
+    music_.Resume(10);
+    boss_music_.Stop(10);
+  }
 
   SetDelayedWork(1.25f, [&, boss]() -> void {
     enemy_.KillAllEnemyUnits();
