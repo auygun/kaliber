@@ -8,6 +8,8 @@ TODO:
 - Add 3rd party libs to credits.
 - Test 30 fps
 - Do benchmark at startup and switch to low qualiy sky for slow devices.
+- Nuke kills at the end of wave count fot the next wave.
+- Context-lost at the boss pops up wave progress bar.
 
 DONE:
 - Fix intersection test in targetting code.
