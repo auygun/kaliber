@@ -1,6 +1,7 @@
 #ifndef AUDIO_SAMPLE_H
 #define AUDIO_SAMPLE_H
 
+#include <atomic>
 #include <memory>
 
 #include "../../base/closure.h"
@@ -19,17 +20,17 @@ struct AudioSample {
   // Accessed by audio thread only.
   bool marked_for_removal = false;
 
-  // Read-only accessed by the audio thread.
+  // Initialized by main thread, used by audio thread.
   std::shared_ptr<Sound> sound;
-  unsigned flags = 0;
-  size_t step = 10;
-  float amplitude_inc = 0;
-  float max_amplitude = 1.0f;
-
-  // Write accessed by the audio thread.
   size_t src_index = 0;
   size_t accumulator = 0;
   float amplitude = 1.0f;
+
+  // Write accessed by main thread, read-only accessed by audio thread.
+  std::atomic<unsigned> flags = 0;
+  std::atomic<size_t> step = 10;
+  std::atomic<float> amplitude_inc = 0;
+  std::atomic<float> max_amplitude = 1.0f;
 };
 
 }  // namespace eng

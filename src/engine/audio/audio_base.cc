@@ -34,7 +34,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
     AudioSample* sample = it->get();
 
     auto sound = sample->sound.get();
-    unsigned flags = sample->flags;
+    unsigned flags = sample->flags.load(std::memory_order_relaxed);
 
     if (flags & AudioSample::kStopped) {
       sample->marked_for_removal = true;
@@ -46,11 +46,13 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
 
       size_t num_samples = sound->GetNumSamples();
       size_t src_index = sample->src_index;
-      size_t step = sample->step;
+      size_t step = sample->step.load(std::memory_order_relaxed);
       size_t accumulator = sample->accumulator;
       float amplitude = sample->amplitude;
-      float amplitude_inc = sample->amplitude_inc;
-      float max_amplitude = sample->max_amplitude;
+      float amplitude_inc =
+          sample->amplitude_inc.load(std::memory_order_relaxed);
+      float max_amplitude =
+          sample->max_amplitude.load(std::memory_order_relaxed);
 
       size_t channel_offset =
           (flags & AudioSample::kSimulateStereo) && !sound->is_streaming_sound()
