@@ -38,14 +38,15 @@ void AudioResource::Play(std::shared_ptr<Sound> sound,
 
   if (reset_pos) {
     sample->src_index = 0;
+    sample->accumulator = 0;
     sound->ResetStream();
   }
 
   sample->active = true;
   sample->flags &= ~AudioSample::kStopped;
   sample->sound = sound;
-  sample->amplitude = amplitude;
-  sample->accumulator = 0;
+  if (amplitude >= 0)
+    sample->amplitude = amplitude;
 
   audio_->Play(sample_);
 }

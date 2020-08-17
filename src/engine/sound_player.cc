@@ -40,7 +40,7 @@ void SoundPlayer::Play(bool loop, float fade_in_duration) {
 void SoundPlayer::Resume(float fade_in_duration) {
   if (fade_in_duration > 0)
     resource_->SetAmplitudeInc(1.0f / (sound_->hz() * fade_in_duration));
-  resource_->Play(sound_, fade_in_duration > 0 ? 0 : max_amplitude_, false);
+  resource_->Play(sound_, fade_in_duration > 0 ? 0 : -1, false);
 }
 
 void SoundPlayer::Stop(float fade_out_duration) {
