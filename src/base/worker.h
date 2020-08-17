@@ -2,6 +2,7 @@
 #define WORKER_H
 
 #include <atomic>
+#include <mutex>
 
 #include "closure.h"
 
@@ -10,10 +11,7 @@ namespace base {
 class TaskRunner;
 
 // Feed the worker tasks (in the form of Closure objects) and they will be
-// called on any thread from the pool. Call Join method to synchronize with
-// successor tasks.
-// GetTaskRunner method can be used to access to the task runner and enqueue
-// fire-and-forget tasks (i.e. no synchronization).
+// called on any thread from the pool.
 class Worker {
  public:
   Worker();
@@ -36,6 +34,7 @@ class Worker {
 
  private:
   std::atomic<int> lock_ = 0;
+  std::mutex mutex_;
 
   Worker(Worker const&) = delete;
   Worker& operator=(Worker const&) = delete;

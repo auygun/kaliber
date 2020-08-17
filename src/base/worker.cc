@@ -52,7 +52,7 @@ namespace base {
 Worker::Worker() = default;
 
 Worker::~Worker() {
-  DCHECK(lock_.load(std::memory_order_acquire) == 0);
+  DCHECK(lock_.load(std::memory_order_acquire) == 0) << "Join must be called.";
 }
 
 void Worker::Initialize(unsigned max_concurrency) {
@@ -70,16 +70,18 @@ TaskRunner& Worker::GetTaskRunner() {
 void Worker::Enqueue(Location from, Closure task) {
   DCHECK(task);
 
-  lock_.fetch_add(1, std::memory_order_relaxed);
+  if (lock_.fetch_add(1, std::memory_order_relaxed) == 0)
+    mutex_.lock();
 
   g_thread_pool.GetTaskRunner().Enqueue(from, std::move(task), [&]() -> void {
-    lock_.fetch_sub(1, std::memory_order_release);
+    if (lock_.fetch_sub(1, std::memory_order_release) - 1 == 0)
+      mutex_.unlock();
   });
 }
 
 void Worker::Join() {
-  while (lock_.load(std::memory_order_acquire))
-    ;  // spin
+  // Wait for the tasks to complete.
+  mutex_.lock();
 }
 
 }  // namespace base
