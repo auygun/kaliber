@@ -24,13 +24,16 @@ void SoundPlayer::SetSound(std::unique_ptr<Sound> sound) {
   sound_ = std::move(sound);
 }
 
-void SoundPlayer::Play(bool loop) {
+void SoundPlayer::Play(bool loop, float fade_in_duration) {
   if (sound_) {
     int step = variate_ ? Engine::Get().GetRandomGenerator().Roll(3) - 2 : 0;
     resource_->SetResampleStep(step);
-    resource_->SetAmplitudeInc(0);
     resource_->SetLoop(loop);
-    resource_->Play(sound_, max_amplitude_, true);
+    if (fade_in_duration > 0)
+      resource_->SetAmplitudeInc(1.0f / (sound_->hz() * fade_in_duration));
+    else
+      resource_->SetAmplitudeInc(0);
+    resource_->Play(sound_, fade_in_duration > 0 ? 0 : max_amplitude_, true);
   }
 }
 

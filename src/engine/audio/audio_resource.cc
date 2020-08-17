@@ -23,7 +23,7 @@ void AudioResource::Play(std::shared_ptr<Sound> sound,
 
   if (sample->active) {
     if (reset_pos)
-      sample->flags = AudioSample::kStopped;
+      sample->flags |= AudioSample::kStopped;
 
     if (sample->flags & AudioSample::kStopped) {
       Closure ocb = sample_->end_cb;

@@ -18,7 +18,7 @@ class SoundPlayer {
   void SetSound(std::shared_ptr<Sound> sound);
   void SetSound(std::unique_ptr<Sound> sound);
 
-  void Play(bool loop);
+  void Play(bool loop, float fade_in_duration = 0);
 
   void Resume(float fade_in_duration = 0);
 
