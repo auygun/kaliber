@@ -1,6 +1,7 @@
 #ifndef AUDIO_ALSA_H
 #define AUDIO_ALSA_H
 
+#include <atomic>
 #include <future>
 #include <thread>
 
@@ -31,8 +32,8 @@ class AudioAlsa : public AudioBase {
   snd_pcm_t* device_;
 
   std::thread worker_thread_;
-  bool terminate_worker_ = false;
-  bool suspend_worker_ = false;
+  std::atomic<bool> terminate_worker_ = false;
+  std::atomic<bool> suspend_worker_ = false;
 
   size_t num_channels_ = 0;
   size_t sample_rate_ = 0;

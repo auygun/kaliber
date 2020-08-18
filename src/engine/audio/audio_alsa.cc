@@ -138,17 +138,22 @@ bool AudioAlsa::Initialize() {
 
 void AudioAlsa::Shutdown() {
   LOG << "Shutting down audio system.";
+
   TerminateWorker();
   snd_pcm_drop(device_);
   snd_pcm_close(device_);
 }
 
 void AudioAlsa::Suspend() {
-  suspend_worker_ = true;
+  DCHECK(!terminate_worker_.load(std::memory_order_relaxed));
+
+  suspend_worker_.store(true, std::memory_order_relaxed);
 }
 
 void AudioAlsa::Resume() {
-  suspend_worker_ = false;
+  DCHECK(!terminate_worker_.load(std::memory_order_relaxed));
+
+  suspend_worker_.store(false, std::memory_order_relaxed);
 }
 
 size_t AudioAlsa::GetSampleRate() {
@@ -158,20 +163,25 @@ size_t AudioAlsa::GetSampleRate() {
 bool AudioAlsa::StartWorker() {
   LOG << "Starting audio thread.";
 
+  DCHECK(!terminate_worker_.load(std::memory_order_relaxed));
+
   std::promise<bool> promise;
   std::future<bool> future = promise.get_future();
   worker_thread_ =
       std::thread(&AudioAlsa::WorkerMain, this, std::move(promise));
+
   return future.get();
 }
 
 void AudioAlsa::TerminateWorker() {
-  // Notify worker thread and wait for it to terminate.
-  suspend_worker_ = false;
-  if (terminate_worker_)
+  if (terminate_worker_.load(std::memory_order_relaxed))
     return;
-  terminate_worker_ = true;
+
   LOG << "Terminating audio thread";
+
+  // Notify worker thread and wait for it to terminate.
+  terminate_worker_.store(true, std::memory_order_relaxed);
+  suspend_worker_.store(true, std::memory_order_relaxed);
   worker_thread_.join();
 }
 
@@ -182,11 +192,11 @@ void AudioAlsa::WorkerMain(std::promise<bool> promise) {
   auto buffer = std::make_unique<float[]>(num_frames * 2);
 
   for (;;) {
-    while (suspend_worker_)
+    while (suspend_worker_.load(std::memory_order_relaxed)) {
+      if (terminate_worker_.load(std::memory_order_relaxed))
+        return;
       std::this_thread::yield();
-
-    if (terminate_worker_)
-      return;
+    }
 
     RenderAudio(buffer.get(), num_frames);
 
