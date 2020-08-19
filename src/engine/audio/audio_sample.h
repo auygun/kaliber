@@ -31,6 +31,9 @@ struct AudioSample {
   std::atomic<size_t> step = 10;
   std::atomic<float> amplitude_inc = 0;
   std::atomic<float> max_amplitude = 1.0f;
+
+  // Accessed by audio thread and decoder thread.
+  std::atomic<bool> streaming_in_progress = false;
 };
 
 }  // namespace eng

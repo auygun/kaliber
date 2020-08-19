@@ -2,7 +2,6 @@
 #define SOUND_H
 
 #include <stdint.h>
-#include <atomic>
 #include <memory>
 #include <string>
 
@@ -30,8 +29,6 @@ class Sound {
   void SwapBuffers();
 
   void ResetStream();
-
-  size_t IsStreamingInProgress() const;
 
   float* GetBuffer(int channel) const;
 
@@ -66,13 +63,10 @@ class Sound {
   std::unique_ptr<r8b::CDSPResampler16> resampler_;
 
   bool eof_ = false;
-  std::atomic<bool> streaming_in_progress_ = false;
 
   bool is_streaming_sound_ = false;
 
   bool StreamInternal(size_t num_samples, bool loop);
-
-  void SwapBuffersInternal();
 
   void Preprocess(std::unique_ptr<float[]> input_buffer);
 };

@@ -100,7 +100,7 @@ bool Sound::Load(const std::string& file_name, bool stream) {
 
     // Fill up buffers.
     StreamInternal(kMaxSamplesPerChunk, false);
-    SwapBuffersInternal();
+    SwapBuffers();
     StreamInternal(kMaxSamplesPerChunk, false);
 
     if (eof_) {
@@ -117,7 +117,7 @@ bool Sound::Load(const std::string& file_name, bool stream) {
 
     // Decode entire file.
     StreamInternal(mp3_dec_->samples, false);
-    SwapBuffersInternal();
+    SwapBuffers();
     eof_ = true;
 
     // We are done with decoding for non-streaming sound.
@@ -133,21 +133,18 @@ bool Sound::Load(const std::string& file_name, bool stream) {
 bool Sound::Stream(bool loop) {
   DCHECK(is_streaming_sound_);
 
-  bool result = StreamInternal(kMaxSamplesPerChunk, loop);
-
-  // Memory barrier to ensure all memory writes become visible to the audio
-  // thread.
-  streaming_in_progress_.store(false, std::memory_order_release);
-
-  return result;
+  return StreamInternal(kMaxSamplesPerChunk, loop);
 }
 
 void Sound::SwapBuffers() {
   DCHECK(is_streaming_sound_);
 
-  SwapBuffersInternal();
+  front_buffer_[0].swap(back_buffer_[0]);
+  front_buffer_[1].swap(back_buffer_[1]);
 
-  streaming_in_progress_.store(true, std::memory_order_relaxed);
+  cur_sample_front_ = cur_sample_back_;
+  num_samples_front_ = num_samples_back_;
+  num_samples_back_ = 0;
 }
 
 void Sound::ResetStream() {
@@ -158,12 +155,6 @@ void Sound::ResetStream() {
     num_samples_back_ = num_samples_front_ = 0;
     cur_sample_front_ = cur_sample_back_ = 0;
   }
-}
-
-size_t Sound::IsStreamingInProgress() const {
-  DCHECK(is_streaming_sound_);
-
-  return streaming_in_progress_.load(std::memory_order_acquire);
 }
 
 float* Sound::GetBuffer(int channel) const {
@@ -199,15 +190,6 @@ bool Sound::StreamInternal(size_t num_samples, bool loop) {
     eof_ = true;
 
   return true;
-}
-
-void Sound::SwapBuffersInternal() {
-  front_buffer_[0].swap(back_buffer_[0]);
-  front_buffer_[1].swap(back_buffer_[1]);
-
-  cur_sample_front_ = cur_sample_back_;
-  num_samples_front_ = num_samples_back_;
-  num_samples_back_ = 0;
 }
 
 void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {

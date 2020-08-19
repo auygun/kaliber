@@ -43,10 +43,6 @@ class LogBase {
     return *this;
   }
 
-  LogBase& operator<<(const bool& arg);
-  LogBase& operator<<(const Vector2& arg);
-  LogBase& operator<<(const Vector4& arg);
-
   static LogBase* swallow_stream;
 
  protected:

@@ -39,8 +39,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
     if (flags & AudioSample::kStopped) {
       sample->marked_for_removal = true;
     } else if (!sample->marked_for_removal) {
-      const float* src[2] = {const_cast<const Sound*>(sound)->GetBuffer(0),
-                             const_cast<const Sound*>(sound)->GetBuffer(1)};
+      const float* src[2] = {sound->GetBuffer(0), sound->GetBuffer(1)};
       if (!src[1])
         src[1] = src[0];  // mono.
 
@@ -99,7 +98,8 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
               sample->marked_for_removal = true;
               break;
             }
-          } else if (!sound->IsStreamingInProgress()) {
+          } else if (!sample->streaming_in_progress.load(
+                         std::memory_order_acquire)) {
             if (num_samples)
               src_index %= num_samples;
 
@@ -108,16 +108,19 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
               break;
             }
 
+            sample->streaming_in_progress.store(true,
+                                                std::memory_order_relaxed);
+
             // Swap buffers and start streaming in background.
             sound->SwapBuffers();
-            src[0] = const_cast<const Sound*>(sound)->GetBuffer(0);
-            src[1] = const_cast<const Sound*>(sound)->GetBuffer(1);
+            src[0] = sound->GetBuffer(0);
+            src[1] = sound->GetBuffer(1);
             if (!src[1])
               src[1] = src[0];  // mono.
             num_samples = sound->GetNumSamples();
 
             Worker::GetTaskRunner().Enqueue(
-                HERE, std::bind(&Sound::Stream, sample->sound,
+                HERE, std::bind(&AudioBase::DoStream, this, *it,
                                 flags & AudioSample::kLoop));
           } else if (num_samples) {
             DLOG << "Buffer underrun!";
@@ -132,7 +135,8 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
     }
 
     if (sample->marked_for_removal &&
-        (!sound->is_streaming_sound() || !sound->IsStreamingInProgress())) {
+        (!sound->is_streaming_sound() ||
+         !sample->streaming_in_progress.load(std::memory_order_relaxed))) {
       sample->marked_for_removal = false;
       task_runner_.Enqueue(HERE, std::bind(&AudioBase::EndCallback, this, *it));
       it = samples_[1].erase(it);
@@ -140,6 +144,14 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
       ++it;
     }
   }
+}
+
+void AudioBase::DoStream(std::shared_ptr<AudioSample> sample, bool loop) {
+  sample->sound->Stream(loop);
+
+  // Memory barrier to ensure all memory writes become visible to the audio
+  // thread.
+  sample->streaming_in_progress.store(false, std::memory_order_release);
 }
 
 void AudioBase::EndCallback(std::shared_ptr<AudioSample> sample) {

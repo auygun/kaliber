@@ -33,6 +33,8 @@ class AudioBase {
   void RenderAudio(float* output_buffer, size_t num_frames);
 
  private:
+  void DoStream(std::shared_ptr<AudioSample> sample, bool loop);
+
   void EndCallback(std::shared_ptr<AudioSample> sample);
 
   AudioBase(const AudioBase&) = delete;

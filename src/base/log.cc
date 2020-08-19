@@ -23,17 +23,20 @@ LogBase::LogBase(const char* file, int line) : file_(file), line_(line) {}
 
 LogBase::~LogBase() = default;
 
-LogBase& LogBase::operator<<(const bool& arg) {
+template <>
+LogBase& LogBase::operator<<<bool>(const bool& arg) {
   stream_ << (arg ? "true" : "false");
   return *this;
 }
 
-LogBase& LogBase::operator<<(const Vector2& arg) {
+template <>
+LogBase& LogBase::operator<<<Vector2>(const Vector2& arg) {
   stream_ << "(" << arg.x << ", " << arg.y << ")";
   return *this;
 }
 
-LogBase& LogBase::operator<<(const Vector4& arg) {
+template <>
+LogBase& LogBase::operator<<<Vector4>(const Vector4& arg) {
   stream_ << "(" << arg.x << ", " << arg.y << ", " << arg.z << ", " << arg.w
           << ")";
   return *this;
