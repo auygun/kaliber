@@ -1,7 +1,7 @@
 #ifndef WORKER_H
 #define WORKER_H
 
-#include <atomic>
+#include <condition_variable>
 #include <mutex>
 
 #include "closure.h"
@@ -33,8 +33,10 @@ class Worker {
   void Join();
 
  private:
-  std::atomic<int> lock_ = 0;
+  // Semaphore.
   std::mutex mutex_;
+  std::condition_variable cv_;
+  int count_ = 0;
 
   Worker(Worker const&) = delete;
   Worker& operator=(Worker const&) = delete;

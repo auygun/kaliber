@@ -87,7 +87,7 @@ Check::Check(const char* file,
              const char* expr)
     : LogBase(file, line), condition_(condition) {
   if (!condition_)
-    *this << (debug ? "DCHECK: " : "CHECK: (") << expr << ") ";
+    *this << (debug ? "DCHECK: (" : "CHECK: (") << expr << ") ";
 }
 
 Check::~Check() {

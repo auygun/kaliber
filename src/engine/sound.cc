@@ -137,8 +137,6 @@ bool Sound::Stream(bool loop) {
 }
 
 void Sound::SwapBuffers() {
-  DCHECK(is_streaming_sound_);
-
   front_buffer_[0].swap(back_buffer_[0]);
   front_buffer_[1].swap(back_buffer_[1]);
 
