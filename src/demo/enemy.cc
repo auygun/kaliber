@@ -413,7 +413,8 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   num_enemies_killed_in_current_wave_ = 0;
   seconds_since_last_spawn_ = {0, 0, 0, 0};
   seconds_to_next_spawn_ = {0, 0, 0, 0};
-  spawn_factor_ = 1 / (log10(0.25f * ((wave + 7) * 0.8f) + 1.468f) * 6);
+  // spawn_factor_ = 1 / (log10(0.25f * ((wave + 7) * 0.8f) + 1.468f) * 6);
+  spawn_factor_ = 1 / (2.4f * log10(10.f * wave + 33.6f));
   spawn_factor_interpolator_ = 0;
   boss_spawn_cooldown_ = 7;
   boss_spawn_duration_ = 0;
@@ -753,7 +754,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
 
             float ct = target->movement_animator.GetTime(Animator::kMovement);
             float t = Lerp(0.0f, 0.5f, rnd.GetFloat());
-            float nt = std::min(ct + (t * 0.9f), 1.0f);
+            float nt = std::min(ct + t, 0.8f);
             target->movement_animator.SetTime(Animator::kMovement, nt);
 
             target->stealth_active = false;
