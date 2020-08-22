@@ -3,7 +3,7 @@
 #include <thread>
 
 #include "../../base/log.h"
-#include "../../base/thread_pool.h"
+#include "../../base/task_runner.h"
 #include "../audio/audio.h"
 #include "../engine.h"
 #include "../renderer/renderer.h"
@@ -66,13 +66,13 @@ void PlatformBase::RunMainLoop() {
 
     // Subdivide the frame time.
     while (accumulator >= time_step) {
+      TaskRunner::GetLocalTaskRunner().Run();
+
       static_cast<Platform*>(this)->Update();
-      audio_->Update();
-      renderer_->Update();
       engine_->Update(time_step);
 
       if (should_exit_) {
-        ThreadPool::Shutdown();
+        thread_pool_.Shutdown();
         engine_->Shutdown();
         engine_.reset();
         return;

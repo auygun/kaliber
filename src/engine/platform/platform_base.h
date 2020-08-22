@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 
+#include "../../base/thread_pool.h"
 #include "../../base/timer.h"
 #include "../audio/audio_forward.h"
 
@@ -41,6 +42,8 @@ class PlatformBase {
   std::unique_ptr<Audio> audio_;
   std::unique_ptr<Renderer> renderer_;
   std::unique_ptr<Engine> engine_;
+
+  base::ThreadPool thread_pool_;
 
   PlatformBase();
   ~PlatformBase();

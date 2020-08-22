@@ -2,56 +2,50 @@
 
 #include "log.h"
 
+namespace {
+
+thread_local base::TaskRunner t_task_runner;
+
+}  // namespace
+
 namespace base {
 
-void TaskRunner::Enqueue(Location from, Closure task, Closure done_cb) {
+TaskRunner& TaskRunner::GetLocalTaskRunner() {
+  return t_task_runner;
+}
+
+void TaskRunner::EnqueueTask(Location from, Closure task) {
   DCHECK(task);
 
-  bool notify;
-  {
-    std::unique_lock<std::mutex> scoped_lock(mutex_);
-    notify = blocking_ && tasks_.empty();
-    tasks_.emplace_back(std::move(from), std::move(task), std::move(done_cb));
-  }
-  if (notify)
-    cv_.notify_all();
+  stack_.Push(
+      std::make_tuple(std::move(from), std::move(task), nullptr, nullptr));
+
+  if (delegate_)
+    delegate_->Signal();
+}
+
+void TaskRunner::EnqueueTaskAndReply(Location from,
+                                     Closure task,
+                                     Closure reply) {
+  DCHECK(task);
+
+  stack_.Push(std::make_tuple(std::move(from), std::move(task),
+                              std::move(reply), &t_task_runner));
+
+  if (delegate_)
+    delegate_->Signal();
 }
 
 void TaskRunner::Run() {
-  for (;;) {
-    Task task;
-    {
-      std::unique_lock<std::mutex> scoped_lock(mutex_);
-      while (blocking_ && tasks_.empty()) {
-        if (quit_when_idle_)
-          return;
-        cv_.wait(scoped_lock);
-      }
-      if (tasks_.empty())
-        return;
-      task.swap(tasks_.front());
-      tasks_.pop_front();
-    }
-
-    auto [from, task_cb, done_cb] = task;
-
-    DLOG_ONCE << "Task from: " << LOCATION(from);
+  Task task;
+  while (stack_.Pop(task)) {
+    auto [from, task_cb, reply_cb, reply_tr] = task;
 
     task_cb();
 
-    if (done_cb)
-      done_cb();
+    if (reply_cb)
+      reply_tr->EnqueueTask(from, reply_cb);
   }
-}
-
-void TaskRunner::QuitWhenIdle() {
-  DCHECK(blocking_);
-
-  {
-    std::unique_lock<std::mutex> scoped_lock(mutex_);
-    quit_when_idle_ = true;
-  }
-  cv_.notify_all();
 }
 
 }  // namespace base

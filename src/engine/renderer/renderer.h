@@ -24,15 +24,18 @@
 #endif
 
 #include "../../base/closure.h"
-#ifdef THREADED_RENDERING
-#include "../../base/task_runner.h"
-#endif  // THREADED_RENDERING
 #include "render_resource.h"
 #include "renderer_types.h"
 
 #if defined(__ANDROID__)
 struct ANativeWindow;
 #endif
+
+#ifdef THREADED_RENDERING
+namespace base {
+class TaskRunner;
+}
+#endif  // THREADED_RENDERING
 
 namespace eng {
 
@@ -53,8 +56,6 @@ class Renderer {
 #endif
 
   void Shutdown();
-
-  void Update();
 
   void ContextLost();
 
@@ -154,7 +155,7 @@ class Renderer {
   std::thread worker_thread_;
   bool terminate_worker_ = false;
 
-  base::TaskRunner task_runner_;
+  base::TaskRunner& task_runner_;
 #endif  // THREADED_RENDERING
 
   // Stats.

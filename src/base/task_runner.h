@@ -1,46 +1,46 @@
 #ifndef TASK_RUNNER_H
 #define TASK_RUNNER_H
 
-#include <condition_variable>
-#include <deque>
-#include <mutex>
 #include <tuple>
 
 #include "closure.h"
+#include "concurrent_stack.h"
 
 namespace base {
 
 // Runs queued tasks (in the form of Closure objects). All methods are
 // thread-safe and can be called on any thread.
-// When used in a thread pool, TaskRunner does not guarantee the order in which
-// tasks are run, whether tasks overlap, or whether they run on a particular
+// Tasks run in LIFO order. When consumed concurrently by multiple threads, it
+// doesn't guarantee whether tasks overlap, or whether they run on a particular
 // thread.
 class TaskRunner {
  public:
-  // If blocking is true, Run method won't return until QuitWhenIdle is called.
-  TaskRunner(bool blocking = false) : blocking_(blocking) {}
+  class Delegate {
+   public:
+    virtual void Signal() = 0;
+  };
+
+  TaskRunner() = default;
   ~TaskRunner() = default;
 
-  // Enqueue the given task to be run. On completion, done_cb is called on the
-  // same thread that ran the task.
-  void Enqueue(Location from, Closure task, Closure done_cb = nullptr);
+  void SetDelegate(Delegate* delegate) { delegate_ = delegate; }
 
-  // Run all queued tasks and return upon completion if non-blocking. Otherwise,
-  // wait for more tasks to run.
+  void EnqueueTask(Location from, Closure task);
+
+  void EnqueueTaskAndReply(Location from, Closure task, Closure done_cb);
+
   void Run();
 
-  // Tell Run method to stop waiting for tasks and return.
-  void QuitWhenIdle();
+  bool Enmpty() const { return stack_.Empty(); }
+
+  static TaskRunner& GetLocalTaskRunner();
 
  private:
-  using Task = std::tuple<Location, Closure, Closure>;
+  using Task = std::tuple<Location, Closure, Closure, TaskRunner*>;
 
-  std::condition_variable cv_;
-  std::mutex mutex_;
-  std::deque<Task> tasks_;
-  bool quit_when_idle_ = false;
+  ConcurrentStack<Task> stack_;
 
-  const bool blocking_;
+  Delegate* delegate_ = nullptr;
 
   TaskRunner(TaskRunner const&) = delete;
   TaskRunner& operator=(TaskRunner const&) = delete;

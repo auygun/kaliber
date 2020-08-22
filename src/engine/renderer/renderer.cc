@@ -6,6 +6,9 @@
 
 #include "../../base/log.h"
 #include "../../base/vecmath.h"
+#ifdef THREADED_RENDERING
+#include "../../base/task_runner.h"
+#endif  // THREADED_RENDERING
 #include "../image.h"
 #include "../mesh.h"
 #include "../shader_source.h"
@@ -13,6 +16,8 @@
 #include "render_command.h"
 #include "shader.h"
 #include "texture.h"
+
+using namespace base;
 
 namespace {
 
@@ -30,18 +35,16 @@ const std::string kAttributeNames[eng::kAttribType_Max] = {
 
 namespace eng {
 
+#ifdef THREADED_RENDERING
+Renderer::Renderer() : task_runner_(TaskRunner::GetLocalTaskRunner()) {}
+#else
 Renderer::Renderer() = default;
+#endif  // THREADED_RENDERING
 
 Renderer::~Renderer() = default;
 
-void Renderer::SetContextLostCB(base::Closure cb) {
+void Renderer::SetContextLostCB(Closure cb) {
   context_lost_cb_ = std::move(cb);
-}
-
-void Renderer::Update() {
-#ifdef THREADED_RENDERING
-  task_runner_.Run();
-#endif  // THREADED_RENDERING
 }
 
 void Renderer::ContextLost() {
@@ -56,7 +59,7 @@ void Renderer::ContextLost() {
   InvalidateAllResources();
 
 #ifdef THREADED_RENDERING
-  task_runner_.Enqueue(HERE, context_lost_cb_);
+  task_runner_.EnqueueTask(HERE, context_lost_cb_);
 #else
   context_lost_cb_();
 #endif  // THREADED_RENDERING

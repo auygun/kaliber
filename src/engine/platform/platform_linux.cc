@@ -4,7 +4,6 @@
 #include <X11/Xutil.h>
 
 #include "../../base/log.h"
-#include "../../base/thread_pool.h"
 #include "../../base/vecmath.h"
 #include "../audio/audio_alsa.h"
 #include "../engine.h"
@@ -21,7 +20,7 @@ PlatformLinux::~PlatformLinux() = default;
 void PlatformLinux::Initialize() {
   LOG << "Initializing platform.";
 
-  ThreadPool::Initialize();
+  thread_pool_.Initialize();
 
   root_path_ = "../../";
   LOG << "Root path: " << root_path_.c_str();

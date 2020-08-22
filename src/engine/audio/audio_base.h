@@ -6,8 +6,11 @@
 #include <mutex>
 
 #include "../../base/closure.h"
-#include "../../base/task_runner.h"
 #include "audio_sample.h"
+
+namespace base {
+class TaskRunner;
+}
 
 namespace eng {
 
@@ -17,15 +20,13 @@ class AudioBase {
  public:
   void Play(std::shared_ptr<AudioSample> sample);
 
-  void Update();
-
  protected:
   static constexpr int kChannelCount = 2;
 
   std::list<std::shared_ptr<AudioSample>> samples_[2];
   std::mutex mutex_;
 
-  base::TaskRunner task_runner_;
+  base::TaskRunner& task_runner_;
 
   AudioBase();
   ~AudioBase();

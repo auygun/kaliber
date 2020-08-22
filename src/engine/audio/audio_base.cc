@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include "../../base/log.h"
+#include "../../base/task_runner.h"
 #include "../../base/thread_pool.h"
 #include "../sound.h"
 
@@ -10,16 +11,13 @@ using namespace base;
 
 namespace eng {
 
-AudioBase::AudioBase() = default;
+AudioBase::AudioBase() : task_runner_(TaskRunner::GetLocalTaskRunner()) {}
+
 AudioBase::~AudioBase() = default;
 
 void AudioBase::Play(std::shared_ptr<AudioSample> sample) {
   std::unique_lock<std::mutex> scoped_lock(mutex_);
   samples_[0].push_back(sample);
-}
-
-void AudioBase::Update() {
-  task_runner_.Run();
 }
 
 void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
@@ -119,7 +117,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
               src[1] = src[0];  // mono.
             num_samples = sound->GetNumSamples();
 
-            ThreadPool::GetTaskRunner().Enqueue(
+            ThreadPool::Get().EnqueueTask(
                 HERE, std::bind(&AudioBase::DoStream, this, *it,
                                 flags & AudioSample::kLoop));
           } else if (num_samples) {
@@ -138,7 +136,8 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
         (!sound->is_streaming_sound() ||
          !sample->streaming_in_progress.load(std::memory_order_relaxed))) {
       sample->marked_for_removal = false;
-      task_runner_.Enqueue(HERE, std::bind(&AudioBase::EndCallback, this, *it));
+      task_runner_.EnqueueTask(HERE,
+                               std::bind(&AudioBase::EndCallback, this, *it));
       it = samples_[1].erase(it);
     } else {
       ++it;
