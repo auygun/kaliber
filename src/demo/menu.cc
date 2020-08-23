@@ -6,7 +6,6 @@
 #include "../base/collusion_test.h"
 #include "../base/interpolation.h"
 #include "../base/log.h"
-#include "../base/worker.h"
 #include "../engine/engine.h"
 #include "../engine/font.h"
 #include "../engine/image.h"
@@ -250,16 +249,13 @@ std::unique_ptr<Image> Menu::CreateImage() {
   // Fill the area of each menu item with gradient.
   image->GradientV({1.0f, 1.0f, 1.0f, 0}, {.0f, .0f, 1.0f, 0}, line_height);
 
-  base::Worker worker;
   for (int i = 0; i < kOption_Max; ++i) {
     int w, h;
     font.CalculateBoundingBox(kMenuOption[i], w, h);
     float x = (image->GetWidth() - w) / 2;
     float y = line_height * i;
-    worker.Enqueue(HERE, std::bind(&Font::Print, &font, x, y, kMenuOption[i],
-                                   image->GetBuffer(), image->GetWidth()));
+    font.Print(x, y, kMenuOption[i], image->GetBuffer(), image->GetWidth());
   }
-  worker.Join();
 
   image->Compress();
   return image;

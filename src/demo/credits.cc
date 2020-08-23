@@ -2,7 +2,6 @@
 
 #include "../base/log.h"
 #include "../base/vecmath.h"
-#include "../base/worker.h"
 #include "../engine/engine.h"
 #include "../engine/font.h"
 #include "../engine/image.h"
@@ -114,16 +113,13 @@ std::unique_ptr<Image> Credits::CreateImage() {
   image->Create(max_text_width_, line_height * kNumLines);
   image->Clear({1, 1, 1, 0});
 
-  Worker worker;
   for (int i = 0; i < kNumLines; ++i) {
     int w, h;
     font.CalculateBoundingBox(kCreditsLines[i], w, h);
     float x = (image->GetWidth() - w) / 2;
     float y = line_height * i;
-    worker.Enqueue(HERE, std::bind(&Font::Print, &font, x, y, kCreditsLines[i],
-                                   image->GetBuffer(), image->GetWidth()));
+    font.Print(x, y, kCreditsLines[i], image->GetBuffer(), image->GetWidth());
   }
-  worker.Join();
 
   image->Compress();
   return image;

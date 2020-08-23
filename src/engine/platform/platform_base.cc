@@ -3,7 +3,7 @@
 #include <thread>
 
 #include "../../base/log.h"
-#include "../../base/worker.h"
+#include "../../base/thread_pool.h"
 #include "../audio/audio.h"
 #include "../engine.h"
 #include "../renderer/renderer.h"
@@ -72,7 +72,7 @@ void PlatformBase::RunMainLoop() {
       engine_->Update(time_step);
 
       if (should_exit_) {
-        Worker::Shutdown();
+        ThreadPool::Shutdown();
         engine_->Shutdown();
         engine_.reset();
         return;

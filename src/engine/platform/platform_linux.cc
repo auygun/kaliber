@@ -4,8 +4,8 @@
 #include <X11/Xutil.h>
 
 #include "../../base/log.h"
+#include "../../base/thread_pool.h"
 #include "../../base/vecmath.h"
-#include "../../base/worker.h"
 #include "../audio/audio_alsa.h"
 #include "../engine.h"
 #include "../input_event.h"
@@ -21,7 +21,7 @@ PlatformLinux::~PlatformLinux() = default;
 void PlatformLinux::Initialize() {
   LOG << "Initializing platform.";
 
-  Worker::Initialize();
+  ThreadPool::Initialize();
 
   root_path_ = "../../";
   LOG << "Root path: " << root_path_.c_str();

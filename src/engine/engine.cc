@@ -1,7 +1,6 @@
 #include "engine.h"
 
 #include "../base/log.h"
-#include "../base/worker.h"
 #include "../third_party/texture_compressor/texture_compressor.h"
 #include "animator.h"
 #include "audio/audio.h"
@@ -425,15 +424,12 @@ std::unique_ptr<Image> Engine::PrintStats() {
   image->Create(image_width, image_height);
   image->Clear({1, 1, 1, 0.08f});
 
-  Worker worker;
   int y = margin;
   for (auto& text : lines) {
-    worker.Enqueue(
-        HERE, std::bind(&Font::Print, system_font_.get(), margin, y,
-                        text.c_str(), image->GetBuffer(), image->GetWidth()));
+    system_font_->Print(margin, y, text.c_str(), image->GetBuffer(),
+                        image->GetWidth());
     y += line_height + margin;
   }
-  worker.Join();
 
   return image;
 }

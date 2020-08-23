@@ -3,7 +3,7 @@
 #include <cstring>
 
 #include "../../base/log.h"
-#include "../../base/worker.h"
+#include "../../base/thread_pool.h"
 #include "../sound.h"
 
 using namespace base;
@@ -119,7 +119,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
               src[1] = src[0];  // mono.
             num_samples = sound->GetNumSamples();
 
-            Worker::GetTaskRunner().Enqueue(
+            ThreadPool::GetTaskRunner().Enqueue(
                 HERE, std::bind(&AudioBase::DoStream, this, *it,
                                 flags & AudioSample::kLoop));
           } else if (num_samples) {
