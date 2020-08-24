@@ -6,9 +6,6 @@
 #include <cstdio>
 #endif
 #include <cstdlib>
-#ifdef _DEBUG
-#include <unordered_set>
-#endif
 
 #include "vecmath.h"
 
