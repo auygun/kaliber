@@ -32,8 +32,6 @@ void ThreadPool::Initialize(unsigned max_concurrency) {
 
   while (max_concurrency--)
     threads_.emplace_back(&ThreadPool::WorkerMain, this);
-
-  TaskRunner::GetLocalTaskRunner().SetDelegate(this);
 }
 
 void ThreadPool::Shutdown() {
@@ -64,16 +62,11 @@ void ThreadPool::EnqueueTaskAndReply(Location from,
   cv_.notify_one();
 }
 
-void ThreadPool::Signal() {
-  cv_.notify_all();
-}
-
 void ThreadPool::WorkerMain() {
   for (;;) {
     {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
-      while (task_runner_.Enmpty() &&
-             TaskRunner::GetLocalTaskRunner().Enmpty()) {
+      while (task_runner_.Enmpty()) {
         if (quit_when_idle_)
           return;
         cv_.wait(scoped_lock);
@@ -82,7 +75,9 @@ void ThreadPool::WorkerMain() {
 
     task_runner_.Run();
 
-    TaskRunner::GetLocalTaskRunner().Run();
+    DCHECK(TaskRunner::GetLocalTaskRunner().Enmpty())
+        << "Pooled thread is not allowed to run tasks from the thread-local "
+           "TaskRunner.";
   }
 }
 

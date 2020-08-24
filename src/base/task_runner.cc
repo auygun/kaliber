@@ -19,9 +19,6 @@ void TaskRunner::EnqueueTask(Location from, Closure task) {
 
   stack_.Push(
       std::make_tuple(std::move(from), std::move(task), nullptr, nullptr));
-
-  if (delegate_)
-    delegate_->Signal();
 }
 
 void TaskRunner::EnqueueTaskAndReply(Location from,
@@ -31,9 +28,6 @@ void TaskRunner::EnqueueTaskAndReply(Location from,
 
   stack_.Push(std::make_tuple(std::move(from), std::move(task),
                               std::move(reply), &t_task_runner));
-
-  if (delegate_)
-    delegate_->Signal();
 }
 
 void TaskRunner::Run() {

@@ -15,7 +15,7 @@ class TaskRunner;
 
 // Feed the ThreadPool tasks (in the form of Closure objects) and they will be
 // called on any thread from the pool.
-class ThreadPool : public TaskRunner::Delegate {
+class ThreadPool {
  public:
   ThreadPool();
   ~ThreadPool();
@@ -40,9 +40,6 @@ class ThreadPool : public TaskRunner::Delegate {
   base::TaskRunner task_runner_;
 
   static ThreadPool* singleton;
-
-  // TaskRunner::Delegate interface.
-  void Signal() override;
 
   void WorkerMain();
 

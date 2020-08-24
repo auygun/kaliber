@@ -15,19 +15,12 @@ namespace base {
 // thread.
 class TaskRunner {
  public:
-  class Delegate {
-   public:
-    virtual void Signal() = 0;
-  };
-
   TaskRunner() = default;
   ~TaskRunner() = default;
 
-  void SetDelegate(Delegate* delegate) { delegate_ = delegate; }
-
   void EnqueueTask(Location from, Closure task);
 
-  void EnqueueTaskAndReply(Location from, Closure task, Closure done_cb);
+  void EnqueueTaskAndReply(Location from, Closure task, Closure reply);
 
   void Run();
 
@@ -39,8 +32,6 @@ class TaskRunner {
   using Task = std::tuple<Location, Closure, Closure, TaskRunner*>;
 
   ConcurrentStack<Task> stack_;
-
-  Delegate* delegate_ = nullptr;
 
   TaskRunner(TaskRunner const&) = delete;
   TaskRunner& operator=(TaskRunner const&) = delete;
