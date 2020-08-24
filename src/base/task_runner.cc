@@ -35,6 +35,10 @@ void TaskRunner::Run() {
   while (stack_.Pop(task)) {
     auto [from, task_cb, reply_cb, reply_tr] = task;
 
+#if 0
+    LOG << __func__ << " from: " << LOCATION(from);
+#endif
+
     task_cb();
 
     if (reply_cb)

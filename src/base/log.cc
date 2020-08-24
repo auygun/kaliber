@@ -63,23 +63,6 @@ Log::~Log() {
   Flush();
 }
 
-#ifdef _DEBUG
-
-LogOnce::LogOnce(const char* file, int line) : LogBase(file, line) {}
-
-LogOnce::~LogOnce() {
-  static std::unordered_set<std::string> count_set;
-
-  auto key = std::string(file_) + std::to_string(line_) + stream_.str();
-  auto it = count_set.find(key);
-  if (it == count_set.end()) {
-    count_set.insert(key);
-    Flush();
-  }
-}
-
-#endif
-
 Check::Check(const char* file,
              int line,
              bool condition,

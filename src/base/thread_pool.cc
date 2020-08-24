@@ -50,6 +50,8 @@ void ThreadPool::Shutdown() {
 }
 
 void ThreadPool::EnqueueTask(Location from, Closure task) {
+  DCHECK((!threads_.empty()));
+
   task_runner_.EnqueueTask(std::move(from), std::move(task));
   cv_.notify_one();
 }
@@ -57,6 +59,8 @@ void ThreadPool::EnqueueTask(Location from, Closure task) {
 void ThreadPool::EnqueueTaskAndReply(Location from,
                                      Closure task,
                                      Closure reply) {
+  DCHECK((!threads_.empty()));
+
   task_runner_.EnqueueTaskAndReply(std::move(from), std::move(task),
                                    std::move(reply));
   cv_.notify_one();

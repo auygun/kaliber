@@ -187,49 +187,49 @@ Vector2 Engine::ToPosition(const Vector2& vec) {
   return ToScale(vec) - GetScreenSize() / 2.0f;
 }
 
-bool Engine::SetImageSource(const std::string& asset_name,
+void Engine::SetImageSource(const std::string& asset_name,
                             const std::string& file_name,
                             bool persistent) {
-  auto image = std::make_unique<Image>();
-  if (!image->Load(file_name))
-    return false;
-
-  image->Compress();
-
   std::shared_ptr<Texture> texture;
   auto it = textures_.find(asset_name);
   if (it != textures_.end()) {
     texture = it->second.texture;
     it->second.asset_file = file_name;
     it->second.create_image = nullptr;
+    it->second.persistent = persistent;
   } else {
     texture = CreateRenderResource<Texture>();
     textures_[asset_name] = {texture, file_name, nullptr, persistent};
   }
 
-  if (persistent)
-    texture->Update(std::move(image));
-
-  return true;
+  if (persistent) {
+    auto image = std::make_unique<Image>();
+    if (image->Load(file_name)) {
+      image->Compress();
+      texture->Update(std::move(image));
+    } else {
+      texture->Destroy();
+    }
+  }
 }
 
 void Engine::SetImageSource(const std::string& asset_name,
                             CreateImageCB create_image,
                             bool persistent) {
-  auto image = create_image();
-
   std::shared_ptr<Texture> texture;
   auto it = textures_.find(asset_name);
   if (it != textures_.end()) {
     texture = it->second.texture;
     it->second.create_image = create_image;
     it->second.asset_file.clear();
+    it->second.persistent = persistent;
   } else {
     texture = CreateRenderResource<Texture>();
     textures_[asset_name] = {texture, "", create_image, persistent};
   }
 
   if (persistent) {
+    auto image = create_image();
     if (image)
       texture->Update(std::move(image));
     else
@@ -237,17 +237,18 @@ void Engine::SetImageSource(const std::string& asset_name,
   }
 }
 
-bool Engine::RefreshImage(const std::string& asset_name) {
+void Engine::RefreshImage(const std::string& asset_name) {
   auto it = textures_.find(asset_name);
   if (it == textures_.end())
-    return false;
+    return;
 
   std::unique_ptr<Image> image;
   if (!it->second.asset_file.empty()) {
     image = std::make_unique<Image>();
-    if (!image->Load(it->second.asset_file))
-      return false;
-    image->Compress();
+    if (image->Load(it->second.asset_file))
+      image->Compress();
+    else
+      image.reset();
   } else if (it->second.create_image) {
     image = it->second.create_image();
   }
@@ -256,8 +257,6 @@ bool Engine::RefreshImage(const std::string& asset_name) {
     it->second.texture->Update(std::move(image));
   else
     it->second.texture->Destroy();
-
-  return true;
 }
 
 std::shared_ptr<Texture> Engine::GetTexture(const std::string& asset_name) {

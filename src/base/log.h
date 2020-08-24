@@ -13,12 +13,10 @@
 
 #ifdef _DEBUG
 #define DLOG base::Log(__FILE__, __LINE__)
-#define DLOG_ONCE base::LogOnce(__FILE__, __LINE__)
 #define DCHECK(expr) \
   base::Check(__FILE__, __LINE__, static_cast<bool>(expr), true, #expr)
 #else
 #define DLOG EAT_STREAM_PARAMETERS
-#define DLOG_ONCE EAT_STREAM_PARAMETERS
 #define DCHECK(expr) EAT_STREAM_PARAMETERS
 #endif
 
@@ -61,16 +59,6 @@ class Log : public LogBase {
   Log(const char* file, int line);
   ~Log();
 };
-
-#ifdef _DEBUG
-
-class LogOnce : public LogBase {
- public:
-  LogOnce(const char* file, int line);
-  ~LogOnce();
-};
-
-#endif
 
 class Check : public LogBase {
  public:

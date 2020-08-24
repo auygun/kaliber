@@ -68,14 +68,14 @@ class Engine {
     return std::unique_ptr<T>(static_cast<T*>(resource.release()));
   }
 
-  bool SetImageSource(const std::string& asset_name,
+  void SetImageSource(const std::string& asset_name,
                       const std::string& file_name,
                       bool persistent = false);
   void SetImageSource(const std::string& asset_name,
                       CreateImageCB create_image,
                       bool persistent = false);
 
-  bool RefreshImage(const std::string& asset_name);
+  void RefreshImage(const std::string& asset_name);
 
   std::shared_ptr<Texture> GetTexture(const std::string& asset_name);
 
