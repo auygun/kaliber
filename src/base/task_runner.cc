@@ -17,8 +17,8 @@ TaskRunner& TaskRunner::GetLocalTaskRunner() {
 void TaskRunner::EnqueueTask(Location from, Closure task) {
   DCHECK(task);
 
-  stack_.Push(
-      std::make_tuple(std::move(from), std::move(task), nullptr, nullptr));
+  std::lock_guard<std::mutex> scoped_lock(lock_);
+  queue_.emplace_back(std::move(from), std::move(task), nullptr, nullptr);
 }
 
 void TaskRunner::EnqueueTaskAndReply(Location from,
@@ -26,13 +26,27 @@ void TaskRunner::EnqueueTaskAndReply(Location from,
                                      Closure reply) {
   DCHECK(task);
 
-  stack_.Push(std::make_tuple(std::move(from), std::move(task),
-                              std::move(reply), &t_task_runner));
+  std::lock_guard<std::mutex> scoped_lock(lock_);
+  queue_.emplace_back(std::move(from), std::move(task), std::move(reply),
+                      &t_task_runner);
+}
+
+bool TaskRunner::Enmpty() const {
+  std::lock_guard<std::mutex> scoped_lock(lock_);
+  return queue_.empty();
 }
 
 void TaskRunner::Run() {
-  Task task;
-  while (stack_.Pop(task)) {
+  for (;;) {
+    Task task;
+    {
+      std::lock_guard<std::mutex> scoped_lock(lock_);
+      if (queue_.empty())
+        return;
+      task.swap(queue_.front());
+      queue_.pop_front();
+    }
+
     auto [from, task_cb, reply_cb, reply_tr] = task;
 
 #if 0
