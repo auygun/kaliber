@@ -7,16 +7,19 @@
   true ? (void)0 : base::Log::Voidify() & (*base::Log::swallow_stream)
 
 #define LOG base::Log(__FILE__, __LINE__)
+#define LOG_DIFF base::LogDiff(__FILE__, __LINE__)
 #define CHECK(expr) \
   base::Check(__FILE__, __LINE__, static_cast<bool>(expr), false, #expr)
 #define NOTREACHED base::NotReached(__FILE__, __LINE__)
 
 #ifdef _DEBUG
 #define DLOG base::Log(__FILE__, __LINE__)
+#define DLOG_DIFF base::LogDiff(__FILE__, __LINE__)
 #define DCHECK(expr) \
   base::Check(__FILE__, __LINE__, static_cast<bool>(expr), true, #expr)
 #else
 #define DLOG EAT_STREAM_PARAMETERS
+#define DLOG_DIFF EAT_STREAM_PARAMETERS
 #define DCHECK(expr) EAT_STREAM_PARAMETERS
 #endif
 
@@ -58,6 +61,12 @@ class Log : public LogBase {
  public:
   Log(const char* file, int line);
   ~Log();
+};
+
+class LogDiff : public LogBase {
+ public:
+  LogDiff(const char* file, int line);
+  ~LogDiff();
 };
 
 class Check : public LogBase {

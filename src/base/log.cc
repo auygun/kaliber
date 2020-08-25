@@ -6,6 +6,8 @@
 #include <cstdio>
 #endif
 #include <cstdlib>
+#include <mutex>
+#include <unordered_map>
 
 #include "vecmath.h"
 
@@ -58,6 +60,29 @@ Log::Log(const char* file, int line) : LogBase(file, line) {}
 
 Log::~Log() {
   Flush();
+}
+
+LogDiff::LogDiff(const char* file, int line) : LogBase(file, line) {}
+
+LogDiff::~LogDiff() {
+  static std::unordered_map<std::string, std::string> log_map;
+  static std::mutex lock;
+
+  auto key = std::string(file_) + std::to_string(line_);
+  bool flush = true;
+  {
+    std::lock_guard<std::mutex> scoped_lock(lock);
+    auto it = log_map.find(key);
+    if (it == log_map.end())
+      log_map[key] = stream_.str();
+    else if (it->second != stream_.str())
+      it->second = stream_.str();
+    else
+      flush = false;
+  }
+
+  if (flush)
+    Flush();
 }
 
 Check::Check(const char* file,
