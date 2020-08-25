@@ -35,11 +35,14 @@ class ThreadPool {
 
   std::condition_variable cv_;
   std::mutex mutex_;
+  bool wake_up_ = false;
   bool quit_when_idle_ = false;
 
   base::TaskRunner task_runner_;
 
   static ThreadPool* singleton;
+
+  void WakeUpOne();
 
   void WorkerMain();
 

@@ -53,7 +53,7 @@ void ThreadPool::EnqueueTask(Location from, Closure task) {
   DCHECK((!threads_.empty()));
 
   task_runner_.EnqueueTask(std::move(from), std::move(task));
-  cv_.notify_one();
+  WakeUpOne();
 }
 
 void ThreadPool::EnqueueTaskAndReply(Location from,
@@ -63,6 +63,14 @@ void ThreadPool::EnqueueTaskAndReply(Location from,
 
   task_runner_.EnqueueTaskAndReply(std::move(from), std::move(task),
                                    std::move(reply));
+  WakeUpOne();
+}
+
+void ThreadPool::WakeUpOne() {
+  {
+    std::unique_lock<std::mutex> scoped_lock(mutex_);
+    wake_up_ = true;
+  }
   cv_.notify_one();
 }
 
@@ -70,11 +78,12 @@ void ThreadPool::WorkerMain() {
   for (;;) {
     {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
-      while (task_runner_.Enmpty()) {
+      while (!wake_up_) {
         if (quit_when_idle_)
           return;
         cv_.wait(scoped_lock);
       }
+      wake_up_ = false;
     }
 
     task_runner_.Run();
