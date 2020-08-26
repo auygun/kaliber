@@ -3,9 +3,9 @@
 
 #include <list>
 #include <memory>
-#include <mutex>
 
 #include "../../base/closure.h"
+#include "../../base/spin_lock.h"
 #include "audio_sample.h"
 
 namespace base {
@@ -23,17 +23,17 @@ class AudioBase {
  protected:
   static constexpr int kChannelCount = 2;
 
-  std::list<std::shared_ptr<AudioSample>> samples_[2];
-  std::mutex mutex_;
-
-  base::TaskRunner& task_runner_;
-
   AudioBase();
   ~AudioBase();
 
   void RenderAudio(float* output_buffer, size_t num_frames);
 
  private:
+  std::list<std::shared_ptr<AudioSample>> samples_[2];
+  base::SpinLock lock_;
+
+  base::TaskRunner& task_runner_;
+
   void DoStream(std::shared_ptr<AudioSample> sample, bool loop);
 
   void EndCallback(std::shared_ptr<AudioSample> sample);
