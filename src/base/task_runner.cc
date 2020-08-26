@@ -10,7 +10,7 @@ thread_local base::TaskRunner t_task_runner;
 
 namespace base {
 
-TaskRunner& TaskRunner::GetLocalTaskRunner() {
+TaskRunner& TaskRunner::GetThreadLocalTaskRunner() {
   return t_task_runner;
 }
 
@@ -31,12 +31,7 @@ void TaskRunner::EnqueueTaskAndReply(Location from,
                       &t_task_runner);
 }
 
-bool TaskRunner::Enmpty() const {
-  std::lock_guard<std::mutex> scoped_lock(lock_);
-  return queue_.empty();
-}
-
-void TaskRunner::Run() {
+void TaskRunner::MultiConsumerRun() {
   for (;;) {
     Task task;
     {
@@ -58,6 +53,35 @@ void TaskRunner::Run() {
     if (reply_cb)
       reply_tr->EnqueueTask(from, reply_cb);
   }
+}
+
+void TaskRunner::SingleConsumerRun() {
+  std::deque<Task> queue;
+  {
+    std::lock_guard<std::mutex> scoped_lock(lock_);
+    if (queue_.empty())
+      return;
+    queue.swap(queue_);
+  }
+
+  while (!queue.empty()) {
+    auto [from, task_cb, reply_cb, reply_tr] = queue.front();
+    queue.pop_front();
+
+#if 0
+    LOG << __func__ << " from: " << LOCATION(from);
+#endif
+
+    task_cb();
+
+    if (reply_cb)
+      reply_tr->EnqueueTask(from, reply_cb);
+  }
+}
+
+bool TaskRunner::IsEmpty() const {
+  std::lock_guard<std::mutex> scoped_lock(lock_);
+  return queue_.empty();
 }
 
 }  // namespace base

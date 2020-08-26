@@ -23,11 +23,13 @@ class TaskRunner {
 
   void EnqueueTaskAndReply(Location from, Closure task, Closure reply);
 
-  void Run();
+  void MultiConsumerRun();
 
-  bool Enmpty() const;
+  void SingleConsumerRun();
 
-  static TaskRunner& GetLocalTaskRunner();
+  bool IsEmpty() const;
+
+  static TaskRunner& GetThreadLocalTaskRunner();
 
  private:
   using Task = std::tuple<Location, Closure, Closure, TaskRunner*>;

@@ -25,7 +25,6 @@ class InputEvent;
 class Image;
 class ImageQuad;
 class Renderer;
-struct RenderCommand;
 class Geometry;
 class Shader;
 class Texture;

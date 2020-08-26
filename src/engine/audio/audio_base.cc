@@ -11,7 +11,7 @@ using namespace base;
 
 namespace eng {
 
-AudioBase::AudioBase() : task_runner_(TaskRunner::GetLocalTaskRunner()) {}
+AudioBase::AudioBase() : task_runner_(TaskRunner::GetThreadLocalTaskRunner()) {}
 
 AudioBase::~AudioBase() = default;
 

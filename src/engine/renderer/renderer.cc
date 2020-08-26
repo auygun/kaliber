@@ -36,7 +36,7 @@ const std::string kAttributeNames[eng::kAttribType_Max] = {
 namespace eng {
 
 #ifdef THREADED_RENDERING
-Renderer::Renderer() : task_runner_(TaskRunner::GetLocalTaskRunner()) {}
+Renderer::Renderer() : task_runner_(TaskRunner::GetThreadLocalTaskRunner()) {}
 #else
 Renderer::Renderer() = default;
 #endif  // THREADED_RENDERING

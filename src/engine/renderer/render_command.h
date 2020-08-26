@@ -14,11 +14,13 @@ class Image;
 class ShaderSource;
 class Mesh;
 
-#define RENDER_COMMAND_BEGIN(NAME)            \
+#define RENDER_COMMAND_BEGIN(NAME)                    \
   struct NAME : RenderCommand {                       \
     static constexpr CommandId CMD_ID = HHASH(#NAME); \
     NAME();
-#define RENDER_COMMAND_END };
+#define RENDER_COMMAND_END \
+  }                        \
+  ;
 
 struct RenderCommand {
   using CommandId = size_t;
