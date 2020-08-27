@@ -13,6 +13,7 @@
 
 namespace base {
 
+// Adapted from Chromium's logging implementation.
 // This is never instantiated, it's just used for EAT_STREAM_PARAMETERS to have
 // an object of the correct type on the LHS of the unused part of the ternary
 // operator.
@@ -21,25 +22,6 @@ LogBase* LogBase::swallow_stream;
 LogBase::LogBase(const char* file, int line) : file_(file), line_(line) {}
 
 LogBase::~LogBase() = default;
-
-template <>
-LogBase& LogBase::operator<<<bool>(const bool& arg) {
-  stream_ << (arg ? "true" : "false");
-  return *this;
-}
-
-template <>
-LogBase& LogBase::operator<<<Vector2>(const Vector2& arg) {
-  stream_ << "(" << arg.x << ", " << arg.y << ")";
-  return *this;
-}
-
-template <>
-LogBase& LogBase::operator<<<Vector4>(const Vector4& arg) {
-  stream_ << "(" << arg.x << ", " << arg.y << ", " << arg.z << ", " << arg.w
-          << ")";
-  return *this;
-}
 
 void LogBase::Flush() {
   stream_ << std::endl;
@@ -92,7 +74,7 @@ Check::Check(const char* file,
              const char* expr)
     : LogBase(file, line), condition_(condition) {
   if (!condition_)
-    *this << (debug ? "DCHECK: (" : "CHECK: (") << expr << ") ";
+    base() << (debug ? "DCHECK: (" : "CHECK: (") << expr << ") ";
 }
 
 Check::~Check() {
@@ -103,12 +85,31 @@ Check::~Check() {
 }
 
 NotReached::NotReached(const char* file, int line) : LogBase(file, line) {
-  *this << "NOTREACHED ";
+  base() << "NOTREACHED ";
 }
 
 NotReached::~NotReached() {
   Flush();
   std::abort();
+}
+
+template <>
+LogBase& operator<<(LogBase& out, const base::Vector2& arg) {
+  out.stream() << "(" << arg.x << ", " << arg.y << ")";
+  return out;
+}
+
+template <>
+LogBase& operator<<(LogBase& out, const base::Vector3& arg) {
+  out.stream() << "(" << arg.x << ", " << arg.y << ", " << arg.z << ")";
+  return out;
+}
+
+template <>
+LogBase& operator<<(LogBase& out, const base::Vector4& arg) {
+  out.stream() << "(" << arg.x << ", " << arg.y << ", " << arg.z << ", "
+               << arg.w << ")";
+  return out;
 }
 
 }  // namespace base
