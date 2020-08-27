@@ -1,12 +1,6 @@
 #include "thread_pool.h"
 
-#include <condition_variable>
-#include <mutex>
-#include <thread>
-#include <vector>
-
 #include "log.h"
-#include "task_runner.h"
 
 namespace base {
 
@@ -38,11 +32,8 @@ void ThreadPool::Shutdown() {
   if (threads_.empty())
     return;
 
-  {
-    std::unique_lock<std::mutex> scoped_lock(mutex_);
-    quit_when_idle_ = true;
-  }
-  cv_.notify_all();
+  quit_.store(true, std::memory_order_relaxed);
+  semaphore_.Release();
 
   for (auto& thread : threads_)
     thread.join();
@@ -53,7 +44,7 @@ void ThreadPool::EnqueueTask(Location from, Closure task) {
   DCHECK((!threads_.empty()));
 
   task_runner_.EnqueueTask(std::move(from), std::move(task));
-  WakeUpOne();
+  semaphore_.Release();
 }
 
 void ThreadPool::EnqueueTaskAndReply(Location from,
@@ -63,27 +54,16 @@ void ThreadPool::EnqueueTaskAndReply(Location from,
 
   task_runner_.EnqueueTaskAndReply(std::move(from), std::move(task),
                                    std::move(reply));
-  WakeUpOne();
-}
-
-void ThreadPool::WakeUpOne() {
-  {
-    std::unique_lock<std::mutex> scoped_lock(mutex_);
-    wake_up_ = true;
-  }
-  cv_.notify_one();
+  semaphore_.Release();
 }
 
 void ThreadPool::WorkerMain() {
   for (;;) {
-    {
-      std::unique_lock<std::mutex> scoped_lock(mutex_);
-      while (!wake_up_) {
-        if (quit_when_idle_)
-          return;
-        cv_.wait(scoped_lock);
-      }
-      wake_up_ = false;
+    semaphore_.Acquire();
+
+    if (quit_.load(std::memory_order_relaxed)) {
+      semaphore_.Release();
+      return;
     }
 
     task_runner_.MultiConsumerRun();
