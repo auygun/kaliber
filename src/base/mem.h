@@ -12,6 +12,8 @@
 
 #define ALIGN_MEM(alignment) __attribute__((aligned(alignment)))
 
+namespace base {
+
 namespace internal {
 
 struct ScopedAlignedFree {
@@ -22,8 +24,6 @@ struct ScopedAlignedFree {
 };
 
 }  // namespace internal
-
-namespace base {
 
 template <typename T>
 struct AlignedMem {

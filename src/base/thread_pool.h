@@ -26,9 +26,18 @@ class ThreadPool {
 
   void Shutdown();
 
-  void EnqueueTask(Location from, Closure task);
+  void EnqueueTask(const Location& from, Closure task);
 
-  void EnqueueTaskAndReply(Location from, Closure task, Closure reply);
+  void EnqueueTaskAndReply(const Location& from, Closure task, Closure reply);
+
+  template <typename ReturnType>
+  void EnqueueTaskAndReplyWithResult(const Location& from,
+                                     std::function<ReturnType()> task,
+                                     std::function<void(ReturnType)> reply) {
+    task_runner_.EnqueueTaskAndReplyWithResult(from, std::move(task),
+                                               std::move(reply));
+    semaphore_.Release();
+  }
 
  private:
   std::vector<std::thread> threads_;

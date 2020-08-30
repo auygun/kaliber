@@ -4,6 +4,8 @@
 #include <cstdio>
 #include <memory>
 
+namespace base {
+
 namespace internal {
 
 struct ScopedFILECloser {
@@ -14,8 +16,6 @@ struct ScopedFILECloser {
 };
 
 }  // namespace internal
-
-namespace base {
 
 // Automatically closes file.
 using ScopedFILE = std::unique_ptr<FILE, internal::ScopedFILECloser>;

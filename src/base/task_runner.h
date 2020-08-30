@@ -9,6 +9,27 @@
 
 namespace base {
 
+namespace internal {
+
+// Adapted from Chromium project.
+// Adapts a function that produces a result via a return value to
+// one that returns via an output parameter.
+template <typename ReturnType>
+void ReturnAsParamAdapter(std::function<ReturnType()> func,
+                          ReturnType* result) {
+  *result = func();
+}
+
+// Adapts a ReturnType* result to a callblack that expects a ReturnType.
+template <typename ReturnType>
+void ReplyAdapter(std::function<void(ReturnType)> callback,
+                  ReturnType* result) {
+  callback(std::move(*result));
+  delete result;
+}
+
+}  // namespace internal
+
 // Runs queued tasks (in the form of Closure objects). All methods are
 // thread-safe and can be called on any thread.
 // Tasks run in FIFO order. When consumed concurrently by multiple threads, it
@@ -19,9 +40,25 @@ class TaskRunner {
   TaskRunner() = default;
   ~TaskRunner() = default;
 
-  void EnqueueTask(Location from, Closure task);
+  void EnqueueTask(const Location& from, Closure task);
 
-  void EnqueueTaskAndReply(Location from, Closure task, Closure reply);
+  void EnqueueTaskAndReply(const Location& from, Closure task, Closure reply);
+
+  template <typename ReturnType>
+  void EnqueueTaskAndReplyWithResult(const Location& from,
+                                     std::function<ReturnType()> task,
+                                     std::function<void(ReturnType)> reply) {
+    DCHECK(task) << LOCATION(from);
+    DCHECK(reply) << LOCATION(from);
+
+    auto* result = new ReturnType;
+    return EnqueueTaskAndReply(
+        from,
+        std::bind(internal::ReturnAsParamAdapter<ReturnType>, std::move(task),
+                  result),
+        std::bind(internal::ReplyAdapter<ReturnType>, std::move(reply),
+                  result));
+  }
 
   void MultiConsumerRun();
 
@@ -32,7 +69,7 @@ class TaskRunner {
   static TaskRunner& GetThreadLocalTaskRunner();
 
  private:
-  using Task = std::tuple<Location, Closure, Closure, TaskRunner*>;
+  using Task = std::tuple<Location, Closure>;
 
   std::deque<Task> queue_;
   mutable std::mutex lock_;

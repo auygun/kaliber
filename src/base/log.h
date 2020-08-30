@@ -44,7 +44,6 @@ class LogBase {
   class Voidify {
    public:
     Voidify() = default;
-    // Adapted from Chromium's logging implementation.
     // This has to be an operator with a precedence lower than << but
     // higher than ?:
     void operator&(LogBase&) {}
