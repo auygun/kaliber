@@ -11,7 +11,8 @@ using namespace base;
 
 namespace eng {
 
-AudioBase::AudioBase() : task_runner_(TaskRunner::GetThreadLocalTaskRunner()) {}
+AudioBase::AudioBase()
+    : main_thread_task_runner_(TaskRunner::GetThreadLocalTaskRunner()) {}
 
 AudioBase::~AudioBase() = default;
 
@@ -136,8 +137,8 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
         (!sound->is_streaming_sound() ||
          !sample->streaming_in_progress.load(std::memory_order_relaxed))) {
       sample->marked_for_removal = false;
-      task_runner_.EnqueueTask(HERE,
-                               std::bind(&AudioBase::EndCallback, this, *it));
+      main_thread_task_runner_->EnqueueTask(
+          HERE, std::bind(&AudioBase::EndCallback, this, *it));
       it = samples_[1].erase(it);
     } else {
       ++it;

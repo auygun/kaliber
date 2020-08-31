@@ -2,6 +2,7 @@
 #define TASK_RUNNER_H
 
 #include <deque>
+#include <memory>
 #include <mutex>
 #include <tuple>
 
@@ -48,9 +49,6 @@ class TaskRunner {
   void EnqueueTaskAndReplyWithResult(const Location& from,
                                      std::function<ReturnType()> task,
                                      std::function<void(ReturnType)> reply) {
-    DCHECK(task) << LOCATION(from);
-    DCHECK(reply) << LOCATION(from);
-
     auto* result = new ReturnType;
     return EnqueueTaskAndReply(
         from,
@@ -64,15 +62,16 @@ class TaskRunner {
 
   void SingleConsumerRun();
 
-  bool IsEmpty() const;
-
-  static TaskRunner& GetThreadLocalTaskRunner();
+  static void CreateThreadLocalTaskRunner();
+  static TaskRunner* GetThreadLocalTaskRunner();
 
  private:
   using Task = std::tuple<Location, Closure>;
 
   std::deque<Task> queue_;
   mutable std::mutex lock_;
+
+  static thread_local std::unique_ptr<TaskRunner> thread_local_task_runner;
 
   TaskRunner(TaskRunner const&) = delete;
   TaskRunner& operator=(TaskRunner const&) = delete;

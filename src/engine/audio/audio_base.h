@@ -32,7 +32,7 @@ class AudioBase {
   std::list<std::shared_ptr<AudioSample>> samples_[2];
   base::SpinLock lock_;
 
-  base::TaskRunner& task_runner_;
+  base::TaskRunner* main_thread_task_runner_;
 
   void DoStream(std::shared_ptr<AudioSample> sample, bool loop);
 

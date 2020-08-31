@@ -9,13 +9,13 @@ bool Renderer::Initialize() {
 
   if (!CreateWindow())
     return false;
-  return StartWorker();
+  return StartRenderThread();
 }
 
 void Renderer::Shutdown() {
   LOG << "Shutting down renderer.";
 
-  TerminateWorker();
+  TerminateRenderThread();
   DestroyWindow();
 }
 

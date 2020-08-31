@@ -36,7 +36,8 @@ const std::string kAttributeNames[eng::kAttribType_Max] = {
 namespace eng {
 
 #ifdef THREADED_RENDERING
-Renderer::Renderer() : task_runner_(TaskRunner::GetThreadLocalTaskRunner()) {}
+Renderer::Renderer()
+    : main_thread_task_runner_(TaskRunner::GetThreadLocalTaskRunner()) {}
 #else
 Renderer::Renderer() = default;
 #endif  // THREADED_RENDERING
@@ -59,7 +60,7 @@ void Renderer::ContextLost() {
   InvalidateAllResources();
 
 #ifdef THREADED_RENDERING
-  task_runner_.EnqueueTask(HERE, context_lost_cb_);
+  main_thread_task_runner_->EnqueueTask(HERE, context_lost_cb_);
 #else
   context_lost_cb_();
 #endif  // THREADED_RENDERING
@@ -215,18 +216,20 @@ void Renderer::InvalidateAllResources() {
     r.second->Destroy();
 }
 
-bool Renderer::StartWorker() {
+bool Renderer::StartRenderThread() {
 #ifdef THREADED_RENDERING
   LOG << "Starting render thread.";
 
   global_commands_.clear();
   draw_commands_[0].clear();
   draw_commands_[1].clear();
-  terminate_worker_ = false;
+  terminate_render_thread_ = false;
 
   std::promise<bool> promise;
   std::future<bool> future = promise.get_future();
-  worker_thread_ = std::thread(&Renderer::WorkerMain, this, std::move(promise));
+  render_thread_ =
+      std::thread(&Renderer::RenderThreadMain, this, std::move(promise));
+  future.wait();
   return future.get();
 #else
   LOG << "Single threaded rendering.";
@@ -234,18 +237,18 @@ bool Renderer::StartWorker() {
 #endif  // THREADED_RENDERING
 }
 
-void Renderer::TerminateWorker() {
+void Renderer::TerminateRenderThread() {
 #ifdef THREADED_RENDERING
-  DCHECK(!terminate_worker_);
+  DCHECK(!terminate_render_thread_);
 
   // Notify worker thread and wait for it to terminate.
   {
     std::unique_lock<std::mutex> scoped_lock(mutex_);
-    terminate_worker_ = true;
+    terminate_render_thread_ = true;
   }
   cv_.notify_one();
   LOG << "Terminating render thread";
-  worker_thread_.join();
+  render_thread_.join();
 #else
   ShutdownInternal();
 #endif  // THREADED_RENDERING
@@ -253,7 +256,7 @@ void Renderer::TerminateWorker() {
 
 #ifdef THREADED_RENDERING
 
-void Renderer::WorkerMain(std::promise<bool> promise) {
+void Renderer::RenderThreadMain(std::promise<bool> promise) {
   promise.set_value(InitInternal());
 
   std::deque<std::unique_ptr<RenderCommand>> cq[2];
@@ -262,9 +265,9 @@ void Renderer::WorkerMain(std::promise<bool> promise) {
       std::unique_lock<std::mutex> scoped_lock(mutex_);
       cv_.wait(scoped_lock, [&]() -> bool {
         return !global_commands_.empty() || !draw_commands_[0].empty() ||
-               terminate_worker_;
+               terminate_render_thread_;
       });
-      if (terminate_worker_) {
+      if (terminate_render_thread_) {
         ShutdownInternal();
         return;
       }

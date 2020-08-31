@@ -66,7 +66,7 @@ void PlatformBase::RunMainLoop() {
 
     // Subdivide the frame time.
     while (accumulator >= time_step) {
-      TaskRunner::GetThreadLocalTaskRunner().SingleConsumerRun();
+      TaskRunner::GetThreadLocalTaskRunner()->SingleConsumerRun();
 
       static_cast<Platform*>(this)->Update();
       engine_->Update(time_step);

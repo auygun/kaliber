@@ -152,10 +152,10 @@ class Renderer {
 
   std::condition_variable cv_;
   std::mutex mutex_;
-  std::thread worker_thread_;
-  bool terminate_worker_ = false;
+  std::thread render_thread_;
+  bool terminate_render_thread_ = false;
 
-  base::TaskRunner& task_runner_;
+  base::TaskRunner* main_thread_task_runner_;
 #endif  // THREADED_RENDERING
 
   // Stats.
@@ -178,11 +178,11 @@ class Renderer {
 
   void InvalidateAllResources();
 
-  bool StartWorker();
-  void TerminateWorker();
+  bool StartRenderThread();
+  void TerminateRenderThread();
 
 #ifdef THREADED_RENDERING
-  void WorkerMain(std::promise<bool> promise);
+  void RenderThreadMain(std::promise<bool> promise);
 #endif  // THREADED_RENDERING
 
   void ProcessCommand(RenderCommand* cmd);

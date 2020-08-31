@@ -11,16 +11,16 @@ bool Renderer::Initialize(ANativeWindow* window) {
   LOG << "Initializing renderer.";
 
   window_ = window;
-  return StartWorker();
+  return StartRenderThread();
 }
 
 void Renderer::Shutdown() {
-  if (terminate_worker_)
+  if (terminate_render_thread_)
     return;
 
   LOG << "Shutting down renderer.";
 
-  TerminateWorker();
+  TerminateRenderThread();
 }
 
 bool Renderer::InitInternal() {

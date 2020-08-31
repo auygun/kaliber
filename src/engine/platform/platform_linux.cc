@@ -4,6 +4,7 @@
 #include <X11/Xutil.h>
 
 #include "../../base/log.h"
+#include "../../base/task_runner.h"
 #include "../../base/vecmath.h"
 #include "../audio/audio_alsa.h"
 #include "../engine.h"
@@ -21,6 +22,7 @@ void PlatformLinux::Initialize() {
   LOG << "Initializing platform.";
 
   thread_pool_.Initialize();
+  TaskRunner::CreateThreadLocalTaskRunner();
 
   root_path_ = "../../";
   LOG << "Root path: " << root_path_.c_str();

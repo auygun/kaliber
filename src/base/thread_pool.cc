@@ -66,10 +66,6 @@ void ThreadPool::WorkerMain() {
     }
 
     task_runner_.MultiConsumerRun();
-
-    DCHECK(TaskRunner::GetThreadLocalTaskRunner().IsEmpty())
-        << "Pooled thread is not allowed to run tasks from the thread-local "
-           "TaskRunner.";
   }
 }
 

@@ -4,8 +4,6 @@
 
 namespace {
 
-thread_local base::TaskRunner t_task_runner;
-
 void EnqueueTaskAndReplyRelay(const base::Location& from,
                               base::Closure task_cb,
                               base::Closure reply_cb,
@@ -20,8 +18,16 @@ void EnqueueTaskAndReplyRelay(const base::Location& from,
 
 namespace base {
 
-TaskRunner& TaskRunner::GetThreadLocalTaskRunner() {
-  return t_task_runner;
+thread_local std::unique_ptr<TaskRunner> TaskRunner::thread_local_task_runner;
+
+void TaskRunner::CreateThreadLocalTaskRunner() {
+  DCHECK(!thread_local_task_runner);
+
+  thread_local_task_runner = std::make_unique<TaskRunner>();
+}
+
+TaskRunner* TaskRunner::GetThreadLocalTaskRunner() {
+  return thread_local_task_runner.get();
 }
 
 void TaskRunner::EnqueueTask(const Location& from, Closure task) {
@@ -36,11 +42,12 @@ void TaskRunner::EnqueueTaskAndReply(const Location& from,
                                      Closure reply) {
   DCHECK(task) << LOCATION(from);
   DCHECK(reply) << LOCATION(from);
+  DCHECK(thread_local_task_runner) << LOCATION(from);
 
   std::lock_guard<std::mutex> scoped_lock(lock_);
   queue_.emplace_back(
       from, std::bind(::EnqueueTaskAndReplyRelay, from, std::move(task),
-                      std::move(reply), &t_task_runner));
+                      std::move(reply), thread_local_task_runner.get()));
 }
 
 void TaskRunner::MultiConsumerRun() {
@@ -83,11 +90,6 @@ void TaskRunner::SingleConsumerRun() {
 
     task_cb();
   }
-}
-
-bool TaskRunner::IsEmpty() const {
-  std::lock_guard<std::mutex> scoped_lock(lock_);
-  return queue_.empty();
 }
 
 }  // namespace base

@@ -1,6 +1,7 @@
 #include "audio_alsa.h"
 
 #include <alsa/asoundlib.h>
+
 #include <memory>
 
 #include "../../base/log.h"
@@ -127,7 +128,7 @@ bool AudioAlsa::Initialize() {
     sample_rate_ = sample_rate;
     period_size_ = period_size;
 
-    StartWorker();
+    StartAudioThread();
 
     return true;
   } while (false);
@@ -139,61 +140,54 @@ bool AudioAlsa::Initialize() {
 void AudioAlsa::Shutdown() {
   LOG << "Shutting down audio system.";
 
-  TerminateWorker();
+  TerminateAudioThread();
   snd_pcm_drop(device_);
   snd_pcm_close(device_);
 }
 
 void AudioAlsa::Suspend() {
-  DCHECK(!terminate_worker_.load(std::memory_order_relaxed));
+  DCHECK(!terminate_audio_thread_.load(std::memory_order_relaxed));
 
-  suspend_worker_.store(true, std::memory_order_relaxed);
+  suspend_audio_thread_.store(true, std::memory_order_relaxed);
 }
 
 void AudioAlsa::Resume() {
-  DCHECK(!terminate_worker_.load(std::memory_order_relaxed));
+  DCHECK(!terminate_audio_thread_.load(std::memory_order_relaxed));
 
-  suspend_worker_.store(false, std::memory_order_relaxed);
+  suspend_audio_thread_.store(false, std::memory_order_relaxed);
 }
 
 size_t AudioAlsa::GetSampleRate() {
   return sample_rate_;
 }
 
-bool AudioAlsa::StartWorker() {
+bool AudioAlsa::StartAudioThread() {
   LOG << "Starting audio thread.";
 
-  DCHECK(!terminate_worker_.load(std::memory_order_relaxed));
+  DCHECK(!terminate_audio_thread_.load(std::memory_order_relaxed));
 
-  std::promise<bool> promise;
-  std::future<bool> future = promise.get_future();
-  worker_thread_ =
-      std::thread(&AudioAlsa::WorkerMain, this, std::move(promise));
-
-  return future.get();
+  audio_thread_ = std::thread(&AudioAlsa::AudioThreadMain, this);
 }
 
-void AudioAlsa::TerminateWorker() {
-  if (terminate_worker_.load(std::memory_order_relaxed))
+void AudioAlsa::TerminateAudioThread() {
+  if (terminate_audio_thread_.load(std::memory_order_relaxed))
     return;
 
   LOG << "Terminating audio thread";
 
   // Notify worker thread and wait for it to terminate.
-  terminate_worker_.store(true, std::memory_order_relaxed);
-  suspend_worker_.store(true, std::memory_order_relaxed);
-  worker_thread_.join();
+  terminate_audio_thread_.store(true, std::memory_order_relaxed);
+  suspend_audio_thread_.store(true, std::memory_order_relaxed);
+  audio_thread_.join();
 }
 
-void AudioAlsa::WorkerMain(std::promise<bool> promise) {
-  promise.set_value(true);
-
+void AudioAlsa::AudioThreadMain() {
   size_t num_frames = period_size_ / (num_channels_ * sizeof(float));
   auto buffer = std::make_unique<float[]>(num_frames * 2);
 
   for (;;) {
-    while (suspend_worker_.load(std::memory_order_relaxed)) {
-      if (terminate_worker_.load(std::memory_order_relaxed))
+    while (suspend_audio_thread_.load(std::memory_order_relaxed)) {
+      if (terminate_audio_thread_.load(std::memory_order_relaxed))
         return;
       std::this_thread::yield();
     }

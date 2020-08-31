@@ -5,6 +5,7 @@
 #include <string>
 
 #include "../../base/log.h"
+#include "../../base/task_runner.h"
 #include "../audio/audio_oboe.h"
 #include "../engine.h"
 #include "../input_event.h"
@@ -237,6 +238,7 @@ void PlatformAndroid::Initialize(android_app* app) {
   LOG << "Initializing platform.";
 
   thread_pool_.Initialize();
+  TaskRunner::CreateThreadLocalTaskRunner();
 
   app_ = app;
 
