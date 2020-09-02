@@ -5,8 +5,8 @@
 #include <memory>
 #include <string>
 
-#include "../../base/thread_pool.h"
 #include "../../base/timer.h"
+#include "../../base/worker.h"
 #include "../audio/audio_forward.h"
 
 namespace eng {
@@ -43,7 +43,7 @@ class PlatformBase {
   std::unique_ptr<Renderer> renderer_;
   std::unique_ptr<Engine> engine_;
 
-  base::ThreadPool thread_pool_;
+  base::Worker thread_pool_;
 
   PlatformBase();
   ~PlatformBase();

@@ -14,12 +14,12 @@ source_set("base") {
     "random.h",
     "task_runner.cc",
     "task_runner.h",
-    "thread_pool.cc",
-    "thread_pool.h",
     "timer.cc",
     "timer.h",
     "vecmath.cc",
     "vecmath.h",
+    "worker.cc",
+    "worker.h",
   ]
 
 #  ldflags = []

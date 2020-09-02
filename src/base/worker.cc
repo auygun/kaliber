@@ -1,22 +1,22 @@
-#include "thread_pool.h"
+#include "worker.h"
 
 #include "log.h"
 
 namespace base {
 
-ThreadPool* ThreadPool::singleton = nullptr;
+Worker* Worker::singleton = nullptr;
 
-ThreadPool::ThreadPool() {
+Worker::Worker() {
   DCHECK(!singleton);
   singleton = this;
 }
 
-ThreadPool::~ThreadPool() {
+Worker::~Worker() {
   Shutdown();
   singleton = nullptr;
 }
 
-void ThreadPool::Initialize(unsigned max_concurrency) {
+void Worker::Initialize(unsigned max_concurrency) {
   if (max_concurrency > std::thread::hardware_concurrency() ||
       max_concurrency == 0) {
     max_concurrency = std::thread::hardware_concurrency();
@@ -25,10 +25,10 @@ void ThreadPool::Initialize(unsigned max_concurrency) {
   }
 
   while (max_concurrency--)
-    threads_.emplace_back(&ThreadPool::WorkerMain, this);
+    threads_.emplace_back(&Worker::WorkerMain, this);
 }
 
-void ThreadPool::Shutdown() {
+void Worker::Shutdown() {
   if (threads_.empty())
     return;
 
@@ -40,23 +40,23 @@ void ThreadPool::Shutdown() {
   threads_.clear();
 }
 
-void ThreadPool::EnqueueTask(const Location& from, Closure task) {
+void Worker::EnqueueTask(const Location& from, Closure task) {
   DCHECK((!threads_.empty()));
 
   task_runner_.EnqueueTask(from, std::move(task));
   semaphore_.Release();
 }
 
-void ThreadPool::EnqueueTaskAndReply(const Location& from,
-                                     Closure task,
-                                     Closure reply) {
+void Worker::EnqueueTaskAndReply(const Location& from,
+                                 Closure task,
+                                 Closure reply) {
   DCHECK((!threads_.empty()));
 
   task_runner_.EnqueueTaskAndReply(from, std::move(task), std::move(reply));
   semaphore_.Release();
 }
 
-void ThreadPool::WorkerMain() {
+void Worker::WorkerMain() {
   for (;;) {
     semaphore_.Acquire();
 

@@ -15,12 +15,12 @@ class TaskRunner;
 
 // Feed the ThreadPool tasks (in the form of Closure objects) and they will be
 // called on any thread from the pool.
-class ThreadPool {
+class Worker {
  public:
-  ThreadPool();
-  ~ThreadPool();
+  Worker();
+  ~Worker();
 
-  static ThreadPool& Get() { return *singleton; }
+  static Worker& Get() { return *singleton; }
 
   void Initialize(unsigned max_concurrency = 0);
 
@@ -47,12 +47,12 @@ class ThreadPool {
 
   base::TaskRunner task_runner_;
 
-  static ThreadPool* singleton;
+  static Worker* singleton;
 
   void WorkerMain();
 
-  ThreadPool(ThreadPool const&) = delete;
-  ThreadPool& operator=(ThreadPool const&) = delete;
+  Worker(Worker const&) = delete;
+  Worker& operator=(Worker const&) = delete;
 };
 
 }  // namespace base

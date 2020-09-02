@@ -44,10 +44,11 @@ void TaskRunner::EnqueueTaskAndReply(const Location& from,
   DCHECK(reply) << LOCATION(from);
   DCHECK(thread_local_task_runner) << LOCATION(from);
 
+  auto relay = std::bind(::EnqueueTaskAndReplyRelay, from, std::move(task),
+                         std::move(reply), thread_local_task_runner.get());
+
   std::lock_guard<std::mutex> scoped_lock(lock_);
-  queue_.emplace_back(
-      from, std::bind(::EnqueueTaskAndReplyRelay, from, std::move(task),
-                      std::move(reply), thread_local_task_runner.get()));
+  queue_.emplace_back(from, std::move(relay));
 }
 
 void TaskRunner::MultiConsumerRun() {
