@@ -2,11 +2,13 @@
 
 #include <android_native_app_glue.h>
 #include <unistd.h>
+
+#include <memory>
 #include <string>
 
 #include "../../base/log.h"
 #include "../../base/task_runner.h"
-#include "../audio/audio_oboe.h"
+#include "../audio/audio.h"
 #include "../engine.h"
 #include "../input_event.h"
 #include "../renderer/renderer.h"
@@ -242,7 +244,7 @@ void PlatformAndroid::Initialize(android_app* app) {
 
   app_ = app;
 
-  audio_ = std::make_unique<AudioOboe>();
+  audio_ = std::make_unique<Audio>();
   if (!audio_->Initialize()) {
     LOG << "Failed to initialize audio system.";
     throw internal_error;

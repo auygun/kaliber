@@ -1,8 +1,6 @@
 #ifndef PLATFORM_LINUX_H
 #define PLATFORM_LINUX_H
 
-#include <memory>
-
 #include "platform_base.h"
 
 namespace eng {
@@ -19,8 +17,6 @@ class PlatformLinux : public PlatformBase {
   void Exit();
 
   void Vibrate(int duration) {}
-
- private:
 };
 
 }  // namespace eng

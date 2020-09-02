@@ -17,7 +17,7 @@
 
 namespace base {
 
-class SpinLock {
+class Spinlock {
  public:
   void lock() {
     for (;;) {

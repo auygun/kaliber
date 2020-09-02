@@ -1,8 +1,6 @@
 #ifndef PLATFORM_ANDROID_H
 #define PLATFORM_ANDROID_H
 
-#include <memory>
-
 #include "../../base/vecmath.h"
 #include "platform_base.h"
 

@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "../../base/closure.h"
-#include "../../base/spin_lock.h"
+#include "../../base/spinlock.h"
 #include "audio_sample.h"
 
 namespace base {
@@ -30,7 +30,7 @@ class AudioBase {
 
  private:
   std::list<std::shared_ptr<AudioSample>> samples_[2];
-  base::SpinLock lock_;
+  base::Spinlock lock_;
 
   base::TaskRunner* main_thread_task_runner_;
 

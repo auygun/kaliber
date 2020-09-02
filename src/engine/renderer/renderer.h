@@ -19,9 +19,6 @@
 #endif  // THREADED_RENDERING
 
 #include "opengl.h"
-#if defined(__linux__) && !defined(__ANDROID__)
-#include "../../third_party/glew/glxew.h"
-#endif
 
 #include "../../base/closure.h"
 #include "render_resource.h"

@@ -1,4 +1,4 @@
-#include "audio_base.h"
+#include "audio.h"
 
 #include <cstring>
 
@@ -17,13 +17,13 @@ AudioBase::AudioBase()
 AudioBase::~AudioBase() = default;
 
 void AudioBase::Play(std::shared_ptr<AudioSample> sample) {
-  std::lock_guard<SpinLock> scoped_lock(lock_);
+  std::lock_guard<Spinlock> scoped_lock(lock_);
   samples_[0].push_back(sample);
 }
 
 void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
   {
-    std::lock_guard<SpinLock> scoped_lock(lock_);
+    std::lock_guard<Spinlock> scoped_lock(lock_);
     samples_[1].splice(samples_[1].end(), samples_[0]);
   }
 

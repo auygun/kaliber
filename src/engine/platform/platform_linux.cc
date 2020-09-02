@@ -3,10 +3,12 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include <memory>
+
 #include "../../base/log.h"
 #include "../../base/task_runner.h"
 #include "../../base/vecmath.h"
-#include "../audio/audio_alsa.h"
+#include "../audio/audio.h"
 #include "../engine.h"
 #include "../input_event.h"
 #include "../renderer/renderer.h"
@@ -27,7 +29,7 @@ void PlatformLinux::Initialize() {
   root_path_ = "../../";
   LOG << "Root path: " << root_path_.c_str();
 
-  audio_ = std::make_unique<AudioAlsa>();
+  audio_ = std::make_unique<Audio>();
   if (!audio_->Initialize()) {
     LOG << "Failed to initialize audio system.";
     throw internal_error;

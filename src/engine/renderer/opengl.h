@@ -10,6 +10,7 @@
 
 #elif defined(__linux__)
 #include "../../third_party/glew/glew.h"
+#include "../../third_party/glew/glxew.h"
 
 // Define the missing format for the etc1
 #ifndef GL_ETC1_RGB8_OES
