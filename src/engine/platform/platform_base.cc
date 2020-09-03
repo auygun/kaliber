@@ -21,6 +21,21 @@ PlatformBase::PlatformBase() = default;
 
 PlatformBase::~PlatformBase() = default;
 
+void PlatformBase::Initialize() {
+  LOG << "Initializing platform.";
+
+  worker_.Initialize();
+  TaskRunner::CreateThreadLocalTaskRunner();
+
+  audio_ = std::make_unique<Audio>();
+  if (!audio_->Initialize()) {
+    LOG << "Failed to initialize audio system.";
+    throw internal_error;
+  }
+
+  renderer_ = std::make_unique<Renderer>();
+}
+
 void PlatformBase::Shutdown() {
   LOG << "Shutting down platform.";
 
@@ -29,6 +44,8 @@ void PlatformBase::Shutdown() {
 }
 
 void PlatformBase::RunMainLoop() {
+  engine_ = std::make_unique<Engine>(static_cast<Platform*>(this),
+                                     renderer_.get(), audio_.get());
   if (!engine_->Initialize()) {
     LOG << "Failed to initialize the engine.";
     throw internal_error;

@@ -237,20 +237,9 @@ void PlatformAndroid::HandleCmd(android_app* app, int32_t cmd) {
 }
 
 void PlatformAndroid::Initialize(android_app* app) {
-  LOG << "Initializing platform.";
-
-  worker_.Initialize();
-  TaskRunner::CreateThreadLocalTaskRunner();
+  PlatformBase::Initialize();
 
   app_ = app;
-
-  audio_ = std::make_unique<Audio>();
-  if (!audio_->Initialize()) {
-    LOG << "Failed to initialize audio system.";
-    throw internal_error;
-  }
-
-  renderer_ = std::make_unique<Renderer>();
 
   mobile_device_ = true;
 
@@ -263,8 +252,6 @@ void PlatformAndroid::Initialize(android_app* app) {
   app->userData = reinterpret_cast<void*>(this);
   app->onAppCmd = PlatformAndroid::HandleCmd;
   app->onInputEvent = PlatformAndroid::HandleInput;
-
-  engine_ = std::make_unique<Engine>(this, renderer_.get(), audio_.get());
 
   Update();
 }

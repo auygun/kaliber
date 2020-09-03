@@ -16,6 +16,8 @@ class Engine;
 
 class PlatformBase {
  public:
+  void Initialize();
+
   void Shutdown();
 
   void RunMainLoop();

@@ -21,21 +21,11 @@ PlatformLinux::PlatformLinux() = default;
 PlatformLinux::~PlatformLinux() = default;
 
 void PlatformLinux::Initialize() {
-  LOG << "Initializing platform.";
-
-  worker_.Initialize();
-  TaskRunner::CreateThreadLocalTaskRunner();
+  PlatformBase::Initialize();
 
   root_path_ = "../../";
   LOG << "Root path: " << root_path_.c_str();
 
-  audio_ = std::make_unique<Audio>();
-  if (!audio_->Initialize()) {
-    LOG << "Failed to initialize audio system.";
-    throw internal_error;
-  }
-
-  renderer_ = std::make_unique<Renderer>();
   if (!renderer_->Initialize()) {
     LOG << "Failed to initialize renderer.";
     throw internal_error;
@@ -48,14 +38,9 @@ void PlatformLinux::Initialize() {
                    ButtonReleaseMask | FocusChangeMask);
   Atom WM_DELETE_WINDOW = XInternAtom(display, "WM_DELETE_WINDOW", false);
   XSetWMProtocols(display, window, &WM_DELETE_WINDOW, 1);
-
-  engine_ = std::make_unique<Engine>(this, renderer_.get(), audio_.get());
 }
 
 void PlatformLinux::Update() {
-  if (!engine_)
-    return;
-
   Display* display = renderer_->display();
   while (XPending(display)) {
     XEvent e;
