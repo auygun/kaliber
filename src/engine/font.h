@@ -39,7 +39,7 @@ class Font {
   enum Constants {
     kGlyphSize = 512,
     kFirstChar = 32,  // ' ' (space)
-    kNumChars = 96    // Covers almost all ASCII chars.
+    kNumChars = 224   // Covers all ASCII chars.
   };
 
   std::unique_ptr<uint8_t[]> glyph_cache_;  // Image data.

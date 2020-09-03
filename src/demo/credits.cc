@@ -13,15 +13,15 @@ using namespace eng;
 
 namespace {
 
-constexpr char kCreditsLines[Credits::kNumLines][20] = {
+constexpr char kCreditsLines[Credits::kNumLines][30] = {
     "Credits",           "Code",           "Attila Uygun",
-    "Design & Graphics", "Erkan Erturk",   "Music",
-    "Patrik Haggblad",   "Special thanks", "Peter Pettersson"};
+    "Design & Graphics", "Erkan Ertürk",   "Music",
+    "Patrik Häggblad",   "Special thanks", "Peter Pettersson"};
 
 constexpr float kLineSpaces[Credits::kNumLines - 1] = {1.5f, 0.5f, 1.5f, 0.5f,
                                                        1.5f, 0.5f, 1.5f, 0.5f};
 
-const Vector4 kTextColor = {0.3f, 0.55f, 1.0f, 1};
+const Vector4 kTextColor = {0.80f, 0.87f, 0.93f, 1};
 constexpr float kFadeSpeed = 0.2f;
 
 }  // namespace
@@ -31,12 +31,12 @@ Credits::Credits() = default;
 Credits::~Credits() = default;
 
 bool Credits::Initialize() {
-  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+  const Font* font = Engine::Get().GetSystemFont();
 
   max_text_width_ = -1;
   for (int i = 0; i < kNumLines; ++i) {
     int width, height;
-    font.CalculateBoundingBox(kCreditsLines[i], width, height);
+    font->CalculateBoundingBox(kCreditsLines[i], width, height);
     if (width > max_text_width_)
       max_text_width_ = width;
   }
@@ -106,19 +106,19 @@ void Credits::Hide() {
 }
 
 std::unique_ptr<Image> Credits::CreateImage() {
-  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+  const Font* font = Engine::Get().GetSystemFont();
 
-  int line_height = font.GetLineHeight() + 1;
+  int line_height = font->GetLineHeight() + 1;
   auto image = std::make_unique<Image>();
   image->Create(max_text_width_, line_height * kNumLines);
   image->Clear({1, 1, 1, 0});
 
   for (int i = 0; i < kNumLines; ++i) {
     int w, h;
-    font.CalculateBoundingBox(kCreditsLines[i], w, h);
+    font->CalculateBoundingBox(kCreditsLines[i], w, h);
     float x = (image->GetWidth() - w) / 2;
     float y = line_height * i;
-    font.Print(x, y, kCreditsLines[i], image->GetBuffer(), image->GetWidth());
+    font->Print(x, y, kCreditsLines[i], image->GetBuffer(), image->GetWidth());
   }
 
   image->Compress();
