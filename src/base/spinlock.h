@@ -1,5 +1,5 @@
-#ifndef SPIN_LOCK_H
-#define SPIN_LOCK_H
+#ifndef SPINLOCK_H
+#define SPINLOCK_H
 
 #include <atomic>
 
@@ -39,4 +39,4 @@ class Spinlock {
 
 }  // namespace base
 
-#endif  // SPIN_LOCK_H
+#endif  // SPINLOCK_H

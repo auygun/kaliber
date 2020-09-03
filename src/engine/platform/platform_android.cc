@@ -239,7 +239,7 @@ void PlatformAndroid::HandleCmd(android_app* app, int32_t cmd) {
 void PlatformAndroid::Initialize(android_app* app) {
   LOG << "Initializing platform.";
 
-  thread_pool_.Initialize();
+  worker_.Initialize();
   TaskRunner::CreateThreadLocalTaskRunner();
 
   app_ = app;

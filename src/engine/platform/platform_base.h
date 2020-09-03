@@ -43,7 +43,7 @@ class PlatformBase {
   std::unique_ptr<Renderer> renderer_;
   std::unique_ptr<Engine> engine_;
 
-  base::Worker thread_pool_;
+  base::Worker worker_;
 
   PlatformBase();
   ~PlatformBase();

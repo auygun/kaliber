@@ -72,7 +72,7 @@ void PlatformBase::RunMainLoop() {
       engine_->Update(time_step);
 
       if (should_exit_) {
-        thread_pool_.Shutdown();
+        worker_.Shutdown();
         engine_->Shutdown();
         engine_.reset();
         return;

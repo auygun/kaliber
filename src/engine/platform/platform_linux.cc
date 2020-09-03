@@ -23,7 +23,7 @@ PlatformLinux::~PlatformLinux() = default;
 void PlatformLinux::Initialize() {
   LOG << "Initializing platform.";
 
-  thread_pool_.Initialize();
+  worker_.Initialize();
   TaskRunner::CreateThreadLocalTaskRunner();
 
   root_path_ = "../../";

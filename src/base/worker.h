@@ -13,7 +13,7 @@ namespace base {
 
 class TaskRunner;
 
-// Feed the ThreadPool tasks (in the form of Closure objects) and they will be
+// Feed the worker tasks (in the form of Closure objects) and they will be
 // called on any thread from the pool.
 class Worker {
  public:
