@@ -6,6 +6,7 @@
 
 #include "../engine/animator.h"
 #include "../engine/image_quad.h"
+#include "../engine/solid_quad.h"
 
 namespace eng {
 class Image;
@@ -29,6 +30,9 @@ class Credits {
   void Hide();
 
  private:
+  eng::SolidQuad dimmer_;
+  eng::Animator dimmer_animator_;
+
   eng::ImageQuad text_[kNumLines];
   eng::Animator text_animator_;
 
