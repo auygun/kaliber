@@ -23,7 +23,6 @@ constexpr char kCreditsLines[Credits::kNumLines][40] = {
 constexpr float kLineSpaces[Credits::kNumLines - 1] = {
     1.5f, 0.5f, 1.5f, 0.5f, 1.5f, 0.5f, 1.5f, 0.5f, 1.5f};
 
-const Vector4 kBgColor = {0, 0, 0, 0.7f};
 const Vector4 kTextColor = {0.80f, 0.87f, 0.93f, 1};
 constexpr float kFadeSpeed = 0.2f;
 
@@ -50,16 +49,10 @@ bool Credits::Initialize() {
   for (int i = 0; i < kNumLines; ++i)
     text_animator_.Attach(&text_[i]);
 
-  dimmer_.SetScale(Engine::Get().GetScreenSize());
-  dimmer_.SetZOrder(50);
-
-  dimmer_animator_.Attach(&dimmer_);
-
   return true;
 }
 
 void Credits::Update(float delta_time) {
-  dimmer_animator_.Update(delta_time);
   text_animator_.Update(delta_time);
 }
 
@@ -76,14 +69,9 @@ void Credits::OnInputEvent(std::unique_ptr<InputEvent> event) {
 void Credits::Show() {
   Engine::Get().RefreshImage("credits");
 
-  dimmer_.SetColor(kBgColor * Vector4(0, 0, 0, 0));
-  dimmer_animator_.SetBlending(kBgColor, kFadeSpeed);
-  dimmer_animator_.Play(Animator::kBlending, false);
-  dimmer_animator_.SetVisible(true);
-
   for (int i = 0; i < kNumLines; ++i) {
     text_[i].Create("credits", {1, kNumLines});
-    text_[i].SetZOrder(51);
+    text_[i].SetZOrder(50);
     text_[i].SetOffset({0, 0});
     text_[i].SetColor(kTextColor * Vector4(1, 1, 1, 0));
     text_[i].SetFrame(i);
@@ -109,15 +97,11 @@ void Credits::Show() {
 }
 
 void Credits::Hide() {
-  dimmer_animator_.SetBlending(kBgColor * Vector4(0, 0, 0, 0), kFadeSpeed);
-  dimmer_animator_.Play(Animator::kBlending, false);
-
   text_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
     for (int i = 0; i < kNumLines; ++i)
       text_[i].Destory();
     text_animator_.SetEndCallback(Animator::kBlending, nullptr);
     text_animator_.SetVisible(false);
-    dimmer_animator_.SetVisible(false);
   });
   text_animator_.SetBlending(kTextColor * Vector4(1, 1, 1, 0), kFadeSpeed);
   text_animator_.Play(Animator::kBlending, false);
