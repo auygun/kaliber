@@ -15,7 +15,7 @@ class InputEvent;
 
 class Credits {
  public:
-  static constexpr int kNumLines = 9;
+  static constexpr int kNumLines = 10;
 
   Credits();
   ~Credits();

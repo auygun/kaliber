@@ -13,13 +13,15 @@ using namespace eng;
 
 namespace {
 
-constexpr char kCreditsLines[Credits::kNumLines][30] = {
-    "Credits",           "Code",           "Attila Uygun",
-    "Design & Graphics", "Erkan Ertürk",   "Music",
-    "Patrik Häggblad",   "Special thanks", "Peter Pettersson"};
+constexpr char kCreditsLines[Credits::kNumLines][40] = {
+    "Credits",          "Code",
+    "Attila Uygun",     "Design & Graphics",
+    "Erkan Ertürk",     "Music",
+    "Patrik Häggblad",  "Special thanks",
+    "Peter Pettersson", "https://github.com/auygun/kaliber"};
 
-constexpr float kLineSpaces[Credits::kNumLines - 1] = {1.5f, 0.5f, 1.5f, 0.5f,
-                                                       1.5f, 0.5f, 1.5f, 0.5f};
+constexpr float kLineSpaces[Credits::kNumLines - 1] = {
+    1.5f, 0.5f, 1.5f, 0.5f, 1.5f, 0.5f, 1.5f, 0.5f, 1.5f};
 
 const Vector4 kBgColor = {0, 0, 0, 0.7f};
 const Vector4 kTextColor = {0.80f, 0.87f, 0.93f, 1};
