@@ -29,6 +29,8 @@ class Demo : public eng::Game {
 
   void AddScore(int score);
 
+  void SetEnableMusic(bool enable);
+
   void EnterMenuState();
   void EnterCreditsState();
   void EnterGameState();

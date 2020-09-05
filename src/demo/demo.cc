@@ -117,6 +117,18 @@ void Demo::AddScore(int score) {
   add_score_ += score;
 }
 
+void Demo::SetEnableMusic(bool enable) {
+  if (enable) {
+    if (boss_fight_)
+      boss_music_.Resume(1);
+    else
+      music_.Resume(1);
+  } else {
+    music_.Stop(1);
+    boss_music_.Stop(1);
+  }
+}
+
 void Demo::EnterMenuState() {
   if (state_ == kMenu)
     return;

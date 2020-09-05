@@ -20,6 +20,8 @@ class AudioBase {
  public:
   void Play(std::shared_ptr<AudioSample> sample);
 
+  void SetEnableAudio(bool enable) { audio_enabled_ = enable; }
+
  protected:
   static constexpr int kChannelCount = 2;
 
@@ -33,6 +35,8 @@ class AudioBase {
   base::Spinlock lock_;
 
   base::TaskRunner* main_thread_task_runner_;
+
+  bool audio_enabled_ = true;
 
   void DoStream(std::shared_ptr<AudioSample> sample, bool loop);
 

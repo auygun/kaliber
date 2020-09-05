@@ -17,8 +17,12 @@ AudioBase::AudioBase()
 AudioBase::~AudioBase() = default;
 
 void AudioBase::Play(std::shared_ptr<AudioSample> sample) {
-  std::lock_guard<Spinlock> scoped_lock(lock_);
-  samples_[0].push_back(sample);
+  if (audio_enabled_) {
+    std::lock_guard<Spinlock> scoped_lock(lock_);
+    samples_[0].push_back(sample);
+  } else {
+    sample->active = false;
+  }
 }
 
 void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {

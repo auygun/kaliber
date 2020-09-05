@@ -16,6 +16,42 @@ class InputEvent;
 class Sound;
 }  // namespace eng
 
+class Switch {
+ public:
+  Switch() = default;
+  ~Switch() = default;
+
+  void Create(const std::string& asset_name,
+              std::array<int, 2> num_frames,
+              int frame1,
+              int frame2,
+              base::Closure pressed_cb,
+              bool enabled);
+
+  void Update(float delta_time);
+
+  bool OnInputEvent(eng::InputEvent* event);
+
+  void Show();
+  void Hide();
+
+  eng::ImageQuad& image() { return image_; };
+
+  bool enabled() const { return enabled_; }
+
+ private:
+  eng::ImageQuad image_;
+  eng::Animator animator_;
+  int frame1_ = 0;
+  int frame2_ = 0;
+  base::Closure pressed_cb_;
+
+  bool enabled_ = false;
+  base::Vector2 tap_pos_[2] = {{0, 0}, {0, 0}};
+
+  void SetEnabled(bool enable);
+};
+
 class Menu {
  public:
   enum Option {
@@ -65,6 +101,10 @@ class Menu {
   Option selected_option_ = kOption_Invalid;
 
   base::Vector2 tap_pos_[2] = {{0, 0}, {0, 0}};
+
+  Switch toggle_audio_;
+  Switch toggle_music_;
+  Switch toggle_vibration_;
 
   bool CreateRenderResources();
 

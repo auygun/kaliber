@@ -1,10 +1,7 @@
 TODO:
 - Harder and shorter waves.
 - Harder boss.
-- Change shield sound.
-- Music and vibration on/off buttons.
 - Change targetted_by_weapon_ to bool targetted_by_weapon_[2].
-- Add 3rd party libs to credits.
 - Test 30 fps
 - Do benchmark at startup and switch to low qualiy sky for slow devices.
 - Nuke kills at the end of wave count fot the next wave.
@@ -17,3 +14,4 @@ DONE:
 - Stealth enemy jumps/moves after nuke.
 - Music should not stop when switching to menu state.
 - Change font and background for creadits.
+- Music and vibration on/off buttons.

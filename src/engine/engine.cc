@@ -318,7 +318,12 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
 }
 
 void Engine::Vibrate(int duration) {
-  platform_->Vibrate(duration);
+  if (vibration_enabled_)
+    platform_->Vibrate(duration);
+}
+
+void Engine::SetEnableAudio(bool enable) {
+  audio_->SetEnableAudio(enable);
 }
 
 TextureCompressor* Engine::GetTextureCompressor(bool opacity) {
