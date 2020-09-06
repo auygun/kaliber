@@ -198,12 +198,12 @@ void Enemy::SelectTarget(DamageType damage_type,
     if (e.hit_points <= 0 || e.marked_for_removal || e.stealth_active)
       continue;
 
-    if (e.targetted_by_weapon_ == damage_type) {
-      e.targetted_by_weapon_ = kDamageType_Invalid;
+    if (e.targetted_by_weapon_[damage_type]) {
+      e.targetted_by_weapon_[damage_type] = false;
       e.target.SetVisible(false);
       e.target_animator.Stop(Animator::kAllAnimations);
-    } else if (e.targetted_by_weapon_ != kDamageType_Invalid) {
-      return;
+    // } else if (e.targetted_by_weapon_ != kDamageType_Invalid) {
+    //   return;
     }
 
     Vector2 weapon_enemy_dir = e.sprite.GetOffset() - origin;
@@ -258,7 +258,7 @@ void Enemy::SelectTarget(DamageType damage_type,
     best_enemy = std::get<0>(candidates[0]);
 
   if (best_enemy) {
-    best_enemy->targetted_by_weapon_ = damage_type;
+    best_enemy->targetted_by_weapon_[damage_type] = true;
     best_enemy->target.SetVisible(true);
     if (damage_type == kDamageType_Green) {
       best_enemy->target.SetFrame(0);
@@ -276,7 +276,7 @@ void Enemy::DeselectTarget(DamageType damage_type) {
 
   EnemyUnit* target = GetTarget(damage_type);
   if (target) {
-    target->targetted_by_weapon_ = kDamageType_Invalid;
+    target->targetted_by_weapon_[damage_type] = false;
     target->target.SetVisible(false);
     target->target_animator.Stop(Animator::kAllAnimations);
   }
@@ -295,7 +295,7 @@ void Enemy::HitTarget(DamageType damage_type) {
 
   target->target.SetVisible(false);
   target->target_animator.Stop(Animator::kAllAnimations);
-  target->targetted_by_weapon_ = kDamageType_Invalid;
+  target->targetted_by_weapon_[damage_type] = false;
 
   if ((target->damage_type != kDamageType_Any &&
        target->damage_type != damage_type)) {
@@ -671,8 +671,6 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
   if (target->hit_points <= 0)
     return;
 
-  target->targetted_by_weapon_ = kDamageType_Invalid;
-
   Engine::Get().Vibrate(30);
 
   if (target->shield_active) {
@@ -904,7 +902,7 @@ void Enemy::UpdateBoss(float delta_time) {
 
 Enemy::EnemyUnit* Enemy::GetTarget(DamageType damage_type) {
   for (auto& e : enemies_) {
-    if (e.targetted_by_weapon_ == damage_type && e.hit_points > 0 &&
+    if (e.targetted_by_weapon_[damage_type] && e.hit_points > 0 &&
         !e.marked_for_removal)
       return &e;
   }

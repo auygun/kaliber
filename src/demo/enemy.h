@@ -57,7 +57,7 @@ class Enemy {
     DamageType damage_type = kDamageType_Invalid;
 
     bool marked_for_removal = false;
-    DamageType targetted_by_weapon_ = kDamageType_Invalid;
+    bool targetted_by_weapon_[2] = {false, false};
     int total_health = 0;
     int hit_points = 0;
 
