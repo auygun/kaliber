@@ -154,6 +154,8 @@ void Demo::EnterGameState() {
   if (state_ == kGame)
     return;
   hud_.Show();
+  if (boss_fight_)
+    hud_.HideProgress();
   state_ = kGame;
 }
 
