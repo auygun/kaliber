@@ -18,7 +18,7 @@ constexpr char kCreditsLines[Credits::kNumLines][40] = {
     "Attila Uygun",     "Design & Graphics",
     "Erkan Ertürk",     "Music",
     "Patrik Häggblad",  "Special thanks",
-    "Peter Pettersson", "https://github.com/auygun/kaliber"};
+    "Peter Pettersson", "github.com/auygun/kaliber"};
 
 constexpr float kLineSpaces[Credits::kNumLines - 1] = {
     1.5f, 0.5f, 1.5f, 0.5f, 1.5f, 0.5f, 1.5f, 0.5f, 1.5f};
