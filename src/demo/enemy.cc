@@ -307,7 +307,7 @@ void Enemy::HitTarget(DamageType damage_type) {
       target->shield_animator.Stop(Animator::kAllAnimations);
       target->shield.SetFrame(0);
       target->shield_animator.SetFrames(4, 12);
-      target->shield_animator.SetTimer(0.6f);
+      target->shield_animator.SetTimer(1.0f);
       target->shield_animator.Play(Animator::kFrames | Animator::kTimer, false);
       target->shield_animator.SetEndCallback(
           Animator::kFrames, [&, target]() -> void {
@@ -834,7 +834,7 @@ void Enemy::UpdateWave(float delta_time) {
   float x = SnapSpawnPosX(col);
   Vector2 pos = {x, s.y / 2};
   float speed =
-      enemy_type == kEnemyType_Tank ? 16.0f : (rnd.Roll(4) == 4 ? 6.0f : 10.0f);
+      enemy_type == kEnemyType_Tank ? 14.0f : (rnd.Roll(3) == 3 ? 6.0f : 10.0f);
 
   SpawnUnit(enemy_type, damage_type, pos, speed);
 }
