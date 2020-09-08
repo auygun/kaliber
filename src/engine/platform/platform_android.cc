@@ -129,7 +129,7 @@ int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
     switch (flags) {
       case AMOTION_EVENT_ACTION_DOWN:
       case AMOTION_EVENT_ACTION_POINTER_DOWN:
-        DLOG << "AMOTION_EVENT_ACTION_DOWN - pointer_id: " << pointer_id;
+        // DLOG << "AMOTION_EVENT_ACTION_DOWN - pointer_id: " << pointer_id;
         platform->pointer_pos_[pointer_id] = pos[pointer_id];
         platform->pointer_down_[pointer_id] = true;
         input_event =
@@ -139,7 +139,7 @@ int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
 
       case AMOTION_EVENT_ACTION_UP:
       case AMOTION_EVENT_ACTION_POINTER_UP:
-        DLOG << "AMOTION_EVENT_ACTION_UP -   pointer_id: " << pointer_id;
+        // DLOG << "AMOTION_EVENT_ACTION_UP -   pointer_id: " << pointer_id;
         platform->pointer_pos_[pointer_id] = pos[pointer_id];
         platform->pointer_down_[pointer_id] = false;
         input_event = std::make_unique<InputEvent>(
