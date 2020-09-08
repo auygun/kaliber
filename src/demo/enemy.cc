@@ -604,7 +604,7 @@ void Enemy::SpawnBoss() {
     auto& e = enemies_.emplace_front();
     e.enemy_type = kEnemyType_Boss;
     e.damage_type = kDamageType_Any;
-    e.total_health = e.hit_points = 40 + 5 * (game->wave() / 3);
+    e.total_health = e.hit_points = 45 + 15 * ((game->wave() - 1) / 3);
     DLOG << " Boss health: " << e.total_health;
 
     Vector2 hit_box_pos =
@@ -850,7 +850,7 @@ void Enemy::UpdateBoss(float delta_time) {
   boss_spawn_duration_ -= delta_time;
   if (boss_spawn_duration_ <= 0) {
     if (spawn_factor_interpolator_ < 1) {
-      spawn_factor_interpolator_ += delta_time * 9.0f;
+      spawn_factor_interpolator_ += delta_time * 12.0f;
       if (spawn_factor_interpolator_ > 1)
         spawn_factor_interpolator_ = 1;
     }
