@@ -46,10 +46,10 @@ constexpr int idle_frame_speed = 12;
 constexpr int enemy_scores[] = {100, 150, 300, 200, 500};
 
 // Enemy units spawn speed.
-constexpr float kSpawnPeriod[kEnemyType_Unit_Last + 1][2] = {{2, 5},
-                                                             {15, 25},
-                                                             {110, 130},
-                                                             {70, 100}};
+constexpr float kSpawnPeriod[kEnemyType_Unit_Last + 1][2] = {{3, 6},
+                                                             {10, 20},
+                                                             {50, 70},
+                                                             {40, 60}};
 
 void SetupFadeOutAnim(Animator& animator, float delay) {
   animator.SetEndCallback(Animator::kTimer, [&]() -> void {
@@ -413,10 +413,9 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   num_enemies_killed_in_current_wave_ = 0;
   seconds_since_last_spawn_ = {0, 0, 0, 0};
   seconds_to_next_spawn_ = {0, 0, 0, 0};
-  // spawn_factor_ = 1 / (log10(0.25f * ((wave + 7) * 0.8f) + 1.468f) * 6);
-  spawn_factor_ = 1 / (2.4f * log10(10.f * wave + 33.6f));
+  spawn_factor_ = 0.0655f / log10(0.0067f * wave * wave + 1.8f);
   spawn_factor_interpolator_ = 0;
-  boss_spawn_cooldown_ = 7;
+  boss_spawn_cooldown_ = 4;
   boss_spawn_duration_ = 0;
   last_spawn_col_ = 0;
   paused_ = false;
@@ -450,7 +449,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
       e.sprite.Create("skull_tex", {10, 13}, 100, 100);
       break;
     case kEnemyType_Tank:
-      e.total_health = e.hit_points = 6;
+      e.total_health = e.hit_points = 8;
       e.sprite.Create("skull_tex", {10, 13}, 100, 100);
       break;
     case kEnemyType_Bug:
@@ -834,7 +833,7 @@ void Enemy::UpdateWave(float delta_time) {
   float x = SnapSpawnPosX(col);
   Vector2 pos = {x, s.y / 2};
   float speed =
-      enemy_type == kEnemyType_Tank ? 14.0f : (rnd.Roll(3) == 3 ? 6.0f : 10.0f);
+      enemy_type == kEnemyType_Tank ? 10.0f : (rnd.Roll(3) == 1 ? 6.0f : 10.0f);
 
   SpawnUnit(enemy_type, damage_type, pos, speed);
 }
@@ -844,7 +843,7 @@ void Enemy::UpdateBoss(float delta_time) {
     boss_spawn_cooldown_ -= delta_time;
     if (boss_spawn_cooldown_ > 0)
       return;
-    boss_spawn_duration_ = 3;
+    boss_spawn_duration_ = 6;
     DLOG << "boss_spawn_duration_: " << boss_spawn_duration_;
   }
 
@@ -856,7 +855,7 @@ void Enemy::UpdateBoss(float delta_time) {
         spawn_factor_interpolator_ = 1;
     }
     boss_spawn_cooldown_ =
-        10.1f - Lerp(1.0f, 10.0f, spawn_factor_interpolator_);
+        7.1f - Lerp(1.0f, 7.0f, spawn_factor_interpolator_);
     DLOG << "boss_spawn_cooldown_: " << boss_spawn_cooldown_;
     return;
   }
