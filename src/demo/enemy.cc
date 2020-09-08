@@ -789,19 +789,12 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
 }
 
 void Enemy::UpdateWave(float delta_time) {
-  if (spawn_factor_interpolator_ < 1) {
-    spawn_factor_interpolator_ += delta_time * 0.1f;
-    if (spawn_factor_interpolator_ > 1)
-      spawn_factor_interpolator_ = 1;
-  }
-
   for (int i = 0; i < kEnemyType_Unit_Last + 1; ++i)
     seconds_since_last_spawn_[i] += delta_time;
 
   Engine& engine = Engine::Get();
   Random& rnd = engine.GetRandomGenerator();
 
-  float factor = Lerp(1.0f, spawn_factor_, spawn_factor_interpolator_);
   EnemyType enemy_type = kEnemyType_Invalid;
 
   for (int i = 0; i < kEnemyType_Unit_Last + 1; ++i) {
@@ -811,8 +804,8 @@ void Enemy::UpdateWave(float delta_time) {
 
       seconds_since_last_spawn_[i] = 0;
       seconds_to_next_spawn_[i] =
-          Lerp(kSpawnPeriod[i][0] * factor, kSpawnPeriod[i][1] * factor,
-               rnd.GetFloat());
+          Lerp(kSpawnPeriod[i][0] * spawn_factor_,
+               kSpawnPeriod[i][1] * spawn_factor_, rnd.GetFloat());
       break;
     }
   }
@@ -854,8 +847,7 @@ void Enemy::UpdateBoss(float delta_time) {
       if (spawn_factor_interpolator_ > 1)
         spawn_factor_interpolator_ = 1;
     }
-    boss_spawn_cooldown_ =
-        7.1f - Lerp(1.0f, 7.0f, spawn_factor_interpolator_);
+    boss_spawn_cooldown_ = 7.1f - Lerp(1.0f, 7.0f, spawn_factor_interpolator_);
     DLOG << "boss_spawn_cooldown_: " << boss_spawn_cooldown_;
     return;
   }
