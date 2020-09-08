@@ -26,9 +26,7 @@ struct ScopedAlignedFree {
 }  // namespace internal
 
 template <typename T>
-struct AlignedMem {
-  using ScoppedPtr = std::unique_ptr<T, internal::ScopedAlignedFree>;
-};
+using AlignedMemPtr = std::unique_ptr<T, internal::ScopedAlignedFree>;
 
 template <int kAlignment>
 inline void* AlignedAlloc(size_t size) {
