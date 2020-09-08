@@ -604,7 +604,7 @@ void Enemy::SpawnBoss() {
     auto& e = enemies_.emplace_front();
     e.enemy_type = kEnemyType_Boss;
     e.damage_type = kDamageType_Any;
-    e.total_health = e.hit_points = 45 + 15 * ((game->wave() - 1) / 3);
+    e.total_health = e.hit_points = 45 + 17 * ((game->wave() - 1) / 3);
     DLOG << " Boss health: " << e.total_health;
 
     Vector2 hit_box_pos =
