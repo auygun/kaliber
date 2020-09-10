@@ -47,9 +47,9 @@ constexpr int enemy_scores[] = {100, 150, 300, 200, 500};
 
 // Enemy units spawn speed.
 constexpr float kSpawnPeriod[kEnemyType_Unit_Last + 1][2] = {{3, 6},
-                                                             {10, 20},
+                                                             {15, 25},
                                                              {50, 70},
-                                                             {40, 60}};
+                                                             {70, 90}};
 
 void SetupFadeOutAnim(Animator& animator, float delay) {
   animator.SetEndCallback(Animator::kTimer, [&]() -> void {
@@ -413,6 +413,7 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   num_enemies_killed_in_current_wave_ = 0;
   seconds_since_last_spawn_ = {0, 0, 0, 0};
   seconds_to_next_spawn_ = {0, 0, 0, 0};
+  // spawn_factor_ = 0.2779f - (0.0283f * log((float)wave));
   spawn_factor_ = 0.0655f / log10(0.0067f * wave * wave + 1.8f);
   spawn_factor_interpolator_ = 0;
   boss_spawn_cooldown_ = 4;
