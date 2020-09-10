@@ -306,8 +306,7 @@ void Demo::StartNextStage(bool boss) {
         if (boss_fight_)
           player_.AddNuke(1);
 
-        float factor = 3 * (log10(5 * (float)(wave_ + 2)) / log10(1.2f)) - 25;
-        total_enemies_ = (int)(2 * factor);
+        total_enemies_ = 32.0871f + 23.0897f * log((float)wave_);
         last_num_enemies_killed_ = 0;
         boss_fight_ = false;
         DLOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
