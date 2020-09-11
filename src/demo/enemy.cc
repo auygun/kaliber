@@ -43,7 +43,7 @@ constexpr int idle2_frame_count[][3] = {{16, 16, -1},
 
 constexpr int idle_frame_speed = 12;
 
-constexpr int enemy_scores[] = {100, 150, 300, 200, 500};
+constexpr int enemy_scores[] = {100, 150, 200, 300, 500};
 
 // Enemy units spawn speed.
 constexpr float kSpawnPeriod[kEnemyType_Unit_Last + 1][2] = {{3, 6},
@@ -750,9 +750,11 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
             TranslateEnemyUnit(*target, {x - target->sprite.GetOffset().x, 0});
 
             float ct = target->movement_animator.GetTime(Animator::kMovement);
-            float t = Lerp(0.0f, 0.5f, rnd.GetFloat());
-            float nt = std::min(ct + t, 0.8f);
-            target->movement_animator.SetTime(Animator::kMovement, nt);
+            if (ct < 0.6f) {
+              float t = Lerp(0.0f, 0.5f, rnd.GetFloat());
+              float nt = std::min(ct + t, 0.6f);
+              target->movement_animator.SetTime(Animator::kMovement, nt);
+            }
 
             target->stealth_active = false;
             target->movement_animator.Play(Animator::kMovement, false);
