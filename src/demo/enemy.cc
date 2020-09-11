@@ -413,8 +413,7 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   num_enemies_killed_in_current_wave_ = 0;
   seconds_since_last_spawn_ = {0, 0, 0, 0};
   seconds_to_next_spawn_ = {0, 0, 0, 0};
-  // spawn_factor_ = 0.2779f - (0.0283f * log((float)wave));
-  spawn_factor_ = 0.0655f / log10(0.0067f * wave * wave + 1.8f);
+  spawn_factor_ = 0.308f - (0.0514f * log((float)wave));
   spawn_factor_interpolator_ = 0;
   boss_spawn_cooldown_ = 4;
   boss_spawn_duration_ = 0;
@@ -605,7 +604,7 @@ void Enemy::SpawnBoss() {
     auto& e = enemies_.emplace_front();
     e.enemy_type = kEnemyType_Boss;
     e.damage_type = kDamageType_Any;
-    e.total_health = e.hit_points = 45 + 25 * ((game->wave() - 1) / 3);
+    e.total_health = e.hit_points = 40 + 25 * ((game->wave() - 1) / 3);
     DLOG << " Boss health: " << e.total_health;
 
     Vector2 hit_box_pos =
