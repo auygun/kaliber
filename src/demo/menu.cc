@@ -166,6 +166,7 @@ bool Menu::Initialize() {
   logo_animator_[0].SetEndCallback(Animator::kFrames, [&]() -> void {
     logo_[0].SetVisible(false);
     logo_[1].SetVisible(true);
+    logo_[1].SetFrame(0);
     logo_animator_[1].SetFrames(12, 20);
     logo_animator_[1].SetTimer(
         Lerp(3.0f, 8.0f, Engine::Get().GetRandomGenerator().GetFloat()));
@@ -334,6 +335,7 @@ void Menu::Show() {
 
 void Menu::Hide() {
   for (int i = 0; i < 2; ++i) {
+    logo_animator_[i].Stop(Animator::kAllAnimations | Animator::kTimer);
     logo_animator_[i].SetBlending(kColorFadeOut, kFadeSpeed);
     logo_animator_[i].SetEndCallback(Animator::kBlending, [&, i]() -> void {
       logo_animator_[i].Stop(Animator::kAllAnimations | Animator::kTimer);
