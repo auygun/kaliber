@@ -419,6 +419,7 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   boss_spawn_duration_ = 0;
   last_spawn_col_ = 0;
   paused_ = false;
+  wave_ = wave;
   boss_fight_ = boss_fight;
 
   if (boss_fight)
@@ -812,6 +813,14 @@ void Enemy::UpdateWave(float delta_time) {
     }
   }
 
+  // Do not spawn hard enemies durting the first 3 waves.
+  if (enemy_type >= kEnemyType_Tank && wave_ <= 3)
+    return;
+
+  // Do not spawn enemies harder then tank durting the 4th. wave.
+  if (enemy_type > kEnemyType_Tank && wave_ == 4)
+    return;
+
   if (enemy_type == kEnemyType_Invalid)
     return;
 
@@ -874,6 +883,10 @@ void Enemy::UpdateBoss(float delta_time) {
       break;
     }
   }
+
+  // Do not spawn enemies harder then tank durting the 1st. boss.
+  if (enemy_type > kEnemyType_Tank && wave_ < 4)
+    return;
 
   if (enemy_type == kEnemyType_Invalid)
     return;

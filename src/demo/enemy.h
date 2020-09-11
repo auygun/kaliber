@@ -120,6 +120,7 @@ class Enemy {
 
   int last_spawn_col_ = 0;
 
+  int wave_ = 0;
   bool boss_fight_ = false;
 
   void SpawnUnit(EnemyType enemy_type,
