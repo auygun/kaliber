@@ -169,6 +169,11 @@ void Demo::EnterGameOverState() {
   hud_.ShowMessage("Game Over", 3);
   state_ = kGameOver;
 
+  if (boss_fight_) {
+    music_.Resume(10);
+    boss_music_.Stop(10);
+  }
+
   SetDelayedWork(1, [&]() -> void {
     enemy_.RemoveAll();
     hud_.Hide();
