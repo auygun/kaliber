@@ -43,7 +43,7 @@ constexpr int idle2_frame_count[][3] = {{16, 16, -1},
 
 constexpr int idle_frame_speed = 12;
 
-constexpr int enemy_scores[] = {100, 150, 200, 300, 500};
+constexpr int enemy_scores[] = {100, 150, 300, 250, 500};
 
 // Enemy units spawn speed.
 constexpr float kSpawnPeriod[kEnemyType_Unit_Last + 1][2] = {{3, 6},
@@ -813,12 +813,16 @@ void Enemy::UpdateWave(float delta_time) {
     }
   }
 
-  // Do not spawn hard enemies durting the first 3 waves.
-  if (enemy_type >= kEnemyType_Tank && wave_ <= 3)
+  // Do not spawn hard enemies during the first 2 waves.
+  if (enemy_type >= kEnemyType_Tank && wave_ <= 2)
     return;
 
-  // Do not spawn enemies harder then tank durting the 4th. wave.
-  if (enemy_type > kEnemyType_Tank && wave_ == 4)
+  // Do not spawn tank during the 3th. wave.
+  if (enemy_type == kEnemyType_Tank && wave_ == 3)
+    return;
+
+  // Do not spawn stealth enemy during the 4th. wave.
+  if (enemy_type == kEnemyType_Bug && wave_ == 4)
     return;
 
   if (enemy_type == kEnemyType_Invalid)
@@ -884,8 +888,8 @@ void Enemy::UpdateBoss(float delta_time) {
     }
   }
 
-  // Do not spawn enemies harder then tank durting the 1st. boss.
-  if (enemy_type > kEnemyType_Tank && wave_ < 4)
+  // Do not spawn tank during the 1st. boss.
+  if (enemy_type == kEnemyType_Tank && wave_ == 3)
     return;
 
   if (enemy_type == kEnemyType_Invalid)
