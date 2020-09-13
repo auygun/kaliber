@@ -60,6 +60,8 @@ void SkyQuad::ContextLost() {
 }
 
 void SkyQuad::SwitchColor(const Vector4& color) {
+  color_animator_.Pause(Animator::kBlending);
+  color_animator_.SetTime(Animator::kBlending, 0);
   color_animator_.SetBlending(color, 5,
                               std::bind(SmoothStep, std::placeholders::_1));
   color_animator_.Play(Animator::kBlending, false);
