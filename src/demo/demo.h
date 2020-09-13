@@ -92,6 +92,9 @@ class Demo : public eng::Game {
 
   void StartNextStage(bool boss);
 
+  void Load();
+  void Save();
+
   void SetDelayedWork(float seconds, base::Closure cb);
 };
 
