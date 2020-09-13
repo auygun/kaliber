@@ -77,10 +77,9 @@ bool Demo::Initialize() {
   boss_music_.SetSound(std::move(boss_sound));
   boss_music_.SetMaxAplitude(0.5f);
 
-  EnterMenuState();
-
   Load();
-  Save();
+
+  EnterMenuState();
 
   return true;
 }
@@ -143,6 +142,9 @@ void Demo::SetEnableMusic(bool enable) {
 }
 
 void Demo::EnterMenuState() {
+  if (save_game_dirty_)
+    Save();
+
   if (state_ == kMenu)
     return;
   if (state_ == kState_Invalid || state_ == kGameOver) {
@@ -175,6 +177,9 @@ void Demo::EnterGameState() {
 void Demo::EnterGameOverState() {
   if (state_ == kGameOver)
     return;
+
+  if (save_game_dirty_)
+    Save();
 
   enemy_.PauseProgress();
   enemy_.StopAllEnemyUnits();
@@ -226,6 +231,10 @@ void Demo::UpdateGameState(float delta_time) {
     score_ += add_score_;
     add_score_ = 0;
     hud_.SetScore(score_, true);
+
+    if (score_ > high_score_)
+      high_score_ = score_;
+      save_game_dirty_ = true;
   }
 
   hud_.Update(delta_time);
@@ -258,8 +267,7 @@ void Demo::Continue() {
 }
 
 void Demo::StartNewGame() {
-  score_ = 0;
-  add_score_ = 0;
+  score_ = add_score_ = 0;
   wave_ = 0;
   last_num_enemies_killed_ = -1;
   total_enemies_ = 0;
@@ -376,14 +384,13 @@ void Demo::Load() {
     return;
   }
 
-  unsigned high_score = root[kHightScore].asUInt();
-  LOG << "High Score: " << high_score;
+  high_score_ = root[kHightScore].asUInt();
 }
 
 // TODO: Move to engine.
 void Demo::Save() {
   Json::Value value;
-  value[kHightScore] = 12345;
+  value[kHightScore] = high_score_;
 
   Json::StreamWriterBuilder builder;
   std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
@@ -403,6 +410,8 @@ void Demo::Save() {
     LOG << "Failed to write to file " << file_path;
     return;
   }
+
+  save_game_dirty_ = false;
 }
 
 void Demo::SetDelayedWork(float seconds, base::Closure cb) {

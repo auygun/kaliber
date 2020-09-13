@@ -111,7 +111,8 @@ class Menu {
 
   bool CreateRenderResources();
 
-  std::unique_ptr<eng::Image> CreateImage();
+  std::unique_ptr<eng::Image> CreateMenuImage();
+  std::unique_ptr<eng::Image> CreateHighScoreImage();
 
   bool IsAnimating();
 };

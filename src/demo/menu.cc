@@ -331,6 +331,7 @@ void Menu::Show() {
   logo_animator_[0].SetBlending(kColorNormal, kFadeSpeed);
   logo_animator_[0].Play(Animator::kBlending | Animator::kFrames, false);
 
+  Engine::Get().RefreshImage("high_score_tex");
   high_score_.SetColor(kColorNormal);
   high_score__animator_.SetVisible(true);
   high_score__animator_.SetBlending(kColorNormal, kFadeSpeed);
@@ -391,30 +392,18 @@ void Menu::Hide() {
 }
 
 bool Menu::CreateRenderResources() {
-  Engine::Get().SetImageSource("menu_tex", std::bind(&Menu::CreateImage, this));
+  Engine::Get().SetImageSource("menu_tex",
+                               std::bind(&Menu::CreateMenuImage, this));
   Engine::Get().SetImageSource("logo_tex0", "woom_logo_start_frames_01.png");
   Engine::Get().SetImageSource("logo_tex1", "woom_logo_start_frames_02-03.png");
   Engine::Get().SetImageSource("buttons_tex", "menu_icons.png");
-  Engine::Get().SetImageSource(
-      "high_score_tex", std::bind([&]() -> std::unique_ptr<Image> {
-        std::string text = "High Score: "s + std::to_string(12345);
-        const Font& font =
-            static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
-
-        int width, height;
-        font.CalculateBoundingBox(text, width, height);
-
-        auto image = std::make_unique<Image>();
-        image->Create(width, height);
-        image->Clear({0.80f, 0.87f, 0.93f, 0});
-        font.Print(0, 0, text, image->GetBuffer(), image->GetWidth());
-        return image;
-      }));
+  Engine::Get().SetImageSource("high_score_tex",
+                               std::bind(&Menu::CreateHighScoreImage, this));
 
   return true;
 }
 
-std::unique_ptr<Image> Menu::CreateImage() {
+std::unique_ptr<Image> Menu::CreateMenuImage() {
   const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
 
   int line_height = font.GetLineHeight() + 1;
@@ -431,6 +420,25 @@ std::unique_ptr<Image> Menu::CreateImage() {
     float y = line_height * i;
     font.Print(x, y, kMenuOption[i], image->GetBuffer(), image->GetWidth());
   }
+
+  image->Compress();
+  return image;
+}
+
+std::unique_ptr<Image> Menu::CreateHighScoreImage() {
+  std::string text =
+      "High Score: "s +
+      std::to_string(static_cast<Demo*>(Engine::Get().GetGame())->high_score());
+  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+  static_cast<Demo*>(Engine::Get().GetGame())->high_score();
+
+  int width, height;
+  font.CalculateBoundingBox(text, width, height);
+
+  auto image = std::make_unique<Image>();
+  image->Create(width, height);
+  image->Clear({0.80f, 0.87f, 0.93f, 0});
+  font.Print(0, 0, text, image->GetBuffer(), image->GetWidth());
 
   image->Compress();
   return image;

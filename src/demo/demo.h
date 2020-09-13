@@ -43,6 +43,8 @@ class Demo : public eng::Game {
 
   int wave() { return wave_; }
 
+  int high_score() { return high_score_; }
+
  private:
   enum State {
     kState_Invalid = -1,
@@ -69,6 +71,8 @@ class Demo : public eng::Game {
   int score_ = 0;
   int add_score_ = 0;
 
+  int high_score_ = 0;
+
   int wave_ = 0;
 
   int last_num_enemies_killed_ = -1;
@@ -77,6 +81,8 @@ class Demo : public eng::Game {
   int waiting_for_next_wave_ = false;
 
   bool boss_fight_ = false;
+
+  bool save_game_dirty_ = false;
 
   eng::SoundPlayer music_;
   eng::SoundPlayer boss_music_;
