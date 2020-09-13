@@ -346,6 +346,10 @@ const std::string& Engine::GetRootPath() const {
   return platform_->GetRootPath();
 }
 
+const std::string& Engine::GetDataPath() const {
+  return platform_->GetDataPath();
+}
+
 size_t Engine::GetAudioSampleRate() {
   return audio_->GetSampleRate();
 }

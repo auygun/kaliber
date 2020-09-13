@@ -26,6 +26,9 @@ void PlatformLinux::Initialize() {
   root_path_ = "../../";
   LOG << "Root path: " << root_path_.c_str();
 
+  data_path_ = "./";
+  LOG << "Data path: " << data_path_.c_str();
+
   if (!renderer_->Initialize()) {
     LOG << "Failed to initialize renderer.";
     throw internal_error;

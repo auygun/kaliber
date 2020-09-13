@@ -45,6 +45,37 @@ std::string GetApkPath(ANativeActivity* activity) {
   return apk_path;
 }
 
+std::string GetDataPath(ANativeActivity* activity) {
+  JNIEnv* env = nullptr;
+  activity->vm->AttachCurrentThread(&env, nullptr);
+
+  jclass activity_clazz = env->GetObjectClass(activity->clazz);
+  jmethodID get_dir_id = env->GetMethodID(
+      activity_clazz, "getDir", "(Ljava/lang/String;I)Ljava/io/File;");
+  jstring suffix = env->NewStringUTF("kaliber");
+  jobject data_dir_obj = env->CallObjectMethod(activity->clazz, get_dir_id,
+                                               suffix, 0 /* MODE_PRIVATE */);
+
+  jclass file_clazz = env->FindClass("java/io/File");
+  jmethodID get_absolute_path_id =
+      env->GetMethodID(file_clazz, "getAbsolutePath", "()Ljava/lang/String;");
+  jstring data_path_obj =
+      (jstring)env->CallObjectMethod(data_dir_obj, get_absolute_path_id);
+
+  const char* tmp = env->GetStringUTFChars(data_path_obj, nullptr);
+  std::string data_path = std::string(tmp);
+
+  env->ReleaseStringUTFChars(data_path_obj, tmp);
+  env->DeleteLocalRef(activity_clazz);
+  env->DeleteLocalRef(file_clazz);
+  env->DeleteLocalRef(suffix);
+  activity->vm->DetachCurrentThread();
+
+  if (data_path.back() != '/')
+    data_path += '/';
+  return data_path;
+}
+
 void Vibrate(ANativeActivity* activity, int duration) {
   JNIEnv* env = nullptr;
   activity->vm->AttachCurrentThread(&env, nullptr);
@@ -78,7 +109,7 @@ void Vibrate(ANativeActivity* activity, int duration) {
   activity->vm->DetachCurrentThread();
 }
 
-int32_t getDensityDpi(android_app* app) {
+int32_t GetDensityDpi(android_app* app) {
   AConfiguration* config = AConfiguration_new();
   AConfiguration_fromAssetManager(config, app->activity->assetManager);
   int32_t density = AConfiguration_getDensity(config);
@@ -243,10 +274,13 @@ void PlatformAndroid::Initialize(android_app* app) {
 
   mobile_device_ = true;
 
-  root_path_ = GetApkPath(app->activity);
+  root_path_ = ::GetApkPath(app->activity);
   LOG << "Root path: " << root_path_.c_str();
 
-  device_dpi_ = getDensityDpi(app);
+  data_path_ = ::GetDataPath(app->activity);
+  LOG << "Data path: " << data_path_.c_str();
+
+  device_dpi_ = ::GetDensityDpi(app);
   LOG << "Device DPI: " << device_dpi_;
 
   app->userData = reinterpret_cast<void*>(this);

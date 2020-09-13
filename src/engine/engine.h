@@ -118,6 +118,8 @@ class Engine {
 
   const std::string& GetRootPath() const;
 
+  const std::string& GetDataPath() const;
+
   size_t GetAudioSampleRate();
 
   bool IsMobile() const;
