@@ -6,6 +6,8 @@
 
 namespace {
 
+// Used to parse the vertex layout,
+// e.g. "p3f;c4b" for "position 3 floats, color 4 bytes".
 const char kLayoutDelimiter[] = ";/ \t";
 
 }  // namespace

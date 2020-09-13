@@ -9,8 +9,6 @@ namespace eng {
 
 class Mesh {
  public:
-  static const char kLayoutDelimiter[];
-
   Mesh() = default;
   ~Mesh() = default;
 
