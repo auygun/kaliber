@@ -101,7 +101,6 @@ bool Enemy::Initialize() {
   if (!CreateRenderResources())
     return false;
 
-  boss_.Create("boss_tex", {4, 3});
   boss_.SetZOrder(10);
   boss_animator_.Attach(&boss_);
 
@@ -586,6 +585,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
 
 void Enemy::SpawnBoss() {
   // Setup visual sprite of the boss.
+  boss_.Create("boss_tex"s + std::to_string(std::min(wave_ / 3, 3)), {4, 3});
   boss_.SetVisible(true);
   boss_.SetOffset(Engine::Get().GetScreenSize() * Vector2(0, 0.5f) +
                   boss_.GetScale() * Vector2(0, 2.0f));
@@ -944,7 +944,9 @@ bool Enemy::CreateRenderResources() {
   Engine::Get().SetImageSource("skull_tex", "enemy_anims_01_frames_ok.png",
                                true);
   Engine::Get().SetImageSource("bug_tex", "enemy_anims_02_frames_ok.png", true);
-  Engine::Get().SetImageSource("boss_tex", "Boss_ok.png", true);
+  Engine::Get().SetImageSource("boss_tex1", "Boss_ok.png", true);
+  Engine::Get().SetImageSource("boss_tex2", "Boss_ok_lvl2.png", true);
+  Engine::Get().SetImageSource("boss_tex3", "Boss_ok_lvl3.png", true);
   Engine::Get().SetImageSource("target_tex", "enemy_target_single_ok.png",
                                true);
   Engine::Get().SetImageSource("blast_tex", "enemy_anims_blast_ok.png", true);
