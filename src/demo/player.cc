@@ -502,7 +502,7 @@ std::unique_ptr<Image> Player::GetNukeCounterImage() {
 
   auto image = std::make_unique<Image>();
   image->Create(width, height);
-  image->Clear({1, 1, 1, 0});
+  image->Clear({0.80f, 0.87f, 0.93f, 0});
 
   font.Print(0, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
 

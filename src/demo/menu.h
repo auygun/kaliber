@@ -106,6 +106,9 @@ class Menu {
   Switch toggle_music_;
   Switch toggle_vibration_;
 
+  eng::ImageQuad high_score_;
+  eng::Animator high_score__animator_;
+
   bool CreateRenderResources();
 
   std::unique_ptr<eng::Image> CreateImage();

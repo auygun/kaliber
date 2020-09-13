@@ -1,6 +1,7 @@
 #include "menu.h"
 
 #include <cmath>
+#include <string>
 #include <vector>
 
 #include "../base/collusion_test.h"
@@ -12,6 +13,8 @@
 #include "../engine/input_event.h"
 #include "../engine/sound.h"
 #include "demo.h"
+
+using namespace std::string_literals;
 
 using namespace base;
 using namespace eng;
@@ -230,6 +233,16 @@ bool Menu::Initialize() {
   toggle_vibration_.image().Translate(
       {toggle_music_.image().GetScale().x / 2, 0});
 
+  high_score_.Create("high_score_tex");
+  high_score_.SetZOrder(40);
+  high_score_.Scale(0.8f);
+  high_score_.SetOffset(Engine::Get().GetScreenSize() * Vector2(0, -0.40f));
+  // high_score_.PlaceToBottomOf(toggle_music_.image());
+  high_score_.SetColor(kColorFadeOut);
+  high_score_.SetVisible(false);
+
+  high_score__animator_.Attach(&high_score_);
+
   return true;
 }
 
@@ -246,6 +259,8 @@ void Menu::Update(float delta_time) {
   toggle_audio_.Update(delta_time);
   toggle_music_.Update(delta_time);
   toggle_vibration_.Update(delta_time);
+
+  high_score__animator_.Update(delta_time);
 }
 
 void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
@@ -316,6 +331,11 @@ void Menu::Show() {
   logo_animator_[0].SetBlending(kColorNormal, kFadeSpeed);
   logo_animator_[0].Play(Animator::kBlending | Animator::kFrames, false);
 
+  high_score_.SetColor(kColorNormal);
+  high_score__animator_.SetVisible(true);
+  high_score__animator_.SetBlending(kColorNormal, kFadeSpeed);
+  high_score__animator_.Play(Animator::kBlending, false);
+
   for (int i = 0; i < kOption_Max; ++i) {
     if (items_[i].hide)
       continue;
@@ -345,6 +365,13 @@ void Menu::Hide() {
     logo_animator_[i].Play(Animator::kBlending, false);
   }
 
+  high_score__animator_.SetBlending(kColorFadeOut, kFadeSpeed);
+  high_score__animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
+    high_score__animator_.SetEndCallback(Animator::kBlending, nullptr);
+    high_score__animator_.SetVisible(false);
+  });
+  high_score__animator_.Play(Animator::kBlending, false);
+
   selected_option_ = kOption_Invalid;
   for (int i = 0; i < kOption_Max; ++i) {
     if (items_[i].hide)
@@ -368,6 +395,21 @@ bool Menu::CreateRenderResources() {
   Engine::Get().SetImageSource("logo_tex0", "woom_logo_start_frames_01.png");
   Engine::Get().SetImageSource("logo_tex1", "woom_logo_start_frames_02-03.png");
   Engine::Get().SetImageSource("buttons_tex", "menu_icons.png");
+  Engine::Get().SetImageSource(
+      "high_score_tex", std::bind([&]() -> std::unique_ptr<Image> {
+        std::string text = "High Score: "s + std::to_string(12345);
+        const Font& font =
+            static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+
+        int width, height;
+        font.CalculateBoundingBox(text, width, height);
+
+        auto image = std::make_unique<Image>();
+        image->Create(width, height);
+        image->Clear({0.80f, 0.87f, 0.93f, 0});
+        font.Print(0, 0, text, image->GetBuffer(), image->GetWidth());
+        return image;
+      }));
 
   return true;
 }
