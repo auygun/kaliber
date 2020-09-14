@@ -1,7 +1,12 @@
 TODO:
-- Harder and shorter waves.
-- Harder boss.
-- Do benchmark at startup and switch to low qualiy sky for slow devices.
+- Sound after phone call
+- Randomize horizontal spawn point
+- Boss hp + 23 each
+- High score animation
+- Save settings
+- Save launch counter
+- Menu colors
+- Vibration fix.
 
 DONE:
 - Fix intersection test in targetting code.
@@ -15,3 +20,6 @@ DONE:
 - Nuke kills at the end of wave count fot the next wave.
 - Context-lost at the boss pops up wave progress bar.
 - Test 30 fps
+- Harder and shorter waves.
+- Harder boss.
+- Move dimmer from credits to menu
