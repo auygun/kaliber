@@ -23,6 +23,9 @@ using namespace eng;
 
 namespace {
 
+const Vector4 kBgColor = {0, 0, 0, 0.8f};
+constexpr float kFadeSpeed = 0.2f;
+
 const char kSaveFileName[] = "woom";
 const char kHightScore[] = "high_score";
 
@@ -77,6 +80,13 @@ bool Demo::Initialize() {
   boss_music_.SetSound(std::move(boss_sound));
   boss_music_.SetMaxAplitude(0.5f);
 
+  dimmer_.SetScale(Engine::Get().GetScreenSize());
+  dimmer_.SetZOrder(40);
+  dimmer_.SetColor(kBgColor);
+  dimmer_.SetVisible(true);
+  dimmer_active_ = true;
+  dimmer_animator_.Attach(&dimmer_);
+
   Load();
 
   EnterMenuState();
@@ -86,6 +96,8 @@ bool Demo::Initialize() {
 
 void Demo::Update(float delta_time) {
   Engine& engine = Engine::Get();
+
+  dimmer_animator_.Update(delta_time);
 
   while (std::unique_ptr<InputEvent> event = engine.GetNextInputEvent()) {
     if (state_ == kMenu)
@@ -147,6 +159,9 @@ void Demo::EnterMenuState() {
 
   if (state_ == kMenu)
     return;
+
+  Dimmer(true);
+
   if (state_ == kState_Invalid || state_ == kGameOver) {
     menu_.SetOptionEnabled(Menu::kContinue, false);
     menu_.SetOptionEnabled(Menu::kNewGame, true);
@@ -161,6 +176,7 @@ void Demo::EnterMenuState() {
 void Demo::EnterCreditsState() {
   if (state_ == kCredits)
     return;
+
   credits_.Show();
   state_ = kCredits;
 }
@@ -168,6 +184,9 @@ void Demo::EnterCreditsState() {
 void Demo::EnterGameState() {
   if (state_ == kGame)
     return;
+
+  Dimmer(false);
+
   hud_.Show();
   if (boss_fight_)
     hud_.HideProgress();
@@ -232,9 +251,10 @@ void Demo::UpdateGameState(float delta_time) {
     add_score_ = 0;
     hud_.SetScore(score_, true);
 
-    if (score_ > high_score_)
+    if (score_ > high_score_) {
       high_score_ = score_;
       save_game_dirty_ = true;
+    }
   }
 
   hud_.Update(delta_time);
@@ -346,6 +366,24 @@ void Demo::StartNextStage(bool boss) {
       waiting_for_next_wave_ = false;
     });
   });
+}
+
+void Demo::Dimmer(bool enable) {
+  if (enable && !dimmer_active_) {
+    dimmer_active_ = true;
+    dimmer_.SetColor(kBgColor * Vector4(0, 0, 0, 0));
+    dimmer_animator_.SetBlending(kBgColor, kFadeSpeed);
+    dimmer_animator_.Play(Animator::kBlending, false);
+    dimmer_animator_.SetVisible(true);
+  } else if (!enable && dimmer_active_) {
+    dimmer_active_ = false;
+    dimmer_animator_.SetBlending(kBgColor * Vector4(0, 0, 0, 0), kFadeSpeed);
+    dimmer_animator_.Play(Animator::kBlending, false);
+    dimmer_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
+      dimmer_animator_.SetEndCallback(Animator::kBlending, nullptr);
+      dimmer_animator_.SetVisible(false);
+    });
+  }
 }
 
 // TODO: Move to engine.

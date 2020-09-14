@@ -2,8 +2,10 @@
 #define DEMO_H
 
 #include "../base/closure.h"
+#include "../engine/animator.h"
 #include "../engine/font.h"
 #include "../engine/game.h"
+#include "../engine/solid_quad.h"
 #include "../engine/sound_player.h"
 #include "credits.h"
 #include "enemy.h"
@@ -87,6 +89,10 @@ class Demo : public eng::Game {
   eng::SoundPlayer music_;
   eng::SoundPlayer boss_music_;
 
+  eng::SolidQuad dimmer_;
+  eng::Animator dimmer_animator_;
+  bool dimmer_active_ = false;
+
   float delayed_work_timer_ = 0;
   base::Closure delayed_work_cb_;
 
@@ -97,6 +103,8 @@ class Demo : public eng::Game {
   void StartNewGame();
 
   void StartNextStage(bool boss);
+
+  void Dimmer(bool enable);
 
   void Load();
   void Save();
