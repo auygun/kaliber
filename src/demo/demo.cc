@@ -32,6 +32,8 @@ const char kHightScore[] = "high_score";
 }  // namespace
 
 bool Demo::Initialize() {
+  Load();
+
   if (!font_.Load("PixelCaps!.ttf"))
     return false;
 
@@ -86,8 +88,6 @@ bool Demo::Initialize() {
   dimmer_.SetVisible(true);
   dimmer_active_ = true;
   dimmer_animator_.Attach(&dimmer_);
-
-  Load();
 
   EnterMenuState();
 

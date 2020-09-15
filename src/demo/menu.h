@@ -106,8 +106,10 @@ class Menu {
   Switch toggle_music_;
   Switch toggle_vibration_;
 
+  int high_score_value_ = 0;
+
   eng::ImageQuad high_score_;
-  eng::Animator high_score__animator_;
+  eng::Animator high_score_animator_;
 
   bool CreateRenderResources();
 

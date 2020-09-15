@@ -27,7 +27,7 @@ constexpr char kMenuOption[Menu::kOption_Max][10] = {"continue", "start",
 constexpr float kMenuOptionSpace = 1.5f;
 
 const Vector4 kColorNormal = {1, 1, 1, 1};
-const Vector4 kColorHighlight = {5, 5, 5, 1};
+const Vector4 kColorHighlight = {10, 10, 10, 1};
 constexpr float kBlendingSpeed = 0.12f;
 
 const Vector4 kColorSwitch[2] = {{0.003f, 0.91f, 0.99f, 1},
@@ -35,6 +35,8 @@ const Vector4 kColorSwitch[2] = {{0.003f, 0.91f, 0.99f, 1},
 
 const Vector4 kColorFadeOut = {1, 1, 1, 0};
 constexpr float kFadeSpeed = 0.2f;
+
+const Vector4 kHighScoreColor = {0.895f, 0.692f, 0.24f, 1};
 
 }  // namespace
 
@@ -233,15 +235,16 @@ bool Menu::Initialize() {
   toggle_vibration_.image().Translate(
       {toggle_music_.image().GetScale().x / 2, 0});
 
+  high_score_value_ = static_cast<Demo*>(Engine::Get().GetGame())->high_score();
+
   high_score_.Create("high_score_tex");
   high_score_.SetZOrder(41);
   high_score_.Scale(0.8f);
-  high_score_.SetOffset(Engine::Get().GetScreenSize() * Vector2(0, -0.40f));
-  // high_score_.PlaceToBottomOf(toggle_music_.image());
-  high_score_.SetColor(kColorFadeOut);
+  high_score_.SetOffset(Engine::Get().GetScreenSize() * Vector2(0, -0.36f));
+  high_score_.SetColor(kHighScoreColor * Vector4(1, 1, 1, 0));
   high_score_.SetVisible(false);
 
-  high_score__animator_.Attach(&high_score_);
+  high_score_animator_.Attach(&high_score_);
 
   return true;
 }
@@ -260,7 +263,7 @@ void Menu::Update(float delta_time) {
   toggle_music_.Update(delta_time);
   toggle_vibration_.Update(delta_time);
 
-  high_score__animator_.Update(delta_time);
+  high_score_animator_.Update(delta_time);
 }
 
 void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
@@ -331,11 +334,20 @@ void Menu::Show() {
   logo_animator_[0].SetBlending(kColorNormal, kFadeSpeed);
   logo_animator_[0].Play(Animator::kBlending | Animator::kFrames, false);
 
-  Engine::Get().RefreshImage("high_score_tex");
-  high_score_.SetColor(kColorNormal);
-  high_score__animator_.SetVisible(true);
-  high_score__animator_.SetBlending(kColorNormal, kFadeSpeed);
-  high_score__animator_.Play(Animator::kBlending, false);
+  if (high_score_value_ !=
+      static_cast<Demo*>(Engine::Get().GetGame())->high_score()) {
+    high_score_value_ =
+        static_cast<Demo*>(Engine::Get().GetGame())->high_score();
+    Engine::Get().RefreshImage("high_score_tex");
+
+    high_score_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
+      high_score_animator_.SetBlending(kColorNormal, 0.3f);
+      high_score_animator_.Play(Animator::kBlending, true);
+    });
+  }
+  high_score_animator_.SetVisible(true);
+  high_score_animator_.SetBlending(kHighScoreColor, kFadeSpeed);
+  high_score_animator_.Play(Animator::kBlending, false);
 
   for (int i = 0; i < kOption_Max; ++i) {
     if (items_[i].hide)
@@ -366,12 +378,12 @@ void Menu::Hide() {
     logo_animator_[i].Play(Animator::kBlending, false);
   }
 
-  high_score__animator_.SetBlending(kColorFadeOut, kFadeSpeed);
-  high_score__animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
-    high_score__animator_.SetEndCallback(Animator::kBlending, nullptr);
-    high_score__animator_.SetVisible(false);
+  high_score_animator_.SetBlending(kColorFadeOut, kFadeSpeed);
+  high_score_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
+    high_score_animator_.SetEndCallback(Animator::kBlending, nullptr);
+    high_score_animator_.SetVisible(false);
   });
-  high_score__animator_.Play(Animator::kBlending, false);
+  high_score_animator_.Play(Animator::kBlending, false);
 
   selected_option_ = kOption_Invalid;
   for (int i = 0; i < kOption_Max; ++i) {
@@ -411,7 +423,8 @@ std::unique_ptr<Image> Menu::CreateMenuImage() {
   image->Create(max_text_width_, line_height * kOption_Max);
 
   // Fill the area of each menu item with gradient.
-  image->GradientV({1.0f, 1.0f, 1.0f, 0}, {.0f, .0f, 1.0f, 0}, line_height);
+  image->GradientV({0.80f, 0.87f, 0.93f, 0},
+                   kColorSwitch[0] * Vector4(1, 1, 1, 0), line_height);
 
   for (int i = 0; i < kOption_Max; ++i) {
     int w, h;
@@ -426,18 +439,15 @@ std::unique_ptr<Image> Menu::CreateMenuImage() {
 }
 
 std::unique_ptr<Image> Menu::CreateHighScoreImage() {
-  std::string text =
-      "High Score: "s +
-      std::to_string(static_cast<Demo*>(Engine::Get().GetGame())->high_score());
+  std::string text = "High Score: "s + std::to_string(high_score_value_);
   const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
-  static_cast<Demo*>(Engine::Get().GetGame())->high_score();
 
   int width, height;
   font.CalculateBoundingBox(text, width, height);
 
   auto image = std::make_unique<Image>();
   image->Create(width, height);
-  image->Clear({0.80f, 0.87f, 0.93f, 0});
+  image->Clear({1, 1, 1, 0});
   font.Print(0, 0, text, image->GetBuffer(), image->GetWidth());
 
   image->Compress();

@@ -71,7 +71,7 @@ bool Player::Initialize() {
   nuke_counter_.SetOffset(nuke_symbol_.GetOffset() -
                           nuke_symbol_.GetScale() * Vector2(0.0f, 0.25f));
   nuke_counter_.PlaceToRightOf(nuke_symbol_);
-  nuke_counter_.SetColor({1, 1, 1, 1});
+  nuke_counter_.SetColor({0.80f, 0.87f, 0.93f, 1});
   nuke_counter_.SetVisible(true);
 
   nuke_.SetZOrder(20);
@@ -502,7 +502,7 @@ std::unique_ptr<Image> Player::GetNukeCounterImage() {
 
   auto image = std::make_unique<Image>();
   image->Create(width, height);
-  image->Clear({0.80f, 0.87f, 0.93f, 0});
+  image->Clear({1, 1, 1, 0});
 
   font.Print(0, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
 

@@ -18,7 +18,10 @@ void Animator::Attach(Animatable* animatable) {
 
 void Animator::Play(int animation, bool loop) {
   play_flags_ |= animation;
-  loop_flags_ |= loop ? animation : 0;
+  if (loop)
+    loop_flags_ |= animation;
+  else
+    loop_flags_ &= ~animation;
 }
 
 void Animator::Pause(int animation) {
