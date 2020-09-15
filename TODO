@@ -1,11 +1,8 @@
 TODO:
 - Sound after phone call
 - Randomize horizontal spawn point
-- Boss hp + 23 each
-- High score animation
 - Save settings
 - Save launch counter
-- Menu colors
 - Vibration fix.
 
 DONE:
@@ -23,3 +20,5 @@ DONE:
 - Harder and shorter waves.
 - Harder boss.
 - Move dimmer from credits to menu
+- High score animation
+- Menu colors
