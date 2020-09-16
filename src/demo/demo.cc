@@ -11,9 +11,7 @@
 #include "../engine/engine.h"
 #include "../engine/game_factory.h"
 #include "../engine/input_event.h"
-#include "../engine/persistent_data.h"
 #include "../engine/sound.h"
-#include "../third_party/jsoncpp/json.h"
 
 DECLARE_GAME_BEGIN
 DECLARE_GAME(Demo)
@@ -35,12 +33,11 @@ const char kHightScore[] = "high_score";
 Demo::Demo() = default;
 
 Demo::~Demo() {
-  if (save_game_dirty_)
-    Save();
+  saved_data_.Save();
 }
 
 bool Demo::Initialize() {
-  Load();
+  saved_data_.Load(kSaveFileName);
 
   if (!font_.Load("PixelCaps!.ttf"))
     return false;
@@ -162,8 +159,7 @@ void Demo::SetEnableMusic(bool enable) {
 }
 
 void Demo::EnterMenuState() {
-  if (save_game_dirty_)
-    Save();
+  saved_data_.Save();
 
   if (state_ == kMenu)
     return;
@@ -205,8 +201,7 @@ void Demo::EnterGameOverState() {
   if (state_ == kGameOver)
     return;
 
-  if (save_game_dirty_)
-    Save();
+  saved_data_.Save();
 
   enemy_.PauseProgress();
   enemy_.StopAllEnemyUnits();
@@ -259,10 +254,8 @@ void Demo::UpdateGameState(float delta_time) {
     add_score_ = 0;
     hud_.SetScore(score_, true);
 
-    if (score_ > high_score_) {
-      high_score_ = score_;
-      save_game_dirty_ = true;
-    }
+    if (score_ > saved_data_.Get<int>(kHightScore, 0))
+      saved_data_[kHightScore] << score_;
   }
 
   hud_.Update(delta_time);
@@ -394,19 +387,8 @@ void Demo::Dimmer(bool enable) {
   }
 }
 
-// TODO: Move to engine.
-void Demo::Load() {
-  PersistentData data;
-  data.Load(kSaveFileName);
-  high_score_ = data[kHightScore].asUInt();
-}
-
-// TODO: Move to engine.
-void Demo::Save() {
-  PersistentData data;
-  data[kHightScore] = high_score_;
-  data.Save(kSaveFileName);
-  save_game_dirty_ = false;
+int Demo::GetHighScore() {
+  return saved_data_.Get<int>(kHightScore, 0);
 }
 
 void Demo::SetDelayedWork(float seconds, base::Closure cb) {

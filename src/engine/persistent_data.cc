@@ -10,6 +10,8 @@ using namespace base;
 namespace eng {
 
 bool PersistentData::Load(const std::string& file_name) {
+  file_name_ = file_name;
+
   std::string file_path = Engine::Get().GetDataPath() + file_name;
   ScopedFILE file;
   file.reset(fopen(file_path.c_str(), "r"));
@@ -43,10 +45,23 @@ bool PersistentData::Load(const std::string& file_name) {
     return false;
   }
 
+  old_root_ = root_;
+
   return true;
 }
 
-bool PersistentData::Save(const std::string& file_name) {
+bool PersistentData::Save(bool force) {
+  if (!force && old_root_ == root_)
+    return true;
+
+  DCHECK(!file_name_.empty());
+
+  return SaveAs(file_name_);
+}
+
+bool PersistentData::SaveAs(const std::string& file_name) {
+  file_name_ = file_name;
+
   Json::StreamWriterBuilder builder;
   std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
   std::ostringstream stream;
@@ -66,6 +81,8 @@ bool PersistentData::Save(const std::string& file_name) {
     return false;
   }
 
+  old_root_ = root_;
+
   return true;
 }
 
@@ -84,5 +101,48 @@ const Json::Value& PersistentData::operator[](const char* key) const {
 const Json::Value& PersistentData::operator[](const std::string& key) const {
   return root_[key];
 }
+
+template <>
+const Json::Value& operator>>(const Json::Value& val, unsigned& arg) {
+  if (!val.isNull() && val.isConvertibleTo(Json::uintValue))
+    arg = val.asUInt();
+  return val;
+}
+
+template <>
+const Json::Value& operator>>(const Json::Value& val, int& arg) {
+  if (!val.isNull() && val.isConvertibleTo(Json::intValue))
+    arg = val.asInt();
+  return val;
+}
+
+template <>
+const Json::Value& operator>>(const Json::Value& val, bool& arg) {
+  if (!val.isNull() && val.isConvertibleTo(Json::booleanValue))
+    arg = val.asBool();
+  return val;
+}
+
+namespace internal {
+
+template <>
+unsigned Get(const Json::Value& val, unsigned default_val) {
+  return (!val.isNull() && val.isConvertibleTo(Json::uintValue)) ? val.asUInt()
+                                                                 : default_val;
+}
+
+template <>
+int Get(const Json::Value& val, int default_val) {
+  return (!val.isNull() && val.isConvertibleTo(Json::intValue)) ? val.asInt()
+                                                                : default_val;
+}
+
+template <>
+bool Get(const Json::Value& val, bool default_val) {
+  return (!val.isNull() && val.isConvertibleTo(Json::intValue)) ? val.asBool()
+                                                                : default_val;
+}
+
+}  // namespace internal
 
 }  // namespace eng

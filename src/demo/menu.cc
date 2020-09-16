@@ -235,7 +235,7 @@ bool Menu::Initialize() {
   toggle_vibration_.image().Translate(
       {toggle_music_.image().GetScale().x / 2, 0});
 
-  high_score_value_ = static_cast<Demo*>(Engine::Get().GetGame())->high_score();
+  high_score_value_ = static_cast<Demo*>(Engine::Get().GetGame())->GetHighScore();
 
   high_score_.Create("high_score_tex");
   high_score_.SetZOrder(41);
@@ -335,9 +335,9 @@ void Menu::Show() {
   logo_animator_[0].Play(Animator::kBlending | Animator::kFrames, false);
 
   if (high_score_value_ !=
-      static_cast<Demo*>(Engine::Get().GetGame())->high_score()) {
+      static_cast<Demo*>(Engine::Get().GetGame())->GetHighScore()) {
     high_score_value_ =
-        static_cast<Demo*>(Engine::Get().GetGame())->high_score();
+        static_cast<Demo*>(Engine::Get().GetGame())->GetHighScore();
     Engine::Get().RefreshImage("high_score_tex");
 
     high_score_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {

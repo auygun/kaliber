@@ -5,6 +5,7 @@
 #include "../engine/animator.h"
 #include "../engine/font.h"
 #include "../engine/game.h"
+#include "../engine/persistent_data.h"
 #include "../engine/solid_quad.h"
 #include "../engine/sound_player.h"
 #include "credits.h"
@@ -45,7 +46,10 @@ class Demo : public eng::Game {
 
   int wave() { return wave_; }
 
-  int high_score() { return high_score_; }
+  int GetHighScore();
+
+  eng::PersistentData& saved_data() { return saved_data_; }
+  const eng::PersistentData& saved_data() const { return saved_data_; }
 
  private:
   enum State {
@@ -84,8 +88,6 @@ class Demo : public eng::Game {
 
   bool boss_fight_ = false;
 
-  bool save_game_dirty_ = false;
-
   eng::SoundPlayer music_;
   eng::SoundPlayer boss_music_;
 
@@ -96,6 +98,8 @@ class Demo : public eng::Game {
   float delayed_work_timer_ = 0;
   base::Closure delayed_work_cb_;
 
+  eng::PersistentData saved_data_;
+
   void UpdateMenuState(float delta_time);
   void UpdateGameState(float delta_time);
 
@@ -105,9 +109,6 @@ class Demo : public eng::Game {
   void StartNextStage(bool boss);
 
   void Dimmer(bool enable);
-
-  void Load();
-  void Save();
 
   void SetDelayedWork(float seconds, base::Closure cb);
 };
