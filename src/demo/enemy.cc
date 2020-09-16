@@ -585,7 +585,10 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
 
 void Enemy::SpawnBoss() {
   // Setup visual sprite of the boss.
-  boss_.Create("boss_tex"s + std::to_string(std::min(wave_ / 3, 3)), {4, 3});
+  int boss_id = (wave_ / 3) % 3;
+  if (boss_id == 0)
+    boss_id = 3;
+  boss_.Create("boss_tex"s + std::to_string(boss_id), {4, 3});
   boss_.SetVisible(true);
   boss_.SetOffset(Engine::Get().GetScreenSize() * Vector2(0, 0.5f) +
                   boss_.GetScale() * Vector2(0, 2.0f));
@@ -857,12 +860,12 @@ void Enemy::UpdateBoss(float delta_time) {
   boss_spawn_duration_ -= delta_time;
   if (boss_spawn_duration_ <= 0) {
     if (spawn_factor_interpolator_ < 1) {
-      spawn_factor_interpolator_ += delta_time * 12.0f;
+      spawn_factor_interpolator_ += delta_time * 15.0f;
       if (spawn_factor_interpolator_ > 1)
         spawn_factor_interpolator_ = 1;
     }
-    boss_spawn_cooldown_ = 7.1f - Lerp(1.0f, 7.0f, spawn_factor_interpolator_);
-    DLOG << "boss_spawn_cooldown_: " << boss_spawn_cooldown_;
+    boss_spawn_cooldown_ = 6.1f - Lerp(1.0f, 6.0f, spawn_factor_interpolator_);
+    LOG << "boss_spawn_cooldown_: " << boss_spawn_cooldown_;
     return;
   }
 
@@ -881,7 +884,7 @@ void Enemy::UpdateBoss(float delta_time) {
 
       seconds_since_last_spawn_[i] = 0;
       seconds_to_next_spawn_[i] =
-          Lerp(kSpawnPeriod[i][0] * 0.15f, kSpawnPeriod[i][1] * 0.15f,
+          Lerp(kSpawnPeriod[i][0] * 0.14f, kSpawnPeriod[i][1] * 0.14f,
                rnd.GetFloat());
       break;
     }
