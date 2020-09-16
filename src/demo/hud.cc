@@ -206,7 +206,7 @@ std::unique_ptr<Image> Hud::CreateMessageImage() {
 
   auto image = std::make_unique<Image>();
   image->Create(max_text_width_, font.GetLineHeight());
-  image->GradientV({1.0f, 1.0f, 1.0f, 0}, {.0f, .0f, 1.0f, 0},
+  image->GradientV({0.80f, 0.87f, 0.93f, 0}, {0.003f, 0.91f, 0.99f, 0},
                    font.GetLineHeight());
 
   int w, h;
