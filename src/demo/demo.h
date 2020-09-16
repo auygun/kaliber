@@ -77,8 +77,6 @@ class Demo : public eng::Game {
   int score_ = 0;
   int add_score_ = 0;
 
-  int high_score_ = 0;
-
   int wave_ = 0;
 
   int last_num_enemies_killed_ = -1;

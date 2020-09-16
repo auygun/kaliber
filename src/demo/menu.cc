@@ -117,7 +117,9 @@ bool Menu::Initialize() {
   if (!click_sound_->Load("menu_click.mp3", false))
     return false;
 
-  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+  Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
+
+  const Font& font = game->GetFont();
 
   max_text_width_ = -1;
   for (int i = 0; i < kOption_Max; ++i) {
@@ -197,24 +199,28 @@ bool Menu::Initialize() {
       "buttons_tex", {4, 2}, 2, 6,
       [&] {
         Engine::Get().SetEnableAudio(toggle_audio_.enabled());
+
+        Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
         if (toggle_audio_.enabled()) {
           if (toggle_music_.enabled())
-            static_cast<Demo*>(Engine::Get().GetGame())->SetEnableMusic(true);
+            game->SetEnableMusic(true);
         } else {
-          static_cast<Demo*>(Engine::Get().GetGame())->SetEnableMusic(false);
+          game->SetEnableMusic(false);
         }
+        game->saved_data()["audio"] << toggle_audio_.enabled();
       },
-      true);
+      game->saved_data().Get<bool>("audio", true));
   toggle_audio_.image().SetOffset(Engine::Get().GetScreenSize() *
                                   Vector2(0, -0.25f));
 
   toggle_music_.Create(
       "buttons_tex", {4, 2}, 1, 5,
       [&] {
-        static_cast<Demo*>(Engine::Get().GetGame())
-            ->SetEnableMusic(toggle_music_.enabled());
+        Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
+        game->SetEnableMusic(toggle_music_.enabled());
+        game->saved_data()["music"] << toggle_music_.enabled();
       },
-      true);
+      game->saved_data().Get<bool>("music", true));
   toggle_music_.image().SetOffset(Engine::Get().GetScreenSize() *
                                   Vector2(0, -0.25f));
 
@@ -224,8 +230,10 @@ bool Menu::Initialize() {
         Engine::Get().SetEnableVibration(toggle_vibration_.enabled());
         if (toggle_vibration_.enabled())
           Engine::Get().Vibrate(50);
+        Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
+        game->saved_data()["vibration"] << toggle_vibration_.enabled();
       },
-      true);
+      game->saved_data().Get<bool>("vibration", true));
   toggle_vibration_.image().SetOffset(Engine::Get().GetScreenSize() *
                                       Vector2(0, -0.25f));
 
@@ -235,7 +243,7 @@ bool Menu::Initialize() {
   toggle_vibration_.image().Translate(
       {toggle_music_.image().GetScale().x / 2, 0});
 
-  high_score_value_ = static_cast<Demo*>(Engine::Get().GetGame())->GetHighScore();
+  high_score_value_ = game->GetHighScore();
 
   high_score_.Create("high_score_tex");
   high_score_.SetZOrder(41);

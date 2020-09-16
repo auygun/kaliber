@@ -82,10 +82,18 @@ bool Demo::Initialize() {
 
   music_.SetSound(std::move(sound));
   music_.SetMaxAplitude(0.5f);
-  music_.Play(true);
 
   boss_music_.SetSound(std::move(boss_sound));
   boss_music_.SetMaxAplitude(0.5f);
+
+  if (!saved_data_.Get<bool>("audio", true))
+    Engine::Get().SetEnableAudio(false);
+  else if (saved_data_.Get<bool>("music", true))
+    music_.Play(true);
+
+  if (!saved_data_.Get<bool>("vibration", true)) {
+    Engine::Get().SetEnableVibration(false);
+  }
 
   dimmer_.SetScale(Engine::Get().GetScreenSize());
   dimmer_.SetZOrder(40);
