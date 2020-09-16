@@ -759,8 +759,8 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
             target->stealth_active = false;
             target->movement_animator.Play(Animator::kMovement, false);
             target->sprite_animator.SetBlending({1, 1, 1, 1}, 1.0f);
-            target->sprite_animator.Play(
-                Animator::kBlending | Animator::kFrames, false);
+            target->sprite_animator.Play(Animator::kBlending, false);
+            target->sprite_animator.Play(Animator::kFrames, true);
           });
 
       target->sprite_animator.SetTimer(stealth_timer);
