@@ -341,8 +341,14 @@ void Menu::Show() {
     Engine::Get().RefreshImage("high_score_tex");
 
     high_score_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
-      high_score_animator_.SetBlending(kColorNormal, 0.3f);
-      high_score_animator_.Play(Animator::kBlending, true);
+      high_score_animator_.SetBlending(kColorFadeOut, 0.3f);
+      high_score_animator_.SetTimer(5);
+      high_score_animator_.Play(Animator::kBlending | Animator::kTimer, true);
+    });
+    high_score_animator_.SetEndCallback(Animator::kTimer, [&]() -> void {
+      high_score_animator_.Stop(Animator::kBlending);
+      high_score_animator_.SetEndCallback(Animator::kBlending, nullptr);
+      high_score_animator_.SetEndCallback(Animator::kTimer, nullptr);
     });
   }
   high_score_animator_.SetVisible(true);
@@ -378,6 +384,8 @@ void Menu::Hide() {
     logo_animator_[i].Play(Animator::kBlending, false);
   }
 
+  high_score_animator_.Stop(Animator::kAllAnimations | Animator::kTimer);
+  high_score_animator_.SetEndCallback(Animator::kTimer, nullptr);
   high_score_animator_.SetBlending(kColorFadeOut, kFadeSpeed);
   high_score_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
     high_score_animator_.SetEndCallback(Animator::kBlending, nullptr);
