@@ -11,6 +11,7 @@
 #include "../engine/engine.h"
 #include "../engine/game_factory.h"
 #include "../engine/input_event.h"
+#include "../engine/persistent_data.h"
 #include "../engine/sound.h"
 #include "../third_party/jsoncpp/json.h"
 
@@ -30,6 +31,13 @@ const char kSaveFileName[] = "woom";
 const char kHightScore[] = "high_score";
 
 }  // namespace
+
+Demo::Demo() = default;
+
+Demo::~Demo() {
+  if (save_game_dirty_)
+    Save();
+}
 
 bool Demo::Initialize() {
   Load();
@@ -388,67 +396,16 @@ void Demo::Dimmer(bool enable) {
 
 // TODO: Move to engine.
 void Demo::Load() {
-  std::string file_path = Engine::Get().GetDataPath() + kSaveFileName;
-  ScopedFILE file;
-  file.reset(fopen(file_path.c_str(), "r"));
-  if (!file) {
-    LOG << "Failed to open file " << file_path;
-    return;
-  }
-
-  size_t size = 0;
-  if (file) {
-    if (!fseek(file.get(), 0, SEEK_END)) {
-      size = ftell(file.get());
-      rewind(file.get());
-    }
-  }
-
-  auto buffer = std::make_unique<char[]>(size + 1);
-  size_t bytes_read = fread(buffer.get(), 1, size, file.get());
-  if (!bytes_read) {
-    LOG << "Failed to read a buffer of size: " << size << " from file "
-        << file_path;
-    return;
-  }
-  buffer[size] = 0;
-
-  std::string err;
-  Json::Value root;
-  Json::CharReaderBuilder builder;
-  const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
-  if (!reader->parse(buffer.get(), buffer.get() + size, &root, &err)) {
-    LOG << "Failed to parse save file. Json parser error: " << err;
-    return;
-  }
-
-  high_score_ = root[kHightScore].asUInt();
+  PersistentData data;
+  data.Load(kSaveFileName);
+  high_score_ = data[kHightScore].asUInt();
 }
 
 // TODO: Move to engine.
 void Demo::Save() {
-  Json::Value value;
-  value[kHightScore] = high_score_;
-
-  Json::StreamWriterBuilder builder;
-  std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
-  std::ostringstream stream;
-  writer->write(value, &stream);
-
-  std::string file_path = Engine::Get().GetDataPath() + kSaveFileName;
-  ScopedFILE file;
-  file.reset(fopen(file_path.c_str(), "w"));
-  if (!file) {
-    LOG << "Failed to create file " << file_path;
-    return;
-  }
-
-  std::string data = stream.str();
-  if (fwrite(data.c_str(), data.size(), 1, file.get()) != 1) {
-    LOG << "Failed to write to file " << file_path;
-    return;
-  }
-
+  PersistentData data;
+  data[kHightScore] = high_score_;
+  data.Save(kSaveFileName);
   save_game_dirty_ = false;
 }
 

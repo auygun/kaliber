@@ -16,8 +16,8 @@
 
 class Demo : public eng::Game {
  public:
-  Demo() = default;
-  ~Demo() override = default;
+  Demo();
+  ~Demo() override;
 
   bool Initialize() override;
 

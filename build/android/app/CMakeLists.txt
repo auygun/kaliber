@@ -73,6 +73,7 @@ add_library(woom SHARED
     ../../../src/engine/image_quad.cc
     ../../../src/engine/image.cc
     ../../../src/engine/mesh.cc
+    ../../../src/engine/persistent_data.cc
     ../../../src/engine/platform/asset_file_android.cc
     ../../../src/engine/platform/asset_file.cc
     ../../../src/engine/platform/platform_android.cc
