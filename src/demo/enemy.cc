@@ -410,7 +410,7 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   num_enemies_killed_in_current_wave_ = 0;
   seconds_since_last_spawn_ = {0, 0, 0, 0};
   seconds_to_next_spawn_ = {0, 0, 0, 0};
-  spawn_factor_ = 0.308f - (0.0514f * log((float)wave));
+  spawn_factor_ = 0.3077f - (0.0538f * log((float)wave));
   spawn_factor_interpolator_ = 0;
   boss_spawn_cooldown_ = 4;
   boss_spawn_duration_ = 0;
