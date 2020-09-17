@@ -815,20 +815,20 @@ void Enemy::UpdateWave(float delta_time) {
     }
   }
 
+  if (enemy_type == kEnemyType_Invalid)
+    return;
+
   // Do not spawn hard enemies during the first 2 waves.
   if (enemy_type >= kEnemyType_Tank && wave_ <= 2)
-    return;
+    enemy_type = kEnemyType_LightSkull;
 
   // Do not spawn tank during the 3th. wave.
   if (enemy_type == kEnemyType_Tank && wave_ == 3)
-    return;
+    enemy_type = kEnemyType_LightSkull;
 
   // Do not spawn stealth enemy during the 4th. wave.
   if (enemy_type == kEnemyType_Bug && wave_ == 4)
-    return;
-
-  if (enemy_type == kEnemyType_Invalid)
-    return;
+    enemy_type = kEnemyType_LightSkull;
 
   DamageType damage_type = enemy_type == kEnemyType_Tank
                                ? kDamageType_Any
