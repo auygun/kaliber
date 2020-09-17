@@ -20,7 +20,9 @@ class Shader : public RenderResource {
          Renderer* renderer);
   ~Shader() override;
 
-  void Create(std::unique_ptr<ShaderSource> source, const VertexDescripton& vd);
+  void Create(std::unique_ptr<ShaderSource> source,
+              const VertexDescripton& vd,
+              Primitive primitive);
 
   void Destroy() override;
 
@@ -32,6 +34,8 @@ class Shader : public RenderResource {
   void SetUniform(const std::string& name, const base::Matrix4x4& m);
   void SetUniform(const std::string& name, float f);
   void SetUniform(const std::string& name, int i);
+
+  void UploadUniforms();
 };
 
 }  // namespace eng

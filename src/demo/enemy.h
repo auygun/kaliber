@@ -26,6 +26,8 @@ class Enemy {
 
   void Update(float delta_time);
 
+  void Pause(bool pause);
+
   bool HasTarget(DamageType damage_type);
   base::Vector2 GetTargetPos(DamageType damage_type);
 
@@ -86,6 +88,8 @@ class Enemy {
   bool waiting_for_next_wave_ = false;
 
   int last_spawn_col_ = 0;
+
+  bool paused_ = false;
 
   void TakeDamage(EnemyUnit* target, int damage);
 

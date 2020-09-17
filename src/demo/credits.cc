@@ -47,10 +47,6 @@ bool Credits::Initialize() {
   return true;
 }
 
-void Credits::Update(float delta_time) {
-  text_animator_.Update(delta_time);
-}
-
 void Credits::OnInputEvent(std::unique_ptr<InputEvent> event) {
   if ((event->GetType() == InputEvent::kDragEnd ||
        event->GetType() == InputEvent::kNavigateBack) &&
@@ -67,19 +63,19 @@ void Credits::Show() {
   for (int i = 0; i < kNumLines; ++i) {
     text_[i].Create("credits", {1, kNumLines});
     text_[i].SetZOrder(50);
-    text_[i].SetOffset({0, 0});
+    text_[i].SetPosition({0, 0});
     text_[i].SetColor(kTextColor * Vector4(1, 1, 1, 0));
     text_[i].SetFrame(i);
 
     if (i > 0) {
       text_[i].PlaceToBottomOf(text_[i - 1]);
-      text_[i].Translate(text_[i - 1].GetOffset() * Vector2(0, 1));
-      text_[i].Translate({0, text_[i - 1].GetScale().y * -kLineSpaces[i - 1]});
+      text_[i].Translate(text_[i - 1].GetPosition() * Vector2(0, 1));
+      text_[i].Translate({0, text_[i - 1].GetSize().y * -kLineSpaces[i - 1]});
     }
   }
 
   float center_offset_y =
-      (text_[0].GetOffset().y - text_[kNumLines - 1].GetOffset().y) / 2;
+      (text_[0].GetPosition().y - text_[kNumLines - 1].GetPosition().y) / 2;
   for (int i = 0; i < kNumLines; ++i)
     text_[i].Translate({0, center_offset_y});
 

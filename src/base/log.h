@@ -3,113 +3,94 @@
 
 #include <sstream>
 
+// Adapted from Chromium's logging implementation.
+
 // Macros for logging that are active in both debug and release builds. The way
 // to log things is to stream things to LOG.
-// LOG_DIFF can be used to avoid spam and log only if the message differs.
+// LOG_IF can be used for conditional logging.
 // CHECK(condition) terminates the process if the condition is false.
 // NOTREACHED annotates unreachable codepaths and terminates the process if
 // reached.
-#define LOG base::Log(__FILE__, __LINE__).base()
-#define LOG_DIFF base::LogDiff(__FILE__, __LINE__).base()
-#define CHECK(expr) \
-  base::Check(__FILE__, __LINE__, static_cast<bool>(expr), false, #expr).base()
-#define NOTREACHED base::NotReached(__FILE__, __LINE__).base()
+#define LOG base::LogMessage(__FILE__, __LINE__).stream()
+#define LOG_IF(condition) \
+  LAZY_STREAM(condition, base::LogMessage(__FILE__, __LINE__).stream())
+#define CHECK(condition) \
+  LAZY_STREAM(           \
+      !(condition),      \
+      base::LogAbort::Check(__FILE__, __LINE__, #condition).GetLog().stream())
+
+#define NOTREACHED \
+  base::LogAbort::NotReached(__FILE__, __LINE__).GetLog().stream()
 
 // Macros for logging which are active only in debug builds.
 #ifdef _DEBUG
-#define DLOG base::Log(__FILE__, __LINE__).base()
-#define DLOG_DIFF base::LogDiff(__FILE__, __LINE__).base()
-#define DCHECK(expr) \
-  base::Check(__FILE__, __LINE__, static_cast<bool>(expr), true, #expr).base()
+#define DLOG base::LogMessage(__FILE__, __LINE__).stream()
+#define DLOG_IF(condition) \
+  LAZY_STREAM(condition, base::LogMessage(__FILE__, __LINE__).stream())
+#define DCHECK(condition)                                            \
+  LAZY_STREAM(!(condition),                                          \
+              base::LogAbort::DCheck(__FILE__, __LINE__, #condition) \
+                  .GetLog()                                          \
+                  .stream())
 #else
 // "debug mode" logging is compiled away to nothing for release builds.
 #define DLOG EAT_STREAM_PARAMETERS
-#define DLOG_DIFF EAT_STREAM_PARAMETERS
-#define DCHECK(expr) EAT_STREAM_PARAMETERS
+#define DLOG_IF(condition) EAT_STREAM_PARAMETERS
+#define DCHECK(condition) EAT_STREAM_PARAMETERS
 #endif
 
-// Adapted from Chromium's logging implementation.
+// Helper macro which avoids evaluating the arguments to a stream if
+// the condition doesn't hold.
+#define LAZY_STREAM(condition, stream) \
+  !(condition) ? (void)0 : base::LogMessage::Voidify() & (stream)
+
 // Avoid any pointless instructions to be emitted by the compiler.
 #define EAT_STREAM_PARAMETERS \
-  true ? (void)0 : base::LogBase::Voidify() & (*base::LogBase::swallow_stream)
+  LAZY_STREAM(false, *base::LogMessage::swallow_stream)
 
 namespace base {
 
-struct Vector2;
-struct Vector3;
-struct Vector4;
-
-class LogBase {
+class LogMessage {
  public:
   class Voidify {
    public:
     Voidify() = default;
+
     // This has to be an operator with a precedence lower than << but
     // higher than ?:
-    void operator&(LogBase&) {}
+    void operator&(std::ostream&) {}
   };
 
-  LogBase& base() { return *this; }
+  LogMessage(const char* file, int line);
+  ~LogMessage();
+
+  LogMessage& base() { return *this; }
 
   std::ostream& stream() { return stream_; }
 
-  static LogBase* swallow_stream;
+  static std::ostream* swallow_stream;
 
  protected:
   const char* file_;
   const int line_;
   std::ostringstream stream_;
-
-  LogBase(const char* file, int line);
-  ~LogBase();
-
-  void Flush();
 };
 
-class Log : public LogBase {
+class LogAbort {
  public:
-  Log(const char* file, int line);
-  ~Log();
-};
+  ~LogAbort();
 
-class LogDiff : public LogBase {
- public:
-  LogDiff(const char* file, int line);
-  ~LogDiff();
-};
+  static LogAbort Check(const char* file, int line, const char* expr);
+  static LogAbort DCheck(const char* file, int line, const char* expr);
+  static LogAbort NotReached(const char* file, int line);
 
-class Check : public LogBase {
- public:
-  Check(const char* file,
-        int line,
-        bool condition,
-        bool debug,
-        const char* expr);
-  ~Check();
+  LogMessage& GetLog() { return *log_; }
 
  private:
-  bool condition_;
+  LogMessage* log_;
+
+  LogAbort(LogMessage* log);
 };
-
-class NotReached : public LogBase {
- public:
-  NotReached(const char* file, int line);
-  ~NotReached();
-};
-
-template <typename T>
-LogBase& operator<<(LogBase& out, const T& arg) {
-  out.stream() << arg;
-  return out;
-}
-
-// Explicit specialization for internal types.
-template <>
-LogBase& operator<<(LogBase& out, const base::Vector2& arg);
-template <>
-LogBase& operator<<(LogBase& out, const base::Vector3& arg);
-template <>
-LogBase& operator<<(LogBase& out, const base::Vector4& arg);
 
 }  // namespace base
 

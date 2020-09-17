@@ -29,8 +29,11 @@ class Geometry : public RenderResource {
     return vertex_description_;
   }
 
+  Primitive primitive() { return primitive_; }
+
  private:
   VertexDescripton vertex_description_;
+  Primitive primitive_ = kPrimitive_Invalid;
 };
 
 }  // namespace eng

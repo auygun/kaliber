@@ -22,6 +22,12 @@ class PlatformAndroid : public PlatformBase {
 
   void Vibrate(int duration);
 
+  void ShowInterstitialAd();
+
+  void ShareFile(const std::string& file_name);
+
+  void SetKeepScreenOn(bool keep_screen_on);
+
  private:
   android_app* app_ = nullptr;
 

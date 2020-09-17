@@ -57,7 +57,7 @@ bool Enemy::Initialize() {
 }
 
 void Enemy::Update(float delta_time) {
-  if (!waiting_for_next_wave_) {
+  if (!waiting_for_next_wave_ && !paused_) {
     if (spawn_factor_interpolator_ < 1) {
       spawn_factor_interpolator_ += delta_time * 0.1f;
       if (spawn_factor_interpolator_ > 1)
@@ -70,17 +70,23 @@ void Enemy::Update(float delta_time) {
     SpawnNextEnemy();
   }
 
-  for (auto it = enemies_.begin(); it != enemies_.end(); ++it) {
-    if (it->marked_for_removal) {
+  for (auto it = enemies_.begin(); it != enemies_.end();) {
+    if (it->marked_for_removal)
       it = enemies_.erase(it);
-      continue;
-    }
-    it->sprite_animator.Update(delta_time);
-    it->target_animator.Update(delta_time);
-    it->blast_animator.Update(delta_time);
-    it->health_animator.Update(delta_time);
-    it->score_animator.Update(delta_time);
-    it->movement_animator.Update(delta_time);
+    else
+      ++it;
+  }
+}
+
+void Enemy::Pause(bool pause) {
+  paused_ = pause;
+  for (auto& e : enemies_) {
+    e.movement_animator.PauseOrResumeAll(pause);
+    e.sprite_animator.PauseOrResumeAll(pause);
+    e.target_animator.PauseOrResumeAll(pause);
+    e.blast_animator.PauseOrResumeAll(pause);
+    e.health_animator.PauseOrResumeAll(pause);
+    e.score_animator.PauseOrResumeAll(pause);
   }
 }
 
@@ -95,8 +101,8 @@ Vector2 Enemy::GetTargetPos(DamageType damage_type) {
 
   EnemyUnit* target = GetTarget(damage_type);
   if (target)
-    return target->sprite.GetOffset() -
-           Vector2(0, target->sprite.GetScale().y / 2.5f);
+    return target->sprite.GetPosition() -
+           Vector2(0, target->sprite.GetSize().y / 2.5f);
   return {0, 0};
 }
 
@@ -122,11 +128,11 @@ void Enemy::SelectTarget(DamageType damage_type,
       e.target_animator.Stop(Animator::kAllAnimations);
     }
 
-    if (!base::Intersection(e.sprite.GetOffset(),
-                            e.sprite.GetScale() * snap_factor, origin, dir))
+    if (!base::Intersection(e.sprite.GetPosition(),
+                            e.sprite.GetSize() * snap_factor, origin, dir))
       continue;
 
-    Vector2 weapon_enemy_dir = e.sprite.GetOffset() - origin;
+    Vector2 weapon_enemy_dir = e.sprite.GetPosition() - origin;
     float enemy_weapon_dist = weapon_enemy_dir.Magnitude();
     if (closest_dist > enemy_weapon_dist) {
       closest_dist = enemy_weapon_dist;
@@ -232,10 +238,10 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
   } else {
     target->targetted_by_weapon_ = kDamageType_Invalid;
 
-    Vector2 s = target->sprite.GetScale() * Vector2(0.6f, 0.01f);
+    Vector2 s = target->sprite.GetSize() * Vector2(0.6f, 0.01f);
     s.x *= (float)target->hit_points / (float)target->total_health;
-    float t = (s.x - target->health_bar.GetScale().x) / 2;
-    target->health_bar.SetScale(s);
+    float t = (s.x - target->health_bar.GetSize().x) / 2;
+    target->health_bar.SetSize(s);
     target->health_bar.Translate({t, 0});
 
     target->health_base.SetVisible(true);
@@ -312,8 +318,8 @@ void Enemy::Spawn(EnemyType enemy_type,
   }
   e.sprite.SetZOrder(11);
   e.sprite.SetVisible(true);
-  Vector2 spawn_pos = pos + Vector2(0, e.sprite.GetScale().y / 2);
-  e.sprite.SetOffset(spawn_pos);
+  Vector2 spawn_pos = pos + Vector2(0, e.sprite.GetSize().y / 2);
+  e.sprite.SetPosition(spawn_pos);
 
   e.sprite.SetFrame(enemy_frame_start[enemy_type][damage_type]);
   e.sprite_animator.SetFrames(enemy_frame_count[enemy_type][damage_type],
@@ -324,28 +330,28 @@ void Enemy::Spawn(EnemyType enemy_type,
 
   e.target.Create("target_tex", {6, 2});
   e.target.SetZOrder(12);
-  e.target.SetOffset(spawn_pos);
+  e.target.SetPosition(spawn_pos);
 
   e.blast.Create("blast_tex", {6, 2});
   e.blast.SetZOrder(12);
-  e.blast.SetOffset(spawn_pos);
+  e.blast.SetPosition(spawn_pos);
 
   e.health_base.SetZOrder(11);
-  e.health_base.Scale(e.sprite.GetScale() * Vector2(0.6f, 0.01f));
-  e.health_base.SetOffset(spawn_pos);
+  e.health_base.SetSize(e.sprite.GetSize() * Vector2(0.6f, 0.01f));
+  e.health_base.SetPosition(spawn_pos);
   e.health_base.PlaceToBottomOf(e.sprite);
   e.health_base.SetColor({0.5f, 0.5f, 0.5f, 1});
 
   e.health_bar.SetZOrder(11);
-  e.health_bar.Scale(e.sprite.GetScale() * Vector2(0.6f, 0.01f));
-  e.health_bar.SetOffset(spawn_pos);
+  e.health_bar.SetSize(e.sprite.GetSize() * Vector2(0.6f, 0.01f));
+  e.health_bar.SetPosition(spawn_pos);
   e.health_bar.PlaceToBottomOf(e.sprite);
   e.health_bar.SetColor({0.161f, 0.89f, 0.322f, 1});
 
   e.score.Create("score_tex"s + std::to_string(e.enemy_type));
   e.score.SetZOrder(12);
   e.score.SetColor({1, 1, 1, 1});
-  e.score.SetOffset(spawn_pos);
+  e.score.SetPosition(spawn_pos);
 
   e.target_animator.Attach(&e.target);
 

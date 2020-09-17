@@ -6,16 +6,16 @@ using namespace base;
 
 namespace eng {
 
-void Animatable::Translate(const Vector2& offset) {
-  offset_ += offset;
+void Animatable::Translate(const Vector2& pos) {
+  position_ += pos;
 }
 
 void Animatable::Scale(const Vector2& scale) {
-  scale_ *= scale;
+  scale_ = scale;
 }
 
 void Animatable::Scale(float scale) {
-  scale_ *= scale;
+  scale_ = {scale, scale};
 }
 
 void Animatable::Rotate(float angle) {

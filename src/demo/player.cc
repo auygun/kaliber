@@ -31,24 +31,26 @@ bool Player::Initialize() {
 }
 
 void Player::Update(float delta_time) {
-  for (int i = 0; i < 2; ++i) {
-    warmup_animator_[i].Update(delta_time);
-    cooldown_animator_[i].Update(delta_time);
-    beam_animator_[i].Update(delta_time);
-    spark_animator_[i].Update(delta_time);
-  }
-
   if (active_weapon_ != kDamageType_Invalid)
     UpdateTarget();
+}
+
+void Player::Pause(bool pause) {
+  for (int i = 0; i < 2; ++i) {
+    warmup_animator_[i].PauseOrResumeAll(pause);
+    cooldown_animator_[i].PauseOrResumeAll(pause);
+    beam_animator_[i].PauseOrResumeAll(pause);
+    spark_animator_[i].PauseOrResumeAll(pause);
+  }
 }
 
 void Player::OnInputEvent(std::unique_ptr<InputEvent> event) {
   if (event->GetType() == InputEvent::kNavigateBack)
     NavigateBack();
   else if (event->GetType() == InputEvent::kDragStart)
-    DragStart(event->GetVector(0));
+    DragStart(event->GetVector());
   else if (event->GetType() == InputEvent::kDrag)
-    Drag(event->GetVector(0));
+    Drag(event->GetVector());
   else if (event->GetType() == InputEvent::kDragEnd)
     DragEnd();
   else if (event->GetType() == InputEvent::kDragCancel)
@@ -58,18 +60,18 @@ void Player::OnInputEvent(std::unique_ptr<InputEvent> event) {
 Vector2 Player::GetWeaponPos(DamageType type) const {
   return Engine::Get().GetScreenSize() /
              Vector2(type == kDamageType_Green ? 3.5f : -3.5f, -2) +
-         Vector2(0, weapon_[type].GetScale().y * 0.7f);
+         Vector2(0, weapon_[type].GetSize().y * 0.7f);
 }
 
 Vector2 Player::GetWeaponScale() const {
-  return weapon_[0].GetScale();
+  return weapon_[0].GetSize();
 }
 
 DamageType Player::GetWeaponType(const Vector2& pos) {
   DamageType closest_weapon = kDamageType_Invalid;
   float closest_dist = std::numeric_limits<float>::max();
   for (int i = 0; i < 2; ++i) {
-    float dist = (pos - weapon_[i].GetOffset()).Magnitude();
+    float dist = (pos - weapon_[i].GetPosition()).Magnitude();
     if (dist < closest_dist) {
       closest_dist = dist;
       closest_weapon = (DamageType)i;
@@ -77,18 +79,9 @@ DamageType Player::GetWeaponType(const Vector2& pos) {
   }
 
   DCHECK(closest_weapon != kDamageType_Invalid);
-  if (closest_dist < weapon_[closest_weapon].GetScale().x * 0.9f)
+  if (closest_dist < weapon_[closest_weapon].GetSize().x * 0.9f)
     return closest_weapon;
   return kDamageType_Invalid;
-}
-
-void Player::SetBeamLength(DamageType type, float len) {
-  beam_[type].SetOffset({0, 0});
-  beam_[type].SetScale({len, beam_[type].GetScale().y});
-  beam_[type].PlaceToRightOf(weapon_[type]);
-  beam_[type].Translate(weapon_[type].GetScale() * Vector2(-0.5f, 0));
-  beam_[type].SetPivot(beam_[type].GetOffset());
-  beam_[type].Translate(weapon_[type].GetOffset());
 }
 
 void Player::WarmupWeapon(DamageType type) {
@@ -106,25 +99,27 @@ void Player::Fire(DamageType type, Vector2 dir) {
   Enemy& enemy = static_cast<Demo*>(engine.GetGame())->GetEnemy();
 
   if (enemy.HasTarget(type))
-    dir = weapon_[type].GetOffset() - enemy.GetTargetPos(type);
+    dir = weapon_[type].GetPosition() - enemy.GetTargetPos(type);
   else
     dir *= engine.GetScreenSize().y * 1.3f;
 
   float len = dir.Magnitude();
-  SetBeamLength(type, len);
+  beam_[type].SetSize({len, beam_[type].GetSize().y});
+  beam_[type].SetPosition(weapon_[type].GetPosition());
 
   dir.Normalize();
   float cos_theta = dir.DotProduct(Vector2(1, 0));
   float theta = acos(cos_theta) + M_PI;
   beam_[type].SetTheta(theta);
-  beam_spark_[type].SetTheta(theta);
+  auto offset = beam_[type].GetRotation() * (len / 2);
+  beam_[type].Translate({offset.y, -offset.x});
 
   beam_[type].SetColor({1, 1, 1, 1});
   beam_[type].SetVisible(true);
   beam_spark_[type].SetVisible(true);
 
   spark_animator_[type].Stop(Animator::kMovement);
-  float length = beam_[type].GetScale().x * 0.85f;
+  float length = beam_[type].GetSize().x * 0.9f;
   Vector2 movement = dir * -length;
   // Convert from units per second to duration.
   float speed = 1.0f / (18.0f / length);
@@ -144,33 +139,27 @@ void Player::SetupWeapons() {
     drag_sign_[i].SetZOrder(21);
     drag_sign_[i].SetFrame(i * 8);
 
+    Vector2 pos = GetWeaponPos((DamageType)i);
+
     // Setup weapon.
     weapon_[i].Create("weapon_tex", {8, 2});
     weapon_[i].SetZOrder(24);
     weapon_[i].SetVisible(true);
     weapon_[i].SetFrame(wepon_warmup_frame[i]);
+    weapon_[i].SetPosition(pos);
 
     // Setup beam.
     beam_[i].Create("beam_tex", {1, 2});
     beam_[i].SetZOrder(22);
     beam_[i].SetFrame(i);
-    beam_[i].PlaceToRightOf(weapon_[i]);
-    beam_[i].Translate(weapon_[i].GetScale() * Vector2(-0.5f, 0));
-    beam_[i].SetPivot(beam_[i].GetOffset());
+    beam_[i].SetPosition(pos);
+    beam_[i].Translate(beam_[i].GetSize() * Vector2(-0.5f, -0.5f));
 
     // Setup beam spark.
     beam_spark_[i].Create("weapon_tex", {8, 2});
     beam_spark_[i].SetZOrder(23);
     beam_spark_[i].SetFrame(i * 8 + 1);
-    beam_spark_[i].PlaceToRightOf(weapon_[i]);
-    beam_spark_[i].Translate(weapon_[i].GetScale() * Vector2(-0.5f, 0));
-    beam_spark_[i].SetPivot(beam_spark_[i].GetOffset());
-
-    // Place parts on the screen.
-    Vector2 offset = GetWeaponPos((DamageType)i);
-    beam_[i].Translate(offset);
-    beam_spark_[i].Translate(offset);
-    weapon_[i].Translate(offset);
+    beam_spark_[i].SetPosition(pos);
 
     // Setup animators.
     weapon_[i].SetFrame(wepon_cooldown_frame[i]);
@@ -227,7 +216,7 @@ void Player::DragStart(const Vector2& pos) {
 
   drag_start_ = drag_end_ = pos;
 
-  drag_sign_[active_weapon_].SetOffset(drag_start_);
+  drag_sign_[active_weapon_].SetPosition(drag_start_);
   drag_sign_[active_weapon_].SetVisible(true);
 }
 
@@ -236,7 +225,7 @@ void Player::Drag(const Vector2& pos) {
     return;
 
   drag_end_ = pos;
-  drag_sign_[active_weapon_].SetOffset(drag_end_);
+  drag_sign_[active_weapon_].SetPosition(drag_end_);
 
   if (ValidateDrag()) {
     if (!drag_valid_ && !IsFiring(active_weapon_))
@@ -307,7 +296,7 @@ bool Player::ValidateDrag() {
   Vector2 dir = drag_end_ - drag_start_;
   float len = dir.Magnitude();
   dir.Normalize();
-  if (len < weapon_[active_weapon_].GetScale().y / 4)
+  if (len < weapon_[active_weapon_].GetSize().y / 4)
     return false;
   if (dir.DotProduct(Vector2(0, 1)) < 0)
     return false;

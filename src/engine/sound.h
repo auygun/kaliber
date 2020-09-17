@@ -7,9 +7,9 @@
 
 typedef struct mp3dec_ex mp3dec_ex_t;
 
-namespace r8b {
-class CDSPResampler16;
-}  // namespace r8b
+namespace base {
+class SincResampler;
+}  // namespace base
 
 namespace eng {
 
@@ -35,7 +35,7 @@ class Sound {
   size_t GetNumSamples() const { return num_samples_front_; }
 
   size_t num_channels() const { return num_channels_; }
-  size_t hz() const { return hz_; }
+  int sample_rate() const { return sample_rate_; }
 
   bool is_streaming_sound() const { return is_streaming_sound_; }
 
@@ -54,13 +54,15 @@ class Sound {
   size_t cur_sample_back_ = 0;
 
   size_t num_channels_ = 0;
-  size_t hz_ = 0;
+  int sample_rate_ = 0;
+
+  int hw_sample_rate_ = 0;
 
   std::unique_ptr<char[]> encoded_data_;
 
   std::unique_ptr<mp3dec_ex_t> mp3_dec_;
 
-  std::unique_ptr<r8b::CDSPResampler16> resampler_;
+  std::unique_ptr<base::SincResampler> resampler_[2];
 
   bool eof_ = false;
 
@@ -68,7 +70,8 @@ class Sound {
 
   bool StreamInternal(size_t num_samples, bool loop);
 
-  void Preprocess(std::unique_ptr<float[]> input_buffer);
+  void Preprocess(std::unique_ptr<float[]> input_buffer,
+                  size_t samples_per_channel);
 };
 
 }  // namespace eng

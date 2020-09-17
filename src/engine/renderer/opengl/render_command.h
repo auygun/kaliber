@@ -5,9 +5,9 @@
 #include <memory>
 #include <string>
 
-#include "../../base/hash.h"
-#include "../../base/vecmath.h"
-#include "renderer_types.h"
+#include "../../../base/hash.h"
+#include "../../../base/vecmath.h"
+#include "../renderer_types.h"
 
 namespace eng {
 
@@ -39,7 +39,7 @@ struct RenderCommand {
   const CommandId cmd_id = INVALID_CMD_ID;
 
   // Global render commands are guaranteed to be processed. Others commands are
-  // frame specific and can be discared by the renderer.
+  // frame specific and can be discared by the renderer if not throttled.
   const bool global = false;
 
 #ifdef _DEBUG

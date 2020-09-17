@@ -1,15 +1,10 @@
 #include "platform.h"
 
-#include <thread>
-
 #include "../../base/log.h"
 #include "../../base/task_runner.h"
 #include "../audio/audio.h"
 #include "../engine.h"
-#include "../renderer/renderer.h"
-
-// Save battery on mobile devices.
-#define USE_SLEEP
+#include "../renderer/opengl/renderer_opengl.h"
 
 using namespace base;
 
@@ -33,7 +28,7 @@ void PlatformBase::Initialize() {
     throw internal_error;
   }
 
-  renderer_ = std::make_unique<Renderer>();
+  renderer_ = std::make_unique<RendererOpenGL>();
 }
 
 void PlatformBase::Shutdown() {
@@ -52,11 +47,7 @@ void PlatformBase::RunMainLoop() {
   }
 
   // Use fixed time steps.
-  constexpr float time_step = 1.0f / 60.0f;
-
-#ifdef USE_SLEEP
-  constexpr float epsilon = 0.0001f;
-#endif  // USE_SLEEP
+  float time_step = engine_->time_step();
 
   timer_.Reset();
   float accumulator = 0.0;
@@ -66,20 +57,8 @@ void PlatformBase::RunMainLoop() {
     engine_->Draw(frame_frac);
 
     // Accumulate time.
-#ifdef USE_SLEEP
-    while (accumulator < time_step) {
-      timer_.Update();
-      accumulator += timer_.GetSecondsPassed();
-      if (time_step - accumulator > epsilon) {
-        float sleep_time = time_step - accumulator - epsilon;
-        std::this_thread::sleep_for(
-            std::chrono::microseconds((int)(sleep_time * 1000000.0f)));
-      }
-    };
-#else
     timer_.Update();
     accumulator += timer_.GetSecondsPassed();
-#endif  // USE_SLEEP
 
     // Subdivide the frame time.
     while (accumulator >= time_step) {

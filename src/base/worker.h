@@ -26,16 +26,16 @@ class Worker {
 
   void Shutdown();
 
-  void EnqueueTask(const Location& from, Closure task);
+  void PostTask(const Location& from, Closure task);
 
-  void EnqueueTaskAndReply(const Location& from, Closure task, Closure reply);
+  void PostTaskAndReply(const Location& from, Closure task, Closure reply);
 
   template <typename ReturnType>
-  void EnqueueTaskAndReplyWithResult(const Location& from,
-                                     std::function<ReturnType()> task,
-                                     std::function<void(ReturnType)> reply) {
-    task_runner_.EnqueueTaskAndReplyWithResult(from, std::move(task),
-                                               std::move(reply));
+  void PostTaskAndReplyWithResult(const Location& from,
+                                  std::function<ReturnType()> task,
+                                  std::function<void(ReturnType)> reply) {
+    task_runner_.PostTaskAndReplyWithResult(from, std::move(task),
+                                            std::move(reply));
     semaphore_.Release();
   }
 

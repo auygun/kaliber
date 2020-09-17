@@ -25,27 +25,37 @@ void SoundPlayer::SetSound(std::unique_ptr<Sound> sound) {
 }
 
 void SoundPlayer::Play(bool loop, float fade_in_duration) {
-  if (sound_) {
-    int step = variate_ ? Engine::Get().GetRandomGenerator().Roll(3) - 2 : 0;
-    resource_->SetResampleStep(step);
-    resource_->SetLoop(loop);
-    if (fade_in_duration > 0)
-      resource_->SetAmplitudeInc(1.0f / (sound_->hz() * fade_in_duration));
-    else
-      resource_->SetAmplitudeInc(0);
-    resource_->Play(sound_, fade_in_duration > 0 ? 0 : max_amplitude_, true);
-  }
+  if (!sound_)
+    return;
+
+  int step = variate_ ? Engine::Get().GetRandomGenerator().Roll(3) - 2 : 0;
+  resource_->SetResampleStep(step * 12);
+  resource_->SetLoop(loop);
+  if (fade_in_duration > 0)
+    resource_->SetAmplitudeInc(1.0f /
+                               (sound_->sample_rate() * fade_in_duration));
+  else
+    resource_->SetAmplitudeInc(0);
+  resource_->Play(sound_, fade_in_duration > 0 ? 0 : max_amplitude_, true);
 }
 
 void SoundPlayer::Resume(float fade_in_duration) {
+  if (!sound_)
+    return;
+
   if (fade_in_duration > 0)
-    resource_->SetAmplitudeInc(1.0f / (sound_->hz() * fade_in_duration));
+    resource_->SetAmplitudeInc(1.0f /
+                               (sound_->sample_rate() * fade_in_duration));
   resource_->Play(sound_, fade_in_duration > 0 ? 0 : -1, false);
 }
 
 void SoundPlayer::Stop(float fade_out_duration) {
+  if (!sound_)
+    return;
+
   if (fade_out_duration > 0)
-    resource_->SetAmplitudeInc(-1.0f / (sound_->hz() * fade_out_duration));
+    resource_->SetAmplitudeInc(-1.0f /
+                               (sound_->sample_rate() * fade_out_duration));
   else
     resource_->Stop();
 }

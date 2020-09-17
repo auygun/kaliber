@@ -15,7 +15,6 @@
 #include "mesh.h"
 #include "platform/platform.h"
 #include "renderer/geometry.h"
-#include "renderer/render_command.h"
 #include "renderer/renderer.h"
 #include "renderer/shader.h"
 #include "renderer/texture.h"
@@ -68,6 +67,8 @@ bool Engine::Initialize() {
     projection_ = base::Ortho(-1.0, 1.0, -aspect_ratio, aspect_ratio);
   }
 
+  LOG << "image scale factor: " << GetImageScaleFactor();
+
   if (renderer_->SupportsDXT5()) {
     tex_comp_alpha_ = TextureCompressor::Create(TextureCompressor::kFormatDXT5);
   } else if (renderer_->SupportsATC()) {
@@ -95,7 +96,7 @@ bool Engine::Initialize() {
 
   game_ = GameFactoryBase::CreateGame("");
   if (!game_) {
-    printf("No game found to run.\n");
+    LOG << "No game found to run.";
     return false;
   }
 
@@ -113,6 +114,10 @@ void Engine::Shutdown() {
 
 void Engine::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
+  ++tick_;
+
+  for (auto d : animators_)
+    d->Update(delta_time);
 
   game_->Update(delta_time);
 
@@ -135,15 +140,20 @@ void Engine::Update(float delta_time) {
 }
 
 void Engine::Draw(float frame_frac) {
+  for (auto d : animators_)
+    d->EvalAnim(time_step_ * frame_frac);
+
   drawables_.sort(
       [](auto& a, auto& b) { return a->GetZOrder() < b->GetZOrder(); });
+
+  renderer_->PrepareForDrawing();
 
   for (auto d : drawables_) {
     if (d->IsVisible())
       d->Draw(frame_frac);
   }
 
-  renderer_->EnqueueCommand(std::make_unique<CmdPresent>());
+  renderer_->Present();
 }
 
 void Engine::LostFocus() {
@@ -153,11 +163,11 @@ void Engine::LostFocus() {
     game_->LostFocus();
 }
 
-void Engine::GainedFocus() {
+void Engine::GainedFocus(bool from_interstitial_ad) {
   audio_->Resume();
 
   if (game_)
-    game_->GainedFocus();
+    game_->GainedFocus(from_interstitial_ad);
 }
 
 void Engine::AddDrawable(Drawable* drawable) {
@@ -170,6 +180,20 @@ void Engine::RemoveDrawable(Drawable* drawable) {
   auto it = std::find(drawables_.begin(), drawables_.end(), drawable);
   if (it != drawables_.end()) {
     drawables_.erase(it);
+    return;
+  }
+}
+
+void Engine::AddAnimator(Animator* animator) {
+  DCHECK(std::find(animators_.begin(), animators_.end(), animator) ==
+         animators_.end());
+  animators_.push_back(animator);
+}
+
+void Engine::RemoveAnimator(Animator* animator) {
+  auto it = std::find(animators_.begin(), animators_.end(), animator);
+  if (it != animators_.end()) {
+    animators_.erase(it);
     return;
   }
 }
@@ -190,27 +214,16 @@ Vector2 Engine::ToPosition(const Vector2& vec) {
 void Engine::SetImageSource(const std::string& asset_name,
                             const std::string& file_name,
                             bool persistent) {
-  std::shared_ptr<Texture> texture;
-  auto it = textures_.find(asset_name);
-  if (it != textures_.end()) {
-    texture = it->second.texture;
-    it->second.asset_file = file_name;
-    it->second.create_image = nullptr;
-    it->second.persistent = persistent;
-  } else {
-    texture = CreateRenderResource<Texture>();
-    textures_[asset_name] = {texture, file_name, nullptr, persistent};
-  }
-
-  if (persistent) {
-    auto image = std::make_unique<Image>();
-    if (image->Load(file_name)) {
-      image->Compress();
-      texture->Update(std::move(image));
-    } else {
-      texture->Destroy();
-    }
-  }
+  SetImageSource(
+      asset_name,
+      [file_name]() -> std::unique_ptr<Image> {
+        auto image = std::make_unique<Image>();
+        if (!image->Load(file_name))
+          return nullptr;
+        image->Compress();
+        return image;
+      },
+      persistent);
 }
 
 void Engine::SetImageSource(const std::string& asset_name,
@@ -221,11 +234,10 @@ void Engine::SetImageSource(const std::string& asset_name,
   if (it != textures_.end()) {
     texture = it->second.texture;
     it->second.create_image = create_image;
-    it->second.asset_file.clear();
     it->second.persistent = persistent;
   } else {
     texture = CreateRenderResource<Texture>();
-    textures_[asset_name] = {texture, "", create_image, persistent};
+    textures_[asset_name] = {texture, create_image, persistent};
   }
 
   if (persistent) {
@@ -242,17 +254,7 @@ void Engine::RefreshImage(const std::string& asset_name) {
   if (it == textures_.end())
     return;
 
-  std::unique_ptr<Image> image;
-  if (!it->second.asset_file.empty()) {
-    image = std::make_unique<Image>();
-    if (image->Load(it->second.asset_file))
-      image->Compress();
-    else
-      image.reset();
-  } else if (it->second.create_image) {
-    image = it->second.create_image();
-  }
-
+  auto image = it->second.create_image();
   if (image)
     it->second.texture->Update(std::move(image));
   else
@@ -278,9 +280,12 @@ std::unique_ptr<AudioResource> Engine::CreateAudioResource() {
 }
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
+  if (replaying_)
+    return;
+
   switch (event->GetType()) {
     case InputEvent::kDragEnd:
-      if (((GetScreenSize() / 2) * 0.9f - event->GetVector(0)).Magnitude() <=
+      if (((GetScreenSize() / 2) * 0.9f - event->GetVector()).Magnitude() <=
           0.25f) {
         SetSatsVisible(!stats_->IsVisible());
         // TODO: Enqueue DragCancel so we can consume this event.
@@ -295,9 +300,9 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
       break;
     case InputEvent::kDrag:
       if (stats_->IsVisible()) {
-        if ((stats_->GetOffset() - event->GetVector(0)).Magnitude() <=
-            stats_->GetScale().y)
-          stats_->SetOffset(event->GetVector(0));
+        if ((stats_->GetPosition() - event->GetVector()).Magnitude() <=
+            stats_->GetSize().y)
+          stats_->SetPosition(event->GetVector());
         // TODO: Enqueue DragCancel so we can consume this event.
       }
       break;
@@ -310,16 +315,89 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
 
 std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
   std::unique_ptr<InputEvent> event;
+
+  if (replaying_) {
+    if (replay_index_ < replay_data_.root()["input"].size()) {
+      auto data = replay_data_.root()["input"][replay_index_];
+      if (data["tick"].asUInt64() == tick_) {
+        event = std::make_unique<InputEvent>(
+            (InputEvent::Type)data["input_type"].asInt(),
+            (size_t)data["pointer_id"].asUInt(),
+            Vector2(data["pos_x"].asFloat(), data["pos_y"].asFloat()));
+        ++replay_index_;
+      }
+      return event;
+    }
+    replaying_ = false;
+    replay_data_.root().clear();
+  }
+
   if (!input_queue_.empty()) {
     event.swap(input_queue_.front());
     input_queue_.pop_front();
+
+    if (recording_) {
+      Json::Value data;
+      data["tick"] = tick_;
+      data["input_type"] = event->GetType();
+      data["pointer_id"] = event->GetPointerId();
+      data["pos_x"] = event->GetVector().x;
+      data["pos_y"] = event->GetVector().y;
+      replay_data_.root()["input"].append(data);
+    }
   }
+
   return event;
+}
+
+void Engine::StartRecording(const Json::Value& payload) {
+  if (!replaying_ && !recording_) {
+    recording_ = true;
+    random_ = Random();
+    replay_data_.root()["seed"] = random_.seed();
+    replay_data_.root()["payload"] = payload;
+    tick_ = 0;
+  }
+}
+
+void Engine::EndRecording(const std::string file_name) {
+  if (recording_) {
+    DCHECK(!replaying_);
+
+    recording_ = false;
+    replay_data_.SaveAs(file_name, PersistentData::kShared);
+    replay_data_.root().clear();
+  }
+}
+
+bool Engine::Replay(const std::string file_name, Json::Value& payload) {
+  if (!replaying_ && !recording_ &&
+      replay_data_.Load(file_name, PersistentData::kShared)) {
+    replaying_ = true;
+    random_ = Random(replay_data_.root()["seed"].asUInt());
+    payload = replay_data_.root()["payload"];
+    tick_ = 0;
+    replay_index_ = 0;
+  }
+
+  return replaying_;
 }
 
 void Engine::Vibrate(int duration) {
   if (vibration_enabled_)
     platform_->Vibrate(duration);
+}
+
+void Engine::ShowInterstitialAd() {
+  platform_->ShowInterstitialAd();
+}
+
+void Engine::ShareFile(const std::string& file_name) {
+  platform_->ShareFile(file_name);
+}
+
+void Engine::SetKeepScreenOn(bool keep_screen_on) {
+  platform_->SetKeepScreenOn(keep_screen_on);
 }
 
 void Engine::SetEnableAudio(bool enable) {
@@ -342,12 +420,26 @@ int Engine::GetDeviceDpi() const {
   return platform_->GetDeviceDpi();
 }
 
+float Engine::GetImageScaleFactor() const {
+  float width_inch = static_cast<float>(renderer_->screen_width()) /
+                     static_cast<float>(platform_->GetDeviceDpi());
+  return 2.57143f / width_inch;
+}
+
 const std::string& Engine::GetRootPath() const {
   return platform_->GetRootPath();
 }
 
-size_t Engine::GetAudioSampleRate() {
-  return audio_->GetSampleRate();
+const std::string& Engine::GetDataPath() const {
+  return platform_->GetDataPath();
+}
+
+const std::string& Engine::GetSharedDataPath() const {
+  return platform_->GetSharedDataPath();
+}
+
+int Engine::GetAudioHardwareSampleRate() {
+  return audio_->GetHardwareSampleRate();
 }
 
 bool Engine::IsMobile() const {
@@ -369,12 +461,16 @@ void Engine::ContextLost() {
 }
 
 bool Engine::CreateRenderResources() {
+  // This creates a normalized unit sized quad.
+  static const char vertex_description[] = "p2f;t2f";
+  static const float vertices[] = {
+      -0.5f, -0.5f, 0.0f, 1.0f, 0.5f, -0.5f, 1.0f, 1.0f,
+      -0.5f, 0.5f,  0.0f, 0.0f, 0.5f, 0.5f,  1.0f, 0.0f,
+  };
+
   // Create the quad geometry we can reuse for all sprites.
   auto quad_mesh = std::make_unique<Mesh>();
-  if (!quad_mesh->Load("engine/quad.mesh")) {
-    LOG << "Could not create quad mesh.";
-    return false;
-  }
+  quad_mesh->Create(kPrimitive_TriangleStrip, vertex_description, 4, vertices);
   quad_->Create(std::move(quad_mesh));
 
   // Create the shader we can reuse for texture rendering.
@@ -383,7 +479,8 @@ bool Engine::CreateRenderResources() {
     LOG << "Could not create pass through shader.";
     return false;
   }
-  pass_through_shader_->Create(std::move(source), quad_->vertex_description());
+  pass_through_shader_->Create(std::move(source), quad_->vertex_description(),
+                               quad_->primitive());
 
   // Create the shader we can reuse for solid rendering.
   source = std::make_unique<ShaderSource>();
@@ -391,7 +488,8 @@ bool Engine::CreateRenderResources() {
     LOG << "Could not create solid shader.";
     return false;
   }
-  solid_shader_->Create(std::move(source), quad_->vertex_description());
+  solid_shader_->Create(std::move(source), quad_->vertex_description(),
+                        quad_->primitive());
 
   return true;
 }
@@ -414,10 +512,10 @@ std::unique_ptr<Image> Engine::PrintStats() {
   line = "fps: ";
   line += std::to_string(fps_);
   lines.push_back(line);
-  line = "cmd: ";
-  line += std::to_string(renderer_->global_queue_size() +
-                         renderer_->render_queue_size());
-  lines.push_back(line);
+  // line = "cmd: ";
+  // line += std::to_string(renderer_->global_queue_size() +
+  //                        renderer_->render_queue_size());
+  // lines.push_back(line);
 
   constexpr int margin = 5;
   int line_height = system_font_->GetLineHeight();

@@ -6,24 +6,17 @@
 #include <cstdio>
 #endif
 #include <cstdlib>
-#include <mutex>
-#include <unordered_map>
-
-#include "vecmath.h"
 
 namespace base {
 
-// Adapted from Chromium's logging implementation.
 // This is never instantiated, it's just used for EAT_STREAM_PARAMETERS to have
 // an object of the correct type on the LHS of the unused part of the ternary
 // operator.
-LogBase* LogBase::swallow_stream;
+std::ostream* LogMessage::swallow_stream;
 
-LogBase::LogBase(const char* file, int line) : file_(file), line_(line) {}
+LogMessage::LogMessage(const char* file, int line) : file_(file), line_(line) {}
 
-LogBase::~LogBase() = default;
-
-void LogBase::Flush() {
+LogMessage::~LogMessage() {
   stream_ << std::endl;
   std::string text(stream_.str());
   std::string filename(file_);
@@ -38,78 +31,31 @@ void LogBase::Flush() {
 #endif
 }
 
-Log::Log(const char* file, int line) : LogBase(file, line) {}
-
-Log::~Log() {
-  Flush();
+LogAbort LogAbort::Check(const char* file, int line, const char* expr) {
+  LogAbort instance(new LogMessage(file, line));
+  instance.GetLog().stream() << "CHECK: "
+                             << "(" << expr << ") ";
+  return instance;
 }
 
-LogDiff::LogDiff(const char* file, int line) : LogBase(file, line) {}
-
-LogDiff::~LogDiff() {
-  static std::unordered_map<std::string, std::string> log_map;
-  static std::mutex lock;
-
-  auto key = std::string(file_) + std::to_string(line_);
-  bool flush = true;
-  {
-    std::lock_guard<std::mutex> scoped_lock(lock);
-    auto it = log_map.find(key);
-    if (it == log_map.end())
-      log_map[key] = stream_.str();
-    else if (it->second != stream_.str())
-      it->second = stream_.str();
-    else
-      flush = false;
-  }
-
-  if (flush)
-    Flush();
+LogAbort LogAbort::DCheck(const char* file, int line, const char* expr) {
+  LogAbort instance(new LogMessage(file, line));
+  instance.GetLog().stream() << "DCHECK: "
+                             << "(" << expr << ") ";
+  return instance;
 }
 
-Check::Check(const char* file,
-             int line,
-             bool condition,
-             bool debug,
-             const char* expr)
-    : LogBase(file, line), condition_(condition) {
-  if (!condition_)
-    base() << (debug ? "DCHECK: (" : "CHECK: (") << expr << ") ";
+LogAbort LogAbort::NotReached(const char* file, int line) {
+  LogAbort instance(new LogMessage(file, line));
+  instance.GetLog().stream() << "NOTREACHED ";
+  return instance;
 }
 
-Check::~Check() {
-  if (!condition_) {
-    Flush();
-    std::abort();
-  }
-}
+LogAbort::LogAbort(LogMessage* log) : log_(log) {}
 
-NotReached::NotReached(const char* file, int line) : LogBase(file, line) {
-  base() << "NOTREACHED ";
-}
-
-NotReached::~NotReached() {
-  Flush();
+LogAbort::~LogAbort() {
+  delete log_;
   std::abort();
-}
-
-template <>
-LogBase& operator<<(LogBase& out, const base::Vector2& arg) {
-  out.stream() << "(" << arg.x << ", " << arg.y << ")";
-  return out;
-}
-
-template <>
-LogBase& operator<<(LogBase& out, const base::Vector3& arg) {
-  out.stream() << "(" << arg.x << ", " << arg.y << ", " << arg.z << ")";
-  return out;
-}
-
-template <>
-LogBase& operator<<(LogBase& out, const base::Vector4& arg) {
-  out.stream() << "(" << arg.x << ", " << arg.y << ", " << arg.z << ", "
-               << arg.w << ")";
-  return out;
 }
 
 }  // namespace base

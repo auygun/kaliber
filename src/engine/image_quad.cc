@@ -33,8 +33,16 @@ void ImageQuad::Destory() {
 void ImageQuad::AutoScale() {
   auto& engine = Engine::Get();
   Vector2 dimensions = {GetFrameWidth(), GetFrameHeight()};
-  SetScale(engine.ToScale(dimensions));
-  Scale((float)engine.GetDeviceDpi() / engine.image_dpi());
+  Vector2 size = engine.ToScale(dimensions);
+  float s =
+      static_cast<float>(engine.image_dpi()) * engine.GetImageScaleFactor();
+  size *= static_cast<float>(engine.GetDeviceDpi()) / s;
+  SetSize(size);
+}
+
+void ImageQuad::SetCustomShader(std::shared_ptr<Shader> shader) {
+  custom_shader_ = shader;
+  custom_uniforms_.clear();
 }
 
 void ImageQuad::SetFrame(size_t frame) {
@@ -58,18 +66,25 @@ void ImageQuad::Draw(float frame_frac) {
   Vector2 tex_scale = {GetFrameWidth() / texture_->GetWidth(),
                        GetFrameHeight() / texture_->GetHeight()};
 
-  Shader* shader = Engine::Get().GetPassThroughShader();
+  Shader* shader = custom_shader_ ? custom_shader_.get()
+                                  : Engine::Get().GetPassThroughShader();
 
   shader->Activate();
-  shader->SetUniform("offset", offset_);
-  shader->SetUniform("scale", scale_);
-  shader->SetUniform("pivot", pivot_);
+  shader->SetUniform("offset", position_);
+  shader->SetUniform("scale", GetSize());
   shader->SetUniform("rotation", rotation_);
   shader->SetUniform("tex_offset", GetUVOffset(current_frame_));
   shader->SetUniform("tex_scale", tex_scale);
-  shader->SetUniform("projection", Engine::Get().GetProjectionMarix());
+  shader->SetUniform("projection", Engine::Get().GetProjectionMatrix());
   shader->SetUniform("color", color_);
-  shader->SetUniform("texture", 0);
+  shader->SetUniform("texture_0", 0);
+  if (custom_shader_) {
+    for (auto& cu : custom_uniforms_)
+      std::visit(
+          [shader, &cu](auto&& arg) { shader->SetUniform(cu.first, arg); },
+          cu.second);
+  }
+  shader->UploadUniforms();
 
   Engine::Get().GetQuad()->Draw();
 }

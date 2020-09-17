@@ -10,6 +10,7 @@
 #include "../base/random.h"
 #include "../base/vecmath.h"
 #include "audio/audio_forward.h"
+#include "persistent_data.h"
 #include "platform/platform_forward.h"
 #include "renderer/render_resource.h"
 
@@ -17,6 +18,7 @@ class TextureCompressor;
 
 namespace eng {
 
+class Animator;
 class AudioResource;
 class Font;
 class Game;
@@ -46,10 +48,13 @@ class Engine {
   void Draw(float frame_frac);
 
   void LostFocus();
-  void GainedFocus();
+  void GainedFocus(bool from_interstitial_ad);
 
   void AddDrawable(Drawable* drawable);
   void RemoveDrawable(Drawable* drawable);
+
+  void AddAnimator(Animator* animator);
+  void RemoveAnimator(Animator* animator);
 
   void Exit();
 
@@ -83,8 +88,19 @@ class Engine {
   void AddInputEvent(std::unique_ptr<InputEvent> event);
   std::unique_ptr<InputEvent> GetNextInputEvent();
 
+  void StartRecording(const Json::Value& payload);
+  void EndRecording(const std::string file_name);
+
+  bool Replay(const std::string file_name, Json::Value& payload);
+
   // Vibrate (if supported by the platform) for the specified duration.
   void Vibrate(int duration);
+
+  void ShowInterstitialAd();
+
+  void ShareFile(const std::string& file_name);
+
+  void SetKeepScreenOn(bool keep_screen_on);
 
   void SetImageDpi(float dpi) { image_dpi_ = dpi; }
 
@@ -112,13 +128,19 @@ class Engine {
   // Return screen size in viewport scale.
   base::Vector2 GetScreenSize() const { return screen_size_; }
 
-  const base::Matrix4x4& GetProjectionMarix() const { return projection_; }
+  const base::Matrix4x4& GetProjectionMatrix() const { return projection_; }
 
   int GetDeviceDpi() const;
 
+  float GetImageScaleFactor() const;
+
   const std::string& GetRootPath() const;
 
-  size_t GetAudioSampleRate();
+  const std::string& GetDataPath() const;
+
+  const std::string& GetSharedDataPath() const;
+
+  int GetAudioHardwareSampleRate();
 
   bool IsMobile() const;
 
@@ -126,13 +148,15 @@ class Engine {
 
   float image_dpi() const { return image_dpi_; }
 
+  float time_step() { return time_step_; }
+
+  int fps() const { return fps_; }
+
  private:
   // Class holding information about texture resources managed by engine.
-  // Texture is created from an image asset if asset_file is valid. Otherwise
-  // texture is created from the image returned by create_image callback.
+  // Texture is created from the image returned by create_image callback.
   struct TextureResource {
     std::shared_ptr<Texture> texture;
-    std::string asset_file;
     CreateImageCB create_image;
     bool persistent = false;
   };
@@ -143,7 +167,7 @@ class Engine {
 
   Renderer* renderer_ = nullptr;
 
-  Audio* audio_;
+  Audio* audio_ = nullptr;
 
   std::unique_ptr<Game> game_;
 
@@ -161,6 +185,8 @@ class Engine {
 
   std::list<Drawable*> drawables_;
 
+  std::list<Animator*> animators_;
+
   // Textures mapped by asset name.
   std::unordered_map<std::string, TextureResource> textures_;
 
@@ -171,11 +197,19 @@ class Engine {
 
   float seconds_accumulated_ = 0.0f;
 
+  float time_step_ = 1.0f / 60.0f;
+  size_t tick_ = 0;
+
   float image_dpi_ = 200;
 
   bool vibration_enabled_ = true;
 
   std::deque<std::unique_ptr<InputEvent>> input_queue_;
+
+  PersistentData replay_data_;
+  bool recording_ = false;
+  bool replaying_ = false;
+  int replay_index_ = 0;
 
   base::Random random_;
 

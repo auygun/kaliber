@@ -24,7 +24,7 @@ class Demo : public eng::Game {
 
   void LostFocus() override;
 
-  void GainedFocus() override;
+  void GainedFocus(bool from_interstitial_ad) override;
 
   void AddScore(int score);
 

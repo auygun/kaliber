@@ -75,19 +75,11 @@ bool Menu::Initialize() {
   return true;
 }
 
-void Menu::Update(float delta_time) {
-  for (int i = 0; i < kOption_Max; ++i) {
-    if (items_[i].hide)
-      continue;
-    items_[i].text_animator.Update(delta_time);
-  }
-}
-
 void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
   if (event->GetType() == InputEvent::kDragStart)
-    tap_pos_[0] = tap_pos_[1] = event->GetVector(0);
+    tap_pos_[0] = tap_pos_[1] = event->GetVector();
   else if (event->GetType() == InputEvent::kDrag)
-    tap_pos_[1] = event->GetVector(0);
+    tap_pos_[1] = event->GetVector();
 
   if (event->GetType() != InputEvent::kDragEnd || IsAnimating())
     return;
@@ -95,13 +87,11 @@ void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
   for (int i = 0; i < kOption_Max; ++i) {
     if (items_[i].hide)
       continue;
-    if (!Intersection(items_[i].text.GetOffset(),
-                      items_[i].text.GetScale() * Vector2(1.2f, 2),
-                      tap_pos_[0]))
+    if (!Intersection(items_[i].text.GetPosition(),
+                      items_[i].text.GetSize() * Vector2(1.2f, 2), tap_pos_[0]))
       continue;
-    if (!Intersection(items_[i].text.GetOffset(),
-                      items_[i].text.GetScale() * Vector2(1.2f, 2),
-                      tap_pos_[1]))
+    if (!Intersection(items_[i].text.GetPosition(),
+                      items_[i].text.GetSize() * Vector2(1.2f, 2), tap_pos_[1]))
       continue;
 
     items_[i].text_animator.SetEndCallback(Animator::kBlending,
@@ -117,12 +107,13 @@ void Menu::SetOptionEnabled(Option o, bool enable) {
     if (i == o)
       items_[i].hide = !enable;
     if (!items_[i].hide) {
-      items_[i].text.SetOffset({0, 0});
+      items_[i].text.SetPosition({0, 0});
       if (last >= 0) {
         items_[i].text.PlaceToBottomOf(items_[last].text);
-        items_[i].text.Translate(items_[last].text.GetOffset() * Vector2(0, 1));
+        items_[i].text.Translate(items_[last].text.GetPosition() *
+                                 Vector2(0, 1));
         items_[i].text.Translate(
-            {0, items_[last].text.GetScale().y * -kMenuOptionSpace});
+            {0, items_[last].text.GetSize().y * -kMenuOptionSpace});
       }
       if (first < 0)
         first = i;
@@ -131,7 +122,8 @@ void Menu::SetOptionEnabled(Option o, bool enable) {
   }
 
   float center_offset_y =
-      (items_[first].text.GetOffset().y - items_[last].text.GetOffset().y) / 2;
+      (items_[first].text.GetPosition().y - items_[last].text.GetPosition().y) /
+      2;
   for (int i = 0; i < kOption_Max; ++i) {
     if (!items_[i].hide)
       items_[i].text.Translate({0, center_offset_y});

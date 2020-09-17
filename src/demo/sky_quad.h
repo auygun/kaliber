@@ -40,6 +40,8 @@ class SkyQuad : public eng::Animatable {
 
   void SwitchColor(const base::Vector4& color);
 
+  void SetSpeed(float speed);
+
  private:
   std::unique_ptr<eng::Shader> shader_;
 
@@ -49,6 +51,8 @@ class SkyQuad : public eng::Animatable {
   base::Vector2 scale_ = {1, 1};
 
   eng::Animator color_animator_;
+
+  float speed_ = 0;
 };
 
 #endif  // SKY_QUAD_H

@@ -18,17 +18,19 @@ AudioBase::~AudioBase() = default;
 
 void AudioBase::Play(std::shared_ptr<AudioSample> sample) {
   if (audio_enabled_) {
-    std::lock_guard<Spinlock> scoped_lock(lock_);
+    std::lock_guard<std::mutex> scoped_lock(lock_);
     samples_[0].push_back(sample);
-  } else {
+  } else if ((sample->flags.load(std::memory_order_relaxed) &
+              AudioSample::kStopped) == 0) {
     sample->active = false;
   }
 }
 
 void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
   {
-    std::lock_guard<Spinlock> scoped_lock(lock_);
-    samples_[1].splice(samples_[1].end(), samples_[0]);
+    std::unique_lock<std::mutex> scoped_lock(lock_, std::try_to_lock);
+    if (scoped_lock)
+      samples_[1].splice(samples_[1].end(), samples_[0]);
   }
 
   memset(output_buffer, 0, sizeof(float) * num_frames * kChannelCount);
@@ -58,7 +60,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
 
       size_t channel_offset =
           (flags & AudioSample::kSimulateStereo) && !sound->is_streaming_sound()
-              ? sound->hz() / 10
+              ? sound->sample_rate() / 10
               : 0;
 
       DCHECK(num_samples || sound->is_streaming_sound());
@@ -88,8 +90,8 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
 
           // Basic resampling for variations.
           accumulator += step;
-          src_index += accumulator / 10;
-          accumulator %= 10;
+          src_index += accumulator / 100;
+          accumulator %= 100;
         }
 
         // Advance source index.
@@ -122,9 +124,9 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
               src[1] = src[0];  // mono.
             num_samples = sound->GetNumSamples();
 
-            Worker::Get().EnqueueTask(HERE,
-                                      std::bind(&AudioBase::DoStream, this, *it,
-                                                flags & AudioSample::kLoop));
+            Worker::Get().PostTask(HERE,
+                                   std::bind(&AudioBase::DoStream, this, *it,
+                                             flags & AudioSample::kLoop));
           } else if (num_samples) {
             DLOG << "Buffer underrun!";
             src_index %= num_samples;
@@ -141,7 +143,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
         (!sound->is_streaming_sound() ||
          !sample->streaming_in_progress.load(std::memory_order_relaxed))) {
       sample->marked_for_removal = false;
-      main_thread_task_runner_->EnqueueTask(
+      main_thread_task_runner_->PostTask(
           HERE, std::bind(&AudioBase::EndCallback, this, *it));
       it = samples_[1].erase(it);
     } else {
@@ -159,12 +161,10 @@ void AudioBase::DoStream(std::shared_ptr<AudioSample> sample, bool loop) {
 }
 
 void AudioBase::EndCallback(std::shared_ptr<AudioSample> sample) {
-  AudioSample* s = sample.get();
+  sample->active = false;
 
-  s->active = false;
-
-  if (s->end_cb)
-    s->end_cb();
+  if (sample->end_cb)
+    sample->end_cb();
 }
 
 }  // namespace eng

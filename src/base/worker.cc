@@ -40,19 +40,19 @@ void Worker::Shutdown() {
   threads_.clear();
 }
 
-void Worker::EnqueueTask(const Location& from, Closure task) {
+void Worker::PostTask(const Location& from, Closure task) {
   DCHECK((!threads_.empty()));
 
-  task_runner_.EnqueueTask(from, std::move(task));
+  task_runner_.PostTask(from, std::move(task));
   semaphore_.Release();
 }
 
-void Worker::EnqueueTaskAndReply(const Location& from,
-                                 Closure task,
-                                 Closure reply) {
+void Worker::PostTaskAndReply(const Location& from,
+                              Closure task,
+                              Closure reply) {
   DCHECK((!threads_.empty()));
 
-  task_runner_.EnqueueTaskAndReply(from, std::move(task), std::move(reply));
+  task_runner_.PostTaskAndReply(from, std::move(task), std::move(reply));
   semaphore_.Release();
 }
 

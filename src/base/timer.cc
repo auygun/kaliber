@@ -1,5 +1,7 @@
 #include "timer.h"
 
+#include <thread>
+
 namespace base {
 
 Timer::Timer() {
@@ -23,6 +25,22 @@ void Timer::Update() {
   last_time_ = currentTime;
 
   seconds_accumulated_ += seconds_passed_;
+}
+
+void Timer::Sleep(float duration) {
+  Timer timer;
+  float accumulator = 0.0;
+  constexpr float epsilon = 0.0001f;
+
+  while (accumulator < duration) {
+    timer.Update();
+    accumulator += timer.GetSecondsPassed();
+    if (duration - accumulator > epsilon) {
+      float sleep_time = duration - accumulator - epsilon;
+      std::this_thread::sleep_for(
+          std::chrono::microseconds((int)(sleep_time * 1000000.0f)));
+    }
+  };
 }
 
 }  // namespace base

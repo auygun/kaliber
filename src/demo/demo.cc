@@ -83,9 +83,9 @@ void Demo::Update(float delta_time) {
     hud_.SetScore(score_, true);
   }
 
-  hud_.Update(delta_time);
-  menu_.Update(delta_time);
-  credits_.Update(delta_time);
+  sky_.Update(delta_time);
+  player_.Update(delta_time);
+  enemy_.Update(delta_time);
 
   if (state_ == kMenu)
     UpdateMenuState(delta_time);
@@ -102,7 +102,7 @@ void Demo::LostFocus() {
     EnterMenuState();
 }
 
-void Demo::GainedFocus() {}
+void Demo::GainedFocus(bool from_interstitial_ad) {}
 
 void Demo::AddScore(int score) {
   add_score_ += score;
@@ -111,6 +111,13 @@ void Demo::AddScore(int score) {
 void Demo::EnterMenuState() {
   if (state_ == kMenu)
     return;
+
+  if (state_ == kState_Invalid || state_ == kGame) {
+    sky_.SetSpeed(0);
+    player_.Pause(true);
+    enemy_.Pause(true);
+  }
+
   if (wave_ == 0) {
     menu_.SetOptionEnabled(Menu::kContinue, false);
   } else {
@@ -131,7 +138,11 @@ void Demo::EnterCreditsState() {
 void Demo::EnterGameState() {
   if (state_ == kGame)
     return;
+
+  sky_.SetSpeed(0.04f);
   hud_.Show();
+  player_.Pause(false);
+  enemy_.Pause(false);
   state_ = kGame;
 }
 
@@ -160,10 +171,6 @@ void Demo::UpdateMenuState(float delta_time) {
 }
 
 void Demo::UpdateGameState(float delta_time) {
-  sky_.Update(delta_time);
-  player_.Update(delta_time);
-  enemy_.Update(delta_time);
-
   if (waiting_for_next_wave_)
     return;
 

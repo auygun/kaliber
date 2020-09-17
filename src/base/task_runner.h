@@ -1,6 +1,8 @@
 #ifndef TASK_RUNNER_H
 #define TASK_RUNNER_H
 
+#include <atomic>
+#include <condition_variable>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -25,7 +27,7 @@ void ReturnAsParamAdapter(std::function<ReturnType()> func,
 template <typename ReturnType>
 void ReplyAdapter(std::function<void(ReturnType)> callback,
                   ReturnType* result) {
-  callback(std::move(*result));
+  callback(*result);
   delete result;
 }
 
@@ -41,16 +43,16 @@ class TaskRunner {
   TaskRunner() = default;
   ~TaskRunner() = default;
 
-  void EnqueueTask(const Location& from, Closure task);
+  void PostTask(const Location& from, Closure task);
 
-  void EnqueueTaskAndReply(const Location& from, Closure task, Closure reply);
+  void PostTaskAndReply(const Location& from, Closure task, Closure reply);
 
   template <typename ReturnType>
-  void EnqueueTaskAndReplyWithResult(const Location& from,
-                                     std::function<ReturnType()> task,
-                                     std::function<void(ReturnType)> reply) {
+  void PostTaskAndReplyWithResult(const Location& from,
+                                  std::function<ReturnType()> task,
+                                  std::function<void(ReturnType)> reply) {
     auto* result = new ReturnType;
-    return EnqueueTaskAndReply(
+    return PostTaskAndReply(
         from,
         std::bind(internal::ReturnAsParamAdapter<ReturnType>, std::move(task),
                   result),
@@ -62,6 +64,8 @@ class TaskRunner {
 
   void SingleConsumerRun();
 
+  void WaitForCompletion();
+
   static void CreateThreadLocalTaskRunner();
   static TaskRunner* GetThreadLocalTaskRunner();
 
@@ -70,6 +74,8 @@ class TaskRunner {
 
   std::deque<Task> queue_;
   mutable std::mutex lock_;
+  std::condition_variable cv_;
+  std::atomic<size_t> task_count_{0};
 
   static thread_local std::unique_ptr<TaskRunner> thread_local_task_runner;
 

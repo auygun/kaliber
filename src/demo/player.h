@@ -21,6 +21,8 @@ class Player {
 
   void Update(float delta_time);
 
+  void Pause(bool pause);
+
   void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
 
   base::Vector2 GetWeaponPos(DamageType type) const;
@@ -44,8 +46,6 @@ class Player {
   bool drag_valid_ = false;
 
   DamageType GetWeaponType(const base::Vector2& pos);
-
-  void SetBeamLength(DamageType type, float len);
 
   void WarmupWeapon(DamageType type);
   void CooldownWeapon(DamageType type);

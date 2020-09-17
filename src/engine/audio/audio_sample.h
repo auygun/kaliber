@@ -28,7 +28,7 @@ struct AudioSample {
 
   // Write accessed by main thread, read-only accessed by audio thread.
   std::atomic<unsigned> flags{0};
-  std::atomic<size_t> step{10};
+  std::atomic<size_t> step{100};
   std::atomic<float> amplitude_inc{0};
   std::atomic<float> max_amplitude{1.0f};
 

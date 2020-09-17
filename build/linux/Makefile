@@ -68,6 +68,7 @@ GLTEST_SRC := \
   $(SRC_ROOT)/base/collusion_test.cc \
   $(SRC_ROOT)/base/log.cc \
   $(SRC_ROOT)/base/random.cc \
+  $(SRC_ROOT)/base/sinc_resampler.cc \
   $(SRC_ROOT)/base/task_runner.cc \
   $(SRC_ROOT)/base/timer.cc \
   $(SRC_ROOT)/base/vecmath.cc \
@@ -90,16 +91,17 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/image_quad.cc \
   $(SRC_ROOT)/engine/image.cc \
   $(SRC_ROOT)/engine/mesh.cc \
+  $(SRC_ROOT)/engine/persistent_data.cc \
   $(SRC_ROOT)/engine/platform/asset_file_linux.cc \
   $(SRC_ROOT)/engine/platform/asset_file.cc \
   $(SRC_ROOT)/engine/platform/platform_base.cc \
   $(SRC_ROOT)/engine/platform/platform_linux.cc \
   $(SRC_ROOT)/engine/renderer/geometry.cc \
-  $(SRC_ROOT)/engine/renderer/render_command.cc \
+  $(SRC_ROOT)/engine/renderer/opengl/render_command.cc \
   $(SRC_ROOT)/engine/renderer/render_resource.cc \
-  $(SRC_ROOT)/engine/renderer/renderer_linux.cc \
+  $(SRC_ROOT)/engine/renderer/opengl/renderer_opengl_linux.cc \
+  $(SRC_ROOT)/engine/renderer/opengl/renderer_opengl.cc \
   $(SRC_ROOT)/engine/renderer/renderer_types.cc \
-  $(SRC_ROOT)/engine/renderer/renderer.cc \
   $(SRC_ROOT)/engine/renderer/shader.cc \
   $(SRC_ROOT)/engine/renderer/texture.cc \
   $(SRC_ROOT)/engine/shader_source.cc \
@@ -108,8 +110,6 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/sound.cc \
   $(SRC_ROOT)/third_party/glew/glew.c \
   $(SRC_ROOT)/third_party/jsoncpp/jsoncpp.cc \
-  $(SRC_ROOT)/third_party/r8b/pffft.cpp \
-  $(SRC_ROOT)/third_party/r8b/r8bbase.cpp \
   $(SRC_ROOT)/third_party/texture_compressor/dxt_encoder_internals.cc \
   $(SRC_ROOT)/third_party/texture_compressor/dxt_encoder.cc \
   $(SRC_ROOT)/third_party/texture_compressor/texture_compressor_etc1.cc \

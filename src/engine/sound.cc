@@ -3,13 +3,13 @@
 #include <array>
 
 #include "../base/log.h"
+#include "../base/sinc_resampler.h"
 #define MINIMP3_ONLY_MP3
 #define MINIMP3_ONLY_SIMD
 #define MINIMP3_FLOAT_OUTPUT
 #define MINIMP3_NO_STDIO
 #define MINIMP3_IMPLEMENTATION
 #include "../third_party/minimp3/minimp3_ex.h"
-#include "../third_party/r8b/CDSPResampler.h"
 #include "engine.h"
 #include "platform/asset_file.h"
 
@@ -27,20 +27,35 @@ std::array<std::unique_ptr<T[]>, 2> Deinterleave(size_t num_channels,
 
   if (num_channels == 1) {
     // Single channel.
-    channels[0] = std::make_unique<T[]>(num_samples);
-    for (int i = 0; i < num_samples; ++i)
-      channels[0].get()[i] = input_buffer[i];
+    if constexpr (std::is_same<float, T>::value) {
+      channels[0] = std::make_unique<T[]>(num_samples);
+      memcpy(channels[0].get(), input_buffer, num_samples * sizeof(float));
+    } else {
+      channels[0] = std::make_unique<T[]>(num_samples);
+      for (int i = 0; i < num_samples; ++i)
+        channels[0].get()[i] = static_cast<T>(input_buffer[i]);
+    }
   } else {
     // Deinterleave into separate channels.
     channels[0] = std::make_unique<T[]>(num_samples);
     channels[1] = std::make_unique<T[]>(num_samples);
     for (int i = 0, j = 0; i < num_samples * 2; i += 2) {
-      channels[0].get()[j] = input_buffer[i];
-      channels[1].get()[j++] = input_buffer[i + 1];
+      channels[0].get()[j] = static_cast<T>(input_buffer[i]);
+      channels[1].get()[j++] = static_cast<T>(input_buffer[i + 1]);
     }
   }
 
   return channels;
+}
+
+std::unique_ptr<SincResampler> CreateResampler(int src_samle_rate,
+                                               int dst_sample_rate,
+                                               size_t num_samples) {
+  const double io_ratio = static_cast<double>(src_samle_rate) /
+                          static_cast<double>(dst_sample_rate);
+  auto resampler = std::make_unique<SincResampler>(io_ratio, num_samples);
+  resampler->PrimeWithSilence();
+  return resampler;
 }
 
 }  // namespace
@@ -79,52 +94,60 @@ bool Sound::Load(const std::string& file_name, bool stream) {
 
   is_streaming_sound_ = stream;
 
-  LOG << (is_streaming_sound_ ? "Streaming " : "Loading ") << file_name << ". "
+  LOG << (is_streaming_sound_ ? "Streaming " : "Loaded ") << file_name << ". "
       << mp3_dec_->samples << " samples, " << mp3_dec_->info.channels
       << " channels, " << mp3_dec_->info.hz << " hz, "
       << "layer " << mp3_dec_->info.layer << ", "
       << "avg_bitrate_kbps " << mp3_dec_->info.bitrate_kbps;
 
   num_channels_ = mp3_dec_->info.channels;
-  hz_ = mp3_dec_->info.hz;
+  sample_rate_ = mp3_dec_->info.hz;
   num_samples_back_ = cur_sample_back_ = 0;
   eof_ = false;
 
   DCHECK(num_channels_ > 0 && num_channels_ <= 2);
 
-  size_t system_hz = Engine::Get().GetAudioSampleRate();
+  hw_sample_rate_ = Engine::Get().GetAudioHardwareSampleRate();
 
   if (is_streaming_sound_) {
-    resampler_ = std::make_unique<r8b::CDSPResampler16>(hz_, system_hz,
-                                                        kMaxSamplesPerChunk);
+    if (sample_rate_ != hw_sample_rate_) {
+      for (int i = 0; i < mp3_dec_->info.channels; ++i) {
+        resampler_[i] =
+            CreateResampler(sample_rate_, hw_sample_rate_,
+                            (int)kMaxSamplesPerChunk / mp3_dec_->info.channels);
+      }
+    }
 
     // Fill up buffers.
     StreamInternal(kMaxSamplesPerChunk, false);
     SwapBuffers();
     StreamInternal(kMaxSamplesPerChunk, false);
 
-    if (eof_) {
-      // Sample is smaller than buffer. No need to stream.
+    // No need to stream if sample fits into the buffer.
+    if (eof_)
       is_streaming_sound_ = false;
-      mp3dec_ex_close(mp3_dec_.get());
-      mp3_dec_.reset();
-      encoded_data_.reset();
-      resampler_.reset();
-    }
   } else {
-    resampler_ = std::make_unique<r8b::CDSPResampler16>(hz_, system_hz,
-                                                        mp3_dec_->samples);
+    if (sample_rate_ != hw_sample_rate_) {
+      for (int i = 0; i < mp3_dec_->info.channels; ++i) {
+        resampler_[i] =
+            CreateResampler(sample_rate_, hw_sample_rate_,
+                            mp3_dec_->samples / mp3_dec_->info.channels);
+      }
+    }
 
     // Decode entire file.
     StreamInternal(mp3_dec_->samples, false);
     SwapBuffers();
     eof_ = true;
+  }
 
-    // We are done with decoding for non-streaming sound.
+  if (!is_streaming_sound_) {
+    // We are done with decoding.
+    encoded_data_.reset();
+    for (int i = 0; i < mp3_dec_->info.channels; ++i)
+      resampler_[i].reset();
     mp3dec_ex_close(mp3_dec_.get());
     mp3_dec_.reset();
-    encoded_data_.reset();
-    resampler_.reset();
   }
 
   return true;
@@ -161,6 +184,7 @@ float* Sound::GetBuffer(int channel) const {
 
 bool Sound::StreamInternal(size_t num_samples, bool loop) {
   auto buffer = std::make_unique<float[]>(num_samples);
+  size_t samples_read_per_channel = 0;
 
   cur_sample_back_ = mp3_dec_->cur_sample;
 
@@ -173,8 +197,8 @@ bool Sound::StreamInternal(size_t num_samples, bool loop) {
       return false;
     }
 
-    num_samples_back_ = samples_read / mp3_dec_->info.channels;
-    if (!num_samples_back_ && loop) {
+    samples_read_per_channel = samples_read / mp3_dec_->info.channels;
+    if (!samples_read_per_channel && loop) {
       mp3dec_ex_seek(mp3_dec_.get(), 0);
       loop = false;
       continue;
@@ -182,47 +206,50 @@ bool Sound::StreamInternal(size_t num_samples, bool loop) {
     break;
   }
 
-  if (num_samples_back_)
-    Preprocess(std::move(buffer));
-  else
+  if (samples_read_per_channel) {
+    Preprocess(std::move(buffer), samples_read_per_channel);
+  } else {
+    num_samples_back_ = 0;
     eof_ = true;
+  }
 
   return true;
 }
 
-void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {
-  size_t system_hz = Engine::Get().GetAudioSampleRate();
+void Sound::Preprocess(std::unique_ptr<float[]> input_buffer,
+                       size_t samples_per_channel) {
+  auto channels = Deinterleave<float>(num_channels_, samples_per_channel,
+                                      input_buffer.get());
 
-  if (system_hz == hz_) {
-    auto channels = Deinterleave<float>(num_channels_, num_samples_back_,
-                                        input_buffer.get());
-
+  if (hw_sample_rate_ == sample_rate_) {
     // No need for resmapling.
     back_buffer_[0] = std::move(channels[0]);
     if (num_channels_ == 2)
       back_buffer_[1] = std::move(channels[1]);
+    num_samples_back_ = samples_per_channel;
   } else {
-    // r8b resampler supports only double floating point type.
-    auto channels = Deinterleave<double>(num_channels_, num_samples_back_,
-                                         input_buffer.get());
-
-    size_t resampled_num_samples =
-        ((float)system_hz / (float)hz_) * num_samples_back_;
+    size_t num_resampled_samples = resampler_[0]->ChunkSize();
+    DCHECK(num_resampled_samples ==
+           (int)(((float)hw_sample_rate_ / (float)sample_rate_) *
+                 samples_per_channel));
 
     if (!back_buffer_[0]) {
-      if (max_samples_ < resampled_num_samples)
-        max_samples_ = resampled_num_samples;
+      if (max_samples_ < num_resampled_samples)
+        max_samples_ = num_resampled_samples;
       back_buffer_[0] = std::make_unique<float[]>(max_samples_);
       if (num_channels_ == 2)
         back_buffer_[1] = std::make_unique<float[]>(max_samples_);
     }
+    num_samples_back_ = num_resampled_samples;
 
     // Resample to match the system sample rate.
     for (int i = 0; i < num_channels_; ++i) {
-      resampler_->oneshot(channels[i].get(), num_samples_back_,
-                          back_buffer_[i].get(), resampled_num_samples);
+      resampler_[i]->Resample(num_resampled_samples, back_buffer_[i].get(),
+                              [&](int frames, float* destination) {
+                                memcpy(destination, channels[i].get(),
+                                       frames * sizeof(float));
+                              });
     }
-    num_samples_back_ = resampled_num_samples;
   }
 }
 

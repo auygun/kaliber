@@ -1,8 +1,5 @@
 #include "platform_linux.h"
 
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-
 #include <memory>
 
 #include "../../base/log.h"
@@ -26,25 +23,39 @@ void PlatformLinux::Initialize() {
   root_path_ = "../../";
   LOG << "Root path: " << root_path_.c_str();
 
-  if (!renderer_->Initialize()) {
+  data_path_ = "./";
+  LOG << "Data path: " << data_path_.c_str();
+
+  shared_data_path_ = "./";
+  LOG << "Shared data path: " << shared_data_path_.c_str();
+
+  if (!CreateWindow(800, 1205)) {
+    LOG << "Failed to create window.";
+    throw internal_error;
+  }
+
+  if (!renderer_->Initialize(display_, window_)) {
     LOG << "Failed to initialize renderer.";
     throw internal_error;
   }
 
-  Display* display = renderer_->display();
-  Window window = renderer_->window();
-  XSelectInput(display, window,
+  XSelectInput(display_, window_,
                KeyPressMask | Button1MotionMask | ButtonPressMask |
                    ButtonReleaseMask | FocusChangeMask);
-  Atom WM_DELETE_WINDOW = XInternAtom(display, "WM_DELETE_WINDOW", false);
-  XSetWMProtocols(display, window, &WM_DELETE_WINDOW, 1);
+  Atom WM_DELETE_WINDOW = XInternAtom(display_, "WM_DELETE_WINDOW", false);
+  XSetWMProtocols(display_, window_, &WM_DELETE_WINDOW, 1);
+}
+
+void PlatformLinux::Shutdown() {
+  PlatformBase::Shutdown();
+
+  DestroyWindow();
 }
 
 void PlatformLinux::Update() {
-  Display* display = renderer_->display();
-  while (XPending(display)) {
+  while (XPending(display_)) {
     XEvent e;
-    XNextEvent(display, &e);
+    XNextEvent(display_, &e);
     switch (e.type) {
       case KeyPress: {
         KeySym key = XLookupKeysym(&e.xkey, 0);
@@ -90,7 +101,7 @@ void PlatformLinux::Update() {
         break;
       }
       case FocusIn: {
-        engine_->GainedFocus();
+        engine_->GainedFocus(false);
         break;
       }
       case ClientMessage: {
@@ -104,6 +115,47 @@ void PlatformLinux::Update() {
 
 void PlatformLinux::Exit() {
   should_exit_ = true;
+}
+
+bool PlatformLinux::CreateWindow(int width, int height) {
+  // Try to open the local display.
+  display_ = XOpenDisplay(NULL);
+  if (!display_) {
+    LOG << "Can't connect to X server. Try to set the DISPLAY environment "
+           "variable (hostname:number.screen_number).";
+    return false;
+  }
+
+  Window root_window = DefaultRootWindow(display_);
+
+  XVisualInfo* visual_info = renderer_->GetXVisualInfo(display_);
+  if (!visual_info) {
+    LOG << "No appropriate visual found.";
+    return false;
+  }
+  LOG << "Visual " << (void*)visual_info->visualid << " selected";
+
+  // Create the main window.
+  XSetWindowAttributes window_attributes;
+  window_attributes.colormap =
+      XCreateColormap(display_, root_window, visual_info->visual, AllocNone);
+  window_attributes.event_mask = ExposureMask | KeyPressMask;
+  window_ = XCreateWindow(display_, root_window, 0, 0, width, height, 0,
+                          visual_info->depth, InputOutput, visual_info->visual,
+                          CWColormap | CWEventMask, &window_attributes);
+  XMapWindow(display_, window_);
+  XStoreName(display_, window_, "kaliber");
+
+  return true;
+}
+
+void PlatformLinux::DestroyWindow() {
+  if (display_) {
+    XDestroyWindow(display_, window_);
+    XCloseDisplay(display_);
+    display_ = nullptr;
+    window_ = 0;
+  }
 }
 
 }  // namespace eng

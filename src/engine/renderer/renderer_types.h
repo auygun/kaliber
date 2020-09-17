@@ -8,6 +8,7 @@
 namespace eng {
 
 enum Primitive {
+  kPrimitive_Invalid = -1,
   kPrimitive_Triangles,
   kPrimitive_TriangleStrip,
   kPrimitive_Max

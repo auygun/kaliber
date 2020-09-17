@@ -3,10 +3,19 @@
 #include "../base/interpolation.h"
 #include "../base/log.h"
 #include "animatable.h"
+#include "engine.h"
 
 using namespace base;
 
 namespace eng {
+
+Animator::Animator() {
+  Engine::Get().AddAnimator(this);
+}
+
+Animator::~Animator() {
+  Engine::Get().RemoveAnimator(this);
+}
 
 void Animator::Attach(Animatable* animatable) {
   elements_.push_back({animatable,
@@ -18,7 +27,10 @@ void Animator::Attach(Animatable* animatable) {
 
 void Animator::Play(int animation, bool loop) {
   play_flags_ |= animation;
-  loop_flags_ |= loop ? animation : 0;
+  if (loop)
+    loop_flags_ |= animation;
+  else
+    loop_flags_ &= ~animation;
 }
 
 void Animator::Pause(int animation) {
@@ -43,6 +55,16 @@ void Animator::Stop(int animation) {
   loop_flags_ &= ~animation;
 }
 
+void Animator::PauseOrResumeAll(bool pause) {
+  if (pause) {
+    resume_flags_ = play_flags_;
+    play_flags_ = 0;
+  } else {
+    play_flags_ = resume_flags_;
+    resume_flags_ = 0;
+  }
+}
+
 float Animator::GetTime(int animation) {
   if ((animation & kMovement) != 0)
     return movement_time_;
@@ -55,7 +77,7 @@ float Animator::GetTime(int animation) {
   return timer_time_;
 }
 
-void Animator::SetTime(int animation, float time) {
+void Animator::SetTime(int animation, float time, bool force_update) {
   DCHECK(time >= 0 && time <= 1);
 
   if ((animation & kMovement) != 0)
@@ -68,6 +90,13 @@ void Animator::SetTime(int animation, float time) {
     frame_time_ = time;
   if ((animation & kTimer) != 0)
     timer_time_ = time;
+
+  if (force_update) {
+    unsigned play_flags = play_flags_;
+    play_flags_ = animation;
+    Update(0);
+    play_flags_ = play_flags;
+  }
 }
 
 void Animator::SetEndCallback(int animation, base::Closure cb) {
@@ -95,7 +124,7 @@ void Animator::SetMovement(Vector2 direction,
   movement_interpolator_ = std::move(interpolator);
 
   for (auto& a : elements_)
-    a.movement_last_offset = {0, 0};
+    a.movement_last_pos = {0, 0};
 }
 
 void Animator::SetRotation(float trget,
@@ -149,39 +178,41 @@ void Animator::Update(float delta_time) {
     UpdateFrame(delta_time);
   if (play_flags_ & kTimer)
     UpdateTimer(delta_time);
+}
 
+void Animator::EvalAnim(float frame_time) {
   for (auto& a : elements_) {
     if (play_flags_ & kMovement) {
-      float interpolated_time = movement_interpolator_
-                                    ? movement_interpolator_(movement_time_)
-                                    : movement_time_;
-      Vector2 offset =
-          base::Lerp({0, 0}, movement_direction_, interpolated_time);
-      a.animatable->Translate(offset - a.movement_last_offset);
-      a.movement_last_offset = offset;
+      float time = movement_time_ + movement_speed_ * frame_time;
+      float interpolated_time =
+          movement_interpolator_ ? movement_interpolator_(time) : time;
+      Vector2 pos = base::Lerp({0, 0}, movement_direction_, interpolated_time);
+      a.animatable->Translate(pos - a.movement_last_pos);
+      a.movement_last_pos = pos;
     }
 
     if (play_flags_ & kRotation) {
-      float interpolated_time = rotation_interpolator_
-                                    ? rotation_interpolator_(rotation_time_)
-                                    : rotation_time_;
+      float time = rotation_time_ + rotation_speed_ * frame_time;
+      float interpolated_time =
+          rotation_interpolator_ ? rotation_interpolator_(time) : time;
       float theta = base::Lerp(0.0f, rotation_target_, interpolated_time);
       a.animatable->Rotate(theta - a.rotation_last_theta);
       a.rotation_last_theta = theta;
     }
 
     if (play_flags_ & kBlending) {
-      float interpolated_time = blending_interpolator_
-                                    ? blending_interpolator_(blending_time_)
-                                    : blending_time_;
+      float time = blending_time_ + blending_speed_ * frame_time;
+      float interpolated_time =
+          blending_interpolator_ ? blending_interpolator_(time) : time;
       Vector4 r =
           base::Lerp(a.blending_start, blending_target_, interpolated_time);
       a.animatable->SetColor(r);
     }
 
     if (play_flags_ & kFrames) {
+      float time = frame_time_ + frame_speed_ * frame_time;
       float interpolated_time =
-          frame_interpolator_ ? frame_interpolator_(frame_time_) : frame_time_;
+          frame_interpolator_ ? frame_interpolator_(time) : time;
       int target = a.frame_start_ + frame_count_;
       int r = base::Lerp(a.frame_start_, target, interpolated_time);
       if (r < target)

@@ -25,8 +25,8 @@ class Animator {
 
   using Interpolator = std::function<float(float)>;
 
-  Animator() = default;
-  ~Animator() = default;
+  Animator();
+  ~Animator();
 
   void Attach(Animatable* animatable);
 
@@ -34,9 +34,11 @@ class Animator {
   void Pause(int animation);
   void Stop(int animation);
 
+  void PauseOrResumeAll(bool pause);
+
   // Get/set current time of the given animation.
   float GetTime(int animation);
-  void SetTime(int animation, float time);
+  void SetTime(int animation, float time, bool force_update = false);
 
   // Set callback ro be called once animation ends.
   void SetEndCallback(int animation, base::Closure cb);
@@ -67,13 +69,14 @@ class Animator {
   void SetVisible(bool visible);
 
   void Update(float delta_time);
+  void EvalAnim(float frame_time);
 
   bool IsPlaying(int animation) const { return play_flags_ & animation; }
 
  private:
   struct Element {
     Animatable* animatable;
-    base::Vector2 movement_last_offset = {0, 0};
+    base::Vector2 movement_last_pos = {0, 0};
     float rotation_last_theta = 0;
     base::Vector4 blending_start = {0, 0, 0, 0};
     int frame_start_ = 0;
@@ -81,6 +84,7 @@ class Animator {
 
   unsigned int play_flags_ = 0;
   unsigned int loop_flags_ = 0;
+  unsigned int resume_flags_ = 0;
   std::vector<Element> elements_;
 
   base::Vector2 movement_direction_ = {0, 0};

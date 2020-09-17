@@ -3,9 +3,9 @@
 
 #include <list>
 #include <memory>
+#include <mutex>
 
 #include "../../base/closure.h"
-#include "../../base/spinlock.h"
 #include "audio_sample.h"
 
 namespace base {
@@ -32,7 +32,7 @@ class AudioBase {
 
  private:
   std::list<std::shared_ptr<AudioSample>> samples_[2];
-  base::Spinlock lock_;
+  std::mutex lock_;
 
   base::TaskRunner* main_thread_task_runner_;
 

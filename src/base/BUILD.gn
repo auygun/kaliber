@@ -12,6 +12,8 @@ source_set("base") {
     "misc.h",
     "random.cc",
     "random.h",
+    "sinc_resampler.cc",
+    "sinc_resampler.h",
     "task_runner.cc",
     "task_runner.h",
     "timer.cc",

@@ -4,6 +4,8 @@
 #include <condition_variable>
 #include <mutex>
 
+#include "../base/log.h"
+
 namespace base {
 
 class Semaphore {
@@ -14,6 +16,7 @@ class Semaphore {
     std::unique_lock<std::mutex> scoped_lock(mutex_);
     cv_.wait(scoped_lock, [&]() { return count_ > 0; });
     --count_;
+    DCHECK(count_ >= 0);
   }
 
   void Release() {

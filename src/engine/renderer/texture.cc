@@ -2,7 +2,6 @@
 
 #include "../../base/log.h"
 #include "../image.h"
-#include "render_command.h"
 #include "renderer.h"
 
 namespace eng {
@@ -20,29 +19,20 @@ void Texture::Update(std::unique_ptr<Image> image) {
   valid_ = true;
   width_ = image->GetWidth();
   height_ = image->GetHeight();
-
-  auto cmd = std::make_unique<CmdUpdateTexture>();
-  cmd->image = std::move(image);
-  cmd->impl_data = impl_data_;
-  renderer_->EnqueueCommand(std::move(cmd));
+  renderer_->UpdateTexture(impl_data_, std::move(image));
 }
 
 void Texture::Destroy() {
   if (valid_) {
-    auto cmd = std::make_unique<CmdDestoryTexture>();
-    cmd->impl_data = impl_data_;
-    renderer_->EnqueueCommand(std::move(cmd));
+    renderer_->DestroyTexture(impl_data_);
     valid_ = false;
     DLOG << "Texture destroyed. resource_id: " << resource_id_;
   }
 }
 
 void Texture::Activate() {
-  if (valid_) {
-    auto cmd = std::make_unique<CmdActivateTexture>();
-    cmd->impl_data = impl_data_;
-    renderer_->EnqueueCommand(std::move(cmd));
-  }
+  if (valid_)
+    renderer_->ActivateTexture(impl_data_);
 }
 
 }  // namespace eng

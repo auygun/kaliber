@@ -44,19 +44,19 @@ bool Hud::Initialize() {
     text_[i].SetZOrder(30);
     text_[i].SetColor(kTextColor * Vector4(1, 1, 1, 0));
 
-    Vector2 pos = (engine.GetScreenSize() / 2 - text_[i].GetScale() / 2);
+    Vector2 pos = (engine.GetScreenSize() / 2 - text_[i].GetSize() / 2);
     pos -= engine.GetScreenSize() * Vector2(kHorizontalMargin, kVerticalMargin);
 
     Vector2 scale = engine.GetScreenSize() * Vector2(1, 0);
     scale -= engine.GetScreenSize() * Vector2(kHorizontalMargin * 4, 0);
-    scale += text_[0].GetScale() * Vector2(0, 0.3f);
+    scale += text_[0].GetSize() * Vector2(0, 0.3f);
 
     progress_bar_[i].SetZOrder(30);
-    progress_bar_[i].Scale(scale);
+    progress_bar_[i].SetSize(scale);
     progress_bar_[i].Translate(pos * Vector2(0, 1));
     progress_bar_[i].SetColor(kPprogressBarColor[i] * Vector4(1, 1, 1, 0));
 
-    pos -= progress_bar_[i].GetScale() * Vector2(0, 4);
+    pos -= progress_bar_[i].GetSize() * Vector2(0, 4);
     text_[i].Translate(pos * Vector2(i ? 1 : -1, 1));
 
     progress_bar_animator_[i].Attach(&progress_bar_[i]);
@@ -71,13 +71,6 @@ bool Hud::Initialize() {
   }
 
   return true;
-}
-
-void Hud::Update(float delta_time) {
-  for (int i = 0; i < 2; ++i) {
-    text_animator_[i].Update(delta_time);
-    progress_bar_animator_[i].Update(delta_time);
-  }
 }
 
 void Hud::Show() {
@@ -118,9 +111,9 @@ void Hud::SetWave(int wave, bool flash) {
 void Hud::SetProgress(float progress) {
   progress = std::min(std::max(0.0f, progress), 1.0f);
   last_progress_ = progress;
-  Vector2 s = progress_bar_[0].GetScale() * Vector2(progress, 1);
-  float t = (s.x - progress_bar_[1].GetScale().x) / 2;
-  progress_bar_[1].SetScale(s);
+  Vector2 s = progress_bar_[0].GetSize() * Vector2(progress, 1);
+  float t = (s.x - progress_bar_[1].GetSize().x) / 2;
+  progress_bar_[1].SetSize(s);
   progress_bar_[1].Translate({t, 0});
 }
 

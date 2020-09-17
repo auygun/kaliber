@@ -4,14 +4,14 @@
 
 namespace {
 
-void EnqueueTaskAndReplyRelay(const base::Location& from,
-                              base::Closure task_cb,
-                              base::Closure reply_cb,
-                              base::TaskRunner* destination) {
+void PostTaskAndReplyRelay(base::Location from,
+                           base::Closure task_cb,
+                           base::Closure reply_cb,
+                           base::TaskRunner* destination) {
   task_cb();
 
   if (reply_cb)
-    destination->EnqueueTask(from, std::move(reply_cb));
+    destination->PostTask(from, std::move(reply_cb));
 }
 
 }  // namespace
@@ -30,25 +30,24 @@ TaskRunner* TaskRunner::GetThreadLocalTaskRunner() {
   return thread_local_task_runner.get();
 }
 
-void TaskRunner::EnqueueTask(const Location& from, Closure task) {
+void TaskRunner::PostTask(const Location& from, Closure task) {
   DCHECK(task) << LOCATION(from);
 
+  task_count_.fetch_add(1, std::memory_order_relaxed);
   std::lock_guard<std::mutex> scoped_lock(lock_);
   queue_.emplace_back(from, std::move(task));
 }
 
-void TaskRunner::EnqueueTaskAndReply(const Location& from,
-                                     Closure task,
-                                     Closure reply) {
+void TaskRunner::PostTaskAndReply(const Location& from,
+                                  Closure task,
+                                  Closure reply) {
   DCHECK(task) << LOCATION(from);
   DCHECK(reply) << LOCATION(from);
   DCHECK(thread_local_task_runner) << LOCATION(from);
 
-  auto relay = std::bind(::EnqueueTaskAndReplyRelay, from, std::move(task),
+  auto relay = std::bind(::PostTaskAndReplyRelay, from, std::move(task),
                          std::move(reply), thread_local_task_runner.get());
-
-  std::lock_guard<std::mutex> scoped_lock(lock_);
-  queue_.emplace_back(from, std::move(relay));
+  PostTask(from, std::move(relay));
 }
 
 void TaskRunner::MultiConsumerRun() {
@@ -69,6 +68,7 @@ void TaskRunner::MultiConsumerRun() {
 #endif
 
     task_cb();
+    task_count_.fetch_sub(1, std::memory_order_relaxed);
   }
 }
 
@@ -90,7 +90,16 @@ void TaskRunner::SingleConsumerRun() {
 #endif
 
     task_cb();
+    task_count_.fetch_sub(1, std::memory_order_relaxed);
   }
+  cv_.notify_one();
+}
+
+void TaskRunner::WaitForCompletion() {
+  std::unique_lock<std::mutex> scoped_lock(lock_);
+  cv_.wait(scoped_lock, [&]() -> bool {
+    return task_count_.load(std::memory_order_relaxed) == 0;
+  });
 }
 
 }  // namespace base

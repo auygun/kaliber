@@ -61,7 +61,7 @@ void AudioResource::SetLoop(bool loop) {
   if (loop)
     sample_->flags.fetch_or(AudioSample::kLoop, std::memory_order_relaxed);
   else
-    sample_->flags.fetch_and(AudioSample::kLoop, std::memory_order_relaxed);
+    sample_->flags.fetch_and(~AudioSample::kLoop, std::memory_order_relaxed);
 }
 
 void AudioResource::SetSimulateStereo(bool simulate) {
@@ -69,12 +69,12 @@ void AudioResource::SetSimulateStereo(bool simulate) {
     sample_->flags.fetch_or(AudioSample::kSimulateStereo,
                             std::memory_order_relaxed);
   else
-    sample_->flags.fetch_and(AudioSample::kSimulateStereo,
+    sample_->flags.fetch_and(~AudioSample::kSimulateStereo,
                              std::memory_order_relaxed);
 }
 
 void AudioResource::SetResampleStep(size_t step) {
-  sample_->step.store(step + 10, std::memory_order_relaxed);
+  sample_->step.store(step + 100, std::memory_order_relaxed);
 }
 
 void AudioResource::SetMaxAmplitude(float max_amplitude) {

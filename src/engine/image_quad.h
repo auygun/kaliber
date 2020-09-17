@@ -7,9 +7,12 @@
 #include <array>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <variant>
 
 namespace eng {
 
+class Shader;
 class Texture;
 
 class ImageQuad : public Animatable {
@@ -26,6 +29,13 @@ class ImageQuad : public Animatable {
 
   void AutoScale();
 
+  void SetCustomShader(std::shared_ptr<Shader> shader);
+
+  template <typename T>
+  void SetCustomUniform(const std::string& name, T value) {
+    custom_uniforms_[name] = UniformValue(value);
+  }
+
   // Animatable interface.
   void SetFrame(size_t frame) override;
   size_t GetFrame() const override { return current_frame_; }
@@ -37,7 +47,17 @@ class ImageQuad : public Animatable {
   void Draw(float frame_frac) override;
 
  private:
+  using UniformValue = std::variant<base::Vector2,
+                                    base::Vector3,
+                                    base::Vector4,
+                                    base::Matrix4x4,
+                                    float,
+                                    int>;
+
   std::shared_ptr<Texture> texture_;
+
+  std::shared_ptr<Shader> custom_shader_;
+  std::unordered_map<std::string, UniformValue> custom_uniforms_;
 
   size_t current_frame_ = 0;
   std::array<int, 2> num_frames_ = {1, 1};  // horizontal, vertical

@@ -151,6 +151,8 @@ bool Image::Load(const std::string& file_name) {
     return false;
   }
 
+  LOG << "Loaded " << file_name << ". number of color components: " << c;
+
   uint8_t* converted_buffer = NULL;
   switch (c) {
     case 1:

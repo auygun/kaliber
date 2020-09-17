@@ -1,20 +1,20 @@
-#include "renderer.h"
+#include "renderer_opengl.h"
 
 #include <android/native_window.h>
 
-#include "../../base/log.h"
-#include "../../third_party/android/GLContext.h"
+#include "../../../base/log.h"
+#include "../../../third_party/android/GLContext.h"
 
 namespace eng {
 
-bool Renderer::Initialize(ANativeWindow* window) {
+bool RendererOpenGL::Initialize(ANativeWindow* window) {
   LOG << "Initializing renderer.";
 
   window_ = window;
   return StartRenderThread();
 }
 
-void Renderer::Shutdown() {
+void RendererOpenGL::Shutdown() {
   if (terminate_render_thread_)
     return;
 
@@ -23,7 +23,7 @@ void Renderer::Shutdown() {
   TerminateRenderThread();
 }
 
-bool Renderer::InitInternal() {
+bool RendererOpenGL::InitInternal() {
   ndk_helper::GLContext* gl_context = ndk_helper::GLContext::GetInstance();
 
   if (!gl_context->IsInitialzed()) {
@@ -52,16 +52,21 @@ bool Renderer::InitInternal() {
   return InitCommon();
 }
 
-void Renderer::ShutdownInternal() {
+void RendererOpenGL::ShutdownInternal() {
   ndk_helper::GLContext::GetInstance()->Suspend();
 }
 
-void Renderer::HandleCmdPresent(RenderCommand* cmd) {
+void RendererOpenGL::HandleCmdPresent(RenderCommand* cmd) {
   if (EGL_SUCCESS != ndk_helper::GLContext::GetInstance()->Swap()) {
     ContextLost();
     return;
   }
+#ifdef THREADED_RENDERING
+  draw_complete_semaphore_.Release();
+#endif  // THREADED_RENDERING
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  active_shader_id_ = 0;
+  active_texture_id_ = 0;
 }
 
 }  // namespace eng

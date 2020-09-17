@@ -9,8 +9,6 @@ namespace eng {
 
 class Mesh {
  public:
-  static const char kLayoutDelimiter[];
-
   Mesh() = default;
   ~Mesh() = default;
 
@@ -40,7 +38,7 @@ class Mesh {
 
   bool IsValid() const { return !!vertices_.get(); }
 
- protected:
+ private:
   Primitive primitive_ = kPrimitive_TriangleStrip;
   VertexDescripton vertex_description_;
   size_t num_vertices_ = 0;

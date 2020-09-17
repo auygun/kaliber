@@ -1,21 +1,22 @@
-#include "renderer.h"
+#include "renderer_opengl.h"
 
 #include <algorithm>
 #include <cstring>
 #include <sstream>
+#include <unordered_set>
 
-#include "../../base/log.h"
-#include "../../base/vecmath.h"
+#include "../../../base/log.h"
+#include "../../../base/vecmath.h"
 #ifdef THREADED_RENDERING
-#include "../../base/task_runner.h"
+#include "../../../base/task_runner.h"
 #endif  // THREADED_RENDERING
-#include "../image.h"
-#include "../mesh.h"
-#include "../shader_source.h"
-#include "geometry.h"
+#include "../../image.h"
+#include "../../mesh.h"
+#include "../../shader_source.h"
+#include "../geometry.h"
+#include "../shader.h"
+#include "../texture.h"
 #include "render_command.h"
-#include "shader.h"
-#include "texture.h"
 
 using namespace base;
 
@@ -29,44 +30,170 @@ constexpr GLenum kGlDataType[eng::kDataType_Max] = {
     GL_SHORT,         GL_UNSIGNED_INT, GL_UNSIGNED_SHORT};
 
 const std::string kAttributeNames[eng::kAttribType_Max] = {
-    "inColor", "inNormal", "inPosition", "inTexCoord"};
+    "in_color", "in_normal", "in_position", "in_tex_coord"};
 
 }  // namespace
 
 namespace eng {
 
 #ifdef THREADED_RENDERING
-Renderer::Renderer()
+RendererOpenGL::RendererOpenGL()
     : main_thread_task_runner_(TaskRunner::GetThreadLocalTaskRunner()) {}
 #else
-Renderer::Renderer() = default;
+RendererOpenGL::RendererOpenGL() = default;
 #endif  // THREADED_RENDERING
 
-Renderer::~Renderer() = default;
+RendererOpenGL::~RendererOpenGL() = default;
 
-void Renderer::SetContextLostCB(Closure cb) {
-  context_lost_cb_ = std::move(cb);
+void RendererOpenGL::CreateGeometry(std::shared_ptr<void> impl_data,
+                                    std::unique_ptr<Mesh> mesh) {
+  auto cmd = std::make_unique<CmdCreateGeometry>();
+  cmd->mesh = std::move(mesh);
+  cmd->impl_data = impl_data;
+  EnqueueCommand(std::move(cmd));
 }
 
-void Renderer::ContextLost() {
+void RendererOpenGL::DestroyGeometry(std::shared_ptr<void> impl_data) {
+  auto cmd = std::make_unique<CmdDestroyGeometry>();
+  cmd->impl_data = impl_data;
+  EnqueueCommand(std::move(cmd));
+}
+
+void RendererOpenGL::Draw(std::shared_ptr<void> impl_data) {
+  auto cmd = std::make_unique<CmdDrawGeometry>();
+  cmd->impl_data = impl_data;
+  EnqueueCommand(std::move(cmd));
+}
+
+void RendererOpenGL::UpdateTexture(std::shared_ptr<void> impl_data,
+                                   std::unique_ptr<Image> image) {
+  auto cmd = std::make_unique<CmdUpdateTexture>();
+  cmd->image = std::move(image);
+  cmd->impl_data = impl_data;
+  EnqueueCommand(std::move(cmd));
+}
+
+void RendererOpenGL::DestroyTexture(std::shared_ptr<void> impl_data) {
+  auto cmd = std::make_unique<CmdDestoryTexture>();
+  cmd->impl_data = impl_data;
+  EnqueueCommand(std::move(cmd));
+}
+
+void RendererOpenGL::ActivateTexture(std::shared_ptr<void> impl_data) {
+  auto cmd = std::make_unique<CmdActivateTexture>();
+  cmd->impl_data = impl_data;
+  EnqueueCommand(std::move(cmd));
+}
+
+void RendererOpenGL::CreateShader(std::shared_ptr<void> impl_data,
+                                  std::unique_ptr<ShaderSource> source,
+                                  const VertexDescripton& vertex_description,
+                                  Primitive primitive) {
+  auto cmd = std::make_unique<CmdCreateShader>();
+  cmd->source = std::move(source);
+  cmd->vertex_description = vertex_description;
+  cmd->impl_data = impl_data;
+  EnqueueCommand(std::move(cmd));
+}
+
+void RendererOpenGL::DestroyShader(std::shared_ptr<void> impl_data) {
+  auto cmd = std::make_unique<CmdDestroyShader>();
+  cmd->impl_data = impl_data;
+  EnqueueCommand(std::move(cmd));
+}
+
+void RendererOpenGL::ActivateShader(std::shared_ptr<void> impl_data) {
+  auto cmd = std::make_unique<CmdActivateShader>();
+  cmd->impl_data = impl_data;
+  EnqueueCommand(std::move(cmd));
+}
+
+void RendererOpenGL::SetUniform(std::shared_ptr<void> impl_data,
+                                const std::string& name,
+                                const base::Vector2& val) {
+  auto cmd = std::make_unique<CmdSetUniformVec2>();
+  cmd->name = name;
+  cmd->v = val;
+  cmd->impl_data = impl_data;
+  EnqueueCommand(std::move(cmd));
+}
+
+void RendererOpenGL::SetUniform(std::shared_ptr<void> impl_data,
+                                const std::string& name,
+                                const base::Vector3& val) {
+  auto cmd = std::make_unique<CmdSetUniformVec3>();
+  cmd->name = name;
+  cmd->v = val;
+  cmd->impl_data = impl_data;
+  EnqueueCommand(std::move(cmd));
+}
+
+void RendererOpenGL::SetUniform(std::shared_ptr<void> impl_data,
+                                const std::string& name,
+                                const base::Vector4& val) {
+  auto cmd = std::make_unique<CmdSetUniformVec4>();
+  cmd->name = name;
+  cmd->v = val;
+  cmd->impl_data = impl_data;
+  EnqueueCommand(std::move(cmd));
+}
+
+void RendererOpenGL::SetUniform(std::shared_ptr<void> impl_data,
+                                const std::string& name,
+                                const base::Matrix4x4& val) {
+  auto cmd = std::make_unique<CmdSetUniformMat4>();
+  cmd->name = name;
+  cmd->m = val;
+  cmd->impl_data = impl_data;
+  EnqueueCommand(std::move(cmd));
+}
+
+void RendererOpenGL::SetUniform(std::shared_ptr<void> impl_data,
+                                const std::string& name,
+                                float val) {
+  auto cmd = std::make_unique<CmdSetUniformFloat>();
+  cmd->name = name;
+  cmd->f = val;
+  cmd->impl_data = impl_data;
+  EnqueueCommand(std::move(cmd));
+}
+
+void RendererOpenGL::SetUniform(std::shared_ptr<void> impl_data,
+                                const std::string& name,
+                                int val) {
+  auto cmd = std::make_unique<CmdSetUniformInt>();
+  cmd->name = name;
+  cmd->i = val;
+  cmd->impl_data = impl_data;
+  EnqueueCommand(std::move(cmd));
+}
+
+void RendererOpenGL::Present() {
+  EnqueueCommand(std::make_unique<CmdPresent>());
+#ifdef THREADED_RENDERING
+  draw_complete_semaphore_.Acquire();
+#endif  // THREADED_RENDERING
+  fps_++;
+}
+
+void RendererOpenGL::ContextLost() {
   LOG << "Context lost.";
 
 #ifdef THREADED_RENDERING
   global_commands_.clear();
   draw_commands_[0].clear();
   draw_commands_[1].clear();
-#endif  // THREADED_RENDERING
 
-  InvalidateAllResources();
-
-#ifdef THREADED_RENDERING
-  main_thread_task_runner_->EnqueueTask(HERE, context_lost_cb_);
+  main_thread_task_runner_->PostTask(
+      HERE, std::bind(&RendererOpenGL::InvalidateAllResources, this));
+  main_thread_task_runner_->PostTask(HERE, context_lost_cb_);
 #else
+  InvalidateAllResources();
   context_lost_cb_();
 #endif  // THREADED_RENDERING
 }
 
-std::unique_ptr<RenderResource> Renderer::CreateResource(
+std::unique_ptr<RenderResource> RendererOpenGL::CreateResource(
     RenderResourceFactoryBase& factory) {
   static unsigned last_id = 0;
 
@@ -88,48 +215,19 @@ std::unique_ptr<RenderResource> Renderer::CreateResource(
   return resource;
 }
 
-void Renderer::ReleaseResource(unsigned resource_id) {
+void RendererOpenGL::ReleaseResource(unsigned resource_id) {
   auto it = resources_.find(resource_id);
   if (it != resources_.end())
     resources_.erase(it);
 }
 
-void Renderer::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
-#ifdef THREADED_RENDERING
-  if (cmd->global) {
-    {
-      std::unique_lock<std::mutex> scoped_lock(mutex_);
-      global_commands_.push_back(std::move(cmd));
-    }
-    cv_.notify_one();
-    global_queue_size_ = global_commands_.size();
-    return;
-  }
-
-  bool new_frame = cmd->cmd_id == CmdPresent::CMD_ID;
-  draw_commands_[1].push_back(std::move(cmd));
-  if (new_frame) {
-    render_queue_size_ = draw_commands_[1].size();
-    {
-      std::unique_lock<std::mutex> scoped_lock(mutex_);
-      draw_commands_[0].swap(draw_commands_[1]);
-    }
-    cv_.notify_one();
-    fps_ += draw_commands_[1].size() ? 0 : 1;
-    draw_commands_[1].clear();
-  }
-#else
-  ProcessCommand(cmd.get());
-#endif  // THREADED_RENDERING
-}
-
-size_t Renderer::GetAndResetFPS() {
+size_t RendererOpenGL::GetAndResetFPS() {
   int ret = fps_;
   fps_ = 0;
   return ret;
 }
 
-bool Renderer::InitCommon() {
+bool RendererOpenGL::InitCommon() {
   // Get information about the currently active context.
   const char* renderer =
       reinterpret_cast<const char*>(glGetString(GL_RENDERER));
@@ -187,10 +285,8 @@ bool Renderer::InitCommon() {
   }
 
   // Ancient hardware is not supported.
-  if (!npot_) {
+  if (!npot_)
     LOG << "NPOT not supported.";
-    return false;
-  }
 
   if (vertex_array_objects_)
     LOG << "Supports Vertex Array Objects.";
@@ -211,12 +307,12 @@ bool Renderer::InitCommon() {
   return true;
 }
 
-void Renderer::InvalidateAllResources() {
+void RendererOpenGL::InvalidateAllResources() {
   for (auto& r : resources_)
     r.second->Destroy();
 }
 
-bool Renderer::StartRenderThread() {
+bool RendererOpenGL::StartRenderThread() {
 #ifdef THREADED_RENDERING
   LOG << "Starting render thread.";
 
@@ -228,7 +324,7 @@ bool Renderer::StartRenderThread() {
   std::promise<bool> promise;
   std::future<bool> future = promise.get_future();
   render_thread_ =
-      std::thread(&Renderer::RenderThreadMain, this, std::move(promise));
+      std::thread(&RendererOpenGL::RenderThreadMain, this, std::move(promise));
   future.wait();
   return future.get();
 #else
@@ -237,7 +333,7 @@ bool Renderer::StartRenderThread() {
 #endif  // THREADED_RENDERING
 }
 
-void Renderer::TerminateRenderThread() {
+void RendererOpenGL::TerminateRenderThread() {
 #ifdef THREADED_RENDERING
   DCHECK(!terminate_render_thread_);
 
@@ -256,7 +352,7 @@ void Renderer::TerminateRenderThread() {
 
 #ifdef THREADED_RENDERING
 
-void Renderer::RenderThreadMain(std::promise<bool> promise) {
+void RendererOpenGL::RenderThreadMain(std::promise<bool> promise) {
   promise.set_value(InitInternal());
 
   std::deque<std::unique_ptr<RenderCommand>> cq[2];
@@ -291,7 +387,33 @@ void Renderer::RenderThreadMain(std::promise<bool> promise) {
 
 #endif  // THREADED_RENDERING
 
-void Renderer::ProcessCommand(RenderCommand* cmd) {
+void RendererOpenGL::EnqueueCommand(std::unique_ptr<RenderCommand> cmd) {
+#ifdef THREADED_RENDERING
+  if (cmd->global) {
+    {
+      std::unique_lock<std::mutex> scoped_lock(mutex_);
+      global_commands_.push_back(std::move(cmd));
+    }
+    cv_.notify_one();
+    return;
+  }
+
+  bool new_frame = cmd->cmd_id == CmdPresent::CMD_ID;
+  draw_commands_[1].push_back(std::move(cmd));
+  if (new_frame) {
+    {
+      std::unique_lock<std::mutex> scoped_lock(mutex_);
+      draw_commands_[0].swap(draw_commands_[1]);
+    }
+    cv_.notify_one();
+    draw_commands_[1].clear();
+  }
+#else
+  ProcessCommand(cmd.get());
+#endif  // THREADED_RENDERING
+}
+
+void RendererOpenGL::ProcessCommand(RenderCommand* cmd) {
 #if 0
   LOG << "Processing command: " << cmd->cmd_name.c_str();
 #endif
@@ -350,7 +472,7 @@ void Renderer::ProcessCommand(RenderCommand* cmd) {
   }
 }
 
-void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
+void RendererOpenGL::HandleCmdUpdateTexture(RenderCommand* cmd) {
   auto* c = static_cast<CmdUpdateTexture*>(cmd);
   auto impl_data = reinterpret_cast<TextureOpenGL*>(c->impl_data.get());
   bool new_texture = impl_data->id == 0;
@@ -418,7 +540,7 @@ void Renderer::HandleCmdUpdateTexture(RenderCommand* cmd) {
   }
 }
 
-void Renderer::HandleCmdDestoryTexture(RenderCommand* cmd) {
+void RendererOpenGL::HandleCmdDestoryTexture(RenderCommand* cmd) {
   auto* c = static_cast<CmdDestoryTexture*>(cmd);
   auto impl_data = reinterpret_cast<TextureOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0) {
@@ -427,14 +549,16 @@ void Renderer::HandleCmdDestoryTexture(RenderCommand* cmd) {
   }
 }
 
-void Renderer::HandleCmdActivateTexture(RenderCommand* cmd) {
+void RendererOpenGL::HandleCmdActivateTexture(RenderCommand* cmd) {
   auto* c = static_cast<CmdActivateTexture*>(cmd);
   auto impl_data = reinterpret_cast<TextureOpenGL*>(c->impl_data.get());
-  if (impl_data->id > 0)
+  if (impl_data->id > 0 && impl_data->id != active_texture_id_) {
     glBindTexture(GL_TEXTURE_2D, impl_data->id);
+    active_texture_id_ = impl_data->id;
+  }
 }
 
-void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
+void RendererOpenGL::HandleCmdCreateGeometry(RenderCommand* cmd) {
   auto* c = static_cast<CmdCreateGeometry*>(cmd);
   auto impl_data = reinterpret_cast<GeometryOpenGL*>(c->impl_data.get());
   if (impl_data->vertex_buffer_id > 0)
@@ -448,7 +572,7 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
   }
 
   GLuint vertex_array_id = 0;
-  if (SupportsVAO()) {
+  if (vertex_array_objects_) {
     glGenVertexArrays(1, &vertex_array_id);
     glBindVertexArray(vertex_array_id);
   }
@@ -464,7 +588,7 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
   // set up.
   std::vector<GeometryOpenGL::Element> vertex_layout;
   if (!SetupVertexLayout(c->mesh->vertex_description(), vertex_size,
-                         SupportsVAO(), vertex_layout))
+                         vertex_array_objects_, vertex_layout))
     return;
 
   // Create the index buffer and upload the data.
@@ -497,7 +621,7 @@ void Renderer::HandleCmdCreateGeometry(RenderCommand* cmd) {
                 index_buffer_id};
 }
 
-void Renderer::HandleCmdDestroyGeometry(RenderCommand* cmd) {
+void RendererOpenGL::HandleCmdDestroyGeometry(RenderCommand* cmd) {
   auto* c = static_cast<CmdDestroyGeometry*>(cmd);
   auto impl_data = reinterpret_cast<GeometryOpenGL*>(c->impl_data.get());
   if (impl_data->vertex_buffer_id == 0)
@@ -513,7 +637,7 @@ void Renderer::HandleCmdDestroyGeometry(RenderCommand* cmd) {
   *impl_data = {};
 }
 
-void Renderer::HandleCmdDrawGeometry(RenderCommand* cmd) {
+void RendererOpenGL::HandleCmdDrawGeometry(RenderCommand* cmd) {
   auto* c = static_cast<CmdDrawGeometry*>(cmd);
   auto impl_data = reinterpret_cast<GeometryOpenGL*>(c->impl_data.get());
   if (impl_data->vertex_buffer_id == 0)
@@ -559,7 +683,7 @@ void Renderer::HandleCmdDrawGeometry(RenderCommand* cmd) {
   }
 }
 
-void Renderer::HandleCmdCreateShader(RenderCommand* cmd) {
+void RendererOpenGL::HandleCmdCreateShader(RenderCommand* cmd) {
   auto* c = static_cast<CmdCreateShader*>(cmd);
   auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0)
@@ -604,7 +728,7 @@ void Renderer::HandleCmdCreateShader(RenderCommand* cmd) {
   *impl_data = {id, {}};
 }
 
-void Renderer::HandleCmdDestroyShader(RenderCommand* cmd) {
+void RendererOpenGL::HandleCmdDestroyShader(RenderCommand* cmd) {
   auto* c = static_cast<CmdDestroyShader*>(cmd);
   auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0) {
@@ -613,14 +737,16 @@ void Renderer::HandleCmdDestroyShader(RenderCommand* cmd) {
   }
 }
 
-void Renderer::HandleCmdActivateShader(RenderCommand* cmd) {
+void RendererOpenGL::HandleCmdActivateShader(RenderCommand* cmd) {
   auto* c = static_cast<CmdActivateShader*>(cmd);
   auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
-  if (impl_data->id > 0)
+  if (impl_data->id > 0 && impl_data->id != active_shader_id_) {
     glUseProgram(impl_data->id);
+    active_shader_id_ = impl_data->id;
+  }
 }
 
-void Renderer::HandleCmdSetUniformVec2(RenderCommand* cmd) {
+void RendererOpenGL::HandleCmdSetUniformVec2(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformVec2*>(cmd);
   auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0) {
@@ -631,7 +757,7 @@ void Renderer::HandleCmdSetUniformVec2(RenderCommand* cmd) {
   }
 }
 
-void Renderer::HandleCmdSetUniformVec3(RenderCommand* cmd) {
+void RendererOpenGL::HandleCmdSetUniformVec3(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformVec3*>(cmd);
   auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0) {
@@ -642,7 +768,7 @@ void Renderer::HandleCmdSetUniformVec3(RenderCommand* cmd) {
   }
 }
 
-void Renderer::HandleCmdSetUniformVec4(RenderCommand* cmd) {
+void RendererOpenGL::HandleCmdSetUniformVec4(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformVec4*>(cmd);
   auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0) {
@@ -653,7 +779,7 @@ void Renderer::HandleCmdSetUniformVec4(RenderCommand* cmd) {
   }
 }
 
-void Renderer::HandleCmdSetUniformMat4(RenderCommand* cmd) {
+void RendererOpenGL::HandleCmdSetUniformMat4(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformMat4*>(cmd);
   auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0) {
@@ -664,7 +790,7 @@ void Renderer::HandleCmdSetUniformMat4(RenderCommand* cmd) {
   }
 }
 
-void Renderer::HandleCmdSetUniformFloat(RenderCommand* cmd) {
+void RendererOpenGL::HandleCmdSetUniformFloat(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformFloat*>(cmd);
   auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0) {
@@ -675,7 +801,7 @@ void Renderer::HandleCmdSetUniformFloat(RenderCommand* cmd) {
   }
 }
 
-void Renderer::HandleCmdSetUniformInt(RenderCommand* cmd) {
+void RendererOpenGL::HandleCmdSetUniformInt(RenderCommand* cmd) {
   auto* c = static_cast<CmdSetUniformInt*>(cmd);
   auto impl_data = reinterpret_cast<ShaderOpenGL*>(c->impl_data.get());
   if (impl_data->id > 0) {
@@ -686,7 +812,7 @@ void Renderer::HandleCmdSetUniformInt(RenderCommand* cmd) {
   }
 }
 
-bool Renderer::SetupVertexLayout(
+bool RendererOpenGL::SetupVertexLayout(
     const VertexDescripton& vd,
     GLuint vertex_size,
     bool use_vao,
@@ -726,7 +852,7 @@ bool Renderer::SetupVertexLayout(
   return true;
 }
 
-GLuint Renderer::CreateShader(const char* source, GLenum type) {
+GLuint RendererOpenGL::CreateShader(const char* source, GLenum type) {
   GLuint shader = glCreateShader(type);
   if (shader) {
     glShaderSource(shader, 1, &source, NULL);
@@ -751,7 +877,8 @@ GLuint Renderer::CreateShader(const char* source, GLenum type) {
   return shader;
 }
 
-bool Renderer::BindAttributeLocation(GLuint id, const VertexDescripton& vd) {
+bool RendererOpenGL::BindAttributeLocation(GLuint id,
+                                           const VertexDescripton& vd) {
   int current = 0;
   int tex_coord = 0;
 
@@ -765,7 +892,7 @@ bool Renderer::BindAttributeLocation(GLuint id, const VertexDescripton& vd) {
   return current > 0;
 }
 
-GLint Renderer::GetUniformLocation(
+GLint RendererOpenGL::GetUniformLocation(
     GLuint id,
     const std::string& name,
     std::unordered_map<std::string, GLuint>& uniforms) {

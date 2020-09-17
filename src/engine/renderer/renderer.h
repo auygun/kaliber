@@ -1,66 +1,88 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include <array>
 #include <memory>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
 
-#define THREADED_RENDERING
-
-#ifdef THREADED_RENDERING
-#include <condition_variable>
-#include <deque>
-#include <future>
-#include <mutex>
-#include <thread>
-#endif  // THREADED_RENDERING
-
-#include "opengl.h"
+#if defined(__linux__) && !defined(__ANDROID__)
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#endif
 
 #include "../../base/closure.h"
-#include "render_resource.h"
+#include "../../base/vecmath.h"
 #include "renderer_types.h"
 
 #if defined(__ANDROID__)
 struct ANativeWindow;
 #endif
 
-#ifdef THREADED_RENDERING
-namespace base {
-class TaskRunner;
-}
-#endif  // THREADED_RENDERING
-
 namespace eng {
 
-struct RenderCommand;
 class Image;
+class ShaderSource;
+class Mesh;
 
 class Renderer {
  public:
-  Renderer();
-  ~Renderer();
+  const unsigned kInvalidId = 0;
 
-  void SetContextLostCB(base::Closure cb);
+  Renderer() = default;
+  virtual ~Renderer() = default;
+
+  void SetContextLostCB(base::Closure cb) { context_lost_cb_ = std::move(cb); }
 
 #if defined(__ANDROID__)
-  bool Initialize(ANativeWindow* window);
+  virtual bool Initialize(ANativeWindow* window) = 0;
 #elif defined(__linux__)
-  bool Initialize();
+  virtual bool Initialize(Display* display, Window window) = 0;
 #endif
 
-  void Shutdown();
+  virtual void Shutdown() = 0;
 
-  void ContextLost();
+  virtual void CreateGeometry(std::shared_ptr<void> impl_data,
+                              std::unique_ptr<Mesh> mesh) = 0;
+  virtual void DestroyGeometry(std::shared_ptr<void> impl_data) = 0;
+  virtual void Draw(std::shared_ptr<void> impl_data) = 0;
 
-  std::unique_ptr<RenderResource> CreateResource(
-      RenderResourceFactoryBase& factory);
-  void ReleaseResource(unsigned resource_id);
+  virtual void UpdateTexture(std::shared_ptr<void> impl_data,
+                             std::unique_ptr<Image> image) = 0;
+  virtual void DestroyTexture(std::shared_ptr<void> impl_data) = 0;
+  virtual void ActivateTexture(std::shared_ptr<void> impl_data) = 0;
 
-  void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
+  virtual void CreateShader(std::shared_ptr<void> impl_data,
+                            std::unique_ptr<ShaderSource> source,
+                            const VertexDescripton& vertex_description,
+                            Primitive primitive) = 0;
+  virtual void DestroyShader(std::shared_ptr<void> impl_data) = 0;
+  virtual void ActivateShader(std::shared_ptr<void> impl_data) = 0;
+
+  virtual void SetUniform(std::shared_ptr<void> impl_data,
+                          const std::string& name,
+                          const base::Vector2& val) = 0;
+  virtual void SetUniform(std::shared_ptr<void> impl_data,
+                          const std::string& name,
+                          const base::Vector3& val) = 0;
+  virtual void SetUniform(std::shared_ptr<void> impl_data,
+                          const std::string& name,
+                          const base::Vector4& val) = 0;
+  virtual void SetUniform(std::shared_ptr<void> impl_data,
+                          const std::string& name,
+                          const base::Matrix4x4& val) = 0;
+  virtual void SetUniform(std::shared_ptr<void> impl_data,
+                          const std::string& name,
+                          float val) = 0;
+  virtual void SetUniform(std::shared_ptr<void> impl_data,
+                          const std::string& name,
+                          int val) = 0;
+  virtual void UploadUniforms(std::shared_ptr<void> impl_data) = 0;
+
+  virtual void PrepareForDrawing() = 0;
+  virtual void Present() = 0;
+
+  virtual std::unique_ptr<RenderResource> CreateResource(
+      RenderResourceFactoryBase& factory) = 0;
+  virtual void ReleaseResource(unsigned resource_id) = 0;
 
   bool SupportsETC1() const { return texture_compression_.etc1; }
   bool SupportsDXT1() const {
@@ -69,22 +91,16 @@ class Renderer {
   bool SupportsDXT5() const { return texture_compression_.s3tc; }
   bool SupportsATC() const { return texture_compression_.atc; }
 
-  bool SupportsVAO() const { return vertex_array_objects_; }
-
   int screen_width() const { return screen_width_; }
   int screen_height() const { return screen_height_; }
 
-  size_t GetAndResetFPS();
-
-  size_t global_queue_size() { return global_queue_size_; }
-  size_t render_queue_size() { return render_queue_size_; }
+  virtual size_t GetAndResetFPS() = 0;
 
 #if defined(__linux__) && !defined(__ANDROID__)
-  Display* display() { return display_; }
-  Window window() { return window_; }
+  virtual XVisualInfo* GetXVisualInfo(Display* display) = 0;
 #endif
 
- private:
+ protected:
   struct TextureCompression {
     unsigned etc1 : 1;
     unsigned dxt1 : 1;
@@ -102,119 +118,12 @@ class Renderer {
           atc(false) {}
   };
 
-  struct GeometryOpenGL {
-    struct Element {
-      GLsizei num_elements;
-      GLenum type;
-      size_t vertex_offset;
-    };
-
-    GLsizei num_vertices = 0;
-    GLsizei num_indices = 0;
-    GLenum primitive = 0;
-    GLenum index_type = 0;
-    std::vector<Element> vertex_layout;
-    GLuint vertex_size = 0;
-    GLuint vertex_array_id = 0;
-    GLuint vertex_buffer_id = 0;
-    GLuint index_buffer_id = 0;
-  };
-
-  struct ShaderOpenGL {
-    GLuint id = 0;
-    std::unordered_map<std::string, GLuint> uniforms;
-  };
-
-  struct TextureOpenGL {
-    GLuint id = 0;
-  };
-
-  base::Closure context_lost_cb_;
-
   TextureCompression texture_compression_;
-  bool vertex_array_objects_ = false;
-  bool npot_ = false;
 
   int screen_width_ = 0;
   int screen_height_ = 0;
 
-  std::unordered_map<unsigned, RenderResource*> resources_;
-
-#ifdef THREADED_RENDERING
-  // Global commands are independent from frames and guaranteed to be processed.
-  std::deque<std::unique_ptr<RenderCommand>> global_commands_;
-  // Draw commands are fame specific and can be discarded if the renderer deems
-  // frame drop.
-  std::deque<std::unique_ptr<RenderCommand>> draw_commands_[2];
-
-  std::condition_variable cv_;
-  std::mutex mutex_;
-  std::thread render_thread_;
-  bool terminate_render_thread_ = false;
-
-  base::TaskRunner* main_thread_task_runner_;
-#endif  // THREADED_RENDERING
-
-  // Stats.
-  size_t fps_ = 0;
-  size_t global_queue_size_ = 0;
-  size_t render_queue_size_ = 0;
-
-#if defined(__ANDROID__)
-  ANativeWindow* window_;
-#elif defined(__linux__)
-  Display* display_ = NULL;
-  Window window_ = 0;
-  XVisualInfo* visual_info_;
-  GLXContext glx_context_ = NULL;
-#endif
-
-  bool InitInternal();
-  bool InitCommon();
-  void ShutdownInternal();
-
-  void InvalidateAllResources();
-
-  bool StartRenderThread();
-  void TerminateRenderThread();
-
-#ifdef THREADED_RENDERING
-  void RenderThreadMain(std::promise<bool> promise);
-#endif  // THREADED_RENDERING
-
-  void ProcessCommand(RenderCommand* cmd);
-
-  void HandleCmdPresent(RenderCommand* cmd);
-  void HandleCmdUpdateTexture(RenderCommand* cmd);
-  void HandleCmdDestoryTexture(RenderCommand* cmd);
-  void HandleCmdActivateTexture(RenderCommand* cmd);
-  void HandleCmdCreateGeometry(RenderCommand* cmd);
-  void HandleCmdDestroyGeometry(RenderCommand* cmd);
-  void HandleCmdDrawGeometry(RenderCommand* cmd);
-  void HandleCmdCreateShader(RenderCommand* cmd);
-  void HandleCmdDestroyShader(RenderCommand* cmd);
-  void HandleCmdActivateShader(RenderCommand* cmd);
-  void HandleCmdSetUniformVec2(RenderCommand* cmd);
-  void HandleCmdSetUniformVec3(RenderCommand* cmd);
-  void HandleCmdSetUniformVec4(RenderCommand* cmd);
-  void HandleCmdSetUniformMat4(RenderCommand* cmd);
-  void HandleCmdSetUniformFloat(RenderCommand* cmd);
-  void HandleCmdSetUniformInt(RenderCommand* cmd);
-
-  bool SetupVertexLayout(const VertexDescripton& vd,
-                         GLuint vertex_size,
-                         bool use_vao,
-                         std::vector<GeometryOpenGL::Element>& vertex_layout);
-  GLuint CreateShader(const char* source, GLenum type);
-  bool BindAttributeLocation(GLuint id, const VertexDescripton& vd);
-  GLint GetUniformLocation(GLuint id,
-                           const std::string& name,
-                           std::unordered_map<std::string, GLuint>& uniforms);
-
-#if defined(__linux__) && !defined(__ANDROID__)
-  bool CreateWindow();
-  void DestroyWindow();
-#endif
+  base::Closure context_lost_cb_;
 
   Renderer(const Renderer&) = delete;
   Renderer& operator=(const Renderer&) = delete;

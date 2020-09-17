@@ -2,6 +2,7 @@
 #define CLOSURE_H
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <tuple>
 
@@ -42,6 +43,16 @@ using Location = std::tuple<const char*, const char*, int>;
 using Location = std::nullptr_t;
 
 #endif
+
+// Bind a method to an object with a std::weak_ptr.
+template <typename Class, typename ReturnType, typename... Args>
+std::function<ReturnType(Args...)> BindWeak(ReturnType (Class::*func)(Args...),
+                                            std::weak_ptr<Class> weak_ptr) {
+  return [func, weak_ptr](Args... args) {
+    if (auto ptr = weak_ptr.lock())
+      std::invoke(func, ptr, args...);
+  };
+}
 
 }  // namespace base
 

@@ -26,6 +26,10 @@ class PlatformBase {
 
   const std::string& GetRootPath() const { return root_path_; }
 
+  const std::string& GetDataPath() const { return data_path_; }
+
+  const std::string& GetSharedDataPath() const { return shared_data_path_; }
+
   bool mobile_device() const { return mobile_device_; }
 
   static class InternalError : public std::exception {
@@ -35,8 +39,10 @@ class PlatformBase {
   base::Timer timer_;
 
   bool mobile_device_ = false;
-  int device_dpi_ = 200;
+  int device_dpi_ = 100;
   std::string root_path_;
+  std::string data_path_;
+  std::string shared_data_path_;
 
   bool has_focus_ = false;
   bool should_exit_ = false;

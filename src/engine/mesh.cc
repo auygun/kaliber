@@ -9,10 +9,6 @@
 
 namespace eng {
 
-// Used to parse the vertex layout,
-// e.g. "p3f;c4b" for "position 3 floats, color 4 bytes".
-const char Mesh::kLayoutDelimiter[] = ";/ \t";
-
 bool Mesh::Create(Primitive primitive,
                   const std::string& vertex_description,
                   size_t num_vertices,
@@ -104,6 +100,8 @@ bool Mesh::Load(const std::string& file_name) {
     LOG << "Failed to load mesh. Invalid vertex size.";
     return false;
   }
+
+  LOG << "Loaded " << file_name << ". Vertex array size: " << vertices.size();
 
   vertices_ = std::make_unique<char[]>(vertex_buffer_size);
 
