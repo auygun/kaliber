@@ -23,6 +23,9 @@ constexpr int wepon_anim_speed = 48;
 const Vector4 kHealthBarColor[2] = {{0.5f, 0.5f, 0.5f, 1},
                                     {0.161f, 0.89f, 0.322f, 1}};
 
+const Vector4 kNukeColor[2] = {{0.94f, 0.5f, 0.36f, 0},
+                               {0.9f, 0.81f, 0.56f, 1}};
+
 }  // namespace
 
 Player::Player() = default;
@@ -76,7 +79,7 @@ bool Player::Initialize() {
 
   nuke_.SetZOrder(20);
   nuke_.Scale(Engine::Get().GetScreenSize());
-  nuke_.SetColor({1, 1, 1, 0});
+  nuke_.SetColor(kNukeColor[0]);
 
   nuke_animator_.Attach(&nuke_);
 
@@ -349,7 +352,7 @@ void Player::Nuke() {
     nuke_animator_.SetEndCallback(Animator::kBlending,
                                   [&]() -> void { nuke_.SetVisible(false); });
     nuke_animator_.SetBlending(
-        {1, 1, 1, 0}, 2, std::bind(Acceleration, std::placeholders::_1, -1));
+        kNukeColor[0], 2, std::bind(Acceleration, std::placeholders::_1, -1));
     nuke_animator_.SetEndCallback(Animator::kTimer, [&, game]() -> void {
       game->GetEnemy().KillAllEnemyUnits(false);
       game->GetEnemy().ResumeProgress();
@@ -357,7 +360,7 @@ void Player::Nuke() {
     nuke_animator_.SetTimer(0.5f);
     nuke_animator_.Play(Animator::kBlending | Animator::kTimer, false);
   });
-  nuke_animator_.SetBlending({1, 1, 1, 1}, 0.1f,
+  nuke_animator_.SetBlending(kNukeColor[1], 0.1f,
                              std::bind(Acceleration, std::placeholders::_1, 1));
   nuke_animator_.Play(Animator::kBlending, false);
   nuke_.SetVisible(true);
