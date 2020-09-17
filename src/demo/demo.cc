@@ -357,9 +357,10 @@ void Demo::StartNextStage(bool boss) {
         hud_.Show();
         hud_.SetProgress(1);
 
-        player_.TakeDamage(-1);
-        if (boss_fight_)
+        if (boss_fight_) {
+          player_.TakeDamage(-1);
           player_.AddNuke(1);
+        }
 
         total_enemies_ = 32.0871f + 23.0897f * log((float)wave_);
         last_num_enemies_killed_ = 0;
