@@ -45,13 +45,13 @@ bool PersistentData::Load(const std::string& file_name) {
     return false;
   }
 
-  old_root_ = root_;
+  dirty_ = false;
 
   return true;
 }
 
 bool PersistentData::Save(bool force) {
-  if (!force && old_root_ == root_)
+  if (!force && !dirty_)
     return true;
 
   DCHECK(!file_name_.empty());
@@ -81,16 +81,18 @@ bool PersistentData::SaveAs(const std::string& file_name) {
     return false;
   }
 
-  old_root_ = root_;
+  dirty_ = false;
 
   return true;
 }
 
 Json::Value& PersistentData::operator[](const char* key) {
+  dirty_ = true;
   return root_[key];
 }
 
 Json::Value& PersistentData::operator[](const std::string& key) {
+  dirty_ = true;
   return root_[key];
 }
 

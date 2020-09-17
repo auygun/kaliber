@@ -50,8 +50,8 @@ class PersistentData {
 
  private:
   std::string file_name_;
-  Json::Value old_root_;
   Json::Value root_;
+  bool dirty_ = false;
 };
 
 template <typename T>
