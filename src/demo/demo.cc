@@ -227,6 +227,7 @@ void Demo::EnterGameOverState() {
     hud_.Hide();
     SetDelayedWork(3, [&]() -> void {
       wave_ = 0;
+      boss_fight_ = false;
       EnterMenuState();
     });
   });
