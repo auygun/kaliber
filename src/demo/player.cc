@@ -23,8 +23,8 @@ constexpr int wepon_anim_speed = 48;
 const Vector4 kHealthBarColor[2] = {{0.5f, 0.5f, 0.5f, 1},
                                     {0.161f, 0.89f, 0.322f, 1}};
 
-const Vector4 kNukeColor[2] = {{0.94f, 0.5f, 0.36f, 0},
-                               {0.9f, 0.81f, 0.56f, 1}};
+const Vector4 kNukeColor[2] = {{0.16f, 0.46f, 0.93f, 0},
+                               {0.93f, 0.35f, 0.15f, 1}};
 
 }  // namespace
 
