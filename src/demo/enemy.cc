@@ -64,7 +64,9 @@ void SetupFadeOutAnim(Animator& animator, float delay) {
 
 float SnapSpawnPosX(int col) {
   Vector2 s = eng::Engine::Get().GetScreenSize();
-  return (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2;
+  float offset = base::Lerp(s.x * -0.02f, s.x * 0.02f,
+                            eng::Engine::Get().GetRandomGenerator().GetFloat());
+  return (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2 + offset;
 }
 
 }  // namespace
