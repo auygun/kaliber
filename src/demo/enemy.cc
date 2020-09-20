@@ -26,24 +26,28 @@ constexpr int idle1_frame_start[][3] = {{0, 50, -1},
                                         {23, 73, -1},
                                         {-1, -1, 100},
                                         {13, 33, -1},
+                                        {13, 33, 13},
                                         {-1, -1, -1}};
 constexpr int idle2_frame_start[][3] = {{7, 57, -1},
                                         {30, 80, -1},
                                         {-1, -1, 107},
+                                        {-1, -1, -1},
                                         {-1, -1, -1}};
 
 constexpr int idle1_frame_count[][3] = {{7, 7, -1},
                                         {7, 7, -1},
                                         {-1, -1, 7},
-                                        {6, 6, -1}};
+                                        {6, 6, -1},
+                                        {6, 6, 6}};
 constexpr int idle2_frame_count[][3] = {{16, 16, -1},
                                         {16, 16, -1},
                                         {-1, -1, 16},
+                                        {-1, -1, -1},
                                         {-1, -1, -1}};
 
 constexpr int idle_frame_speed = 12;
 
-constexpr int enemy_scores[] = {100, 150, 300, 250, 500};
+constexpr int enemy_scores[] = {100, 150, 300, 250, 0, 500};
 
 // Enemy units spawn speed.
 constexpr float kSpawnPeriod[kEnemyType_Unit_Last + 1][2] = {{3, 6},
@@ -429,8 +433,9 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
                       DamageType damage_type,
                       const Vector2& pos,
                       float speed) {
-  DCHECK(enemy_type > kEnemyType_Invalid &&
-         enemy_type < kEnemyType_Unit_Last + 1);
+  DCHECK(
+      (enemy_type > kEnemyType_Invalid && enemy_type <= kEnemyType_Unit_Last) ||
+      enemy_type == kEnemyType_PowerUp);
   DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Max);
 
   Engine& engine = Engine::Get();
@@ -455,6 +460,11 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
     case kEnemyType_Bug:
       e.total_health = e.hit_points = 3;
       e.sprite.Create("bug_tex", {10, 4});
+      break;
+    case kEnemyType_PowerUp:
+      e.total_health = e.hit_points = 1;
+      e.sprite.Create("bug_tex", {10, 4});
+      e.sprite.Scale(0.4f);
       break;
     default:
       NOTREACHED << "- Unkown enemy type: " << enemy_type;
@@ -693,7 +703,8 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
   target->blast_animator.Play(Animator::kFrames, false);
 
   if (target->hit_points <= 0) {
-    ++num_enemies_killed_in_current_wave_;
+    if (target->enemy_type != kEnemyType_PowerUp)
+      ++num_enemies_killed_in_current_wave_;
 
     target->sprite.SetVisible(false);
     target->health_base.SetVisible(false);
@@ -706,11 +717,16 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
 
     Engine& engine = Engine::Get();
     Demo* game = static_cast<Demo*>(engine.GetGame());
-    game->AddScore(GetScore(target->enemy_type));
+    int score = GetScore(target->enemy_type);
+    if (score)
+      game->AddScore(score);
 
     target->explosion.Play(false);
 
-    if (target->enemy_type == kEnemyType_Boss) {
+    if (target->enemy_type == kEnemyType_PowerUp) {
+      if (damage == 1)
+        game->GetPlayer().AddNuke(1);
+    } else if (target->enemy_type == kEnemyType_Boss) {
       // Play dead animation and move away the boss.
       boss_animator_.Stop(Animator::kFrames | Animator::kTimer);
       boss_animator_.SetEndCallback(Animator::kMovement, [&]() -> void {
@@ -848,6 +864,11 @@ void Enemy::UpdateWave(float delta_time) {
       enemy_type == kEnemyType_Tank ? 10.0f : (rnd.Roll(3) == 1 ? 6.0f : 10.0f);
 
   SpawnUnit(enemy_type, damage_type, pos, speed);
+
+  if (enemy_type == kEnemyType_DarkSkull) {
+    pos = {0, s.y / 2};
+    SpawnUnit(kEnemyType_PowerUp, kDamageType_Any, pos, 10);
+  }
 }
 
 void Enemy::UpdateBoss(float delta_time) {
@@ -894,7 +915,7 @@ void Enemy::UpdateBoss(float delta_time) {
 
   // Do not spawn tank during the 1st. boss.
   if (enemy_type == kEnemyType_Tank && wave_ == 3)
-    return;
+    enemy_type = kEnemyType_LightSkull;
 
   if (enemy_type == kEnemyType_Invalid)
     return;
@@ -932,6 +953,9 @@ std::unique_ptr<Image> Enemy::GetScoreImage(EnemyType enemy_type) {
   const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
 
   int score = GetScore(enemy_type);
+  if (!score)
+    return nullptr;
+
   std::string text = std::to_string(score);
   int width, height;
   font.CalculateBoundingBox(text.c_str(), width, height);

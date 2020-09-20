@@ -18,6 +18,7 @@ enum EnemyType {
   kEnemyType_Bug,
   kEnemyType_Unit_Last = kEnemyType_Bug,
   // Boss.
+  kEnemyType_PowerUp,
   kEnemyType_Boss,
   kEnemyType_Max
 };
