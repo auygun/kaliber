@@ -162,11 +162,11 @@ bool Menu::Initialize() {
 
   logo_[0].Create("logo_tex0", {3, 8});
   logo_[0].SetZOrder(41);
-  logo_[0].SetOffset(Engine::Get().GetScreenSize() * Vector2(0, 0.25f));
+  logo_[0].SetOffset(Engine::Get().GetScreenSize() * Vector2(0, 0.35f));
 
   logo_[1].Create("logo_tex1", {3, 7});
   logo_[1].SetZOrder(41);
-  logo_[1].SetOffset(Engine::Get().GetScreenSize() * Vector2(0, 0.25f));
+  logo_[1].SetOffset(Engine::Get().GetScreenSize() * Vector2(0, 0.35f));
 
   logo_animator_[0].Attach(&logo_[0]);
   logo_animator_[0].SetFrames(24, 20);
@@ -248,7 +248,7 @@ bool Menu::Initialize() {
   high_score_.Create("high_score_tex");
   high_score_.SetZOrder(41);
   high_score_.Scale(0.8f);
-  high_score_.SetOffset(Engine::Get().GetScreenSize() * Vector2(0, -0.36f));
+  high_score_.SetOffset(Engine::Get().GetScreenSize() * Vector2(0, 0.225f));
   high_score_.SetColor(kHighScoreColor * Vector4(1, 1, 1, 0));
   high_score_.SetVisible(false);
 
@@ -354,14 +354,18 @@ void Menu::Show() {
       high_score_animator_.Play(Animator::kBlending | Animator::kTimer, true);
     });
     high_score_animator_.SetEndCallback(Animator::kTimer, [&]() -> void {
-      high_score_animator_.Stop(Animator::kBlending);
-      high_score_animator_.SetEndCallback(Animator::kBlending, nullptr);
+      high_score_animator_.Play(Animator::kBlending | Animator::kTimer, false);
+      high_score_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
+        high_score_animator_.Stop(Animator::kBlending);
+      });
       high_score_animator_.SetEndCallback(Animator::kTimer, nullptr);
     });
   }
-  high_score_animator_.SetVisible(true);
-  high_score_animator_.SetBlending(kHighScoreColor, kFadeSpeed);
-  high_score_animator_.Play(Animator::kBlending, false);
+  if (high_score_value_ > 0) {
+    high_score_animator_.SetVisible(true);
+    high_score_animator_.SetBlending(kHighScoreColor, kFadeSpeed);
+    high_score_animator_.Play(Animator::kBlending, false);
+  }
 
   for (int i = 0; i < kOption_Max; ++i) {
     if (items_[i].hide)
