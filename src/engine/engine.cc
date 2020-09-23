@@ -190,27 +190,16 @@ Vector2 Engine::ToPosition(const Vector2& vec) {
 void Engine::SetImageSource(const std::string& asset_name,
                             const std::string& file_name,
                             bool persistent) {
-  std::shared_ptr<Texture> texture;
-  auto it = textures_.find(asset_name);
-  if (it != textures_.end()) {
-    texture = it->second.texture;
-    it->second.asset_file = file_name;
-    it->second.create_image = nullptr;
-    it->second.persistent = persistent;
-  } else {
-    texture = CreateRenderResource<Texture>();
-    textures_[asset_name] = {texture, file_name, nullptr, persistent};
-  }
-
-  if (persistent) {
-    auto image = std::make_unique<Image>();
-    if (image->Load(file_name)) {
-      image->Compress();
-      texture->Update(std::move(image));
-    } else {
-      texture->Destroy();
-    }
-  }
+  SetImageSource(
+      asset_name,
+      [file_name]() -> std::unique_ptr<Image> {
+        auto image = std::make_unique<Image>();
+        if (!image->Load(file_name))
+          return nullptr;
+        image->Compress();
+        return image;
+      },
+      persistent);
 }
 
 void Engine::SetImageSource(const std::string& asset_name,
@@ -221,11 +210,10 @@ void Engine::SetImageSource(const std::string& asset_name,
   if (it != textures_.end()) {
     texture = it->second.texture;
     it->second.create_image = create_image;
-    it->second.asset_file.clear();
     it->second.persistent = persistent;
   } else {
     texture = CreateRenderResource<Texture>();
-    textures_[asset_name] = {texture, "", create_image, persistent};
+    textures_[asset_name] = {texture, create_image, persistent};
   }
 
   if (persistent) {
@@ -242,17 +230,7 @@ void Engine::RefreshImage(const std::string& asset_name) {
   if (it == textures_.end())
     return;
 
-  std::unique_ptr<Image> image;
-  if (!it->second.asset_file.empty()) {
-    image = std::make_unique<Image>();
-    if (image->Load(it->second.asset_file))
-      image->Compress();
-    else
-      image.reset();
-  } else if (it->second.create_image) {
-    image = it->second.create_image();
-  }
-
+  auto image = it->second.create_image();
   if (image)
     it->second.texture->Update(std::move(image));
   else

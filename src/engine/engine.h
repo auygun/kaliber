@@ -130,11 +130,9 @@ class Engine {
 
  private:
   // Class holding information about texture resources managed by engine.
-  // Texture is created from an image asset if asset_file is valid. Otherwise
-  // texture is created from the image returned by create_image callback.
+  // Texture is created from the image returned by create_image callback.
   struct TextureResource {
     std::shared_ptr<Texture> texture;
-    std::string asset_file;
     CreateImageCB create_image;
     bool persistent = false;
   };
