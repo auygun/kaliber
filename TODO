@@ -1,9 +1,6 @@
 TODO:
 - Sound after phone call
-- Randomize horizontal spawn point
-- Save settings
 - Save launch counter
-- Vibration fix.
 
 DONE:
 - Fix intersection test in targetting code.
@@ -22,3 +19,5 @@ DONE:
 - Move dimmer from credits to menu
 - High score animation
 - Menu colors
+- Randomize horizontal spawn point
+- Save settings
