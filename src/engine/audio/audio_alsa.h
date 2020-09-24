@@ -31,8 +31,8 @@ class AudioAlsa : public AudioBase {
   snd_pcm_t* device_;
 
   std::thread audio_thread_;
-  std::atomic<bool> terminate_audio_thread_ = false;
-  std::atomic<bool> suspend_audio_thread_ = false;
+  std::atomic<bool> terminate_audio_thread_{false};
+  std::atomic<bool> suspend_audio_thread_{false};
 
   size_t num_channels_ = 0;
   size_t sample_rate_ = 0;

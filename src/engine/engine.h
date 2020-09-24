@@ -143,7 +143,7 @@ class Engine {
 
   Renderer* renderer_ = nullptr;
 
-  Audio* audio_;
+  Audio* audio_ = nullptr;
 
   std::unique_ptr<Game> game_;
 
