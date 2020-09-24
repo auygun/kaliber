@@ -865,10 +865,10 @@ void Enemy::UpdateWave(float delta_time) {
 
   SpawnUnit(enemy_type, damage_type, pos, speed);
 
-  if (enemy_type == kEnemyType_DarkSkull) {
-    pos = {0, s.y / 2};
-    SpawnUnit(kEnemyType_PowerUp, kDamageType_Any, pos, 10);
-  }
+  // if (enemy_type == kEnemyType_DarkSkull) {
+  //   pos = {0, s.y / 2};
+  //   SpawnUnit(kEnemyType_PowerUp, kDamageType_Any, pos, 10);
+  // }
 }
 
 void Enemy::UpdateBoss(float delta_time) {
