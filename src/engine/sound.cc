@@ -27,9 +27,14 @@ std::array<std::unique_ptr<T[]>, 2> Deinterleave(size_t num_channels,
 
   if (num_channels == 1) {
     // Single channel.
-    channels[0] = std::make_unique<T[]>(num_samples);
-    for (int i = 0; i < num_samples; ++i)
-      channels[0].get()[i] = static_cast<T>(input_buffer[i]);
+    if constexpr(std::is_same<float, T>::value) {
+      channels[0] = std::make_unique<T[]>(num_samples);
+      memcpy(channels[0].get(), input_buffer, num_samples * sizeof(float));
+    } else {
+      channels[0] = std::make_unique<T[]>(num_samples);
+      for (int i = 0; i < num_samples; ++i)
+        channels[0].get()[i] = static_cast<T>(input_buffer[i]);
+    }
   } else {
     // Deinterleave into separate channels.
     channels[0] = std::make_unique<T[]>(num_samples);
@@ -229,27 +234,28 @@ void Sound::Preprocess(std::unique_ptr<float[]> input_buffer,
       back_buffer_[1] = std::move(channels[1]);
     num_samples_back_ = samples_per_channel;
   } else {
-    size_t resampled_num_samples =
-        ((float)system_hz / (float)sample_rate_) * samples_per_channel;
-    CHECK(resampled_num_samples == resampler_[0]->ChunkSize());
+    size_t num_resampled_samples = resampler_[0]->ChunkSize();
+    DCHECK(
+        num_resampled_samples ==
+        (int)(((float)system_hz / (float)sample_rate_) * samples_per_channel));
 
     if (!back_buffer_[0]) {
-      if (max_samples_ < resampled_num_samples)
-        max_samples_ = resampled_num_samples;
+      if (max_samples_ < num_resampled_samples)
+        max_samples_ = num_resampled_samples;
       back_buffer_[0] = std::make_unique<float[]>(max_samples_);
       if (num_channels_ == 2)
         back_buffer_[1] = std::make_unique<float[]>(max_samples_);
     }
+    num_samples_back_ = num_resampled_samples;
 
     // Resample to match the system sample rate.
     for (int i = 0; i < num_channels_; ++i) {
-      resampler_[i]->Resample(resampler_[i]->ChunkSize(), back_buffer_[i].get(),
+      resampler_[i]->Resample(num_resampled_samples, back_buffer_[i].get(),
                               [&](int frames, float* destination) {
                                 memcpy(destination, channels[i].get(),
                                        frames * sizeof(float));
                               });
     }
-    num_samples_back_ = resampled_num_samples;
   }
 }
 

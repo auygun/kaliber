@@ -37,8 +37,7 @@ class SincResampler {
   // are available to satisfy the request.
   typedef std::function<void(int frames, float* destination)> ReadCB;
 
-  // Constructs a SincResampler with the specified |read_cb|, which is used to
-  // acquire audio data for resampling.  |io_sample_rate_ratio| is the ratio
+  // Constructs a SincResampler.  |io_sample_rate_ratio| is the ratio
   // of input / output sample rates.  |request_frames| controls the size in
   // frames of the buffer requested by each |read_cb| call.  The value must be
   // greater than kKernelSize.  Specify kDefaultRequestSize if there are no
@@ -46,7 +45,7 @@ class SincResampler {
   SincResampler(double io_sample_rate_ratio, int request_frames);
   ~SincResampler();
 
-  // Resample |frames| of data from |read_cb_| into |destination|.
+  // Resample |frames| of data from |read_cb| into |destination|.
   void Resample(int frames, float* destination, ReadCB read_cb);
 
   // The maximum size in frames that guarantees Resample() will only make a
