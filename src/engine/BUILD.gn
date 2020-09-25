@@ -27,6 +27,8 @@ source_set("engine") {
         "input_event.h",
         "mesh.cc",
         "mesh.h",
+        "persistent_data.cc",
+        "persistent_data.h",
         "platform/asset_file.cc",
         "platform/asset_file.h",
         "platform/platform_base.cc",
