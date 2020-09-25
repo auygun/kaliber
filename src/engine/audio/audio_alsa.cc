@@ -161,7 +161,7 @@ size_t AudioAlsa::GetSampleRate() {
   return sample_rate_;
 }
 
-bool AudioAlsa::StartAudioThread() {
+void AudioAlsa::StartAudioThread() {
   LOG << "Starting audio thread.";
 
   DCHECK(!terminate_audio_thread_.load(std::memory_order_relaxed));

@@ -29,14 +29,14 @@ std::array<std::unique_ptr<T[]>, 2> Deinterleave(size_t num_channels,
     // Single channel.
     channels[0] = std::make_unique<T[]>(num_samples);
     for (int i = 0; i < num_samples; ++i)
-      channels[0].get()[i] = input_buffer[i];
+      channels[0].get()[i] = static_cast<T>(input_buffer[i]);
   } else {
     // Deinterleave into separate channels.
     channels[0] = std::make_unique<T[]>(num_samples);
     channels[1] = std::make_unique<T[]>(num_samples);
     for (int i = 0, j = 0; i < num_samples * 2; i += 2) {
-      channels[0].get()[j] = input_buffer[i];
-      channels[1].get()[j++] = input_buffer[i + 1];
+      channels[0].get()[j] = static_cast<T>(input_buffer[i]);
+      channels[1].get()[j++] = static_cast<T>(input_buffer[i + 1]);
     }
   }
 
@@ -95,8 +95,8 @@ bool Sound::Load(const std::string& file_name, bool stream) {
   size_t system_hz = Engine::Get().GetAudioSampleRate();
 
   if (is_streaming_sound_) {
-    resampler_ = std::make_unique<r8b::CDSPResampler16>(hz_, system_hz,
-                                                        kMaxSamplesPerChunk);
+    resampler_ = std::make_unique<r8b::CDSPResampler16>(
+        hz_, system_hz, kMaxSamplesPerChunk / mp3_dec_->info.channels);
 
     // Fill up buffers.
     StreamInternal(kMaxSamplesPerChunk, false);
@@ -112,8 +112,8 @@ bool Sound::Load(const std::string& file_name, bool stream) {
       resampler_.reset();
     }
   } else {
-    resampler_ = std::make_unique<r8b::CDSPResampler16>(hz_, system_hz,
-                                                        mp3_dec_->samples);
+    resampler_ = std::make_unique<r8b::CDSPResampler16>(
+        hz_, system_hz, mp3_dec_->samples / mp3_dec_->info.channels);
 
     // Decode entire file.
     StreamInternal(mp3_dec_->samples, false);
@@ -161,6 +161,7 @@ float* Sound::GetBuffer(int channel) const {
 
 bool Sound::StreamInternal(size_t num_samples, bool loop) {
   auto buffer = std::make_unique<float[]>(num_samples);
+  size_t samples_read_per_channel = 0;
 
   cur_sample_back_ = mp3_dec_->cur_sample;
 
@@ -173,8 +174,8 @@ bool Sound::StreamInternal(size_t num_samples, bool loop) {
       return false;
     }
 
-    num_samples_back_ = samples_read / mp3_dec_->info.channels;
-    if (!num_samples_back_ && loop) {
+    samples_read_per_channel = samples_read / mp3_dec_->info.channels;
+    if (!samples_read_per_channel && loop) {
       mp3dec_ex_seek(mp3_dec_.get(), 0);
       loop = false;
       continue;
@@ -182,32 +183,36 @@ bool Sound::StreamInternal(size_t num_samples, bool loop) {
     break;
   }
 
-  if (num_samples_back_)
-    Preprocess(std::move(buffer));
-  else
+  if (samples_read_per_channel) {
+    Preprocess(std::move(buffer), samples_read_per_channel);
+  } else {
+    num_samples_back_ = 0;
     eof_ = true;
+  }
 
   return true;
 }
 
-void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {
+void Sound::Preprocess(std::unique_ptr<float[]> input_buffer,
+                       size_t samples_per_channel) {
   size_t system_hz = Engine::Get().GetAudioSampleRate();
 
   if (system_hz == hz_) {
-    auto channels = Deinterleave<float>(num_channels_, num_samples_back_,
+    auto channels = Deinterleave<float>(num_channels_, samples_per_channel,
                                         input_buffer.get());
 
     // No need for resmapling.
     back_buffer_[0] = std::move(channels[0]);
     if (num_channels_ == 2)
       back_buffer_[1] = std::move(channels[1]);
+    num_samples_back_ = samples_per_channel;
   } else {
     // r8b resampler supports only double floating point type.
-    auto channels = Deinterleave<double>(num_channels_, num_samples_back_,
+    auto channels = Deinterleave<double>(num_channels_, samples_per_channel,
                                          input_buffer.get());
 
     size_t resampled_num_samples =
-        ((float)system_hz / (float)hz_) * num_samples_back_;
+        ((float)system_hz / (float)hz_) * samples_per_channel;
 
     if (!back_buffer_[0]) {
       if (max_samples_ < resampled_num_samples)
@@ -219,7 +224,7 @@ void Sound::Preprocess(std::unique_ptr<float[]> input_buffer) {
 
     // Resample to match the system sample rate.
     for (int i = 0; i < num_channels_; ++i) {
-      resampler_->oneshot(channels[i].get(), num_samples_back_,
+      resampler_->oneshot(channels[i].get(), samples_per_channel,
                           back_buffer_[i].get(), resampled_num_samples);
     }
     num_samples_back_ = resampled_num_samples;

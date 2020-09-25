@@ -68,7 +68,8 @@ class Sound {
 
   bool StreamInternal(size_t num_samples, bool loop);
 
-  void Preprocess(std::unique_ptr<float[]> input_buffer);
+  void Preprocess(std::unique_ptr<float[]> input_buffer,
+                  size_t samples_per_channel);
 };
 
 }  // namespace eng

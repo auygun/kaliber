@@ -38,7 +38,7 @@ class AudioAlsa : public AudioBase {
   size_t sample_rate_ = 0;
   size_t period_size_ = 0;
 
-  bool StartAudioThread();
+  void StartAudioThread();
   void TerminateAudioThread();
 
   void AudioThreadMain();
