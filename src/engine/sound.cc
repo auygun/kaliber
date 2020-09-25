@@ -45,12 +45,10 @@ std::array<std::unique_ptr<T[]>, 2> Deinterleave(size_t num_channels,
 
 std::unique_ptr<SincResampler> CreateResampler(int src_samle_rate,
                                                int dst_sample_rate,
-                                               size_t num_samples,
-                                               SincResampler::ReadCB read_cb) {
+                                               size_t num_samples) {
   const double io_ratio = static_cast<double>(src_samle_rate) /
                           static_cast<double>(dst_sample_rate);
-  auto resampler =
-      std::make_unique<SincResampler>(io_ratio, num_samples, read_cb);
+  auto resampler = std::make_unique<SincResampler>(io_ratio, num_samples);
   resampler->PrimeWithSilence();
   return resampler;
 }
@@ -109,11 +107,9 @@ bool Sound::Load(const std::string& file_name, bool stream) {
   if (is_streaming_sound_) {
     if (sample_rate_ != system_hz) {
       for (int i = 0; i < mp3_dec_->info.channels; ++i) {
-        resampler_[i] = CreateResampler(
-            sample_rate_, system_hz,
-            (int)kMaxSamplesPerChunk / mp3_dec_->info.channels,
-            std::bind(&Sound::ProvideInput, this, std::placeholders::_1,
-                      std::placeholders::_2));
+        resampler_[i] =
+            CreateResampler(sample_rate_, system_hz,
+                            (int)kMaxSamplesPerChunk / mp3_dec_->info.channels);
       }
     }
 
@@ -134,11 +130,9 @@ bool Sound::Load(const std::string& file_name, bool stream) {
   } else {
     if (sample_rate_ != system_hz) {
       for (int i = 0; i < mp3_dec_->info.channels; ++i) {
-        resampler_[i] = CreateResampler(
-            sample_rate_, system_hz,
-            mp3_dec_->samples / mp3_dec_->info.channels,
-            std::bind(&Sound::ProvideInput, this, std::placeholders::_1,
-                      std::placeholders::_2));
+        resampler_[i] =
+            CreateResampler(sample_rate_, system_hz,
+                            mp3_dec_->samples / mp3_dec_->info.channels);
       }
     }
 
@@ -249,21 +243,14 @@ void Sound::Preprocess(std::unique_ptr<float[]> input_buffer,
 
     // Resample to match the system sample rate.
     for (int i = 0; i < num_channels_; ++i) {
-      LOG << __func__
-          << "Resampling samples_per_channel: " << samples_per_channel
-          << " resampler_[i]->ChunkSize(): " << resampler_[i]->ChunkSize()
-          << " resampled_num_samples: " << resampled_num_samples;
-      input_ = channels[i].get();
-      resampler_[i]->Resample(resampler_[i]->ChunkSize(),
-                              back_buffer_[i].get());
+      resampler_[i]->Resample(resampler_[i]->ChunkSize(), back_buffer_[i].get(),
+                              [&](int frames, float* destination) {
+                                memcpy(destination, channels[i].get(),
+                                       frames * sizeof(float));
+                              });
     }
     num_samples_back_ = resampled_num_samples;
   }
-}
-
-void Sound::ProvideInput(int frames, float* destination) {
-  LOG << __func__ << "frames: " << frames;
-  memcpy(destination, input_, frames * sizeof(float));
 }
 
 }  // namespace eng

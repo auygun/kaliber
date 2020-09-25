@@ -43,13 +43,11 @@ class SincResampler {
   // frames of the buffer requested by each |read_cb| call.  The value must be
   // greater than kKernelSize.  Specify kDefaultRequestSize if there are no
   // request size constraints.
-  SincResampler(double io_sample_rate_ratio,
-                int request_frames,
-                ReadCB read_cb);
+  SincResampler(double io_sample_rate_ratio, int request_frames);
   ~SincResampler();
 
   // Resample |frames| of data from |read_cb_| into |destination|.
-  void Resample(int frames, float* destination);
+  void Resample(int frames, float* destination, ReadCB read_cb);
 
   // The maximum size in frames that guarantees Resample() will only make a
   // single call to |read_cb_| for more data.  Note: If PrimeWithSilence() is
@@ -116,9 +114,6 @@ class SincResampler {
 
   // The buffer is primed once at the very beginning of processing.
   bool buffer_primed_;
-
-  // Source of data for resampling.
-  ReadCB read_cb_;
 
   // The size (in samples) to request from each |read_cb_| execution.
   const int request_frames_;

@@ -62,8 +62,6 @@ class Sound {
 
   std::unique_ptr<base::SincResampler> resampler_[2];
 
-  float* input_ = nullptr;
-
   bool eof_ = false;
 
   bool is_streaming_sound_ = false;
@@ -72,8 +70,6 @@ class Sound {
 
   void Preprocess(std::unique_ptr<float[]> input_buffer,
                   size_t samples_per_channel);
-
-  void ProvideInput(int frames, float* destination);
 };
 
 }  // namespace eng

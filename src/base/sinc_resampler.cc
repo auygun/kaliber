@@ -147,11 +147,8 @@ int CalculateChunkSize(int block_size_, double io_ratio) {
 
 namespace base {
 
-SincResampler::SincResampler(double io_sample_rate_ratio,
-                             int request_frames,
-                             ReadCB read_cb)
+SincResampler::SincResampler(double io_sample_rate_ratio, int request_frames)
     : io_sample_rate_ratio_(io_sample_rate_ratio),
-      read_cb_(std::move(read_cb)),
       request_frames_(request_frames),
       input_buffer_size_(request_frames_ + kKernelSize),
       // Create input buffers with a 16-byte alignment for SSE optimizations.
@@ -260,12 +257,12 @@ void SincResampler::SetRatio(double io_sample_rate_ratio) {
   }
 }
 
-void SincResampler::Resample(int frames, float* destination) {
+void SincResampler::Resample(int frames, float* destination, ReadCB read_cb) {
   int remaining_frames = frames;
 
   // Step (1) -- Prime the input buffer at the start of the input stream.
   if (!buffer_primed_ && remaining_frames) {
-    read_cb_(request_frames_, r0_);
+    read_cb(request_frames_, r0_);
     buffer_primed_ = true;
   }
 
@@ -323,7 +320,7 @@ void SincResampler::Resample(int frames, float* destination) {
       UpdateRegions(true);
 
     // Step (5) -- Refresh the buffer with more input.
-    read_cb_(request_frames_, r0_);
+    read_cb(request_frames_, r0_);
   }
 }
 
