@@ -32,7 +32,7 @@ void AudioOboe::Resume() {
   RestartStream();
 }
 
-size_t AudioOboe::GetSampleRate() {
+int AudioOboe::GetHardwareSampleRate() {
   return stream_->getSampleRate();
 }
 

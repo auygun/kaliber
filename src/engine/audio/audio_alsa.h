@@ -24,7 +24,7 @@ class AudioAlsa : public AudioBase {
   void Suspend();
   void Resume();
 
-  size_t GetSampleRate();
+  int GetHardwareSampleRate();
 
  private:
   // Handle for the PCM device.
@@ -35,7 +35,7 @@ class AudioAlsa : public AudioBase {
   std::atomic<bool> suspend_audio_thread_{false};
 
   size_t num_channels_ = 0;
-  size_t sample_rate_ = 0;
+  int sample_rate_ = 0;
   size_t period_size_ = 0;
 
   void StartAudioThread();

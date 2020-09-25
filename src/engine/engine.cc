@@ -328,8 +328,8 @@ const std::string& Engine::GetDataPath() const {
   return platform_->GetDataPath();
 }
 
-size_t Engine::GetAudioSampleRate() {
-  return audio_->GetSampleRate();
+int Engine::GetAudioHardwareSampleRate() {
+  return audio_->GetHardwareSampleRate();
 }
 
 bool Engine::IsMobile() const {

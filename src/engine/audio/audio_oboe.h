@@ -23,7 +23,7 @@ class AudioOboe : public AudioBase {
   void Suspend();
   void Resume();
 
-  size_t GetSampleRate();
+  int GetHardwareSampleRate();
 
  private:
   class StreamCallback : public oboe::AudioStreamCallback {

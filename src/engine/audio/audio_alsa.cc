@@ -157,7 +157,7 @@ void AudioAlsa::Resume() {
   suspend_audio_thread_.store(false, std::memory_order_relaxed);
 }
 
-size_t AudioAlsa::GetSampleRate() {
+int AudioAlsa::GetHardwareSampleRate() {
   return sample_rate_;
 }
 

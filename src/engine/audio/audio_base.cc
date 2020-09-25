@@ -58,7 +58,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
 
       size_t channel_offset =
           (flags & AudioSample::kSimulateStereo) && !sound->is_streaming_sound()
-              ? sound->hz() / 10
+              ? sound->sample_rate() / 10
               : 0;
 
       DCHECK(num_samples || sound->is_streaming_sound());

@@ -120,7 +120,7 @@ class Engine {
 
   const std::string& GetDataPath() const;
 
-  size_t GetAudioSampleRate();
+  int GetAudioHardwareSampleRate();
 
   bool IsMobile() const;
 
