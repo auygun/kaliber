@@ -27,6 +27,8 @@ constexpr float kFadeSpeed = 0.2f;
 
 const char kSaveFileName[] = "woom";
 const char kHightScore[] = "high_score";
+const char kWave[] = "wave";
+const char kLaunchCount[] = "launch_count";
 
 }  // namespace
 
@@ -101,6 +103,8 @@ bool Demo::Initialize() {
   dimmer_.SetVisible(true);
   dimmer_active_ = true;
   dimmer_animator_.Attach(&dimmer_);
+
+  saved_data_[kLaunchCount] << (saved_data_.Get<int>(kLaunchCount, 0) + 1);
 
   EnterMenuState();
 
@@ -265,6 +269,9 @@ void Demo::UpdateGameState(float delta_time) {
 
     if (score_ > saved_data_.Get<int>(kHightScore, 0))
       saved_data_[kHightScore] << score_;
+
+    if (wave_ > saved_data_.Get<int>(kWave, 0))
+      saved_data_[kWave] << wave_;
   }
 
   hud_.Update(delta_time);
