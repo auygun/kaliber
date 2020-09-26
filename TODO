@@ -1,6 +1,4 @@
 TODO:
-- Sound after phone call
-- Save launch counter
 
 DONE:
 - Fix intersection test in targetting code.
@@ -21,3 +19,5 @@ DONE:
 - Menu colors
 - Randomize horizontal spawn point
 - Save settings
+- Sound after phone call
+- Save launch counter
