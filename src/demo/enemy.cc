@@ -213,9 +213,9 @@ void Enemy::SelectTarget(DamageType damage_type,
     float weapon_enemy_dist = weapon_enemy_dir.Magnitude();
     weapon_enemy_dir.Normalize();
     float cos_theta = weapon_enemy_dir.DotProduct(dir);
-    if (cos_theta > 0.95f)
-      candidates.push_back(
-          std::make_tuple(&e, cos_theta, weapon_enemy_dist, weapon_enemy_dir));
+
+    candidates.push_back(
+        std::make_tuple(&e, cos_theta, weapon_enemy_dist, weapon_enemy_dir));
   }
 
   if (candidates.empty())
@@ -249,15 +249,19 @@ void Enemy::SelectTarget(DamageType damage_type,
   std::sort(candidates.begin(), candidates.end(),
             [](auto& a, auto& b) { return std::get<1>(a) > std::get<1>(b); });
 
+  constexpr float threshold = 0.95f;
+
   EnemyUnit* best_enemy = nullptr;
   for (auto& cand : candidates) {
-    if (std::get<0>(cand)->damage_type == damage_type ||
-        std::get<0>(cand)->damage_type == kDamageType_Any) {
-      best_enemy = std::get<0>(cand);
+    auto [cand_enemy, cos_theta, cand_dist, cand_dir] = cand;
+    if ((cand_enemy->damage_type == damage_type ||
+         cand_enemy->damage_type == kDamageType_Any) &&
+        cos_theta > threshold) {
+      best_enemy = cand_enemy;
       break;
     }
   }
-  if (!best_enemy)
+  if (!best_enemy && std::get<1>(candidates[0]) > threshold)
     best_enemy = std::get<0>(candidates[0]);
 
   if (best_enemy) {
