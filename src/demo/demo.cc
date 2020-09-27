@@ -366,7 +366,7 @@ void Demo::StartNextStage(bool boss) {
         hud_.SetProgress(1);
 
         if (boss_fight_) {
-          player_.TakeDamage(-1);
+          player_.TakeDamage(-3);
           player_.AddNuke(1);
         }
 
