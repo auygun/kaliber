@@ -24,7 +24,7 @@ namespace {
 
 constexpr int idle1_frame_start[][3] = {{0, 50, -1},   {23, 73, -1},
                                         {-1, -1, 100}, {13, 33, -1},
-                                        {13, 33, 13},  {-1, -1, -1}};
+                                        {0, 0, 0},     {-1, -1, -1}};
 constexpr int idle2_frame_start[][3] = {{7, 57, -1},
                                         {30, 80, -1},
                                         {-1, -1, 107},
@@ -35,7 +35,7 @@ constexpr int idle1_frame_count[][3] = {{7, 7, -1},
                                         {7, 7, -1},
                                         {-1, -1, 7},
                                         {6, 6, -1},
-                                        {6, 6, 6}};
+                                        {0, 0, 0}};
 constexpr int idle2_frame_count[][3] = {{16, 16, -1},
                                         {16, 16, -1},
                                         {-1, -1, 16},
@@ -358,7 +358,7 @@ void Enemy::ResumeProgress() {
 
 void Enemy::StopAllEnemyUnits() {
   for (auto& e : enemies_) {
-    if (e.enemy_type == kEnemyType_Boss || e.marked_for_removal ||
+    if (e.enemy_type > kEnemyType_Unit_Last || e.marked_for_removal ||
         e.hit_points == 0)
       continue;
 
@@ -379,7 +379,7 @@ void Enemy::KillAllEnemyUnits(bool randomize_order) {
 
   for (auto& e : enemies_) {
     if (!e.marked_for_removal && e.hit_points > 0 &&
-        e.enemy_type != kEnemyType_Boss) {
+        e.enemy_type <= kEnemyType_Unit_Last) {
       if (randomize_order) {
         e.kill_timer = Lerp(0.0f, engine.GetScreenSize().y * 0.5f * 0.15f,
                             engine.GetRandomGenerator().GetFloat());
@@ -413,6 +413,11 @@ void Enemy::RemoveAll() {
     boss_animator_.SetMovement({0, boss_.GetScale().y * 0.99f}, 1);
     boss_animator_.Play(Animator::kMovement, false);
   }
+}
+
+void Enemy::Reset() {
+  seconds_since_last_power_up_ = 0;
+  seconds_to_next_power_up_ = 0;
 }
 
 void Enemy::OnWaveStarted(int wave, bool boss_fight) {
@@ -466,8 +471,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
       break;
     case kEnemyType_PowerUp:
       e.total_health = e.hit_points = 1;
-      e.sprite.Create("bug_tex", {10, 4});
-      e.sprite.Scale(0.4f);
+      e.sprite.Create("crate_tex");
       break;
     default:
       NOTREACHED << "- Unkown enemy type: " << enemy_type;
@@ -550,10 +554,14 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
 
   float max_distance =
       spawn_pos.y - game->GetPlayer().GetWeaponPos(kDamageType_Green).y;
+  if (enemy_type == kEnemyType_PowerUp)
+    max_distance /=2 ;
 
   Animator::Interpolator interpolator;
   if (boss_fight_)
     interpolator = std::bind(CatmullRom, std::placeholders::_1, 2.5f, 1.5f);
+  else if (enemy_type == kEnemyType_PowerUp)
+    interpolator = std::bind(CatmullRom, std::placeholders::_1, -9.0, 1.35f);
   else
     interpolator = std::bind(Acceleration, std::placeholders::_1, -0.15f);
   e.movement_animator.SetMovement({0, -max_distance}, speed, interpolator);
@@ -562,7 +570,8 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
     e.hit_points = 0;
     e.target.SetVisible(false);
     e.blast.SetVisible(false);
-    static_cast<Demo*>(engine.GetGame())->GetPlayer().TakeDamage(1);
+    if (e.enemy_type != kEnemyType_PowerUp)
+      static_cast<Demo*>(engine.GetGame())->GetPlayer().TakeDamage(1);
     e.sprite_animator.SetEndCallback(
         Animator::kBlending, [&]() -> void { e.marked_for_removal = true; });
     e.sprite_animator.SetBlending({1, 1, 1, 0}, 0.3f);
@@ -836,42 +845,49 @@ void Enemy::UpdateWave(float delta_time) {
     }
   }
 
-  if (enemy_type == kEnemyType_Invalid)
-    return;
+  if (enemy_type != kEnemyType_Invalid) {
+    // Do not spawn hard enemies during the first 2 waves.
+    if (enemy_type >= kEnemyType_Tank && wave_ <= 2)
+      enemy_type = kEnemyType_LightSkull;
 
-  // Do not spawn hard enemies during the first 2 waves.
-  if (enemy_type >= kEnemyType_Tank && wave_ <= 2)
-    enemy_type = kEnemyType_LightSkull;
+    // Do not spawn tank during the 3th. wave.
+    if (enemy_type == kEnemyType_Tank && wave_ == 3)
+      enemy_type = kEnemyType_LightSkull;
 
-  // Do not spawn tank during the 3th. wave.
-  if (enemy_type == kEnemyType_Tank && wave_ == 3)
-    enemy_type = kEnemyType_LightSkull;
+    // Do not spawn stealth enemy during the 4th. wave.
+    if (enemy_type == kEnemyType_Bug && wave_ == 4)
+      enemy_type = kEnemyType_LightSkull;
 
-  // Do not spawn stealth enemy during the 4th. wave.
-  if (enemy_type == kEnemyType_Bug && wave_ == 4)
-    enemy_type = kEnemyType_LightSkull;
+    DamageType damage_type = enemy_type == kEnemyType_Tank
+                                 ? kDamageType_Any
+                                 : (DamageType)(rnd.Roll(2) - 1);
 
-  DamageType damage_type = enemy_type == kEnemyType_Tank
-                               ? kDamageType_Any
-                               : (DamageType)(rnd.Roll(2) - 1);
+    Vector2 s = engine.GetScreenSize();
+    int col;
+    col = rnd.Roll(4) - 1;
+    if (col == last_spawn_col_)
+      col = (col + 1) % 4;
+    last_spawn_col_ = col;
+    float x = SnapSpawnPosX(col);
+    Vector2 pos = {x, s.y / 2};
+    float speed = enemy_type == kEnemyType_Tank
+                      ? 10.0f
+                      : (rnd.Roll(3) == 1 ? 6.0f : 10.0f);
 
-  Vector2 s = engine.GetScreenSize();
-  int col;
-  col = rnd.Roll(4) - 1;
-  if (col == last_spawn_col_)
-    col = (col + 1) % 4;
-  last_spawn_col_ = col;
-  float x = SnapSpawnPosX(col);
-  Vector2 pos = {x, s.y / 2};
-  float speed =
-      enemy_type == kEnemyType_Tank ? 10.0f : (rnd.Roll(3) == 1 ? 6.0f : 10.0f);
+    SpawnUnit(enemy_type, damage_type, pos, speed);
+  }
 
-  SpawnUnit(enemy_type, damage_type, pos, speed);
-
-  // if (enemy_type == kEnemyType_DarkSkull) {
-  //   pos = {0, s.y / 2};
-  //   SpawnUnit(kEnemyType_PowerUp, kDamageType_Any, pos, 10);
-  // }
+  seconds_since_last_power_up_ += delta_time;
+  if (seconds_since_last_power_up_ >= seconds_to_next_power_up_) {
+    if (seconds_to_next_power_up_ > 0) {
+      Vector2 s = engine.GetScreenSize();
+      Vector2 pos = {0, s.y / 2};
+      SpawnUnit(kEnemyType_PowerUp, kDamageType_Any, pos, 6);
+    }
+    seconds_since_last_power_up_ = 0;
+    seconds_to_next_power_up_ =
+        Lerp(2.0f * 60.0f, 3.0f * 60.0f, rnd.GetFloat());
+  }
 }
 
 void Enemy::UpdateBoss(float delta_time) {
@@ -984,6 +1000,7 @@ bool Enemy::CreateRenderResources() {
                                true);
   Engine::Get().SetImageSource("blast_tex", "enemy_anims_blast_ok.png", true);
   Engine::Get().SetImageSource("shield_tex", "woom_enemy_shield.png", true);
+  Engine::Get().SetImageSource("crate_tex", "crate.png", true);
 
   for (int i = 0; i < kEnemyType_Max; ++i)
     Engine::Get().SetImageSource(

@@ -47,6 +47,8 @@ class Enemy {
   void KillAllEnemyUnits(bool randomize_order = true);
   void RemoveAll();
 
+  void Reset();
+
   int num_enemies_killed_in_current_wave() const {
     return num_enemies_killed_in_current_wave_;
   }
@@ -115,6 +117,9 @@ class Enemy {
 
   float boss_spawn_duration_ = 0;
   float boss_spawn_cooldown_ = 0;
+
+  float seconds_since_last_power_up_ = 0;
+  float seconds_to_next_power_up_ = 0;
 
   bool paused_ = true;
 
