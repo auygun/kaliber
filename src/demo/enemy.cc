@@ -22,12 +22,9 @@ using namespace eng;
 
 namespace {
 
-constexpr int idle1_frame_start[][3] = {{0, 50, -1},
-                                        {23, 73, -1},
-                                        {-1, -1, 100},
-                                        {13, 33, -1},
-                                        {13, 33, 13},
-                                        {-1, -1, -1}};
+constexpr int idle1_frame_start[][3] = {{0, 50, -1},   {23, 73, -1},
+                                        {-1, -1, 100}, {13, 33, -1},
+                                        {13, 33, 13},  {-1, -1, -1}};
 constexpr int idle2_frame_start[][3] = {{7, 57, -1},
                                         {30, 80, -1},
                                         {-1, -1, 107},
@@ -361,10 +358,12 @@ void Enemy::ResumeProgress() {
 
 void Enemy::StopAllEnemyUnits() {
   for (auto& e : enemies_) {
-    if (e.enemy_type == kEnemyType_Boss)
+    if (e.enemy_type == kEnemyType_Boss || e.marked_for_removal ||
+        e.hit_points == 0)
       continue;
-    if (!e.marked_for_removal && e.hit_points > 0)
-      e.movement_animator.Pause(Animator::kMovement);
+
+    e.movement_animator.Pause(Animator::kMovement);
+
     if (e.stealth_active) {
       e.sprite_animator.Stop(Animator::kAllAnimations | Animator::kTimer);
       e.sprite_animator.SetBlending({1, 1, 1, 1}, 0.5f);
