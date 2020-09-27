@@ -52,7 +52,7 @@ class Player {
   eng::Animator beam_animator_[2];
   eng::Animator spark_animator_[2];
 
-  eng::SolidQuad health_bar_[2];
+  eng::ImageQuad health_bead_[3];
 
   eng::SolidQuad nuke_;
   eng::Animator nuke_animator_;

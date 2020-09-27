@@ -20,8 +20,8 @@ constexpr int wepon_cooldown_frame[] = {5, 13};
 constexpr int wepon_cooldown_frame_count = 3;
 constexpr int wepon_anim_speed = 48;
 
-const Vector4 kHealthBarColor[2] = {{0.5f, 0.5f, 0.5f, 1},
-                                    {0.161f, 0.89f, 0.322f, 1}};
+const Vector4 kHealthBeadColor[2] = {{0.5f, 0.5f, 0.5f, 1},
+                                    {0.366f, 0.79f, 0.612f, 1}};
 
 const Vector4 kNukeColor[2] = {{0.16f, 0.46f, 0.93f, 0},
                                {0.93f, 0.35f, 0.15f, 1}};
@@ -48,19 +48,16 @@ bool Player::Initialize() {
 
   Vector2 hb_pos = Engine::Get().GetScreenSize() / Vector2(2, -2) +
                    Vector2(0, weapon_[0].GetScale().y * 0.4f);
-  Vector2 hb_scale = {
-      ((weapon_[0].GetOffset() - weapon_[1].GetOffset()).Magnitude() -
-       weapon_[0].GetScale().x) *
-          1.1f,
-      weapon_[0].GetScale().y * 0.04f};
 
-  for (int i = 0; i < 2; ++i) {
-    health_bar_[i].SetZOrder(25);
-    health_bar_[i].Scale(hb_scale);
-    health_bar_[i].Translate(hb_pos * Vector2(0, 1));
-    health_bar_[i].SetColor(kHealthBarColor[i]);
-    health_bar_[i].SetVisible(true);
+  for (int i = 0; i < 3; ++i) {
+    health_bead_[i].Create("health_bead");
+    health_bead_[i].SetZOrder(25);
+    health_bead_[i].Translate(hb_pos * Vector2(0, 1));
+    health_bead_[i].SetColor(kHealthBeadColor[1]);
+    health_bead_[i].SetVisible(true);
   }
+  health_bead_[0].PlaceToLeftOf(health_bead_[1]);
+  health_bead_[2].PlaceToRightOf(health_bead_[1]);
 
   nuke_counter_.Create("nuke_counter_tex");
   nuke_counter_.SetZOrder(29);
@@ -131,11 +128,8 @@ void Player::TakeDamage(int damage) {
 
   hit_points_ = std::min(total_health_, std::max(0, hit_points_ - damage));
 
-  Vector2 s = health_bar_[0].GetScale();
-  s.x *= (float)hit_points_ / (float)total_health_;
-  float t = (s.x - health_bar_[1].GetScale().x) / 2;
-  health_bar_[1].SetScale(s);
-  health_bar_[1].Translate({t, 0});
+  for (int i = 0; i < 3; ++i)
+    health_bead_[i].SetColor(kHealthBeadColor[hit_points_ > i ? 1 : 0]);
 
   if (hit_points_ == 0)
     static_cast<Demo*>(Engine::Get().GetGame())->EnterGameOverState();
@@ -492,6 +486,7 @@ bool Player::CreateRenderResources() {
   Engine::Get().SetImageSource("nuke_symbol_tex", "nuke_frames.png", true);
   Engine::Get().SetImageSource("nuke_counter_tex",
                                std::bind(&Player::GetNukeCounterImage, this));
+  Engine::Get().SetImageSource("health_bead", "bead.png", true);
 
   return true;
 }
