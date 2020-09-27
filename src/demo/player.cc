@@ -81,9 +81,6 @@ bool Player::Initialize() {
   nuke_animator_.Attach(&nuke_);
 
   nuke_symbol_animator_.Attach(&nuke_symbol_);
-  nuke_symbol_animator_.SetEndCallback(Animator::kRotation, [&]() -> void {
-    nuke_symbol_.SetFrame(nuke_count_ > 0 ? 0 : 2);
-  });
 
   nuke_explosion_.SetSound(nuke_explosion_sound_);
   nuke_explosion_.SetVariate(false);
@@ -142,8 +139,9 @@ void Player::AddNuke(int n) {
 
   nuke_count_ = new_nuke_count;
   Engine::Get().RefreshImage("nuke_counter_tex");
-
   nuke_counter_.AutoScale();
+
+  nuke_symbol_.SetFrame(nuke_count_ > 0 ? 0 : 2);
 
   nuke_symbol_animator_.SetRotation(
       M_PI * 5, 2, std::bind(SmootherStep, std::placeholders::_1));
