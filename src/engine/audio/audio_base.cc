@@ -159,12 +159,10 @@ void AudioBase::DoStream(std::shared_ptr<AudioSample> sample, bool loop) {
 }
 
 void AudioBase::EndCallback(std::shared_ptr<AudioSample> sample) {
-  AudioSample* s = sample.get();
+  sample->active = false;
 
-  s->active = false;
-
-  if (s->end_cb)
-    s->end_cb();
+  if (sample->end_cb)
+    sample->end_cb();
 }
 
 }  // namespace eng

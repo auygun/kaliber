@@ -154,8 +154,7 @@ void AudioAlsa::Suspend() {
 void AudioAlsa::Resume() {
   DCHECK(!terminate_audio_thread_.load(std::memory_order_relaxed));
 
-  if (!terminate_audio_thread_.load(std::memory_order_relaxed))
-    suspend_audio_thread_.store(false, std::memory_order_relaxed);
+  suspend_audio_thread_.store(false, std::memory_order_relaxed);
 }
 
 int AudioAlsa::GetHardwareSampleRate() {
