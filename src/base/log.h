@@ -26,7 +26,7 @@
 #ifdef _DEBUG
 #define DLOG base::LogMessage(__FILE__, __LINE__).stream()
 #define DLOG_IF(condition) \
-  LAZY_STREAM(condition, base::LogMessage(__FILE__, __LINE__)).stream()
+  LAZY_STREAM(condition, base::LogMessage(__FILE__, __LINE__).stream())
 #define DCHECK(condition)                                            \
   LAZY_STREAM(!(condition),                                          \
               base::LogAbort::DCheck(__FILE__, __LINE__, #condition) \
