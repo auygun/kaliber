@@ -40,74 +40,6 @@ const Vector4 kHighScoreColor = {0.895f, 0.692f, 0.24f, 1};
 
 }  // namespace
 
-void Switch::Create(const std::string& asset_name,
-                    std::array<int, 2> num_frames,
-                    int frame1,
-                    int frame2,
-                    Closure pressed_cb,
-                    bool enabled) {
-  frame1_ = frame1;
-  frame2_ = frame2;
-  pressed_cb_ = std::move(pressed_cb);
-  enabled_ = enabled;
-
-  image_.Create(asset_name, num_frames);
-  image_.SetFrame(enabled ? frame1 : frame2);
-  image_.SetColor(kColorFadeOut);
-  image_.SetZOrder(41);
-  image_.Scale(0.7f);
-  image_.SetVisible(false);
-
-  animator_.Attach(&image_);
-}
-
-void Switch::Update(float delta_time) {
-  animator_.Update(delta_time);
-}
-
-bool Switch::OnInputEvent(eng::InputEvent* event) {
-  if (event->GetType() == InputEvent::kDragStart)
-    tap_pos_[0] = tap_pos_[1] = event->GetVector(0);
-  else if (event->GetType() == InputEvent::kDrag)
-    tap_pos_[1] = event->GetVector(0);
-
-  if (event->GetType() != InputEvent::kDragEnd)
-    return false;
-
-  if (!Intersection(image_.GetOffset(), image_.GetScale() * Vector2(1.2f, 2),
-                    tap_pos_[0]))
-    return false;
-  if (!Intersection(image_.GetOffset(), image_.GetScale() * Vector2(1.2f, 2),
-                    tap_pos_[1]))
-    return false;
-
-  SetEnabled(!enabled_);
-  pressed_cb_();
-
-  return true;
-}
-
-void Switch::Show() {
-  animator_.SetVisible(true);
-  animator_.SetBlending(enabled_ ? kColorSwitch[0] : kColorSwitch[1],
-                        kBlendingSpeed);
-  animator_.Play(Animator::kBlending, false);
-  animator_.SetEndCallback(Animator::kBlending, nullptr);
-}
-
-void Switch::Hide() {
-  animator_.SetBlending(kColorFadeOut, kBlendingSpeed);
-  animator_.Play(Animator::kBlending, false);
-  animator_.SetEndCallback(Animator::kBlending,
-                           [&]() -> void { animator_.SetVisible(false); });
-}
-
-void Switch::SetEnabled(bool enable) {
-  enabled_ = enable;
-  image_.SetFrame(enabled_ ? frame1_ : frame2_);
-  image_.SetColor(enabled_ ? kColorSwitch[0] : kColorSwitch[1]);
-}
-
 Menu::Menu() = default;
 
 Menu::~Menu() = default;
@@ -209,7 +141,7 @@ bool Menu::Initialize() {
         }
         game->saved_data()["audio"] << toggle_audio_.enabled();
       },
-      game->saved_data().Get<bool>("audio", true));
+      true, game->saved_data().Get<bool>("audio", true));
   toggle_audio_.image().SetOffset(Engine::Get().GetScreenSize() *
                                   Vector2(0, -0.25f));
 
@@ -220,7 +152,7 @@ bool Menu::Initialize() {
         game->SetEnableMusic(toggle_music_.enabled());
         game->saved_data()["music"] << toggle_music_.enabled();
       },
-      game->saved_data().Get<bool>("music", true));
+      true, game->saved_data().Get<bool>("music", true));
   toggle_music_.image().SetOffset(Engine::Get().GetScreenSize() *
                                   Vector2(0, -0.25f));
 
@@ -233,7 +165,7 @@ bool Menu::Initialize() {
         Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
         game->saved_data()["vibration"] << toggle_vibration_.enabled();
       },
-      game->saved_data().Get<bool>("vibration", true));
+      true, game->saved_data().Get<bool>("vibration", true));
   toggle_vibration_.image().SetOffset(Engine::Get().GetScreenSize() *
                                       Vector2(0, -0.25f));
 
@@ -480,4 +412,80 @@ bool Menu::IsAnimating() {
       return true;
   }
   return false;
+}
+
+//
+// Menu::Button implementation
+//
+
+void Menu::Button::Create(const std::string& asset_name,
+                          std::array<int, 2> num_frames,
+                          int frame1,
+                          int frame2,
+                          Closure pressed_cb,
+                          bool switch_control,
+                          bool enabled) {
+  frame1_ = frame1;
+  frame2_ = frame2;
+  pressed_cb_ = std::move(pressed_cb);
+  switch_control_ = switch_control;
+  enabled_ = enabled;
+
+  image_.Create(asset_name, num_frames);
+  image_.SetFrame(enabled ? frame1 : frame2);
+  image_.SetColor(kColorFadeOut);
+  image_.SetZOrder(41);
+  image_.Scale(0.7f);
+  image_.SetVisible(false);
+
+  animator_.Attach(&image_);
+}
+
+void Menu::Button::Update(float delta_time) {
+  animator_.Update(delta_time);
+}
+
+bool Menu::Button::OnInputEvent(eng::InputEvent* event) {
+  if (event->GetType() == InputEvent::kDragStart)
+    tap_pos_[0] = tap_pos_[1] = event->GetVector(0);
+  else if (event->GetType() == InputEvent::kDrag)
+    tap_pos_[1] = event->GetVector(0);
+
+  if (event->GetType() != InputEvent::kDragEnd)
+    return false;
+
+  if (!Intersection(image_.GetOffset(), image_.GetScale() * Vector2(1.2f, 2),
+                    tap_pos_[0]))
+    return false;
+  if (!Intersection(image_.GetOffset(), image_.GetScale() * Vector2(1.2f, 2),
+                    tap_pos_[1]))
+    return false;
+
+  SetEnabled(!enabled_);
+  pressed_cb_();
+
+  return true;
+}
+
+void Menu::Button::Show() {
+  animator_.SetVisible(true);
+  animator_.SetBlending(enabled_ ? kColorSwitch[0] : kColorSwitch[1],
+                        kBlendingSpeed);
+  animator_.Play(Animator::kBlending, false);
+  animator_.SetEndCallback(Animator::kBlending, nullptr);
+}
+
+void Menu::Button::Hide() {
+  animator_.SetBlending(kColorFadeOut, kBlendingSpeed);
+  animator_.Play(Animator::kBlending, false);
+  animator_.SetEndCallback(Animator::kBlending,
+                           [&]() -> void { animator_.SetVisible(false); });
+}
+
+void Menu::Button::SetEnabled(bool enable) {
+  if (switch_control_) {
+    enabled_ = enable;
+    image_.SetFrame(enabled_ ? frame1_ : frame2_);
+    image_.SetColor(enabled_ ? kColorSwitch[0] : kColorSwitch[1]);
+  }
 }
