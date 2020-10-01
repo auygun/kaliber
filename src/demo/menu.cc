@@ -38,6 +38,9 @@ constexpr float kFadeSpeed = 0.2f;
 
 const Vector4 kHighScoreColor = {0.895f, 0.692f, 0.24f, 1};
 
+const char kLastWave[] = "last_wave";
+const char kStartingWave[] = "starting_wave";
+
 }  // namespace
 
 Menu::Menu() = default;
@@ -186,6 +189,44 @@ bool Menu::Initialize() {
 
   high_score_animator_.Attach(&high_score_);
 
+  start_from_wave_ = game->saved_data().Get<int>(kStartingWave, 1);
+  starting_wave_.Create("starting_wave",
+                        game->saved_data().Get<int>(kLastWave, 1),
+                        start_from_wave_ - 1);
+  starting_wave_.image().SetOffset(Engine::Get().GetScreenSize() *
+                                   Vector2(0.35, 0));
+
+  wave_up_.Create(
+      "buttons_tex", {4, 2}, 0, 0,
+      [&] {
+        Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
+        if (++start_from_wave_ > game->saved_data().Get<int>(kLastWave, 1))
+          start_from_wave_ = 1;
+        starting_wave_.image().SetFrame(start_from_wave_ - 1);
+        game->saved_data()[kStartingWave] << start_from_wave_;
+      },
+      false, true);
+  wave_up_.image().SetOffset(Engine::Get().GetScreenSize() * Vector2(0.35, 0));
+
+  wave_down_.Create(
+      "buttons_tex", {4, 2}, 0, 0,
+      [&] {
+        Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
+        if (--start_from_wave_ < 1)
+          start_from_wave_ = game->saved_data().Get<int>(kLastWave, 1);
+        starting_wave_.image().SetFrame(start_from_wave_ - 1);
+        game->saved_data()[kStartingWave] << start_from_wave_;
+      },
+      false, true);
+  wave_down_.image().SetOffset(Engine::Get().GetScreenSize() *
+                               Vector2(0.35, 0));
+
+  wave_up_.image().PlaceToTopOf(starting_wave_.image());
+  wave_up_.image().Translate({0, starting_wave_.image().GetScale().y * 0.7f});
+  wave_down_.image().PlaceToBottomOf(starting_wave_.image());
+  wave_down_.image().Translate(
+      {0, starting_wave_.image().GetScale().y * -0.5f});
+
   return true;
 }
 
@@ -204,12 +245,18 @@ void Menu::Update(float delta_time) {
   toggle_vibration_.Update(delta_time);
 
   high_score_animator_.Update(delta_time);
+
+  starting_wave_.Update(delta_time);
+  wave_up_.Update(delta_time);
+  wave_down_.Update(delta_time);
 }
 
 void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
   if (toggle_audio_.OnInputEvent(event.get()) ||
       toggle_music_.OnInputEvent(event.get()) ||
-      toggle_vibration_.OnInputEvent(event.get()))
+      toggle_vibration_.OnInputEvent(event.get()) ||
+      (wave_up_.image().IsVisible() && wave_up_.OnInputEvent(event.get())) ||
+      (wave_down_.image().IsVisible() && wave_down_.OnInputEvent(event.get())))
     return;
 
   if (event->GetType() == InputEvent::kDragStart)
@@ -314,6 +361,15 @@ void Menu::Show() {
   toggle_audio_.Show();
   toggle_music_.Show();
   toggle_vibration_.Show();
+
+  Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
+
+  if (!items_[kNewGame].hide && game->saved_data().Get<int>(kLastWave, 1) > 1) {
+    starting_wave_.SetMax(game->saved_data().Get<int>(kLastWave, 1));
+    starting_wave_.Show();
+    wave_up_.Show();
+    wave_down_.Show();
+  }
 }
 
 void Menu::Hide() {
@@ -353,6 +409,12 @@ void Menu::Hide() {
   toggle_audio_.Hide();
   toggle_music_.Hide();
   toggle_vibration_.Hide();
+
+  if (starting_wave_.image().IsVisible()) {
+    starting_wave_.Hide();
+    wave_up_.Hide();
+    wave_down_.Hide();
+  }
 }
 
 bool Menu::CreateRenderResources() {
@@ -488,4 +550,83 @@ void Menu::Button::SetEnabled(bool enable) {
     image_.SetFrame(enabled_ ? frame1_ : frame2_);
     image_.SetColor(enabled_ ? kColorSwitch[0] : kColorSwitch[1]);
   }
+}
+
+//
+// Menu::Radio implementation
+//
+
+void Menu::Radio::Create(const std::string& asset_name, int max, int cur) {
+  max_ = max;
+  asset_name_ = asset_name;
+
+  Engine::Get().SetImageSource(asset_name,
+                               std::bind(&Radio::CreateImage, this));
+
+  options_.Create(asset_name, {1, max});
+  options_.SetZOrder(41);
+  options_.SetColor(kColorFadeOut);
+  options_.SetFrame(cur);
+  options_.SetVisible(false);
+
+  animator_.Attach(&options_);
+}
+
+void Menu::Radio::Update(float delta_time) {
+  animator_.Update(delta_time);
+}
+
+bool Menu::Radio::OnInputEvent(eng::InputEvent* event) {
+  return false;
+}
+
+void Menu::Radio::Show() {
+  animator_.SetVisible(true);
+  animator_.SetBlending(kHighScoreColor, kBlendingSpeed);
+  animator_.Play(Animator::kBlending, false);
+  animator_.SetEndCallback(Animator::kBlending, nullptr);
+}
+
+void Menu::Radio::Hide() {
+  animator_.SetBlending(kColorFadeOut, kBlendingSpeed);
+  animator_.Play(Animator::kBlending, false);
+  animator_.SetEndCallback(Animator::kBlending,
+                           [&]() -> void { animator_.SetVisible(false); });
+}
+
+void Menu::Radio::SetMax(int max) {
+  max_ = max;
+  Engine::Get().RefreshImage(asset_name_);
+  options_.Create(asset_name_, {1, max});
+}
+
+std::unique_ptr<eng::Image> Menu::Radio::CreateImage() {
+  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+
+  int max_width = 0;
+  std::vector<int> width;
+  for (int i = 0; i < max_; ++i) {
+    int w, h;
+    font.CalculateBoundingBox(std::to_string(i + 1), w, h);
+    width.push_back(w);
+    if (w > max_width)
+      max_width = w;
+  }
+
+  int line_height = static_cast<int>(font.GetLineHeight() * 1.5f);
+
+  auto image = std::make_unique<Image>();
+  image->Create(max_width, line_height * max_);
+  image->Clear({1, 1, 1, 0});
+
+  for (int i = 0; i < max_; ++i) {
+    float x = (image->GetWidth() - width[i]) / 2;
+    float y = line_height * i;
+    font.Print(x, y, std::to_string(i + 1), image->GetBuffer(),
+               image->GetWidth());
+  }
+
+  image->Compress();
+
+  return image;
 }

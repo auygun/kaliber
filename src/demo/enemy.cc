@@ -555,7 +555,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   float max_distance =
       spawn_pos.y - game->GetPlayer().GetWeaponPos(kDamageType_Green).y;
   if (enemy_type == kEnemyType_PowerUp)
-    max_distance /=2 ;
+    max_distance /= 2;
 
   Animator::Interpolator interpolator;
   if (boss_fight_)

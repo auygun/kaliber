@@ -27,8 +27,9 @@ constexpr float kFadeSpeed = 0.2f;
 
 const char kSaveFileName[] = "woom";
 const char kHightScore[] = "high_score";
-const char kWave[] = "wave";
+const char kLastWave[] = "last_wave";
 const char kLaunchCount[] = "launch_count";
+const char kStartingWave[] = "starting_wave";
 
 }  // namespace
 
@@ -274,10 +275,10 @@ void Demo::UpdateGameState(float delta_time) {
 
     if (score_ > saved_data_.Get<int>(kHightScore, 0))
       saved_data_[kHightScore] << score_;
-
-    if (wave_ > saved_data_.Get<int>(kWave, 0))
-      saved_data_[kWave] << wave_;
   }
+
+  if (wave_ > saved_data_.Get<int>(kLastWave, 0))
+    saved_data_[kLastWave] << wave_;
 
   hud_.Update(delta_time);
   sky_.Update(delta_time);
@@ -294,11 +295,12 @@ void Demo::UpdateGameState(float delta_time) {
   }
 
   if (enemy_.num_enemies_killed_in_current_wave() != last_num_enemies_killed_) {
+    bool no_boss = (last_num_enemies_killed_ == -1);
     last_num_enemies_killed_ = enemy_.num_enemies_killed_in_current_wave();
     int enemies_remaining = total_enemies_ - last_num_enemies_killed_;
 
     if (enemies_remaining <= 0)
-      StartNextStage(wave_ && !(wave_ % 3));
+      StartNextStage(wave_ && !(wave_ % 3) && !no_boss);
     else
       hud_.SetProgress((float)enemies_remaining / (float)total_enemies_);
   }
@@ -310,7 +312,7 @@ void Demo::Continue() {
 
 void Demo::StartNewGame() {
   score_ = add_score_ = 0;
-  wave_ = 0;
+  wave_ = saved_data_.Get<int>(kStartingWave, 1) - 1;
   last_num_enemies_killed_ = -1;
   total_enemies_ = 0;
   waiting_for_next_wave_ = false;

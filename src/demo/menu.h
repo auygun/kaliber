@@ -82,6 +82,35 @@ class Menu {
     void SetEnabled(bool enable);
   };
 
+  class Radio {
+   public:
+    Radio() = default;
+    ~Radio() = default;
+
+    void Create(const std::string& asset_name, int max, int cur);
+
+    void Update(float delta_time);
+
+    bool OnInputEvent(eng::InputEvent* event);
+
+    void Show();
+    void Hide();
+
+    void SetMax(int max);
+
+    eng::ImageQuad& image() { return options_; };
+
+   private:
+    eng::ImageQuad options_;
+    eng::Animator animator_;
+
+    int max_ = 0;
+
+    std::string asset_name_;
+
+    std::unique_ptr<eng::Image> CreateImage();
+  };
+
   struct Item {
     eng::ImageQuad text;
     eng::Animator text_animator;
@@ -112,6 +141,12 @@ class Menu {
 
   eng::ImageQuad high_score_;
   eng::Animator high_score_animator_;
+
+  int start_from_wave_ = 1;
+
+  Radio starting_wave_;
+  Button wave_up_;
+  Button wave_down_;
 
   bool CreateRenderResources();
 
