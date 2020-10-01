@@ -176,6 +176,11 @@ void Demo::EnterMenuState() {
   if (state_ == kMenu)
     return;
 
+  player_.OnInputEvent(
+      std::make_unique<InputEvent>(InputEvent::kDragCancel, (size_t)0));
+  player_.OnInputEvent(
+      std::make_unique<InputEvent>(InputEvent::kDragCancel, (size_t)1));
+
   Dimmer(true);
 
   if (state_ == kState_Invalid || state_ == kGameOver) {

@@ -149,6 +149,9 @@ void Player::AddNuke(int n) {
 }
 
 void Player::Reset() {
+  DragCancel(0);
+  DragCancel(1);
+
   TakeDamage(-total_health_);
 
   nuke_count_ = 2;
