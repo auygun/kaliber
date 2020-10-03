@@ -120,6 +120,7 @@ class Enemy {
 
   float seconds_since_last_power_up_ = 0;
   float seconds_to_next_power_up_ = 0;
+  float power_up_spawn_factor_ = 0;
 
   bool paused_ = true;
 

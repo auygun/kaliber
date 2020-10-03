@@ -154,7 +154,7 @@ void Player::Reset() {
 
   TakeDamage(-total_health_);
 
-  nuke_count_ = 2;
+  nuke_count_ = 1;
   Engine::Get().RefreshImage("nuke_counter_tex");
 
   nuke_counter_.AutoScale();

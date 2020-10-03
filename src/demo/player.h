@@ -36,6 +36,8 @@ class Player {
   base::Vector2 GetWeaponPos(DamageType type) const;
   base::Vector2 GetWeaponScale() const;
 
+  int nuke_count() { return nuke_count_; }
+
  private:
   std::shared_ptr<eng::Sound> nuke_explosion_sound_;
   std::shared_ptr<eng::Sound> laser_shot_sound_;
