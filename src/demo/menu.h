@@ -43,6 +43,8 @@ class Menu {
 
   Option selected_option() const { return selected_option_; }
 
+  int start_from_wave() { return start_from_wave_; }
+
  private:
   class Button {
    public:
@@ -87,7 +89,7 @@ class Menu {
     Radio() = default;
     ~Radio() = default;
 
-    void Create(const std::string& asset_name, int max, int cur);
+    void Create(const std::string& asset_name);
 
     void Update(float delta_time);
 
@@ -96,17 +98,11 @@ class Menu {
     void Show();
     void Hide();
 
-    void SetMax(int max);
-
     eng::ImageQuad& image() { return options_; };
 
    private:
     eng::ImageQuad options_;
     eng::Animator animator_;
-
-    int max_ = 0;
-
-    std::string asset_name_;
 
     std::unique_ptr<eng::Image> CreateImage();
   };

@@ -29,7 +29,6 @@ const char kSaveFileName[] = "woom";
 const char kHightScore[] = "high_score";
 const char kLastWave[] = "last_wave";
 const char kLaunchCount[] = "launch_count";
-const char kStartingWave[] = "starting_wave";
 
 }  // namespace
 
@@ -312,7 +311,7 @@ void Demo::Continue() {
 
 void Demo::StartNewGame() {
   score_ = add_score_ = 0;
-  wave_ = saved_data_.Get<int>(kStartingWave, 1) - 1;
+  wave_ = menu_.start_from_wave() - 1;
   last_num_enemies_killed_ = -1;
   total_enemies_ = 0;
   waiting_for_next_wave_ = false;
