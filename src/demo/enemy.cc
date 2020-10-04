@@ -24,7 +24,7 @@ namespace {
 
 constexpr int idle1_frame_start[][3] = {{0, 50, -1},   {23, 73, -1},
                                         {-1, -1, 100}, {13, 33, -1},
-                                        {0, 0, 0},     {-1, -1, -1}};
+                                        {-1, -1, 0},   {-1, -1, -1}};
 constexpr int idle2_frame_start[][3] = {{7, 57, -1},
                                         {30, 80, -1},
                                         {-1, -1, 107},
@@ -35,7 +35,7 @@ constexpr int idle1_frame_count[][3] = {{7, 7, -1},
                                         {7, 7, -1},
                                         {-1, -1, 7},
                                         {6, 6, -1},
-                                        {0, 0, 0}};
+                                        {0, 0, 4}};
 constexpr int idle2_frame_count[][3] = {{16, 16, -1},
                                         {16, 16, -1},
                                         {-1, -1, 16},
@@ -472,7 +472,8 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
       break;
     case kEnemyType_PowerUp:
       e.total_health = e.hit_points = 1;
-      e.sprite.Create("crate_tex");
+      e.sprite.Create("crate_tex", {8, 3});
+      e.sprite.Scale(0.7f);
       break;
     default:
       NOTREACHED << "- Unkown enemy type: " << enemy_type;
@@ -498,7 +499,12 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.target.SetZOrder(12);
   e.target.SetOffset(spawn_pos);
 
-  e.blast.Create("blast_tex", {6, 2});
+  if (enemy_type == kEnemyType_PowerUp) {
+    e.blast.Create("crate_tex", {8, 3});
+    e.blast.Scale(0.7f);
+  } else {
+    e.blast.Create("blast_tex", {6, 2});
+  }
   e.blast.SetZOrder(12);
   e.blast.SetOffset(spawn_pos);
 
@@ -527,7 +533,10 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
 
   e.blast_animator.SetEndCallback(Animator::kFrames,
                                   [&]() -> void { e.blast.SetVisible(false); });
-  if (damage_type == kDamageType_Green) {
+  if (enemy_type == kEnemyType_PowerUp) {
+    e.blast.SetFrame(8);
+    e.blast_animator.SetFrames(12, 16);
+  } else if (damage_type == kDamageType_Green) {
     e.blast.SetFrame(0);
     e.blast_animator.SetFrames(6, 18);
   } else {
@@ -1003,7 +1012,7 @@ bool Enemy::CreateRenderResources() {
                                true);
   Engine::Get().SetImageSource("blast_tex", "enemy_anims_blast_ok.png", true);
   Engine::Get().SetImageSource("shield_tex", "woom_enemy_shield.png", true);
-  Engine::Get().SetImageSource("crate_tex", "crate.png", true);
+  Engine::Get().SetImageSource("crate_tex", "nuke_pack_OK.png", true);
 
   for (int i = 0; i < kEnemyType_Max; ++i)
     Engine::Get().SetImageSource(
