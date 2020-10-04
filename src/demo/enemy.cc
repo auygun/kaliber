@@ -432,7 +432,7 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   paused_ = false;
   wave_ = wave;
   boss_fight_ = boss_fight;
-  power_up_spawn_factor_ = 1.4025f - (0.1724f * log((float)wave));
+  power_up_spawn_factor_ = 1.4f - (0.2076f * log((float)wave));
 
   if (boss_fight)
     SpawnBoss();
@@ -898,7 +898,7 @@ void Enemy::UpdateWave(float delta_time) {
     seconds_since_last_power_up_ = 0;
     seconds_to_next_power_up_ =
         Lerp(2.0f * 60.0f * power_up_spawn_factor_,
-             3.0f * 60.0f * power_up_spawn_factor_, rnd.GetFloat());
+             2.5f * 60.0f * power_up_spawn_factor_, rnd.GetFloat());
   }
 }
 
