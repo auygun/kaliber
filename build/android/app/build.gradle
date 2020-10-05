@@ -5,8 +5,8 @@ android {
 
     defaultConfig {
         applicationId = 'com.woom.game'
-        minSdkVersion 14
-        targetSdkVersion 28
+        minSdkVersion 21
+        targetSdkVersion 29
         externalNativeBuild {
             cmake {
                 arguments '-DANDROID_STL=c++_static'
