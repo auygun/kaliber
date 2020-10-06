@@ -473,7 +473,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
     case kEnemyType_PowerUp:
       e.total_health = e.hit_points = 1;
       e.sprite.Create("crate_tex", {8, 3});
-      e.sprite.Scale(0.7f);
+      // e.sprite.Scale(0.7f);
       break;
     default:
       NOTREACHED << "- Unkown enemy type: " << enemy_type;
@@ -501,7 +501,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
 
   if (enemy_type == kEnemyType_PowerUp) {
     e.blast.Create("crate_tex", {8, 3});
-    e.blast.Scale(0.7f);
+    // e.blast.Scale(0.7f);
   } else {
     e.blast.Create("blast_tex", {6, 2});
   }
