@@ -580,7 +580,9 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
     e.hit_points = 0;
     e.target.SetVisible(false);
     e.blast.SetVisible(false);
-    if (e.enemy_type != kEnemyType_PowerUp)
+    if (e.enemy_type == kEnemyType_PowerUp)
+      seconds_to_next_power_up_ *= 0.5f;
+    else
       static_cast<Demo*>(engine.GetGame())->GetPlayer().TakeDamage(1);
     e.sprite_animator.SetEndCallback(
         Animator::kBlending, [&]() -> void { e.marked_for_removal = true; });
