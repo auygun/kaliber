@@ -19,7 +19,7 @@ void SolidQuad::Draw(float frame_frac) {
   shader->SetUniform("scale", scale_);
   shader->SetUniform("pivot", pivot_);
   shader->SetUniform("rotation", rotation_);
-  shader->SetUniform("projection", Engine::Get().GetProjectionMarix());
+  shader->SetUniform("projection", Engine::Get().GetProjectionMatrix());
   shader->SetUniform("color", color_);
 
   Engine::Get().GetQuad()->Draw();

@@ -112,7 +112,7 @@ class Engine {
   // Return screen size in viewport scale.
   base::Vector2 GetScreenSize() const { return screen_size_; }
 
-  const base::Matrix4x4& GetProjectionMarix() const { return projection_; }
+  const base::Matrix4x4& GetProjectionMatrix() const { return projection_; }
 
   int GetDeviceDpi() const;
 

@@ -67,7 +67,7 @@ void ImageQuad::Draw(float frame_frac) {
   shader->SetUniform("rotation", rotation_);
   shader->SetUniform("tex_offset", GetUVOffset(current_frame_));
   shader->SetUniform("tex_scale", tex_scale);
-  shader->SetUniform("projection", Engine::Get().GetProjectionMarix());
+  shader->SetUniform("projection", Engine::Get().GetProjectionMatrix());
   shader->SetUniform("color", color_);
   shader->SetUniform("texture", 0);
 
