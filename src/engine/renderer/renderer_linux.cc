@@ -20,8 +20,8 @@ void Renderer::Shutdown() {
 }
 
 bool Renderer::CreateWindow() {
-  screen_width_ = 1280;
-  screen_height_ = 1024;
+  screen_width_ = 800;
+  screen_height_ = 1205;
 
   // Try to open the local display.
   display_ = XOpenDisplay(NULL);

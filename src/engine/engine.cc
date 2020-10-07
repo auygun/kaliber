@@ -68,6 +68,8 @@ bool Engine::Initialize() {
     projection_ = base::Ortho(-1.0, 1.0, -aspect_ratio, aspect_ratio);
   }
 
+  LOG << "image scale factor: " << GetImageScaleFactor();
+
   if (renderer_->SupportsDXT5()) {
     tex_comp_alpha_ = TextureCompressor::Create(TextureCompressor::kFormatDXT5);
   } else if (renderer_->SupportsATC()) {
@@ -95,7 +97,7 @@ bool Engine::Initialize() {
 
   game_ = GameFactoryBase::CreateGame("");
   if (!game_) {
-    printf("No game found to run.\n");
+    LOG << "No game found to run.";
     return false;
   }
 
@@ -318,6 +320,12 @@ int Engine::GetScreenHeight() const {
 
 int Engine::GetDeviceDpi() const {
   return platform_->GetDeviceDpi();
+}
+
+float Engine::GetImageScaleFactor() const {
+  float width_inch = static_cast<float>(renderer_->screen_width()) /
+         static_cast<float>(platform_->GetDeviceDpi());
+  return 2.57143f / width_inch;
 }
 
 const std::string& Engine::GetRootPath() const {

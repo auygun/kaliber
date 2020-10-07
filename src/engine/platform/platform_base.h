@@ -37,7 +37,7 @@ class PlatformBase {
   base::Timer timer_;
 
   bool mobile_device_ = false;
-  int device_dpi_ = 200;
+  int device_dpi_ = 100;
   std::string root_path_;
   std::string data_path_;
 

@@ -34,7 +34,9 @@ void ImageQuad::AutoScale() {
   auto& engine = Engine::Get();
   Vector2 dimensions = {GetFrameWidth(), GetFrameHeight()};
   SetScale(engine.ToScale(dimensions));
-  Scale((float)engine.GetDeviceDpi() / engine.image_dpi());
+  float s =
+      static_cast<float>(engine.image_dpi()) * engine.GetImageScaleFactor();
+  Scale(static_cast<float>(engine.GetDeviceDpi()) / s);
 }
 
 void ImageQuad::SetFrame(size_t frame) {

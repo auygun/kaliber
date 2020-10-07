@@ -187,10 +187,8 @@ bool Renderer::InitCommon() {
   }
 
   // Ancient hardware is not supported.
-  if (!npot_) {
+  if (!npot_)
     LOG << "NPOT not supported.";
-    return false;
-  }
 
   if (vertex_array_objects_)
     LOG << "Supports Vertex Array Objects.";

@@ -116,6 +116,8 @@ class Engine {
 
   int GetDeviceDpi() const;
 
+  float GetImageScaleFactor() const;
+
   const std::string& GetRootPath() const;
 
   const std::string& GetDataPath() const;
