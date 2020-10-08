@@ -86,6 +86,7 @@ class Enemy {
     eng::Animator health_animator;
     eng::Animator score_animator;
 
+    eng::SoundPlayer spawn;
     eng::SoundPlayer explosion;
     eng::SoundPlayer stealth;
     eng::SoundPlayer shield_on;
@@ -102,6 +103,8 @@ class Enemy {
   std::shared_ptr<eng::Sound> stealth_sound_;
   std::shared_ptr<eng::Sound> shield_on_sound_;
   std::shared_ptr<eng::Sound> hit_sound_;
+  std::shared_ptr<eng::Sound> power_up_spawn_sound_;
+  std::shared_ptr<eng::Sound> power_up_pick_sound_;
 
   std::list<EnemyUnit> enemies_;
 

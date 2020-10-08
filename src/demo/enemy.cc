@@ -101,6 +101,14 @@ bool Enemy::Initialize() {
   if (!hit_sound_->Load("hit.mp3", false))
     return false;
 
+  power_up_spawn_sound_ = std::make_shared<Sound>();
+  if (!power_up_spawn_sound_->Load("powerup-spawn.mp3", false))
+    return false;
+
+  power_up_pick_sound_ = std::make_shared<Sound>();
+  if (!power_up_pick_sound_->Load("powerup-pick.mp3", false))
+    return false;
+
   if (!CreateRenderResources())
     return false;
 
@@ -473,7 +481,6 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
     case kEnemyType_PowerUp:
       e.total_health = e.hit_points = 1;
       e.sprite.Create("crate_tex", {8, 3});
-      // e.sprite.Scale(0.7f);
       break;
     default:
       NOTREACHED << "- Unkown enemy type: " << enemy_type;
@@ -499,12 +506,10 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.target.SetZOrder(12);
   e.target.SetOffset(spawn_pos);
 
-  if (enemy_type == kEnemyType_PowerUp) {
+  if (enemy_type == kEnemyType_PowerUp)
     e.blast.Create("crate_tex", {8, 3});
-    // e.blast.Scale(0.7f);
-  } else {
+  else
     e.blast.Create("blast_tex", {6, 2});
-  }
   e.blast.SetZOrder(12);
   e.blast.SetOffset(spawn_pos);
 
@@ -598,10 +603,18 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.movement_animator.Attach(&e.score);
   e.movement_animator.Play(Animator::kMovement, false);
 
-  e.explosion.SetSound(explosion_sound_);
-  e.explosion.SetVariate(true);
-  e.explosion.SetSimulateStereo(true);
-  e.explosion.SetMaxAplitude(0.9f);
+  if (e.enemy_type == kEnemyType_PowerUp) {
+    e.explosion.SetSound(power_up_pick_sound_);
+
+    e.spawn.SetSound(power_up_spawn_sound_);
+    e.spawn.SetMaxAplitude(2.0f);
+    e.spawn.Play(false);
+  } else {
+    e.explosion.SetSound(explosion_sound_);
+    e.explosion.SetVariate(true);
+    e.explosion.SetSimulateStereo(true);
+    e.explosion.SetMaxAplitude(0.9f);
+  }
 
   e.stealth.SetSound(stealth_sound_);
   e.stealth.SetVariate(false);
@@ -737,6 +750,8 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
     target->health_base.SetVisible(false);
     target->health_bar.SetVisible(false);
     target->target.SetVisible(false);
+
+    target->spawn.Stop(0.5f);
 
     if (target->enemy_type == kEnemyType_PowerUp) {
       // Move power-up sprite towards player.
