@@ -727,6 +727,9 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
   target->blast_animator.Play(Animator::kFrames, false);
 
   if (target->hit_points <= 0) {
+    Engine& engine = Engine::Get();
+    Demo* game = static_cast<Demo*>(engine.GetGame());
+
     if (target->enemy_type != kEnemyType_PowerUp)
       ++num_enemies_killed_in_current_wave_;
 
@@ -734,13 +737,25 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
     target->health_base.SetVisible(false);
     target->health_bar.SetVisible(false);
     target->target.SetVisible(false);
-    target->score.SetVisible(true);
 
-    target->score_animator.Play(Animator::kTimer | Animator::kMovement, false);
-    target->movement_animator.Pause(Animator::kMovement);
+    if (target->enemy_type == kEnemyType_PowerUp) {
+      // Move power-up sprite towards player.
+      float distance = target->sprite.GetOffset().y -
+                       game->GetPlayer().GetWeaponPos(kDamageType_Green).y;
+      target->movement_animator.SetMovement(
+          {0, -distance}, 0.7f,
+          std::bind(Acceleration, std::placeholders::_1, 1));
+      target->movement_animator.Stop(Animator::kMovement);
+      target->movement_animator.SetEndCallback(Animator::kMovement, nullptr);
+      target->movement_animator.Play(Animator::kMovement, false);
+    } else {
+      // Stop enemy sprite and play score animation.
+      target->score.SetVisible(true);
+      target->score_animator.Play(Animator::kTimer | Animator::kMovement,
+                                  false);
+      target->movement_animator.Pause(Animator::kMovement);
+    }
 
-    Engine& engine = Engine::Get();
-    Demo* game = static_cast<Demo*>(engine.GetGame());
     int score = GetScore(target->enemy_type);
     if (score)
       game->AddScore(score);
