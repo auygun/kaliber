@@ -19,11 +19,13 @@ SkyQuad::SkyQuad()
 
 SkyQuad::~SkyQuad() = default;
 
-bool SkyQuad::Create() {
+bool SkyQuad::Create(bool without_nebula) {
+  without_nebula_ = without_nebula;
+
   Engine& engine = Engine::Get();
 
   auto source = std::make_unique<ShaderSource>();
-  if (!source->Load("sky.glsl"))
+  if (!source->Load(without_nebula_ ? "sky_without_nebula.glsl" : "sky.glsl"))
     return false;
   shader_->Create(std::move(source), engine.GetQuad()->vertex_description());
 
@@ -48,15 +50,16 @@ void SkyQuad::Draw(float frame_frac) {
   shader_->SetUniform("scale", scale_);
   shader_->SetUniform("projection", Engine::Get().GetProjectionMatrix());
   shader_->SetUniform("sky_offset", sky_offset);
-  shader_->SetUniform("nebula_color",
-                      {nebula_color_.x, nebula_color_.y, nebula_color_.z});
+  if (!without_nebula_)
+    shader_->SetUniform("nebula_color",
+                        {nebula_color_.x, nebula_color_.y, nebula_color_.z});
 
   Engine::Get().GetQuad()->Draw();
   last_sky_offset_ = sky_offset_;
 }
 
 void SkyQuad::ContextLost() {
-  Create();
+  Create(without_nebula_);
 }
 
 void SkyQuad::SwitchColor(const Vector4& color) {

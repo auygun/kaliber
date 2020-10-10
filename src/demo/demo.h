@@ -109,6 +109,9 @@ class Demo : public eng::Game {
   void Dimmer(bool enable);
 
   void SetDelayedWork(float seconds, base::Closure cb);
+
+  int DoBenchmark();
+  void BenchmarkResult(int avarage_fps);
 };
 
 #endif  // DEMO_H

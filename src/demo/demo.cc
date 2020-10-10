@@ -8,6 +8,8 @@
 #include "../base/interpolation.h"
 #include "../base/log.h"
 #include "../base/random.h"
+#include "../base/timer.h"
+#include "../base/worker.h"
 #include "../engine/engine.h"
 #include "../engine/game_factory.h"
 #include "../engine/input_event.h"
@@ -44,7 +46,7 @@ bool Demo::Initialize() {
   if (!font_.Load("PixelCaps!.ttf"))
     return false;
 
-  if (!sky_.Create()) {
+  if (!sky_.Create(false)) {
     LOG << "Could not create the sky.";
     return false;
   }
@@ -107,6 +109,10 @@ bool Demo::Initialize() {
   saved_data_[kLaunchCount] << (saved_data_.Get<int>(kLaunchCount, 0) + 1);
 
   EnterMenuState();
+
+  Worker::Get().EnqueueTaskAndReplyWithResult<int>(
+      HERE, std::bind(&Demo::DoBenchmark, this),
+      std::bind(&Demo::BenchmarkResult, this, std::placeholders::_1));
 
   return true;
 }
@@ -417,4 +423,25 @@ void Demo::SetDelayedWork(float seconds, base::Closure cb) {
   DCHECK(delayed_work_cb_ == nullptr);
   delayed_work_cb_ = std::move(cb);
   delayed_work_timer_ = seconds;
+}
+
+int Demo::DoBenchmark() {
+  Timer::Sleep(1);
+
+  int avarage_fps = 0;
+  constexpr int num_samples = 5;
+
+  for (int i = 0; i < num_samples; ++i) {
+    Timer::Sleep(1);
+    avarage_fps += Engine::Get().fps();
+  }
+  avarage_fps /= num_samples;
+
+  return avarage_fps;
+}
+
+void Demo::BenchmarkResult(int avarage_fps) {
+  LOG << __func__ << " avarage_fps: " << avarage_fps;
+  if (avarage_fps < 30)
+    sky_.Create(true);
 }

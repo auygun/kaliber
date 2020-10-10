@@ -22,7 +22,7 @@ class SkyQuad : public eng::Animatable {
   SkyQuad(const SkyQuad&) = delete;
   SkyQuad& operator=(const SkyQuad&) = delete;
 
-  bool Create();
+  bool Create(bool without_nebula);
 
   void Update(float delta_time);
 
@@ -51,6 +51,8 @@ class SkyQuad : public eng::Animatable {
   base::Vector2 scale_ = {1, 1};
 
   eng::Animator color_animator_;
+
+  bool without_nebula_ = false;
 };
 
 #endif  // SKY_QUAD_H
