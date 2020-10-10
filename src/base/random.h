@@ -12,14 +12,19 @@ class Random {
   ~Random();
 
   // Returns a random float between 0 and 1.
-  float GetFloat() { return real_distribution_(generator_); }
+  float GetFloat();
 
   // Roll dice with the given number of sides.
   int Roll(int sides);
 
+  unsigned seed() const { return seed_; }
+
  private:
+  unsigned seed_ = 0;
   std::mt19937 generator_;
   std::uniform_real_distribution<float> real_distribution_;
+
+  void Initialize();
 };
 
 }  // namespace base
