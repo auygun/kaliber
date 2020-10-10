@@ -126,7 +126,7 @@ void Engine::Update(float delta_time) {
 
   fps_seconds_ += delta_time;
   if (fps_seconds_ >= 1) {
-    fps_ = renderer_->GetAndResetFPS();
+    fps_.store(renderer_->GetAndResetFPS(), std::memory_order_relaxed);
     fps_seconds_ = 0;
   }
 
@@ -402,7 +402,7 @@ std::unique_ptr<Image> Engine::PrintStats() {
   std::vector<std::string> lines;
   std::string line;
   line = "fps: ";
-  line += std::to_string(fps_);
+  line += std::to_string(fps());
   lines.push_back(line);
   line = "cmd: ";
   line += std::to_string(renderer_->global_queue_size() +

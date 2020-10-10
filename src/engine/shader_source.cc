@@ -33,6 +33,8 @@ bool ShaderSource::Load(const std::string& name) {
     return false;
   }
 
+  LOG << "Loaded " << name;
+
   fragment_source_ = std::move(fragment_source);
 
   return true;

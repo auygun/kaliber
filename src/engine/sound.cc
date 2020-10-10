@@ -94,7 +94,7 @@ bool Sound::Load(const std::string& file_name, bool stream) {
 
   is_streaming_sound_ = stream;
 
-  LOG << (is_streaming_sound_ ? "Streaming " : "Loading ") << file_name << ". "
+  LOG << (is_streaming_sound_ ? "Streaming " : "Loaded ") << file_name << ". "
       << mp3_dec_->samples << " samples, " << mp3_dec_->info.channels
       << " channels, " << mp3_dec_->info.hz << " hz, "
       << "layer " << mp3_dec_->info.layer << ", "

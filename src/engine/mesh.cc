@@ -101,6 +101,8 @@ bool Mesh::Load(const std::string& file_name) {
     return false;
   }
 
+  LOG << "Loaded " << file_name << ". Vertex array size: " << vertices.size();
+
   vertices_ = std::make_unique<char[]>(vertex_buffer_size);
 
   char* dst = vertices_.get();

@@ -1,6 +1,7 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include <atomic>
 #include <deque>
 #include <functional>
 #include <list>
@@ -130,6 +131,8 @@ class Engine {
 
   float image_dpi() const { return image_dpi_; }
 
+  int fps() const { return fps_.load(std::memory_order_relaxed); }
+
  private:
   // Class holding information about texture resources managed by engine.
   // Texture is created from the image returned by create_image callback.
@@ -169,7 +172,7 @@ class Engine {
   std::unique_ptr<ImageQuad> stats_;
 
   float fps_seconds_ = 0;
-  int fps_ = 0;
+  std::atomic<int> fps_{0};
 
   float seconds_accumulated_ = 0.0f;
 

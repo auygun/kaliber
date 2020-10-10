@@ -14,6 +14,8 @@ class Timer {
 
   void Update();
 
+  static void Sleep(float duration);
+
   float GetSecondsPassed() const { return seconds_passed_; }
   float GetSecondsAccumulated() const { return seconds_accumulated_; }
 
