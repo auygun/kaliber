@@ -951,7 +951,7 @@ void Enemy::UpdateBoss(float delta_time) {
         spawn_factor_interpolator_ = 1;
     }
     boss_spawn_cooldown_ = 6.1f - Lerp(1.0f, 6.0f, spawn_factor_interpolator_);
-    LOG << "boss_spawn_cooldown_: " << boss_spawn_cooldown_;
+    DLOG << "boss_spawn_cooldown_: " << boss_spawn_cooldown_;
     return;
   }
 
