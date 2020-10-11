@@ -35,7 +35,7 @@ constexpr int idle1_frame_count[][3] = {{7, 7, -1},
                                         {7, 7, -1},
                                         {-1, -1, 7},
                                         {6, 6, -1},
-                                        {0, 0, 4}};
+                                        {0, 0, 8}};
 constexpr int idle2_frame_count[][3] = {{16, 16, -1},
                                         {16, 16, -1},
                                         {-1, -1, 16},
@@ -536,11 +536,14 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
 
   e.target_animator.Attach(&e.target);
 
-  e.blast_animator.SetEndCallback(Animator::kFrames,
-                                  [&]() -> void { e.blast.SetVisible(false); });
+  e.blast_animator.SetEndCallback(Animator::kFrames, [&]() -> void {
+    e.blast.SetVisible(false);
+    if (e.enemy_type == kEnemyType_PowerUp)
+      e.marked_for_removal = true;
+  });
   if (enemy_type == kEnemyType_PowerUp) {
     e.blast.SetFrame(8);
-    e.blast_animator.SetFrames(12, 16);
+    e.blast_animator.SetFrames(13, 18);
   } else if (damage_type == kDamageType_Green) {
     e.blast.SetFrame(0);
     e.blast_animator.SetFrames(6, 18);
