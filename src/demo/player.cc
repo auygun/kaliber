@@ -62,10 +62,10 @@ bool Player::Initialize() {
   nuke_counter_.Create("nuke_counter_tex");
   nuke_counter_.SetZOrder(29);
 
-  nuke_symbol_.Create("nuke_symbol_tex", {3, 1});
+  nuke_symbol_.Create("nuke_symbol_tex", {5, 1});
   nuke_symbol_.SetZOrder(29);
   nuke_symbol_.SetOffset({0, weapon_[0].GetOffset().y});
-  nuke_symbol_.SetFrame(2);
+  nuke_symbol_.SetFrame(4);
   nuke_symbol_.SetVisible(true);
 
   nuke_counter_.SetOffset(nuke_symbol_.GetOffset() -
@@ -141,11 +141,13 @@ void Player::AddNuke(int n) {
   Engine::Get().RefreshImage("nuke_counter_tex");
   nuke_counter_.AutoScale();
 
-  nuke_symbol_.SetFrame(nuke_count_ > 0 ? 0 : 2);
+  nuke_symbol_.SetFrame(4 - nuke_count_);
 
-  nuke_symbol_animator_.SetRotation(
-      M_PI * 5, 2, std::bind(SmootherStep, std::placeholders::_1));
-  nuke_symbol_animator_.Play(Animator::kRotation, false);
+  if (!nuke_symbol_animator_.IsPlaying(Animator::kRotation)) {
+    nuke_symbol_animator_.SetRotation(
+        M_PI * 5, 2, std::bind(SmootherStep, std::placeholders::_1));
+    nuke_symbol_animator_.Play(Animator::kRotation, false);
+  }
 }
 
 void Player::Reset() {
@@ -158,7 +160,7 @@ void Player::Reset() {
   Engine::Get().RefreshImage("nuke_counter_tex");
 
   nuke_counter_.AutoScale();
-  nuke_symbol_.SetFrame(0);
+  nuke_symbol_.SetFrame(3);
 }
 
 Vector2 Player::GetWeaponPos(DamageType type) const {
