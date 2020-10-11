@@ -236,6 +236,7 @@ void Enemy::SelectTarget(DamageType damage_type,
       if (cand_enemy == other_enemy || cand_dist < other_dist)
         continue;
 
+      // Remove obstructed units.
       if (base::Intersection(other_enemy->sprite.GetOffset(),
                              other_enemy->sprite.GetScale() * 1.2f, origin,
                              cand_dir)) {
@@ -251,6 +252,7 @@ void Enemy::SelectTarget(DamageType damage_type,
   if (candidates.empty())
     return;
 
+  // Sort by cos-theta.
   std::sort(candidates.begin(), candidates.end(),
             [](auto& a, auto& b) { return std::get<1>(a) > std::get<1>(b); });
 
@@ -266,8 +268,20 @@ void Enemy::SelectTarget(DamageType damage_type,
       break;
     }
   }
+
   if (!best_enemy && std::get<1>(candidates[0]) > threshold)
     best_enemy = std::get<0>(candidates[0]);
+
+  if (!best_enemy) {
+    // Sort by distance.
+    std::sort(candidates.begin(), candidates.end(),
+              [](auto& a, auto& b) { return std::get<2>(a) > std::get<2>(b); });
+
+    if (base::Intersection(std::get<0>(candidates[0])->sprite.GetOffset(),
+                           std::get<0>(candidates[0])->sprite.GetScale() * 1.2f,
+                           origin, dir))
+      best_enemy = std::get<0>(candidates[0]);
+  }
 
   if (best_enemy) {
     best_enemy->targetted_by_weapon_[damage_type] = true;
