@@ -4,7 +4,6 @@
 #include "../base/log.h"
 #include "../engine/engine.h"
 #include "../engine/font.h"
-#include "../engine/image.h"
 #include "../engine/input_event.h"
 #include "../engine/sound.h"
 #include "demo.h"
@@ -59,20 +58,11 @@ bool Player::Initialize() {
   health_bead_[0].PlaceToLeftOf(health_bead_[1]);
   health_bead_[2].PlaceToRightOf(health_bead_[1]);
 
-  nuke_counter_.Create("nuke_counter_tex");
-  nuke_counter_.SetZOrder(29);
-
   nuke_symbol_.Create("nuke_symbol_tex", {5, 1});
   nuke_symbol_.SetZOrder(29);
   nuke_symbol_.SetOffset({0, weapon_[0].GetOffset().y});
   nuke_symbol_.SetFrame(4);
   nuke_symbol_.SetVisible(true);
-
-  nuke_counter_.SetOffset(nuke_symbol_.GetOffset() -
-                          nuke_symbol_.GetScale() * Vector2(0.0f, 0.25f));
-  nuke_counter_.PlaceToRightOf(nuke_symbol_);
-  nuke_counter_.SetColor({0.80f, 0.87f, 0.93f, 1});
-  nuke_counter_.SetVisible(true);
 
   nuke_.SetZOrder(20);
   nuke_.Scale(Engine::Get().GetScreenSize());
@@ -138,9 +128,6 @@ void Player::AddNuke(int n) {
     return;
 
   nuke_count_ = new_nuke_count;
-  Engine::Get().RefreshImage("nuke_counter_tex");
-  nuke_counter_.AutoScale();
-
   nuke_symbol_.SetFrame(4 - nuke_count_);
 
   if (!nuke_symbol_animator_.IsPlaying(Animator::kRotation)) {
@@ -157,9 +144,6 @@ void Player::Reset() {
   TakeDamage(-total_health_);
 
   nuke_count_ = 1;
-  Engine::Get().RefreshImage("nuke_counter_tex");
-
-  nuke_counter_.AutoScale();
   nuke_symbol_.SetFrame(3);
 }
 
@@ -487,26 +471,7 @@ bool Player::CreateRenderResources() {
   Engine::Get().SetImageSource("weapon_tex", "enemy_anims_flare_ok.png", true);
   Engine::Get().SetImageSource("beam_tex", "enemy_ray_ok.png", true);
   Engine::Get().SetImageSource("nuke_symbol_tex", "nuke_frames.png", true);
-  Engine::Get().SetImageSource("nuke_counter_tex",
-                               std::bind(&Player::GetNukeCounterImage, this));
   Engine::Get().SetImageSource("health_bead", "bead.png", true);
 
   return true;
-}
-
-std::unique_ptr<Image> Player::GetNukeCounterImage() {
-  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
-
-  std::string text = std::to_string(nuke_count_);
-  int width, height;
-  font.CalculateBoundingBox(text.c_str(), width, height);
-
-  auto image = std::make_unique<Image>();
-  image->Create(width, height);
-  image->Clear({1, 1, 1, 0});
-
-  font.Print(0, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
-
-  image->Compress();
-  return image;
 }

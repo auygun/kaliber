@@ -11,7 +11,6 @@
 #include "damage_type.h"
 
 namespace eng {
-class Image;
 class InputEvent;
 class Sound;
 }  //  namespace eng
@@ -61,7 +60,6 @@ class Player {
   eng::SoundPlayer nuke_explosion_;
 
   eng::ImageQuad nuke_symbol_;
-  eng::ImageQuad nuke_counter_;
   eng::Animator nuke_symbol_animator_;
 
   int nuke_count_ = 0;
@@ -102,8 +100,6 @@ class Player {
   void NavigateBack();
 
   bool CreateRenderResources();
-
-  std::unique_ptr<eng::Image> GetNukeCounterImage();
 };
 
 #endif  // PLAYER_H
