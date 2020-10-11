@@ -19,9 +19,6 @@ constexpr int wepon_cooldown_frame[] = {5, 13};
 constexpr int wepon_cooldown_frame_count = 3;
 constexpr int wepon_anim_speed = 48;
 
-const Vector4 kHealthBeadColor[2] = {{0.5f, 0.5f, 0.5f, 1},
-                                    {0.366f, 0.79f, 0.612f, 1}};
-
 const Vector4 kNukeColor[2] = {{0.16f, 0.46f, 0.93f, 0},
                                {0.93f, 0.35f, 0.15f, 1}};
 
@@ -46,17 +43,18 @@ bool Player::Initialize() {
   SetupWeapons();
 
   Vector2 hb_pos = Engine::Get().GetScreenSize() / Vector2(2, -2) +
-                   Vector2(0, weapon_[0].GetScale().y * 0.4f);
+                   Vector2(0, weapon_[0].GetScale().y * 0.3f);
 
   for (int i = 0; i < 3; ++i) {
-    health_bead_[i].Create("health_bead");
+    health_bead_[i].Create("health_bead", {1, 2});
     health_bead_[i].SetZOrder(25);
     health_bead_[i].Translate(hb_pos * Vector2(0, 1));
-    health_bead_[i].SetColor(kHealthBeadColor[1]);
     health_bead_[i].SetVisible(true);
   }
   health_bead_[0].PlaceToLeftOf(health_bead_[1]);
+  health_bead_[0].Translate(health_bead_[1].GetScale() * Vector2(-0.1f, 0));
   health_bead_[2].PlaceToRightOf(health_bead_[1]);
+  health_bead_[2].Translate(health_bead_[1].GetScale() * Vector2(0.1f, 0));
 
   nuke_symbol_.Create("nuke_symbol_tex", {5, 1});
   nuke_symbol_.SetZOrder(29);
@@ -116,7 +114,7 @@ void Player::TakeDamage(int damage) {
   hit_points_ = std::min(total_health_, std::max(0, hit_points_ - damage));
 
   for (int i = 0; i < 3; ++i)
-    health_bead_[i].SetColor(kHealthBeadColor[hit_points_ > i ? 1 : 0]);
+    health_bead_[i].SetFrame(hit_points_ > i ? 0 : 1);
 
   if (hit_points_ == 0)
     static_cast<Demo*>(Engine::Get().GetGame())->EnterGameOverState();
