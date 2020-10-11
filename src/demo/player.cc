@@ -195,6 +195,9 @@ void Player::Fire(DamageType type, Vector2 dir) {
   Engine& engine = Engine::Get();
   Enemy& enemy = static_cast<Demo*>(engine.GetGame())->GetEnemy();
 
+  float max_beam_length = engine.GetScreenSize().y * 1.3f * 0.85f;
+  constexpr float max_beam_duration = 0.259198f;
+
   if (enemy.HasTarget(type))
     dir = weapon_[type].GetOffset() - enemy.GetTargetPos(type);
   else
@@ -214,11 +217,12 @@ void Player::Fire(DamageType type, Vector2 dir) {
   beam_spark_[type].SetVisible(true);
 
   spark_animator_[type].Stop(Animator::kMovement);
+
   float length = beam_[type].GetScale().x * 0.85f;
   Vector2 movement = dir * -length;
-  // Convert from units per second to duration.
-  float speed = 1.0f / (18.0f / length);
-  spark_animator_[type].SetMovement(movement, speed);
+  float duration = (length * max_beam_duration) / max_beam_length;
+
+  spark_animator_[type].SetMovement(movement, duration);
   spark_animator_[type].Play(Animator::kMovement, false);
 
   laser_shot_[type].Play(false);
