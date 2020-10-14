@@ -153,12 +153,16 @@ void Demo::ContextLost() {
   sky_.ContextLost();
 }
 
-void Demo::LostFocus() {
-  if (state_ == kGame)
-    EnterMenuState();
-}
+void Demo::LostFocus() {}
 
-void Demo::GainedFocus() {}
+void Demo::GainedFocus(bool from_interstitial_ad) {
+  DLOG << __func__ << " from_interstitial_ad: " << from_interstitial_ad;
+  if (!from_interstitial_ad) {
+    Engine::Get().ShowInterstitialAd();
+    if (state_ == kGame)
+      EnterMenuState();
+  }
+}
 
 void Demo::AddScore(int score) {
   add_score_ += score;
@@ -257,8 +261,10 @@ void Demo::UpdateMenuState(float delta_time) {
       Continue();
       break;
     case Menu::kNewGame:
-      menu_.Hide();
-      StartNewGame();
+      menu_.Hide([&]() {
+        Engine::Get().ShowInterstitialAd();
+        StartNewGame();
+      });
       break;
     case Menu::kCredits:
       menu_.Hide();

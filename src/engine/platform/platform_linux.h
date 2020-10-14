@@ -17,6 +17,8 @@ class PlatformLinux : public PlatformBase {
   void Exit();
 
   void Vibrate(int duration) {}
+
+  void ShowInterstitialAd() {}
 };
 
 }  // namespace eng

@@ -47,7 +47,7 @@ class Engine {
   void Draw(float frame_frac);
 
   void LostFocus();
-  void GainedFocus();
+  void GainedFocus(bool from_interstitial_ad);
 
   void AddDrawable(Drawable* drawable);
   void RemoveDrawable(Drawable* drawable);
@@ -86,6 +86,8 @@ class Engine {
 
   // Vibrate (if supported by the platform) for the specified duration.
   void Vibrate(int duration);
+
+  void ShowInterstitialAd();
 
   void SetImageDpi(float dpi) { image_dpi_ = dpi; }
 

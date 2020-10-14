@@ -351,14 +351,16 @@ void Menu::Show() {
   }
 }
 
-void Menu::Hide() {
+void Menu::Hide(Closure cb) {
   for (int i = 0; i < 2; ++i) {
     logo_animator_[i].Stop(Animator::kAllAnimations | Animator::kTimer);
     logo_animator_[i].SetBlending(kColorFadeOut, kFadeSpeed);
-    logo_animator_[i].SetEndCallback(Animator::kBlending, [&, i]() -> void {
+    logo_animator_[i].SetEndCallback(Animator::kBlending, [&, i, cb]() -> void {
       logo_animator_[i].Stop(Animator::kAllAnimations | Animator::kTimer);
       logo_animator_[i].SetEndCallback(Animator::kBlending, nullptr);
       logo_animator_[i].SetVisible(false);
+      if (i == 0 && cb)
+        cb();
     });
     logo_animator_[i].Play(Animator::kBlending, false);
   }

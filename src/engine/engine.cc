@@ -155,11 +155,11 @@ void Engine::LostFocus() {
     game_->LostFocus();
 }
 
-void Engine::GainedFocus() {
+void Engine::GainedFocus(bool from_interstitial_ad) {
   audio_->Resume();
 
   if (game_)
-    game_->GainedFocus();
+    game_->GainedFocus(from_interstitial_ad);
 }
 
 void Engine::AddDrawable(Drawable* drawable) {
@@ -302,6 +302,10 @@ void Engine::Vibrate(int duration) {
     platform_->Vibrate(duration);
 }
 
+void Engine::ShowInterstitialAd() {
+  platform_->ShowInterstitialAd();
+}
+
 void Engine::SetEnableAudio(bool enable) {
   audio_->SetEnableAudio(enable);
 }
@@ -324,7 +328,7 @@ int Engine::GetDeviceDpi() const {
 
 float Engine::GetImageScaleFactor() const {
   float width_inch = static_cast<float>(renderer_->screen_width()) /
-         static_cast<float>(platform_->GetDeviceDpi());
+                     static_cast<float>(platform_->GetDeviceDpi());
   return 2.57143f / width_inch;
 }
 

@@ -93,7 +93,7 @@ void PlatformLinux::Update() {
         break;
       }
       case FocusIn: {
-        engine_->GainedFocus();
+        engine_->GainedFocus(false);
         break;
       }
       case ClientMessage: {

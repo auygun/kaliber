@@ -22,6 +22,8 @@ class PlatformAndroid : public PlatformBase {
 
   void Vibrate(int duration);
 
+  void ShowInterstitialAd();
+
  private:
   android_app* app_ = nullptr;
 

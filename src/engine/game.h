@@ -16,7 +16,7 @@ class Game {
 
   virtual void LostFocus() = 0;
 
-  virtual void GainedFocus() = 0;
+  virtual void GainedFocus(bool from_interstitial_ad) = 0;
 
  private:
   Game(const Game&) = delete;

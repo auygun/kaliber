@@ -39,7 +39,7 @@ class Menu {
   void SetOptionEnabled(Option o, bool enable);
 
   void Show();
-  void Hide();
+  void Hide(base::Closure cb = nullptr);
 
   Option selected_option() const { return selected_option_; }
 

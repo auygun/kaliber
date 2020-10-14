@@ -47,7 +47,7 @@ endif ()
 set(CMAKE_SHARED_LINKER_FLAGS
     "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate")
 
-add_library(woom SHARED
+add_library(kaliber SHARED
     ../../../src/base/collusion_test.cc
     ../../../src/base/log.cc
     ../../../src/base/random.cc
@@ -103,23 +103,23 @@ add_library(woom SHARED
 )
 
 if (ANDROID_ABI STREQUAL armeabi-v7a)
-    target_sources(woom PRIVATE ../../../src/third_party/texture_compressor/dxt_encoder_neon.cc)
-    target_sources(woom PRIVATE ../../../src/third_party/texture_compressor/texture_compressor_etc1_neon.cc)
+    target_sources(kaliber PRIVATE ../../../src/third_party/texture_compressor/dxt_encoder_neon.cc)
+    target_sources(kaliber PRIVATE ../../../src/third_party/texture_compressor/texture_compressor_etc1_neon.cc)
     set_source_files_properties(../../../src/third_party/texture_compressor/dxt_encoder_neon.cc PROPERTIES COMPILE_FLAGS -mfpu=neon)
     set_source_files_properties(../../../src/third_party/texture_compressor/texture_compressor_etc1_neon.cc PROPERTIES COMPILE_FLAGS -mfpu=neon)
 endif()
 
 if (ANDROID_ABI STREQUAL arm64-v8a)
-    target_sources(woom PRIVATE ../../../src/third_party/texture_compressor/dxt_encoder_neon.cc)
-    target_sources(woom PRIVATE ../../../src/third_party/texture_compressor/texture_compressor_etc1_neon.cc)
+    target_sources(kaliber PRIVATE ../../../src/third_party/texture_compressor/dxt_encoder_neon.cc)
+    target_sources(kaliber PRIVATE ../../../src/third_party/texture_compressor/texture_compressor_etc1_neon.cc)
 endif()
 
-target_include_directories(woom PRIVATE
+target_include_directories(kaliber PRIVATE
     ${ANDROID_NDK}/sources/android/native_app_glue
     )
 
 # add lib dependencies
-target_link_libraries(woom
+target_link_libraries(kaliber
     android
     native_app_glue
     oboe

@@ -1,6 +1,7 @@
 #include "platform_android.h"
 
 #include <android_native_app_glue.h>
+#include <jni.h>
 #include <unistd.h>
 
 #include <memory>
@@ -16,6 +17,22 @@
 using namespace base;
 
 namespace {
+
+bool g_showing_interstitial_ad = false;
+
+extern "C" {
+JNIEXPORT void JNICALL
+Java_com_woom_game_KaliberActivity_onShowAdResult(JNIEnv* env,
+                                                  jobject obj,
+                                                  jboolean succeeded);
+};
+
+JNIEXPORT void JNICALL
+Java_com_woom_game_KaliberActivity_onShowAdResult(JNIEnv* env,
+                                                  jobject obj,
+                                                  jboolean succeeded) {
+  g_showing_interstitial_ad = !!succeeded;
+}
 
 std::string GetApkPath(ANativeActivity* activity) {
   JNIEnv* env = nullptr;
@@ -74,6 +91,19 @@ std::string GetDataPath(ANativeActivity* activity) {
   if (data_path.back() != '/')
     data_path += '/';
   return data_path;
+}
+
+void ShowInterstitialAd(ANativeActivity* activity) {
+  JNIEnv* env = nullptr;
+  activity->vm->AttachCurrentThread(&env, nullptr);
+
+  jclass activity_clazz = env->GetObjectClass(activity->clazz);
+  jmethodID show_interstitial_ad =
+      env->GetMethodID(activity_clazz, "showInterstitialAd", "()V");
+  env->CallVoidMethod(activity->clazz, show_interstitial_ad);
+
+  env->DeleteLocalRef(activity_clazz);
+  activity->vm->DetachCurrentThread();
 }
 
 void Vibrate(ANativeActivity* activity, int duration) {
@@ -251,7 +281,8 @@ void PlatformAndroid::HandleCmd(android_app* app, int32_t cmd) {
       platform->timer_.Reset();
       platform->has_focus_ = true;
       if (platform->engine_)
-        platform->engine_->GainedFocus();
+        platform->engine_->GainedFocus(g_showing_interstitial_ad);
+      g_showing_interstitial_ad = false;
       break;
 
     case APP_CMD_LOST_FOCUS:
@@ -315,6 +346,10 @@ void PlatformAndroid::Exit() {
 
 void PlatformAndroid::Vibrate(int duration) {
   ::Vibrate(app_->activity, duration);
+}
+
+void PlatformAndroid::ShowInterstitialAd() {
+  ::ShowInterstitialAd(app_->activity);
 }
 
 }  // namespace eng
