@@ -98,9 +98,9 @@ void Player::OnInputEvent(std::unique_ptr<InputEvent> event) {
   if (event->GetType() == InputEvent::kNavigateBack)
     NavigateBack();
   else if (event->GetType() == InputEvent::kDragStart)
-    DragStart(event->GetPointerId(), event->GetVector(0));
+    DragStart(event->GetPointerId(), event->GetVector());
   else if (event->GetType() == InputEvent::kDrag)
-    Drag(event->GetPointerId(), event->GetVector(0));
+    Drag(event->GetPointerId(), event->GetVector());
   else if (event->GetType() == InputEvent::kDragEnd)
     DragEnd(event->GetPointerId());
   else if (event->GetType() == InputEvent::kDragCancel)

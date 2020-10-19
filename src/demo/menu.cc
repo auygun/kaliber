@@ -238,9 +238,9 @@ void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
     return;
 
   if (event->GetType() == InputEvent::kDragStart)
-    tap_pos_[0] = tap_pos_[1] = event->GetVector(0);
+    tap_pos_[0] = tap_pos_[1] = event->GetVector();
   else if (event->GetType() == InputEvent::kDrag)
-    tap_pos_[1] = event->GetVector(0);
+    tap_pos_[1] = event->GetVector();
 
   if (event->GetType() != InputEvent::kDragEnd || IsAnimating())
     return;
@@ -506,9 +506,9 @@ void Menu::Button::Update(float delta_time) {
 
 bool Menu::Button::OnInputEvent(eng::InputEvent* event) {
   if (event->GetType() == InputEvent::kDragStart)
-    tap_pos_[0] = tap_pos_[1] = event->GetVector(0);
+    tap_pos_[0] = tap_pos_[1] = event->GetVector();
   else if (event->GetType() == InputEvent::kDrag)
-    tap_pos_[1] = event->GetVector(0);
+    tap_pos_[1] = event->GetVector();
 
   if (event->GetType() != InputEvent::kDragEnd)
     return false;

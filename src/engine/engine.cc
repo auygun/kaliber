@@ -260,7 +260,7 @@ std::unique_ptr<AudioResource> Engine::CreateAudioResource() {
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
   switch (event->GetType()) {
     case InputEvent::kDragEnd:
-      if (((GetScreenSize() / 2) * 0.9f - event->GetVector(0)).Magnitude() <=
+      if (((GetScreenSize() / 2) * 0.9f - event->GetVector()).Magnitude() <=
           0.25f) {
         SetSatsVisible(!stats_->IsVisible());
         // TODO: Enqueue DragCancel so we can consume this event.
@@ -275,9 +275,9 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
       break;
     case InputEvent::kDrag:
       if (stats_->IsVisible()) {
-        if ((stats_->GetOffset() - event->GetVector(0)).Magnitude() <=
+        if ((stats_->GetOffset() - event->GetVector()).Magnitude() <=
             stats_->GetScale().y)
-          stats_->SetOffset(event->GetVector(0));
+          stats_->SetOffset(event->GetVector());
         // TODO: Enqueue DragCancel so we can consume this event.
       }
       break;

@@ -31,10 +31,7 @@ class InputEvent {
 
   size_t GetPointerId() const { return pointer_id_; }
 
-  base::Vector2 GetVector(size_t i) const {
-    DCHECK(i < 2);
-    return vec_;
-  }
+  base::Vector2 GetVector() const { return vec_; }
 
   char GetKeyPress() const { return key_; }
 
