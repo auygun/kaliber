@@ -9,10 +9,13 @@ using namespace base;
 
 namespace eng {
 
-bool PersistentData::Load(const std::string& file_name) {
+bool PersistentData::Load(const std::string& file_name, bool shared) {
   file_name_ = file_name;
+  shared_ = shared;
 
-  std::string file_path = Engine::Get().GetDataPath() + file_name;
+  std::string file_path =
+      shared ? Engine::Get().GetSharedDataPath() : Engine::Get().GetDataPath();
+  file_path += file_name;
   ScopedFILE file;
   file.reset(fopen(file_path.c_str(), "r"));
   if (!file) {
@@ -56,10 +59,10 @@ bool PersistentData::Save(bool force) {
 
   DCHECK(!file_name_.empty());
 
-  return SaveAs(file_name_);
+  return SaveAs(file_name_, shared_);
 }
 
-bool PersistentData::SaveAs(const std::string& file_name) {
+bool PersistentData::SaveAs(const std::string& file_name, bool shared) {
   file_name_ = file_name;
 
   Json::StreamWriterBuilder builder;
@@ -67,7 +70,9 @@ bool PersistentData::SaveAs(const std::string& file_name) {
   std::ostringstream stream;
   writer->write(root_, &stream);
 
-  std::string file_path = Engine::Get().GetDataPath() + file_name;
+  std::string file_path =
+      shared ? Engine::Get().GetSharedDataPath() : Engine::Get().GetDataPath();
+  file_path += file_name;
   ScopedFILE file;
   file.reset(fopen(file_path.c_str(), "w"));
   if (!file) {

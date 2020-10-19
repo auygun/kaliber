@@ -29,6 +29,9 @@ void PlatformLinux::Initialize() {
   data_path_ = "./";
   LOG << "Data path: " << data_path_.c_str();
 
+  shared_data_path_ = "./";
+  LOG << "Shared data path: " << shared_data_path_.c_str();
+
   if (!renderer_->Initialize()) {
     LOG << "Failed to initialize renderer.";
     throw internal_error;

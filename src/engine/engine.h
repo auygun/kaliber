@@ -11,6 +11,7 @@
 #include "../base/random.h"
 #include "../base/vecmath.h"
 #include "audio/audio_forward.h"
+#include "persistent_data.h"
 #include "platform/platform_forward.h"
 #include "renderer/render_resource.h"
 
@@ -84,10 +85,17 @@ class Engine {
   void AddInputEvent(std::unique_ptr<InputEvent> event);
   std::unique_ptr<InputEvent> GetNextInputEvent();
 
+  void StartRecording();
+  void EndRecording(const std::string file_name);
+
+  bool Replay(const std::string file_name);
+
   // Vibrate (if supported by the platform) for the specified duration.
   void Vibrate(int duration);
 
   void ShowInterstitialAd();
+
+  void ShareFile(const std::string& file_name);
 
   void SetImageDpi(float dpi) { image_dpi_ = dpi; }
 
@@ -124,6 +132,8 @@ class Engine {
   const std::string& GetRootPath() const;
 
   const std::string& GetDataPath() const;
+
+  const std::string& GetSharedDataPath() const;
 
   int GetAudioHardwareSampleRate();
 
@@ -178,11 +188,18 @@ class Engine {
 
   float seconds_accumulated_ = 0.0f;
 
+  size_t tick_ = 0;
+
   float image_dpi_ = 200;
 
   bool vibration_enabled_ = true;
 
   std::deque<std::unique_ptr<InputEvent>> input_queue_;
+
+  eng::PersistentData replay_data_;
+  bool recording_ = false;
+  bool replaying_ = false;
+  int replay_index_ = 0;
 
   base::Random random_;
 

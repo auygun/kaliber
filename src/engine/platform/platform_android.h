@@ -24,6 +24,8 @@ class PlatformAndroid : public PlatformBase {
 
   void ShowInterstitialAd();
 
+  void ShareFile(const std::string& file_name);
+
  private:
   android_app* app_ = nullptr;
 

@@ -115,6 +115,7 @@ void Engine::Shutdown() {
 
 void Engine::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
+  ++tick_;
 
   game_->Update(delta_time);
 
@@ -258,6 +259,9 @@ std::unique_ptr<AudioResource> Engine::CreateAudioResource() {
 }
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
+  if (replaying_)
+    return;
+
   switch (event->GetType()) {
     case InputEvent::kDragEnd:
       if (((GetScreenSize() / 2) * 0.9f - event->GetVector()).Magnitude() <=
@@ -290,11 +294,69 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
 
 std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
   std::unique_ptr<InputEvent> event;
+
+  if (replaying_) {
+    if (replay_index_ < replay_data_["input"].size()) {
+      auto data = replay_data_["input"][replay_index_];
+      if (data["tick"].asUInt64() == tick_) {
+        event = std::make_unique<InputEvent>(
+            (InputEvent::Type)data["input_type"].asInt(),
+            (size_t)data["pointer_id"].asUInt(),
+            Vector2(data["pos_x"].asFloat(), data["pos_y"].asFloat()));
+        ++replay_index_;
+      }
+      return event;
+    }
+    replaying_ = false;
+    replay_data_ = {};
+  }
+
   if (!input_queue_.empty()) {
     event.swap(input_queue_.front());
     input_queue_.pop_front();
+
+    if (recording_) {
+      Json::Value data;
+      data["tick"] = tick_;
+      data["input_type"] = event->GetType();
+      data["pointer_id"] = event->GetPointerId();
+      data["pos_x"] = event->GetVector().x;
+      data["pos_y"] = event->GetVector().y;
+      replay_data_["input"].append(data);
+    }
   }
+
   return event;
+}
+
+void Engine::StartRecording() {
+  if (!replaying_ && !recording_) {
+    recording_ = true;
+    random_ = Random();
+    replay_data_["random_seed"] = random_.seed();
+    tick_ = 0;
+  }
+}
+
+void Engine::EndRecording(const std::string file_name) {
+  if (recording_) {
+    DCHECK(!replaying_);
+
+    recording_ = false;
+    replay_data_.SaveAs(file_name, true);
+    replay_data_ = {};
+  }
+}
+
+bool Engine::Replay(const std::string file_name) {
+  if (!replaying_ && !recording_ && replay_data_.Load(file_name, true)) {
+    replaying_ = true;
+    random_ = Random(replay_data_["random_seed"].asUInt());
+    tick_ = 0;
+    replay_index_ = 0;
+  }
+
+  return replaying_;
 }
 
 void Engine::Vibrate(int duration) {
@@ -304,6 +366,10 @@ void Engine::Vibrate(int duration) {
 
 void Engine::ShowInterstitialAd() {
   platform_->ShowInterstitialAd();
+}
+
+void Engine::ShareFile(const std::string& file_name) {
+  platform_->ShareFile(file_name);
 }
 
 void Engine::SetEnableAudio(bool enable) {
@@ -338,6 +404,10 @@ const std::string& Engine::GetRootPath() const {
 
 const std::string& Engine::GetDataPath() const {
   return platform_->GetDataPath();
+}
+
+const std::string& Engine::GetSharedDataPath() const {
+  return platform_->GetSharedDataPath();
 }
 
 int Engine::GetAudioHardwareSampleRate() {

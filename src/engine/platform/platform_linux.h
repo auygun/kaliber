@@ -19,6 +19,8 @@ class PlatformLinux : public PlatformBase {
   void Vibrate(int duration) {}
 
   void ShowInterstitialAd() {}
+
+  void ShareFile(const std::string& file_name) {}
 };
 
 }  // namespace eng

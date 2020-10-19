@@ -30,11 +30,11 @@ class PersistentData {
   PersistentData() = default;
   ~PersistentData() = default;
 
-  bool Load(const std::string& file_name);
+  bool Load(const std::string& file_name, bool shared = false);
 
   bool Save(bool force = false);
 
-  bool SaveAs(const std::string& file_name);
+  bool SaveAs(const std::string& file_name, bool shared = false);
 
   template <typename T>
   T Get(const char* key, T default_val) const {
@@ -49,6 +49,7 @@ class PersistentData {
   const Json::Value& operator[](const std::string& key) const;
 
  private:
+  bool shared_ = false;
   std::string file_name_;
   Json::Value root_;
   bool dirty_ = false;

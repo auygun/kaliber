@@ -23,14 +23,14 @@ bool g_showing_interstitial_ad = false;
 extern "C" {
 JNIEXPORT void JNICALL
 Java_com_kaliber_base_KaliberActivity_onShowAdResult(JNIEnv* env,
-                                                  jobject obj,
-                                                  jboolean succeeded);
+                                                     jobject obj,
+                                                     jboolean succeeded);
 };
 
 JNIEXPORT void JNICALL
 Java_com_kaliber_base_KaliberActivity_onShowAdResult(JNIEnv* env,
-                                                  jobject obj,
-                                                  jboolean succeeded) {
+                                                     jobject obj,
+                                                     jboolean succeeded) {
   g_showing_interstitial_ad = !!succeeded;
 }
 
@@ -93,6 +93,35 @@ std::string GetDataPath(ANativeActivity* activity) {
   return data_path;
 }
 
+std::string GetSharedDataPath(ANativeActivity* activity) {
+  JNIEnv* env = nullptr;
+  activity->vm->AttachCurrentThread(&env, nullptr);
+
+  jclass activity_clazz = env->GetObjectClass(activity->clazz);
+  jmethodID get_dir_id = env->GetMethodID(activity_clazz, "getExternalFilesDir",
+                                          "(Ljava/lang/String;)Ljava/io/File;");
+  jobject data_dir_obj =
+      env->CallObjectMethod(activity->clazz, get_dir_id, nullptr);
+
+  jclass file_clazz = env->FindClass("java/io/File");
+  jmethodID get_absolute_path_id =
+      env->GetMethodID(file_clazz, "getAbsolutePath", "()Ljava/lang/String;");
+  jstring data_path_obj =
+      (jstring)env->CallObjectMethod(data_dir_obj, get_absolute_path_id);
+
+  const char* tmp = env->GetStringUTFChars(data_path_obj, nullptr);
+  std::string data_path = std::string(tmp);
+
+  env->ReleaseStringUTFChars(data_path_obj, tmp);
+  env->DeleteLocalRef(activity_clazz);
+  env->DeleteLocalRef(file_clazz);
+  activity->vm->DetachCurrentThread();
+
+  if (data_path.back() != '/')
+    data_path += '/';
+  return data_path;
+}
+
 void ShowInterstitialAd(ANativeActivity* activity) {
   JNIEnv* env = nullptr;
   activity->vm->AttachCurrentThread(&env, nullptr);
@@ -103,6 +132,21 @@ void ShowInterstitialAd(ANativeActivity* activity) {
   env->CallVoidMethod(activity->clazz, show_interstitial_ad);
 
   env->DeleteLocalRef(activity_clazz);
+  activity->vm->DetachCurrentThread();
+}
+
+void ShareFile(ANativeActivity* activity, const std::string& file_name) {
+  JNIEnv* env = nullptr;
+  activity->vm->AttachCurrentThread(&env, nullptr);
+
+  jclass activity_clazz = env->GetObjectClass(activity->clazz);
+  jmethodID show_interstitial_ad =
+      env->GetMethodID(activity_clazz, "shareFile", "(Ljava/lang/String;)V");
+  jstring file_name_js = env->NewStringUTF(file_name.c_str());
+  env->CallVoidMethod(activity->clazz, show_interstitial_ad, file_name_js);
+
+  env->DeleteLocalRef(activity_clazz);
+  env->DeleteLocalRef(file_name_js);
   activity->vm->DetachCurrentThread();
 }
 
@@ -311,6 +355,9 @@ void PlatformAndroid::Initialize(android_app* app) {
   data_path_ = ::GetDataPath(app->activity);
   LOG << "Data path: " << data_path_.c_str();
 
+  shared_data_path_ = ::GetSharedDataPath(app->activity);
+  LOG << "Shared data path: " << shared_data_path_.c_str();
+
   device_dpi_ = ::GetDensityDpi(app);
   LOG << "Device DPI: " << device_dpi_;
 
@@ -350,6 +397,10 @@ void PlatformAndroid::Vibrate(int duration) {
 
 void PlatformAndroid::ShowInterstitialAd() {
   ::ShowInterstitialAd(app_->activity);
+}
+
+void PlatformAndroid::ShareFile(const std::string& file_name) {
+  ::ShareFile(app_->activity, file_name);
 }
 
 }  // namespace eng
