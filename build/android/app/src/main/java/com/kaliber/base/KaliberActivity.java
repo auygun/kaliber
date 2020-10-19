@@ -1,4 +1,4 @@
-package com.woom.game;
+package com.kaliber.base;
 
 import android.app.NativeActivity;
 import android.os.Bundle;
