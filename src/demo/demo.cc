@@ -250,6 +250,9 @@ void Demo::EnterGameOverState() {
       EnterMenuState();
     });
   });
+
+  Engine::Get().EndRecording("replay");
+  Engine::Get().ShareFile("replay");
 }
 
 void Demo::UpdateMenuState(float delta_time) {
@@ -322,6 +325,9 @@ void Demo::Continue() {
 }
 
 void Demo::StartNewGame() {
+  Engine::Get().StartRecording();
+  // Engine::Get().Replay("replay");
+
   score_ = add_score_ = 0;
   wave_ = menu_.start_from_wave() - 1;
   last_num_enemies_killed_ = -1;
