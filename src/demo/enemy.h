@@ -57,6 +57,7 @@ class Enemy {
   struct EnemyUnit {
     EnemyType enemy_type = kEnemyType_Invalid;
     DamageType damage_type = kDamageType_Invalid;
+    SpeedType speed_type = kSpeedType_Invalid;
 
     bool marked_for_removal = false;
     bool targetted_by_weapon_[2] = {false, false};
@@ -133,10 +134,13 @@ class Enemy {
   int wave_ = 0;
   bool boss_fight_ = false;
 
+  bool CheckSpawnPos(base::Vector2 pos, SpeedType speed_type);
+
   void SpawnUnit(EnemyType enemy_type,
                  DamageType damage_type,
                  const base::Vector2& pos,
-                 float speed);
+                 float speed,
+                 SpeedType speed_type = kSpeedType_Invalid);
 
   void SpawnBoss();
 

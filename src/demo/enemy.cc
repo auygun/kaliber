@@ -474,10 +474,27 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   }
 }
 
+bool Enemy::CheckSpawnPos(Vector2 pos, SpeedType speed_type) {
+  for (auto& e : enemies_) {
+    if (e.hit_points <= 0 || e.marked_for_removal || e.stealth_active ||
+        e.enemy_type > kEnemyType_Unit_Last || e.speed_type != speed_type)
+      continue;
+
+    // Check for collision.
+    float sy = e.sprite.GetScale().y;
+    Vector2 spawn_pos = pos + Vector2(0, sy);
+    if ((spawn_pos - e.sprite.GetOffset()).Magnitude() < sy)
+      return false;
+  }
+
+  return true;
+}
+
 void Enemy::SpawnUnit(EnemyType enemy_type,
                       DamageType damage_type,
                       const Vector2& pos,
-                      float speed) {
+                      float speed,
+                      SpeedType speed_type) {
   DCHECK(
       (enemy_type > kEnemyType_Invalid && enemy_type <= kEnemyType_Unit_Last) ||
       enemy_type == kEnemyType_PowerUp);
@@ -489,6 +506,8 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   auto& e = enemies_.emplace_back();
   e.enemy_type = enemy_type;
   e.damage_type = damage_type;
+  e.speed_type = speed_type;
+
   switch (enemy_type) {
     case kEnemyType_LightSkull:
       e.total_health = e.hit_points = 1;
@@ -942,19 +961,25 @@ void Enemy::UpdateWave(float delta_time) {
                                  ? kDamageType_Any
                                  : (DamageType)(rnd.Roll(2) - 1);
 
-    Vector2 s = engine.GetScreenSize();
-    int col;
-    col = rnd.Roll(4) - 1;
+    int col = rnd.Roll(4) - 1;
     if (col == last_spawn_col_)
       col = (col + 1) % 4;
     last_spawn_col_ = col;
+
+    Vector2 s = engine.GetScreenSize();
     float x = SnapSpawnPosX(col);
     Vector2 pos = {x, s.y / 2};
-    float speed = enemy_type == kEnemyType_Tank
-                      ? 10.0f
-                      : (rnd.Roll(3) == 1 ? 6.0f : 10.0f);
 
-    SpawnUnit(enemy_type, damage_type, pos, speed);
+    SpeedType speed_type =
+        enemy_type == kEnemyType_Tank
+            ? kSpeedType_Slow
+            : (rnd.Roll(3) == 1 ? kSpeedType_Fast : kSpeedType_Slow);
+    float speed = speed_type == kSpeedType_Slow ? 10.0f : 6.0f;
+
+    if (CheckSpawnPos(pos, speed_type))
+      SpawnUnit(enemy_type, damage_type, pos, speed, speed_type);
+    else
+      seconds_to_next_spawn_[enemy_type] = 0;
   }
 
   seconds_since_last_power_up_ += delta_time;

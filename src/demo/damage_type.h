@@ -23,4 +23,11 @@ enum EnemyType {
   kEnemyType_Max
 };
 
+enum SpeedType {
+  kSpeedType_Invalid = -1,
+  kSpeedType_Slow,
+  kSpeedType_Fast,
+  kSpeedType_Max
+};
+
 #endif  // DAMAGE_TYPE_H
