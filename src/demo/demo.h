@@ -86,6 +86,8 @@ class Demo : public eng::Game {
 
   bool boss_fight_ = false;
 
+  float stage_time_ = 0;
+
   eng::SoundPlayer music_;
   eng::SoundPlayer boss_music_;
 

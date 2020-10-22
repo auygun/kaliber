@@ -120,6 +120,8 @@ bool Demo::Initialize() {
 void Demo::Update(float delta_time) {
   Engine& engine = Engine::Get();
 
+  stage_time_ += delta_time;
+
   dimmer_animator_.Update(delta_time);
 
   while (std::unique_ptr<InputEvent> event = engine.GetNextInputEvent()) {
@@ -345,6 +347,10 @@ void Demo::StartNextStage(bool boss) {
   waiting_for_next_wave_ = true;
   hud_.SetProgress(wave_ > 0 ? 0 : 1);
 
+  DLOG_IF(wave_ > 0 && stage_time_ > 0)
+      << "wave: " << wave_ << " time: " << stage_time_ / 60.0f;
+  stage_time_ = 0;
+
   enemy_.PauseProgress();
   enemy_.StopAllEnemyUnits();
 
@@ -393,7 +399,7 @@ void Demo::StartNextStage(bool boss) {
         if (boss_fight_)
           player_.TakeDamage(-3);
 
-        total_enemies_ = 32.0871f + 23.0897f * log((float)wave_);
+        total_enemies_ = 20.0f + 23.0897f * log((float)wave_);
         last_num_enemies_killed_ = 0;
         boss_fight_ = false;
         DLOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
