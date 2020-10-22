@@ -992,9 +992,9 @@ void Enemy::UpdateWave(float delta_time) {
       SpawnUnit(kEnemyType_PowerUp, kDamageType_Any, pos, 6);
     }
     seconds_since_last_power_up_ = 0;
-    float b_ln = 0.0869f * log((float)wave_);
+    float b_ln = 0.5646f * log((float)wave_);
     seconds_to_next_power_up_ =
-        Lerp((1.4f - b_ln) * 60.0f, (1.8f - b_ln) * 60.0f, rnd.GetFloat());
+        Lerp((2.0f - b_ln) * 60.0f, (2.5f - b_ln) * 60.0f, rnd.GetFloat());
   }
 }
 
