@@ -981,7 +981,7 @@ void Enemy::UpdateWave(float delta_time) {
     if (CheckSpawnPos(pos, speed_type))
       SpawnUnit(enemy_type, damage_type, pos, speed, speed_type);
     else
-      seconds_to_next_spawn_[enemy_type] = 0;
+      seconds_to_next_spawn_[enemy_type] = 0.001f;
   }
 
   seconds_since_last_power_up_ += delta_time;
