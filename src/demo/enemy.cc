@@ -323,8 +323,12 @@ void Enemy::HitTarget(DamageType damage_type) {
   target->target_animator.Stop(Animator::kAllAnimations);
   target->targetted_by_weapon_[damage_type] = false;
 
-  if ((target->damage_type != kDamageType_Any &&
-       target->damage_type != damage_type)) {
+  if (target->damage_type != kDamageType_Any &&
+      target->damage_type != damage_type) {
+    // No shield until wave 4.
+    if (wave_ <= 3)
+      return;
+
     if (!target->shield_active) {
       target->shield_active = true;
       target->shield.SetVisible(true);
@@ -905,18 +909,17 @@ void Enemy::UpdateWave(float delta_time) {
   }
 
   if (enemy_type != kEnemyType_Invalid) {
-    // Do not spawn hard enemies during the first 2 waves.
-    if (enemy_type >= kEnemyType_Tank && wave_ <= 2)
+    // Spawn only light enemies during the first 4 waves. Then gradually
+    // introduce harder enemy types.
+    if (enemy_type != kEnemyType_LightSkull && wave_ <= 4)
+      enemy_type = wave_ == 1 ? kEnemyType_Invalid : kEnemyType_LightSkull;
+    else if (enemy_type > kEnemyType_DarkSkull && wave_ == 5)
       enemy_type = kEnemyType_LightSkull;
-
-    // Do not spawn tank during the 3th. wave.
-    if (enemy_type == kEnemyType_Tank && wave_ == 3)
+    else if (enemy_type == kEnemyType_Tank && wave_ == 6)
       enemy_type = kEnemyType_LightSkull;
+  }
 
-    // Do not spawn stealth enemy during the 4th. wave.
-    if (enemy_type == kEnemyType_Bug && wave_ == 4)
-      enemy_type = kEnemyType_LightSkull;
-
+  if (enemy_type != kEnemyType_Invalid) {
     DamageType damage_type = enemy_type == kEnemyType_Tank
                                  ? kDamageType_Any
                                  : (DamageType)(rnd.Roll(2) - 1);
@@ -993,9 +996,14 @@ void Enemy::UpdateBoss(float delta_time) {
     }
   }
 
-  // Do not spawn tank during the 1st. boss.
-  if (enemy_type == kEnemyType_Tank && wave_ == 3)
-    enemy_type = kEnemyType_LightSkull;
+  if (enemy_type != kEnemyType_Invalid) {
+    // Spawn only light enemies during the first boss fight. Then gradually
+    // introduce harder enemy types.
+    if (enemy_type != kEnemyType_LightSkull && wave_ == 3)
+      enemy_type = kEnemyType_Invalid;
+    else if (enemy_type == kEnemyType_Tank && wave_ == 6)
+      enemy_type = kEnemyType_Invalid;
+  }
 
   if (enemy_type == kEnemyType_Invalid)
     return;
