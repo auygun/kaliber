@@ -27,6 +27,8 @@ namespace {
 const Vector4 kBgColor = {0, 0, 0, 0.8f};
 constexpr float kFadeSpeed = 0.2f;
 
+constexpr int kLaunchCountBeforeAd = 2;
+
 const char kSaveFileName[] = "woom";
 const char kHightScore[] = "high_score";
 const char kLastWave[] = "last_wave";
@@ -160,7 +162,8 @@ void Demo::LostFocus() {}
 void Demo::GainedFocus(bool from_interstitial_ad) {
   DLOG << __func__ << " from_interstitial_ad: " << from_interstitial_ad;
   if (!from_interstitial_ad) {
-    Engine::Get().ShowInterstitialAd();
+    if (saved_data_.Get<int>(kLaunchCount, 0) > kLaunchCountBeforeAd)
+      Engine::Get().ShowInterstitialAd();
     if (state_ == kGame)
       EnterMenuState();
   }
@@ -267,7 +270,8 @@ void Demo::UpdateMenuState(float delta_time) {
       break;
     case Menu::kNewGame:
       menu_.Hide([&]() {
-        Engine::Get().ShowInterstitialAd();
+        if (saved_data_.Get<int>(kLaunchCount, 0) > kLaunchCountBeforeAd)
+          Engine::Get().ShowInterstitialAd();
         StartNewGame();
       });
       break;
