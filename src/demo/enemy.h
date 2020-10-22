@@ -71,6 +71,8 @@ class Enemy {
 
     bool shield_active = false;
 
+    bool freeze_ = false;
+
     eng::ImageQuad sprite;
     eng::ImageQuad target;
     eng::ImageQuad blast;

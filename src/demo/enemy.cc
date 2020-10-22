@@ -389,6 +389,7 @@ void Enemy::StopAllEnemyUnits() {
       continue;
 
     e.movement_animator.Pause(Animator::kMovement);
+    e.freeze_ = true;
 
     if (e.stealth_active) {
       e.sprite_animator.Stop(Animator::kAllAnimations | Animator::kTimer);
@@ -891,7 +892,8 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
             target->sprite_animator.Play(Animator::kBlending, false);
             target->sprite_animator.SetEndCallback(
                 Animator::kBlending, [&]() -> void {
-                  target->movement_animator.Play(Animator::kMovement, false);
+                  if (!target->freeze_)
+                    target->movement_animator.Play(Animator::kMovement, false);
                   target->sprite_animator.Play(Animator::kFrames, true);
                 });
           });
