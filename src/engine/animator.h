@@ -36,7 +36,7 @@ class Animator {
 
   // Get/set current time of the given animation.
   float GetTime(int animation);
-  void SetTime(int animation, float time);
+  void SetTime(int animation, float time, bool force_update = false);
 
   // Set callback ro be called once animation ends.
   void SetEndCallback(int animation, base::Closure cb);

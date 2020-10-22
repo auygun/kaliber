@@ -58,7 +58,7 @@ float Animator::GetTime(int animation) {
   return timer_time_;
 }
 
-void Animator::SetTime(int animation, float time) {
+void Animator::SetTime(int animation, float time, bool force_update) {
   DCHECK(time >= 0 && time <= 1);
 
   if ((animation & kMovement) != 0)
@@ -71,6 +71,13 @@ void Animator::SetTime(int animation, float time) {
     frame_time_ = time;
   if ((animation & kTimer) != 0)
     timer_time_ = time;
+
+  if (force_update) {
+    unsigned play_flags = play_flags_;
+    play_flags_ = animation;
+    Update(0);
+    play_flags_ = play_flags;
+  }
 }
 
 void Animator::SetEndCallback(int animation, base::Closure cb) {
