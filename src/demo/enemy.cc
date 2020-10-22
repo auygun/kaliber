@@ -452,16 +452,25 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   seconds_to_next_spawn_ = {0, 0, 0, 0};
   spawn_factor_ = 0.3077f - (0.0538f * log((float)wave));
   spawn_factor_interpolator_ = 0;
-  boss_spawn_cooldown_ = 4;
-  boss_spawn_duration_ = 0;
   last_spawn_col_ = 0;
   paused_ = false;
   wave_ = wave;
   boss_fight_ = boss_fight;
   power_up_spawn_factor_ = 1.4f - (0.188f * log((float)wave));
 
-  if (boss_fight)
+  if (boss_fight) {
+    boss_spawn_cooldown_ = 4;
+    boss_spawn_duration_ = 0;
+    boss_spawn_factor_ = [wave]() -> float {
+      if (wave == 3)
+        return 0.18f;
+      else if (wave == 6)
+        return 0.16f;
+      else
+        return 0.14f;
+    }();
     SpawnBoss();
+  }
 }
 
 void Enemy::SpawnUnit(EnemyType enemy_type,
