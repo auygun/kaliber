@@ -393,6 +393,7 @@ void Enemy::StopAllEnemyUnits() {
     if (e.stealth_active) {
       e.sprite_animator.Stop(Animator::kAllAnimations | Animator::kTimer);
       e.sprite_animator.SetBlending({1, 1, 1, 1}, 0.5f);
+      e.sprite_animator.SetEndCallback(Animator::kBlending, nullptr);
       e.sprite_animator.Play(Animator::kBlending, false);
       e.sprite_animator.Play(Animator::kFrames, true);
     }
@@ -851,21 +852,29 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
       float stealth_timer = Lerp(2.0f, 5.0f, rnd.GetFloat());
       target->sprite_animator.SetEndCallback(
           Animator::kTimer, [&, target]() -> void {
-            float x = SnapSpawnPosX(rnd.Roll(4) - 1);
-            TranslateEnemyUnit(*target, {x - target->sprite.GetOffset().x, 0});
+            // No horizontal teleport in boss fight.
+            if (!boss_fight_) {
+              float x = SnapSpawnPosX(rnd.Roll(4) - 1);
+              TranslateEnemyUnit(*target,
+                                 {x - target->sprite.GetOffset().x, 0});
+            }
 
+            // Vertical teleport.
             float ct = target->movement_animator.GetTime(Animator::kMovement);
             if (ct < 0.6f) {
               float t = Lerp(0.0f, 0.5f, rnd.GetFloat());
               float nt = std::min(ct + t, 0.6f);
-              target->movement_animator.SetTime(Animator::kMovement, nt);
+              target->movement_animator.SetTime(Animator::kMovement, nt, true);
             }
 
             target->stealth_active = false;
-            target->movement_animator.Play(Animator::kMovement, false);
             target->sprite_animator.SetBlending({1, 1, 1, 1}, 1.0f);
             target->sprite_animator.Play(Animator::kBlending, false);
-            target->sprite_animator.Play(Animator::kFrames, true);
+            target->sprite_animator.SetEndCallback(
+                Animator::kBlending, [&]() -> void {
+                  target->movement_animator.Play(Animator::kMovement, false);
+                  target->sprite_animator.Play(Animator::kFrames, true);
+                });
           });
 
       target->sprite_animator.SetTimer(stealth_timer);
