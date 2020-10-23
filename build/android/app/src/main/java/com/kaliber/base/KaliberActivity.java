@@ -93,7 +93,7 @@ public class KaliberActivity extends NativeActivity {
                     File dir = getExternalFilesDir(null);
                     File file = new File(dir, fileName);
                     Uri uri = FileProvider.getUriForFile(KaliberActivity.this,
-                            "com.codepath.fileprovider", file);
+                            "com.woom.game.fileprovider", file);
 
                     Intent emailIntent = new Intent();
                     emailIntent.setAction(Intent.ACTION_SEND);
