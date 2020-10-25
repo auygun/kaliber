@@ -138,6 +138,9 @@ class Menu {
   eng::ImageQuad high_score_;
   eng::Animator high_score_animator_;
 
+  eng::ImageQuad version_;
+  eng::Animator version_animator_;
+
   int start_from_wave_ = 1;
 
   Radio starting_wave_;

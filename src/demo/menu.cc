@@ -21,6 +21,8 @@ using namespace eng;
 
 namespace {
 
+constexpr char kVersionStr[] = "Version 1.0.test.3";
+
 constexpr char kMenuOption[Menu::kOption_Max][10] = {"continue", "start",
                                                      "credits", "exit"};
 
@@ -191,6 +193,16 @@ bool Menu::Initialize() {
 
   high_score_animator_.Attach(&high_score_);
 
+  version_.Create("version_tex");
+  version_.SetZOrder(41);
+  version_.Scale(0.6f);
+  version_.SetOffset(Engine::Get().GetScreenSize() * Vector2(0, -0.5f) +
+                     version_.GetScale() * Vector2(0, 2));
+  version_.SetColor(kHighScoreColor * Vector4(1, 1, 1, 0));
+  version_.SetVisible(false);
+
+  version_animator_.Attach(&version_);
+
   start_from_wave_ = 1;
   starting_wave_.Create("starting_wave");
 
@@ -225,6 +237,8 @@ void Menu::Update(float delta_time) {
   toggle_vibration_.Update(delta_time);
 
   high_score_animator_.Update(delta_time);
+
+  version_animator_.Update(delta_time);
 
   starting_wave_.Update(delta_time);
   wave_up_.Update(delta_time);
@@ -324,6 +338,10 @@ void Menu::Show() {
     high_score_animator_.Play(Animator::kBlending, false);
   }
 
+  version_animator_.SetVisible(true);
+  version_animator_.SetBlending(kHighScoreColor, kFadeSpeed);
+  version_animator_.Play(Animator::kBlending, false);
+
   for (int i = 0; i < kOption_Max; ++i) {
     if (items_[i].hide)
       continue;
@@ -374,6 +392,14 @@ void Menu::Hide(Closure cb) {
   });
   high_score_animator_.Play(Animator::kBlending, false);
 
+  version_animator_.Stop(Animator::kAllAnimations);
+  version_animator_.SetBlending(kColorFadeOut, kFadeSpeed);
+  version_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
+    version_animator_.SetEndCallback(Animator::kBlending, nullptr);
+    version_animator_.SetVisible(false);
+  });
+  version_animator_.Play(Animator::kBlending, false);
+
   selected_option_ = kOption_Invalid;
   for (int i = 0; i < kOption_Max; ++i) {
     if (items_[i].hide)
@@ -419,6 +445,22 @@ bool Menu::CreateRenderResources() {
     image->Clear({1, 1, 1, 0});
 
     font.Print(0, 0, btn_text, image->GetBuffer(), image->GetWidth());
+
+    image->Compress();
+    return image;
+  });
+
+  Engine::Get().SetImageSource("version_tex", []() -> std::unique_ptr<Image> {
+    const Font* font = Engine::Get().GetSystemFont();
+
+    int w, h;
+    font->CalculateBoundingBox(kVersionStr, w, h);
+
+    auto image = std::make_unique<Image>();
+    image->Create(w, font->GetLineHeight());
+    image->Clear({1, 1, 1, 0});
+
+    font->Print(0, 0, kVersionStr, image->GetBuffer(), image->GetWidth());
 
     image->Compress();
     return image;
