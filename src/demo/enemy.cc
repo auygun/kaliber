@@ -462,14 +462,7 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   if (boss_fight) {
     boss_spawn_cooldown_ = 4;
     boss_spawn_duration_ = 0;
-    boss_spawn_factor_ = [wave]() -> float {
-      if (wave == 3)
-        return 0.18f;
-      else if (wave == 6)
-        return 0.16f;
-      else
-        return 0.14f;
-    }();
+    boss_spawn_factor_ = wave <= 9 ? 0.16f : 0.14f;
     SpawnBoss();
   }
 }
@@ -878,9 +871,9 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
                                  {x - target->sprite.GetOffset().x, 0});
             }
 
-            // Vertical teleport.
+            // Vertical teleport (wave 6+).
             float ct = target->movement_animator.GetTime(Animator::kMovement);
-            if (ct < 0.6f) {
+            if (wave_ >= 6 && ct < 0.6f) {
               float t = Lerp(0.0f, 0.5f, rnd.GetFloat());
               float nt = std::min(ct + t, 0.6f);
               target->movement_animator.SetTime(Animator::kMovement, nt, true);
@@ -949,11 +942,11 @@ void Enemy::UpdateWave(float delta_time) {
   if (enemy_type != kEnemyType_Invalid) {
     // Spawn only light enemies during the first 4 waves. Then gradually
     // introduce harder enemy types.
-    if (enemy_type != kEnemyType_LightSkull && wave_ <= 4)
+    if (enemy_type != kEnemyType_LightSkull && wave_ <= 3)
       enemy_type = wave_ == 1 ? kEnemyType_Invalid : kEnemyType_LightSkull;
-    else if (enemy_type > kEnemyType_DarkSkull && wave_ == 5)
+    else if (enemy_type > kEnemyType_DarkSkull && wave_ == 4)
       enemy_type = kEnemyType_LightSkull;
-    else if (enemy_type == kEnemyType_Tank && wave_ == 6)
+    else if (enemy_type == kEnemyType_Tank && wave_ <= 6)
       enemy_type = kEnemyType_LightSkull;
   }
 
@@ -992,7 +985,7 @@ void Enemy::UpdateWave(float delta_time) {
       SpawnUnit(kEnemyType_PowerUp, kDamageType_Any, pos, 6);
     }
     seconds_since_last_power_up_ = 0;
-    float b_ln = 0.5646f * log((float)wave_);
+    float b_ln = 0.4498f * log((float)(wave_ < 7 ? wave_ : 7));
     seconds_to_next_power_up_ =
         Lerp((2.0f - b_ln) * 60.0f, (2.5f - b_ln) * 60.0f, rnd.GetFloat());
   }
@@ -1034,8 +1027,8 @@ void Enemy::UpdateBoss(float delta_time) {
 
       seconds_since_last_spawn_[i] = 0;
       seconds_to_next_spawn_[i] =
-          Lerp(kSpawnPeriod[i][0] * 0.14f, kSpawnPeriod[i][1] * 0.14f,
-               rnd.GetFloat());
+          Lerp(kSpawnPeriod[i][0] * boss_spawn_factor_,
+               kSpawnPeriod[i][1] * boss_spawn_factor_, rnd.GetFloat());
       break;
     }
   }
