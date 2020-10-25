@@ -256,8 +256,8 @@ void Demo::EnterGameOverState() {
     });
   });
 
-  Engine::Get().EndRecording("replay");
-  Engine::Get().ShareFile("replay");
+  // Engine::Get().EndRecording("replay");
+  // Engine::Get().ShareFile("replay");
 }
 
 void Demo::UpdateMenuState(float delta_time) {
@@ -331,7 +331,7 @@ void Demo::Continue() {
 }
 
 void Demo::StartNewGame() {
-  Engine::Get().StartRecording();
+  // Engine::Get().StartRecording();
   // Engine::Get().Replay("replay");
 
   score_ = add_score_ = 0;
