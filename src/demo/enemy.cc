@@ -48,9 +48,9 @@ constexpr int enemy_scores[] = {100, 150, 300, 250, 0, 500};
 
 // Enemy units spawn speed.
 constexpr float kSpawnPeriod[kEnemyType_Unit_Last + 1][2] = {{3, 6},
-                                                             {15, 25},
-                                                             {50, 70},
-                                                             {70, 90}};
+                                                             {20, 30},
+                                                             {60, 80},
+                                                             {80, 100}};
 
 void SetupFadeOutAnim(Animator& animator, float delay) {
   animator.SetEndCallback(Animator::kTimer, [&]() -> void {
@@ -985,9 +985,8 @@ void Enemy::UpdateWave(float delta_time) {
       SpawnUnit(kEnemyType_PowerUp, kDamageType_Any, pos, 6);
     }
     seconds_since_last_power_up_ = 0;
-    float b_ln = 0.4498f * log((float)(wave_ < 7 ? wave_ : 7));
     seconds_to_next_power_up_ =
-        Lerp((2.0f - b_ln) * 60.0f, (2.5f - b_ln) * 60.0f, rnd.GetFloat());
+        Lerp(1.3f * 60.0f, 1.8f * 60.0f, rnd.GetFloat());
   }
 }
 
