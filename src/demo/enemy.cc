@@ -1023,8 +1023,8 @@ void Enemy::UpdateBoss(float delta_time) {
   Engine& engine = Engine::Get();
   Random& rnd = engine.GetRandomGenerator();
 
-  if (static_cast<Demo*>(engine.GetGame())->stage_time() > 2.5f)
-    boss_spawn_factor_ = 0.10f;
+  if (static_cast<Demo*>(engine.GetGame())->stage_time() > 2.5f * 60)
+    boss_spawn_factor_ = 0.08f;
 
   EnemyType enemy_type = kEnemyType_Invalid;
 
@@ -1041,7 +1041,8 @@ void Enemy::UpdateBoss(float delta_time) {
     }
   }
 
-  if (enemy_type != kEnemyType_Invalid) {
+  if (enemy_type != kEnemyType_Invalid &&
+      static_cast<Demo*>(engine.GetGame())->stage_time() <= 2.5f * 60) {
     // Spawn only light enemies during the first boss fight. Then gradually
     // introduce harder enemy types.
     if (enemy_type != kEnemyType_LightSkull && wave_ == 3)
