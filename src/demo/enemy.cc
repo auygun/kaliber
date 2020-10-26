@@ -462,7 +462,13 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   if (boss_fight) {
     boss_spawn_cooldown_ = 4;
     boss_spawn_duration_ = 0;
-    boss_spawn_factor_ = wave <= 9 ? 0.16f : 0.14f;
+    boss_spawn_factor_ = [wave]() -> float {
+      if (wave <= 9)
+        return 0.16f;
+      if (wave <= 15)
+        return 0.14f;
+      return 0.12f;
+    }();
     SpawnBoss();
   }
 }
@@ -1016,6 +1022,9 @@ void Enemy::UpdateBoss(float delta_time) {
 
   Engine& engine = Engine::Get();
   Random& rnd = engine.GetRandomGenerator();
+
+  if (static_cast<Demo*>(engine.GetGame())->stage_time() > 2.5f)
+    boss_spawn_factor_ = 0.10f;
 
   EnemyType enemy_type = kEnemyType_Invalid;
 

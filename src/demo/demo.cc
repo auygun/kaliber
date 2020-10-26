@@ -437,7 +437,7 @@ void Demo::Dimmer(bool enable) {
   }
 }
 
-int Demo::GetHighScore() {
+int Demo::GetHighScore() const {
   return saved_data_.Get<int>(kHightScore, 0);
 }
 

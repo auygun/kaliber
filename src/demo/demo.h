@@ -44,9 +44,11 @@ class Demo : public eng::Game {
   Player& GetPlayer() { return player_; }
   Enemy& GetEnemy() { return enemy_; }
 
-  int wave() { return wave_; }
+  int wave() const { return wave_; }
 
-  int GetHighScore();
+  int GetHighScore() const;
+
+  float stage_time() const { return stage_time_; }
 
   eng::PersistentData& saved_data() { return saved_data_; }
   const eng::PersistentData& saved_data() const { return saved_data_; }
