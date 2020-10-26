@@ -50,7 +50,7 @@ constexpr int enemy_scores[] = {100, 150, 300, 250, 0, 500};
 constexpr float kSpawnPeriod[kEnemyType_Unit_Last + 1][2] = {{3, 6},
                                                              {20, 30},
                                                              {60, 80},
-                                                             {80, 100}};
+                                                             {70, 100}};
 
 void SetupFadeOutAnim(Animator& animator, float delay) {
   animator.SetEndCallback(Animator::kTimer, [&]() -> void {
@@ -465,7 +465,7 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
     boss_spawn_factor_ = [wave]() -> float {
       if (wave <= 9)
         return 0.16f;
-      if (wave <= 15)
+      if (wave <= 12)
         return 0.14f;
       return 0.12f;
     }();
