@@ -1,4 +1,8 @@
 TODO:
+- Use frame_fract everywhere and check the smoothness in low fps.
+- Move resource creation from Renderer to Engine.
+- Rename offset to position
+- Rename scale to size and add scale separately.
 
 DONE:
 - Fix intersection test in targetting code.
