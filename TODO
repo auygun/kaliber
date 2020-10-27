@@ -3,6 +3,7 @@ TODO:
 - Move resource creation from Renderer to Engine.
 - Rename offset to position
 - Rename scale to size and add scale separately.
+- Add world matrix. (model matrix?)
 
 DONE:
 - Fix intersection test in targetting code.
