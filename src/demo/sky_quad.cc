@@ -39,6 +39,7 @@ bool SkyQuad::Create(bool without_nebula) {
 }
 
 void SkyQuad::Update(float delta_time) {
+  last_sky_offset_ = sky_offset_;
   sky_offset_ += {0, delta_time * 0.04f};
   color_animator_.Update(delta_time);
 }
@@ -55,7 +56,6 @@ void SkyQuad::Draw(float frame_frac) {
                         {nebula_color_.x, nebula_color_.y, nebula_color_.z});
 
   Engine::Get().GetQuad()->Draw();
-  last_sky_offset_ = sky_offset_;
 }
 
 void SkyQuad::ContextLost() {
