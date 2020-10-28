@@ -40,6 +40,10 @@ bool Player::Initialize() {
   if (!nuke_explosion_sound_->Load("nuke.mp3", false))
     return false;
 
+  no_nuke_sound_ = std::make_shared<Sound>();
+  if (!no_nuke_sound_->Load("no_nuke.mp3", false))
+    return false;
+
   SetupWeapons();
 
   Vector2 hb_pos = Engine::Get().GetScreenSize() / Vector2(2, -2) +
@@ -74,6 +78,8 @@ bool Player::Initialize() {
   nuke_explosion_.SetVariate(false);
   nuke_explosion_.SetSimulateStereo(false);
   nuke_explosion_.SetMaxAplitude(0.8f);
+
+  no_nuke_.SetSound(no_nuke_sound_);
 
   return true;
 }
@@ -323,8 +329,13 @@ void Player::UpdateTarget(DamageType weapon) {
 }
 
 void Player::Nuke() {
-  if (nuke_count_ <= 0 || nuke_animator_.IsPlaying(Animator::kBlending))
+  if (nuke_animator_.IsPlaying(Animator::kBlending))
     return;
+
+  if (nuke_count_ <= 0) {
+    no_nuke_.Play(false);
+    return;
+  }
 
   Engine& engine = Engine::Get();
   Demo* game = static_cast<Demo*>(engine.GetGame());

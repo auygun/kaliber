@@ -39,6 +39,7 @@ class Player {
 
  private:
   std::shared_ptr<eng::Sound> nuke_explosion_sound_;
+  std::shared_ptr<eng::Sound> no_nuke_sound_;
   std::shared_ptr<eng::Sound> laser_shot_sound_;
 
   eng::ImageQuad drag_sign_[2];
@@ -58,6 +59,7 @@ class Player {
   eng::SolidQuad nuke_;
   eng::Animator nuke_animator_;
   eng::SoundPlayer nuke_explosion_;
+  eng::SoundPlayer no_nuke_;
 
   eng::ImageQuad nuke_symbol_;
   eng::Animator nuke_symbol_animator_;
