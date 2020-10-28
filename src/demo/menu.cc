@@ -140,6 +140,8 @@ bool Menu::Initialize() {
         if (toggle_audio_.enabled()) {
           if (toggle_music_.enabled())
             game->SetEnableMusic(true);
+          else
+            click_.Play(false);
         } else {
           game->SetEnableMusic(false);
         }
@@ -215,6 +217,7 @@ bool Menu::Initialize() {
             start_from_wave_ > 10)
           start_from_wave_ = 1;
         starting_wave_.image().SetFrame(start_from_wave_ / 3);
+        click_.Play(false);
       },
       false, true);
   wave_up_.image().Scale(1.5f);
