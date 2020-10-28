@@ -41,6 +41,7 @@ void ImageQuad::AutoScale() {
 
 void ImageQuad::SetCustomShader(std::shared_ptr<Shader> shader) {
   custom_shader_ = shader;
+  custom_uniforms_.clear();
 }
 
 void ImageQuad::SetFrame(size_t frame) {
