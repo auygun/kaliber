@@ -18,7 +18,7 @@ AudioBase::~AudioBase() = default;
 
 void AudioBase::Play(std::shared_ptr<AudioSample> sample) {
   if (audio_enabled_) {
-    std::lock_guard<Spinlock> scoped_lock(lock_);
+    std::lock_guard<std::mutex> scoped_lock(lock_);
     samples_[0].push_back(sample);
   } else {
     sample->active = false;
@@ -27,8 +27,9 @@ void AudioBase::Play(std::shared_ptr<AudioSample> sample) {
 
 void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
   {
-    std::lock_guard<Spinlock> scoped_lock(lock_);
-    samples_[1].splice(samples_[1].end(), samples_[0]);
+    std::unique_lock<std::mutex> scoped_lock(lock_, std::try_to_lock);
+    if (scoped_lock)
+      samples_[1].splice(samples_[1].end(), samples_[0]);
   }
 
   memset(output_buffer, 0, sizeof(float) * num_frames * kChannelCount);
