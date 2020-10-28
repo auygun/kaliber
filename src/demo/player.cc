@@ -349,7 +349,7 @@ void Player::Nuke() {
   nuke_.SetVisible(true);
 
   game->GetEnemy().PauseProgress();
-  game->GetEnemy().StopAllEnemyUnits();
+  game->GetEnemy().StopAllEnemyUnits(true);
 
   nuke_explosion_.Play(false);
 }

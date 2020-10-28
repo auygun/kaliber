@@ -14,6 +14,7 @@
 
 namespace eng {
 class Image;
+class Shader;
 class Sound;
 }  // namespace eng
 
@@ -43,7 +44,7 @@ class Enemy {
 
   void OnWaveStarted(int wave, bool boss_figt);
 
-  void StopAllEnemyUnits();
+  void StopAllEnemyUnits(bool chromatic_aberration_effect = false);
   void KillAllEnemyUnits(bool randomize_order = true);
   void RemoveAll();
 
@@ -73,6 +74,8 @@ class Enemy {
 
     bool freeze_ = false;
 
+    bool chromatic_aberration_active_ = false;
+
     eng::ImageQuad sprite;
     eng::ImageQuad target;
     eng::ImageQuad blast;
@@ -95,6 +98,9 @@ class Enemy {
     eng::SoundPlayer shield_on;
     eng::SoundPlayer hit;
   };
+
+  std::shared_ptr<eng::Shader> chromatic_aberration_;
+  float chromatic_aberration_offset_ = 0;
 
   eng::ImageQuad boss_;
   eng::Animator boss_animator_;

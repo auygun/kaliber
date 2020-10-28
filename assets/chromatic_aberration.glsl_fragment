@@ -1,0 +1,16 @@
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+uniform vec4 color;
+uniform sampler2D texture;
+uniform float aberration_offset;
+
+varying vec2 tex_coord_0;
+
+void main() {
+  vec4 r = texture2D(texture, tex_coord_0 - vec2(aberration_offset, 0));
+  vec4 g = texture2D(texture, tex_coord_0 - vec2(-aberration_offset, 0));
+  vec4 b = texture2D(texture, tex_coord_0 - vec2(0, aberration_offset));
+  gl_FragColor = vec4(r.x, g.y, b.z, (r.w + g.w + b.w) / 3.0) * color;
+}

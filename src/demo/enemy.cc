@@ -12,6 +12,9 @@
 #include "../engine/engine.h"
 #include "../engine/font.h"
 #include "../engine/image.h"
+#include "../engine/renderer/geometry.h"
+#include "../engine/renderer/shader.h"
+#include "../engine/shader_source.h"
 #include "../engine/sound.h"
 #include "demo.h"
 
@@ -72,11 +75,18 @@ float SnapSpawnPosX(int col) {
 
 }  // namespace
 
-Enemy::Enemy() = default;
+Enemy::Enemy()
+    : chromatic_aberration_(Engine::Get().CreateRenderResource<Shader>()) {}
 
 Enemy::~Enemy() = default;
 
 bool Enemy::Initialize() {
+  auto source = std::make_unique<ShaderSource>();
+  if (!source->Load("chromatic_aberration.glsl"))
+    return false;
+  chromatic_aberration_->Create(std::move(source),
+                                Engine::Get().GetQuad()->vertex_description());
+
   boss_intro_sound_ = std::make_shared<Sound>();
   if (!boss_intro_sound_->Load("boss_intro.mp3", false))
     return false;
@@ -134,11 +144,19 @@ void Enemy::Update(float delta_time) {
 
   Random& rnd = Engine::Get().GetRandomGenerator();
 
+  chromatic_aberration_offset_ += 0.8f * delta_time;
+
   // Update enemy units.
   for (auto it = enemies_.begin(); it != enemies_.end();) {
     if (it->marked_for_removal) {
       it = enemies_.erase(it);
       continue;
+    }
+
+    if (it->chromatic_aberration_active_) {
+      it->sprite.SetCustomUniform(
+          "aberration_offset",
+          Lerp(0.0f, 0.05f, Acceleration(chromatic_aberration_offset_, 2)));
     }
 
     if (it->kill_timer > 0) {
@@ -382,11 +400,16 @@ void Enemy::ResumeProgress() {
   paused_ = false;
 }
 
-void Enemy::StopAllEnemyUnits() {
+void Enemy::StopAllEnemyUnits(bool chromatic_aberration_effect) {
   for (auto& e : enemies_) {
     if (e.enemy_type > kEnemyType_Unit_Last || e.marked_for_removal ||
         e.hit_points == 0)
       continue;
+
+    if (chromatic_aberration_effect) {
+      e.sprite.SetCustomShader(chromatic_aberration_);
+      e.chromatic_aberration_active_ = true;
+    }
 
     e.movement_animator.Pause(Animator::kMovement);
     e.freeze_ = true;
@@ -399,6 +422,9 @@ void Enemy::StopAllEnemyUnits() {
       e.sprite_animator.Play(Animator::kFrames, true);
     }
   }
+
+  if (chromatic_aberration_effect)
+    chromatic_aberration_offset_ = 0.0f;
 }
 
 void Enemy::KillAllEnemyUnits(bool randomize_order) {
