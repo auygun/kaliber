@@ -39,6 +39,10 @@ void ImageQuad::AutoScale() {
   Scale(static_cast<float>(engine.GetDeviceDpi()) / s);
 }
 
+void ImageQuad::SetCustomShader(std::shared_ptr<Shader> shader) {
+  custom_shader_ = shader;
+}
+
 void ImageQuad::SetFrame(size_t frame) {
   DCHECK(frame < GetNumFrames())
       << "asset: " << asset_name_ << " frame: " << frame;
@@ -60,7 +64,8 @@ void ImageQuad::Draw(float frame_frac) {
   Vector2 tex_scale = {GetFrameWidth() / texture_->GetWidth(),
                        GetFrameHeight() / texture_->GetHeight()};
 
-  Shader* shader = Engine::Get().GetPassThroughShader();
+  Shader* shader = custom_shader_ ? custom_shader_.get()
+                                  : Engine::Get().GetPassThroughShader();
 
   shader->Activate();
   shader->SetUniform("offset", offset_);
@@ -72,6 +77,13 @@ void ImageQuad::Draw(float frame_frac) {
   shader->SetUniform("projection", Engine::Get().GetProjectionMatrix());
   shader->SetUniform("color", color_);
   shader->SetUniform("texture", 0);
+
+  if (custom_shader_) {
+    for (auto& cu : custom_uniforms_)
+      std::visit(
+          [shader, &cu](auto&& arg) { shader->SetUniform(cu.first, arg); },
+          cu.second);
+  }
 
   Engine::Get().GetQuad()->Draw();
 }
