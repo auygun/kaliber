@@ -53,6 +53,8 @@ class SkyQuad : public eng::Animatable {
   eng::Animator color_animator_;
 
   bool without_nebula_ = false;
+
+  bool CreateShaders();
 };
 
 #endif  // SKY_QUAD_H

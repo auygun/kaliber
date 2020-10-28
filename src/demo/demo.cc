@@ -155,6 +155,7 @@ void Demo::Update(float delta_time) {
 
 void Demo::ContextLost() {
   sky_.ContextLost();
+  enemy_.ContextLost();
 }
 
 void Demo::LostFocus() {}

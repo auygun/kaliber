@@ -27,6 +27,8 @@ class Enemy {
 
   void Update(float delta_time);
 
+  void ContextLost();
+
   bool HasTarget(DamageType damage_type);
   base::Vector2 GetTargetPos(DamageType damage_type);
 
@@ -163,6 +165,7 @@ class Enemy {
   std::unique_ptr<eng::Image> GetScoreImage(EnemyType enemy_type);
 
   bool CreateRenderResources();
+  bool CreateShaders();
 
   void TranslateEnemyUnit(EnemyUnit& e, const base::Vector2& delta);
 };

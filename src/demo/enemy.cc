@@ -81,12 +81,6 @@ Enemy::Enemy()
 Enemy::~Enemy() = default;
 
 bool Enemy::Initialize() {
-  auto source = std::make_unique<ShaderSource>();
-  if (!source->Load("chromatic_aberration.glsl"))
-    return false;
-  chromatic_aberration_->Create(std::move(source),
-                                Engine::Get().GetQuad()->vertex_description());
-
   boss_intro_sound_ = std::make_shared<Sound>();
   if (!boss_intro_sound_->Load("boss_intro.mp3", false))
     return false;
@@ -156,7 +150,7 @@ void Enemy::Update(float delta_time) {
     if (it->chromatic_aberration_active_) {
       it->sprite.SetCustomUniform(
           "aberration_offset",
-          Lerp(0.0f, 0.05f, Acceleration(chromatic_aberration_offset_, 2)));
+          Lerp(0.0f, 0.01f, chromatic_aberration_offset_));
     }
 
     if (it->kill_timer > 0) {
@@ -194,6 +188,10 @@ void Enemy::Update(float delta_time) {
 
     it++;
   }
+}
+
+void Enemy::ContextLost() {
+  CreateShaders();
 }
 
 bool Enemy::HasTarget(DamageType damage_type) {
@@ -1131,6 +1129,9 @@ std::unique_ptr<Image> Enemy::GetScoreImage(EnemyType enemy_type) {
 }
 
 bool Enemy::CreateRenderResources() {
+  if (!CreateShaders())
+    return false;
+
   Engine::Get().SetImageSource("skull_tex", "enemy_anims_01_frames_ok.png",
                                true);
   Engine::Get().SetImageSource("bug_tex", "enemy_anims_02_frames_ok.png", true);
@@ -1148,6 +1149,15 @@ bool Enemy::CreateRenderResources() {
         "score_tex"s + std::to_string(i),
         std::bind(&Enemy::GetScoreImage, this, (EnemyType)i), true);
 
+  return true;
+}
+
+bool Enemy::CreateShaders() {
+  auto source = std::make_unique<ShaderSource>();
+  if (!source->Load("chromatic_aberration.glsl"))
+    return false;
+  chromatic_aberration_->Create(std::move(source),
+                                Engine::Get().GetQuad()->vertex_description());
   return true;
 }
 
