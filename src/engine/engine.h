@@ -196,7 +196,7 @@ class Engine {
 
   std::deque<std::unique_ptr<InputEvent>> input_queue_;
 
-  eng::PersistentData replay_data_;
+  PersistentData replay_data_;
   bool recording_ = false;
   bool replaying_ = false;
   int replay_index_ = 0;

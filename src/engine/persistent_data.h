@@ -27,14 +27,16 @@ bool Get(const Json::Value& val, bool default_val);
 
 class PersistentData {
  public:
+  enum StorageType { kPrivate, kShared, kAsset };
+
   PersistentData() = default;
   ~PersistentData() = default;
 
-  bool Load(const std::string& file_name, bool shared = false);
+  bool Load(const std::string& file_name, StorageType type = kPrivate);
 
   bool Save(bool force = false);
 
-  bool SaveAs(const std::string& file_name, bool shared = false);
+  bool SaveAs(const std::string& file_name, StorageType type = kPrivate);
 
   template <typename T>
   T Get(const char* key, T default_val) const {
@@ -49,7 +51,7 @@ class PersistentData {
   const Json::Value& operator[](const std::string& key) const;
 
  private:
-  bool shared_ = false;
+  StorageType type_ = kPrivate;
   std::string file_name_;
   Json::Value root_;
   bool dirty_ = false;

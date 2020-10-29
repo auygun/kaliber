@@ -343,13 +343,14 @@ void Engine::EndRecording(const std::string file_name) {
     DCHECK(!replaying_);
 
     recording_ = false;
-    replay_data_.SaveAs(file_name, true);
+    replay_data_.SaveAs(file_name, PersistentData::kShared);
     replay_data_ = {};
   }
 }
 
 bool Engine::Replay(const std::string file_name) {
-  if (!replaying_ && !recording_ && replay_data_.Load(file_name, true)) {
+  if (!replaying_ && !recording_ &&
+      replay_data_.Load(file_name, PersistentData::kShared)) {
     replaying_ = true;
     random_ = Random(replay_data_["random_seed"].asUInt());
     tick_ = 0;
