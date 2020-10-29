@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <string>
 
 namespace base {
 
@@ -64,6 +65,8 @@ struct Vector2 {
   }
 
   const float* GetData() const { return &x; }
+
+  std::string ToString();
 };
 
 inline Vector2 operator+(const Vector2& v1, const Vector2& v2) {
