@@ -149,8 +149,7 @@ void Enemy::Update(float delta_time) {
 
     if (it->chromatic_aberration_active_) {
       it->sprite.SetCustomUniform(
-          "aberration_offset",
-          Lerp(0.0f, 0.01f, chromatic_aberration_offset_));
+          "aberration_offset", Lerp(0.0f, 0.01f, chromatic_aberration_offset_));
     }
 
     if (it->kill_timer > 0) {
@@ -729,7 +728,7 @@ void Enemy::SpawnBoss() {
     e.enemy_type = kEnemyType_Boss;
     e.damage_type = kDamageType_Any;
     e.total_health = e.hit_points =
-        38.5706f + 53.4193f * log((float)(game->wave() / 3));
+        -15.0845f + 41.1283f * log((float)game->wave());
     DLOG << " Boss health: " << e.total_health;
 
     Vector2 hit_box_pos =
