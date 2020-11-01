@@ -1015,7 +1015,7 @@ void Enemy::UpdateWave(float delta_time) {
     }
     seconds_since_last_power_up_ = 0;
     seconds_to_next_power_up_ =
-        Lerp(1.3f * 60.0f, 1.8f * 60.0f, rnd.GetFloat());
+        Lerp(1.0f * 60.0f, 1.5f * 60.0f, rnd.GetFloat());
   }
 }
 
