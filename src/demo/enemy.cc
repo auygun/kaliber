@@ -540,7 +540,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
       e.sprite.Create("skull_tex", {10, 13}, 100, 100);
       break;
     case kEnemyType_Tank:
-      e.total_health = e.hit_points = 6;
+      e.total_health = e.hit_points = 5;
       e.sprite.Create("skull_tex", {10, 13}, 100, 100);
       break;
     case kEnemyType_Bug:
