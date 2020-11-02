@@ -600,6 +600,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
 
   e.score.Create("score_tex"s + std::to_string(e.enemy_type));
   e.score.SetZOrder(12);
+  e.score.Scale(1.1f);
   e.score.SetColor({1, 1, 1, 1});
   e.score.SetOffset(spawn_pos);
 
@@ -633,7 +634,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.health_animator.Attach(&e.health_base);
   e.health_animator.Attach(&e.health_bar);
 
-  SetupFadeOutAnim(e.score_animator, 0.2f);
+  SetupFadeOutAnim(e.score_animator, 0.4f);
   e.score_animator.SetMovement({0, engine.GetScreenSize().y / 2}, 2.0f);
   e.score_animator.SetEndCallback(
       Animator::kMovement, [&]() -> void { e.marked_for_removal = true; });
@@ -766,7 +767,7 @@ void Enemy::SpawnBoss() {
 
     e.target_animator.Attach(&e.target);
 
-    SetupFadeOutAnim(e.score_animator, 0.2f);
+    SetupFadeOutAnim(e.score_animator, 0.4f);
     e.score_animator.SetMovement({0, Engine::Get().GetScreenSize().y / 2},
                                  2.0f);
     e.score_animator.SetEndCallback(
