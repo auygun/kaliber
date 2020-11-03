@@ -525,10 +525,14 @@ bool Enemy::CheckTeleportPos(EnemyUnit* enemy) {
         e.speed_type != enemy->speed_type)
       continue;
 
+    if (e.enemy_type == kEnemyType_Bug &&
+        !e.movement_animator.IsPlaying(Animator::kMovement))
+      continue;
+
     bool gc =
         (pos - e.sprite.GetOffset()).Magnitude() < e.sprite.GetScale().y * 0.8f;
     bool tc =
-        fabs(t - e.movement_animator.GetTime(Animator::kMovement)) <= 0.04f;
+        fabs(t - e.movement_animator.GetTime(Animator::kMovement)) <= 0.06f;
 
     if (gc && tc)
       return false;
