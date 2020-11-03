@@ -144,6 +144,7 @@ class Enemy {
   bool boss_fight_ = false;
 
   bool CheckSpawnPos(base::Vector2 pos, SpeedType speed_type);
+  bool CheckTeleportPos(EnemyUnit* enemy);
 
   void SpawnUnit(EnemyType enemy_type,
                  DamageType damage_type,

@@ -505,7 +505,29 @@ bool Enemy::CheckSpawnPos(Vector2 pos, SpeedType speed_type) {
     // Check for collision.
     float sy = e.sprite.GetScale().y;
     Vector2 spawn_pos = pos + Vector2(0, sy);
-    if ((spawn_pos - e.sprite.GetOffset()).Magnitude() < sy)
+    if ((spawn_pos - e.sprite.GetOffset()).Magnitude() < sy * 0.8f)
+      return false;
+  }
+
+  return true;
+}
+
+bool Enemy::CheckTeleportPos(EnemyUnit* enemy) {
+  Vector2 pos = enemy->sprite.GetOffset();
+  float t = enemy->movement_animator.GetTime(Animator::kMovement);
+
+  for (auto& e : enemies_) {
+    if (&e == enemy || e.hit_points <= 0 || e.marked_for_removal ||
+        e.stealth_active || e.enemy_type > kEnemyType_Unit_Last ||
+        e.speed_type != enemy->speed_type)
+      continue;
+
+    bool gc =
+        (pos - e.sprite.GetOffset()).Magnitude() < e.sprite.GetScale().y * 0.8f;
+    bool tc =
+        fabs(t - e.movement_animator.GetTime(Animator::kMovement)) <= 0.04f;
+
+    if (gc && tc)
       return false;
   }
 
@@ -914,9 +936,16 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
             target->sprite_animator.Play(Animator::kBlending, false);
             target->sprite_animator.SetEndCallback(
                 Animator::kBlending, [&]() -> void {
-                  if (!target->freeze_)
+                  if (target->freeze_) {
+                    target->sprite_animator.Play(Animator::kFrames, true);
+                  } else if (CheckTeleportPos(target)) {
                     target->movement_animator.Play(Animator::kMovement, false);
-                  target->sprite_animator.Play(Animator::kFrames, true);
+                    target->sprite_animator.Play(Animator::kFrames, true);
+                  } else {
+                    // Try again soon.
+                    target->sprite_animator.SetBlending({1, 1, 1, 1}, 0.001f);
+                    target->sprite_animator.Play(Animator::kBlending, false);
+                  }
                 });
           });
 
