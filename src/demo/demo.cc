@@ -171,7 +171,7 @@ void Demo::GainedFocus(bool from_interstitial_ad) {
 }
 
 void Demo::AddScore(int score) {
-  add_score_ += score;
+  delta_score_ += score;
 }
 
 void Demo::SetEnableMusic(bool enable) {
@@ -289,13 +289,14 @@ void Demo::UpdateMenuState(float delta_time) {
 }
 
 void Demo::UpdateGameState(float delta_time) {
-  if (add_score_ > 0) {
-    score_ += add_score_;
-    add_score_ = 0;
-    hud_.SetScore(score_, true);
+  if (delta_score_ > 0) {
+    wave_score_ += delta_score_;
+    total_score_ += delta_score_;
+    delta_score_ = 0;
+    hud_.SetScore(total_score_, true);
 
-    if (score_ > saved_data_.Get<int>(kHightScore, 0))
-      saved_data_[kHightScore] << score_;
+    if (total_score_ > saved_data_.Get<int>(kHightScore, 0))
+      saved_data_[kHightScore] << total_score_;
   }
 
   if (wave_ > saved_data_.Get<int>(kLastWave, 0))
@@ -312,10 +313,8 @@ void Demo::UpdateGameState(float delta_time) {
   if (boss_fight_) {
     if (!enemy_.IsBossAlive())
       StartNextStage(false);
-    return;
-  }
-
-  if (enemy_.num_enemies_killed_in_current_wave() != last_num_enemies_killed_) {
+  } else if (enemy_.num_enemies_killed_in_current_wave() !=
+             last_num_enemies_killed_) {
     bool no_boss = (last_num_enemies_killed_ == -1);
     last_num_enemies_killed_ = enemy_.num_enemies_killed_in_current_wave();
     int enemies_remaining = total_enemies_ - last_num_enemies_killed_;
@@ -335,7 +334,7 @@ void Demo::StartNewGame() {
   // Engine::Get().StartRecording();
   // Engine::Get().Replay("replay");
 
-  score_ = add_score_ = 0;
+  wave_score_ = total_score_ = delta_score_ = 0;
   wave_ = menu_.start_from_wave() - 1;
   last_num_enemies_killed_ = -1;
   total_enemies_ = 0;
@@ -376,11 +375,12 @@ void Demo::StartNextStage(bool boss) {
 
         hud_.HideProgress();
 
-        total_enemies_ = 0;
-        last_num_enemies_killed_ = 0;
         boss_fight_ = true;
         DLOG << "Boss fight.";
       } else {
+        DLOG << "wave " << wave_ << " score: " << wave_score_;
+        wave_score_ = 0;
+
         Random& rnd = Engine::Get().GetRandomGenerator();
         int dominant_channel = rnd.Roll(3) - 1;
         if (dominant_channel == last_dominant_channel_)
@@ -410,7 +410,7 @@ void Demo::StartNextStage(bool boss) {
         DLOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
       }
 
-      hud_.SetScore(score_, true);
+      hud_.SetScore(total_score_, true);
       hud_.SetWave(wave_, true);
 
       enemy_.OnWaveStarted(wave_, boss);

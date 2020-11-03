@@ -76,8 +76,9 @@ class Demo : public eng::Game {
 
   eng::Font font_;
 
-  int score_ = 0;
-  int add_score_ = 0;
+  int wave_score_ = 0;
+  int total_score_ = 0;
+  int delta_score_ = 0;
 
   int wave_ = 0;
 
