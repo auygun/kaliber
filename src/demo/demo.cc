@@ -19,6 +19,8 @@ DECLARE_GAME_BEGIN
 DECLARE_GAME(Demo)
 DECLARE_GAME_END
 
+using namespace std::string_literals;
+
 using namespace base;
 using namespace eng;
 
@@ -378,8 +380,22 @@ void Demo::StartNextStage(bool boss) {
         boss_fight_ = true;
         DLOG << "Boss fight.";
       } else {
-        DLOG << "wave " << wave_ << " score: " << wave_score_;
-        wave_score_ = 0;
+        int bonus_factor = [&]() -> int {
+          if (wave_ <= 3)
+            return 2;
+          if (wave_ <= 6)
+            return 5;
+          return 10;
+        }();
+        int bonus_score = wave_score_ * bonus_factor;
+        DLOG << "wave " << wave_ << " score: " << wave_score_
+             << " bonus: " << bonus_score;
+
+        if (bonus_score > 0) {
+          AddScore(bonus_score);
+          hud_.ShowMessage("Bonus x"s + std::to_string(bonus_factor), 0.6f);
+          wave_score_ = 0;
+        }
 
         Random& rnd = Engine::Get().GetRandomGenerator();
         int dominant_channel = rnd.Roll(3) - 1;
