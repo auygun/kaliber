@@ -241,6 +241,8 @@ void Enemy::SelectTarget(DamageType damage_type,
   if (candidates.empty())
     return;
 
+  auto all_candidates = candidates;
+
   for (auto it = candidates.begin(); it != candidates.end();) {
     auto [cand_enemy, cand_cos_theta, cand_dist, cand_dir] = *it;
 
@@ -253,7 +255,7 @@ void Enemy::SelectTarget(DamageType damage_type,
 
       // Remove obstructed units.
       if (base::Intersection(other_enemy->sprite.GetOffset(),
-                             other_enemy->sprite.GetScale() * 1.2f, origin,
+                             other_enemy->sprite.GetScale() * 0.8f, origin,
                              cand_dir)) {
         break;
       }
@@ -289,13 +291,14 @@ void Enemy::SelectTarget(DamageType damage_type,
 
   if (!best_enemy) {
     // Sort by distance.
-    std::sort(candidates.begin(), candidates.end(),
+    std::sort(all_candidates.begin(), all_candidates.end(),
               [](auto& a, auto& b) { return std::get<2>(a) > std::get<2>(b); });
 
-    if (base::Intersection(std::get<0>(candidates[0])->sprite.GetOffset(),
-                           std::get<0>(candidates[0])->sprite.GetScale() * 1.2f,
-                           origin, dir))
-      best_enemy = std::get<0>(candidates[0]);
+    if (base::Intersection(
+            std::get<0>(all_candidates[0])->sprite.GetOffset(),
+            std::get<0>(all_candidates[0])->sprite.GetScale() * 0.8f, origin,
+            dir))
+      best_enemy = std::get<0>(all_candidates[0]);
   }
 
   if (best_enemy) {
