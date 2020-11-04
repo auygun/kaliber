@@ -255,7 +255,7 @@ void Enemy::SelectTarget(DamageType damage_type,
 
       // Remove obstructed units.
       if (base::Intersection(other_enemy->sprite.GetOffset(),
-                             other_enemy->sprite.GetScale() * 0.8f, origin,
+                             other_enemy->sprite.GetScale(), origin,
                              cand_dir)) {
         break;
       }
@@ -296,7 +296,7 @@ void Enemy::SelectTarget(DamageType damage_type,
 
     if (base::Intersection(
             std::get<0>(all_candidates[0])->sprite.GetOffset(),
-            std::get<0>(all_candidates[0])->sprite.GetScale() * 0.8f, origin,
+            std::get<0>(all_candidates[0])->sprite.GetScale(), origin,
             dir))
       best_enemy = std::get<0>(all_candidates[0]);
   }
