@@ -74,7 +74,7 @@ void AudioResource::SetSimulateStereo(bool simulate) {
 }
 
 void AudioResource::SetResampleStep(size_t step) {
-  sample_->step.store(step + 10, std::memory_order_relaxed);
+  sample_->step.store(step + 100, std::memory_order_relaxed);
 }
 
 void AudioResource::SetMaxAmplitude(float max_amplitude) {

@@ -89,8 +89,8 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
 
           // Basic resampling for variations.
           accumulator += step;
-          src_index += accumulator / 10;
-          accumulator %= 10;
+          src_index += accumulator / 100;
+          accumulator %= 100;
         }
 
         // Advance source index.
