@@ -94,12 +94,12 @@ bool Demo::Initialize() {
   boss_music_.SetSound(std::move(boss_sound));
   boss_music_.SetMaxAplitude(0.5f);
 
-  if (!saved_data_.Get<bool>("audio", true))
+  if (!saved_data_.root().get("audio", Json::Value(true)).asBool())
     Engine::Get().SetEnableAudio(false);
-  else if (saved_data_.Get<bool>("music", true))
+  else if (saved_data_.root().get("music", Json::Value(true)).asBool())
     music_.Play(true);
 
-  if (!saved_data_.Get<bool>("vibration", true)) {
+  if (!saved_data_.root().get("vibration", Json::Value(true)).asBool()) {
     Engine::Get().SetEnableVibration(false);
   }
 
@@ -110,7 +110,8 @@ bool Demo::Initialize() {
   dimmer_active_ = true;
   dimmer_animator_.Attach(&dimmer_);
 
-  saved_data_[kLaunchCount] << (saved_data_.Get<int>(kLaunchCount, 0) + 1);
+  saved_data_.root()[kLaunchCount] =
+      saved_data_.root().get(kLaunchCount, Json::Value(0)).asInt() + 1;
 
   EnterMenuState();
 
@@ -165,7 +166,8 @@ void Demo::LostFocus() {}
 void Demo::GainedFocus(bool from_interstitial_ad) {
   DLOG << __func__ << " from_interstitial_ad: " << from_interstitial_ad;
   if (!from_interstitial_ad) {
-    if (saved_data_.Get<int>(kLaunchCount, 0) > kLaunchCountBeforeAd)
+    if (saved_data_.root().get(kLaunchCount, Json::Value(0)).asInt() >
+        kLaunchCountBeforeAd)
       Engine::Get().ShowInterstitialAd();
     if (state_ == kGame)
       EnterMenuState();
@@ -274,7 +276,8 @@ void Demo::UpdateMenuState(float delta_time) {
       break;
     case Menu::kNewGame:
       menu_.Hide([&]() {
-        if (saved_data_.Get<int>(kLaunchCount, 0) > kLaunchCountBeforeAd)
+        if (saved_data_.root().get(kLaunchCount, Json::Value(0)).asInt() >
+            kLaunchCountBeforeAd)
           Engine::Get().ShowInterstitialAd();
         StartNewGame();
       });
@@ -297,12 +300,12 @@ void Demo::UpdateGameState(float delta_time) {
     delta_score_ = 0;
     hud_.SetScore(total_score_, true);
 
-    if (total_score_ > saved_data_.Get<unsigned>(kHightScore, 0))
-      saved_data_[kHightScore] << total_score_;
+    if (total_score_ > GetHighScore())
+      saved_data_.root()[kHightScore] = total_score_;
   }
 
-  if (wave_ > saved_data_.Get<int>(kLastWave, 0))
-    saved_data_[kLastWave] << wave_;
+  if (wave_ > saved_data_.root().get(kLastWave, Json::Value(0)).asInt())
+    saved_data_.root()[kLastWave] = wave_;
 
   hud_.Update(delta_time);
   sky_.Update(delta_time);
@@ -455,7 +458,7 @@ void Demo::Dimmer(bool enable) {
 }
 
 size_t Demo::GetHighScore() const {
-  return saved_data_.Get<unsigned>(kHightScore, 0);
+  return saved_data_.root().get(kHightScore, Json::Value(0)).asUInt64();
 }
 
 void Demo::SetDelayedWork(float seconds, base::Closure cb) {

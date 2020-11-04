@@ -145,9 +145,9 @@ bool Menu::Initialize() {
         } else {
           game->SetEnableMusic(false);
         }
-        game->saved_data()["audio"] << toggle_audio_.enabled();
+        game->saved_data().root()["audio"] = toggle_audio_.enabled();
       },
-      true, game->saved_data().Get<bool>("audio", true));
+      true, game->saved_data().root().get("audio", Json::Value(true)).asBool());
   toggle_audio_.image().SetOffset(Engine::Get().GetScreenSize() *
                                   Vector2(0, -0.25f));
   toggle_audio_.image().Scale(0.7f);
@@ -157,9 +157,9 @@ bool Menu::Initialize() {
       [&] {
         Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
         game->SetEnableMusic(toggle_music_.enabled());
-        game->saved_data()["music"] << toggle_music_.enabled();
+        game->saved_data().root()["music"] = toggle_music_.enabled();
       },
-      true, game->saved_data().Get<bool>("music", true));
+      true, game->saved_data().root().get("music", Json::Value(true)).asBool());
   toggle_music_.image().SetOffset(Engine::Get().GetScreenSize() *
                                   Vector2(0, -0.25f));
   toggle_music_.image().Scale(0.7f);
@@ -171,9 +171,10 @@ bool Menu::Initialize() {
         if (toggle_vibration_.enabled())
           Engine::Get().Vibrate(50);
         Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
-        game->saved_data()["vibration"] << toggle_vibration_.enabled();
+        game->saved_data().root()["vibration"] = toggle_vibration_.enabled();
       },
-      true, game->saved_data().Get<bool>("vibration", true));
+      true,
+      game->saved_data().root().get("vibration", Json::Value(true)).asBool());
   toggle_vibration_.image().SetOffset(Engine::Get().GetScreenSize() *
                                       Vector2(0, -0.25f));
   toggle_vibration_.image().Scale(0.7f);
@@ -213,7 +214,10 @@ bool Menu::Initialize() {
       [&] {
         Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
         start_from_wave_ += 3;
-        if (start_from_wave_ > game->saved_data().Get<int>(kLastWave, 1) ||
+        if (start_from_wave_ > game->saved_data()
+                                   .root()
+                                   .get(kLastWave, Json::Value(1))
+                                   .asInt() ||
             start_from_wave_ > 10)
           start_from_wave_ = 1;
         starting_wave_.image().SetFrame(start_from_wave_ / 3);
@@ -363,7 +367,8 @@ void Menu::Show() {
 
   Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
 
-  if (!items_[kNewGame].hide && game->saved_data().Get<int>(kLastWave, 1) > 3) {
+  if (!items_[kNewGame].hide &&
+      game->saved_data().root().get(kLastWave, Json::Value(1)).asInt() > 3) {
     wave_up_.image().SetOffset(items_[1].text.GetOffset());
     wave_up_.image().PlaceToRightOf(items_[1].text);
     starting_wave_.image().SetOffset(wave_up_.image().GetOffset());

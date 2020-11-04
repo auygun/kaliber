@@ -8,23 +8,6 @@
 
 namespace eng {
 
-namespace internal {
-
-template <typename T>
-T Get(const Json::Value& val, T default_val) {
-  NOTREACHED;
-}
-
-// Explicit specialization for basic types.
-template <>
-unsigned Get(const Json::Value& val, unsigned default_val);
-template <>
-int Get(const Json::Value& val, int default_val);
-template <>
-bool Get(const Json::Value& val, bool default_val);
-
-}  // namespace internal
-
 class PersistentData {
  public:
   enum StorageType { kPrivate, kShared, kAsset };
@@ -38,17 +21,10 @@ class PersistentData {
 
   bool SaveAs(const std::string& file_name, StorageType type = kPrivate);
 
-  template <typename T>
-  T Get(const char* key, T default_val) const {
-    Json::Value val = root_.get(key, Json::Value());
-    return internal::Get<T>(val, default_val);
-  }
+  void Clear();
 
-  Json::Value& operator[](const char* key);
-  Json::Value& operator[](const std::string& key);
-
-  const Json::Value& operator[](const char* key) const;
-  const Json::Value& operator[](const std::string& key) const;
+  Json::Value& root();
+  const Json::Value& root() const { return root_; }
 
  private:
   StorageType type_ = kPrivate;
@@ -56,25 +32,6 @@ class PersistentData {
   Json::Value root_;
   bool dirty_ = false;
 };
-
-template <typename T>
-Json::Value& operator<<(Json::Value& val, const T& arg) {
-  val = arg;
-  return val;
-}
-
-template <typename T>
-const Json::Value& operator>>(const Json::Value& val, T& arg) {
-  NOTREACHED;
-}
-
-// Explicit specialization for basic types.
-template <>
-const Json::Value& operator>>(const Json::Value& val, unsigned& arg);
-template <>
-const Json::Value& operator>>(const Json::Value& val, int& arg);
-template <>
-const Json::Value& operator>>(const Json::Value& val, bool& arg);
 
 }  // namespace eng
 

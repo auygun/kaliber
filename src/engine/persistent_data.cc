@@ -101,65 +101,14 @@ bool PersistentData::SaveAs(const std::string& file_name, StorageType type) {
   return true;
 }
 
-Json::Value& PersistentData::operator[](const char* key) {
+void PersistentData::Clear() {
   dirty_ = true;
-  return root_[key];
+  root_ = {};
 }
 
-Json::Value& PersistentData::operator[](const std::string& key) {
+Json::Value& PersistentData::root() {
   dirty_ = true;
-  return root_[key];
+  return root_;
 }
-
-const Json::Value& PersistentData::operator[](const char* key) const {
-  return root_[key];
-}
-
-const Json::Value& PersistentData::operator[](const std::string& key) const {
-  return root_[key];
-}
-
-template <>
-const Json::Value& operator>>(const Json::Value& val, unsigned& arg) {
-  if (!val.isNull() && val.isConvertibleTo(Json::uintValue))
-    arg = val.asUInt();
-  return val;
-}
-
-template <>
-const Json::Value& operator>>(const Json::Value& val, int& arg) {
-  if (!val.isNull() && val.isConvertibleTo(Json::intValue))
-    arg = val.asInt();
-  return val;
-}
-
-template <>
-const Json::Value& operator>>(const Json::Value& val, bool& arg) {
-  if (!val.isNull() && val.isConvertibleTo(Json::booleanValue))
-    arg = val.asBool();
-  return val;
-}
-
-namespace internal {
-
-template <>
-unsigned Get(const Json::Value& val, unsigned default_val) {
-  return (!val.isNull() && val.isConvertibleTo(Json::uintValue)) ? val.asUInt()
-                                                                 : default_val;
-}
-
-template <>
-int Get(const Json::Value& val, int default_val) {
-  return (!val.isNull() && val.isConvertibleTo(Json::intValue)) ? val.asInt()
-                                                                : default_val;
-}
-
-template <>
-bool Get(const Json::Value& val, bool default_val) {
-  return (!val.isNull() && val.isConvertibleTo(Json::intValue)) ? val.asBool()
-                                                                : default_val;
-}
-
-}  // namespace internal
 
 }  // namespace eng

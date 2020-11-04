@@ -296,8 +296,8 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
   std::unique_ptr<InputEvent> event;
 
   if (replaying_) {
-    if (replay_index_ < replay_data_["input"].size()) {
-      auto data = replay_data_["input"][replay_index_];
+    if (replay_index_ < replay_data_.root()["input"].size()) {
+      auto data = replay_data_.root()["input"][replay_index_];
       if (data["tick"].asUInt64() == tick_) {
         event = std::make_unique<InputEvent>(
             (InputEvent::Type)data["input_type"].asInt(),
@@ -308,7 +308,7 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
       return event;
     }
     replaying_ = false;
-    replay_data_ = {};
+    replay_data_.Clear();
   }
 
   if (!input_queue_.empty()) {
@@ -322,7 +322,7 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
       data["pointer_id"] = event->GetPointerId();
       data["pos_x"] = event->GetVector().x;
       data["pos_y"] = event->GetVector().y;
-      replay_data_["input"].append(data);
+      replay_data_.root()["input"].append(data);
     }
   }
 
@@ -333,7 +333,7 @@ void Engine::StartRecording() {
   if (!replaying_ && !recording_) {
     recording_ = true;
     random_ = Random();
-    replay_data_["random_seed"] = random_.seed();
+    replay_data_.root()["random_seed"] = random_.seed();
     tick_ = 0;
   }
 }
@@ -344,7 +344,7 @@ void Engine::EndRecording(const std::string file_name) {
 
     recording_ = false;
     replay_data_.SaveAs(file_name, PersistentData::kShared);
-    replay_data_ = {};
+    replay_data_.Clear();
   }
 }
 
@@ -352,7 +352,7 @@ bool Engine::Replay(const std::string file_name) {
   if (!replaying_ && !recording_ &&
       replay_data_.Load(file_name, PersistentData::kShared)) {
     replaying_ = true;
-    random_ = Random(replay_data_["random_seed"].asUInt());
+    random_ = Random(replay_data_.root()["random_seed"].asUInt());
     tick_ = 0;
     replay_index_ = 0;
   }
