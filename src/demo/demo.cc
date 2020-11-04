@@ -174,6 +174,7 @@ void Demo::GainedFocus(bool from_interstitial_ad) {
 
 void Demo::AddScore(size_t score) {
   delta_score_ += score;
+  wave_score_ += score;
 }
 
 void Demo::SetEnableMusic(bool enable) {
@@ -292,7 +293,6 @@ void Demo::UpdateMenuState(float delta_time) {
 
 void Demo::UpdateGameState(float delta_time) {
   if (delta_score_ > 0) {
-    wave_score_ += delta_score_;
     total_score_ += delta_score_;
     delta_score_ = 0;
     hud_.SetScore(total_score_, true);
@@ -387,12 +387,12 @@ void Demo::StartNextStage(bool boss) {
             return 5;
           return 10;
         }();
-        size_t bonus_score = wave_score_ * bonus_factor;
-        DLOG << "wave " << wave_ << " score: " << wave_score_
-             << " bonus: " << bonus_score;
+        size_t bonus_score = wave_score_ * (bonus_factor - 1);
+        DLOG << "total_score_" << total_score_ << " wave " << wave_
+             << " score: " << wave_score_ << " bonus: " << bonus_score;
 
         if (bonus_score > 0) {
-          AddScore(bonus_score);
+          delta_score_ += bonus_score;
           hud_.ShowMessage("Bonus x"s + std::to_string(bonus_factor), 0.6f);
           wave_score_ = 0;
         }
