@@ -172,7 +172,7 @@ void Demo::GainedFocus(bool from_interstitial_ad) {
   }
 }
 
-void Demo::AddScore(int score) {
+void Demo::AddScore(size_t score) {
   delta_score_ += score;
 }
 
@@ -297,7 +297,7 @@ void Demo::UpdateGameState(float delta_time) {
     delta_score_ = 0;
     hud_.SetScore(total_score_, true);
 
-    if (total_score_ > saved_data_.Get<int>(kHightScore, 0))
+    if (total_score_ > saved_data_.Get<unsigned>(kHightScore, 0))
       saved_data_[kHightScore] << total_score_;
   }
 
@@ -380,14 +380,14 @@ void Demo::StartNextStage(bool boss) {
         boss_fight_ = true;
         DLOG << "Boss fight.";
       } else {
-        int bonus_factor = [&]() -> int {
+        size_t bonus_factor = [&]() -> size_t {
           if (wave_ <= 3)
             return 2;
           if (wave_ <= 6)
             return 5;
           return 10;
         }();
-        int bonus_score = wave_score_ * bonus_factor;
+        size_t bonus_score = wave_score_ * bonus_factor;
         DLOG << "wave " << wave_ << " score: " << wave_score_
              << " bonus: " << bonus_score;
 
@@ -454,8 +454,8 @@ void Demo::Dimmer(bool enable) {
   }
 }
 
-int Demo::GetHighScore() const {
-  return saved_data_.Get<int>(kHightScore, 0);
+size_t Demo::GetHighScore() const {
+  return saved_data_.Get<unsigned>(kHightScore, 0);
 }
 
 void Demo::SetDelayedWork(float seconds, base::Closure cb) {

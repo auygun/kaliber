@@ -26,7 +26,7 @@ class Hud {
   void Hide();
   void HideProgress();
 
-  void SetScore(int score, bool flash);
+  void SetScore(size_t score, bool flash);
   void SetWave(int wave, bool flash);
   void SetProgress(float progress);
 
@@ -44,7 +44,7 @@ class Hud {
 
   int max_text_width_ = 0;
 
-  int last_score_ = 0;
+  size_t last_score_ = 0;
   int last_wave_ = 0;
   float last_progress_ = 0;
 

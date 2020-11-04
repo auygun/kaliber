@@ -30,7 +30,7 @@ class Demo : public eng::Game {
 
   void GainedFocus(bool from_interstitial_ad) override;
 
-  void AddScore(int score);
+  void AddScore(size_t score);
 
   void SetEnableMusic(bool enable);
 
@@ -46,7 +46,7 @@ class Demo : public eng::Game {
 
   int wave() const { return wave_; }
 
-  int GetHighScore() const;
+  size_t GetHighScore() const;
 
   float stage_time() const { return stage_time_; }
 
@@ -76,9 +76,9 @@ class Demo : public eng::Game {
 
   eng::Font font_;
 
-  int wave_score_ = 0;
-  int total_score_ = 0;
-  int delta_score_ = 0;
+  size_t wave_score_ = 0;
+  size_t total_score_ = 0;
+  size_t delta_score_ = 0;
 
   int wave_ = 0;
 

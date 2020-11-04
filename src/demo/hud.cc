@@ -142,7 +142,7 @@ void Hud::HideProgress() {
   }
 }
 
-void Hud::SetScore(int score, bool flash) {
+void Hud::SetScore(size_t score, bool flash) {
   last_score_ = score;
   Engine::Get().RefreshImage("text0");
 
