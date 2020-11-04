@@ -21,9 +21,11 @@ class PersistentData {
 
   bool SaveAs(const std::string& file_name, StorageType type = kPrivate);
 
-  void Clear();
+  Json::Value& root() {
+    dirty_ = true;
+    return root_;
+  }
 
-  Json::Value& root();
   const Json::Value& root() const { return root_; }
 
  private:

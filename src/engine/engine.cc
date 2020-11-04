@@ -308,7 +308,7 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
       return event;
     }
     replaying_ = false;
-    replay_data_.Clear();
+    replay_data_.root().clear();
   }
 
   if (!input_queue_.empty()) {
@@ -344,7 +344,7 @@ void Engine::EndRecording(const std::string file_name) {
 
     recording_ = false;
     replay_data_.SaveAs(file_name, PersistentData::kShared);
-    replay_data_.Clear();
+    replay_data_.root().clear();
   }
 }
 

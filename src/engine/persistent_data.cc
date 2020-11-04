@@ -101,14 +101,4 @@ bool PersistentData::SaveAs(const std::string& file_name, StorageType type) {
   return true;
 }
 
-void PersistentData::Clear() {
-  dirty_ = true;
-  root_ = {};
-}
-
-Json::Value& PersistentData::root() {
-  dirty_ = true;
-  return root_;
-}
-
 }  // namespace eng
