@@ -42,6 +42,8 @@ const Vector4 kHighScoreColor = {0.895f, 0.692f, 0.24f, 1};
 
 const char kLastWave[] = "last_wave";
 
+constexpr int kMaxStartWave = 16;
+
 }  // namespace
 
 Menu::Menu() = default;
@@ -218,7 +220,7 @@ bool Menu::Initialize() {
                                    .root()
                                    .get(kLastWave, Json::Value(1))
                                    .asInt() ||
-            start_from_wave_ > 10)
+            start_from_wave_ > kMaxStartWave)
           start_from_wave_ = 1;
         starting_wave_.image().SetFrame(start_from_wave_ / 3);
         click_.Play(false);
@@ -607,7 +609,7 @@ void Menu::Radio::Create(const std::string& asset_name) {
   Engine::Get().SetImageSource(asset_name,
                                std::bind(&Radio::CreateImage, this));
 
-  options_.Create(asset_name, {1, 4});
+  options_.Create(asset_name, {1, (kMaxStartWave + 2) / 3});
   options_.SetZOrder(41);
   options_.SetColor(kColorFadeOut);
   options_.SetFrame(0);
@@ -642,7 +644,7 @@ std::unique_ptr<eng::Image> Menu::Radio::CreateImage() {
   const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
 
   int max_width = 0;
-  for (int i = 1; i <= 10; i += 3) {
+  for (int i = 1; i <= kMaxStartWave; i += 3) {
     int w, h;
     font.CalculateBoundingBox(std::to_string(i), w, h);
     if (w > max_width)
@@ -652,10 +654,10 @@ std::unique_ptr<eng::Image> Menu::Radio::CreateImage() {
   int line_height = font.GetLineHeight() + 1;
 
   auto image = std::make_unique<Image>();
-  image->Create(max_width, line_height * 4);
+  image->Create(max_width, line_height * ((kMaxStartWave + 2) / 3));
   image->Clear({1, 1, 1, 0});
 
-  for (int i = 1, j = 0; i <= 10; i += 3) {
+  for (int i = 1, j = 0; i <= kMaxStartWave; i += 3) {
     int w, h;
     font.CalculateBoundingBox(std::to_string(i), w, h);
     float x = (image->GetWidth() - w) / 2;
