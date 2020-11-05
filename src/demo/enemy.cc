@@ -294,10 +294,9 @@ void Enemy::SelectTarget(DamageType damage_type,
     std::sort(all_candidates.begin(), all_candidates.end(),
               [](auto& a, auto& b) { return std::get<2>(a) > std::get<2>(b); });
 
-    if (base::Intersection(
-            std::get<0>(all_candidates[0])->sprite.GetOffset(),
-            std::get<0>(all_candidates[0])->sprite.GetScale(), origin,
-            dir))
+    if (base::Intersection(std::get<0>(all_candidates[0])->sprite.GetOffset(),
+                           std::get<0>(all_candidates[0])->sprite.GetScale(),
+                           origin, dir))
       best_enemy = std::get<0>(all_candidates[0]);
   }
 
@@ -479,22 +478,23 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
   seconds_since_last_spawn_ = {0, 0, 0, 0};
   seconds_to_next_spawn_ = {0, 0, 0, 0};
   spawn_factor_ = 0.3077f - (0.0538f * log((float)wave));
-  spawn_factor_interpolator_ = 0;
   last_spawn_col_ = 0;
   paused_ = false;
   wave_ = wave;
   boss_fight_ = boss_fight;
 
   if (boss_fight) {
-    boss_spawn_cooldown_ = 4;
-    boss_spawn_duration_ = 0;
-    boss_spawn_factor_ = [wave]() -> float {
+    boss_spawn_time_ = 0;
+    boss_spawn_time_factor_ = [wave]() -> float {
+      if (wave <= 6)
+        return 0.6f;
       if (wave <= 9)
-        return 0.16f;
+        return 0.9f;
       if (wave <= 12)
-        return 0.14f;
-      return 0.12f;
+        return 1.2f;
+      return 1.5f;
     }();
+    DLOG << "boss_spawn_time_factor_: " << boss_spawn_time_factor_;
     SpawnBoss();
   }
 }
@@ -1057,52 +1057,38 @@ void Enemy::UpdateWave(float delta_time) {
 }
 
 void Enemy::UpdateBoss(float delta_time) {
-  if (boss_spawn_cooldown_ > 0) {
-    boss_spawn_cooldown_ -= delta_time;
-    if (boss_spawn_cooldown_ > 0)
-      return;
-    boss_spawn_duration_ = 6;
-    DLOG << "boss_spawn_duration_: " << boss_spawn_duration_;
-  }
-
-  boss_spawn_duration_ -= delta_time;
-  if (boss_spawn_duration_ <= 0) {
-    if (spawn_factor_interpolator_ < 1) {
-      spawn_factor_interpolator_ += delta_time * 15.0f;
-      if (spawn_factor_interpolator_ > 1)
-        spawn_factor_interpolator_ = 1;
-    }
-    boss_spawn_cooldown_ = 6.1f - Lerp(1.0f, 6.0f, spawn_factor_interpolator_);
-    DLOG << "boss_spawn_cooldown_: " << boss_spawn_cooldown_;
+  if (boss_animator_.IsPlaying(Animator::kMovement) &&
+      boss_animator_.GetTime(Animator::kMovement) < 0.5f)
     return;
-  }
 
   for (int i = 0; i < kEnemyType_Unit_Last + 1; ++i)
     seconds_since_last_spawn_[i] += delta_time;
 
-  Engine& engine = Engine::Get();
-  Random& rnd = engine.GetRandomGenerator();
+  Random& rnd = Engine::Get().GetRandomGenerator();
 
-  if (static_cast<Demo*>(engine.GetGame())->stage_time() > 2.5f * 60)
-    boss_spawn_factor_ = 0.08f;
+  boss_spawn_time_ += delta_time;
+  float boss_spawn_factor =
+      1.0f - (0.2149f * log(boss_spawn_time_ * boss_spawn_time_factor_));
+  if (boss_spawn_factor < 0.12f)
+    boss_spawn_factor = 0.12f;
 
   EnemyType enemy_type = kEnemyType_Invalid;
 
   for (int i = 0; i < kEnemyType_Unit_Last + 1; ++i) {
+    seconds_to_next_spawn_[i] =
+        Lerp(kSpawnPeriod[i][0] * boss_spawn_factor,
+             kSpawnPeriod[i][1] * boss_spawn_factor, rnd.GetFloat());
+
     if (seconds_since_last_spawn_[i] >= seconds_to_next_spawn_[i]) {
       if (seconds_to_next_spawn_[i] > 0)
         enemy_type = (EnemyType)i;
 
       seconds_since_last_spawn_[i] = 0;
-      seconds_to_next_spawn_[i] =
-          Lerp(kSpawnPeriod[i][0] * boss_spawn_factor_,
-               kSpawnPeriod[i][1] * boss_spawn_factor_, rnd.GetFloat());
       break;
     }
   }
 
-  if (enemy_type != kEnemyType_Invalid &&
-      static_cast<Demo*>(engine.GetGame())->stage_time() <= 2.5f * 60) {
+  if (enemy_type != kEnemyType_Invalid && boss_spawn_time_ <= 2.5f * 60) {
     // Spawn only light enemies during the first boss fight. Then gradually
     // introduce harder enemy types.
     if (enemy_type != kEnemyType_LightSkull && wave_ == 3)

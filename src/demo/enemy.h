@@ -127,11 +127,9 @@ class Enemy {
                                                                         0};
 
   float spawn_factor_ = 0;
-  float spawn_factor_interpolator_ = 0;
 
-  float boss_spawn_duration_ = 0;
-  float boss_spawn_cooldown_ = 0;
-  float boss_spawn_factor_ = 0;
+  float boss_spawn_time_ = 0;
+  float boss_spawn_time_factor_ = 0;
 
   float seconds_since_last_power_up_ = 0;
   float seconds_to_next_power_up_ = 0;
