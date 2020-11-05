@@ -111,6 +111,8 @@ class Demo : public eng::Game {
 
   void StartNextStage(bool boss);
 
+  void Win();
+
   void Dimmer(bool enable);
 
   void SetDelayedWork(float seconds, base::Closure cb);

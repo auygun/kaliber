@@ -468,6 +468,15 @@ void Enemy::RemoveAll() {
   }
 }
 
+void Enemy::KillBoss() {
+  for (auto& e : enemies_) {
+    if (e.enemy_type == kEnemyType_Boss) {
+      TakeDamage(&e, 1000);
+      break;
+    }
+  }
+}
+
 void Enemy::Reset() {
   seconds_since_last_power_up_ = 0;
   seconds_to_next_power_up_ = 0;

@@ -130,6 +130,12 @@ void Demo::Update(float delta_time) {
   dimmer_animator_.Update(delta_time);
 
   while (std::unique_ptr<InputEvent> event = engine.GetNextInputEvent()) {
+    if (event->GetType() == InputEvent::kDragEnd &&
+        ((engine.GetScreenSize() / 2) * 0.9f -
+         event->GetVector() * Vector2(-1, 1))
+                .Magnitude() <= 0.25f)
+      Win();
+
     if (state_ == kMenu)
       menu_.OnInputEvent(std::move(event));
     else if (state_ == kCredits)
@@ -321,7 +327,8 @@ void Demo::UpdateGameState(float delta_time) {
   } else if (enemy_.num_enemies_killed_in_current_wave() !=
              last_num_enemies_killed_) {
     bool no_boss = (last_num_enemies_killed_ == -1);
-    last_num_enemies_killed_ = enemy_.num_enemies_killed_in_current_wave();
+    if (last_num_enemies_killed_ < enemy_.num_enemies_killed_in_current_wave())
+      last_num_enemies_killed_ = enemy_.num_enemies_killed_in_current_wave();
     int enemies_remaining = total_enemies_ - last_num_enemies_killed_;
 
     if (enemies_remaining <= 0)
@@ -437,6 +444,14 @@ void Demo::StartNextStage(bool boss) {
       waiting_for_next_wave_ = false;
     });
   });
+}
+
+void Demo::Win() {
+  // Satisfy win conditions.
+  if (boss_fight_)
+    enemy_.KillBoss();
+  else
+    last_num_enemies_killed_ = total_enemies_;
 }
 
 void Demo::Dimmer(bool enable) {

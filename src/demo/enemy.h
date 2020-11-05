@@ -50,6 +50,8 @@ class Enemy {
   void KillAllEnemyUnits(bool randomize_order = true);
   void RemoveAll();
 
+  void KillBoss();
+
   void Reset();
 
   int num_enemies_killed_in_current_wave() const {
