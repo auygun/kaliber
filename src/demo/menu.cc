@@ -42,7 +42,7 @@ const Vector4 kHighScoreColor = {0.895f, 0.692f, 0.24f, 1};
 
 const char kLastWave[] = "last_wave";
 
-constexpr int kMaxStartWave = 16;
+constexpr int kMaxStartWave = 10;
 
 }  // namespace
 

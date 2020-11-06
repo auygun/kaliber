@@ -403,7 +403,6 @@ void Demo::StartNextStage(bool boss) {
 
         if (bonus_score > 0) {
           delta_score_ += bonus_score;
-          hud_.ShowMessage("Bonus x"s + std::to_string(bonus_factor), 0.6f);
           wave_score_ = 0;
         }
 
