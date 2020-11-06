@@ -1106,7 +1106,8 @@ void Enemy::UpdateBoss(float delta_time) {
     // Spawn only light enemies during the first boss fight. Then gradually
     // introduce harder enemy types.
     if (enemy_type != kEnemyType_LightSkull && wave_ == 3)
-      enemy_type = kEnemyType_Invalid;
+      enemy_type = enemy_type == kEnemyType_DarkSkull ? kEnemyType_LightSkull
+                                                       : kEnemyType_Invalid;
     else if (enemy_type == kEnemyType_Tank && wave_ == 6)
       enemy_type = kEnemyType_Invalid;
   }
