@@ -517,7 +517,11 @@ bool Enemy::CheckSpawnPos(Vector2 pos, SpeedType speed_type) {
     // Check for collision.
     float sy = e.sprite.GetScale().y;
     Vector2 spawn_pos = pos + Vector2(0, sy);
-    if ((spawn_pos - e.sprite.GetOffset()).Magnitude() < sy * 0.8f)
+
+    bool gc = (spawn_pos - e.sprite.GetOffset()).Magnitude() < sy * 0.8f;
+    bool tc = e.movement_animator.GetTime(Animator::kMovement) <= 0.06f;
+
+    if (gc && tc)
       return false;
   }
 
@@ -1109,7 +1113,7 @@ void Enemy::UpdateBoss(float delta_time) {
     // introduce harder enemy types.
     if (enemy_type != kEnemyType_LightSkull && wave_ == 3)
       enemy_type = enemy_type == kEnemyType_DarkSkull ? kEnemyType_LightSkull
-                                                       : kEnemyType_Invalid;
+                                                      : kEnemyType_Invalid;
     else if (enemy_type == kEnemyType_Tank && wave_ == 6)
       enemy_type = kEnemyType_Invalid;
   }
@@ -1126,10 +1130,17 @@ void Enemy::UpdateBoss(float delta_time) {
                       rnd.GetFloat());
   float x = (boss_.GetScale().x / 3) * (col ? 1 : -1) + offset;
   Vector2 pos = {x, boss_.GetOffset().y - boss_.GetScale().y / 2};
-  float speed =
-      enemy_type == kEnemyType_Tank ? 16.0f : (rnd.Roll(4) == 4 ? 6.0f : 10.0f);
 
-  SpawnUnit(enemy_type, damage_type, pos, speed);
+  SpeedType speed_type =
+      enemy_type == kEnemyType_Tank
+          ? kSpeedType_Slow
+          : (rnd.Roll(3) == 1 ? kSpeedType_Fast : kSpeedType_Slow);
+  float speed = speed_type == kSpeedType_Slow ? 10.0f : 6.0f;
+
+  if (CheckSpawnPos(pos, speed_type))
+    SpawnUnit(enemy_type, damage_type, pos, speed, speed_type);
+  else
+    seconds_to_next_spawn_[enemy_type] = 0.001f;
 }
 
 Enemy::EnemyUnit* Enemy::GetTarget(DamageType damage_type) {
