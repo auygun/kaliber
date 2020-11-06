@@ -416,10 +416,10 @@ void Demo::StartNextStage(bool boss) {
           if (wave_ <= 3)
             return 2;
           if (wave_ <= 6)
-            return 10;
+            return 5;
           if (wave_ <= 9)
-            return 100;
-          return 1000;
+            return 15;
+          return 100;
         }();
         size_t bonus_score = wave_score_ * (bonus_factor - 1);
         DLOG << "total_score_" << total_score_ << " wave " << wave_
