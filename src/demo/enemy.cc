@@ -499,7 +499,9 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
         return 0.4f;
       if (wave <= 9)
         return 0.6f;
-      return 1.0f;
+      if (wave <= 12)
+        return 1.0f;
+      return 1.5f;
     }();
     DLOG << "boss_spawn_time_factor_: " << boss_spawn_time_factor_;
     SpawnBoss();
