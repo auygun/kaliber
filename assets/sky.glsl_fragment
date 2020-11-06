@@ -40,7 +40,7 @@ float stars(in vec2 p, float num_cells, float size) {
   a /= num_cells * size;
   float e = dot(a, a);
 
-  return smoothstep(0.95, 1.0, (1.0 - e * 35.0));
+  return smoothstep(0.94, 1.0, (1.0 - e * 35.0));
 }
 
 void main() {
