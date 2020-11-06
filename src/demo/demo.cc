@@ -1,6 +1,7 @@
 #include "demo.h"
 
 #include <algorithm>
+#include <atomic>
 #include <iostream>
 #include <string>
 
@@ -35,6 +36,26 @@ const char kSaveFileName[] = "woom";
 const char kHightScore[] = "high_score";
 const char kLastWave[] = "last_wave";
 const char kLaunchCount[] = "launch_count";
+
+std::atomic<bool> g_cancel_benchmark{false};
+
+int DoBenchmark() {
+  Timer::Sleep(1);
+
+  int avarage_fps = 0;
+  constexpr int num_samples = 5;
+
+  for (int i = 0; i < num_samples; ++i) {
+    if (g_cancel_benchmark.load(std::memory_order_relaxed))
+      return 0;
+
+    Timer::Sleep(1);
+    avarage_fps += Engine::Get().fps();
+  }
+  avarage_fps /= num_samples;
+
+  return avarage_fps;
+}
 
 }  // namespace
 
@@ -116,7 +137,7 @@ bool Demo::Initialize() {
   EnterMenuState();
 
   Worker::Get().EnqueueTaskAndReplyWithResult<int>(
-      HERE, std::bind(&Demo::DoBenchmark, this),
+      HERE, std::bind(&DoBenchmark),
       std::bind(&Demo::BenchmarkResult, this, std::placeholders::_1));
 
   return true;
@@ -293,6 +314,7 @@ void Demo::UpdateMenuState(float delta_time) {
       EnterCreditsState();
       break;
     case Menu::kExit:
+      g_cancel_benchmark.store(true, std::memory_order_relaxed);
       Engine::Get().Exit();
       break;
     default:
@@ -479,21 +501,6 @@ void Demo::SetDelayedWork(float seconds, base::Closure cb) {
   DCHECK(delayed_work_cb_ == nullptr);
   delayed_work_cb_ = std::move(cb);
   delayed_work_timer_ = seconds;
-}
-
-int Demo::DoBenchmark() {
-  Timer::Sleep(1);
-
-  int avarage_fps = 0;
-  constexpr int num_samples = 5;
-
-  for (int i = 0; i < num_samples; ++i) {
-    Timer::Sleep(1);
-    avarage_fps += Engine::Get().fps();
-  }
-  avarage_fps /= num_samples;
-
-  return avarage_fps;
 }
 
 void Demo::BenchmarkResult(int avarage_fps) {

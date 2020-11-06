@@ -117,7 +117,6 @@ class Demo : public eng::Game {
 
   void SetDelayedWork(float seconds, base::Closure cb);
 
-  int DoBenchmark();
   void BenchmarkResult(int avarage_fps);
 };
 
