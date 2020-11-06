@@ -44,16 +44,14 @@ using Location = std::nullptr_t;
 
 #endif
 
-// Bind a method with a std::weak_ptr
-template <typename Func, typename Class, typename... Args>
-Closure BindWeak(Func func, std::weak_ptr<Class> weak_ptr, Args&&... args) {
-  return std::bind(
-      [fn = std::move(func), wptr = std::move(weak_ptr)](Args&... args) {
-        auto ptr = wptr.lock();
-        if (ptr)
-          std::invoke(std::move(fn), ptr, args...);
-      },
-      std::forward<Args>(args)...);
+// Bind a method to and object with a std::weak_ptr.
+template <typename Class, typename ReturnType, typename... Args>
+std::function<ReturnType(Args...)> BindWeak(ReturnType (Class::*func)(Args...),
+                                            std::weak_ptr<Class> weak_ptr) {
+  return [func, weak_ptr](Args... args) {
+    if (auto ptr = weak_ptr.lock())
+      std::invoke(func, ptr, args...);
+  };
 }
 
 }  // namespace base
