@@ -496,12 +496,10 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
     boss_spawn_time_ = 0;
     boss_spawn_time_factor_ = [wave]() -> float {
       if (wave <= 6)
-        return 0.6f;
+        return 0.4f;
       if (wave <= 9)
-        return 0.9f;
-      if (wave <= 12)
-        return 1.2f;
-      return 1.5f;
+        return 0.6f;
+      return 1.0f;
     }();
     DLOG << "boss_spawn_time_factor_: " << boss_spawn_time_factor_;
     SpawnBoss();
@@ -1077,23 +1075,30 @@ void Enemy::UpdateBoss(float delta_time) {
 
   boss_spawn_time_ += delta_time;
   float boss_spawn_factor =
-      1.0f - (0.2149f * log(boss_spawn_time_ * boss_spawn_time_factor_));
+      0.4f - (0.0684f * log(boss_spawn_time_ * boss_spawn_time_factor_));
   if (boss_spawn_factor < 0.12f)
     boss_spawn_factor = 0.12f;
+
+  DLOG << "boss_spawn_time_: " << boss_spawn_time_
+       << " boss_spawn_factor: " << boss_spawn_factor;
 
   EnemyType enemy_type = kEnemyType_Invalid;
 
   for (int i = 0; i < kEnemyType_Unit_Last + 1; ++i) {
-    seconds_to_next_spawn_[i] =
-        Lerp(kSpawnPeriod[i][0] * boss_spawn_factor,
-             kSpawnPeriod[i][1] * boss_spawn_factor, rnd.GetFloat());
-
     if (seconds_since_last_spawn_[i] >= seconds_to_next_spawn_[i]) {
       if (seconds_to_next_spawn_[i] > 0)
         enemy_type = (EnemyType)i;
 
       seconds_since_last_spawn_[i] = 0;
+      seconds_to_next_spawn_[i] =
+          Lerp(kSpawnPeriod[i][0] * boss_spawn_factor,
+               kSpawnPeriod[i][1] * boss_spawn_factor, rnd.GetFloat());
       break;
+    } else if (seconds_to_next_spawn_[i] >
+               kSpawnPeriod[i][1] * boss_spawn_factor) {
+      seconds_to_next_spawn_[i] =
+          Lerp(kSpawnPeriod[i][0] * boss_spawn_factor,
+               kSpawnPeriod[i][1] * boss_spawn_factor, rnd.GetFloat());
     }
   }
 
