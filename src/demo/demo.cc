@@ -427,6 +427,7 @@ void Demo::StartNextStage(bool boss) {
 
         if (bonus_score > 0) {
           delta_score_ += bonus_score;
+          hud_.ShowBonus(bonus_score);
           wave_score_ = 0;
         }
 

@@ -22,6 +22,17 @@ const Vector4 kPprogressBarColor[2] = {{0.256f, 0.434f, 0.72f, 1},
                                        {0.905f, 0.493f, 0.194f, 1}};
 const Vector4 kTextColor = {0.895f, 0.692f, 0.24f, 1};
 
+void SetupFadeOutAnim(Animator& animator, float delay) {
+  animator.SetEndCallback(Animator::kTimer, [&]() -> void {
+    animator.SetBlending({1, 1, 1, 0}, 0.5f,
+                         std::bind(Acceleration, std::placeholders::_1, -1));
+    animator.Play(Animator::kBlending, false);
+  });
+  animator.SetEndCallback(Animator::kBlending,
+                          [&]() -> void { animator.SetVisible(false); });
+  animator.SetTimer(delay);
+}
+
 }  // namespace
 
 Hud::Hud() = default;
@@ -40,6 +51,8 @@ bool Hud::Initialize() {
   Engine::Get().SetImageSource("text1", std::bind(&Hud::CreateWaveImage, this));
   Engine::Get().SetImageSource("message",
                                std::bind(&Hud::CreateMessageImage, this));
+  Engine::Get().SetImageSource("bonus_tex",
+                               std::bind(&Hud::CreateBonusImage, this));
 
   for (int i = 0; i < 2; ++i) {
     text_[i].Create("text"s + std::to_string(i));
@@ -84,6 +97,13 @@ bool Hud::Initialize() {
   });
   message_animator_.Attach(&message_);
 
+  bonus_.Create("bonus_tex");
+  bonus_.SetZOrder(30);
+
+  SetupFadeOutAnim(bonus_animator_, 1.0f);
+  bonus_animator_.SetMovement({0, Engine::Get().GetScreenSize().y / 2}, 2.0f);
+  bonus_animator_.Attach(&bonus_);
+
   return true;
 }
 
@@ -93,6 +113,7 @@ void Hud::Update(float delta_time) {
     progress_bar_animator_[i].Update(delta_time);
   }
   message_animator_.Update(delta_time);
+  bonus_animator_.Update(delta_time);
 }
 
 void Hud::Show() {
@@ -193,6 +214,16 @@ void Hud::ShowMessage(const std::string& text, float duration) {
   message_animator_.Play(Animator::kBlending, false);
 }
 
+void Hud::ShowBonus(size_t bonus) {
+  bonus_score_ = bonus;
+  Engine::Get().RefreshImage("bonus_tex");
+  bonus_.AutoScale();
+  bonus_.Scale(1.3f);
+  bonus_.SetColor({1, 1, 1, 1});
+  bonus_.SetVisible(true);
+  bonus_animator_.Play(Animator::kTimer | Animator::kMovement, false);
+}
+
 std::unique_ptr<eng::Image> Hud::CreateScoreImage() {
   return Print(0, std::to_string(last_score_));
 }
@@ -217,6 +248,26 @@ std::unique_ptr<Image> Hud::CreateMessageImage() {
              image->GetWidth());
   image->Compress();
 
+  return image;
+}
+
+std::unique_ptr<Image> Hud::CreateBonusImage() {
+  const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+
+  if (bonus_score_ == 0)
+    return nullptr;
+
+  std::string text = std::to_string(bonus_score_);
+  int width, height;
+  font.CalculateBoundingBox(text.c_str(), width, height);
+
+  auto image = std::make_unique<Image>();
+  image->Create(width, height);
+  image->Clear({1, 1, 1, 0});
+
+  font.Print(0, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
+
+  image->Compress();
   return image;
 }
 

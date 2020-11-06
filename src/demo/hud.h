@@ -32,15 +32,19 @@ class Hud {
 
   void ShowMessage(const std::string& text, float duration);
 
+  void ShowBonus(size_t bonus);
+
  private:
   eng::SolidQuad progress_bar_[2];
   eng::ImageQuad text_[2];
   eng::ImageQuad message_;
+  eng::ImageQuad bonus_;
 
   eng::Animator progress_bar_animator_[2];
   eng::Animator text_animator_[2];
   eng::Animator message_animator_;
   base::Closure text_animator_cb_[2];
+  eng::Animator bonus_animator_;
 
   int max_text_width_ = 0;
 
@@ -50,9 +54,12 @@ class Hud {
 
   std::string message_text_;
 
+  size_t bonus_score_ = 0;
+
   std::unique_ptr<eng::Image> CreateScoreImage();
   std::unique_ptr<eng::Image> CreateWaveImage();
   std::unique_ptr<eng::Image> CreateMessageImage();
+  std::unique_ptr<eng::Image> CreateBonusImage();
 
   std::unique_ptr<eng::Image> Print(int i, const std::string& text);
 
