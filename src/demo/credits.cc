@@ -15,7 +15,7 @@ namespace {
 
 constexpr char kCreditsLines[Credits::kNumLines][40] = {
     "Credits",          "Code",
-    "Attila Uygun",     "Design & Graphics",
+    "Attila Uygun",     "Graphics",
     "Erkan Ertürk",     "Music",
     "Patrik Häggblad",  "Special thanks",
     "Peter Pettersson", "github.com/auygun/kaliber"};
