@@ -44,7 +44,7 @@ using Location = std::nullptr_t;
 
 #endif
 
-// Bind a method to and object with a std::weak_ptr.
+// Bind a method to an object with a std::weak_ptr.
 template <typename Class, typename ReturnType, typename... Args>
 std::function<ReturnType(Args...)> BindWeak(ReturnType (Class::*func)(Args...),
                                             std::weak_ptr<Class> weak_ptr) {
