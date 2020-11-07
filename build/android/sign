@@ -1,2 +1,2 @@
 jarsigner -keystore ~/key_store/apk_key_store.jks -storepass Password0613 -keypass Password0613 -signedjar app-release.apk ./app/build/outputs/apk/release/app-release-unsigned.apk upload
-zipalign -f -v 4 ./app-release.apk ./app-release-aligned.apk
+zipalign -f 4 ./app-release.apk ./app-release-aligned.apk
