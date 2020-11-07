@@ -151,11 +151,13 @@ void Demo::Update(float delta_time) {
   dimmer_animator_.Update(delta_time);
 
   while (std::unique_ptr<InputEvent> event = engine.GetNextInputEvent()) {
+#if 0
     if (event->GetType() == InputEvent::kDragEnd &&
         ((engine.GetScreenSize() / 2) * 0.9f -
          event->GetVector() * Vector2(-1, 1))
                 .Magnitude() <= 0.25f)
       Win();
+#endif
 
     if (state_ == kMenu)
       menu_.OnInputEvent(std::move(event));
