@@ -500,8 +500,8 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
       if (wave <= 9)
         return 0.6f;
       if (wave <= 12)
-        return 1.0f;
-      return 1.5f;
+        return 1.1f;
+      return 1.8f;
     }();
     DLOG << "boss_spawn_time_factor_: " << boss_spawn_time_factor_;
     SpawnBoss();
@@ -676,7 +676,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.health_animator.Attach(&e.health_base);
   e.health_animator.Attach(&e.health_bar);
 
-  SetupFadeOutAnim(e.score_animator, 0.4f);
+  SetupFadeOutAnim(e.score_animator, 0.5f);
   e.score_animator.SetMovement({0, engine.GetScreenSize().y / 2}, 2.0f);
   e.score_animator.SetEndCallback(
       Animator::kMovement, [&]() -> void { e.marked_for_removal = true; });
@@ -809,7 +809,7 @@ void Enemy::SpawnBoss() {
 
     e.target_animator.Attach(&e.target);
 
-    SetupFadeOutAnim(e.score_animator, 0.4f);
+    SetupFadeOutAnim(e.score_animator, 0.5f);
     e.score_animator.SetMovement({0, Engine::Get().GetScreenSize().y / 2},
                                  2.0f);
     e.score_animator.SetEndCallback(

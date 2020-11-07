@@ -100,7 +100,7 @@ bool Hud::Initialize() {
   bonus_.Create("bonus_tex");
   bonus_.SetZOrder(30);
 
-  SetupFadeOutAnim(bonus_animator_, 1.0f);
+  SetupFadeOutAnim(bonus_animator_, 1.1f);
   bonus_animator_.SetMovement({0, Engine::Get().GetScreenSize().y / 2}, 2.0f);
   bonus_animator_.Attach(&bonus_);
 
