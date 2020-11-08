@@ -500,8 +500,8 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
       if (wave <= 9)
         return 0.6f;
       if (wave <= 12)
-        return 1.1f;
-      return 1.8f;
+        return 1.0f;
+      return 1.6f;
     }();
     DLOG << "boss_spawn_time_factor_: " << boss_spawn_time_factor_;
     SpawnBoss();
@@ -1082,8 +1082,8 @@ void Enemy::UpdateBoss(float delta_time) {
   boss_spawn_time_ += delta_time;
   float boss_spawn_factor =
       0.4f - (0.0684f * log(boss_spawn_time_ * boss_spawn_time_factor_));
-  if (boss_spawn_factor < 0.12f)
-    boss_spawn_factor = 0.12f;
+  if (boss_spawn_factor < 0.1f)
+    boss_spawn_factor = 0.1f;
 
   DLOG << "boss_spawn_time_: " << boss_spawn_time_
        << " boss_spawn_factor: " << boss_spawn_factor;
@@ -1108,7 +1108,7 @@ void Enemy::UpdateBoss(float delta_time) {
     }
   }
 
-  if (enemy_type != kEnemyType_Invalid && boss_spawn_time_ <= 2.5f * 60) {
+  if (enemy_type != kEnemyType_Invalid && boss_spawn_factor > 0.11f) {
     // Spawn only light enemies during the first boss fight. Then gradually
     // introduce harder enemy types.
     if (enemy_type != kEnemyType_LightSkull && wave_ == 3)
