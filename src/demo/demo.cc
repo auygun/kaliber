@@ -20,6 +20,9 @@ DECLARE_GAME_BEGIN
 DECLARE_GAME(Demo)
 DECLARE_GAME_END
 
+// #define RECORD 15
+// #define REPLAY
+
 using namespace std::string_literals;
 
 using namespace base;
@@ -291,8 +294,9 @@ void Demo::EnterGameOverState() {
     });
   });
 
-  // Engine::Get().EndRecording("replay");
-  // Engine::Get().ShareFile("replay");
+#if defined(RECORD)
+  Engine::Get().EndRecording("replay");
+#endif
 }
 
 void Demo::UpdateMenuState(float delta_time) {
@@ -367,11 +371,20 @@ void Demo::Continue() {
 }
 
 void Demo::StartNewGame() {
-  // Engine::Get().StartRecording();
-  // Engine::Get().Replay("replay");
+#if defined(RECORD)
+  Json::Value game_data;
+  game_data["wave"] = RECORD;
+  wave_ = RECORD - 1;
+  Engine::Get().StartRecording(game_data);
+#elif defined(REPLAY)
+  Json::Value game_data;
+  Engine::Get().Replay("replay", game_data);
+  wave_ = game_data["wave"].asInt() - 1;
+#else
+  wave_ = menu_.start_from_wave() - 1;
+#endif
 
   wave_score_ = total_score_ = delta_score_ = 0;
-  wave_ = menu_.start_from_wave() - 1;
   last_num_enemies_killed_ = -1;
   total_enemies_ = 0;
   waiting_for_next_wave_ = false;
