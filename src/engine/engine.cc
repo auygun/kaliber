@@ -329,11 +329,12 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
   return event;
 }
 
-void Engine::StartRecording() {
+void Engine::StartRecording(const Json::Value& payload) {
   if (!replaying_ && !recording_) {
     recording_ = true;
     random_ = Random();
-    replay_data_.root()["random_seed"] = random_.seed();
+    replay_data_.root()["seed"] = random_.seed();
+    replay_data_.root()["payload"] = payload;
     tick_ = 0;
   }
 }
@@ -348,11 +349,12 @@ void Engine::EndRecording(const std::string file_name) {
   }
 }
 
-bool Engine::Replay(const std::string file_name) {
+bool Engine::Replay(const std::string file_name, Json::Value& payload) {
   if (!replaying_ && !recording_ &&
       replay_data_.Load(file_name, PersistentData::kShared)) {
     replaying_ = true;
-    random_ = Random(replay_data_.root()["random_seed"].asUInt());
+    random_ = Random(replay_data_.root()["seed"].asUInt());
+    payload = replay_data_.root()["payload"];
     tick_ = 0;
     replay_index_ = 0;
   }

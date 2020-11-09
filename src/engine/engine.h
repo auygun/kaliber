@@ -85,10 +85,10 @@ class Engine {
   void AddInputEvent(std::unique_ptr<InputEvent> event);
   std::unique_ptr<InputEvent> GetNextInputEvent();
 
-  void StartRecording();
+  void StartRecording(const Json::Value& payload);
   void EndRecording(const std::string file_name);
 
-  bool Replay(const std::string file_name);
+  bool Replay(const std::string file_name, Json::Value& payload);
 
   // Vibrate (if supported by the platform) for the specified duration.
   void Vibrate(int duration);
