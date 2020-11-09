@@ -545,7 +545,7 @@ bool Enemy::CheckTeleportPos(EnemyUnit* enemy) {
     bool gc =
         (pos - e.sprite.GetOffset()).Magnitude() < e.sprite.GetScale().y * 0.8f;
     bool tc =
-        fabs(t - e.movement_animator.GetTime(Animator::kMovement)) <= 0.06f;
+        fabs(t - e.movement_animator.GetTime(Animator::kMovement)) <= 0.04f;
 
     if (gc && tc)
       return false;
