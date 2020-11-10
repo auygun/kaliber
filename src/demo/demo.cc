@@ -10,7 +10,6 @@
 #include "../base/log.h"
 #include "../base/random.h"
 #include "../base/timer.h"
-#include "../base/worker.h"
 #include "../engine/engine.h"
 #include "../engine/game_factory.h"
 #include "../engine/input_event.h"
@@ -39,26 +38,6 @@ const char kSaveFileName[] = "woom";
 const char kHightScore[] = "high_score";
 const char kLastWave[] = "last_wave";
 const char kLaunchCount[] = "launch_count";
-
-std::atomic<bool> g_cancel_benchmark{false};
-
-int DoBenchmark() {
-  Timer::Sleep(1);
-
-  int avarage_fps = 0;
-  constexpr int num_samples = 5;
-
-  for (int i = 0; i < num_samples; ++i) {
-    if (g_cancel_benchmark.load(std::memory_order_relaxed))
-      return 0;
-
-    Timer::Sleep(1);
-    avarage_fps += Engine::Get().fps();
-  }
-  avarage_fps /= num_samples;
-
-  return avarage_fps;
-}
 
 }  // namespace
 
@@ -139,15 +118,24 @@ bool Demo::Initialize() {
 
   EnterMenuState();
 
-  Worker::Get().EnqueueTaskAndReplyWithResult<int>(
-      HERE, std::bind(&DoBenchmark),
-      std::bind(&Demo::BenchmarkResult, this, std::placeholders::_1));
-
   return true;
 }
 
 void Demo::Update(float delta_time) {
   Engine& engine = Engine::Get();
+
+  if (do_benchmark_) {
+    benchmark_time_ += delta_time;
+    if (benchmark_time_ > 1) {
+      avarage_fps_ += Engine::Get().fps();
+      ++num_benchmark_samples_;
+    }
+    if (benchmark_time_ > 6) {
+      avarage_fps_ /= num_benchmark_samples_;
+      do_benchmark_ = false;
+      BenchmarkResult(avarage_fps_);
+    }
+  }
 
   stage_time_ += delta_time;
 
@@ -320,7 +308,6 @@ void Demo::UpdateMenuState(float delta_time) {
       EnterCreditsState();
       break;
     case Menu::kExit:
-      g_cancel_benchmark.store(true, std::memory_order_relaxed);
       Engine::Get().Exit();
       break;
     default:

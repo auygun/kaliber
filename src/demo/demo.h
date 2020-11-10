@@ -105,6 +105,11 @@ class Demo : public eng::Game {
 
   eng::PersistentData saved_data_;
 
+  bool do_benchmark_ = true;
+  float benchmark_time_ = 0;
+  int num_benchmark_samples_ = 0;
+  int avarage_fps_ = 0;
+
   void UpdateMenuState(float delta_time);
   void UpdateGameState(float delta_time);
 
