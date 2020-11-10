@@ -152,6 +152,12 @@ void Enemy::Update(float delta_time) {
           "aberration_offset", Lerp(0.0f, 0.01f, chromatic_aberration_offset_));
     }
 
+#if defined(LOAD_TEST)
+    else if (it->kill_timer <= 0 && it->movement_animator.GetTime(Animator::kMovement) > 0.7f) {
+      TakeDamage(&*it, 1);
+    }
+#endif
+
     if (it->kill_timer > 0) {
       it->kill_timer -= delta_time;
       if (it->kill_timer <= 0)
@@ -187,6 +193,11 @@ void Enemy::Update(float delta_time) {
 
     it++;
   }
+
+#if defined(LOAD_TEST)
+  if (boss_fight_ && IsBossAlive() && boss_spawn_time_ > 40)
+    KillBoss();
+#endif
 }
 
 void Enemy::ContextLost() {

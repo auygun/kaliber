@@ -98,6 +98,20 @@ void Player::Update(float delta_time) {
     if (drag_weapon_[i] != kDamageType_Invalid)
       UpdateTarget(drag_weapon_[i]);
   }
+
+#if defined(LOAD_TEST)
+  Enemy& enemy = static_cast<Demo*>(Engine::Get().GetGame())->GetEnemy();
+  if (enemy.num_enemies_killed_in_current_wave() == 40)
+    Nuke();
+
+  DamageType type =
+      (DamageType)(Engine::Get().GetRandomGenerator().Roll(2) - 1);
+  if (!IsFiring(type)) {
+    DragStart(type, GetWeaponPos(type));
+    Drag(type, {0, 0});
+    DragEnd(type);
+  }
+#endif
 }
 
 void Player::OnInputEvent(std::unique_ptr<InputEvent> event) {

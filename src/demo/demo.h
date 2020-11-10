@@ -15,6 +15,8 @@
 #include "player.h"
 #include "sky_quad.h"
 
+// #define LOAD_TEST
+
 class Demo : public eng::Game {
  public:
   Demo();
