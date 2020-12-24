@@ -2,8 +2,16 @@
 precision mediump float;
 #endif
 
-uniform vec4 color;
+UNIFORM_BEGIN
+  UNIFORM_V(vec2 scale)
+  UNIFORM_V(vec2 offset)
+  UNIFORM_V(vec2 rotation)
+  UNIFORM_V(mat4 projection)
+  UNIFORM_F(vec4 color)
+UNIFORM_END
+
+FRAG_COLOR_OUT(frag_color)
 
 void main() {
-  gl_FragColor = color;
+  FRAG_COLOR(frag_color) = PARAM(color);
 }

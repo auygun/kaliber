@@ -1,6 +1,9 @@
-A simple, cross-platform 2D game engine with OpenGL renderer. Supports Linux and
-Android (lolipop+) platforms. My personal hobby project.  
-I've published a game on [Google Play](https://play.google.com/store/apps/details?id=com.woom.game) based on the engine. The demo included in this repository is an early prototype of the game.
+A simple, cross-platform 2D game engine with OpenGL and Vulkan renderers.
+Supports Linux and Android (lolipop+) platforms.  
+This is a personal hobby project. I've published a little game on
+[Google Play](https://play.google.com/store/apps/details?id=com.woom.game)
+based on this engine. The demo included in this repository is an early prototype
+of the game.
 #### Building the demo
 Linux:
 ```text
@@ -24,4 +27,8 @@ ninja -C out/release
 [oboe](https://github.com/google/oboe),
 [stb](https://github.com/nothings/stb),
 [texture-compressor](https://github.com/auygun/kaliber/tree/master/src/third_party/texture_compressor),
-[minizip](https://github.com/madler/zlib/tree/master/contrib/minizip)
+[minizip](https://github.com/madler/zlib/tree/master/contrib/minizip),
+[glslang](https://github.com/KhronosGroup/glslang),
+[spirv-reflect](https://github.com/KhronosGroup/SPIRV-Reflect),
+[vma](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator),
+[vulkan-sdk](https://vulkan.lunarg.com)

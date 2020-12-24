@@ -17,7 +17,7 @@ class ShaderSource {
   const char* GetFragmentSource() const { return fragment_source_.get(); }
 
   size_t vertex_source_size() const { return vertex_source_size_; }
-  size_t fragment_source_size() const { return fragment_source_size_ ; }
+  size_t fragment_source_size() const { return fragment_source_size_; }
 
   const std::string& name() const { return name_; }
 
@@ -29,6 +29,11 @@ class ShaderSource {
 
   size_t vertex_source_size_ = 0;
   size_t fragment_source_size_ = 0;
+
+  size_t LoadInternal(const std::string& name,
+                      std::unique_ptr<char[]>& dst,
+                      const char* inject,
+                      size_t inject_len);
 };
 
 }  // namespace eng

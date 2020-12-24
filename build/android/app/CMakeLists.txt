@@ -36,9 +36,9 @@ add_library(native_app_glue STATIC
 
 # now build app's shared lib
 if (CMAKE_BUILD_TYPE MATCHES Debug)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Werror -D_DEBUG")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Werror -D_DEBUG -DVK_USE_PLATFORM_ANDROID_KHR")
 else ()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Werror")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Werror -DVK_USE_PLATFORM_ANDROID_KHR")
 endif ()
 
 
@@ -87,19 +87,69 @@ add_library(kaliber SHARED
     ../../../src/engine/renderer/renderer_types.cc
     ../../../src/engine/renderer/shader.cc
     ../../../src/engine/renderer/texture.cc
+    ../../../src/engine/renderer/vulkan/renderer_vulkan_android.cc
+    ../../../src/engine/renderer/vulkan/renderer_vulkan.cc
+    ../../../src/engine/renderer/vulkan/vulkan_context_android.cc
+    ../../../src/engine/renderer/vulkan/vulkan_context.cc
     ../../../src/engine/shader_source.cc
     ../../../src/engine/solid_quad.cc
     ../../../src/engine/sound_player.cc
     ../../../src/engine/sound.cc
     ../../../src/third_party/android/gl3stub.c
     ../../../src/third_party/android/GLContext.cpp
+    ../../../src/third_party/android/vulkan_wrapper.cpp
+    ../../../src/third_party/glslang/glslang/CInterface/glslang_c_interface.cpp
+    ../../../src/third_party/glslang/glslang/GenericCodeGen/CodeGen.cpp
+    ../../../src/third_party/glslang/glslang/GenericCodeGen/Link.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/attribute.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/Constant.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/glslang_tab.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/InfoSink.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/Initialize.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/Intermediate.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/intermOut.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/IntermTraverse.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/iomapper.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/limits.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/linkValidate.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/parseConst.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/ParseContextBase.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/ParseHelper.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/PoolAlloc.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/preprocessor/Pp.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/propagateNoContraction.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/reflection.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/RemoveTree.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/Scan.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/ShaderLang.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/SymbolTable.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/Versions.cpp
+    ../../../src/third_party/glslang/glslang/OSDependent/Unix/ossource.cpp
+    ../../../src/third_party/glslang/OGLCompilersDLL/InitializeDll.cpp
+    ../../../src/third_party/glslang/SPIRV/CInterface/spirv_c_interface.cpp
+    ../../../src/third_party/glslang/SPIRV/disassemble.cpp
+    ../../../src/third_party/glslang/SPIRV/doc.cpp
+    ../../../src/third_party/glslang/SPIRV/GlslangToSpv.cpp
+    ../../../src/third_party/glslang/SPIRV/InReadableOrder.cpp
+    ../../../src/third_party/glslang/SPIRV/Logger.cpp
+    ../../../src/third_party/glslang/SPIRV/SpvBuilder.cpp
+    ../../../src/third_party/glslang/SPIRV/SpvPostProcess.cpp
+    ../../../src/third_party/glslang/SPIRV/SPVRemapper.cpp
+    ../../../src/third_party/glslang/SPIRV/SpvTools.cpp
+    ../../../src/third_party/glslang/StandAlone/ResourceLimits.cpp
     ../../../src/third_party/jsoncpp/jsoncpp.cc
     ../../../src/third_party/minizip/ioapi.c
     ../../../src/third_party/minizip/unzip.c
+    ../../../src/third_party/spirv-reflect/spirv_reflect.c
     ../../../src/third_party/texture_compressor/dxt_encoder_internals.cc
     ../../../src/third_party/texture_compressor/dxt_encoder.cc
     ../../../src/third_party/texture_compressor/texture_compressor_etc1.cc
     ../../../src/third_party/texture_compressor/texture_compressor.cc
+    ../../../src/third_party/vma/vk_mem_alloc.cpp
 )
 
 if (ANDROID_ABI STREQUAL armeabi-v7a)

@@ -51,6 +51,10 @@ source_set("engine") {
         "renderer/shader.h",
         "renderer/texture.cc",
         "renderer/texture.h",
+        "renderer/vulkan/renderer_vulkan_linux.cc",
+        "renderer/vulkan/renderer_vulkan.cc",
+        "renderer/vulkan/vulkan_context_linux.cc",
+        "renderer/vulkan/vulkan_context.cc",
         "shader_source.cc",
         "shader_source.h",
         "solid_quad.cc",
@@ -59,6 +63,15 @@ source_set("engine") {
         "sound_player.h",
         "sound.cc",
         "sound.h",
+      ]
+
+      defines = [
+        "VK_USE_PLATFORM_XLIB_KHR",
+        "VULKAN_NON_CMAKE_BUILD",
+        "SYSCONFDIR=\"/etc\"",
+        "FALLBACK_DATA_DIRS=\"/usr/local/share:/usr/share\"",
+        "FALLBACK_CONFIG_DIRS=\"/etc/xdg\"",
+        "HAVE_SECURE_GETENV",
       ]
 
       ldflags = [] libs = []

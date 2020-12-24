@@ -5,6 +5,9 @@
 #include "../audio/audio.h"
 #include "../engine.h"
 #include "../renderer/opengl/renderer_opengl.h"
+#include "../renderer/vulkan/renderer_vulkan.h"
+
+#define VULKAN_RENDERER
 
 using namespace base;
 
@@ -28,7 +31,11 @@ void PlatformBase::Initialize() {
     throw internal_error;
   }
 
+#if defined(VULKAN_RENDERER)
+  renderer_ = std::make_unique<RendererVulkan>();
+#else
   renderer_ = std::make_unique<RendererOpenGL>();
+#endif
 }
 
 void PlatformBase::Shutdown() {

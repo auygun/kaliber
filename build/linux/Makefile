@@ -106,12 +106,16 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/platform/platform_linux.cc \
   $(SRC_ROOT)/engine/renderer/geometry.cc \
   $(SRC_ROOT)/engine/renderer/opengl/render_command.cc \
-  $(SRC_ROOT)/engine/renderer/render_resource.cc \
   $(SRC_ROOT)/engine/renderer/opengl/renderer_opengl_linux.cc \
   $(SRC_ROOT)/engine/renderer/opengl/renderer_opengl.cc \
+  $(SRC_ROOT)/engine/renderer/render_resource.cc \
   $(SRC_ROOT)/engine/renderer/renderer_types.cc \
   $(SRC_ROOT)/engine/renderer/shader.cc \
   $(SRC_ROOT)/engine/renderer/texture.cc \
+  $(SRC_ROOT)/engine/renderer/vulkan/renderer_vulkan_linux.cc \
+  $(SRC_ROOT)/engine/renderer/vulkan/renderer_vulkan.cc \
+  $(SRC_ROOT)/engine/renderer/vulkan/vulkan_context_linux.cc \
+  $(SRC_ROOT)/engine/renderer/vulkan/vulkan_context.cc \
   $(SRC_ROOT)/engine/shader_source.cc \
   $(SRC_ROOT)/engine/solid_quad.cc \
   $(SRC_ROOT)/engine/sound_player.cc \
