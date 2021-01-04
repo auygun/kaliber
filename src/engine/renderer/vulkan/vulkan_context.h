@@ -42,9 +42,10 @@ class VulkanContext {
 
   VkExtent2D GetSwapchainExtent() { return window_.swapchain_extent; }
 
-  void AppendCommandBuffer(const VkCommandBuffer& command_buffer);
+  void AppendCommandBuffer(const VkCommandBuffer& command_buffer,
+                           bool front = false);
 
-  void Flush();
+  void Flush(bool all);
 
   bool PrepareBuffers();
   bool SwapBuffers();

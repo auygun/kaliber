@@ -206,12 +206,21 @@ void RendererVulkan::CreateGeometry(std::shared_ptr<void> impl_data,
                      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                  VMA_MEMORY_USAGE_GPU_ONLY);
 
-  UpdateBuffer(std::get<0>(geometry->buffer), 0, mesh->GetVertices(),
-               data_size);
-  BufferMemoryBarrier(
-      std::get<0>(geometry->buffer), 0, data_size,
-      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
-      VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
+  task_runner_.PostTask(HERE, std::bind(&RendererVulkan::UpdateBuffer, this,
+                                        std::get<0>(geometry->buffer), 0,
+                                        mesh->GetVertices(), data_size));
+  task_runner_.PostTask(HERE,
+                        std::bind(&RendererVulkan::BufferMemoryBarrier, this,
+                                  std::get<0>(geometry->buffer), 0, data_size,
+                                  VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                  VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+                                  VK_ACCESS_TRANSFER_WRITE_BIT,
+                                  VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT));
+  task_runner_.PostTask(HERE, [&, mesh = mesh.release()]() {
+    // Transfer mesh ownership to the background thread.
+    std::unique_ptr<Mesh> own(mesh);
+  });
+  semaphore_.Release();
 }
 
 void RendererVulkan::DestroyGeometry(std::shared_ptr<void> impl_data) {
@@ -253,19 +262,31 @@ void RendererVulkan::UpdateTexture(std::shared_ptr<void> impl_data,
     texture->height = image->GetHeight();
   }
 
-  ImageMemoryBarrier(
-      std::get<0>(texture->image), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-      VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
-      old_layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-  UpdateImage(std::get<0>(texture->image), image->GetBuffer(),
-              image->GetWidth(), image->GetHeight());
-  ImageMemoryBarrier(std::get<0>(texture->image), VK_ACCESS_TRANSFER_WRITE_BIT,
-                     VK_PIPELINE_STAGE_VERTEX_SHADER_BIT |
-                         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
-                         VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                     0, VK_ACCESS_SHADER_READ_BIT,
-                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  task_runner_.PostTask(
+      HERE,
+      std::bind(&RendererVulkan::ImageMemoryBarrier, this,
+                std::get<0>(texture->image),
+                VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
+                old_layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL));
+  task_runner_.PostTask(
+      HERE,
+      std::bind(&RendererVulkan::UpdateImage, this, std::get<0>(texture->image),
+                image->GetBuffer(), image->GetWidth(), image->GetHeight()));
+  task_runner_.PostTask(
+      HERE, std::bind(&RendererVulkan::ImageMemoryBarrier, this,
+                      std::get<0>(texture->image), VK_ACCESS_TRANSFER_WRITE_BIT,
+                      VK_PIPELINE_STAGE_VERTEX_SHADER_BIT |
+                          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
+                          VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                      0, VK_ACCESS_SHADER_READ_BIT,
+                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+  task_runner_.PostTask(HERE, [&, image = image.release()]() {
+    // Transfer image ownership to the background thread.
+    std::unique_ptr<Image> own(image);
+  });
+  semaphore_.Release();
 }
 
 void RendererVulkan::DestroyTexture(std::shared_ptr<void> impl_data) {
@@ -569,10 +590,17 @@ bool RendererVulkan::InitializeInternal() {
     cmd_pool_info.queueFamilyIndex = context_.GetGraphicsQueue();
     cmd_pool_info.flags = 0;
 
-    VkResult res = vkCreateCommandPool(device_, &cmd_pool_info, nullptr,
-                                       &frames_[i].command_pool);
-    if (res) {
-      DLOG << "vkCreateCommandPool failed with error " << std::to_string(res);
+    VkResult err = vkCreateCommandPool(device_, &cmd_pool_info, nullptr,
+                                       &frames_[i].setup_command_pool);
+    if (err) {
+      DLOG << "vkCreateCommandPool failed with error " << std::to_string(err);
+      return false;
+    }
+
+    err = vkCreateCommandPool(device_, &cmd_pool_info, nullptr,
+                              &frames_[i].draw_command_pool);
+    if (err) {
+      DLOG << "vkCreateCommandPool failed with error " << std::to_string(err);
       return false;
     }
 
@@ -580,18 +608,19 @@ bool RendererVulkan::InitializeInternal() {
     VkCommandBufferAllocateInfo cmdbuf_info;
     cmdbuf_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     cmdbuf_info.pNext = nullptr;
-    cmdbuf_info.commandPool = frames_[i].command_pool;
+    cmdbuf_info.commandPool = frames_[i].setup_command_pool;
     cmdbuf_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     cmdbuf_info.commandBufferCount = 1;
 
-    VkResult err = vkAllocateCommandBuffers(device_, &cmdbuf_info,
-                                            &frames_[i].setup_command_buffer);
+    err = vkAllocateCommandBuffers(device_, &cmdbuf_info,
+                                   &frames_[i].setup_command_buffer);
     if (err) {
       DLOG << "vkAllocateCommandBuffers failed with error "
            << std::to_string(err);
       continue;
     }
 
+    cmdbuf_info.commandPool = frames_[i].draw_command_pool;
     err = vkAllocateCommandBuffers(device_, &cmdbuf_info,
                                    &frames_[i].draw_command_buffer);
     if (err) {
@@ -603,17 +632,6 @@ bool RendererVulkan::InitializeInternal() {
 
   // Begin the first command buffer for the first frame.
   BeginFrame();
-
-  if (max_staging_buffer_size_ < staging_buffer_size_ * 4)
-    max_staging_buffer_size_ = staging_buffer_size_ * 4;
-
-  current_staging_buffer_ = 0;
-  staging_buffer_used_ = false;
-
-  for (int i = 0; i < frame_count; i++) {
-    bool err = InsertStagingBuffer();
-    LOG_IF(!err) << "Failed to create staging buffer.";
-  }
 
   // In this simple engine we use only one descriptor set that is for textures.
   // We use push contants for everything else.
@@ -666,6 +684,11 @@ bool RendererVulkan::InitializeInternal() {
     return false;
   }
 
+  // Use a background thread for filling up staging buffers and recording setup
+  // commands.
+  setup_thread_ =
+      std::thread(&RendererVulkan::SetupThreadMain, this, frame_count);
+
   return true;
 }
 
@@ -673,15 +696,16 @@ void RendererVulkan::Shutdown() {
   LOG << "Shutting down renderer.";
   vkDeviceWaitIdle(device_);
 
+  quit_.store(true, std::memory_order_relaxed);
+  semaphore_.Release();
+  setup_thread_.join();
+
   for (int i = 0; i < frames_.size(); ++i) {
     FreePendingResources(i);
-    vkDestroyCommandPool(device_, frames_[i].command_pool, nullptr);
+    vkDestroyCommandPool(device_, frames_[i].setup_command_pool, nullptr);
+    vkDestroyCommandPool(device_, frames_[i].draw_command_pool, nullptr);
   }
 
-  for (int i = 0; i < staging_buffers_.size(); i++) {
-    auto [buffer, allocation] = staging_buffers_[i].buffer;
-    vmaDestroyBuffer(allocator_, buffer, allocation);
-  }
   vmaDestroyAllocator(allocator_);
 
   vkDestroyDescriptorSetLayout(device_, descriptor_set_layout_, nullptr);
@@ -697,7 +721,8 @@ void RendererVulkan::Shutdown() {
 void RendererVulkan::BeginFrame() {
   FreePendingResources(current_frame_);
 
-  vkResetCommandPool(device_, frames_[current_frame_].command_pool, 0);
+  vkResetCommandPool(device_, frames_[current_frame_].setup_command_pool, 0);
+  vkResetCommandPool(device_, frames_[current_frame_].draw_command_pool, 0);
 
   VkCommandBufferBeginInfo cmdbuf_begin;
   cmdbuf_begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -732,13 +757,12 @@ void RendererVulkan::BeginFrame() {
   }
 }
 
-void RendererVulkan::Flush() {
+void RendererVulkan::FlushSetupBuffer() {
   vkEndCommandBuffer(frames_[current_frame_].setup_command_buffer);
-  vkEndCommandBuffer(frames_[current_frame_].draw_command_buffer);
 
-  context_.Flush();
+  context_.Flush(false);
 
-  vkResetCommandPool(device_, frames_[current_frame_].command_pool, 0);
+  vkResetCommandPool(device_, frames_[current_frame_].setup_command_pool, 0);
 
   VkCommandBufferBeginInfo cmdbuf_begin;
   cmdbuf_begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -752,15 +776,8 @@ void RendererVulkan::Flush() {
     DLOG << "vkBeginCommandBuffer failed with error " << std::to_string(err);
     return;
   }
-  context_.AppendCommandBuffer(frames_[current_frame_].setup_command_buffer);
-
-  err = vkBeginCommandBuffer(frames_[current_frame_].draw_command_buffer,
-                             &cmdbuf_begin);
-  if (err) {
-    DLOG << "vkBeginCommandBuffer failed with error " << std::to_string(err);
-    return;
-  }
-  context_.AppendCommandBuffer(frames_[current_frame_].draw_command_buffer);
+  context_.AppendCommandBuffer(frames_[current_frame_].setup_command_buffer,
+                               true);
 }
 
 void RendererVulkan::FreePendingResources(int frame) {
@@ -880,7 +897,7 @@ bool RendererVulkan::AllocateStagingBuffer(uint32_t amount,
           } else {
             // Worst case scenario, all the staging buffers belong to this frame
             // and this frame is not even done. Flush everything.
-            Flush();
+            FlushSetupBuffer();
 
             // Clear the whole staging buffer.
             for (int i = 0; i < staging_buffers_.size(); i++) {
@@ -1080,7 +1097,7 @@ void RendererVulkan::FreeBuffer(Buffer<VkBuffer> buffer) {
   frames_[current_frame_].buffers_to_destroy.push_back(std::move(buffer));
 }
 
-bool RendererVulkan::UpdateBuffer(VkBuffer buffer,
+void RendererVulkan::UpdateBuffer(VkBuffer buffer,
                                   size_t offset,
                                   const void* data,
                                   size_t data_size) {
@@ -1094,7 +1111,7 @@ bool RendererVulkan::UpdateBuffer(VkBuffer buffer,
     if (!AllocateStagingBuffer(
             std::min((uint32_t)to_submit, staging_buffer_size_), 32,
             block_write_offset, block_write_amount))
-      return false;
+      return;
     Buffer<VkBuffer> staging_buffer =
         staging_buffers_[current_staging_buffer_].buffer;
 
@@ -1116,7 +1133,6 @@ bool RendererVulkan::UpdateBuffer(VkBuffer buffer,
     to_submit -= block_write_amount;
     submit_from += block_write_amount;
   }
-  return true;
 }
 
 void RendererVulkan::BufferMemoryBarrier(VkBuffer buffer,
@@ -1267,7 +1283,7 @@ void RendererVulkan::FreeTexture(Buffer<VkImage> image,
   frames_[current_frame_].desc_sets_to_destroy.push_back(std::move(desc_set));
 }
 
-bool RendererVulkan::UpdateImage(VkImage image,
+void RendererVulkan::UpdateImage(VkImage image,
                                  const uint8_t* data,
                                  int width,
                                  int height) {
@@ -1286,7 +1302,7 @@ bool RendererVulkan::UpdateImage(VkImage image,
 
     if (!AllocateStagingBuffer(std::min((uint32_t)to_submit, max_size), segment,
                                block_write_offset, block_write_amount))
-      return false;
+      return;
     Buffer<VkBuffer> staging_buffer =
         staging_buffers_[current_staging_buffer_].buffer;
 
@@ -1321,10 +1337,9 @@ bool RendererVulkan::UpdateImage(VkImage image,
     to_submit -= block_write_amount;
     submit_from += block_write_amount;
   }
-  return true;
 }
 
-void RendererVulkan::ImageMemoryBarrier(VkImage& image,
+void RendererVulkan::ImageMemoryBarrier(VkImage image,
                                         VkPipelineStageFlags src_stage_mask,
                                         VkPipelineStageFlags dst_stage_mask,
                                         VkAccessFlags src_access,
@@ -1633,6 +1648,9 @@ void RendererVulkan::DrawListEnd() {
 }
 
 void RendererVulkan::SwapBuffers() {
+  // Ensure all tasks in the background thread are complete.
+  task_runner_.WaitForCompletion();
+
   vkEndCommandBuffer(frames_[current_frame_].setup_command_buffer);
   vkEndCommandBuffer(frames_[current_frame_].draw_command_buffer);
 
@@ -1644,6 +1662,32 @@ void RendererVulkan::SwapBuffers() {
   penging_descriptor_set_ = VK_NULL_HANDLE;
 
   BeginFrame();
+}
+
+void RendererVulkan::SetupThreadMain(int preallocate) {
+  if (max_staging_buffer_size_ < staging_buffer_size_ * 4)
+    max_staging_buffer_size_ = staging_buffer_size_ * 4;
+
+  current_staging_buffer_ = 0;
+  staging_buffer_used_ = false;
+
+  for (int i = 0; i < preallocate; i++) {
+    bool err = InsertStagingBuffer();
+    LOG_IF(!err) << "Failed to create staging buffer.";
+  }
+
+  for (;;) {
+    semaphore_.Acquire();
+    if (quit_.load(std::memory_order_relaxed))
+      break;
+
+    task_runner_.SingleConsumerRun();
+  }
+
+  for (int i = 0; i < staging_buffers_.size(); i++) {
+    auto [buffer, allocation] = staging_buffers_[i].buffer;
+    vmaDestroyBuffer(allocator_, buffer, allocation);
+  }
 }
 
 template <typename T>

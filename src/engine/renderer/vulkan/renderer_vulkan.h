@@ -1,13 +1,17 @@
 #ifndef RENDERER_VULKAN_H
 #define RENDERER_VULKAN_H
 
+#include <atomic>
 #include <memory>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
 #include "vulkan_context.h"
 
+#include "../../../base/semaphore.h"
+#include "../../../base/task_runner.h"
 #include "../../../third_party/vma/vk_mem_alloc.h"
 #include "../render_resource.h"
 #include "../renderer.h"
@@ -128,8 +132,9 @@ class RendererVulkan : public Renderer {
   // be destroyed when the frame is cycled. There are 2 or 3 frames (double or
   // tripple buffering) that are cycled constantly.
   struct Frame {
-    VkCommandPool command_pool = VK_NULL_HANDLE;
+    VkCommandPool setup_command_pool = VK_NULL_HANDLE;
     VkCommandBuffer setup_command_buffer = VK_NULL_HANDLE;
+    VkCommandPool draw_command_pool = VK_NULL_HANDLE;
     VkCommandBuffer draw_command_buffer = VK_NULL_HANDLE;
 
     BufferDeathRow buffers_to_destroy;
@@ -171,6 +176,11 @@ class RendererVulkan : public Renderer {
 
   std::unordered_map<unsigned, RenderResource*> resources_;
 
+  std::thread setup_thread_;
+  base::TaskRunner task_runner_;
+  base::Semaphore semaphore_;
+  std::atomic<bool> quit_{false};
+
 #if defined(__ANDROID__)
   ANativeWindow* window_;
 #elif defined(__linux__)
@@ -182,7 +192,7 @@ class RendererVulkan : public Renderer {
 
   void BeginFrame();
 
-  void Flush();
+  void FlushSetupBuffer();
 
   void FreePendingResources(int frame);
 
@@ -206,7 +216,7 @@ class RendererVulkan : public Renderer {
                       uint32_t usage,
                       VmaMemoryUsage mapping);
   void FreeBuffer(Buffer<VkBuffer> buffer);
-  bool UpdateBuffer(VkBuffer buffer,
+  void UpdateBuffer(VkBuffer buffer,
                     size_t offset,
                     const void* data,
                     size_t data_size);
@@ -228,8 +238,8 @@ class RendererVulkan : public Renderer {
   void FreeTexture(Buffer<VkImage> image,
                    VkImageView image_view,
                    DescSet desc_set);
-  bool UpdateImage(VkImage image, const uint8_t* data, int width, int height);
-  void ImageMemoryBarrier(VkImage& image,
+  void UpdateImage(VkImage image, const uint8_t* data, int width, int height);
+  void ImageMemoryBarrier(VkImage image,
                           VkPipelineStageFlags src_stage_mask,
                           VkPipelineStageFlags dst_stage_mask,
                           VkAccessFlags src_access,
@@ -243,6 +253,8 @@ class RendererVulkan : public Renderer {
   void DrawListEnd();
 
   void SwapBuffers();
+
+  void SetupThreadMain(int preallocate);
 
   template <typename T>
   bool SetUniformInternal(ShaderVulkan* shader, const std::string& name, T val);

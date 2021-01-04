@@ -1204,11 +1204,15 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
   return true;
 }
 
-void VulkanContext::AppendCommandBuffer(const VkCommandBuffer& command_buffer) {
-  command_buffers_.push_back(command_buffer);
+void VulkanContext::AppendCommandBuffer(const VkCommandBuffer& command_buffer,
+                                        bool front) {
+  if (front)
+    command_buffers_.insert(command_buffers_.begin(), command_buffer);
+  else
+    command_buffers_.push_back(command_buffer);
 }
 
-void VulkanContext::Flush() {
+void VulkanContext::Flush(bool all) {
   // Ensure everything else pending is executed.
   vkDeviceWaitIdle(device_);
 
@@ -1219,7 +1223,7 @@ void VulkanContext::Flush() {
   submit_info.pWaitDstStageMask = nullptr;
   submit_info.waitSemaphoreCount = 0;
   submit_info.pWaitSemaphores = nullptr;
-  submit_info.commandBufferCount = command_buffers_.size();
+  submit_info.commandBufferCount = command_buffers_.size() - (all ? 0 : 1);
   submit_info.pCommandBuffers = command_buffers_.data();
   submit_info.signalSemaphoreCount = 0;
   submit_info.pSignalSemaphores = nullptr;
@@ -1231,7 +1235,10 @@ void VulkanContext::Flush() {
     return;
   }
 
+  auto draw_command_buffer = command_buffers_.back();
   command_buffers_.clear();
+  if (!all)
+    command_buffers_.push_back(draw_command_buffer);
 
   vkDeviceWaitIdle(device_);
 }
