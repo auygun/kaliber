@@ -194,7 +194,63 @@ VkIndexType GetIndexType(eng::DataType data_type) {
     default:
       break;
   }
-  NOTREACHED << "Invalid index type";
+  NOTREACHED << "Invalid index type: " << data_type;
+  return VK_INDEX_TYPE_UINT16;
+}
+
+VkFormat GetImageFormat(eng::Image::Format format) {
+  switch (format) {
+    case eng::Image::kRGBA32:
+      return VK_FORMAT_R8G8B8A8_UNORM;
+    case eng::Image::kDXT1:
+      return VK_FORMAT_BC1_RGB_UNORM_BLOCK;
+    case eng::Image::kDXT5:
+      return VK_FORMAT_BC3_UNORM_BLOCK;
+    case eng::Image::kETC1:
+    case eng::Image::kATC:
+    case eng::Image::kATCIA:
+    default:
+      break;
+  }
+  NOTREACHED << "Invalid format: " << format;
+  return VK_FORMAT_R8G8B8A8_UNORM;
+}
+
+void GetBlockSizeForImageFormat(VkFormat format, int& size, int& height) {
+  switch (format) {
+    case VK_FORMAT_R8G8B8A8_UNORM:
+      size = 4;
+      height = 1;
+      return;
+    case VK_FORMAT_BC1_RGB_UNORM_BLOCK:
+      size = 8;
+      height = 4;
+      return;
+    case VK_FORMAT_BC3_UNORM_BLOCK:
+      size = 16;
+      height = 4;
+      return;
+    default:
+      break;
+  }
+  NOTREACHED << "Invalid format: " << format;
+}
+
+void GetNumBlocksForImageFormat(VkFormat format,
+                                int& num_blocks_x,
+                                int& num_blocks_y) {
+  switch (format) {
+    case VK_FORMAT_R8G8B8A8_UNORM:
+      return;
+    case VK_FORMAT_BC1_RGB_UNORM_BLOCK:
+    case VK_FORMAT_BC3_UNORM_BLOCK:
+      num_blocks_x = (num_blocks_x + 3) / 4;
+      num_blocks_y = (num_blocks_y + 3) / 4;
+      return;
+    default:
+      break;
+  }
+  NOTREACHED << "Invalid format: " << format;
 }
 
 }  // namespace
@@ -276,6 +332,7 @@ void RendererVulkan::UpdateTexture(std::shared_ptr<void> impl_data,
                                    std::unique_ptr<Image> image) {
   auto texture = reinterpret_cast<TextureVulkan*>(impl_data.get());
   VkImageLayout old_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  VkFormat format = GetImageFormat(image->GetFormat());
 
   if (texture->view != VK_NULL_HANDLE &&
       (texture->width != image->GetWidth() ||
@@ -287,7 +344,7 @@ void RendererVulkan::UpdateTexture(std::shared_ptr<void> impl_data,
   }
 
   if (texture->view == VK_NULL_HANDLE) {
-    CreateTexture(texture->image, texture->view, texture->desc_set,
+    CreateTexture(texture->image, texture->view, texture->desc_set, format,
                   image->GetWidth(), image->GetHeight(),
                   VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                   VMA_MEMORY_USAGE_GPU_ONLY);
@@ -304,9 +361,9 @@ void RendererVulkan::UpdateTexture(std::shared_ptr<void> impl_data,
                 VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
                 old_layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL));
   task_runner_.PostTask(
-      HERE,
-      std::bind(&RendererVulkan::UpdateImage, this, std::get<0>(texture->image),
-                image->GetBuffer(), image->GetWidth(), image->GetHeight()));
+      HERE, std::bind(&RendererVulkan::UpdateImage, this,
+                      std::get<0>(texture->image), format, image->GetBuffer(),
+                      image->GetWidth(), image->GetHeight()));
   task_runner_.PostTask(
       HERE, std::bind(&RendererVulkan::ImageMemoryBarrier, this,
                       std::get<0>(texture->image), VK_ACCESS_TRANSFER_WRITE_BIT,
@@ -717,6 +774,15 @@ bool RendererVulkan::InitializeInternal() {
     DLOG << "vkCreateSampler failed with error " << std::to_string(res);
     return false;
   }
+
+  texture_compression_.dxt1 = IsFormatSupported(VK_FORMAT_BC1_RGB_UNORM_BLOCK);
+  texture_compression_.s3tc = IsFormatSupported(VK_FORMAT_BC3_UNORM_BLOCK);
+
+  LOG << "TextureCompression:";
+  LOG << "  atc:   " << texture_compression_.atc;
+  LOG << "  dxt1:  " << texture_compression_.dxt1;
+  LOG << "  etc1:  " << texture_compression_.etc1;
+  LOG << "  s3tc:  " << texture_compression_.s3tc;
 
   // Use a background thread for filling up staging buffers and recording setup
   // commands.
@@ -1192,10 +1258,10 @@ void RendererVulkan::BufferMemoryBarrier(VkBuffer buffer,
                        &buffer_mem_barrier, 0, nullptr);
 }
 
-// TODO: Support for compressed textures.
 bool RendererVulkan::CreateTexture(Buffer<VkImage>& image,
                                    VkImageView& view,
                                    DescSet& desc_set,
+                                   VkFormat format,
                                    int width,
                                    int height,
                                    VkImageUsageFlags usage,
@@ -1210,7 +1276,7 @@ bool RendererVulkan::CreateTexture(Buffer<VkImage>& image,
   image_create_info.extent.depth = 1;
   image_create_info.mipLevels = 1;
   image_create_info.arrayLayers = 1;
-  image_create_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+  image_create_info.format = format;
   image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
   image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   image_create_info.usage = usage;
@@ -1244,7 +1310,7 @@ bool RendererVulkan::CreateTexture(Buffer<VkImage>& image,
   image_view_create_info.flags = 0;
   image_view_create_info.image = vk_image;
   image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-  image_view_create_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+  image_view_create_info.format = format;
   image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
   image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
   image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -1318,22 +1384,29 @@ void RendererVulkan::FreeTexture(Buffer<VkImage> image,
 }
 
 void RendererVulkan::UpdateImage(VkImage image,
+                                 VkFormat format,
                                  const uint8_t* data,
                                  int width,
                                  int height) {
-  constexpr uint32_t pixel_size = 4;
-  // Ensure a single row is small enough to fit in a staging buffer.
-  DCHECK(staging_buffer_size_ >= width * pixel_size);
+  int num_blocks_x = width;
+  int num_blocks_y = height;
+  GetNumBlocksForImageFormat(format, num_blocks_x, num_blocks_y);
 
-  size_t to_submit = width * height * pixel_size;
+  int block_size, block_height;
+  GetBlockSizeForImageFormat(format, block_size, block_height);
+
+  size_t to_submit = num_blocks_x * num_blocks_y * block_size;
   size_t submit_from = 0;
-  uint32_t segment = width * pixel_size;
+  uint32_t segment = num_blocks_x * block_size;
   uint32_t max_size = staging_buffer_size_ - (staging_buffer_size_ % segment);
+  uint32_t region_offset_y = 0;
+
+  // A segment must fit in a single staging buffer.
+  DCHECK(staging_buffer_size_ >= segment);
 
   while (to_submit > 0) {
     uint32_t block_write_offset;
     uint32_t block_write_amount;
-
     if (!AllocateStagingBuffer(std::min((uint32_t)to_submit, max_size), segment,
                                block_write_offset, block_write_amount))
       return;
@@ -1346,6 +1419,8 @@ void RendererVulkan::UpdateImage(VkImage image,
     memcpy(((uint8_t*)data_ptr) + block_write_offset, (char*)data + submit_from,
            block_write_amount);
 
+    uint32_t region_height = (block_write_amount / segment) * block_height;
+
     // Insert a command to copy to GPU buffer.
     VkBufferImageCopy buffer_image_copy;
     buffer_image_copy.bufferOffset = block_write_offset;
@@ -1356,11 +1431,10 @@ void RendererVulkan::UpdateImage(VkImage image,
     buffer_image_copy.imageSubresource.baseArrayLayer = 0;
     buffer_image_copy.imageSubresource.layerCount = 1;
     buffer_image_copy.imageOffset.x = 0;
-    buffer_image_copy.imageOffset.y = (submit_from / pixel_size) / width;
+    buffer_image_copy.imageOffset.y = region_offset_y;
     buffer_image_copy.imageOffset.z = 0;
     buffer_image_copy.imageExtent.width = width;
-    buffer_image_copy.imageExtent.height =
-        (block_write_amount / pixel_size) / width;
+    buffer_image_copy.imageExtent.height = region_height;
     buffer_image_copy.imageExtent.depth = 1;
 
     vkCmdCopyBufferToImage(frames_[current_frame_].setup_command_buffer,
@@ -1370,6 +1444,7 @@ void RendererVulkan::UpdateImage(VkImage image,
 
     to_submit -= block_write_amount;
     submit_from += block_write_amount;
+    region_offset_y += region_height;
   }
 }
 
@@ -1742,6 +1817,13 @@ bool RendererVulkan::SetUniformInternal(ShaderVulkan* shader,
       reinterpret_cast<T*>(shader->push_constants.get() + it->second[1]);
   *dst = val;
   return true;
+}
+
+bool RendererVulkan::IsFormatSupported(VkFormat format) {
+  VkFormatProperties properties;
+  vkGetPhysicalDeviceFormatProperties(context_.GetPhysicalDevice(), format,
+                                      &properties);
+  return properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
 }
 
 void RendererVulkan::ContextLost() {

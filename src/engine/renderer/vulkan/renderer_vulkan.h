@@ -234,6 +234,7 @@ class RendererVulkan : public Renderer {
   bool CreateTexture(Buffer<VkImage>& image,
                      VkImageView& view,
                      DescSet& desc_set,
+                     VkFormat format,
                      int width,
                      int height,
                      VkImageUsageFlags usage,
@@ -241,7 +242,11 @@ class RendererVulkan : public Renderer {
   void FreeTexture(Buffer<VkImage> image,
                    VkImageView image_view,
                    DescSet desc_set);
-  void UpdateImage(VkImage image, const uint8_t* data, int width, int height);
+  void UpdateImage(VkImage image,
+                   VkFormat format,
+                   const uint8_t* data,
+                   int width,
+                   int height);
   void ImageMemoryBarrier(VkImage image,
                           VkPipelineStageFlags src_stage_mask,
                           VkPipelineStageFlags dst_stage_mask,
@@ -261,6 +266,8 @@ class RendererVulkan : public Renderer {
 
   template <typename T>
   bool SetUniformInternal(ShaderVulkan* shader, const std::string& name, T val);
+
+  bool IsFormatSupported(VkFormat format);
 
   void ContextLost();
 
