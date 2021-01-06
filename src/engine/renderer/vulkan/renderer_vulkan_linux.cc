@@ -7,11 +7,8 @@ namespace eng {
 bool RendererVulkan::Initialize(Display* display, Window window) {
   LOG << "Initializing renderer.";
 
-  display_ = display;
-  window_ = window;
-
   XWindowAttributes xwa;
-  XGetWindowAttributes(display_, window_, &xwa);
+  XGetWindowAttributes(display, window, &xwa);
   screen_width_ = xwa.width;
   screen_height_ = xwa.height;
 

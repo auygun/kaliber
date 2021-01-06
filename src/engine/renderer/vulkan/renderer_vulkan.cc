@@ -1,10 +1,8 @@
 #include "renderer_vulkan.h"
 
 #include <algorithm>
-#include <atomic>
 #include <cstring>
 #include <sstream>
-#include <unordered_set>
 
 #include "../../../base/log.h"
 #include "../../../base/vecmath.h"
@@ -786,19 +784,26 @@ bool RendererVulkan::InitializeInternal() {
 
   // Use a background thread for filling up staging buffers and recording setup
   // commands.
+  quit_.store(false, std::memory_order_relaxed);
   setup_thread_ =
       std::thread(&RendererVulkan::SetupThreadMain, this, frame_count);
 
+  if (context_lost_cb_) {
+    LOG << "Context lost.";
+    context_lost_cb_();
+  }
   return true;
 }
 
 void RendererVulkan::Shutdown() {
   LOG << "Shutting down renderer.";
-  vkDeviceWaitIdle(device_);
+  InvalidateAllResources();
 
   quit_.store(true, std::memory_order_relaxed);
   semaphore_.Release();
   setup_thread_.join();
+
+  vkDeviceWaitIdle(device_);
 
   for (int i = 0; i < frames_.size(); ++i) {
     FreePendingResources(i);
@@ -812,6 +817,14 @@ void RendererVulkan::Shutdown() {
   vkDestroySampler(device_, sampler_, nullptr);
 
   device_ = VK_NULL_HANDLE;
+  frames_drawn_ = 0;
+  frames_.clear();
+  current_frame_ = 0;
+
+  staging_buffers_.clear();
+  current_staging_buffer_ = 0;
+  staging_buffer_used_ = false;
+
   context_.DestroyWindow();
   context_.Shutdown();
 
@@ -995,8 +1008,8 @@ bool RendererVulkan::AllocateStagingBuffer(uint32_t amount,
             staging_buffers_[current_staging_buffer_].frame_used =
                 frames_drawn_;
           } else {
-            // Worst case scenario, all the staging buffers belong to this frame
-            // and this frame is not even done. Flush everything.
+            // All the staging buffers belong to this frame and we can't create
+            // more. Flush setup buffer to make room.
             FlushSetupBuffer();
 
             // Clear the whole staging buffer.
@@ -1205,12 +1218,12 @@ void RendererVulkan::UpdateBuffer(VkBuffer buffer,
   size_t submit_from = 0;
 
   while (to_submit > 0) {
-    uint32_t block_write_offset;
-    uint32_t block_write_amount;
+    uint32_t write_offset;
+    uint32_t write_amount;
 
     if (!AllocateStagingBuffer(
             std::min((uint32_t)to_submit, staging_buffer_size_), 32,
-            block_write_offset, block_write_amount))
+            write_offset, write_amount))
       return;
     Buffer<VkBuffer> staging_buffer =
         staging_buffers_[current_staging_buffer_].buffer;
@@ -1218,20 +1231,20 @@ void RendererVulkan::UpdateBuffer(VkBuffer buffer,
     // Copy to staging buffer.
     void* data_ptr =
         staging_buffers_[current_staging_buffer_].alloc_info.pMappedData;
-    memcpy(((uint8_t*)data_ptr) + block_write_offset, (char*)data + submit_from,
-           block_write_amount);
+    memcpy(((uint8_t*)data_ptr) + write_offset, (char*)data + submit_from,
+           write_amount);
 
     // Insert a command to copy to GPU buffer.
     VkBufferCopy region;
-    region.srcOffset = block_write_offset;
+    region.srcOffset = write_offset;
     region.dstOffset = submit_from + offset;
-    region.size = block_write_amount;
+    region.size = write_amount;
 
     vkCmdCopyBuffer(frames_[current_frame_].setup_command_buffer,
                     std::get<0>(staging_buffer), buffer, 1, &region);
 
-    to_submit -= block_write_amount;
-    submit_from += block_write_amount;
+    to_submit -= write_amount;
+    submit_from += write_amount;
   }
 }
 
@@ -1405,10 +1418,10 @@ void RendererVulkan::UpdateImage(VkImage image,
   DCHECK(staging_buffer_size_ >= segment);
 
   while (to_submit > 0) {
-    uint32_t block_write_offset;
-    uint32_t block_write_amount;
+    uint32_t write_offset;
+    uint32_t write_amount;
     if (!AllocateStagingBuffer(std::min((uint32_t)to_submit, max_size), segment,
-                               block_write_offset, block_write_amount))
+                               write_offset, write_amount))
       return;
     Buffer<VkBuffer> staging_buffer =
         staging_buffers_[current_staging_buffer_].buffer;
@@ -1416,14 +1429,14 @@ void RendererVulkan::UpdateImage(VkImage image,
     // Copy to staging buffer.
     void* data_ptr =
         staging_buffers_[current_staging_buffer_].alloc_info.pMappedData;
-    memcpy(((uint8_t*)data_ptr) + block_write_offset, (char*)data + submit_from,
-           block_write_amount);
+    memcpy(((uint8_t*)data_ptr) + write_offset, (char*)data + submit_from,
+           write_amount);
 
-    uint32_t region_height = (block_write_amount / segment) * block_height;
+    uint32_t region_height = (write_amount / segment) * block_height;
 
     // Insert a command to copy to GPU buffer.
     VkBufferImageCopy buffer_image_copy;
-    buffer_image_copy.bufferOffset = block_write_offset;
+    buffer_image_copy.bufferOffset = write_offset;
     buffer_image_copy.bufferRowLength = 0;
     buffer_image_copy.bufferImageHeight = 0;
     buffer_image_copy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -1442,8 +1455,8 @@ void RendererVulkan::UpdateImage(VkImage image,
                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
                            &buffer_image_copy);
 
-    to_submit -= block_write_amount;
-    submit_from += block_write_amount;
+    to_submit -= write_amount;
+    submit_from += write_amount;
     region_offset_y += region_height;
   }
 }
@@ -1824,12 +1837,6 @@ bool RendererVulkan::IsFormatSupported(VkFormat format) {
   vkGetPhysicalDeviceFormatProperties(context_.GetPhysicalDevice(), format,
                                       &properties);
   return properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
-}
-
-void RendererVulkan::ContextLost() {
-  LOG << "Context lost.";
-  InvalidateAllResources();
-  context_lost_cb_();
 }
 
 std::unique_ptr<RenderResource> RendererVulkan::CreateResource(

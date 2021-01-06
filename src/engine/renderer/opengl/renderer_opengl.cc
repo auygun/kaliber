@@ -335,7 +335,8 @@ bool RendererOpenGL::StartRenderThread() {
 
 void RendererOpenGL::TerminateRenderThread() {
 #ifdef THREADED_RENDERING
-  DCHECK(!terminate_render_thread_);
+  if (terminate_render_thread_)
+    return;
 
   // Notify worker thread and wait for it to terminate.
   {

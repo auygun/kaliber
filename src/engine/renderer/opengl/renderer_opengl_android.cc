@@ -15,11 +15,7 @@ bool RendererOpenGL::Initialize(ANativeWindow* window) {
 }
 
 void RendererOpenGL::Shutdown() {
-  if (terminate_render_thread_)
-    return;
-
   LOG << "Shutting down renderer.";
-
   TerminateRenderThread();
 }
 

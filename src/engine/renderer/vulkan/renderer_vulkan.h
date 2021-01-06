@@ -184,13 +184,6 @@ class RendererVulkan : public Renderer {
   base::Semaphore semaphore_;
   std::atomic<bool> quit_{false};
 
-#if defined(__ANDROID__)
-  ANativeWindow* window_;
-#elif defined(__linux__)
-  Display* display_ = NULL;
-  Window window_ = 0;
-#endif
-
   bool InitializeInternal();
 
   void BeginFrame();
@@ -268,8 +261,6 @@ class RendererVulkan : public Renderer {
   bool SetUniformInternal(ShaderVulkan* shader, const std::string& name, T val);
 
   bool IsFormatSupported(VkFormat format);
-
-  void ContextLost();
 
   void InvalidateAllResources();
 };

@@ -61,6 +61,12 @@ void VulkanContext::Shutdown() {
     vkDestroyDevice(device_, nullptr);
     device_ = VK_NULL_HANDLE;
   }
+  buffers_prepared_ = false;
+  queues_initialized_ = false;
+  separate_present_queue_ = false;
+  swapchain_image_count_ = 0;
+  command_buffers_.clear();
+  window_ = {};
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL VulkanContext::DebugMessengerCallback(
@@ -392,23 +398,25 @@ bool VulkanContext::CreatePhysicalDevice() {
 
   uint32_t gpu_count;
 
-  VkResult err = vkCreateInstance(&inst_info, nullptr, &instance_);
-  if (err == VK_ERROR_INCOMPATIBLE_DRIVER) {
-    DLOG << "Cannot find a compatible Vulkan installable client driver (ICD).";
-    return false;
-  }
-  if (err == VK_ERROR_EXTENSION_NOT_PRESENT) {
-    DLOG << "Cannot find a specified extension library. Make sure your layers "
-            "path is set appropriately. ";
-    return false;
-  }
-  if (err) {
-    DLOG << "vkCreateInstance failed. Error: " << err;
-    return false;
+  if (instance_ == VK_NULL_HANDLE) {
+    VkResult err = vkCreateInstance(&inst_info, nullptr, &instance_);
+    if (err == VK_ERROR_INCOMPATIBLE_DRIVER) {
+      DLOG << "Cannot find a compatible Vulkan installable client driver (ICD).";
+      return false;
+    }
+    if (err == VK_ERROR_EXTENSION_NOT_PRESENT) {
+      DLOG << "Cannot find a specified extension library. Make sure your layers "
+              "path is set appropriately. ";
+      return false;
+    }
+    if (err) {
+      DLOG << "vkCreateInstance failed. Error: " << err;
+      return false;
+    }
   }
 
   // Make initial call to query gpu_count.
-  err = vkEnumeratePhysicalDevices(instance_, &gpu_count, nullptr);
+  VkResult err = vkEnumeratePhysicalDevices(instance_, &gpu_count, nullptr);
   if (err) {
     DLOG << "vkEnumeratePhysicalDevices failed. Error: " << err;
     return false;
@@ -919,7 +927,7 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
   // between VSync signals, which is 16.6ms at a rate of 60 fps. The rendered
   // image is presented to the swapchain, and the previously presented one is
   // made available to the application again. If the GPU cannot process frames
-  // fast enough, VSync will be missed and the application wait have to wait for
+  // fast enough, VSync will be missed and the application will have to wait for
   // another whole VSync cycle, which caps framerate at 30 fps. This may be ok,
   // but triple buffering can deliver higher framerate.
   uint32_t desired_num_of_swapchain_images = 3;
