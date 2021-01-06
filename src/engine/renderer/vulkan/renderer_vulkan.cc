@@ -185,6 +185,18 @@ VertexInputDescription GetVertexInputDescription(
   return std::make_tuple(std::move(bindings), std::move(attributes));
 }
 
+VkIndexType GetIndexType(eng::DataType data_type) {
+  switch (data_type) {
+    case eng::kDataType_UInt:
+      return VK_INDEX_TYPE_UINT32;
+    case eng::kDataType_UShort:
+      return VK_INDEX_TYPE_UINT16;
+    default:
+      break;
+  }
+  NOTREACHED << "Invalid index type";
+}
+
 }  // namespace
 
 namespace eng {
@@ -193,12 +205,19 @@ RendererVulkan::RendererVulkan() = default;
 
 RendererVulkan::~RendererVulkan() = default;
 
-// TODO: Support for index buffer.
 void RendererVulkan::CreateGeometry(std::shared_ptr<void> impl_data,
                                     std::unique_ptr<Mesh> mesh) {
   auto geometry = reinterpret_cast<GeometryVulkan*>(impl_data.get());
   geometry->num_vertices = mesh->num_vertices();
-  size_t data_size = mesh->GetVertexSize() * geometry->num_vertices;
+  size_t vertex_data_size = mesh->GetVertexSize() * geometry->num_vertices;
+  size_t index_data_size = 0;
+
+  if (mesh->GetIndices()) {
+    geometry->num_indices = mesh->num_indices();
+    geometry->index_type = GetIndexType(mesh->index_description());
+    index_data_size = mesh->GetIndexSize() * geometry->num_indices;
+  }
+  size_t data_size = vertex_data_size + index_data_size;
 
   AllocateBuffer(geometry->buffer, data_size,
                  VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
@@ -208,7 +227,14 @@ void RendererVulkan::CreateGeometry(std::shared_ptr<void> impl_data,
 
   task_runner_.PostTask(HERE, std::bind(&RendererVulkan::UpdateBuffer, this,
                                         std::get<0>(geometry->buffer), 0,
-                                        mesh->GetVertices(), data_size));
+                                        mesh->GetVertices(), vertex_data_size));
+  if (geometry->num_indices > 0) {
+    geometry->indices_offset = vertex_data_size;
+    task_runner_.PostTask(
+        HERE, std::bind(&RendererVulkan::UpdateBuffer, this,
+                        std::get<0>(geometry->buffer), geometry->indices_offset,
+                        mesh->GetIndices(), index_data_size));
+  }
   task_runner_.PostTask(HERE,
                         std::bind(&RendererVulkan::BufferMemoryBarrier, this,
                                   std::get<0>(geometry->buffer), 0, data_size,
@@ -234,8 +260,16 @@ void RendererVulkan::Draw(std::shared_ptr<void> impl_data) {
   VkDeviceSize offset = 0;
   vkCmdBindVertexBuffers(frames_[current_frame_].draw_command_buffer, 0, 1,
                          &std::get<0>(geometry->buffer), &offset);
-  vkCmdDraw(frames_[current_frame_].draw_command_buffer, geometry->num_vertices,
-            1, 0, 0);
+  if (geometry->num_indices > 0) {
+    vkCmdBindIndexBuffer(frames_[current_frame_].draw_command_buffer,
+                         std::get<0>(geometry->buffer),
+                         geometry->indices_offset, geometry->index_type);
+    vkCmdDrawIndexed(frames_[current_frame_].draw_command_buffer,
+                     geometry->num_indices, 1, 0, 0, 0);
+  } else {
+    vkCmdDraw(frames_[current_frame_].draw_command_buffer,
+              geometry->num_vertices, 1, 0, 0);
+  }
 }
 
 void RendererVulkan::UpdateTexture(std::shared_ptr<void> impl_data,

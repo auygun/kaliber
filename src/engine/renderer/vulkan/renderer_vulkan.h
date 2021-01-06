@@ -103,7 +103,10 @@ class RendererVulkan : public Renderer {
 
   struct GeometryVulkan {
     Buffer<VkBuffer> buffer;
-    size_t num_vertices = 0;
+    uint32_t num_vertices = 0;
+    uint32_t num_indices = 0;
+    uint64_t indices_offset = 0;
+    VkIndexType index_type = VK_INDEX_TYPE_UINT16;
   };
 
   struct ShaderVulkan {
