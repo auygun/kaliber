@@ -387,7 +387,8 @@ void RendererVulkan::DestroyTexture(std::shared_ptr<void> impl_data) {
 
 void RendererVulkan::ActivateTexture(std::shared_ptr<void> impl_data) {
   auto texture = reinterpret_cast<TextureVulkan*>(impl_data.get());
-  penging_descriptor_set_ = std::get<0>(texture->desc_set);
+  // Keep as pengind and bind later in ActivateShader.
+  penging_descriptor_sets_[/*TODO*/0] = std::get<0>(texture->desc_set);
 }
 
 void RendererVulkan::CreateShader(std::shared_ptr<void> impl_data,
@@ -579,14 +580,15 @@ void RendererVulkan::ActivateShader(std::shared_ptr<void> impl_data) {
     vkCmdBindPipeline(frames_[current_frame_].draw_command_buffer,
                       VK_PIPELINE_BIND_POINT_GRAPHICS, shader->pipeline);
   }
-  if (shader->use_desc_set &&
-      active_descriptor_set_ != penging_descriptor_set_) {
-    active_descriptor_set_ = penging_descriptor_set_;
-
-    vkCmdBindDescriptorSets(frames_[current_frame_].draw_command_buffer,
-                            VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            shader->pipeline_layout, 0, 1,
-                            &active_descriptor_set_, 0, nullptr);
+  for (int i = 0; i < shader->desc_set_count; ++i) {
+    if (active_descriptor_sets_[i] != penging_descriptor_sets_[i]) {
+      active_descriptor_sets_[i] = penging_descriptor_sets_[i];
+      vkCmdBindDescriptorSets(frames_[current_frame_].draw_command_buffer,
+                              VK_PIPELINE_BIND_POINT_GRAPHICS,
+                              shader->pipeline_layout, 0, 1,
+                              &active_descriptor_sets_[i], 0, nullptr);
+      break;
+    }
   }
 }
 
@@ -629,9 +631,11 @@ void RendererVulkan::SetUniform(std::shared_ptr<void> impl_data,
                                 const std::string& name,
                                 int val) {
   auto shader = reinterpret_cast<ShaderVulkan*>(impl_data.get());
-  // Unlike OpenGL, no need to set a uniform for sampler.
-  if (name != shader->sampler_uniform_name)
-    SetUniformInternal(shader, name, val);
+  for (auto& sampler_name : shader->sampler_uniform_names) {
+    if (name == sampler_name)
+      return;
+  }
+  SetUniformInternal(shader, name, val);
 }
 
 void RendererVulkan::UploadUniforms(std::shared_ptr<void> impl_data) {
@@ -722,8 +726,8 @@ bool RendererVulkan::InitializeInternal() {
   // Begin the first command buffer for the first frame.
   BeginFrame();
 
-  // In this simple engine we use only one descriptor set that is for textures.
-  // We use push contants for everything else.
+  // In this simple engine we use only one descriptor set layout that is for
+  // textures. We use push contants for everything else.
   VkDescriptorSetLayoutBinding ds_layout_binding;
   ds_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   ds_layout_binding.descriptorCount = 1;
@@ -1540,14 +1544,8 @@ bool RendererVulkan::CreatePipelineLayout(ShaderVulkan* shader) {
     DLOG << __func__ << " binding_count: " << binding_count;
 
     if (binding_count > 0) {
-      if (binding_count > 1) {
-        DLOG << "SPIR-V reflection found " << binding_count
-             << " descriptor bindings in fragment shader. Only one descriptor "
-                "binding is suported.";
-        break;
-      }
-
-      // Validate that the desriptor type is COMBINED_IMAGE_SAMPLER.
+      // Collect binding names and validate that only COMBINED_IMAGE_SAMPLER
+      // desriptor type is used.
       std::vector<SpvReflectDescriptorBinding*> bindings;
       bindings.resize(binding_count);
       result = spvReflectEnumerateDescriptorBindings(
@@ -1559,23 +1557,37 @@ bool RendererVulkan::CreatePipelineLayout(ShaderVulkan* shader) {
         break;
       }
 
-      const SpvReflectDescriptorBinding& binding = *bindings[0];
+      for (int i = 0; i < binding_count; ++i) {
+        const SpvReflectDescriptorBinding& binding = *bindings[i];
 
-      DLOG << __func__ << " name: " << binding.name
-           << " descriptor_type: " << binding.descriptor_type
-           << " set: " << binding.set << " binding: " << binding.binding;
+        DLOG << __func__ << " name: " << binding.name
+             << " descriptor_type: " << binding.descriptor_type
+             << " set: " << binding.set << " binding: " << binding.binding;
 
-      if (binding.descriptor_type !=
-          SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
-        DLOG << "SPIR-V reflection found descriptor type "
-             << binding.descriptor_type
-             << " in fragment shader. Only COMBINED_IMAGE_SAMPLER type is "
-                "supported.";
-        break;
+        if (binding.binding > 0) {
+          DLOG << "SPIR-V reflection found " << binding_count
+               << " bindings in vertex shader. Only one binding per set is "
+                  "supported";
+          break;
+        }
+
+        if (binding.descriptor_type !=
+            SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
+          DLOG << "SPIR-V reflection found descriptor type "
+               << binding.descriptor_type
+               << " in fragment shader. Only COMBINED_IMAGE_SAMPLER type is "
+                  "supported.";
+          break;
+        }
+
+        shader->sampler_uniform_names.push_back(binding.name);
+        shader->desc_set_count++;
       }
+    }
 
-      shader->sampler_uniform_name = binding.name;
-      shader->use_desc_set = true;
+    if (active_descriptor_sets_.size() < shader->desc_set_count) {
+      active_descriptor_sets_.resize(shader->desc_set_count);
+      penging_descriptor_sets_.resize(shader->desc_set_count);
     }
 
     // Parse push constants.
@@ -1657,7 +1669,10 @@ bool RendererVulkan::CreatePipelineLayout(ShaderVulkan* shader) {
       }
     }
 
-    VkDescriptorSetLayout desc_set_layout = descriptor_set_layout_;
+    // Use the same layout for all decriptor sets.
+    std::vector<VkDescriptorSetLayout> desc_set_layouts;
+    for (int i = 0; i < binding_count; ++i)
+      desc_set_layouts.push_back(descriptor_set_layout_);
 
     VkPipelineLayoutCreateInfo pipeline_layout_create_info;
     pipeline_layout_create_info.sType =
@@ -1665,8 +1680,8 @@ bool RendererVulkan::CreatePipelineLayout(ShaderVulkan* shader) {
     pipeline_layout_create_info.pNext = nullptr;
     pipeline_layout_create_info.flags = 0;
     if (binding_count > 0) {
-      pipeline_layout_create_info.setLayoutCount = 1;
-      pipeline_layout_create_info.pSetLayouts = &desc_set_layout;
+      pipeline_layout_create_info.setLayoutCount = binding_count;
+      pipeline_layout_create_info.pSetLayouts = desc_set_layouts.data();
     } else {
       pipeline_layout_create_info.setLayoutCount = 0;
       pipeline_layout_create_info.pSetLayouts = nullptr;
@@ -1780,8 +1795,10 @@ void RendererVulkan::SwapBuffers() {
   current_frame_ = (current_frame_ + 1) % frames_.size();
 
   active_pipeline_ = VK_NULL_HANDLE;
-  active_descriptor_set_ = VK_NULL_HANDLE;
-  penging_descriptor_set_ = VK_NULL_HANDLE;
+  for (auto& ds : active_descriptor_sets_)
+    ds = VK_NULL_HANDLE;
+  for (auto& ds : penging_descriptor_sets_)
+    ds = VK_NULL_HANDLE;
 
   BeginFrame();
 }

@@ -37,9 +37,8 @@ const char kFragmentShaderMacros[] = R"(
   #define UNIFORM_BEGIN layout(push_constant) uniform Params {
   #define UNIFORM_V(X) X;
   #define UNIFORM_F(X) X;
-  #define UNIFORM_S(X)
   #define UNIFORM_END } params;
-  #define SAMPLER(X) layout(set = 0, binding = 0) uniform X;
+  #define SAMPLER(N, X) layout(set = N, binding = 0) uniform X;
   #define IN(X) layout(location = X) in
   #define OUT(X) layout(location = X) out
   #define FRAG_COLOR_OUT(X) layout(location = 0) out vec4 X;
@@ -50,9 +49,8 @@ const char kFragmentShaderMacros[] = R"(
   #define UNIFORM_BEGIN
   #define UNIFORM_V(X)
   #define UNIFORM_F(X) uniform X;
-  #define UNIFORM_S(X) uniform X;
   #define UNIFORM_END
-  #define SAMPLER(X)
+  #define SAMPLER(N, X) uniform X;
   #define IN(X) varying
   #define OUT(X) varying
   #define FRAG_COLOR_OUT(X)

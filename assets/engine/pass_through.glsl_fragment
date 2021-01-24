@@ -12,10 +12,9 @@ UNIFORM_BEGIN
   UNIFORM_V(vec2 tex_scale)
   UNIFORM_V(mat4 projection)
   UNIFORM_F(vec4 color)
-  UNIFORM_S(sampler2D texture_0)
 UNIFORM_END
 
-SAMPLER(sampler2D texture_0)
+SAMPLER(0, sampler2D texture_0)
 
 FRAG_COLOR_OUT(frag_color)
 

@@ -113,8 +113,8 @@ class RendererVulkan : public Renderer {
     std::unordered_map<std::string, std::array<size_t, 2>> variables;
     std::unique_ptr<char[]> push_constants;
     size_t push_constants_size = 0;
-    std::string sampler_uniform_name;
-    bool use_desc_set = false;
+    std::vector<std::string> sampler_uniform_names;
+    int desc_set_count = 0;
     std::vector<uint8_t> spirv_vertex;
     std::vector<uint8_t> spirv_fragment;
     VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
@@ -172,8 +172,8 @@ class RendererVulkan : public Renderer {
 
   std::vector<std::unique_ptr<DescPool>> desc_pools_;
   VkDescriptorSetLayout descriptor_set_layout_ = VK_NULL_HANDLE;
-  VkDescriptorSet active_descriptor_set_ = VK_NULL_HANDLE;
-  VkDescriptorSet penging_descriptor_set_ = VK_NULL_HANDLE;
+  std::vector<VkDescriptorSet> active_descriptor_sets_;
+  std::vector<VkDescriptorSet> penging_descriptor_sets_;
 
   VkSampler sampler_ = VK_NULL_HANDLE;
 
