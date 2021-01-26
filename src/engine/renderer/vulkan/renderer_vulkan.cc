@@ -533,6 +533,15 @@ void RendererVulkan::CreateShader(std::shared_ptr<void> impl_data,
   color_blending.blendConstants[2] = 0.0f;
   color_blending.blendConstants[3] = 0.0f;
 
+  VkPipelineDepthStencilStateCreateInfo depth_stencil{};
+  depth_stencil.sType =
+      VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+  depth_stencil.depthTestEnable = VK_TRUE;
+  depth_stencil.depthWriteEnable = VK_TRUE;
+  depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
+  depth_stencil.depthBoundsTestEnable = VK_FALSE;
+  depth_stencil.stencilTestEnable = VK_FALSE;
+
   std::vector<VkDynamicState> dynamic_states;
   dynamic_states.push_back(VK_DYNAMIC_STATE_VIEWPORT);
   dynamic_states.push_back(VK_DYNAMIC_STATE_SCISSOR);
@@ -555,6 +564,7 @@ void RendererVulkan::CreateShader(std::shared_ptr<void> impl_data,
   pipeline_info.pRasterizationState = &rasterizer;
   pipeline_info.pMultisampleState = &multisampling;
   pipeline_info.pColorBlendState = &color_blending;
+  pipeline_info.pDepthStencilState = &depth_stencil;
   pipeline_info.pDynamicState = &dynamic_state_create_info;
   pipeline_info.layout = shader->pipeline_layout;
   pipeline_info.renderPass = context_.GetRenderPass();
@@ -1746,15 +1756,12 @@ void RendererVulkan::DrawListBegin() {
   render_pass_begin.renderArea.offset.x = 0;
   render_pass_begin.renderArea.offset.y = 0;
 
-  render_pass_begin.clearValueCount = 1;
+  std::array<VkClearValue, 2> clear_values;
+  clear_values[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+  clear_values[1].depthStencil = {1.0f, 0};
 
-  VkClearValue clear_value;
-  clear_value.color.float32[0] = 0;
-  clear_value.color.float32[1] = 0;
-  clear_value.color.float32[2] = 0;
-  clear_value.color.float32[3] = 1;
-
-  render_pass_begin.pClearValues = &clear_value;
+  render_pass_begin.clearValueCount = clear_values.size();
+  render_pass_begin.pClearValues = clear_values.data();
 
   vkCmdBeginRenderPass(command_buffer, &render_pass_begin,
                        VK_SUBPASS_CONTENTS_INLINE);

@@ -81,6 +81,9 @@ class VulkanContext {
     VkSurfaceKHR surface = VK_NULL_HANDLE;
     VkSwapchainKHR swapchain = VK_NULL_HANDLE;
     std::unique_ptr<SwapchainImageResources[]> swapchain_image_resources;
+    VkImage depth_image = VK_NULL_HANDLE;
+    VkDeviceMemory depth_image_memory = VK_NULL_HANDLE;
+    VkImageView depth_view = VK_NULL_HANDLE;
     uint32_t current_buffer = 0;
     int width = 0;
     int height = 0;
@@ -178,7 +181,8 @@ class VulkanContext {
 
   bool UpdateSwapChain(Window* window);
 
-  bool CreateSwapChain();
+  bool CreateDepthImage(Window* window);
+
   bool CreateSemaphores();
 
   const char* GetPlatformSurfaceExtension() const;

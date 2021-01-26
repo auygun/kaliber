@@ -1,6 +1,7 @@
 #include "vulkan_context.h"
 
 #include <string.h>
+#include <array>
 #include <limits>
 #include <string>
 
@@ -401,12 +402,14 @@ bool VulkanContext::CreatePhysicalDevice() {
   if (instance_ == VK_NULL_HANDLE) {
     VkResult err = vkCreateInstance(&inst_info, nullptr, &instance_);
     if (err == VK_ERROR_INCOMPATIBLE_DRIVER) {
-      DLOG << "Cannot find a compatible Vulkan installable client driver (ICD).";
+      DLOG
+          << "Cannot find a compatible Vulkan installable client driver (ICD).";
       return false;
     }
     if (err == VK_ERROR_EXTENSION_NOT_PRESENT) {
-      DLOG << "Cannot find a specified extension library. Make sure your layers "
-              "path is set appropriately. ";
+      DLOG
+          << "Cannot find a specified extension library. Make sure your layers "
+             "path is set appropriately. ";
       return false;
     }
     if (err) {
@@ -799,6 +802,13 @@ bool VulkanContext::CleanUpSwapChain(Window* window) {
 
   vkDeviceWaitIdle(device_);
 
+  vkDestroyImageView(device_, window->depth_view, nullptr);
+  vkDestroyImage(device_, window->depth_image, nullptr);
+  vkFreeMemory(device_, window->depth_image_memory, nullptr);
+  window->depth_view = VK_NULL_HANDLE;
+  window->depth_image = VK_NULL_HANDLE;
+  window->depth_image_memory = VK_NULL_HANDLE;
+
   DestroySwapchainKHR(device_, window->swapchain, nullptr);
   window->swapchain = VK_NULL_HANDLE;
   vkDestroyRenderPass(device_, window->render_pass, nullptr);
@@ -1064,7 +1074,7 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
   // Framebuffer
 
   {
-    const VkAttachmentDescription attachment = {
+    const VkAttachmentDescription color_attachment = {
         /*flags*/ 0,
         /*format*/ format_,
         /*samples*/ VK_SAMPLE_COUNT_1_BIT,
@@ -1081,6 +1091,23 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
         /*layout*/ VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     };
 
+    const VkAttachmentDescription depth_attachment = {
+        /*flags*/ 0,
+        /*format*/ VK_FORMAT_D24_UNORM_S8_UINT,
+        /*samples*/ VK_SAMPLE_COUNT_1_BIT,
+        /*loadOp*/ VK_ATTACHMENT_LOAD_OP_CLEAR,
+        /*storeOp*/ VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        /*stencilLoadOp*/ VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        /*stencilStoreOp*/ VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        /*initialLayout*/ VK_IMAGE_LAYOUT_UNDEFINED,
+        /*finalLayout*/ VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+
+    };
+    const VkAttachmentReference depth_reference = {
+        /*attachment*/ 1,
+        /*layout*/ VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    };
+
     const VkSubpassDescription subpass = {
         /*flags*/ 0,
         /*pipelineBindPoint*/ VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -1089,20 +1116,36 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
         /*colorAttachmentCount*/ 1,
         /*pColorAttachments*/ &color_reference,
         /*pResolveAttachments*/ nullptr,
-        /*pDepthStencilAttachment*/ nullptr,
+        /*pDepthStencilAttachment*/ &depth_reference,
         /*preserveAttachmentCount*/ 0,
         /*pPreserveAttachments*/ nullptr,
     };
+
+    VkSubpassDependency dependency = {
+        /*srcSubpass*/ VK_SUBPASS_EXTERNAL,
+        /*dstSubpass*/ 0,
+        /*srcStageMask*/ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+        /*dstStageMask*/ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
+        /*srcAccessMask*/ 0,
+        /*dstAccessMask*/ VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+            VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        /*dependencyFlags*/ 0,
+    };
+
+    std::array<VkAttachmentDescription, 2> attachments = {color_attachment,
+                                                          depth_attachment};
     const VkRenderPassCreateInfo rp_info = {
         /*sTyp*/ VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
         /*pNext*/ nullptr,
         /*flags*/ 0,
-        /*attachmentCount*/ 1,
-        /*pAttachments*/ &attachment,
+        /*attachmentCount*/ attachments.size(),
+        /*pAttachments*/ attachments.data(),
         /*subpassCount*/ 1,
         /*pSubpasses*/ &subpass,
-        /*dependencyCount*/ 0,
-        /*pDependencies*/ nullptr,
+        /*dependencyCount*/ 1,
+        /*pDependencies*/ &dependency,
     };
 
     err = vkCreateRenderPass(device_, &rp_info, nullptr, &window->render_pass);
@@ -1111,14 +1154,18 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
       return false;
     }
 
+    CreateDepthImage(window);
+
     for (uint32_t i = 0; i < swapchain_image_count_; i++) {
+      std::array<VkImageView, 2> attachments = {
+          window->swapchain_image_resources[i].view, window->depth_view};
       const VkFramebufferCreateInfo fb_info = {
           /*sType*/ VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
           /*pNext*/ nullptr,
           /*flags*/ 0,
           /*renderPass*/ window->render_pass,
-          /*attachmentCount*/ 1,
-          /*pAttachments*/ &window->swapchain_image_resources[i].view,
+          /*attachmentCount*/ attachments.size(),
+          /*pAttachments*/ attachments.data(),
           /*width*/ (uint32_t)window->width,
           /*height*/ (uint32_t)window->height,
           /*layers*/ 1,
@@ -1209,6 +1256,108 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
   // Reset current buffer.
   window->current_buffer = 0;
 
+  return true;
+}
+
+bool VulkanContext::CreateDepthImage(Window* window) {
+  VkImageCreateInfo depth_image_ci = {
+      /*sType*/ VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+      /*pNext*/ nullptr,
+      /*flags*/ 0,
+      /*imageType*/ VK_IMAGE_TYPE_2D,
+      /*format*/ VK_FORMAT_D24_UNORM_S8_UINT,
+      /*extent*/
+      {
+          /*width*/ window->swapchain_extent.width,
+          /*height*/ window->swapchain_extent.height,
+          /*depth*/ 1,
+      },
+      /*mipLevels*/ 1,
+      /*arrayLayers*/ 1,
+      /*samples*/ VK_SAMPLE_COUNT_1_BIT,
+      /*tiling*/ VK_IMAGE_TILING_OPTIMAL,
+      /*usage*/ VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+      /*sharingMode*/ VK_SHARING_MODE_EXCLUSIVE,
+      /*queueFamilyIndexCount*/ 0,
+      /*pQueueFamilyIndices*/ nullptr,
+      /*initialLayout*/ VK_IMAGE_LAYOUT_UNDEFINED,
+  };
+
+  VkResult err =
+      vkCreateImage(device_, &depth_image_ci, nullptr, &window->depth_image);
+  if (err) {
+    DLOG << "vkCreateImage failed. Error: " << err;
+    return false;
+  }
+
+  VkMemoryRequirements mem_requirements;
+  vkGetImageMemoryRequirements(device_, window->depth_image, &mem_requirements);
+
+  VkPhysicalDeviceMemoryProperties memProperties;
+  vkGetPhysicalDeviceMemoryProperties(gpu_, &memProperties);
+  uint32_t mti = 0;
+  for (; mti < memProperties.memoryTypeCount; mti++) {
+    if ((mem_requirements.memoryTypeBits & (1 << mti)) &&
+        (memProperties.memoryTypes[mti].propertyFlags &
+         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) ==
+            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) {
+      break;
+    }
+  }
+  if (mti == memProperties.memoryTypeCount) {
+    DLOG << "Memort type index not found.";
+    return false;
+  }
+
+  VkMemoryAllocateInfo alloc_info = {
+      /*sType*/ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+      /*pNext*/ nullptr,
+      /*allocationSize*/ mem_requirements.size,
+      /*memoryTypeIndex*/ mti,
+  };
+  err = vkAllocateMemory(device_, &alloc_info, nullptr,
+                         &window->depth_image_memory);
+  if (err) {
+    DLOG << "vkAllocateMemory failed. Error: " << err;
+    return false;
+  }
+
+  vkBindImageMemory(device_, window->depth_image, window->depth_image_memory,
+                    0);
+
+  VkImageViewCreateInfo image_view_create_info = {
+      /*sType*/ VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+      /*pNext*/ nullptr,
+      /*flags*/ 0,
+      /*image*/ window->depth_image,
+      /*viewType*/ VK_IMAGE_VIEW_TYPE_2D,
+      /*format*/ VK_FORMAT_D24_UNORM_S8_UINT,
+      /*components*/
+      {
+          /*r*/ VK_COMPONENT_SWIZZLE_R,
+          /*g*/ VK_COMPONENT_SWIZZLE_G,
+          /*b*/ VK_COMPONENT_SWIZZLE_B,
+          /*a*/ VK_COMPONENT_SWIZZLE_A,
+      },
+      /*subresourceRange*/
+      {
+          /*aspectMask*/ VK_IMAGE_ASPECT_DEPTH_BIT,
+          /*baseMipLevel*/ 0,
+          /*levelCount*/ 1,
+          /*baseArrayLayer*/ 0,
+          /*layerCount*/ 1,
+      },
+  };
+
+  err = vkCreateImageView(device_, &image_view_create_info, nullptr,
+                          &window->depth_view);
+
+  if (err) {
+    vkDestroyImage(device_, window->depth_image, nullptr);
+    vkFreeMemory(device_, window->depth_image_memory, nullptr);
+    DLOG << "vkCreateImageView failed with error " << std::to_string(err);
+    return false;
+  }
   return true;
 }
 
