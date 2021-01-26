@@ -27,7 +27,7 @@ bool SkyQuad::Create() {
   if (!source->Load("sky.glsl"))
     return false;
   shader_->Create(std::move(source), engine.GetQuad()->vertex_description(),
-                  Engine::Get().GetQuad()->primitive());
+                  Engine::Get().GetQuad()->primitive(), false);
 
   scale_ = engine.GetScreenSize();
 

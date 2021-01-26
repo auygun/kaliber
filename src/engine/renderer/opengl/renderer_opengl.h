@@ -63,7 +63,8 @@ class RendererOpenGL : public Renderer {
   void CreateShader(std::shared_ptr<void> impl_data,
                     std::unique_ptr<ShaderSource> source,
                     const VertexDescripton& vertex_description,
-                    Primitive primitive) override;
+                    Primitive primitive,
+                    bool enable_depth_test) override;
   void DestroyShader(std::shared_ptr<void> impl_data) override;
   void ActivateShader(std::shared_ptr<void> impl_data) override;
 
@@ -122,6 +123,7 @@ class RendererOpenGL : public Renderer {
   struct ShaderOpenGL {
     GLuint id = 0;
     std::unordered_map<std::string, GLuint> uniforms;
+    bool enable_depth_test = false;
   };
 
   struct TextureOpenGL {

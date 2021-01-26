@@ -18,10 +18,12 @@ Shader::~Shader() {
 
 void Shader::Create(std::unique_ptr<ShaderSource> source,
                     const VertexDescripton& vd,
-                    Primitive primitive) {
+                    Primitive primitive,
+                    bool enable_depth_test) {
   Destroy();
   valid_ = true;
-  renderer_->CreateShader(impl_data_, std::move(source), vd, primitive);
+  renderer_->CreateShader(impl_data_, std::move(source), vd, primitive,
+                          enable_depth_test);
 }
 
 void Shader::Destroy() {

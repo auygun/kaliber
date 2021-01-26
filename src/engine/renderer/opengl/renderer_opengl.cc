@@ -88,11 +88,13 @@ void RendererOpenGL::ActivateTexture(std::shared_ptr<void> impl_data) {
 void RendererOpenGL::CreateShader(std::shared_ptr<void> impl_data,
                                   std::unique_ptr<ShaderSource> source,
                                   const VertexDescripton& vertex_description,
-                                  Primitive primitive) {
+                                  Primitive primitive,
+                                  bool enable_depth_test) {
   auto cmd = std::make_unique<CmdCreateShader>();
   cmd->source = std::move(source);
   cmd->vertex_description = vertex_description;
   cmd->impl_data = impl_data;
+  cmd->enable_depth_test = enable_depth_test;
   EnqueueCommand(std::move(cmd));
 }
 
@@ -726,7 +728,7 @@ void RendererOpenGL::HandleCmdCreateShader(RenderCommand* cmd) {
     }
   }
 
-  *impl_data = {id, {}};
+  *impl_data = {id, {}, c->enable_depth_test};
 }
 
 void RendererOpenGL::HandleCmdDestroyShader(RenderCommand* cmd) {
@@ -744,6 +746,10 @@ void RendererOpenGL::HandleCmdActivateShader(RenderCommand* cmd) {
   if (impl_data->id > 0 && impl_data->id != active_shader_id_) {
     glUseProgram(impl_data->id);
     active_shader_id_ = impl_data->id;
+    if (impl_data->enable_depth_test)
+      glEnable(GL_DEPTH_TEST);
+    else
+      glDisable(GL_DEPTH_TEST);
   }
 }
 

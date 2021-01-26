@@ -479,7 +479,7 @@ bool Engine::CreateRenderResources() {
     return false;
   }
   pass_through_shader_->Create(std::move(source), quad_->vertex_description(),
-                               quad_->primitive());
+                               quad_->primitive(), false);
 
   // Create the shader we can reuse for solid rendering.
   source = std::make_unique<ShaderSource>();
@@ -488,7 +488,7 @@ bool Engine::CreateRenderResources() {
     return false;
   }
   solid_shader_->Create(std::move(source), quad_->vertex_description(),
-                        quad_->primitive());
+                        quad_->primitive(), false);
 
   return true;
 }

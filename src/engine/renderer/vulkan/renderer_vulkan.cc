@@ -394,7 +394,8 @@ void RendererVulkan::ActivateTexture(std::shared_ptr<void> impl_data) {
 void RendererVulkan::CreateShader(std::shared_ptr<void> impl_data,
                                   std::unique_ptr<ShaderSource> source,
                                   const VertexDescripton& vertex_description,
-                                  Primitive primitive) {
+                                  Primitive primitive,
+                                  bool enable_depth_test) {
   auto shader = reinterpret_cast<ShaderVulkan*>(impl_data.get());
 
   auto it = spirv_cache_.find(source->name());
@@ -536,8 +537,8 @@ void RendererVulkan::CreateShader(std::shared_ptr<void> impl_data,
   VkPipelineDepthStencilStateCreateInfo depth_stencil{};
   depth_stencil.sType =
       VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-  depth_stencil.depthTestEnable = VK_TRUE;
-  depth_stencil.depthWriteEnable = VK_TRUE;
+  depth_stencil.depthTestEnable = enable_depth_test ? VK_TRUE : VK_FALSE;
+  depth_stencil.depthWriteEnable = enable_depth_test ? VK_TRUE : VK_FALSE;
   depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
   depth_stencil.depthBoundsTestEnable = VK_FALSE;
   depth_stencil.stencilTestEnable = VK_FALSE;

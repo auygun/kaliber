@@ -80,6 +80,7 @@ RENDER_COMMAND_BEGIN(CmdCreateShader)
   std::unique_ptr<ShaderSource> source;
   VertexDescripton vertex_description;
   std::shared_ptr<void> impl_data;
+  bool enable_depth_test;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdDestroyShader)

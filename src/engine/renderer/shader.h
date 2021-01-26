@@ -22,7 +22,8 @@ class Shader : public RenderResource {
 
   void Create(std::unique_ptr<ShaderSource> source,
               const VertexDescripton& vd,
-              Primitive primitive);
+              Primitive primitive,
+              bool enable_depth_test);
 
   void Destroy() override;
 

@@ -53,7 +53,8 @@ class Renderer {
   virtual void CreateShader(std::shared_ptr<void> impl_data,
                             std::unique_ptr<ShaderSource> source,
                             const VertexDescripton& vertex_description,
-                            Primitive primitive) = 0;
+                            Primitive primitive,
+                            bool enable_depth_test) = 0;
   virtual void DestroyShader(std::shared_ptr<void> impl_data) = 0;
   virtual void ActivateShader(std::shared_ptr<void> impl_data) = 0;
 

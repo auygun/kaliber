@@ -46,7 +46,8 @@ class RendererVulkan : public Renderer {
   void CreateShader(std::shared_ptr<void> impl_data,
                     std::unique_ptr<ShaderSource> source,
                     const VertexDescripton& vertex_description,
-                    Primitive primitive) override;
+                    Primitive primitive,
+                    bool enable_depth_test) override;
   void DestroyShader(std::shared_ptr<void> impl_data) override;
   void ActivateShader(std::shared_ptr<void> impl_data) override;
 
