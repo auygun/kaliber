@@ -388,7 +388,7 @@ void RendererVulkan::DestroyTexture(std::shared_ptr<void> impl_data) {
 void RendererVulkan::ActivateTexture(std::shared_ptr<void> impl_data) {
   auto texture = reinterpret_cast<TextureVulkan*>(impl_data.get());
   // Keep as pengind and bind later in ActivateShader.
-  penging_descriptor_sets_[/*TODO*/0] = std::get<0>(texture->desc_set);
+  penging_descriptor_sets_[/*TODO*/ 0] = std::get<0>(texture->desc_set);
 }
 
 void RendererVulkan::CreateShader(std::shared_ptr<void> impl_data,
@@ -723,9 +723,6 @@ bool RendererVulkan::InitializeInternal() {
     }
   }
 
-  // Begin the first command buffer for the first frame.
-  BeginFrame();
-
   // In this simple engine we use only one descriptor set layout that is for
   // textures. We use push contants for everything else.
   VkDescriptorSetLayoutBinding ds_layout_binding;
@@ -792,6 +789,9 @@ bool RendererVulkan::InitializeInternal() {
   setup_thread_ =
       std::thread(&RendererVulkan::SetupThreadMain, this, frame_count);
 
+  // Begin the first command buffer for the first frame.
+  BeginFrame();
+
   if (context_lost_cb_) {
     LOG << "Context lost.";
     context_lost_cb_();
@@ -800,6 +800,9 @@ bool RendererVulkan::InitializeInternal() {
 }
 
 void RendererVulkan::Shutdown() {
+  if (device_ == VK_NULL_HANDLE)
+    return;
+
   LOG << "Shutting down renderer.";
   InvalidateAllResources();
 
@@ -838,7 +841,26 @@ void RendererVulkan::Shutdown() {
 void RendererVulkan::BeginFrame() {
   FreePendingResources(current_frame_);
 
-  vkResetCommandPool(device_, frames_[current_frame_].setup_command_pool, 0);
+  context_.AppendCommandBuffer(frames_[current_frame_].setup_command_buffer);
+  context_.AppendCommandBuffer(frames_[current_frame_].draw_command_buffer);
+
+  task_runner_.PostTask(HERE, [&]() {
+    vkResetCommandPool(device_, frames_[current_frame_].setup_command_pool, 0);
+
+    VkCommandBufferBeginInfo cmdbuf_begin;
+    cmdbuf_begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    cmdbuf_begin.pNext = nullptr;
+    cmdbuf_begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    cmdbuf_begin.pInheritanceInfo = nullptr;
+    VkResult err = vkBeginCommandBuffer(
+        frames_[current_frame_].setup_command_buffer, &cmdbuf_begin);
+    if (err) {
+      DLOG << "vkBeginCommandBuffer failed with error " << std::to_string(err);
+      return;
+    }
+  });
+  semaphore_.Release();
+
   vkResetCommandPool(device_, frames_[current_frame_].draw_command_pool, 0);
 
   VkCommandBufferBeginInfo cmdbuf_begin;
@@ -846,22 +868,12 @@ void RendererVulkan::BeginFrame() {
   cmdbuf_begin.pNext = nullptr;
   cmdbuf_begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
   cmdbuf_begin.pInheritanceInfo = nullptr;
-
   VkResult err = vkBeginCommandBuffer(
-      frames_[current_frame_].setup_command_buffer, &cmdbuf_begin);
+      frames_[current_frame_].draw_command_buffer, &cmdbuf_begin);
   if (err) {
     DLOG << "vkBeginCommandBuffer failed with error " << std::to_string(err);
     return;
   }
-  context_.AppendCommandBuffer(frames_[current_frame_].setup_command_buffer);
-
-  err = vkBeginCommandBuffer(frames_[current_frame_].draw_command_buffer,
-                             &cmdbuf_begin);
-  if (err) {
-    DLOG << "vkBeginCommandBuffer failed with error " << std::to_string(err);
-    return;
-  }
-  context_.AppendCommandBuffer(frames_[current_frame_].draw_command_buffer);
 
   // Advance current frame.
   frames_drawn_++;
