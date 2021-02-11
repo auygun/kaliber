@@ -101,6 +101,9 @@ class RendererVulkan : public Renderer {
   using PipelineDeathRow =
       std::vector<std::tuple<VkPipeline, VkPipelineLayout>>;
 
+  std::unordered_map<std::string, std::array<std::vector<uint8_t>, 2>>
+      spirv_cache_;
+
   struct GeometryVulkan {
     Buffer<VkBuffer> buffer;
     uint32_t num_vertices = 0;
@@ -115,8 +118,6 @@ class RendererVulkan : public Renderer {
     size_t push_constants_size = 0;
     std::vector<std::string> sampler_uniform_names;
     int desc_set_count = 0;
-    std::vector<uint8_t> spirv_vertex;
-    std::vector<uint8_t> spirv_fragment;
     VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
     VkPipeline pipeline = VK_NULL_HANDLE;
   };
@@ -248,7 +249,9 @@ class RendererVulkan : public Renderer {
                           VkImageLayout old_layout,
                           VkImageLayout new_layout);
 
-  bool CreatePipelineLayout(ShaderVulkan* shader);
+  bool CreatePipelineLayout(ShaderVulkan* shader,
+                            const std::vector<uint8_t>& spirv_vertex,
+                            const std::vector<uint8_t>& spirv_fragment);
 
   void DrawListBegin();
   void DrawListEnd();

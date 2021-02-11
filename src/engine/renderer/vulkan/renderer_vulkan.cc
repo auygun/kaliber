@@ -397,20 +397,30 @@ void RendererVulkan::CreateShader(std::shared_ptr<void> impl_data,
                                   Primitive primitive) {
   auto shader = reinterpret_cast<ShaderVulkan*>(impl_data.get());
 
-  VkShaderModule vert_shader_module;
-  {
-    // TODO: Reuse compiled spirv on context-lost.
+  auto it = spirv_cache_.find(source->name());
+  if (it == spirv_cache_.end()) {
+    std::array<std::vector<uint8_t>, 2> spirv;
     std::string error;
-    shader->spirv_vertex =
-        CompileGlsl(EShLangVertex, source->GetVertexSource(), &error);
+    spirv[0] = CompileGlsl(EShLangVertex, source->GetVertexSource(), &error);
     if (!error.empty())
       DLOG << source->name() << " vertex shader compile error: " << error;
+    spirv[1] =
+        CompileGlsl(EShLangFragment, source->GetFragmentSource(), &error);
+    if (!error.empty())
+      DLOG << source->name() << " fragment shader compile error: " << error;
+    it = spirv_cache_.insert({source->name(), spirv}).first;
+  }
 
+  auto& spirv_vertex = it->second[0];
+  auto& spirv_fragment = it->second[1];
+
+  VkShaderModule vert_shader_module;
+  {
     VkShaderModuleCreateInfo shader_module_info{};
     shader_module_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    shader_module_info.codeSize = shader->spirv_vertex.size();
+    shader_module_info.codeSize = spirv_vertex.size();
     shader_module_info.pCode =
-        reinterpret_cast<const uint32_t*>(shader->spirv_vertex.data());
+        reinterpret_cast<const uint32_t*>(spirv_vertex.data());
 
     if (vkCreateShaderModule(device_, &shader_module_info, nullptr,
                              &vert_shader_module) != VK_SUCCESS) {
@@ -421,18 +431,11 @@ void RendererVulkan::CreateShader(std::shared_ptr<void> impl_data,
 
   VkShaderModule frag_shader_module;
   {
-    // TODO: Reuse compiled spirv on context-lost.
-    std::string error;
-    shader->spirv_fragment =
-        CompileGlsl(EShLangFragment, source->GetFragmentSource(), &error);
-    if (!error.empty())
-      DLOG << source->name() << " fragment shader compile error: " << error;
-
     VkShaderModuleCreateInfo shader_module_info{};
     shader_module_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    shader_module_info.codeSize = shader->spirv_fragment.size();
+    shader_module_info.codeSize = spirv_fragment.size();
     shader_module_info.pCode =
-        reinterpret_cast<const uint32_t*>(shader->spirv_fragment.data());
+        reinterpret_cast<const uint32_t*>(spirv_fragment.data());
 
     if (vkCreateShaderModule(device_, &shader_module_info, nullptr,
                              &frag_shader_module) != VK_SUCCESS) {
@@ -441,7 +444,7 @@ void RendererVulkan::CreateShader(std::shared_ptr<void> impl_data,
     }
   }
 
-  if (!CreatePipelineLayout(shader))
+  if (!CreatePipelineLayout(shader, spirv_vertex, spirv_fragment))
     return;
 
   VkPipelineShaderStageCreateInfo vert_shader_stage_info{};
@@ -1505,19 +1508,21 @@ void RendererVulkan::ImageMemoryBarrier(VkImage image,
                        nullptr, 1, &image_mem_barrier);
 }
 
-bool RendererVulkan::CreatePipelineLayout(ShaderVulkan* shader) {
+bool RendererVulkan::CreatePipelineLayout(
+    ShaderVulkan* shader,
+    const std::vector<uint8_t>& spirv_vertex,
+    const std::vector<uint8_t>& spirv_fragment) {
   SpvReflectShaderModule module_vertex;
   SpvReflectResult result = spvReflectCreateShaderModule(
-      shader->spirv_vertex.size(), shader->spirv_vertex.data(), &module_vertex);
+      spirv_vertex.size(), spirv_vertex.data(), &module_vertex);
   if (result != SPV_REFLECT_RESULT_SUCCESS) {
     DLOG << "SPIR-V reflection failed to parse vertex shader.";
     return false;
   }
 
   SpvReflectShaderModule module_fragment;
-  result = spvReflectCreateShaderModule(shader->spirv_fragment.size(),
-                                        shader->spirv_fragment.data(),
-                                        &module_fragment);
+  result = spvReflectCreateShaderModule(
+      spirv_fragment.size(), spirv_fragment.data(), &module_fragment);
   if (result != SPV_REFLECT_RESULT_SUCCESS) {
     DLOG << "SPIR-V reflection failed to parse fragment shader.";
     spvReflectDestroyShaderModule(&module_vertex);
