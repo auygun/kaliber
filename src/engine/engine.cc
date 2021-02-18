@@ -140,7 +140,7 @@ void Engine::Update(float delta_time) {
 
 void Engine::Draw(float frame_frac) {
   for (auto d : animators_)
-    d->EvalAnim(time_step_ * frame_frac);
+    d->Evaluate(time_step_ * frame_frac);
 
   drawables_.sort(
       [](auto& a, auto& b) { return a->GetZOrder() < b->GetZOrder(); });

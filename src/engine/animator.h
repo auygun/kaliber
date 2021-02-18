@@ -69,7 +69,7 @@ class Animator {
   void SetVisible(bool visible);
 
   void Update(float delta_time);
-  void EvalAnim(float frame_time);
+  void Evaluate(float frame_frac_time);
 
   bool IsPlaying(int animation) const { return play_flags_ & animation; }
 
@@ -120,11 +120,11 @@ class Animator {
   base::Closure pending_cb_;
   Flags inside_cb_ = kNone;
 
-  void UpdateMovement(float delta_time);
-  void UpdateRotation(float delta_time);
-  void UpdateBlending(float delta_time);
-  void UpdateFrame(float delta_time);
-  void UpdateTimer(float delta_time);
+  void UpdateAnimTime(float delta_time,
+                      int anim,
+                      float anim_speed,
+                      float& anim_time,
+                      base::Closure& cb);
 };
 
 }  // namespace eng

@@ -31,6 +31,8 @@ void Animator::Play(int animation, bool loop) {
     loop_flags_ |= animation;
   else
     loop_flags_ &= ~animation;
+  if ((loop_flags_ & kTimer) != 0)
+    loop_flags_ &= ~kTimer;
 }
 
 void Animator::Pause(int animation) {
@@ -51,6 +53,7 @@ void Animator::Stop(int animation) {
 
   play_flags_ |= animation;
   Update(0);
+  Evaluate(0);
   play_flags_ &= ~animation;
   loop_flags_ &= ~animation;
 }
@@ -95,6 +98,7 @@ void Animator::SetTime(int animation, float time, bool force_update) {
     unsigned play_flags = play_flags_;
     play_flags_ = animation;
     Update(0);
+    Evaluate(0);
     play_flags_ = play_flags;
   }
 }
@@ -169,166 +173,105 @@ void Animator::SetVisible(bool visible) {
 
 void Animator::Update(float delta_time) {
   if (play_flags_ & kMovement)
-    UpdateMovement(delta_time);
+    UpdateAnimTime(delta_time, kMovement, movement_speed_, movement_time_,
+                   movement_cb_);
   if (play_flags_ & kRotation)
-    UpdateRotation(delta_time);
+    UpdateAnimTime(delta_time, kRotation, rotation_speed_, rotation_time_,
+                   rotation_cb_);
   if (play_flags_ & kBlending)
-    UpdateBlending(delta_time);
+    UpdateAnimTime(delta_time, kBlending, blending_speed_, blending_time_,
+                   blending_cb_);
   if (play_flags_ & kFrames)
-    UpdateFrame(delta_time);
+    UpdateAnimTime(delta_time, kFrames, frame_speed_, frame_time_, frame_cb_);
   if (play_flags_ & kTimer)
-    UpdateTimer(delta_time);
+    UpdateAnimTime(delta_time, kTimer, timer_speed_, timer_time_, timer_cb_);
 }
 
-void Animator::EvalAnim(float frame_time) {
+void Animator::Evaluate(float frame_frac_time) {
+  Vector2f pos = {0, 0};
+  if (play_flags_ & kMovement) {
+    float time = movement_time_ + movement_speed_ * frame_frac_time;
+    float interpolated_time =
+        movement_interpolator_ ? movement_interpolator_(time) : time;
+    pos = base::Lerp({0, 0}, movement_direction_, interpolated_time);
+  }
+
+  float theta = 0;
+  if (play_flags_ & kRotation) {
+    float time = rotation_time_ + rotation_speed_ * frame_frac_time;
+    float interpolated_time =
+        rotation_interpolator_ ? rotation_interpolator_(time) : time;
+    theta = base::Lerp(0.0f, rotation_target_, interpolated_time);
+  }
+
+  float blending_itime = 0;
+  if (play_flags_ & kBlending) {
+    float time = blending_time_ + blending_speed_ * frame_frac_time;
+    blending_itime =
+        blending_interpolator_ ? blending_interpolator_(time) : time;
+  }
+
+  float frame_itime = 0;
+  if (play_flags_ & kFrames) {
+    float time = frame_time_ + frame_speed_ * frame_frac_time;
+    frame_itime = frame_interpolator_ ? frame_interpolator_(time) : time;
+  }
+
   for (auto& a : elements_) {
     if (play_flags_ & kMovement) {
-      float time = movement_time_ + movement_speed_ * frame_time;
-      float interpolated_time =
-          movement_interpolator_ ? movement_interpolator_(time) : time;
-      Vector2f pos = base::Lerp({0, 0}, movement_direction_, interpolated_time);
       a.animatable->Translate(pos - a.movement_last_pos);
       a.movement_last_pos = pos;
     }
 
     if (play_flags_ & kRotation) {
-      float time = rotation_time_ + rotation_speed_ * frame_time;
-      float interpolated_time =
-          rotation_interpolator_ ? rotation_interpolator_(time) : time;
-      float theta = base::Lerp(0.0f, rotation_target_, interpolated_time);
       a.animatable->Rotate(theta - a.rotation_last_theta);
       a.rotation_last_theta = theta;
     }
 
     if (play_flags_ & kBlending) {
-      float time = blending_time_ + blending_speed_ * frame_time;
-      float interpolated_time =
-          blending_interpolator_ ? blending_interpolator_(time) : time;
-      Vector4f r =
-          base::Lerp(a.blending_start, blending_target_, interpolated_time);
-      a.animatable->SetColor(r);
+      Vector4f blending =
+          base::Lerp(a.blending_start, blending_target_, blending_itime);
+      a.animatable->SetColor(blending);
     }
 
     if (play_flags_ & kFrames) {
-      float time = frame_time_ + frame_speed_ * frame_time;
-      float interpolated_time =
-          frame_interpolator_ ? frame_interpolator_(time) : time;
       int target = a.frame_start_ + frame_count_;
-      int r = base::Lerp(a.frame_start_, target, interpolated_time);
-      if (r < target)
-        a.animatable->SetFrame(r);
+      int frame = base::Lerp(a.frame_start_, target, frame_itime);
+      if (frame < target)
+        a.animatable->SetFrame(frame);
     }
   }
 }
 
-void Animator::UpdateMovement(float delta_time) {
-  if ((loop_flags_ & kMovement) == 0 && movement_time_ == 1.0f) {
-    movement_time_ = 0;
-    play_flags_ &= ~kMovement;
-    if (movement_cb_) {
-      inside_cb_ = kMovement;
-      movement_cb_();
+void Animator::UpdateAnimTime(float delta_time,
+                              int anim,
+                              float anim_speed,
+                              float& anim_time,
+                              base::Closure& cb) {
+  if ((loop_flags_ & anim) == 0 && anim_time == 1.0f) {
+    anim_time = 0;
+    play_flags_ &= ~anim;
+    if (cb) {
+      inside_cb_ = (Flags)anim;
+      cb();
       inside_cb_ = kNone;
       if (has_pending_cb_) {
         has_pending_cb_ = false;
-        movement_cb_ = std::move(pending_cb_);
+        cb = std::move(pending_cb_);
       }
     }
     return;
+  } else if ((anim & kFrames) != 0 && (loop_flags_ & kFrames) != 0 &&
+             anim_time == 1.0f) {
+    anim_time = 0;
   }
 
-  movement_time_ += movement_speed_ * delta_time;
-  if (movement_time_ > 1)
-    movement_time_ =
-        (loop_flags_ & kMovement) == 0 ? 1 : fmod(movement_time_, 1.0f);
-}
-
-void Animator::UpdateRotation(float delta_time) {
-  if ((loop_flags_ & kRotation) == 0 && rotation_time_ == 1.0f) {
-    rotation_time_ = 0;
-    play_flags_ &= ~kRotation;
-    if (rotation_cb_) {
-      inside_cb_ = kRotation;
-      rotation_cb_();
-      inside_cb_ = kNone;
-      if (has_pending_cb_) {
-        has_pending_cb_ = false;
-        rotation_cb_ = std::move(pending_cb_);
-      }
-    }
-    return;
-  }
-
-  rotation_time_ += rotation_speed_ * delta_time;
-  if (rotation_time_ > 1)
-    rotation_time_ =
-        (loop_flags_ & kRotation) == 0 ? 1 : fmod(rotation_time_, 1.0f);
-}
-
-void Animator::UpdateBlending(float delta_time) {
-  if ((loop_flags_ & kBlending) == 0 && blending_time_ == 1.0f) {
-    blending_time_ = 0;
-    play_flags_ &= ~kBlending;
-    if (blending_cb_) {
-      inside_cb_ = kBlending;
-      blending_cb_();
-      inside_cb_ = kNone;
-      if (has_pending_cb_) {
-        has_pending_cb_ = false;
-        blending_cb_ = std::move(pending_cb_);
-      }
-    }
-    return;
-  }
-
-  blending_time_ += blending_speed_ * delta_time;
-  if (blending_time_ > 1)
-    blending_time_ =
-        (loop_flags_ & kBlending) == 0 ? 1 : fmod(blending_time_, 1.0f);
-}
-
-void Animator::UpdateFrame(float delta_time) {
-  if ((loop_flags_ & kFrames) == 0 && frame_time_ == 1.0f) {
-    frame_time_ = 0;
-    play_flags_ &= ~kFrames;
-    if (frame_cb_) {
-      inside_cb_ = kFrames;
-      frame_cb_();
-      inside_cb_ = kNone;
-      if (has_pending_cb_) {
-        has_pending_cb_ = false;
-        frame_cb_ = std::move(pending_cb_);
-      }
-    }
-    return;
-  } else if ((loop_flags_ & kFrames) != 0 && frame_time_ == 1.0f) {
-    frame_time_ = 0;
-  }
-
-  frame_time_ += frame_speed_ * delta_time;
-  if (frame_time_ > 1)
-    frame_time_ = 1;
-}
-
-void Animator::UpdateTimer(float delta_time) {
-  if (timer_time_ == 1.0f) {
-    timer_time_ = 0;
-    play_flags_ &= ~kTimer;
-    if (timer_cb_) {
-      inside_cb_ = kTimer;
-      timer_cb_();
-      inside_cb_ = kNone;
-      if (has_pending_cb_) {
-        has_pending_cb_ = false;
-        timer_cb_ = std::move(pending_cb_);
-      }
-    }
-    return;
-  }
-
-  timer_time_ += timer_speed_ * delta_time;
-  if (timer_time_ > 1)
-    timer_time_ = 1;
+  anim_time += anim_speed * delta_time;
+  if (anim_time > 1)
+    anim_time = (anim & kFrames) != 0 || (anim & kTimer) != 0 ||
+                        (loop_flags_ & anim) == 0
+                    ? 1
+                    : fmod(anim_time, 1.0f);
 }
 
 }  // namespace eng
