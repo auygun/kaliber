@@ -597,28 +597,28 @@ void RendererVulkan::ActivateShader(std::shared_ptr<void> impl_data) {
 
 void RendererVulkan::SetUniform(std::shared_ptr<void> impl_data,
                                 const std::string& name,
-                                const base::Vector2& val) {
+                                const base::Vector2f& val) {
   auto shader = reinterpret_cast<ShaderVulkan*>(impl_data.get());
   SetUniformInternal(shader, name, val);
 }
 
 void RendererVulkan::SetUniform(std::shared_ptr<void> impl_data,
                                 const std::string& name,
-                                const base::Vector3& val) {
+                                const base::Vector3f& val) {
   auto shader = reinterpret_cast<ShaderVulkan*>(impl_data.get());
   SetUniformInternal(shader, name, val);
 }
 
 void RendererVulkan::SetUniform(std::shared_ptr<void> impl_data,
                                 const std::string& name,
-                                const base::Vector4& val) {
+                                const base::Vector4f& val) {
   auto shader = reinterpret_cast<ShaderVulkan*>(impl_data.get());
   SetUniformInternal(shader, name, val);
 }
 
 void RendererVulkan::SetUniform(std::shared_ptr<void> impl_data,
                                 const std::string& name,
-                                const base::Matrix4x4& val) {
+                                const base::Matrix4f& val) {
   auto shader = reinterpret_cast<ShaderVulkan*>(impl_data.get());
   SetUniformInternal(shader, name, val);
 }

@@ -52,16 +52,16 @@ class RendererVulkan : public Renderer {
 
   void SetUniform(std::shared_ptr<void> impl_data,
                   const std::string& name,
-                  const base::Vector2& val) override;
+                  const base::Vector2f& val) override;
   void SetUniform(std::shared_ptr<void> impl_data,
                   const std::string& name,
-                  const base::Vector3& val) override;
+                  const base::Vector3f& val) override;
   void SetUniform(std::shared_ptr<void> impl_data,
                   const std::string& name,
-                  const base::Vector4& val) override;
+                  const base::Vector4f& val) override;
   void SetUniform(std::shared_ptr<void> impl_data,
                   const std::string& name,
-                  const base::Matrix4x4& val) override;
+                  const base::Matrix4f& val) override;
   void SetUniform(std::shared_ptr<void> impl_data,
                   const std::string& name,
                   float val) override;

@@ -59,10 +59,10 @@ class Engine {
   void Exit();
 
   // Convert size from pixels to viewport scale.
-  base::Vector2 ToScale(const base::Vector2& vec);
+  base::Vector2f ToScale(const base::Vector2f& vec);
 
   // Convert position form pixels to viewport coordinates.
-  base::Vector2 ToPosition(const base::Vector2& vec);
+  base::Vector2f ToPosition(const base::Vector2f& vec);
 
   template <typename T>
   std::unique_ptr<T> CreateRenderResource() {
@@ -126,9 +126,9 @@ class Engine {
   int GetScreenHeight() const;
 
   // Return screen size in viewport scale.
-  base::Vector2 GetScreenSize() const { return screen_size_; }
+  base::Vector2f GetScreenSize() const { return screen_size_; }
 
-  const base::Matrix4x4& GetProjectionMatrix() const { return projection_; }
+  const base::Matrix4f& GetProjectionMatrix() const { return projection_; }
 
   int GetDeviceDpi() const;
 
@@ -175,8 +175,8 @@ class Engine {
   std::unique_ptr<Shader> pass_through_shader_;
   std::unique_ptr<Shader> solid_shader_;
 
-  base::Vector2 screen_size_ = {0, 0};
-  base::Matrix4x4 projection_;
+  base::Vector2f screen_size_ = {0, 0};
+  base::Matrix4f projection_;
 
   std::unique_ptr<Font> system_font_;
 

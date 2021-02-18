@@ -41,9 +41,11 @@ class Image {
 
   bool IsValid() const { return !!buffer_; }
 
-  void Clear(base::Vector4 rgba);
+  void Clear(base::Vector4f rgba);
   void GradientH();
-  void GradientV(const base::Vector4& c1, const base::Vector4& c2, int height);
+  void GradientV(const base::Vector4f& c1,
+                 const base::Vector4f& c2,
+                 int height);
 
  private:
   base::AlignedMemPtr<uint8_t[]> buffer_;

@@ -18,9 +18,9 @@ namespace {
 constexpr float kHorizontalMargin = 0.07f;
 constexpr float kVerticalMargin = 0.025f;
 
-const Vector4 kPprogressBarColor[2] = {{0.256f, 0.434f, 0.72f, 1},
-                                       {0.905f, 0.493f, 0.194f, 1}};
-const Vector4 kTextColor = {0.895f, 0.692f, 0.24f, 1};
+const Vector4f kPprogressBarColor[2] = {{0.256f, 0.434f, 0.72f, 1},
+                                        {0.905f, 0.493f, 0.194f, 1}};
+const Vector4f kTextColor = {0.895f, 0.692f, 0.24f, 1};
 
 }  // namespace
 
@@ -42,22 +42,23 @@ bool Hud::Initialize() {
   for (int i = 0; i < 2; ++i) {
     text_[i].Create("text"s + std::to_string(i));
     text_[i].SetZOrder(30);
-    text_[i].SetColor(kTextColor * Vector4(1, 1, 1, 0));
+    text_[i].SetColor(kTextColor * Vector4f(1, 1, 1, 0));
 
-    Vector2 pos = (engine.GetScreenSize() / 2 - text_[i].GetSize() / 2);
-    pos -= engine.GetScreenSize() * Vector2(kHorizontalMargin, kVerticalMargin);
+    Vector2f pos = (engine.GetScreenSize() / 2 - text_[i].GetSize() / 2);
+    pos -=
+        engine.GetScreenSize() * Vector2f(kHorizontalMargin, kVerticalMargin);
 
-    Vector2 scale = engine.GetScreenSize() * Vector2(1, 0);
-    scale -= engine.GetScreenSize() * Vector2(kHorizontalMargin * 4, 0);
-    scale += text_[0].GetSize() * Vector2(0, 0.3f);
+    Vector2f scale = engine.GetScreenSize() * Vector2f(1, 0);
+    scale -= engine.GetScreenSize() * Vector2f(kHorizontalMargin * 4, 0);
+    scale += text_[0].GetSize() * Vector2f(0, 0.3f);
 
     progress_bar_[i].SetZOrder(30);
     progress_bar_[i].SetSize(scale);
-    progress_bar_[i].Translate(pos * Vector2(0, 1));
-    progress_bar_[i].SetColor(kPprogressBarColor[i] * Vector4(1, 1, 1, 0));
+    progress_bar_[i].Translate(pos * Vector2f(0, 1));
+    progress_bar_[i].SetColor(kPprogressBarColor[i] * Vector4f(1, 1, 1, 0));
 
-    pos -= progress_bar_[i].GetSize() * Vector2(0, 4);
-    text_[i].Translate(pos * Vector2(i ? 1 : -1, 1));
+    pos -= progress_bar_[i].GetSize() * Vector2f(0, 4);
+    text_[i].Translate(pos * Vector2f(i ? 1 : -1, 1));
 
     progress_bar_animator_[i].Attach(&progress_bar_[i]);
 
@@ -111,7 +112,7 @@ void Hud::SetWave(int wave, bool flash) {
 void Hud::SetProgress(float progress) {
   progress = std::min(std::max(0.0f, progress), 1.0f);
   last_progress_ = progress;
-  Vector2 s = progress_bar_[0].GetSize() * Vector2(progress, 1);
+  Vector2f s = progress_bar_[0].GetSize() * Vector2f(progress, 1);
   float t = (s.x - progress_bar_[1].GetSize().x) / 2;
   progress_bar_[1].SetSize(s);
   progress_bar_[1].Translate({t, 0});

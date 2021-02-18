@@ -6,11 +6,11 @@ using namespace base;
 
 namespace eng {
 
-void Animatable::Translate(const Vector2& pos) {
+void Animatable::Translate(const Vector2f& pos) {
   position_ += pos;
 }
 
-void Animatable::Scale(const Vector2& scale) {
+void Animatable::Scale(const Vector2f& scale) {
   scale_ = scale;
 }
 

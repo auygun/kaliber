@@ -29,11 +29,11 @@ class Enemy {
   void Pause(bool pause);
 
   bool HasTarget(DamageType damage_type);
-  base::Vector2 GetTargetPos(DamageType damage_type);
+  base::Vector2f GetTargetPos(DamageType damage_type);
 
   void SelectTarget(DamageType damage_type,
-                    const base::Vector2& origin,
-                    const base::Vector2& dir,
+                    const base::Vector2f& origin,
+                    const base::Vector2f& dir,
                     float snap_factor);
   void DeselectTarget(DamageType damage_type);
 
@@ -97,7 +97,7 @@ class Enemy {
 
   void Spawn(EnemyType enemy_type,
              DamageType damage_type,
-             const base::Vector2& pos,
+             const base::Vector2f& pos,
              float speed);
 
   EnemyUnit* GetTarget(DamageType damage_type);

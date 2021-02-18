@@ -32,8 +32,8 @@ void ImageQuad::Destory() {
 
 void ImageQuad::AutoScale() {
   auto& engine = Engine::Get();
-  Vector2 dimensions = {GetFrameWidth(), GetFrameHeight()};
-  Vector2 size = engine.ToScale(dimensions);
+  Vector2f dimensions = {GetFrameWidth(), GetFrameHeight()};
+  Vector2f size = engine.ToScale(dimensions);
   float s =
       static_cast<float>(engine.image_dpi()) * engine.GetImageScaleFactor();
   size *= static_cast<float>(engine.GetDeviceDpi()) / s;
@@ -63,8 +63,8 @@ void ImageQuad::Draw(float frame_frac) {
 
   texture_->Activate();
 
-  Vector2 tex_scale = {GetFrameWidth() / texture_->GetWidth(),
-                       GetFrameHeight() / texture_->GetHeight()};
+  Vector2f tex_scale = {GetFrameWidth() / texture_->GetWidth(),
+                        GetFrameHeight() / texture_->GetHeight()};
 
   Shader* shader = custom_shader_ ? custom_shader_.get()
                                   : Engine::Get().GetPassThroughShader();
@@ -100,7 +100,7 @@ float ImageQuad::GetFrameHeight() const {
 }
 
 // Return the uv offset for the given frame.
-Vector2 ImageQuad::GetUVOffset(int frame) const {
+Vector2f ImageQuad::GetUVOffset(int frame) const {
   DCHECK(frame < GetNumFrames())
       << "asset: " << asset_name_ << " frame: " << frame;
   return {(float)(frame % num_frames_[0]), (float)(frame / num_frames_[0])};

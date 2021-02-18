@@ -96,19 +96,19 @@ bool Enemy::HasTarget(DamageType damage_type) {
   return GetTarget(damage_type) ? true : false;
 }
 
-Vector2 Enemy::GetTargetPos(DamageType damage_type) {
+Vector2f Enemy::GetTargetPos(DamageType damage_type) {
   DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
   EnemyUnit* target = GetTarget(damage_type);
   if (target)
     return target->sprite.GetPosition() -
-           Vector2(0, target->sprite.GetSize().y / 2.5f);
+           Vector2f(0, target->sprite.GetSize().y / 2.5f);
   return {0, 0};
 }
 
 void Enemy::SelectTarget(DamageType damage_type,
-                         const Vector2& origin,
-                         const Vector2& dir,
+                         const Vector2f& origin,
+                         const Vector2f& dir,
                          float snap_factor) {
   DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Any);
 
@@ -132,8 +132,8 @@ void Enemy::SelectTarget(DamageType damage_type,
                             e.sprite.GetSize() * snap_factor, origin, dir))
       continue;
 
-    Vector2 weapon_enemy_dir = e.sprite.GetPosition() - origin;
-    float enemy_weapon_dist = weapon_enemy_dir.Magnitude();
+    Vector2f weapon_enemy_dir = e.sprite.GetPosition() - origin;
+    float enemy_weapon_dist = weapon_enemy_dir.Length();
     if (closest_dist > enemy_weapon_dist) {
       closest_dist = enemy_weapon_dist;
       best_enemy = &e;
@@ -238,7 +238,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
   } else {
     target->targetted_by_weapon_ = kDamageType_Invalid;
 
-    Vector2 s = target->sprite.GetSize() * Vector2(0.6f, 0.01f);
+    Vector2f s = target->sprite.GetSize() * Vector2f(0.6f, 0.01f);
     s.x *= (float)target->hit_points / (float)target->total_health;
     float t = (s.x - target->health_bar.GetSize().x) / 2;
     target->health_bar.SetSize(s);
@@ -279,14 +279,14 @@ void Enemy::SpawnNextEnemy() {
                                ? kDamageType_Any
                                : (DamageType)(rnd.Roll(2) - 1);
 
-  Vector2 s = engine.GetScreenSize();
+  Vector2f s = engine.GetScreenSize();
   int col;
   col = rnd.Roll(4) - 1;
   if (col == last_spawn_col_)
     col = (col + 1) % 4;
   last_spawn_col_ = col;
   float x = (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2;
-  Vector2 pos = {x, s.y / 2};
+  Vector2f pos = {x, s.y / 2};
   float speed =
       enemy_type == kEnemyType_Tank ? 36.0f : (rnd.Roll(4) == 4 ? 6.0f : 10.0f);
 
@@ -295,7 +295,7 @@ void Enemy::SpawnNextEnemy() {
 
 void Enemy::Spawn(EnemyType enemy_type,
                   DamageType damage_type,
-                  const Vector2& pos,
+                  const Vector2f& pos,
                   float speed) {
   DCHECK(enemy_type > kEnemyType_Invalid && enemy_type < kEnemyType_Max);
   DCHECK(damage_type > kDamageType_Invalid && damage_type < kDamageType_Max);
@@ -318,7 +318,7 @@ void Enemy::Spawn(EnemyType enemy_type,
   }
   e.sprite.SetZOrder(11);
   e.sprite.SetVisible(true);
-  Vector2 spawn_pos = pos + Vector2(0, e.sprite.GetSize().y / 2);
+  Vector2f spawn_pos = pos + Vector2f(0, e.sprite.GetSize().y / 2);
   e.sprite.SetPosition(spawn_pos);
 
   e.sprite.SetFrame(enemy_frame_start[enemy_type][damage_type]);
@@ -337,13 +337,13 @@ void Enemy::Spawn(EnemyType enemy_type,
   e.blast.SetPosition(spawn_pos);
 
   e.health_base.SetZOrder(11);
-  e.health_base.SetSize(e.sprite.GetSize() * Vector2(0.6f, 0.01f));
+  e.health_base.SetSize(e.sprite.GetSize() * Vector2f(0.6f, 0.01f));
   e.health_base.SetPosition(spawn_pos);
   e.health_base.PlaceToBottomOf(e.sprite);
   e.health_base.SetColor({0.5f, 0.5f, 0.5f, 1});
 
   e.health_bar.SetZOrder(11);
-  e.health_bar.SetSize(e.sprite.GetSize() * Vector2(0.6f, 0.01f));
+  e.health_bar.SetSize(e.sprite.GetSize() * Vector2f(0.6f, 0.01f));
   e.health_bar.SetPosition(spawn_pos);
   e.health_bar.PlaceToBottomOf(e.sprite);
   e.health_bar.SetColor({0.161f, 0.89f, 0.322f, 1});

@@ -53,18 +53,17 @@ Engine& Engine::Get() {
 }
 
 bool Engine::Initialize() {
-  // The orthogonal viewport is (-1.0 .. 1.0) for the short edge of the screen.
-  // For the long endge, it's calculated from aspect ratio.
+  // Normalize viewport.
   if (GetScreenWidth() > GetScreenHeight()) {
     float aspect_ratio = (float)GetScreenWidth() / (float)GetScreenHeight();
     LOG << "aspect ratio: " << aspect_ratio;
     screen_size_ = {aspect_ratio * 2.0f, 2.0f};
-    projection_ = base::Ortho(-aspect_ratio, aspect_ratio, -1.0f, 1.0f);
+    projection_.CreateOrthoProjection(-aspect_ratio, aspect_ratio, -1.0f, 1.0f);
   } else {
     float aspect_ratio = (float)GetScreenHeight() / (float)GetScreenWidth();
     LOG << "aspect_ratio: " << aspect_ratio;
     screen_size_ = {2.0f, aspect_ratio * 2.0f};
-    projection_ = base::Ortho(-1.0, 1.0, -aspect_ratio, aspect_ratio);
+    projection_.CreateOrthoProjection(-1.0, 1.0, -aspect_ratio, aspect_ratio);
   }
 
   LOG << "image scale factor: " << GetImageScaleFactor();
@@ -202,12 +201,12 @@ void Engine::Exit() {
   platform_->Exit();
 }
 
-Vector2 Engine::ToScale(const Vector2& vec) {
+Vector2f Engine::ToScale(const Vector2f& vec) {
   return GetScreenSize() * vec /
-         Vector2((float)GetScreenWidth(), (float)GetScreenHeight());
+         Vector2f((float)GetScreenWidth(), (float)GetScreenHeight());
 }
 
-Vector2 Engine::ToPosition(const Vector2& vec) {
+Vector2f Engine::ToPosition(const Vector2f& vec) {
   return ToScale(vec) - GetScreenSize() / 2.0f;
 }
 
@@ -285,7 +284,7 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
 
   switch (event->GetType()) {
     case InputEvent::kDragEnd:
-      if (((GetScreenSize() / 2) * 0.9f - event->GetVector()).Magnitude() <=
+      if (((GetScreenSize() / 2) * 0.9f - event->GetVector()).Length() <=
           0.25f) {
         SetSatsVisible(!stats_->IsVisible());
         // TODO: Enqueue DragCancel so we can consume this event.
@@ -300,7 +299,7 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
       break;
     case InputEvent::kDrag:
       if (stats_->IsVisible()) {
-        if ((stats_->GetPosition() - event->GetVector()).Magnitude() <=
+        if ((stats_->GetPosition() - event->GetVector()).Length() <=
             stats_->GetSize().y)
           stats_->SetPosition(event->GetVector());
         // TODO: Enqueue DragCancel so we can consume this event.
@@ -323,7 +322,7 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
         event = std::make_unique<InputEvent>(
             (InputEvent::Type)data["input_type"].asInt(),
             (size_t)data["pointer_id"].asUInt(),
-            Vector2(data["pos_x"].asFloat(), data["pos_y"].asFloat()));
+            Vector2f(data["pos_x"].asFloat(), data["pos_y"].asFloat()));
         ++replay_index_;
       }
       return event;

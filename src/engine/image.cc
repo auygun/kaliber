@@ -312,7 +312,7 @@ uint8_t* Image::GetBuffer() {
   return buffer_.get();
 }
 
-void Image::Clear(Vector4 rgba) {
+void Image::Clear(Vector4f rgba) {
   // Quantize the color to target resolution.
   uint8_t r = (uint8_t)(rgba.x * 255.0f), g = (uint8_t)(rgba.y * 255.0f),
           b = (uint8_t)(rgba.z * 255.0f), a = (uint8_t)(rgba.w * 255.0f);
@@ -345,10 +345,10 @@ void Image::GradientH() {
     memcpy(buffer_.get() + h * width_ * 4, buffer_.get(), width_ * 4);
 }
 
-void Image::GradientV(const Vector4& c1, const Vector4& c2, int height) {
+void Image::GradientV(const Vector4f& c1, const Vector4f& c2, int height) {
   // Fill each section with gradient.
   for (int h = 0; h < height_; ++h) {
-    Vector4 c = Lerp(c1, c2, fmod(h, height) / (float)height);
+    Vector4f c = Lerp(c1, c2, fmod(h, height) / (float)height);
     for (int x = 0; x < width_; ++x) {
       buffer_.get()[h * width_ * 4 + x * 4 + 0] = c.x * 255;
       buffer_.get()[h * width_ * 4 + x * 4 + 1] = c.y * 255;

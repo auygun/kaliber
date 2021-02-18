@@ -53,7 +53,7 @@ class Menu {
 
   Option selected_option_ = kOption_Invalid;
 
-  base::Vector2 tap_pos_[2] = {{0, 0}, {0, 0}};
+  base::Vector2f tap_pos_[2] = {{0, 0}, {0, 0}};
 
   bool CreateRenderResources();
 

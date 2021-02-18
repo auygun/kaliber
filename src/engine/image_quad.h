@@ -40,17 +40,17 @@ class ImageQuad : public Animatable {
   void SetFrame(size_t frame) override;
   size_t GetFrame() const override { return current_frame_; }
   size_t GetNumFrames() const override;
-  void SetColor(const base::Vector4& color) override { color_ = color; }
-  base::Vector4 GetColor() const override { return color_; }
+  void SetColor(const base::Vector4f& color) override { color_ = color; }
+  base::Vector4f GetColor() const override { return color_; }
 
   // Drawable interface.
   void Draw(float frame_frac) override;
 
  private:
-  using UniformValue = std::variant<base::Vector2,
-                                    base::Vector3,
-                                    base::Vector4,
-                                    base::Matrix4x4,
+  using UniformValue = std::variant<base::Vector2f,
+                                    base::Vector3f,
+                                    base::Vector4f,
+                                    base::Matrix4f,
                                     float,
                                     int>;
 
@@ -64,14 +64,14 @@ class ImageQuad : public Animatable {
   int frame_width_ = 0;
   int frame_height_ = 0;
 
-  base::Vector4 color_ = {1, 1, 1, 1};
+  base::Vector4f color_ = {1, 1, 1, 1};
 
   std::string asset_name_;
 
   float GetFrameWidth() const;
   float GetFrameHeight() const;
 
-  base::Vector2 GetUVOffset(int frame) const;
+  base::Vector2f GetUVOffset(int frame) const;
 };
 
 }  // namespace eng

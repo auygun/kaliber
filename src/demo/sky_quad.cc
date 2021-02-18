@@ -44,7 +44,7 @@ void SkyQuad::Update(float delta_time) {
 }
 
 void SkyQuad::Draw(float frame_frac) {
-  Vector2 sky_offset = Lerp(last_sky_offset_, sky_offset_, frame_frac);
+  Vector2f sky_offset = Lerp(last_sky_offset_, sky_offset_, frame_frac);
 
   shader_->Activate();
   shader_->SetUniform("scale", scale_);
@@ -61,7 +61,7 @@ void SkyQuad::ContextLost() {
   Create();
 }
 
-void SkyQuad::SwitchColor(const Vector4& color) {
+void SkyQuad::SwitchColor(const Vector4f& color) {
   color_animator_.SetBlending(color, 5,
                               std::bind(SmoothStep, std::placeholders::_1));
   color_animator_.Play(Animator::kBlending, false);

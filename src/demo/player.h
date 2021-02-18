@@ -25,8 +25,8 @@ class Player {
 
   void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
 
-  base::Vector2 GetWeaponPos(DamageType type) const;
-  base::Vector2 GetWeaponScale() const;
+  base::Vector2f GetWeaponPos(DamageType type) const;
+  base::Vector2f GetWeaponScale() const;
 
  private:
   eng::ImageQuad drag_sign_[2];
@@ -41,24 +41,24 @@ class Player {
 
   DamageType active_weapon_ = kDamageType_Invalid;
 
-  base::Vector2 drag_start_ = {0, 0};
-  base::Vector2 drag_end_ = {0, 0};
+  base::Vector2f drag_start_ = {0, 0};
+  base::Vector2f drag_end_ = {0, 0};
   bool drag_valid_ = false;
 
-  DamageType GetWeaponType(const base::Vector2& pos);
+  DamageType GetWeaponType(const base::Vector2f& pos);
 
   void WarmupWeapon(DamageType type);
   void CooldownWeapon(DamageType type);
 
-  void Fire(DamageType type, base::Vector2 dir);
+  void Fire(DamageType type, base::Vector2f dir);
   bool IsFiring(DamageType type);
 
   void SetupWeapons();
 
   void UpdateTarget();
 
-  void DragStart(const base::Vector2& pos);
-  void Drag(const base::Vector2& pos);
+  void DragStart(const base::Vector2f& pos);
+  void Drag(const base::Vector2f& pos);
   void DragEnd();
   void DragCancel();
   bool ValidateDrag();

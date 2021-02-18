@@ -14,14 +14,14 @@ class SolidQuad : public Animatable {
   void SetFrame(size_t frame) override {}
   size_t GetFrame() const override { return 0; }
   size_t GetNumFrames() const override { return 0; }
-  void SetColor(const base::Vector4& color) override { color_ = color; }
-  base::Vector4 GetColor() const override { return color_; }
+  void SetColor(const base::Vector4f& color) override { color_ = color; }
+  base::Vector4f GetColor() const override { return color_; }
 
   // Drawable interface.
   void Draw(float frame_frac) override;
 
  private:
-  base::Vector4 color_ = {1, 1, 1, 1};
+  base::Vector4f color_ = {1, 1, 1, 1};
 };
 
 }  // namespace eng

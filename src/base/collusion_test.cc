@@ -6,9 +6,9 @@
 
 namespace base {
 
-bool Intersection(const Vector2& center,
-                  const Vector2& size,
-                  const Vector2& point) {
+bool Intersection(const Vector2f& center,
+                  const Vector2f& size,
+                  const Vector2f& point) {
   float dx = point.x - center.x;
   float px = size.x / 2 - fabs(dx);
   if (px <= 0)
@@ -19,12 +19,12 @@ bool Intersection(const Vector2& center,
   return py > 0;
 }
 
-bool Intersection(const Vector2& center,
-                  const Vector2& size,
-                  const Vector2& origin,
-                  const Vector2& dir) {
-  Vector2 min = center - size / 2;
-  Vector2 max = center + size / 2;
+bool Intersection(const Vector2f& center,
+                  const Vector2f& size,
+                  const Vector2f& origin,
+                  const Vector2f& dir) {
+  Vector2f min = center - size / 2;
+  Vector2f max = center + size / 2;
 
   float tmin = std::numeric_limits<float>::min();
   float tmax = std::numeric_limits<float>::max();

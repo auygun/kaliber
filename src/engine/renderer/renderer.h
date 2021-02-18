@@ -59,16 +59,16 @@ class Renderer {
 
   virtual void SetUniform(std::shared_ptr<void> impl_data,
                           const std::string& name,
-                          const base::Vector2& val) = 0;
+                          const base::Vector2f& val) = 0;
   virtual void SetUniform(std::shared_ptr<void> impl_data,
                           const std::string& name,
-                          const base::Vector3& val) = 0;
+                          const base::Vector3f& val) = 0;
   virtual void SetUniform(std::shared_ptr<void> impl_data,
                           const std::string& name,
-                          const base::Vector4& val) = 0;
+                          const base::Vector4f& val) = 0;
   virtual void SetUniform(std::shared_ptr<void> impl_data,
                           const std::string& name,
-                          const base::Matrix4x4& val) = 0;
+                          const base::Matrix4f& val) = 0;
   virtual void SetUniform(std::shared_ptr<void> impl_data,
                           const std::string& name,
                           float val) = 0;

@@ -31,7 +31,7 @@ class PlatformAndroid : public PlatformBase {
  private:
   android_app* app_ = nullptr;
 
-  base::Vector2 pointer_pos_[2] = {{0, 0}, {0, 0}};
+  base::Vector2f pointer_pos_[2] = {{0, 0}, {0, 0}};
   bool pointer_down_[2] = {false, false};
 
   static int32_t HandleInput(android_app* app, AInputEvent* event);

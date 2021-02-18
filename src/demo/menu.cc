@@ -22,11 +22,11 @@ constexpr char kMenuOption[Menu::kOption_Max][10] = {"continue", "start",
 
 constexpr float kMenuOptionSpace = 1.5f;
 
-const Vector4 kColorNormal = {1, 1, 1, 1};
-const Vector4 kColorHighlight = {5, 5, 5, 1};
+const Vector4f kColorNormal = {1, 1, 1, 1};
+const Vector4f kColorHighlight = {5, 5, 5, 1};
 constexpr float kBlendingSpeed = 0.12f;
 
-const Vector4 kColorFadeOut = {1, 1, 1, 0};
+const Vector4f kColorFadeOut = {1, 1, 1, 0};
 constexpr float kFadeSpeed = 0.2f;
 
 }  // namespace
@@ -76,10 +76,12 @@ bool Menu::Initialize() {
 }
 
 void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
-  if (event->GetType() == InputEvent::kDragStart)
-    tap_pos_[0] = tap_pos_[1] = event->GetVector();
-  else if (event->GetType() == InputEvent::kDrag)
+  if (event->GetType() == InputEvent::kDragStart) {
+    tap_pos_[0] = event->GetVector();
     tap_pos_[1] = event->GetVector();
+  } else if (event->GetType() == InputEvent::kDrag) {
+    tap_pos_[1] = event->GetVector();
+  }
 
   if (event->GetType() != InputEvent::kDragEnd || IsAnimating())
     return;
@@ -88,10 +90,12 @@ void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
     if (items_[i].hide)
       continue;
     if (!Intersection(items_[i].text.GetPosition(),
-                      items_[i].text.GetSize() * Vector2(1.2f, 2), tap_pos_[0]))
+                      items_[i].text.GetSize() * Vector2f(1.2f, 2),
+                      tap_pos_[0]))
       continue;
     if (!Intersection(items_[i].text.GetPosition(),
-                      items_[i].text.GetSize() * Vector2(1.2f, 2), tap_pos_[1]))
+                      items_[i].text.GetSize() * Vector2f(1.2f, 2),
+                      tap_pos_[1]))
       continue;
 
     items_[i].text_animator.SetEndCallback(Animator::kBlending,
@@ -111,7 +115,7 @@ void Menu::SetOptionEnabled(Option o, bool enable) {
       if (last >= 0) {
         items_[i].text.PlaceToBottomOf(items_[last].text);
         items_[i].text.Translate(items_[last].text.GetPosition() *
-                                 Vector2(0, 1));
+                                 Vector2f(0, 1));
         items_[i].text.Translate(
             {0, items_[last].text.GetSize().y * -kMenuOptionSpace});
       }

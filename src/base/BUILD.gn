@@ -18,7 +18,6 @@ source_set("base") {
     "task_runner.h",
     "timer.cc",
     "timer.h",
-    "vecmath.cc",
     "vecmath.h",
     "worker.cc",
     "worker.h",

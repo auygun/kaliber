@@ -66,32 +66,32 @@ void PlatformLinux::Update() {
         break;
       }
       case MotionNotify: {
-        Vector2 v(e.xmotion.x, e.xmotion.y);
+        Vector2f v(e.xmotion.x, e.xmotion.y);
         v = engine_->ToPosition(v);
         // DLOG << "drag: " << v;
         auto input_event = std::make_unique<InputEvent>(InputEvent::kDrag, 0,
-                                                        v * Vector2(1, -1));
+                                                        v * Vector2f(1, -1));
         engine_->AddInputEvent(std::move(input_event));
         break;
       }
       case ButtonPress: {
         if (e.xbutton.button == 1) {
-          Vector2 v(e.xbutton.x, e.xbutton.y);
+          Vector2f v(e.xbutton.x, e.xbutton.y);
           v = engine_->ToPosition(v);
           // DLOG << "drag-start: " << v;
           auto input_event = std::make_unique<InputEvent>(
-              InputEvent::kDragStart, 0, v * Vector2(1, -1));
+              InputEvent::kDragStart, 0, v * Vector2f(1, -1));
           engine_->AddInputEvent(std::move(input_event));
         }
         break;
       }
       case ButtonRelease: {
         if (e.xbutton.button == 1) {
-          Vector2 v(e.xbutton.x, e.xbutton.y);
+          Vector2f v(e.xbutton.x, e.xbutton.y);
           v = engine_->ToPosition(v);
           // DLOG << "drag-end!";
           auto input_event = std::make_unique<InputEvent>(
-              InputEvent::kDragEnd, 0, v * Vector2(1, -1));
+              InputEvent::kDragEnd, 0, v * Vector2f(1, -1));
           engine_->AddInputEvent(std::move(input_event));
         }
         break;

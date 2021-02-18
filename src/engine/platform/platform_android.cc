@@ -232,7 +232,7 @@ int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
     uint32_t flags = action & AMOTION_EVENT_ACTION_MASK;
     int32_t count = AMotionEvent_getPointerCount(event);
     int32_t pointer_id = AMotionEvent_getPointerId(event, index);
-    Vector2 pos[2] = {platform->pointer_pos_[0], platform->pointer_pos_[1]};
+    Vector2f pos[2] = {platform->pointer_pos_[0], platform->pointer_pos_[1]};
     for (auto i = 0; i < count; ++i) {
       int32_t id = AMotionEvent_getPointerId(event, i);
       pos[id] = {AMotionEvent_getX(event, i), AMotionEvent_getY(event, i)};
@@ -252,7 +252,7 @@ int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
         platform->pointer_down_[pointer_id] = true;
         input_event =
             std::make_unique<InputEvent>(InputEvent::kDragStart, pointer_id,
-                                         pos[pointer_id] * Vector2(1, -1));
+                                         pos[pointer_id] * Vector2f(1, -1));
         break;
 
       case AMOTION_EVENT_ACTION_UP:
@@ -260,20 +260,21 @@ int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
         // DLOG << "AMOTION_EVENT_ACTION_UP -   pointer_id: " << pointer_id;
         platform->pointer_pos_[pointer_id] = pos[pointer_id];
         platform->pointer_down_[pointer_id] = false;
-        input_event = std::make_unique<InputEvent>(
-            InputEvent::kDragEnd, pointer_id, pos[pointer_id] * Vector2(1, -1));
+        input_event =
+            std::make_unique<InputEvent>(InputEvent::kDragEnd, pointer_id,
+                                         pos[pointer_id] * Vector2f(1, -1));
         break;
 
       case AMOTION_EVENT_ACTION_MOVE:
         if (platform->pointer_down_[0] && pos[0] != platform->pointer_pos_[0]) {
           platform->pointer_pos_[0] = pos[0];
           input_event = std::make_unique<InputEvent>(InputEvent::kDrag, 0,
-                                                     pos[0] * Vector2(1, -1));
+                                                     pos[0] * Vector2f(1, -1));
         }
         if (platform->pointer_down_[1] && pos[1] != platform->pointer_pos_[1]) {
           platform->pointer_pos_[1] = pos[1];
           input_event = std::make_unique<InputEvent>(InputEvent::kDrag, 1,
-                                                     pos[1] * Vector2(1, -1));
+                                                     pos[1] * Vector2f(1, -1));
         }
         break;
 

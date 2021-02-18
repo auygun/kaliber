@@ -116,7 +116,7 @@ void Animator::SetEndCallback(int animation, base::Closure cb) {
     timer_cb_ = std::move(cb);
 }
 
-void Animator::SetMovement(Vector2 direction,
+void Animator::SetMovement(Vector2f direction,
                            float duration,
                            Interpolator interpolator) {
   movement_direction_ = direction;
@@ -138,7 +138,7 @@ void Animator::SetRotation(float trget,
     a.rotation_last_theta = 0;
 }
 
-void Animator::SetBlending(Vector4 target,
+void Animator::SetBlending(Vector4f target,
                            float duration,
                            Interpolator interpolator) {
   blending_target_ = target;
@@ -186,7 +186,7 @@ void Animator::EvalAnim(float frame_time) {
       float time = movement_time_ + movement_speed_ * frame_time;
       float interpolated_time =
           movement_interpolator_ ? movement_interpolator_(time) : time;
-      Vector2 pos = base::Lerp({0, 0}, movement_direction_, interpolated_time);
+      Vector2f pos = base::Lerp({0, 0}, movement_direction_, interpolated_time);
       a.animatable->Translate(pos - a.movement_last_pos);
       a.movement_last_pos = pos;
     }
@@ -204,7 +204,7 @@ void Animator::EvalAnim(float frame_time) {
       float time = blending_time_ + blending_speed_ * frame_time;
       float interpolated_time =
           blending_interpolator_ ? blending_interpolator_(time) : time;
-      Vector4 r =
+      Vector4f r =
           base::Lerp(a.blending_start, blending_target_, interpolated_time);
       a.animatable->SetColor(r);
     }

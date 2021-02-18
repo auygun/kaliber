@@ -54,7 +54,6 @@ add_library(kaliber SHARED
     ../../../src/base/sinc_resampler.cc
     ../../../src/base/task_runner.cc
     ../../../src/base/timer.cc
-    ../../../src/base/vecmath.cc
     ../../../src/base/worker.cc
     ../../../src/demo/credits.cc
     ../../../src/demo/demo.cc

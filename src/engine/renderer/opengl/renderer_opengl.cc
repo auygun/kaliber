@@ -110,7 +110,7 @@ void RendererOpenGL::ActivateShader(std::shared_ptr<void> impl_data) {
 
 void RendererOpenGL::SetUniform(std::shared_ptr<void> impl_data,
                                 const std::string& name,
-                                const base::Vector2& val) {
+                                const base::Vector2f& val) {
   auto cmd = std::make_unique<CmdSetUniformVec2>();
   cmd->name = name;
   cmd->v = val;
@@ -120,7 +120,7 @@ void RendererOpenGL::SetUniform(std::shared_ptr<void> impl_data,
 
 void RendererOpenGL::SetUniform(std::shared_ptr<void> impl_data,
                                 const std::string& name,
-                                const base::Vector3& val) {
+                                const base::Vector3f& val) {
   auto cmd = std::make_unique<CmdSetUniformVec3>();
   cmd->name = name;
   cmd->v = val;
@@ -130,7 +130,7 @@ void RendererOpenGL::SetUniform(std::shared_ptr<void> impl_data,
 
 void RendererOpenGL::SetUniform(std::shared_ptr<void> impl_data,
                                 const std::string& name,
-                                const base::Vector4& val) {
+                                const base::Vector4f& val) {
   auto cmd = std::make_unique<CmdSetUniformVec4>();
   cmd->name = name;
   cmd->v = val;
@@ -140,7 +140,7 @@ void RendererOpenGL::SetUniform(std::shared_ptr<void> impl_data,
 
 void RendererOpenGL::SetUniform(std::shared_ptr<void> impl_data,
                                 const std::string& name,
-                                const base::Matrix4x4& val) {
+                                const base::Matrix4f& val) {
   auto cmd = std::make_unique<CmdSetUniformMat4>();
   cmd->name = name;
   cmd->m = val;

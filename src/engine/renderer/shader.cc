@@ -36,22 +36,22 @@ void Shader::Activate() {
     renderer_->ActivateShader(impl_data_);
 }
 
-void Shader::SetUniform(const std::string& name, const Vector2& v) {
+void Shader::SetUniform(const std::string& name, const Vector2f& v) {
   if (valid_)
     renderer_->SetUniform(impl_data_, name, v);
 }
 
-void Shader::SetUniform(const std::string& name, const Vector3& v) {
+void Shader::SetUniform(const std::string& name, const Vector3f& v) {
   if (valid_)
     renderer_->SetUniform(impl_data_, name, v);
 }
 
-void Shader::SetUniform(const std::string& name, const Vector4& v) {
+void Shader::SetUniform(const std::string& name, const Vector4f& v) {
   if (valid_)
     renderer_->SetUniform(impl_data_, name, v);
 }
 
-void Shader::SetUniform(const std::string& name, const Matrix4x4& m) {
+void Shader::SetUniform(const std::string& name, const Matrix4f& m) {
   if (valid_)
     renderer_->SetUniform(impl_data_, name, m);
 }

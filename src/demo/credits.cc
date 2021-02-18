@@ -18,7 +18,7 @@ constexpr char kCreditsLines[Credits::kNumLines][15] = {
 
 constexpr float kLineSpaces[Credits::kNumLines - 1] = {1.5f, 0.5f, 1.5f, 0.5f};
 
-const Vector4 kTextColor = {0.80f, 0.87f, 0.93f, 1};
+const Vector4f kTextColor = {0.80f, 0.87f, 0.93f, 1};
 constexpr float kFadeSpeed = 0.2f;
 
 }  // namespace
@@ -64,12 +64,12 @@ void Credits::Show() {
     text_[i].Create("credits", {1, kNumLines});
     text_[i].SetZOrder(50);
     text_[i].SetPosition({0, 0});
-    text_[i].SetColor(kTextColor * Vector4(1, 1, 1, 0));
+    text_[i].SetColor(kTextColor * Vector4f(1, 1, 1, 0));
     text_[i].SetFrame(i);
 
     if (i > 0) {
       text_[i].PlaceToBottomOf(text_[i - 1]);
-      text_[i].Translate(text_[i - 1].GetPosition() * Vector2(0, 1));
+      text_[i].Translate(text_[i - 1].GetPosition() * Vector2f(0, 1));
       text_[i].Translate({0, text_[i - 1].GetSize().y * -kLineSpaces[i - 1]});
     }
   }
@@ -94,7 +94,7 @@ void Credits::Hide() {
     text_animator_.SetEndCallback(Animator::kBlending, nullptr);
     text_animator_.SetVisible(false);
   });
-  text_animator_.SetBlending(kTextColor * Vector4(1, 1, 1, 0), kFadeSpeed);
+  text_animator_.SetBlending(kTextColor * Vector4f(1, 1, 1, 0), kFadeSpeed);
   text_animator_.Play(Animator::kBlending, false);
 }
 

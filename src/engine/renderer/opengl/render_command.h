@@ -92,25 +92,25 @@ RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformVec2)
   std::string name;
-  base::Vector2 v;
+  base::Vector2f v;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformVec3)
   std::string name;
-  base::Vector3 v;
+  base::Vector3f v;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformVec4)
   std::string name;
-  base::Vector4 v;
+  base::Vector4f v;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformMat4)
   std::string name;
-  base::Matrix4x4 m;
+  base::Matrix4f m;
   std::shared_ptr<void> impl_data;
 RENDER_COMMAND_END
 

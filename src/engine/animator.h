@@ -44,7 +44,7 @@ class Animator {
   void SetEndCallback(int animation, base::Closure cb);
 
   // Distance is the magnitude of direction vector. Duration is in seconds.
-  void SetMovement(base::Vector2 direction,
+  void SetMovement(base::Vector2f direction,
                    float duration,
                    Interpolator interpolator = nullptr);
 
@@ -53,7 +53,7 @@ class Animator {
                    float duration,
                    Interpolator interpolator = nullptr);
 
-  void SetBlending(base::Vector4 target,
+  void SetBlending(base::Vector4f target,
                    float duration,
                    Interpolator interpolator = nullptr);
 
@@ -76,9 +76,9 @@ class Animator {
  private:
   struct Element {
     Animatable* animatable;
-    base::Vector2 movement_last_pos = {0, 0};
+    base::Vector2f movement_last_pos = {0, 0};
     float rotation_last_theta = 0;
-    base::Vector4 blending_start = {0, 0, 0, 0};
+    base::Vector4f blending_start = {0, 0, 0, 0};
     int frame_start_ = 0;
   };
 
@@ -87,7 +87,7 @@ class Animator {
   unsigned int resume_flags_ = 0;
   std::vector<Element> elements_;
 
-  base::Vector2 movement_direction_ = {0, 0};
+  base::Vector2f movement_direction_ = {0, 0};
   float movement_speed_ = 0;
   float movement_time_ = 0;
   Interpolator movement_interpolator_;
@@ -99,7 +99,7 @@ class Animator {
   Interpolator rotation_interpolator_;
   base::Closure rotation_cb_;
 
-  base::Vector4 blending_target_ = {0, 0, 0, 0};
+  base::Vector4f blending_target_ = {0, 0, 0, 0};
   float blending_speed_ = 0;
   float blending_time_ = 0;
   Interpolator blending_interpolator_;
