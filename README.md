@@ -2,8 +2,7 @@ A simple, cross-platform 2D game engine with OpenGL and Vulkan renderers.
 Supports Linux and Android (lolipop+) platforms.  
 This is a personal hobby project. I've published a little game on
 [Google Play](https://play.google.com/store/apps/details?id=com.woom.game)
-based on this engine. The demo included in this repository is an early prototype
-of the game.
+based on this engine. Full game code and assets are included in this repository.
 #### Building the demo
 Linux:
 ```text

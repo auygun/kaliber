@@ -1,0 +1,2 @@
+jarsigner -keystore ~/key_store/apk_key_store.jks -storepass xxx -keypass xxx -signedjar app-release.apk ./app/build/outputs/apk/release/app-release-unsigned.apk upload
+zipalign -f 4 ./app-release.apk ./app-release-aligned.apk

@@ -1,0 +1,20 @@
+IN(0) vec2 in_position;
+IN(1) vec2 in_tex_coord_0;
+
+UNIFORM_BEGIN
+  UNIFORM_V(vec2 scale)
+  UNIFORM_V(mat4 projection)
+  UNIFORM_F(vec2 sky_offset)
+UNIFORM_END
+
+OUT(0) vec2 tex_coord_0;
+
+void main() {
+  // Simple 2d transform.
+  vec2 position = in_position;
+  position *= PARAM(scale);
+
+  tex_coord_0 = in_tex_coord_0;
+
+  gl_Position = PARAM(projection) * vec4(position, 0.0, 1.0);
+}

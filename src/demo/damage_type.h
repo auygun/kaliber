@@ -11,10 +11,23 @@ enum DamageType {
 
 enum EnemyType {
   kEnemyType_Invalid = -1,
-  kEnemyType_Skull,
-  kEnemyType_Bug,
+  // Enemy units (waves and boss adds).
+  kEnemyType_LightSkull,
+  kEnemyType_DarkSkull,
   kEnemyType_Tank,
+  kEnemyType_Bug,
+  kEnemyType_Unit_Last = kEnemyType_Bug,
+  // Boss.
+  kEnemyType_PowerUp,
+  kEnemyType_Boss,
   kEnemyType_Max
+};
+
+enum SpeedType {
+  kSpeedType_Invalid = -1,
+  kSpeedType_Slow,
+  kSpeedType_Fast,
+  kSpeedType_Max
 };
 
 #endif  // DAMAGE_TYPE_H

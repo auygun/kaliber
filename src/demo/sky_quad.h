@@ -22,7 +22,7 @@ class SkyQuad : public eng::Animatable {
   SkyQuad(const SkyQuad&) = delete;
   SkyQuad& operator=(const SkyQuad&) = delete;
 
-  bool Create();
+  bool Create(bool without_nebula);
 
   void Update(float delta_time);
 
@@ -42,6 +42,8 @@ class SkyQuad : public eng::Animatable {
 
   void SetSpeed(float speed);
 
+  const base::Vector4f& nebula_color() { return nebula_color_; }
+
  private:
   std::unique_ptr<eng::Shader> shader_;
 
@@ -53,6 +55,10 @@ class SkyQuad : public eng::Animatable {
   eng::Animator color_animator_;
 
   float speed_ = 0;
+
+  bool without_nebula_ = false;
+
+  bool CreateShaders();
 };
 
 #endif  // SKY_QUAD_H

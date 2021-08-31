@@ -2,8 +2,12 @@
 #define DEMO_H
 
 #include "../base/closure.h"
+#include "../engine/animator.h"
 #include "../engine/font.h"
 #include "../engine/game.h"
+#include "../engine/persistent_data.h"
+#include "../engine/solid_quad.h"
+#include "../engine/sound_player.h"
 #include "credits.h"
 #include "enemy.h"
 #include "hud.h"
@@ -11,10 +15,12 @@
 #include "player.h"
 #include "sky_quad.h"
 
+// #define LOAD_TEST
+
 class Demo : public eng::Game {
  public:
-  Demo() = default;
-  ~Demo() override = default;
+  Demo();
+  ~Demo() override;
 
   bool Initialize() override;
 
@@ -26,21 +32,38 @@ class Demo : public eng::Game {
 
   void GainedFocus(bool from_interstitial_ad) override;
 
-  void AddScore(int score);
+  void AddScore(size_t score);
+
+  void SetEnableMusic(bool enable);
 
   void EnterMenuState();
   void EnterCreditsState();
   void EnterGameState();
+  void EnterGameOverState();
 
   const eng::Font& GetFont() { return font_; }
 
   Player& GetPlayer() { return player_; }
   Enemy& GetEnemy() { return enemy_; }
 
-  int wave() { return wave_; }
+  int wave() const { return wave_; }
+
+  size_t GetHighScore() const;
+
+  float stage_time() const { return stage_time_; }
+
+  eng::PersistentData& saved_data() { return saved_data_; }
+  const eng::PersistentData& saved_data() const { return saved_data_; }
 
  private:
-  enum State { kState_Invalid = -1, kMenu, kGame, kCredits, kState_Max };
+  enum State {
+    kState_Invalid = -1,
+    kMenu,
+    kGame,
+    kCredits,
+    kGameOver,
+    kState_Max
+  };
 
   State state_ = kState_Invalid;
 
@@ -55,8 +78,9 @@ class Demo : public eng::Game {
 
   eng::Font font_;
 
-  int score_ = 0;
-  int add_score_ = 0;
+  size_t wave_score_ = 0;
+  size_t total_score_ = 0;
+  size_t delta_score_ = 0;
 
   int wave_ = 0;
 
@@ -65,8 +89,26 @@ class Demo : public eng::Game {
 
   int waiting_for_next_wave_ = false;
 
+  bool boss_fight_ = false;
+
+  float stage_time_ = 0;
+
+  eng::SoundPlayer music_;
+  eng::SoundPlayer boss_music_;
+
+  eng::SolidQuad dimmer_;
+  eng::Animator dimmer_animator_;
+  bool dimmer_active_ = false;
+
   float delayed_work_timer_ = 0;
   base::Closure delayed_work_cb_;
+
+  eng::PersistentData saved_data_;
+
+  bool do_benchmark_ = true;
+  float benchmark_time_ = 0;
+  int num_benchmark_samples_ = 0;
+  int avarage_fps_ = 0;
 
   void UpdateMenuState(float delta_time);
   void UpdateGameState(float delta_time);
@@ -74,7 +116,15 @@ class Demo : public eng::Game {
   void Continue();
   void StartNewGame();
 
+  void StartNextStage(bool boss);
+
+  void Win();
+
+  void Dimmer(bool enable);
+
   void SetDelayedWork(float seconds, base::Closure cb);
+
+  void BenchmarkResult(int avarage_fps);
 };
 
 #endif  // DEMO_H

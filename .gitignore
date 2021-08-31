@@ -1,4 +1,3 @@
-.vscode
 build/android/.gradle
 build/android/app/.cxx
 build/android/app/build

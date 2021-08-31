@@ -16,7 +16,7 @@ import androidx.core.content.FileProvider;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
-import com.kaliber.demo.R;
+import com.woom.game.R;
 
 import java.io.File;
 
@@ -107,7 +107,7 @@ public class KaliberActivity extends NativeActivity {
                     File dir = getExternalFilesDir(null);
                     File file = new File(dir, fileName);
                     Uri uri = FileProvider.getUriForFile(KaliberActivity.this,
-                            "com.codepath.fileprovider", file);
+                            "com.woom.game.fileprovider", file);
 
                     Intent emailIntent = new Intent();
                     emailIntent.setAction(Intent.ACTION_SEND);

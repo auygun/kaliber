@@ -14,6 +14,7 @@
 
 namespace eng {
 class Image;
+class Shader;
 class Sound;
 }  // namespace eng
 
@@ -28,21 +29,34 @@ class Enemy {
 
   void Pause(bool pause);
 
+  void ContextLost();
+
   bool HasTarget(DamageType damage_type);
   base::Vector2f GetTargetPos(DamageType damage_type);
 
   void SelectTarget(DamageType damage_type,
                     const base::Vector2f& origin,
-                    const base::Vector2f& dir,
-                    float snap_factor);
+                    const base::Vector2f& dir);
   void DeselectTarget(DamageType damage_type);
 
   void HitTarget(DamageType damage_type);
 
-  void OnWaveFinished();
-  void OnWaveStarted(int wave);
+  bool IsBossAlive() const;
 
-  int num_enemies_killed_in_current_wave() {
+  void PauseProgress();
+  void ResumeProgress();
+
+  void OnWaveStarted(int wave, bool boss_figt);
+
+  void StopAllEnemyUnits(bool chromatic_aberration_effect = false);
+  void KillAllEnemyUnits(bool randomize_order = true);
+  void RemoveAll();
+
+  void KillBoss();
+
+  void Reset();
+
+  int num_enemies_killed_in_current_wave() const {
     return num_enemies_killed_in_current_wave_;
   }
 
@@ -50,15 +64,28 @@ class Enemy {
   struct EnemyUnit {
     EnemyType enemy_type = kEnemyType_Invalid;
     DamageType damage_type = kDamageType_Invalid;
+    SpeedType speed_type = kSpeedType_Invalid;
 
     bool marked_for_removal = false;
-    DamageType targetted_by_weapon_ = kDamageType_Invalid;
+    bool targetted_by_weapon_[2] = {false, false};
     int total_health = 0;
     int hit_points = 0;
+
+    float kill_timer = 0;
+
+    bool idle2_anim = false;
+    bool stealth_active = false;
+
+    bool shield_active = false;
+
+    bool freeze_ = false;
+
+    bool chromatic_aberration_active_ = false;
 
     eng::ImageQuad sprite;
     eng::ImageQuad target;
     eng::ImageQuad blast;
+    eng::ImageQuad shield;
     eng::ImageQuad score;
     eng::SolidQuad health_base;
     eng::SolidQuad health_bar;
@@ -67,38 +94,72 @@ class Enemy {
     eng::Animator sprite_animator;
     eng::Animator target_animator;
     eng::Animator blast_animator;
+    eng::Animator shield_animator;
     eng::Animator health_animator;
     eng::Animator score_animator;
 
-    eng::SoundPlayer explosion_;
+    eng::SoundPlayer spawn;
+    eng::SoundPlayer explosion;
+    eng::SoundPlayer stealth;
+    eng::SoundPlayer shield_on;
+    eng::SoundPlayer hit;
   };
 
+  std::shared_ptr<eng::Shader> chromatic_aberration_;
+  float chromatic_aberration_offset_ = 0;
+
+  eng::ImageQuad boss_;
+  eng::Animator boss_animator_;
+  eng::SoundPlayer boss_intro_;
+
+  std::shared_ptr<eng::Sound> boss_intro_sound_;
+  std::shared_ptr<eng::Sound> boss_explosion_sound_;
   std::shared_ptr<eng::Sound> explosion_sound_;
+  std::shared_ptr<eng::Sound> stealth_sound_;
+  std::shared_ptr<eng::Sound> shield_on_sound_;
+  std::shared_ptr<eng::Sound> hit_sound_;
+  std::shared_ptr<eng::Sound> power_up_spawn_sound_;
+  std::shared_ptr<eng::Sound> power_up_pick_sound_;
 
   std::list<EnemyUnit> enemies_;
 
   int num_enemies_killed_in_current_wave_ = 0;
 
-  std::array<float, kEnemyType_Max> seconds_since_last_spawn_ = {0, 0, 0};
-  std::array<float, kEnemyType_Max> seconds_to_next_spawn_ = {0, 0, 0};
+  std::array<float, kEnemyType_Unit_Last + 1> seconds_since_last_spawn_ = {
+      0, 0, 0, 0};
+  std::array<float, kEnemyType_Unit_Last + 1> seconds_to_next_spawn_ = {0, 0, 0,
+                                                                        0};
 
   float spawn_factor_ = 0;
-  float spawn_factor_interpolator_ = 0;
 
-  bool waiting_for_next_wave_ = false;
+  float boss_spawn_time_ = 0;
+  float boss_spawn_time_factor_ = 0;
+
+  float seconds_since_last_power_up_ = 0;
+  float seconds_to_next_power_up_ = 0;
+
+  bool progress_paused_ = true;
 
   int last_spawn_col_ = 0;
 
-  bool paused_ = false;
+  int wave_ = 0;
+  bool boss_fight_ = false;
+
+  bool CheckSpawnPos(base::Vector2f pos, SpeedType speed_type);
+  bool CheckTeleportPos(EnemyUnit* enemy);
+
+  void SpawnUnit(EnemyType enemy_type,
+                 DamageType damage_type,
+                 const base::Vector2f& pos,
+                 float speed,
+                 SpeedType speed_type = kSpeedType_Invalid);
+
+  void SpawnBoss();
 
   void TakeDamage(EnemyUnit* target, int damage);
 
-  void SpawnNextEnemy();
-
-  void Spawn(EnemyType enemy_type,
-             DamageType damage_type,
-             const base::Vector2f& pos,
-             float speed);
+  void UpdateWave(float delta_time);
+  void UpdateBoss(float delta_time);
 
   EnemyUnit* GetTarget(DamageType damage_type);
 
@@ -107,6 +168,9 @@ class Enemy {
   std::unique_ptr<eng::Image> GetScoreImage(EnemyType enemy_type);
 
   bool CreateRenderResources();
+  bool CreateShaders();
+
+  void TranslateEnemyUnit(EnemyUnit& e, const base::Vector2f& delta);
 };
 
 #endif  // ENEMY_H
