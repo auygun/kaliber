@@ -19,7 +19,6 @@ class TextureCompressor;
 namespace eng {
 
 class Animator;
-class AudioResource;
 class Font;
 class Game;
 class Drawable;
@@ -83,8 +82,6 @@ class Engine {
 
   std::shared_ptr<Texture> GetTexture(const std::string& asset_name);
 
-  std::unique_ptr<AudioResource> CreateAudioResource();
-
   void AddInputEvent(std::unique_ptr<InputEvent> event);
   std::unique_ptr<InputEvent> GetNextInputEvent();
 
@@ -107,6 +104,8 @@ class Engine {
   void SetEnableAudio(bool enable);
 
   void SetEnableVibration(bool enable) { vibration_enabled_ = enable; }
+
+  Audio* GetAudio() { return audio_; }
 
   // Access to the render resources.
   Geometry* GetQuad() { return quad_.get(); }

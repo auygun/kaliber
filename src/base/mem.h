@@ -46,6 +46,11 @@ inline void AlignedFree(void* mem) {
   free(mem);
 }
 
+template <int kAlignment>
+inline bool IsAligned(void* ptr) {
+  return (reinterpret_cast<uintptr_t>(ptr) & (kAlignment - 1)) == 0U;
+}
+
 }  // namespace base
 
 #endif  // MEM_H

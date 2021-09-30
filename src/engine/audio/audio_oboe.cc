@@ -2,7 +2,6 @@
 
 #include "../../base/log.h"
 #include "../../third_party/oboe/include/oboe/Oboe.h"
-#include "audio_resource.h"
 
 using namespace base;
 

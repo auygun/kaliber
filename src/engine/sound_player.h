@@ -7,7 +7,6 @@
 
 namespace eng {
 
-class AudioResource;
 class Sound;
 
 class SoundPlayer {
@@ -37,7 +36,7 @@ class SoundPlayer {
   void SetEndCallback(base::Closure cb);
 
  private:
-  std::unique_ptr<AudioResource> resource_;
+  size_t resource_id_ = 0;
   std::shared_ptr<Sound> sound_;
 
   float max_amplitude_ = 1.0f;

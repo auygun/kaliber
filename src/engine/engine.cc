@@ -4,7 +4,6 @@
 #include "../third_party/texture_compressor/texture_compressor.h"
 #include "animator.h"
 #include "audio/audio.h"
-#include "audio/audio_resource.h"
 #include "drawable.h"
 #include "font.h"
 #include "game.h"
@@ -272,10 +271,6 @@ std::shared_ptr<Texture> Engine::GetTexture(const std::string& asset_name) {
   textures_[asset_name] = {texture};
 
   return texture;
-}
-
-std::unique_ptr<AudioResource> Engine::CreateAudioResource() {
-  return std::make_unique<AudioResource>(audio_);
 }
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {

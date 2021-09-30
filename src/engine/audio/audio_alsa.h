@@ -10,8 +10,6 @@ typedef struct _snd_pcm snd_pcm_t;
 
 namespace eng {
 
-class AudioResource;
-
 class AudioAlsa : public AudioBase {
  public:
   AudioAlsa();

@@ -9,8 +9,6 @@
 
 namespace eng {
 
-class AudioResource;
-
 class AudioOboe : public AudioBase {
  public:
   AudioOboe();

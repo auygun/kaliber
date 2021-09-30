@@ -8,8 +8,6 @@ source_set("engine") {
         "audio/audio_base.cc",
         "audio/audio_base.h",
         "audio/audio_forward.h",
-        "audio/audio_resource.cc",
-        "audio/audio_resource.h",
         "audio/audio_sample.h",
         "audio/audio.h",
         "drawable.cc",

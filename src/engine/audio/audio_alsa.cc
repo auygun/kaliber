@@ -5,7 +5,6 @@
 #include <memory>
 
 #include "../../base/log.h"
-#include "audio_resource.h"
 
 using namespace base;
 

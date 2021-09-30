@@ -16,50 +16,161 @@ AudioBase::AudioBase()
 
 AudioBase::~AudioBase() = default;
 
-void AudioBase::Play(std::shared_ptr<AudioSample> sample) {
-  if (audio_enabled_) {
-    std::lock_guard<std::mutex> scoped_lock(lock_);
-    samples_[0].push_back(sample);
-  } else if ((sample->flags.load(std::memory_order_relaxed) &
-              AudioSample::kStopped) == 0) {
-    sample->active = false;
+size_t AudioBase::CreateResource() {
+  size_t resource_id = ++last_resource_id_;
+  resources_[resource_id] = std::make_shared<Resource>();
+  return resource_id;
+}
+
+void AudioBase::DestroyResource(size_t resource_id) {
+  auto it = resources_.find(resource_id);
+  if (it == resources_.end())
+    return;
+
+  it->second->flags.fetch_or(kStopped, std::memory_order_relaxed);
+  resources_.erase(it);
+}
+
+void AudioBase::Play(size_t resource_id,
+                     std::shared_ptr<Sound> sound,
+                     float amplitude,
+                     bool reset_pos) {
+  if (!audio_enabled_)
+    return;
+
+  auto it = resources_.find(resource_id);
+  if (it == resources_.end())
+    return;
+
+  if (it->second->active) {
+    if (reset_pos)
+      it->second->flags.fetch_or(kStopped, std::memory_order_relaxed);
+
+    if (it->second->flags.load(std::memory_order_relaxed) & kStopped) {
+      Closure ocb = std::move(it->second->end_cb);
+      SetEndCallback(
+          resource_id,
+          [&, resource_id, sound, amplitude, reset_pos, ocb]() -> void {
+            Play(resource_id, sound, amplitude, reset_pos);
+            SetEndCallback(resource_id, std::move(ocb));
+          });
+    }
+
+    return;
   }
+
+  if (reset_pos) {
+    it->second->src_index = 0;
+    it->second->accumulator = 0;
+    sound->ResetStream();
+  }
+
+  it->second->active = true;
+  it->second->flags.fetch_and(~kStopped, std::memory_order_relaxed);
+  it->second->sound = sound;
+  if (amplitude >= 0)
+    it->second->amplitude = amplitude;
+
+  std::lock_guard<std::mutex> scoped_lock(lock_);
+  play_list_[0].push_back(it->second);
+}
+
+void AudioBase::Stop(size_t resource_id) {
+  auto it = resources_.find(resource_id);
+  if (it == resources_.end())
+    return;
+
+  if (it->second->active)
+    it->second->flags.fetch_or(kStopped, std::memory_order_relaxed);
+}
+
+void AudioBase::SetLoop(size_t resource_id, bool loop) {
+  auto it = resources_.find(resource_id);
+  if (it == resources_.end())
+    return;
+
+  if (loop)
+    it->second->flags.fetch_or(kLoop, std::memory_order_relaxed);
+  else
+    it->second->flags.fetch_and(~kLoop, std::memory_order_relaxed);
+}
+
+void AudioBase::SetSimulateStereo(size_t resource_id, bool simulate) {
+  auto it = resources_.find(resource_id);
+  if (it == resources_.end())
+    return;
+
+  if (simulate)
+    it->second->flags.fetch_or(kSimulateStereo, std::memory_order_relaxed);
+  else
+    it->second->flags.fetch_and(~kSimulateStereo, std::memory_order_relaxed);
+}
+
+void AudioBase::SetResampleStep(size_t resource_id, size_t step) {
+  auto it = resources_.find(resource_id);
+  if (it == resources_.end())
+    return;
+
+  it->second->step.store(step + 100, std::memory_order_relaxed);
+}
+
+void AudioBase::SetMaxAmplitude(size_t resource_id, float max_amplitude) {
+  auto it = resources_.find(resource_id);
+  if (it == resources_.end())
+    return;
+
+  it->second->max_amplitude.store(max_amplitude, std::memory_order_relaxed);
+}
+
+void AudioBase::SetAmplitudeInc(size_t resource_id, float amplitude_inc) {
+  auto it = resources_.find(resource_id);
+  if (it == resources_.end())
+    return;
+
+  it->second->amplitude_inc.store(amplitude_inc, std::memory_order_relaxed);
+}
+
+void AudioBase::SetEndCallback(size_t resource_id, base::Closure cb) {
+  auto it = resources_.find(resource_id);
+  if (it == resources_.end())
+    return;
+
+  it->second->end_cb = std::move(cb);
 }
 
 void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
   {
     std::unique_lock<std::mutex> scoped_lock(lock_, std::try_to_lock);
     if (scoped_lock)
-      samples_[1].splice(samples_[1].end(), samples_[0]);
+      play_list_[1].splice(play_list_[1].end(), play_list_[0]);
   }
 
   memset(output_buffer, 0, sizeof(float) * num_frames * kChannelCount);
 
-  for (auto it = samples_[1].begin(); it != samples_[1].end();) {
-    AudioSample* sample = it->get();
+  for (auto it = play_list_[1].begin(); it != play_list_[1].end();) {
+    auto sound = it->get()->sound.get();
+    unsigned flags = it->get()->flags.load(std::memory_order_relaxed);
+    bool marked_for_removal = false;
 
-    auto sound = sample->sound.get();
-    unsigned flags = sample->flags.load(std::memory_order_relaxed);
-
-    if (flags & AudioSample::kStopped) {
-      sample->marked_for_removal = true;
-    } else if (!sample->marked_for_removal) {
+    if (flags & kStopped) {
+      marked_for_removal = true;
+    } else {
       const float* src[2] = {sound->GetBuffer(0), sound->GetBuffer(1)};
       if (!src[1])
         src[1] = src[0];  // mono.
 
       size_t num_samples = sound->GetNumSamples();
-      size_t src_index = sample->src_index;
-      size_t step = sample->step.load(std::memory_order_relaxed);
-      size_t accumulator = sample->accumulator;
-      float amplitude = sample->amplitude;
+      size_t src_index = it->get()->src_index;
+      size_t step = it->get()->step.load(std::memory_order_relaxed);
+      size_t accumulator = it->get()->accumulator;
+      float amplitude = it->get()->amplitude;
       float amplitude_inc =
-          sample->amplitude_inc.load(std::memory_order_relaxed);
+          it->get()->amplitude_inc.load(std::memory_order_relaxed);
       float max_amplitude =
-          sample->max_amplitude.load(std::memory_order_relaxed);
+          it->get()->max_amplitude.load(std::memory_order_relaxed);
 
       size_t channel_offset =
-          (flags & AudioSample::kSimulateStereo) && !sound->is_streaming_sound()
+          (flags & kSimulateStereo) && !sound->is_streaming_sound()
               ? sound->sample_rate() / 10
               : 0;
 
@@ -74,7 +185,7 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
           size_t ind = channel_offset + src_index;
           if (ind < num_samples)
             output_buffer[i++] += src[1][ind] * amplitude;
-          else if (flags & AudioSample::kLoop)
+          else if (flags & kLoop)
             output_buffer[i++] += src[1][ind % num_samples] * amplitude;
           else
             i++;
@@ -82,39 +193,40 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
           // Apply amplitude modification.
           amplitude += amplitude_inc;
           if (amplitude <= 0) {
-            sample->marked_for_removal = true;
+            marked_for_removal = true;
             break;
           } else if (amplitude > max_amplitude) {
             amplitude = max_amplitude;
           }
 
-          // Basic resampling for variations.
+          // Advance source index. Apply basic resampling for variations.
           accumulator += step;
           src_index += accumulator / 100;
           accumulator %= 100;
         }
 
-        // Advance source index.
+        // Remove, loop or stream if the source data is consumed
         if (src_index >= num_samples) {
           if (!sound->is_streaming_sound()) {
             src_index %= num_samples;
 
-            if (!(flags & AudioSample::kLoop)) {
-              sample->marked_for_removal = true;
+            if (!(flags & kLoop)) {
+              marked_for_removal = true;
               break;
             }
-          } else if (!sample->streaming_in_progress.load(
+          } else if (!it->get()->streaming_in_progress.load(
                          std::memory_order_acquire)) {
             if (num_samples)
               src_index %= num_samples;
 
+            // Looping streaming sounds never return eof.
             if (sound->eof()) {
-              sample->marked_for_removal = true;
+              marked_for_removal = true;
               break;
             }
 
-            sample->streaming_in_progress.store(true,
-                                                std::memory_order_relaxed);
+            it->get()->streaming_in_progress.store(true,
+                                                   std::memory_order_relaxed);
 
             // Swap buffers and start streaming in background.
             sound->SwapBuffers();
@@ -124,9 +236,8 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
               src[1] = src[0];  // mono.
             num_samples = sound->GetNumSamples();
 
-            Worker::Get().PostTask(HERE,
-                                   std::bind(&AudioBase::DoStream, this, *it,
-                                             flags & AudioSample::kLoop));
+            Worker::Get().PostTask(HERE, std::bind(&AudioBase::DoStream, this,
+                                                   *it, flags & kLoop));
           } else if (num_samples) {
             DLOG << "Buffer underrun!";
             src_index %= num_samples;
@@ -134,37 +245,44 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
         }
       }
 
-      sample->src_index = src_index;
-      sample->accumulator = accumulator;
-      sample->amplitude = amplitude;
+      it->get()->src_index = src_index;
+      it->get()->accumulator = accumulator;
+      it->get()->amplitude = amplitude;
     }
 
-    if (sample->marked_for_removal &&
-        (!sound->is_streaming_sound() ||
-         !sample->streaming_in_progress.load(std::memory_order_relaxed))) {
-      sample->marked_for_removal = false;
+    if (marked_for_removal) {
+      end_list_.push_back(*it);
+      it = play_list_[1].erase(it);
+    } else {
+      ++it;
+    }
+  }
+
+  for (auto it = end_list_.begin(); it != end_list_.end();) {
+    if ((!it->get()->sound->is_streaming_sound() ||
+         !it->get()->streaming_in_progress.load(std::memory_order_relaxed))) {
       main_thread_task_runner_->PostTask(
           HERE, std::bind(&AudioBase::EndCallback, this, *it));
-      it = samples_[1].erase(it);
+      it = end_list_.erase(it);
     } else {
       ++it;
     }
   }
 }
 
-void AudioBase::DoStream(std::shared_ptr<AudioSample> sample, bool loop) {
-  sample->sound->Stream(loop);
+void AudioBase::DoStream(std::shared_ptr<Resource> resource, bool loop) {
+  resource->sound->Stream(loop);
 
   // Memory barrier to ensure all memory writes become visible to the audio
   // thread.
-  sample->streaming_in_progress.store(false, std::memory_order_release);
+  resource->streaming_in_progress.store(false, std::memory_order_release);
 }
 
-void AudioBase::EndCallback(std::shared_ptr<AudioSample> sample) {
-  sample->active = false;
+void AudioBase::EndCallback(std::shared_ptr<Resource> resource) {
+  resource->active = false;
 
-  if (sample->end_cb)
-    sample->end_cb();
+  if (resource->end_cb)
+    resource->end_cb();
 }
 
 }  // namespace eng
