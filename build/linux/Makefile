@@ -100,7 +100,7 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/persistent_data.cc \
   $(SRC_ROOT)/engine/platform/asset_file_linux.cc \
   $(SRC_ROOT)/engine/platform/asset_file.cc \
-  $(SRC_ROOT)/engine/platform/platform_base.cc \
+  $(SRC_ROOT)/engine/platform/platform.cc \
   $(SRC_ROOT)/engine/platform/platform_linux.cc \
   $(SRC_ROOT)/engine/renderer/geometry.cc \
   $(SRC_ROOT)/engine/renderer/opengl/render_command.cc \

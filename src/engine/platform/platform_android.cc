@@ -1,4 +1,4 @@
-#include "platform_android.h"
+#include "platform.h"
 
 #include <android_native_app_glue.h>
 #include <jni.h>
@@ -208,11 +208,8 @@ int32_t GetDensityDpi(android_app* app) {
 
 namespace eng {
 
-PlatformAndroid::PlatformAndroid() = default;
-PlatformAndroid::~PlatformAndroid() = default;
-
-int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
-  PlatformAndroid* platform = reinterpret_cast<PlatformAndroid*>(app->userData);
+int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
+  Platform* platform = reinterpret_cast<Platform*>(app->userData);
 
   if (!platform->engine_)
     return 0;
@@ -292,8 +289,8 @@ int32_t PlatformAndroid::HandleInput(android_app* app, AInputEvent* event) {
   return 0;
 }
 
-void PlatformAndroid::HandleCmd(android_app* app, int32_t cmd) {
-  PlatformAndroid* platform = reinterpret_cast<PlatformAndroid*>(app->userData);
+void Platform::HandleCmd(android_app* app, int32_t cmd) {
+  Platform* platform = reinterpret_cast<Platform*>(app->userData);
 
   switch (cmd) {
     case APP_CMD_SAVE_STATE:
@@ -356,8 +353,8 @@ void PlatformAndroid::HandleCmd(android_app* app, int32_t cmd) {
   }
 }
 
-void PlatformAndroid::Initialize(android_app* app) {
-  PlatformBase::Initialize();
+void Platform::Initialize(android_app* app) {
+  Platform::InitializeCommon();
 
   app_ = app;
 
@@ -376,13 +373,17 @@ void PlatformAndroid::Initialize(android_app* app) {
   LOG << "Device DPI: " << device_dpi_;
 
   app->userData = reinterpret_cast<void*>(this);
-  app->onAppCmd = PlatformAndroid::HandleCmd;
-  app->onInputEvent = PlatformAndroid::HandleInput;
+  app->onAppCmd = Platform::HandleCmd;
+  app->onInputEvent = Platform::HandleInput;
 
   Update();
 }
 
-void PlatformAndroid::Update() {
+void Platform::Shutdown() {
+  Platform::ShutdownCommon();
+}
+
+void Platform::Update() {
   int id;
   int events;
   android_poll_source* source;
@@ -401,35 +402,35 @@ void PlatformAndroid::Update() {
   }
 }
 
-void PlatformAndroid::Exit() {
+void Platform::Exit() {
   ANativeActivity_finish(app_->activity);
 }
 
-void PlatformAndroid::Vibrate(int duration) {
+void Platform::Vibrate(int duration) {
   ::Vibrate(app_->activity, duration);
 }
 
-void PlatformAndroid::ShowInterstitialAd() {
+void Platform::ShowInterstitialAd() {
   ::ShowInterstitialAd(app_->activity);
 }
 
-void PlatformAndroid::ShareFile(const std::string& file_name) {
+void Platform::ShareFile(const std::string& file_name) {
   ::ShareFile(app_->activity, file_name);
 }
 
-void PlatformAndroid::SetKeepScreenOn(bool keep_screen_on) {
+void Platform::SetKeepScreenOn(bool keep_screen_on) {
   ::SetKeepScreenOn(app_->activity, keep_screen_on);
 }
 
 }  // namespace eng
 
 void android_main(android_app* app) {
-  eng::PlatformAndroid platform;
+  eng::Platform platform;
   try {
     platform.Initialize(app);
     platform.RunMainLoop();
     platform.Shutdown();
-  } catch (eng::PlatformBase::InternalError& e) {
+  } catch (eng::Platform::InternalError& e) {
   }
   _exit(0);
 }

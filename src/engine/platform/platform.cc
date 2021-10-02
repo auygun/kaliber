@@ -13,13 +13,13 @@ using namespace base;
 
 namespace eng {
 
-PlatformBase::InternalError PlatformBase::internal_error;
+Platform::InternalError Platform::internal_error;
 
-PlatformBase::PlatformBase() = default;
+Platform::Platform() = default;
 
-PlatformBase::~PlatformBase() = default;
+Platform::~Platform() = default;
 
-void PlatformBase::Initialize() {
+void Platform::InitializeCommon() {
   LOG << "Initializing platform.";
 
   worker_.Initialize();
@@ -38,16 +38,15 @@ void PlatformBase::Initialize() {
 #endif
 }
 
-void PlatformBase::Shutdown() {
+void Platform::ShutdownCommon() {
   LOG << "Shutting down platform.";
 
   audio_->Shutdown();
   renderer_->Shutdown();
 }
 
-void PlatformBase::RunMainLoop() {
-  engine_ = std::make_unique<Engine>(static_cast<Platform*>(this),
-                                     renderer_.get(), audio_.get());
+void Platform::RunMainLoop() {
+  engine_ = std::make_unique<Engine>(this, renderer_.get(), audio_.get());
   if (!engine_->Initialize()) {
     LOG << "Failed to initialize the engine.";
     throw internal_error;
@@ -71,7 +70,7 @@ void PlatformBase::RunMainLoop() {
     while (accumulator >= time_step) {
       TaskRunner::GetThreadLocalTaskRunner()->SingleConsumerRun();
 
-      static_cast<Platform*>(this)->Update();
+      Update();
       engine_->Update(time_step);
 
       if (should_exit_) {

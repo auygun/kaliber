@@ -11,7 +11,6 @@
 #include "../base/vecmath.h"
 #include "audio/audio_forward.h"
 #include "persistent_data.h"
-#include "platform/platform_forward.h"
 #include "renderer/render_resource.h"
 
 class TextureCompressor;
@@ -29,6 +28,7 @@ class Renderer;
 class Geometry;
 class Shader;
 class Texture;
+class Platform;
 
 class Engine {
  public:

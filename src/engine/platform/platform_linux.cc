@@ -1,4 +1,4 @@
-#include "platform_linux.h"
+#include "platform.h"
 
 #include <memory>
 
@@ -14,11 +14,8 @@ using namespace base;
 
 namespace eng {
 
-PlatformLinux::PlatformLinux() = default;
-PlatformLinux::~PlatformLinux() = default;
-
-void PlatformLinux::Initialize() {
-  PlatformBase::Initialize();
+void Platform::Initialize() {
+  Platform::InitializeCommon();
 
   root_path_ = "../../";
   LOG << "Root path: " << root_path_.c_str();
@@ -46,13 +43,13 @@ void PlatformLinux::Initialize() {
   XSetWMProtocols(display_, window_, &WM_DELETE_WINDOW, 1);
 }
 
-void PlatformLinux::Shutdown() {
-  PlatformBase::Shutdown();
+void Platform::Shutdown() {
+  Platform::ShutdownCommon();
 
   DestroyWindow();
 }
 
-void PlatformLinux::Update() {
+void Platform::Update() {
   while (XPending(display_)) {
     XEvent e;
     XNextEvent(display_, &e);
@@ -113,11 +110,19 @@ void PlatformLinux::Update() {
   }
 }
 
-void PlatformLinux::Exit() {
+void Platform::Exit() {
   should_exit_ = true;
 }
 
-bool PlatformLinux::CreateWindow(int width, int height) {
+void Platform::Vibrate(int duration) {}
+
+void Platform::ShowInterstitialAd() {}
+
+void Platform::ShareFile(const std::string& file_name) {}
+
+void Platform::SetKeepScreenOn(bool keep_screen_on) {}
+
+bool Platform::CreateWindow(int width, int height) {
   // Try to open the local display.
   display_ = XOpenDisplay(NULL);
   if (!display_) {
@@ -149,7 +154,7 @@ bool PlatformLinux::CreateWindow(int width, int height) {
   return true;
 }
 
-void PlatformLinux::DestroyWindow() {
+void Platform::DestroyWindow() {
   if (display_) {
     XDestroyWindow(display_, window_);
     XCloseDisplay(display_);
@@ -161,12 +166,12 @@ void PlatformLinux::DestroyWindow() {
 }  // namespace eng
 
 int main(int argc, char** argv) {
-  eng::PlatformLinux platform;
+  eng::Platform platform;
   try {
     platform.Initialize();
     platform.RunMainLoop();
     platform.Shutdown();
-  } catch (eng::PlatformBase::InternalError& e) {
+  } catch (eng::Platform::InternalError& e) {
     return -1;
   }
   return 0;

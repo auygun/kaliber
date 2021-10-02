@@ -76,7 +76,7 @@ add_library(kaliber SHARED
     ../../../src/engine/platform/asset_file_android.cc
     ../../../src/engine/platform/asset_file.cc
     ../../../src/engine/platform/platform_android.cc
-    ../../../src/engine/platform/platform_base.cc
+    ../../../src/engine/platform/platform.cc
     ../../../src/engine/renderer/geometry.cc
     ../../../src/engine/renderer/opengl/render_command.cc
     ../../../src/engine/renderer/opengl/renderer_opengl_android.cc
