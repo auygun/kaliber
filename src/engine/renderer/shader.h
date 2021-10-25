@@ -15,17 +15,15 @@ class ShaderSource;
 
 class Shader : public RenderResource {
  public:
-  Shader(unsigned resource_id,
-         std::shared_ptr<void> impl_data,
-         Renderer* renderer);
-  ~Shader() override;
+  Shader(Renderer* renderer);
+  ~Shader();
 
   void Create(std::unique_ptr<ShaderSource> source,
               const VertexDescripton& vd,
               Primitive primitive,
               bool enable_depth_test);
 
-  void Destroy() override;
+  void Destroy();
 
   void Activate();
 

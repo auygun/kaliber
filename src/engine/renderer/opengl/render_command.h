@@ -50,81 +50,88 @@ struct RenderCommand {
 RENDER_COMMAND_BEGIN(CmdPresent)
 RENDER_COMMAND_END
 
+RENDER_COMMAND_BEGIN(CmdInvalidateAllResources)
+RENDER_COMMAND_END
+
+RENDER_COMMAND_BEGIN(CmdCreateTexture)
+  uint64_t resource_id;
+RENDER_COMMAND_END
+
 RENDER_COMMAND_BEGIN(CmdUpdateTexture)
   std::unique_ptr<Image> image;
-  std::shared_ptr<void> impl_data;
+  uint64_t resource_id;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdDestoryTexture)
-  std::shared_ptr<void> impl_data;
+  uint64_t resource_id;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdActivateTexture)
-  std::shared_ptr<void> impl_data;
+  uint64_t resource_id;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdCreateGeometry)
   std::unique_ptr<Mesh> mesh;
-  std::shared_ptr<void> impl_data;
+  uint64_t resource_id;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdDestroyGeometry)
-  std::shared_ptr<void> impl_data;
+  uint64_t resource_id;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdDrawGeometry)
-  std::shared_ptr<void> impl_data;
+  uint64_t resource_id;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdCreateShader)
   std::unique_ptr<ShaderSource> source;
   VertexDescripton vertex_description;
-  std::shared_ptr<void> impl_data;
+  uint64_t resource_id;
   bool enable_depth_test;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdDestroyShader)
-  std::shared_ptr<void> impl_data;
+  uint64_t resource_id;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdActivateShader)
-  std::shared_ptr<void> impl_data;
+  uint64_t resource_id;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformVec2)
   std::string name;
   base::Vector2f v;
-  std::shared_ptr<void> impl_data;
+  uint64_t resource_id;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformVec3)
   std::string name;
   base::Vector3f v;
-  std::shared_ptr<void> impl_data;
+  uint64_t resource_id;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformVec4)
   std::string name;
   base::Vector4f v;
-  std::shared_ptr<void> impl_data;
+  uint64_t resource_id;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformMat4)
   std::string name;
   base::Matrix4f m;
-  std::shared_ptr<void> impl_data;
+  uint64_t resource_id;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformInt)
   std::string name;
   int i;
-  std::shared_ptr<void> impl_data;
+  uint64_t resource_id;
 RENDER_COMMAND_END
 
 RENDER_COMMAND_BEGIN(CmdSetUniformFloat)
   std::string name;
   float f;
-  std::shared_ptr<void> impl_data;
+  uint64_t resource_id;
 RENDER_COMMAND_END
 
 }  // namespace eng

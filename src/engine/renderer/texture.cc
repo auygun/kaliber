@@ -6,33 +6,31 @@
 
 namespace eng {
 
-Texture::Texture(unsigned resource_id,
-                 std::shared_ptr<void> impl_data,
-                 Renderer* renderer)
-    : RenderResource(resource_id, impl_data, renderer) {}
+Texture::Texture(Renderer* renderer) : RenderResource(renderer) {}
 
 Texture::~Texture() {
   Destroy();
 }
 
 void Texture::Update(std::unique_ptr<Image> image) {
-  valid_ = true;
+  if (!IsValid())
+    resource_id_ = renderer_->CreateTexture();
   width_ = image->GetWidth();
   height_ = image->GetHeight();
-  renderer_->UpdateTexture(impl_data_, std::move(image));
+  renderer_->UpdateTexture(resource_id_, std::move(image));
 }
 
 void Texture::Destroy() {
-  if (valid_) {
-    renderer_->DestroyTexture(impl_data_);
-    valid_ = false;
+  if (IsValid()) {
+    renderer_->DestroyTexture(resource_id_);
+    resource_id_ = 0;
     DLOG << "Texture destroyed. resource_id: " << resource_id_;
   }
 }
 
 void Texture::Activate() {
-  if (valid_)
-    renderer_->ActivateTexture(impl_data_);
+  if (IsValid())
+    renderer_->ActivateTexture(resource_id_);
 }
 
 }  // namespace eng

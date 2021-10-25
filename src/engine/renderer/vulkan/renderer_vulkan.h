@@ -13,7 +13,6 @@
 #include "../../../base/semaphore.h"
 #include "../../../base/task_runner.h"
 #include "../../../third_party/vma/vk_mem_alloc.h"
-#include "../render_resource.h"
 #include "../renderer.h"
 
 namespace eng {
@@ -33,50 +32,45 @@ class RendererVulkan : public Renderer {
 
   void Shutdown() override;
 
-  void CreateGeometry(std::shared_ptr<void> impl_data,
-                      std::unique_ptr<Mesh> mesh) override;
-  void DestroyGeometry(std::shared_ptr<void> impl_data) override;
-  void Draw(std::shared_ptr<void> impl_data) override;
+  uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) override;
+  void DestroyGeometry(uint64_t resource_id) override;
+  void Draw(uint64_t resource_id) override;
 
-  void UpdateTexture(std::shared_ptr<void> impl_data,
+  uint64_t CreateTexture() override;
+  void UpdateTexture(uint64_t resource_id,
                      std::unique_ptr<Image> image) override;
-  void DestroyTexture(std::shared_ptr<void> impl_data) override;
-  void ActivateTexture(std::shared_ptr<void> impl_data) override;
+  void DestroyTexture(uint64_t resource_id) override;
+  void ActivateTexture(uint64_t resource_id) override;
 
-  void CreateShader(std::shared_ptr<void> impl_data,
-                    std::unique_ptr<ShaderSource> source,
-                    const VertexDescripton& vertex_description,
-                    Primitive primitive,
-                    bool enable_depth_test) override;
-  void DestroyShader(std::shared_ptr<void> impl_data) override;
-  void ActivateShader(std::shared_ptr<void> impl_data) override;
+  uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
+                        const VertexDescripton& vertex_description,
+                        Primitive primitive,
+                        bool enable_depth_test) override;
+  void DestroyShader(uint64_t resource_id) override;
+  void ActivateShader(uint64_t resource_id) override;
 
-  void SetUniform(std::shared_ptr<void> impl_data,
+  void SetUniform(uint64_t resource_id,
                   const std::string& name,
                   const base::Vector2f& val) override;
-  void SetUniform(std::shared_ptr<void> impl_data,
+  void SetUniform(uint64_t resource_id,
                   const std::string& name,
                   const base::Vector3f& val) override;
-  void SetUniform(std::shared_ptr<void> impl_data,
+  void SetUniform(uint64_t resource_id,
                   const std::string& name,
                   const base::Vector4f& val) override;
-  void SetUniform(std::shared_ptr<void> impl_data,
+  void SetUniform(uint64_t resource_id,
                   const std::string& name,
                   const base::Matrix4f& val) override;
-  void SetUniform(std::shared_ptr<void> impl_data,
+  void SetUniform(uint64_t resource_id,
                   const std::string& name,
                   float val) override;
-  void SetUniform(std::shared_ptr<void> impl_data,
+  void SetUniform(uint64_t resource_id,
                   const std::string& name,
                   int val) override;
-  void UploadUniforms(std::shared_ptr<void> impl_data) override;
+  void UploadUniforms(uint64_t resource_id) override;
 
   void PrepareForDrawing() override;
   void Present() override;
-
-  std::unique_ptr<RenderResource> CreateResource(
-      RenderResourceFactoryBase& factory) override;
-  void ReleaseResource(unsigned resource_id) override;
 
   size_t GetAndResetFPS() override;
 
@@ -155,6 +149,11 @@ class RendererVulkan : public Renderer {
     VmaAllocationInfo alloc_info;
   };
 
+  std::unordered_map<uint64_t, GeometryVulkan> geometries_;
+  std::unordered_map<uint64_t, ShaderVulkan> shaders_;
+  std::unordered_map<uint64_t, TextureVulkan> textures_;
+  uint64_t last_resource_id_ = 0;
+
   VulkanContext context_;
 
   VmaAllocator allocator_ = nullptr;
@@ -178,8 +177,6 @@ class RendererVulkan : public Renderer {
   std::vector<VkDescriptorSet> penging_descriptor_sets_;
 
   VkSampler sampler_ = VK_NULL_HANDLE;
-
-  std::unordered_map<unsigned, RenderResource*> resources_;
 
   std::thread setup_thread_;
   base::TaskRunner task_runner_;
@@ -250,7 +247,7 @@ class RendererVulkan : public Renderer {
                           VkImageLayout old_layout,
                           VkImageLayout new_layout);
 
-  bool CreatePipelineLayout(ShaderVulkan* shader,
+  bool CreatePipelineLayout(ShaderVulkan& shader,
                             const std::vector<uint8_t>& spirv_vertex,
                             const std::vector<uint8_t>& spirv_fragment);
 
@@ -262,11 +259,11 @@ class RendererVulkan : public Renderer {
   void SetupThreadMain(int preallocate);
 
   template <typename T>
-  bool SetUniformInternal(ShaderVulkan* shader, const std::string& name, T val);
+  bool SetUniformInternal(ShaderVulkan& shader, const std::string& name, T val);
 
   bool IsFormatSupported(VkFormat format);
 
-  void InvalidateAllResources();
+  void DestroyAllResources();
 };
 
 }  // namespace eng

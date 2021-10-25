@@ -13,15 +13,12 @@ class Renderer;
 
 class Texture : public RenderResource {
  public:
-  Texture(unsigned resource_id,
-          std::shared_ptr<void> impl_data,
-          Renderer* renderer);
-  ~Texture() override;
+  Texture(Renderer* renderer);
+  ~Texture();
 
-  // Uploads image.
   void Update(std::unique_ptr<Image> image);
 
-  void Destroy() override;
+  void Destroy();
 
   void Activate();
 

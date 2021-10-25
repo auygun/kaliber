@@ -15,6 +15,8 @@
 namespace eng {
 
 RENDER_COMMAND_IMPL(CmdPresent, false);
+RENDER_COMMAND_IMPL(CmdInvalidateAllResources, true);
+RENDER_COMMAND_IMPL(CmdCreateTexture, true);
 RENDER_COMMAND_IMPL(CmdUpdateTexture, true);
 RENDER_COMMAND_IMPL(CmdDestoryTexture, true);
 RENDER_COMMAND_IMPL(CmdActivateTexture, false);

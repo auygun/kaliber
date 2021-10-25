@@ -81,7 +81,6 @@ add_library(kaliber SHARED
     ../../../src/engine/renderer/opengl/render_command.cc
     ../../../src/engine/renderer/opengl/renderer_opengl_android.cc
     ../../../src/engine/renderer/opengl/renderer_opengl.cc
-    ../../../src/engine/renderer/render_resource.cc
     ../../../src/engine/renderer/renderer_types.cc
     ../../../src/engine/renderer/shader.cc
     ../../../src/engine/renderer/texture.cc

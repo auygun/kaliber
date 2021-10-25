@@ -20,7 +20,6 @@
 
 #include "opengl.h"
 
-#include "../render_resource.h"
 #include "../renderer.h"
 
 #if defined(__ANDROID__)
@@ -50,50 +49,45 @@ class RendererOpenGL : public Renderer {
 
   void Shutdown() override;
 
-  void CreateGeometry(std::shared_ptr<void> impl_data,
-                      std::unique_ptr<Mesh> mesh) override;
-  void DestroyGeometry(std::shared_ptr<void> impl_data) override;
-  void Draw(std::shared_ptr<void> impl_data) override;
+  uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) override;
+  void DestroyGeometry(uint64_t resource_id) override;
+  void Draw(uint64_t resource_id) override;
 
-  void UpdateTexture(std::shared_ptr<void> impl_data,
+  uint64_t CreateTexture() override;
+  void UpdateTexture(uint64_t resource_id,
                      std::unique_ptr<Image> image) override;
-  void DestroyTexture(std::shared_ptr<void> impl_data) override;
-  void ActivateTexture(std::shared_ptr<void> impl_data) override;
+  void DestroyTexture(uint64_t resource_id) override;
+  void ActivateTexture(uint64_t resource_id) override;
 
-  void CreateShader(std::shared_ptr<void> impl_data,
-                    std::unique_ptr<ShaderSource> source,
-                    const VertexDescripton& vertex_description,
-                    Primitive primitive,
-                    bool enable_depth_test) override;
-  void DestroyShader(std::shared_ptr<void> impl_data) override;
-  void ActivateShader(std::shared_ptr<void> impl_data) override;
+  uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
+                        const VertexDescripton& vertex_description,
+                        Primitive primitive,
+                        bool enable_depth_test) override;
+  void DestroyShader(uint64_t resource_id) override;
+  void ActivateShader(uint64_t resource_id) override;
 
-  void SetUniform(std::shared_ptr<void> impl_data,
+  void SetUniform(uint64_t resource_id,
                   const std::string& name,
                   const base::Vector2f& val) override;
-  void SetUniform(std::shared_ptr<void> impl_data,
+  void SetUniform(uint64_t resource_id,
                   const std::string& name,
                   const base::Vector3f& val) override;
-  void SetUniform(std::shared_ptr<void> impl_data,
+  void SetUniform(uint64_t resource_id,
                   const std::string& name,
                   const base::Vector4f& val) override;
-  void SetUniform(std::shared_ptr<void> impl_data,
+  void SetUniform(uint64_t resource_id,
                   const std::string& name,
                   const base::Matrix4f& val) override;
-  void SetUniform(std::shared_ptr<void> impl_data,
+  void SetUniform(uint64_t resource_id,
                   const std::string& name,
                   float val) override;
-  void SetUniform(std::shared_ptr<void> impl_data,
+  void SetUniform(uint64_t resource_id,
                   const std::string& name,
                   int val) override;
-  void UploadUniforms(std::shared_ptr<void> impl_data) override {}
+  void UploadUniforms(uint64_t resource_id) override {}
 
   void PrepareForDrawing() override {}
   void Present() override;
-
-  std::unique_ptr<RenderResource> CreateResource(
-      RenderResourceFactoryBase& factory) override;
-  void ReleaseResource(unsigned resource_id) override;
 
   size_t GetAndResetFPS() override;
 
@@ -130,13 +124,16 @@ class RendererOpenGL : public Renderer {
     GLuint id = 0;
   };
 
+  std::unordered_map<uint64_t, GeometryOpenGL> geometries_;
+  std::unordered_map<uint64_t, ShaderOpenGL> shaders_;
+  std::unordered_map<uint64_t, TextureOpenGL> textures_;
+  uint64_t last_resource_id_ = 0;
+
   GLuint active_shader_id_ = 0;
   GLuint active_texture_id_ = 0;
 
   bool vertex_array_objects_ = false;
   bool npot_ = false;
-
-  std::unordered_map<unsigned, RenderResource*> resources_;
 
 #ifdef THREADED_RENDERING
   // Global commands are independent from frames and guaranteed to be processed.
@@ -172,7 +169,7 @@ class RendererOpenGL : public Renderer {
 
   void ContextLost();
 
-  void InvalidateAllResources();
+  void DestroyAllResources();
 
   bool StartRenderThread();
   void TerminateRenderThread();
@@ -185,6 +182,7 @@ class RendererOpenGL : public Renderer {
   void ProcessCommand(RenderCommand* cmd);
 
   void HandleCmdPresent(RenderCommand* cmd);
+  void HandleCmdCreateTexture(RenderCommand* cmd);
   void HandleCmdUpdateTexture(RenderCommand* cmd);
   void HandleCmdDestoryTexture(RenderCommand* cmd);
   void HandleCmdActivateTexture(RenderCommand* cmd);
@@ -201,6 +199,7 @@ class RendererOpenGL : public Renderer {
   void HandleCmdSetUniformFloat(RenderCommand* cmd);
   void HandleCmdSetUniformInt(RenderCommand* cmd);
 
+  void BindTexture(GLuint id);
   bool SetupVertexLayout(const VertexDescripton& vd,
                          GLuint vertex_size,
                          bool use_vao,

@@ -14,14 +14,12 @@ class Mesh;
 
 class Geometry : public RenderResource {
  public:
-  Geometry(unsigned resource_id,
-           std::shared_ptr<void> impl_data,
-           Renderer* renderer);
-  ~Geometry() override;
+  Geometry(Renderer* renderer);
+  ~Geometry();
 
   void Create(std::unique_ptr<Mesh> mesh);
 
-  void Destroy() override;
+  void Destroy();
 
   void Draw();
 

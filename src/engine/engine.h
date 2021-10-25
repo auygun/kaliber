@@ -11,7 +11,6 @@
 #include "../base/vecmath.h"
 #include "audio/audio_forward.h"
 #include "persistent_data.h"
-#include "renderer/render_resource.h"
 
 class TextureCompressor;
 
@@ -65,10 +64,7 @@ class Engine {
 
   template <typename T>
   std::unique_ptr<T> CreateRenderResource() {
-    RenderResourceFactory<T> factory;
-    std::unique_ptr<RenderResource> resource =
-        CreateRenderResourceInternal(factory);
-    return std::unique_ptr<T>(static_cast<T*>(resource.release()));
+    return std::unique_ptr<T>(static_cast<T*>(new T(renderer_)));
   }
 
   void SetImageSource(const std::string& asset_name,
@@ -211,9 +207,6 @@ class Engine {
   int replay_index_ = 0;
 
   base::Random random_;
-
-  std::unique_ptr<RenderResource> CreateRenderResourceInternal(
-      RenderResourceFactoryBase& factory);
 
   void ContextLost();
 

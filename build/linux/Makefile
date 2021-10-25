@@ -106,7 +106,6 @@ GLTEST_SRC := \
   $(SRC_ROOT)/engine/renderer/opengl/render_command.cc \
   $(SRC_ROOT)/engine/renderer/opengl/renderer_opengl_linux.cc \
   $(SRC_ROOT)/engine/renderer/opengl/renderer_opengl.cc \
-  $(SRC_ROOT)/engine/renderer/render_resource.cc \
   $(SRC_ROOT)/engine/renderer/renderer_types.cc \
   $(SRC_ROOT)/engine/renderer/shader.cc \
   $(SRC_ROOT)/engine/renderer/texture.cc \

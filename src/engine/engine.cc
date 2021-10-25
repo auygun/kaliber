@@ -440,16 +440,13 @@ bool Engine::IsMobile() const {
   return platform_->mobile_device();
 }
 
-std::unique_ptr<RenderResource> Engine::CreateRenderResourceInternal(
-    RenderResourceFactoryBase& factory) {
-  return renderer_->CreateResource(factory);
-}
-
 void Engine::ContextLost() {
   CreateRenderResources();
 
-  for (auto& t : textures_)
+  for (auto& t : textures_) {
+    t.second.texture->Destroy();
     RefreshImage(t.first);
+  }
 
   game_->ContextLost();
 }
