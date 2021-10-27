@@ -1,11 +1,11 @@
-#ifndef CREDITS_H
-#define CREDITS_H
+#ifndef DEMO_CREDITS_H
+#define DEMO_CREDITS_H
 
 #include <memory>
 #include <string>
 
-#include "../engine/animator.h"
-#include "../engine/image_quad.h"
+#include "engine/animator.h"
+#include "engine/image_quad.h"
 
 namespace eng {
 class Image;
@@ -35,4 +35,4 @@ class Credits {
   std::unique_ptr<eng::Image> CreateImage();
 };
 
-#endif  // CREDITS_H
+#endif  // DEMO_CREDITS_H

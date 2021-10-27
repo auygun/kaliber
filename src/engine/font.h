@@ -1,11 +1,11 @@
-#ifndef FONT_H
-#define FONT_H
+#ifndef ENGINE_FONT_H
+#define ENGINE_FONT_H
 
 #include <cstdint>
 #include <memory>
 #include <string>
 
-#include "../third_party/stb/stb_truetype.h"
+#include "third_party/stb/stb_truetype.h"
 
 namespace eng {
 
@@ -51,4 +51,4 @@ class Font {
 
 }  // namespace eng
 
-#endif  // FONT_H
+#endif  // ENGINE_FONT_H

@@ -1,8 +1,8 @@
-#include "renderer_types.h"
+#include "engine/renderer/renderer_types.h"
 
 #include <cstring>
 
-#include "../../base/log.h"
+#include "base/log.h"
 
 namespace {
 

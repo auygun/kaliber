@@ -1,14 +1,12 @@
-#include "platform.h"
+#include "engine/platform/platform.h"
 
-#include <memory>
-
-#include "../../base/log.h"
-#include "../../base/task_runner.h"
-#include "../../base/vecmath.h"
-#include "../audio/audio.h"
-#include "../engine.h"
-#include "../input_event.h"
-#include "../renderer/renderer.h"
+#include "base/log.h"
+#include "base/task_runner.h"
+#include "base/vecmath.h"
+#include "engine/audio/audio.h"
+#include "engine/engine.h"
+#include "engine/input_event.h"
+#include "engine/renderer/renderer.h"
 
 using namespace base;
 

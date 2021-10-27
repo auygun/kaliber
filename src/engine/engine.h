@@ -1,5 +1,5 @@
-#ifndef ENGINE_H
-#define ENGINE_H
+#ifndef ENGINE_ENGINE_H
+#define ENGINE_ENGINE_H
 
 #include <deque>
 #include <functional>
@@ -7,10 +7,10 @@
 #include <memory>
 #include <unordered_map>
 
-#include "../base/random.h"
-#include "../base/vecmath.h"
-#include "audio/audio_forward.h"
-#include "persistent_data.h"
+#include "base/random.h"
+#include "base/vecmath.h"
+#include "engine/audio/audio_forward.h"
+#include "engine/persistent_data.h"
 
 class TextureCompressor;
 
@@ -221,4 +221,4 @@ class Engine {
 
 }  // namespace eng
 
-#endif  // ENGINE_H
+#endif  // ENGINE_ENGINE_H

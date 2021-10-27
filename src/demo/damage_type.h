@@ -1,5 +1,5 @@
-#ifndef DAMAGE_TYPE_H
-#define DAMAGE_TYPE_H
+#ifndef DEMO_DAMAGE_TYPE_H
+#define DEMO_DAMAGE_TYPE_H
 
 enum DamageType {
   kDamageType_Invalid = -1,
@@ -30,4 +30,4 @@ enum SpeedType {
   kSpeedType_Max
 };
 
-#endif  // DAMAGE_TYPE_H
+#endif  // DEMO_DAMAGE_TYPE_H

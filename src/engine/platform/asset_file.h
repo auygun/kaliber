@@ -1,14 +1,15 @@
-#ifndef ASSET_FILE_H
-#define ASSET_FILE_H
+#ifndef ENGINE_PLATFORM_ASSET_FILE_H
+#define ENGINE_PLATFORM_ASSET_FILE_H
+
+#include <memory>
+#include <string>
 
 #if defined(__ANDROID__)
 #include <zlib.h>
-#include "../../third_party/minizip/unzip.h"
+#include "third_party/minizip/unzip.h"
 #elif defined(__linux__)
-#include "../../base/file.h"
+#include "base/file.h"
 #endif
-#include <memory>
-#include <string>
 
 namespace eng {
 
@@ -40,4 +41,4 @@ class AssetFile {
 
 }  // namespace eng
 
-#endif  // ASSET_FILE_H
+#endif  // ENGINE_PLATFORM_ASSET_FILE_H

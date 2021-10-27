@@ -1,10 +1,10 @@
-#include "sound_player.h"
+#include "engine/sound_player.h"
 
-#include "../base/interpolation.h"
-#include "../base/log.h"
-#include "audio/audio.h"
-#include "engine.h"
-#include "sound.h"
+#include "base/interpolation.h"
+#include "base/log.h"
+#include "engine/audio/audio.h"
+#include "engine/engine.h"
+#include "engine/sound.h"
 
 using namespace base;
 

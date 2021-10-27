@@ -1,14 +1,15 @@
-#ifndef PLAYER_H
-#define PLAYER_H
+#ifndef DEMO_PLAYER_H
+#define DEMO_PLAYER_H
 
 #include <memory>
 
-#include "../base/vecmath.h"
-#include "../engine/animator.h"
-#include "../engine/image_quad.h"
-#include "../engine/solid_quad.h"
-#include "../engine/sound_player.h"
-#include "damage_type.h"
+#include "base/vecmath.h"
+#include "engine/animator.h"
+#include "engine/image_quad.h"
+#include "engine/solid_quad.h"
+#include "engine/sound_player.h"
+
+#include "demo/damage_type.h"
 
 namespace eng {
 class InputEvent;
@@ -104,4 +105,4 @@ class Player {
   bool CreateRenderResources();
 };
 
-#endif  // PLAYER_H
+#endif  // DEMO_PLAYER_H

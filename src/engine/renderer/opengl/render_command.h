@@ -1,13 +1,13 @@
-#ifndef RENDER_COMMAND_H
-#define RENDER_COMMAND_H
+#ifndef ENGINE_RENDERER_OPENGL_RENDER_COMMAND_H
+#define ENGINE_RENDERER_OPENGL_RENDER_COMMAND_H
 
 #include <array>
 #include <memory>
 #include <string>
 
-#include "../../../base/hash.h"
-#include "../../../base/vecmath.h"
-#include "../renderer_types.h"
+#include "base/hash.h"
+#include "base/vecmath.h"
+#include "engine/renderer/renderer_types.h"
 
 namespace eng {
 
@@ -15,9 +15,9 @@ class Image;
 class ShaderSource;
 class Mesh;
 
-#define RENDER_COMMAND_BEGIN(NAME)                    \
-  struct NAME : RenderCommand {                       \
-    static constexpr CommandId CMD_ID = HHASH(#NAME); \
+#define RENDER_COMMAND_BEGIN(NAME)                         \
+  struct NAME : RenderCommand {                            \
+    static constexpr CommandId CMD_ID = base::Hash(#NAME); \
     NAME();
 #define RENDER_COMMAND_END \
   }                        \
@@ -136,4 +136,4 @@ RENDER_COMMAND_END
 
 }  // namespace eng
 
-#endif  // RENDER_COMMAND_H
+#endif  // ENGINE_RENDERER_OPENGL_RENDER_COMMAND_H

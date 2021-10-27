@@ -1,6 +1,6 @@
-#include <string>
-#include "../../base/log.h"
-#include "asset_file.h"
+#include "engine/platform/asset_file.h"
+
+#include "base/log.h"
 
 namespace eng {
 

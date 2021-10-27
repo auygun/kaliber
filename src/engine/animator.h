@@ -1,10 +1,10 @@
-#ifndef ANIMATOR_H
-#define ANIMATOR_H
+#ifndef ENGINE_ANIMATOR_H
+#define ENGINE_ANIMATOR_H
 
 #include <vector>
 
-#include "../base/closure.h"
-#include "../base/vecmath.h"
+#include "base/closure.h"
+#include "base/vecmath.h"
 
 namespace eng {
 
@@ -129,4 +129,4 @@ class Animator {
 
 }  // namespace eng
 
-#endif  // ANIMATOR_H
+#endif  // ENGINE_ANIMATOR_H

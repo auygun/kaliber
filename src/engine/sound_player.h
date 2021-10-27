@@ -1,9 +1,9 @@
-#ifndef AUDIO_PLAYER_H
-#define AUDIO_PLAYER_H
+#ifndef ENGINE_AUDIO_PLAYER_H
+#define ENGINE_AUDIO_PLAYER_H
 
 #include <memory>
 
-#include "../base/closure.h"
+#include "base/closure.h"
 
 namespace eng {
 
@@ -36,7 +36,7 @@ class SoundPlayer {
   void SetEndCallback(base::Closure cb);
 
  private:
-  size_t resource_id_ = 0;
+  uint64_t resource_id_ = 0;
   std::shared_ptr<Sound> sound_;
 
   float max_amplitude_ = 1.0f;
@@ -49,4 +49,4 @@ class SoundPlayer {
 
 }  // namespace eng
 
-#endif  // AUDIO_PLAYER_H
+#endif  // ENGINE_AUDIO_PLAYER_H

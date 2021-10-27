@@ -1,5 +1,5 @@
-#ifndef INTERPOLATION_H
-#define INTERPOLATION_H
+#ifndef BASE_INTERPOLATION_H
+#define BASE_INTERPOLATION_H
 
 namespace base {
 
@@ -40,4 +40,4 @@ inline float Acceleration(float t, float w) {
 
 }  // namespace base
 
-#endif  // INTERPOLATION_H
+#endif  // BASE_INTERPOLATION_H

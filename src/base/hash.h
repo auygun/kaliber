@@ -1,21 +1,28 @@
-#ifndef HASH_H
-#define HASH_H
+#ifndef BASE_HASH_H
+#define BASE_HASH_H
 
 #include <stddef.h>
-
-#define HHASH(x) base::HornerHash(31, x)
+#include <string>
 
 namespace base {
 
-// Compile time string hashing function.
+// Compile-time string hashing function.
 template <size_t N>
-constexpr inline size_t HornerHash(size_t prime,
-                                   const char (&str)[N],
-                                   size_t Len = N - 1) {
-  return (Len <= 1) ? str[0]
-                    : (prime * HornerHash(prime, str, Len - 1) + str[Len - 1]);
+constexpr inline size_t Hash(const char (&str)[N], size_t Len = N - 1) {
+  size_t hash_value = 0;
+  for (int i = 0; str[i] != '\0'; ++i)
+    hash_value = str[i] + 31 * hash_value;
+  return hash_value;
+}
+
+// The same hashing function for run-time.
+inline size_t Hash(const std::string& str) {
+  size_t hash_value = 0;
+  for (std::string::value_type c : str)
+    hash_value = c + 31 * hash_value;
+  return hash_value;
 }
 
 }  // namespace base
 
-#endif  // HASH_H
+#endif  // BASE_HASH_H

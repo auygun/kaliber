@@ -1,19 +1,19 @@
-#include "demo.h"
+#include "demo/demo.h"
 
 #include <algorithm>
 #include <atomic>
 #include <iostream>
 #include <string>
 
-#include "../base/file.h"
-#include "../base/interpolation.h"
-#include "../base/log.h"
-#include "../base/random.h"
-#include "../base/timer.h"
-#include "../engine/engine.h"
-#include "../engine/game_factory.h"
-#include "../engine/input_event.h"
-#include "../engine/sound.h"
+#include "base/file.h"
+#include "base/interpolation.h"
+#include "base/log.h"
+#include "base/random.h"
+#include "base/timer.h"
+#include "engine/engine.h"
+#include "engine/game_factory.h"
+#include "engine/input_event.h"
+#include "engine/sound.h"
 
 DECLARE_GAME_BEGIN
 DECLARE_GAME(Demo)

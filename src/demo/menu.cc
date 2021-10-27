@@ -1,18 +1,19 @@
-#include "menu.h"
+#include "demo/menu.h"
 
 #include <cmath>
 #include <string>
 #include <vector>
 
-#include "../base/collusion_test.h"
-#include "../base/interpolation.h"
-#include "../base/log.h"
-#include "../engine/engine.h"
-#include "../engine/font.h"
-#include "../engine/image.h"
-#include "../engine/input_event.h"
-#include "../engine/sound.h"
-#include "demo.h"
+#include "base/collusion_test.h"
+#include "base/interpolation.h"
+#include "base/log.h"
+#include "engine/engine.h"
+#include "engine/font.h"
+#include "engine/image.h"
+#include "engine/input_event.h"
+#include "engine/sound.h"
+
+#include "demo/demo.h"
 
 using namespace std::string_literals;
 

@@ -1,7 +1,7 @@
-#ifndef SOLID_QUAD_H
-#define SOLID_QUAD_H
+#ifndef ENGINE_SOLID_QUAD_H
+#define ENGINE_SOLID_QUAD_H
 
-#include "animatable.h"
+#include "engine/animatable.h"
 
 namespace eng {
 
@@ -26,4 +26,4 @@ class SolidQuad : public Animatable {
 
 }  // namespace eng
 
-#endif  // SOLID_QUAD_H
+#endif  // ENGINE_SOLID_QUAD_H

@@ -1,10 +1,10 @@
-#ifndef SEMAPHORE_H
-#define SEMAPHORE_H
+#ifndef BASE_SEMAPHORE_H
+#define BASE_SEMAPHORE_H
 
 #include <condition_variable>
 #include <mutex>
 
-#include "../base/log.h"
+#include "base/log.h"
 
 namespace base {
 
@@ -38,4 +38,4 @@ class Semaphore {
 
 }  // namespace base
 
-#endif  // SEMAPHORE_H
+#endif  // BASE_SEMAPHORE_H

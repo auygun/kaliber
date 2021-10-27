@@ -1,4 +1,4 @@
-#include "enemy.h"
+#include "demo/enemy.h"
 
 #include <algorithm>
 #include <functional>
@@ -6,17 +6,18 @@
 #include <tuple>
 #include <vector>
 
-#include "../base/collusion_test.h"
-#include "../base/interpolation.h"
-#include "../base/log.h"
-#include "../engine/engine.h"
-#include "../engine/font.h"
-#include "../engine/image.h"
-#include "../engine/renderer/geometry.h"
-#include "../engine/renderer/shader.h"
-#include "../engine/shader_source.h"
-#include "../engine/sound.h"
-#include "demo.h"
+#include "base/collusion_test.h"
+#include "base/interpolation.h"
+#include "base/log.h"
+#include "engine/engine.h"
+#include "engine/font.h"
+#include "engine/image.h"
+#include "engine/renderer/geometry.h"
+#include "engine/renderer/shader.h"
+#include "engine/shader_source.h"
+#include "engine/sound.h"
+
+#include "demo/demo.h"
 
 using namespace std::string_literals;
 

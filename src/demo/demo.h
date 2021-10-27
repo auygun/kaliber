@@ -1,19 +1,20 @@
-#ifndef DEMO_H
-#define DEMO_H
+#ifndef DEMO_DEMO_H
+#define DEMO_DEMO_H
 
-#include "../base/closure.h"
-#include "../engine/animator.h"
-#include "../engine/font.h"
-#include "../engine/game.h"
-#include "../engine/persistent_data.h"
-#include "../engine/solid_quad.h"
-#include "../engine/sound_player.h"
-#include "credits.h"
-#include "enemy.h"
-#include "hud.h"
-#include "menu.h"
-#include "player.h"
-#include "sky_quad.h"
+#include "base/closure.h"
+#include "engine/animator.h"
+#include "engine/font.h"
+#include "engine/game.h"
+#include "engine/persistent_data.h"
+#include "engine/solid_quad.h"
+#include "engine/sound_player.h"
+
+#include "demo/credits.h"
+#include "demo/enemy.h"
+#include "demo/hud.h"
+#include "demo/menu.h"
+#include "demo/player.h"
+#include "demo/sky_quad.h"
 
 // #define LOAD_TEST
 
@@ -127,4 +128,4 @@ class Demo : public eng::Game {
   void BenchmarkResult(int avarage_fps);
 };
 
-#endif  // DEMO_H
+#endif  // DEMO_DEMO_H

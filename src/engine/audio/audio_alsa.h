@@ -1,10 +1,10 @@
-#ifndef AUDIO_ALSA_H
-#define AUDIO_ALSA_H
+#ifndef ENGINE_AUDIO_AUDIO_ALSA_H
+#define ENGINE_AUDIO_AUDIO_ALSA_H
 
 #include <atomic>
 #include <thread>
 
-#include "audio_base.h"
+#include "engine/audio/audio_base.h"
 
 typedef struct _snd_pcm snd_pcm_t;
 
@@ -44,4 +44,4 @@ class AudioAlsa : public AudioBase {
 
 }  // namespace eng
 
-#endif  // AUDIO_ALSA_H
+#endif  // ENGINE_AUDIO_AUDIO_ALSA_H

@@ -1,5 +1,6 @@
-#include "drawable.h"
-#include "engine.h"
+#include "engine/drawable.h"
+
+#include "engine/engine.h"
 
 namespace eng {
 

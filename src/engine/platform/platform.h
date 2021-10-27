@@ -1,13 +1,13 @@
-#ifndef PLATFORM_H
-#define PLATFORM_H
+#ifndef ENGINE_PLATFORM_PLATFORM_H
+#define ENGINE_PLATFORM_PLATFORM_H
 
 #include <exception>
 #include <memory>
 #include <string>
 
-#include "../../base/timer.h"
-#include "../../base/worker.h"
-#include "../audio/audio_forward.h"
+#include "base/thread_pool.h"
+#include "base/timer.h"
+#include "engine/audio/audio_forward.h"
 
 #if defined(__ANDROID__)
 
@@ -84,7 +84,7 @@ class Platform {
   std::unique_ptr<Renderer> renderer_;
   std::unique_ptr<Engine> engine_;
 
-  base::Worker worker_;
+  base::ThreadPool thread_pool_;
 
 #if defined(__ANDROID__)
 
@@ -115,4 +115,4 @@ class Platform {
 
 }  // namespace eng
 
-#endif  // PLATFORM_H
+#endif  // ENGINE_PLATFORM_PLATFORM_H

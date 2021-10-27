@@ -1,5 +1,5 @@
-#ifndef GAME_FACTORY_H
-#define GAME_FACTORY_H
+#ifndef ENGINE_GAME_FACTORY_H
+#define ENGINE_GAME_FACTORY_H
 
 #include <memory>
 #include <string>
@@ -52,4 +52,4 @@ class GameFactory : public GameFactoryBase {
 
 }  // namespace eng
 
-#endif  // GAME_FACTORY_H
+#endif  // ENGINE_GAME_FACTORY_H

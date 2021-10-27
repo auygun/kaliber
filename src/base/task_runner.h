@@ -1,5 +1,5 @@
-#ifndef TASK_RUNNER_H
-#define TASK_RUNNER_H
+#ifndef BASE_TASK_RUNNER_H
+#define BASE_TASK_RUNNER_H
 
 #include <atomic>
 #include <condition_variable>
@@ -8,7 +8,7 @@
 #include <mutex>
 #include <tuple>
 
-#include "closure.h"
+#include "base/closure.h"
 
 namespace base {
 
@@ -85,4 +85,4 @@ class TaskRunner {
 
 }  // namespace base
 
-#endif  // TASK_RUNNER_H
+#endif  // BASE_TASK_RUNNER_H

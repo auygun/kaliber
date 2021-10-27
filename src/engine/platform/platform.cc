@@ -1,11 +1,11 @@
-#include "platform.h"
+#include "engine/platform/platform.h"
 
-#include "../../base/log.h"
-#include "../../base/task_runner.h"
-#include "../audio/audio.h"
-#include "../engine.h"
-#include "../renderer/opengl/renderer_opengl.h"
-#include "../renderer/vulkan/renderer_vulkan.h"
+#include "base/log.h"
+#include "base/task_runner.h"
+#include "engine/audio/audio.h"
+#include "engine/engine.h"
+#include "engine/renderer/opengl/renderer_opengl.h"
+#include "engine/renderer/vulkan/renderer_vulkan.h"
 
 #define VULKAN_RENDERER
 
@@ -22,7 +22,7 @@ Platform::~Platform() = default;
 void Platform::InitializeCommon() {
   LOG << "Initializing platform.";
 
-  worker_.Initialize();
+  thread_pool_.Initialize();
   TaskRunner::CreateThreadLocalTaskRunner();
 
   audio_ = std::make_unique<Audio>();
@@ -74,7 +74,7 @@ void Platform::RunMainLoop() {
       engine_->Update(time_step);
 
       if (should_exit_) {
-        worker_.Shutdown();
+        thread_pool_.Shutdown();
         engine_->Shutdown();
         engine_.reset();
         return;

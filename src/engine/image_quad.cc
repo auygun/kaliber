@@ -1,10 +1,10 @@
-#include "image_quad.h"
+#include "engine/image_quad.h"
 
-#include "../base/log.h"
-#include "engine.h"
-#include "renderer/geometry.h"
-#include "renderer/shader.h"
-#include "renderer/texture.h"
+#include "base/log.h"
+#include "engine/engine.h"
+#include "engine/renderer/geometry.h"
+#include "engine/renderer/shader.h"
+#include "engine/renderer/texture.h"
 
 using namespace base;
 

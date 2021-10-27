@@ -1,5 +1,5 @@
-#ifndef CONCURRENT_STACK_H
-#define CONCURRENT_STACK_H
+#ifndef BASE_CONCURRENT_STACK_H
+#define BASE_CONCURRENT_STACK_H
 
 #include <atomic>
 #include <utility>
@@ -88,4 +88,4 @@ class ConcurrentStack {
 
 }  // namespace base
 
-#endif  // CONCURRENT_STACK_H
+#endif  // BASE_CONCURRENT_STACK_H

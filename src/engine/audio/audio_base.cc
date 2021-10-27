@@ -1,11 +1,11 @@
-#include "audio.h"
+#include "engine/audio/audio.h"
 
 #include <cstring>
 
-#include "../../base/log.h"
-#include "../../base/task_runner.h"
-#include "../../base/worker.h"
-#include "../sound.h"
+#include "base/log.h"
+#include "base/task_runner.h"
+#include "base/thread_pool.h"
+#include "engine/sound.h"
 
 using namespace base;
 
@@ -16,13 +16,13 @@ AudioBase::AudioBase()
 
 AudioBase::~AudioBase() = default;
 
-size_t AudioBase::CreateResource() {
-  size_t resource_id = ++last_resource_id_;
+uint64_t AudioBase::CreateResource() {
+  uint64_t resource_id = ++last_resource_id_;
   resources_[resource_id] = std::make_shared<Resource>();
   return resource_id;
 }
 
-void AudioBase::DestroyResource(size_t resource_id) {
+void AudioBase::DestroyResource(uint64_t resource_id) {
   auto it = resources_.find(resource_id);
   if (it == resources_.end())
     return;
@@ -31,7 +31,7 @@ void AudioBase::DestroyResource(size_t resource_id) {
   resources_.erase(it);
 }
 
-void AudioBase::Play(size_t resource_id,
+void AudioBase::Play(uint64_t resource_id,
                      std::shared_ptr<Sound> sound,
                      float amplitude,
                      bool reset_pos) {
@@ -75,7 +75,7 @@ void AudioBase::Play(size_t resource_id,
   play_list_[0].push_back(it->second);
 }
 
-void AudioBase::Stop(size_t resource_id) {
+void AudioBase::Stop(uint64_t resource_id) {
   auto it = resources_.find(resource_id);
   if (it == resources_.end())
     return;
@@ -84,7 +84,7 @@ void AudioBase::Stop(size_t resource_id) {
     it->second->flags.fetch_or(kStopped, std::memory_order_relaxed);
 }
 
-void AudioBase::SetLoop(size_t resource_id, bool loop) {
+void AudioBase::SetLoop(uint64_t resource_id, bool loop) {
   auto it = resources_.find(resource_id);
   if (it == resources_.end())
     return;
@@ -95,7 +95,7 @@ void AudioBase::SetLoop(size_t resource_id, bool loop) {
     it->second->flags.fetch_and(~kLoop, std::memory_order_relaxed);
 }
 
-void AudioBase::SetSimulateStereo(size_t resource_id, bool simulate) {
+void AudioBase::SetSimulateStereo(uint64_t resource_id, bool simulate) {
   auto it = resources_.find(resource_id);
   if (it == resources_.end())
     return;
@@ -106,7 +106,7 @@ void AudioBase::SetSimulateStereo(size_t resource_id, bool simulate) {
     it->second->flags.fetch_and(~kSimulateStereo, std::memory_order_relaxed);
 }
 
-void AudioBase::SetResampleStep(size_t resource_id, size_t step) {
+void AudioBase::SetResampleStep(uint64_t resource_id, size_t step) {
   auto it = resources_.find(resource_id);
   if (it == resources_.end())
     return;
@@ -114,7 +114,7 @@ void AudioBase::SetResampleStep(size_t resource_id, size_t step) {
   it->second->step.store(step + 100, std::memory_order_relaxed);
 }
 
-void AudioBase::SetMaxAmplitude(size_t resource_id, float max_amplitude) {
+void AudioBase::SetMaxAmplitude(uint64_t resource_id, float max_amplitude) {
   auto it = resources_.find(resource_id);
   if (it == resources_.end())
     return;
@@ -122,7 +122,7 @@ void AudioBase::SetMaxAmplitude(size_t resource_id, float max_amplitude) {
   it->second->max_amplitude.store(max_amplitude, std::memory_order_relaxed);
 }
 
-void AudioBase::SetAmplitudeInc(size_t resource_id, float amplitude_inc) {
+void AudioBase::SetAmplitudeInc(uint64_t resource_id, float amplitude_inc) {
   auto it = resources_.find(resource_id);
   if (it == resources_.end())
     return;
@@ -130,7 +130,7 @@ void AudioBase::SetAmplitudeInc(size_t resource_id, float amplitude_inc) {
   it->second->amplitude_inc.store(amplitude_inc, std::memory_order_relaxed);
 }
 
-void AudioBase::SetEndCallback(size_t resource_id, base::Closure cb) {
+void AudioBase::SetEndCallback(uint64_t resource_id, base::Closure cb) {
   auto it = resources_.find(resource_id);
   if (it == resources_.end())
     return;
@@ -236,8 +236,9 @@ void AudioBase::RenderAudio(float* output_buffer, size_t num_frames) {
               src[1] = src[0];  // mono.
             num_samples = sound->GetNumSamples();
 
-            Worker::Get().PostTask(HERE, std::bind(&AudioBase::DoStream, this,
-                                                   *it, flags & kLoop));
+            ThreadPool::Get().PostTask(
+                HERE,
+                std::bind(&AudioBase::DoStream, this, *it, flags & kLoop));
           } else if (num_samples) {
             DLOG << "Buffer underrun!";
             src_index %= num_samples;

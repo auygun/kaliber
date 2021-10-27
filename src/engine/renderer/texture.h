@@ -1,10 +1,10 @@
-#ifndef TEXTURE_H
-#define TEXTURE_H
+#ifndef ENGINE_RENDERER_TEXTURE_H
+#define ENGINE_RENDERER_TEXTURE_H
 
 #include <memory>
 #include <string>
 
-#include "render_resource.h"
+#include "engine/renderer/render_resource.h"
 
 namespace eng {
 
@@ -32,4 +32,4 @@ class Texture : public RenderResource {
 
 }  // namespace eng
 
-#endif  // TEXTURE_H
+#endif  // ENGINE_RENDERER_TEXTURE_H

@@ -1,5 +1,5 @@
-#ifndef GAME_H
-#define GAME_H
+#ifndef ENGINE_GAME_H
+#define ENGINE_GAME_H
 
 namespace eng {
 
@@ -25,4 +25,4 @@ class Game {
 
 }  // namespace eng
 
-#endif  // GAME_H
+#endif  // ENGINE_GAME_H

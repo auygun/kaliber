@@ -1,11 +1,11 @@
-#include "solid_quad.h"
+#include "engine/solid_quad.h"
 
 #include <memory>
 
-#include "../base/log.h"
-#include "engine.h"
-#include "renderer/geometry.h"
-#include "renderer/shader.h"
+#include "base/log.h"
+#include "engine/engine.h"
+#include "engine/renderer/geometry.h"
+#include "engine/renderer/shader.h"
 
 namespace eng {
 

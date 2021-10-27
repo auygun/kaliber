@@ -1,8 +1,8 @@
-#ifndef INPUT_EVENT_H
-#define INPUT_EVENT_H
+#ifndef ENGINE_INPUT_EVENT_H
+#define ENGINE_INPUT_EVENT_H
 
-#include "../base/log.h"
-#include "../base/vecmath.h"
+#include "base/log.h"
+#include "base/vecmath.h"
 
 namespace eng {
 
@@ -44,4 +44,4 @@ class InputEvent {
 
 }  // namespace eng
 
-#endif  // INPUT_EVENT_H
+#endif  // ENGINE_INPUT_EVENT_H

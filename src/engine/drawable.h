@@ -1,7 +1,7 @@
-#ifndef DRAWABLE_H
-#define DRAWABLE_H
+#ifndef ENGINE_DRAWABLE_H
+#define ENGINE_DRAWABLE_H
 
-#include "../base/vecmath.h"
+#include "base/vecmath.h"
 
 namespace eng {
 
@@ -28,4 +28,4 @@ class Drawable {
 
 }  // namespace eng
 
-#endif  // DRAWABLE_H
+#endif  // ENGINE_DRAWABLE_H

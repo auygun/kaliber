@@ -1,9 +1,10 @@
-#ifndef MESH_H
-#define MESH_H
+#ifndef ENGINE_MESH_H
+#define ENGINE_MESH_H
 
 #include <memory>
 #include <string>
-#include "renderer/renderer_types.h"
+
+#include "engine/renderer/renderer_types.h"
 
 namespace eng {
 
@@ -50,4 +51,4 @@ class Mesh {
 
 }  // namespace eng
 
-#endif  // MESH_H
+#endif  // ENGINE_MESH_H

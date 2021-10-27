@@ -1,12 +1,13 @@
-#include "player.h"
+#include "demo/player.h"
 
-#include "../base/interpolation.h"
-#include "../base/log.h"
-#include "../engine/engine.h"
-#include "../engine/font.h"
-#include "../engine/input_event.h"
-#include "../engine/sound.h"
-#include "demo.h"
+#include "base/interpolation.h"
+#include "base/log.h"
+#include "engine/engine.h"
+#include "engine/font.h"
+#include "engine/input_event.h"
+#include "engine/sound.h"
+
+#include "demo/demo.h"
 
 using namespace base;
 using namespace eng;

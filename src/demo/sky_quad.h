@@ -1,9 +1,9 @@
-#ifndef SKY_QUAD_H
-#define SKY_QUAD_H
+#ifndef DEMO_SKY_QUAD_H
+#define DEMO_SKY_QUAD_H
 
-#include "../base/vecmath.h"
-#include "../engine/animatable.h"
-#include "../engine/animator.h"
+#include "base/vecmath.h"
+#include "engine/animatable.h"
+#include "engine/animator.h"
 
 #include <array>
 #include <memory>
@@ -61,4 +61,4 @@ class SkyQuad : public eng::Animatable {
   bool CreateShaders();
 };
 
-#endif  // SKY_QUAD_H
+#endif  // DEMO_SKY_QUAD_H

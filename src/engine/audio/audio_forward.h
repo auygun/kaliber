@@ -1,5 +1,5 @@
-#ifndef AUDIO_FORWARD_H
-#define AUDIO_FORWARD_H
+#ifndef ENGINE_AUDIO_AUDIO_FORWARD_H
+#define ENGINE_AUDIO_AUDIO_FORWARD_H
 
 namespace eng {
 
@@ -13,4 +13,4 @@ using Audio = AudioAlsa;
 
 }  // namespace eng
 
-#endif  // AUDIO_FORWARD_H
+#endif  // ENGINE_AUDIO_AUDIO_FORWARD_H

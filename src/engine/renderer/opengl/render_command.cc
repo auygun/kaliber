@@ -1,8 +1,8 @@
-#include "render_command.h"
+#include "engine/renderer/opengl/render_command.h"
 
-#include "../../image.h"
-#include "../../mesh.h"
-#include "../../shader_source.h"
+#include "engine/image.h"
+#include "engine/mesh.h"
+#include "engine/shader_source.h"
 
 #ifdef _DEBUG
 #define RENDER_COMMAND_IMPL(NAME, GLOBAL) \

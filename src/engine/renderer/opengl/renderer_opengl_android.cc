@@ -1,9 +1,9 @@
-#include "renderer_opengl.h"
+#include "engine/renderer/opengl/renderer_opengl.h"
 
 #include <android/native_window.h>
 
-#include "../../../base/log.h"
-#include "../../../third_party/android/GLContext.h"
+#include "base/log.h"
+#include "third_party/android/GLContext.h"
 
 namespace eng {
 

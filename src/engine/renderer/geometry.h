@@ -1,11 +1,11 @@
-#ifndef GEOMETRY_H
-#define GEOMETRY_H
+#ifndef ENGINE_RENDERER_GEOMETRY_H
+#define ENGINE_RENDERER_GEOMETRY_H
 
 #include <memory>
 #include <string>
 
-#include "render_resource.h"
-#include "renderer_types.h"
+#include "engine/renderer/render_resource.h"
+#include "engine/renderer/renderer_types.h"
 
 namespace eng {
 
@@ -36,4 +36,4 @@ class Geometry : public RenderResource {
 
 }  // namespace eng
 
-#endif  // GEOMETRY_H
+#endif  // ENGINE_RENDERER_GEOMETRY_H

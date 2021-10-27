@@ -1,8 +1,8 @@
-#include "texture.h"
+#include "engine/renderer/texture.h"
 
-#include "../../base/log.h"
-#include "../image.h"
-#include "renderer.h"
+#include "base/log.h"
+#include "engine//image.h"
+#include "engine/renderer/renderer.h"
 
 namespace eng {
 

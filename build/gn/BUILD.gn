@@ -8,6 +8,7 @@ config("compiler_defaults") {
 
     cflags_cc = [
       "-std=c++17",
+      "-I../../src",
     ]
   }
 }

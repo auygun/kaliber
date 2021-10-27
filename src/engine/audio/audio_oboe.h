@@ -1,11 +1,12 @@
-#ifndef AUDIO_OBOE_H
-#define AUDIO_OBOE_H
+#ifndef ENGINE_AUDIO_AUDIO_OBOE_H
+#define ENGINE_AUDIO_AUDIO_OBOE_H
 
 #include <memory>
 
-#include "../../third_party/oboe/include/oboe/AudioStream.h"
-#include "../../third_party/oboe/include/oboe/AudioStreamCallback.h"
-#include "audio_base.h"
+#include "third_party/oboe/include/oboe/AudioStream.h"
+#include "third_party/oboe/include/oboe/AudioStreamCallback.h"
+
+#include "engine/audio/audio_base.h"
 
 namespace eng {
 
@@ -48,4 +49,4 @@ class AudioOboe : public AudioBase {
 
 }  // namespace eng
 
-#endif  // AUDIO_OBOE_H
+#endif  // ENGINE_AUDIO_AUDIO_OBOE_H

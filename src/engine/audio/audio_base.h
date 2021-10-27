@@ -1,12 +1,12 @@
-#ifndef AUDIO_BASE_H
-#define AUDIO_BASE_H
+#ifndef ENGINE_AUDIO_AUDIO_BASE_H
+#define ENGINE_AUDIO_AUDIO_BASE_H
 
 #include <list>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
 
-#include "../../base/closure.h"
+#include "base/closure.h"
 
 namespace base {
 class TaskRunner;
@@ -21,21 +21,21 @@ class Sound;
 // thread.
 class AudioBase {
  public:
-  size_t CreateResource();
-  void DestroyResource(size_t resource_id);
+  uint64_t CreateResource();
+  void DestroyResource(uint64_t resource_id);
 
-  void Play(size_t resource_id,
+  void Play(uint64_t resource_id,
             std::shared_ptr<Sound> sound,
             float amplitude,
             bool reset_pos);
-  void Stop(size_t resource_id);
+  void Stop(uint64_t resource_id);
 
-  void SetLoop(size_t resource_id, bool loop);
-  void SetSimulateStereo(size_t resource_id, bool simulate);
-  void SetResampleStep(size_t resource_id, size_t step);
-  void SetMaxAmplitude(size_t resource_id, float max_amplitude);
-  void SetAmplitudeInc(size_t resource_id, float amplitude_inc);
-  void SetEndCallback(size_t resource_id, base::Closure cb);
+  void SetLoop(uint64_t resource_id, bool loop);
+  void SetSimulateStereo(uint64_t resource_id, bool simulate);
+  void SetResampleStep(uint64_t resource_id, size_t step);
+  void SetMaxAmplitude(uint64_t resource_id, float max_amplitude);
+  void SetAmplitudeInc(uint64_t resource_id, float amplitude_inc);
+  void SetEndCallback(uint64_t resource_id, base::Closure cb);
 
   void SetEnableAudio(bool enable) { audio_enabled_ = enable; }
 
@@ -71,8 +71,8 @@ class AudioBase {
     std::atomic<bool> streaming_in_progress{false};
   };
 
-  std::unordered_map<size_t, std::shared_ptr<Resource>> resources_;
-  size_t last_resource_id_ = 0;
+  std::unordered_map<uint64_t, std::shared_ptr<Resource>> resources_;
+  uint64_t last_resource_id_ = 0;
 
   std::list<std::shared_ptr<Resource>> play_list_[2];
   std::mutex lock_;
@@ -93,4 +93,4 @@ class AudioBase {
 
 }  // namespace eng
 
-#endif  // AUDIO_BASE_H
+#endif  // ENGINE_AUDIO_AUDIO_BASE_H

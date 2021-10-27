@@ -1,5 +1,5 @@
-#ifndef RENDERER_OPENGL_H
-#define RENDERER_OPENGL_H
+#ifndef ENGINE_RENDERER_OPENGL_RENDERER_OPENGL_H
+#define ENGINE_RENDERER_OPENGL_RENDERER_OPENGL_H
 
 #include <memory>
 #include <string>
@@ -15,12 +15,12 @@
 #include <mutex>
 #include <thread>
 
-#include "../../../base/semaphore.h"
+#include "base/semaphore.h"
 #endif  // THREADED_RENDERING
 
-#include "opengl.h"
+#include "engine/renderer/opengl/opengl.h"
 
-#include "../renderer.h"
+#include "engine/renderer/renderer.h"
 
 #if defined(__ANDROID__)
 struct ANativeWindow;
@@ -213,4 +213,4 @@ class RendererOpenGL : public Renderer {
 
 }  // namespace eng
 
-#endif  // RENDERER_OPENGL_H
+#endif  // ENGINE_RENDERER_OPENGL_RENDERER_OPENGL_H

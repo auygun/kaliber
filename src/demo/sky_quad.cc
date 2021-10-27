@@ -1,12 +1,12 @@
-#include "sky_quad.h"
+#include "demo/sky_quad.h"
 
-#include "../base/interpolation.h"
-#include "../base/log.h"
-#include "../base/random.h"
-#include "../engine/engine.h"
-#include "../engine/renderer/geometry.h"
-#include "../engine/renderer/shader.h"
-#include "../engine/shader_source.h"
+#include "base/interpolation.h"
+#include "base/log.h"
+#include "base/random.h"
+#include "engine/engine.h"
+#include "engine/renderer/geometry.h"
+#include "engine/renderer/shader.h"
+#include "engine/shader_source.h"
 
 using namespace base;
 using namespace eng;

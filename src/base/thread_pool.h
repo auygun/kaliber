@@ -1,26 +1,26 @@
-#ifndef THREAD_POOL_H
-#define THREAD_POOL_H
+#ifndef BASE_THREAD_POOL_H
+#define BASE_THREAD_POOL_H
 
 #include <atomic>
 #include <thread>
 #include <vector>
 
-#include "closure.h"
-#include "semaphore.h"
-#include "task_runner.h"
+#include "base/closure.h"
+#include "base/semaphore.h"
+#include "base/task_runner.h"
 
 namespace base {
 
 class TaskRunner;
 
-// Feed the worker tasks (in the form of Closure objects) and they will be
+// Feed the ThreadPool tasks (in the form of Closure objects) and they will be
 // called on any thread from the pool.
-class Worker {
+class ThreadPool {
  public:
-  Worker();
-  ~Worker();
+  ThreadPool();
+  ~ThreadPool();
 
-  static Worker& Get() { return *singleton; }
+  static ThreadPool& Get() { return *singleton; }
 
   void Initialize(unsigned max_concurrency = 0);
 
@@ -47,14 +47,14 @@ class Worker {
 
   base::TaskRunner task_runner_;
 
-  static Worker* singleton;
+  static ThreadPool* singleton;
 
   void WorkerMain();
 
-  Worker(Worker const&) = delete;
-  Worker& operator=(Worker const&) = delete;
+  ThreadPool(ThreadPool const&) = delete;
+  ThreadPool& operator=(ThreadPool const&) = delete;
 };
 
 }  // namespace base
 
-#endif  // THREAD_POOL_H
+#endif  // BASE_THREAD_POOL_H

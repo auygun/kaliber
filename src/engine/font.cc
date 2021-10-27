@@ -1,11 +1,11 @@
-#include "font.h"
+#include "engine/font.h"
 
 #include <codecvt>
 #include <locale>
 
-#include "../base/log.h"
-#include "engine.h"
-#include "platform/asset_file.h"
+#include "base/log.h"
+#include "engine/engine.h"
+#include "engine/platform/asset_file.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "../third_party/stb/stb_truetype.h"
@@ -126,7 +126,7 @@ void Font::CalculateBoundingBox(const std::string& text,
 
   float x = 0, y = 0;
 
-  std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t> convert;
+  std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
   std::u16string u16text = convert.from_bytes(text);
   const char16_t* ptr = u16text.c_str();
 
@@ -173,7 +173,7 @@ void Font::Print(int x,
 
   float fx = (float)x, fy = (float)y + (float)yoff_;
 
-  std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t> convert;
+  std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> convert;
   std::u16string u16text = convert.from_bytes(text);
   const char16_t* ptr = u16text.c_str();
 

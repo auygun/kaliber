@@ -53,8 +53,8 @@ add_library(kaliber SHARED
     ../../../src/base/random.cc
     ../../../src/base/sinc_resampler.cc
     ../../../src/base/task_runner.cc
+    ../../../src/base/thread_pool.cc
     ../../../src/base/timer.cc
-    ../../../src/base/worker.cc
     ../../../src/demo/credits.cc
     ../../../src/demo/demo.cc
     ../../../src/demo/enemy.cc
@@ -162,6 +162,7 @@ if (ANDROID_ABI STREQUAL arm64-v8a)
 endif()
 
 target_include_directories(kaliber PRIVATE
+    ../../../src
     ${ANDROID_NDK}/sources/android/native_app_glue
     )
 

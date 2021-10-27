@@ -1,5 +1,5 @@
-#ifndef RENDERER_VULKAN_H
-#define RENDERER_VULKAN_H
+#ifndef ENGINE_RENDERER_VULKAN_RENDERER_VULKAN_H
+#define ENGINE_RENDERER_VULKAN_RENDERER_VULKAN_H
 
 #include <atomic>
 #include <memory>
@@ -8,12 +8,12 @@
 #include <unordered_map>
 #include <vector>
 
-#include "vulkan_context.h"
+#include "engine/renderer/vulkan/vulkan_context.h"
 
-#include "../../../base/semaphore.h"
-#include "../../../base/task_runner.h"
-#include "../../../third_party/vma/vk_mem_alloc.h"
-#include "../renderer.h"
+#include "base/semaphore.h"
+#include "base/task_runner.h"
+#include "engine/renderer/renderer.h"
+#include "third_party/vma/vk_mem_alloc.h"
 
 namespace eng {
 
@@ -268,4 +268,4 @@ class RendererVulkan : public Renderer {
 
 }  // namespace eng
 
-#endif  // RENDERER_VULKAN_H
+#endif  // ENGINE_RENDERER_VULKAN_RENDERER_VULKAN_H

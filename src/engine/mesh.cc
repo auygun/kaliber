@@ -1,11 +1,11 @@
-#include "mesh.h"
+#include "engine/mesh.h"
 
 #include <string.h>
 
-#include "../base/log.h"
-#include "../third_party/jsoncpp/json.h"
-#include "engine.h"
-#include "platform/asset_file.h"
+#include "base/log.h"
+#include "third_party/jsoncpp/json.h"
+#include "engine/engine.h"
+#include "engine/platform/asset_file.h"
 
 namespace eng {
 

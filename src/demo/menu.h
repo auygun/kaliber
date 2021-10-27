@@ -1,14 +1,14 @@
-#ifndef MENU_H
-#define MENU_H
+#ifndef DEMO_MENU_H
+#define DEMO_MENU_H
 
 #include <memory>
 #include <string>
 
-#include "../base/closure.h"
-#include "../base/vecmath.h"
-#include "../engine/animator.h"
-#include "../engine/image_quad.h"
-#include "../engine/sound_player.h"
+#include "base/closure.h"
+#include "base/vecmath.h"
+#include "engine/animator.h"
+#include "engine/image_quad.h"
+#include "engine/sound_player.h"
 
 namespace eng {
 class Image;
@@ -149,4 +149,4 @@ class Menu {
   bool IsAnimating();
 };
 
-#endif  // MENU_H
+#endif  // DEMO_MENU_H

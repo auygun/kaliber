@@ -1,6 +1,6 @@
-#include "renderer_opengl.h"
+#include "engine/renderer/opengl/renderer_opengl.h"
 
-#include "../../../base/log.h"
+#include "base/log.h"
 
 namespace eng {
 

@@ -1,5 +1,5 @@
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef BASE_TIMER_H
+#define BASE_TIMER_H
 
 #include <sys/time.h>
 
@@ -28,4 +28,4 @@ class Timer {
 
 }  // namespace base
 
-#endif  // TIMER_H
+#endif  // BASE_TIMER_H

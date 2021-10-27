@@ -1,13 +1,14 @@
 .DEFAULT_GOAL := all
 
 # --- Input variables ---
+
 BUILD ?= release
 ifeq ($(findstring $(BUILD),debug release),)
   $(error BUILD must be set to debug or release)
 endif
 
 # Build all executables by default.
-APPS ?= gltest
+APPS ?= demo
 
 # If the VERBOSE flag isn't set, then mute superfluous output.
 ifeq ($(VERBOSE),)
@@ -18,6 +19,7 @@ ifeq ($(VERBOSE),)
 endif
 
 # --- Internal variables ---
+
 ARCH := $(shell uname -p)
 SRC_ROOT := $(abspath ../../src)
 OUTPUT_DIR := $(abspath .)
@@ -51,7 +53,7 @@ endif
 CFLAGS += -msse2
 
 # Let C++ inherit all C flags.
-CXXFLAGS = $(CFLAGS)
+CXXFLAGS = $(CFLAGS) -I$(SRC_ROOT)
 
 # Enable C++17
 CXXFLAGS += -std=c++17
@@ -65,28 +67,21 @@ CFLAGS += -DFALLBACK_CONFIG_DIRS='"/etc/xdg"'
 CFLAGS += -DHAVE_SECURE_GETENV
 
 # --- Internal functions ---
+
 app_exe = $(OUTPUT_DIR)/$(1)_$(ARCH)_$(BUILD)
 objs_from_src = $(patsubst $(SRC_ROOT)/%, $(BUILD_DIR)/%.o, $(basename $(1)))
 objs_from_src_in = $(call objs_from_src, $(shell find $(1) -name "*.cc" -o -name "*.cpp" -o -name "*.c"))
 
-# --- gltest application ---
-ifneq ($(filter gltest,$(APPS)),)
+# --- Engine ---
 
-GLTEST_SRC := \
+ENGINE_SRC := \
   $(SRC_ROOT)/base/collusion_test.cc \
   $(SRC_ROOT)/base/log.cc \
   $(SRC_ROOT)/base/random.cc \
   $(SRC_ROOT)/base/sinc_resampler.cc \
   $(SRC_ROOT)/base/task_runner.cc \
+  $(SRC_ROOT)/base/thread_pool.cc \
   $(SRC_ROOT)/base/timer.cc \
-  $(SRC_ROOT)/base/worker.cc \
-  $(SRC_ROOT)/demo/credits.cc \
-  $(SRC_ROOT)/demo/demo.cc \
-  $(SRC_ROOT)/demo/enemy.cc \
-  $(SRC_ROOT)/demo/hud.cc \
-  $(SRC_ROOT)/demo/menu.cc \
-  $(SRC_ROOT)/demo/player.cc \
-  $(SRC_ROOT)/demo/sky_quad.cc \
   $(SRC_ROOT)/engine/animatable.cc \
   $(SRC_ROOT)/engine/animator.cc \
   $(SRC_ROOT)/engine/audio/audio_alsa.cc \
@@ -179,15 +174,34 @@ GLTEST_SRC := \
   $(SRC_ROOT)/third_party/vulkan/loader/unknown_ext_chain.c \
   $(SRC_ROOT)/third_party/vulkan/loader/wsi.c
 
-GLTEST_EXE := $(call app_exe,gltest)
-GLTEST_OBJS := $(call objs_from_src, $(GLTEST_SRC))
-EXES += $(GLTEST_EXE)
-OBJS += $(GLTEST_OBJS)
+ENGINE_LIB := $(BUILD_DIR)/libengine.a
+ENGINE_OBJS := $(call objs_from_src, $(ENGINE_SRC))
+LIBS += $(ENGINE_LIB)
+OBJS += $(ENGINE_OBJS)
 
-$(GLTEST_EXE): $(GLTEST_OBJS) $(LIBS)
+$(ENGINE_LIB): $(ENGINE_OBJS)
+
+# --- demo application ---
+
+ifneq ($(filter demo,$(APPS)),)
+
+DEMO_SRC := \
+  $(SRC_ROOT)/demo/credits.cc \
+  $(SRC_ROOT)/demo/demo.cc \
+  $(SRC_ROOT)/demo/enemy.cc \
+  $(SRC_ROOT)/demo/hud.cc \
+  $(SRC_ROOT)/demo/menu.cc \
+  $(SRC_ROOT)/demo/player.cc \
+  $(SRC_ROOT)/demo/sky_quad.cc
+
+DEMO_EXE := $(call app_exe,demo)
+DEMO_OBJS := $(call objs_from_src, $(DEMO_SRC))
+EXES += $(DEMO_EXE)
+OBJS += $(DEMO_OBJS)
+
+$(DEMO_EXE): $(DEMO_OBJS) $(LIBS)
 
 endif
-
 
 # --- Build rules ---
 

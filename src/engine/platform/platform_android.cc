@@ -1,18 +1,15 @@
-#include "platform.h"
+#include "engine/platform/platform.h"
 
 #include <android_native_app_glue.h>
 #include <jni.h>
 #include <unistd.h>
 
-#include <memory>
-#include <string>
-
-#include "../../base/log.h"
-#include "../../base/task_runner.h"
-#include "../audio/audio.h"
-#include "../engine.h"
-#include "../input_event.h"
-#include "../renderer/renderer.h"
+#include "base/log.h"
+#include "base/task_runner.h"
+#include "engine/audio/audio.h"
+#include "engine/engine.h"
+#include "engine/input_event.h"
+#include "engine/renderer/renderer.h"
 
 using namespace base;
 

@@ -1,11 +1,11 @@
-#ifndef IMAGE_H
-#define IMAGE_H
+#ifndef ENGINE_IMAGE_H
+#define ENGINE_IMAGE_H
 
 #include <stdint.h>
 #include <string>
 
-#include "../base/mem.h"
-#include "../base/vecmath.h"
+#include "base/mem.h"
+#include "base/vecmath.h"
 
 namespace eng {
 
@@ -56,4 +56,4 @@ class Image {
 
 }  // namespace eng
 
-#endif  // IMAGE_H
+#endif  // ENGINE_IMAGE_H

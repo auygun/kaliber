@@ -1,7 +1,7 @@
-#include "shader.h"
+#include "engine/renderer/shader.h"
 
-#include "../shader_source.h"
-#include "renderer.h"
+#include "engine/renderer/renderer.h"
+#include "engine/shader_source.h"
 
 using namespace base;
 

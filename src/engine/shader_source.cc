@@ -1,10 +1,10 @@
-#include "shader_source.h"
+#include "engine/shader_source.h"
 
 #include <cstring>
 
-#include "../base/log.h"
-#include "engine.h"
-#include "platform/asset_file.h"
+#include "base/log.h"
+#include "engine/engine.h"
+#include "engine/platform/asset_file.h"
 
 namespace {
 

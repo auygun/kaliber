@@ -1,5 +1,5 @@
-#ifndef MEM_H
-#define MEM_H
+#ifndef BASE_MEM_H
+#define BASE_MEM_H
 
 #include <cstdlib>
 #include <memory>
@@ -8,7 +8,7 @@
 #include <malloc.h>
 #endif
 
-#include "log.h"
+#include "base/log.h"
 
 #define ALIGN_MEM(alignment) __attribute__((aligned(alignment)))
 
@@ -53,4 +53,4 @@ inline bool IsAligned(void* ptr) {
 
 }  // namespace base
 
-#endif  // MEM_H
+#endif  // BASE_MEM_H

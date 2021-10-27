@@ -1,12 +1,13 @@
-#include "hud.h"
+#include "demo/hud.h"
 
-#include "../base/interpolation.h"
-#include "../base/log.h"
-#include "../base/vecmath.h"
-#include "../engine/engine.h"
-#include "../engine/font.h"
-#include "../engine/image.h"
-#include "demo.h"
+#include "base/interpolation.h"
+#include "base/log.h"
+#include "base/vecmath.h"
+#include "engine/engine.h"
+#include "engine/font.h"
+#include "engine/image.h"
+
+#include "demo/demo.h"
 
 using namespace std::string_literals;
 

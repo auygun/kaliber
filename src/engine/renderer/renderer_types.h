@@ -1,5 +1,5 @@
-#ifndef RENDERER_TYPES_H
-#define RENDERER_TYPES_H
+#ifndef ENGINE_RENDERER_RENDERER_TYPES_H
+#define ENGINE_RENDERER_RENDERER_TYPES_H
 
 #include <string>
 #include <tuple>
@@ -45,4 +45,4 @@ bool ParseVertexDescription(std::string vd_str, VertexDescripton& out);
 
 }  // namespace eng
 
-#endif  // RENDERER_TYPES_H
+#endif  // ENGINE_RENDERER_RENDERER_TYPES_H

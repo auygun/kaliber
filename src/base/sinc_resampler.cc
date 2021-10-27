@@ -73,13 +73,13 @@
 // Note: we're glossing over how the sub-sample handling works with
 // |virtual_source_idx_|, etc.
 
-#include "sinc_resampler.h"
+#include "base/sinc_resampler.h"
 
 #include <cmath>
 #include <cstring>
 #include <limits>
 
-#include "log.h"
+#include "base/log.h"
 
 #if defined(_M_X64) || defined(__x86_64__) || defined(__i386__)
 #include <xmmintrin.h>

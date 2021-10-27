@@ -1,13 +1,13 @@
-#ifndef HUD_H
-#define HUD_H
+#ifndef DEMO_HUD_H
+#define DEMO_HUD_H
 
 #include <memory>
 #include <string>
 
-#include "../base/closure.h"
-#include "../engine/animator.h"
-#include "../engine/image_quad.h"
-#include "../engine/solid_quad.h"
+#include "base/closure.h"
+#include "engine/animator.h"
+#include "engine/image_quad.h"
+#include "engine/solid_quad.h"
 
 namespace eng {
 class Image;
@@ -66,4 +66,4 @@ class Hud {
   std::unique_ptr<eng::Image> CreateImage();
 };
 
-#endif  // HUD_H
+#endif  // DEMO_HUD_H

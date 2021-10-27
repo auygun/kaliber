@@ -1,14 +1,14 @@
-#ifndef VULKAN_CONTEXT_H
-#define VULKAN_CONTEXT_H
+#ifndef ENGINE_RENDERER_VULKAN_VULKAN_CONTEXT_H
+#define ENGINE_RENDERER_VULKAN_VULKAN_CONTEXT_H
 
 #include <memory>
 #include <unordered_map>
 #include <vector>
 
 #if defined(__ANDROID__)
-#include "../../../third_party/android/vulkan_wrapper.h"
+#include "third_party/android/vulkan_wrapper.h"
 #else
-#include "../../../third_party/vulkan/vulkan.h"
+#include "third_party/vulkan/vulkan.h"
 #endif
 
 #if defined(__ANDROID__)
@@ -193,4 +193,4 @@ class VulkanContext {
 
 }  // namespace eng
 
-#endif  // VULKAN_DEVICE_H
+#endif  // ENGINE_RENDERER_VULKAN_VULKAN_DEVICE_H

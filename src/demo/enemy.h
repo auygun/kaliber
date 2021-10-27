@@ -1,16 +1,17 @@
-#ifndef ENEMY_H
-#define ENEMY_H
+#ifndef DEMO_ENEMY_H
+#define DEMO_ENEMY_H
 
 #include <array>
 #include <list>
 #include <memory>
 
-#include "../base/vecmath.h"
-#include "../engine/animator.h"
-#include "../engine/image_quad.h"
-#include "../engine/solid_quad.h"
-#include "../engine/sound_player.h"
-#include "damage_type.h"
+#include "base/vecmath.h"
+#include "engine/animator.h"
+#include "engine/image_quad.h"
+#include "engine/solid_quad.h"
+#include "engine/sound_player.h"
+
+#include "demo/damage_type.h"
 
 namespace eng {
 class Image;
@@ -173,4 +174,4 @@ class Enemy {
   void TranslateEnemyUnit(EnemyUnit& e, const base::Vector2f& delta);
 };
 
-#endif  // ENEMY_H
+#endif  // DEMO_ENEMY_H

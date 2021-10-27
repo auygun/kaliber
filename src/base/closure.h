@@ -1,5 +1,5 @@
-#ifndef CLOSURE_H
-#define CLOSURE_H
+#ifndef BASE_CLOSURE_H
+#define BASE_CLOSURE_H
 
 #include <functional>
 #include <memory>
@@ -56,4 +56,4 @@ std::function<ReturnType(Args...)> BindWeak(ReturnType (Class::*func)(Args...),
 
 }  // namespace base
 
-#endif  // CLOSURE_H
+#endif  // BASE_CLOSURE_H

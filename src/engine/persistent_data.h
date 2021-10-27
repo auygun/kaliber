@@ -1,10 +1,10 @@
-#ifndef SAVE_GAME_H
-#define SAVE_GAME_H
+#ifndef ENGINE_SAVE_GAME_H
+#define ENGINE_SAVE_GAME_H
 
 #include <string>
 
-#include "../base/log.h"
-#include "../third_party/jsoncpp/json.h"
+#include "base/log.h"
+#include "third_party/jsoncpp/json.h"
 
 namespace eng {
 
@@ -37,4 +37,4 @@ class PersistentData {
 
 }  // namespace eng
 
-#endif  // SAVE_GAME_H
+#endif  // ENGINE_SAVE_GAME_H

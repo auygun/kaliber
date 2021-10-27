@@ -1,5 +1,5 @@
-#ifndef FILE_H
-#define FILE_H
+#ifndef BASE_FILE_H
+#define BASE_FILE_H
 
 #include <cstdio>
 #include <memory>
@@ -22,4 +22,4 @@ using ScopedFILE = std::unique_ptr<FILE, internal::ScopedFILECloser>;
 
 }  // namespace base
 
-#endif  // FILE_H
+#endif  // BASE_FILE_H

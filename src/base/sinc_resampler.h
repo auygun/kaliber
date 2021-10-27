@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SINC_RESAMPLER_H_
-#define SINC_RESAMPLER_H_
+#ifndef BASE_SINC_RESAMPLER_H
+#define BASE_SINC_RESAMPLER_H
 
 #include <functional>
 #include <memory>
 
-#include "mem.h"
+#include "base/mem.h"
 
 namespace base {
 
@@ -151,4 +151,4 @@ class SincResampler {
 
 }  // namespace base
 
-#endif  // SINC_RESAMPLER_H_
+#endif  // BASE_SINC_RESAMPLER_H

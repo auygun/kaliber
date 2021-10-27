@@ -1,17 +1,17 @@
-#include "sound.h"
+#include "engine/sound.h"
 
 #include <array>
 
-#include "../base/log.h"
-#include "../base/sinc_resampler.h"
+#include "base/log.h"
+#include "base/sinc_resampler.h"
 #define MINIMP3_ONLY_MP3
 #define MINIMP3_ONLY_SIMD
 #define MINIMP3_FLOAT_OUTPUT
 #define MINIMP3_NO_STDIO
 #define MINIMP3_IMPLEMENTATION
-#include "../third_party/minimp3/minimp3_ex.h"
-#include "engine.h"
-#include "platform/asset_file.h"
+#include "engine/engine.h"
+#include "engine/platform/asset_file.h"
+#include "third_party/minimp3/minimp3_ex.h"
 
 using namespace base;
 

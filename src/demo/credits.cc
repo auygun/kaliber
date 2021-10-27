@@ -1,12 +1,12 @@
-#include "credits.h"
+#include "demo/credits.h"
 
-#include "../base/log.h"
-#include "../base/vecmath.h"
-#include "../engine/engine.h"
-#include "../engine/font.h"
-#include "../engine/image.h"
-#include "../engine/input_event.h"
-#include "demo.h"
+#include "base/log.h"
+#include "base/vecmath.h"
+#include "demo/demo.h"
+#include "engine/engine.h"
+#include "engine/font.h"
+#include "engine/image.h"
+#include "engine/input_event.h"
 
 using namespace base;
 using namespace eng;

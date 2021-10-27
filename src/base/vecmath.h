@@ -1,12 +1,12 @@
-#ifndef VEC_MATH_H
-#define VEC_MATH_H
+#ifndef BASE_VEC_MATH_H
+#define BASE_VEC_MATH_H
 
 #include <cmath>
 #include <string>
 #include <utility>
 
-#include "interpolation.h"
-#include "log.h"
+#include "base/interpolation.h"
+#include "base/log.h"
 
 //
 // Miscellaneous helper macros.
@@ -1846,4 +1846,4 @@ using Quatf = Quaternion<float>;
 
 }  // namespace base
 
-#endif  // VEC_MATH_H
+#endif  // BASE_VEC_MATH_H

@@ -1,7 +1,7 @@
-#ifndef COLLUSION_TEST_H
-#define COLLUSION_TEST_H
+#ifndef BASE_COLLUSION_TEST_H
+#define BASE_COLLUSION_TEST_H
 
-#include "vecmath.h"
+#include "base/vecmath.h"
 
 namespace base {
 
@@ -20,4 +20,4 @@ bool Intersection(const Vector2f& center,
 
 }  // namespace base
 
-#endif  // COLLUSION_TEST_H
+#endif  // BASE_COLLUSION_TEST_H

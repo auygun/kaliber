@@ -1,5 +1,5 @@
-#ifndef RANDOM_GENERATOR_H
-#define RANDOM_GENERATOR_H
+#ifndef BASE_RANDOM_H
+#define BASE_RANDOM_H
 
 #include <random>
 
@@ -29,4 +29,4 @@ class Random {
 
 }  // namespace base
 
-#endif  // RANDOM_GENERATOR_H
+#endif  // BASE_RANDOM_H

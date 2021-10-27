@@ -1,7 +1,7 @@
-#include "audio_oboe.h"
+#include "engine/audio/audio_oboe.h"
 
-#include "../../base/log.h"
-#include "../../third_party/oboe/include/oboe/Oboe.h"
+#include "base/log.h"
+#include "third_party/oboe/include/oboe/Oboe.h"
 
 using namespace base;
 

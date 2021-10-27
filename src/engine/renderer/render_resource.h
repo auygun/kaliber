@@ -1,5 +1,5 @@
-#ifndef RENDER_RESOURCE_H
-#define RENDER_RESOURCE_H
+#ifndef ENGINE_RENDERER_RENDER_RESOURCE_H
+#define ENGINE_RENDERER_RENDER_RESOURCE_H
 
 #include <cstdint>
 
@@ -27,4 +27,4 @@ class RenderResource {
 
 }  // namespace eng
 
-#endif  // RENDER_RESOURCE_H
+#endif  // ENGINE_RENDERER_RENDER_RESOURCE_H

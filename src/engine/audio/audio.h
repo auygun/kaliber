@@ -1,10 +1,10 @@
-#ifndef AUDIO_H
-#define AUDIO_H
+#ifndef ENGINE_AUDIO_AUDIO_H
+#define ENGINE_AUDIO_AUDIO_H
 
 #if defined(__ANDROID__)
-#include "audio_oboe.h"
+#include "engine/audio/audio_oboe.h"
 #elif defined(__linux__)
-#include "audio_alsa.h"
+#include "engine/audio/audio_alsa.h"
 #endif
 
 namespace eng {
@@ -17,4 +17,4 @@ using Audio = AudioAlsa;
 
 }  // namespace eng
 
-#endif  // AUDIO_H
+#endif  // ENGINE_AUDIO_AUDIO_H

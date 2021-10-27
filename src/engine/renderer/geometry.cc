@@ -1,7 +1,7 @@
-#include "geometry.h"
+#include "engine/renderer/geometry.h"
 
-#include "../mesh.h"
-#include "renderer.h"
+#include "engine/mesh.h"
+#include "engine/renderer/renderer.h"
 
 namespace eng {
 

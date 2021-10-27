@@ -1,22 +1,22 @@
-#include "renderer_vulkan.h"
+#include "engine/renderer/vulkan/renderer_vulkan.h"
 
 #include <algorithm>
 #include <cstring>
 #include <sstream>
 
-#include "../../../base/log.h"
-#include "../../../base/vecmath.h"
-#include "../../../third_party/glslang/SPIRV/GlslangToSpv.h"
-#include "../../../third_party/glslang/StandAlone/ResourceLimits.h"
-#include "../../../third_party/glslang/glslang/Include/Types.h"
-#include "../../../third_party/glslang/glslang/Public/ShaderLang.h"
-#include "../../../third_party/spirv-reflect/spirv_reflect.h"
-#include "../../image.h"
-#include "../../mesh.h"
-#include "../../shader_source.h"
-#include "../geometry.h"
-#include "../shader.h"
-#include "../texture.h"
+#include "base/log.h"
+#include "base/vecmath.h"
+#include "engine/image.h"
+#include "engine/mesh.h"
+#include "engine/renderer/geometry.h"
+#include "engine/renderer/shader.h"
+#include "engine/renderer/texture.h"
+#include "engine/shader_source.h"
+#include "third_party/glslang/SPIRV/GlslangToSpv.h"
+#include "third_party/glslang/StandAlone/ResourceLimits.h"
+#include "third_party/glslang/glslang/Include/Types.h"
+#include "third_party/glslang/glslang/Public/ShaderLang.h"
+#include "third_party/spirv-reflect/spirv_reflect.h"
 
 using namespace base;
 

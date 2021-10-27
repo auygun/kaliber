@@ -1,22 +1,25 @@
-#include "renderer_opengl.h"
+// © 2021 Attila Uygun <auygun@gmail.com>
+// Licensed under the MIT license.
+
+#include "engine/renderer/opengl/renderer_opengl.h"
 
 #include <algorithm>
 #include <cstring>
 #include <sstream>
 #include <unordered_set>
 
-#include "../../../base/log.h"
-#include "../../../base/vecmath.h"
+#include "base/log.h"
+#include "base/vecmath.h"
 #ifdef THREADED_RENDERING
-#include "../../../base/task_runner.h"
+#include "base/task_runner.h"
 #endif  // THREADED_RENDERING
-#include "../../image.h"
-#include "../../mesh.h"
-#include "../../shader_source.h"
-#include "../geometry.h"
-#include "../shader.h"
-#include "../texture.h"
-#include "render_command.h"
+#include "engine/image.h"
+#include "engine/mesh.h"
+#include "engine/renderer/geometry.h"
+#include "engine/renderer/opengl/render_command.h"
+#include "engine/renderer/shader.h"
+#include "engine/renderer/texture.h"
+#include "engine/shader_source.h"
 
 using namespace base;
 

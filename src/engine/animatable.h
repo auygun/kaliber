@@ -1,8 +1,8 @@
-#ifndef SHAPE_H
-#define SHAPE_H
+#ifndef ENGINE_SHAPE_H
+#define ENGINE_SHAPE_H
 
-#include "../base/vecmath.h"
-#include "drawable.h"
+#include "base/vecmath.h"
+#include "engine/drawable.h"
 
 namespace eng {
 
@@ -59,4 +59,4 @@ class Animatable : public Drawable {
 
 }  // namespace eng
 
-#endif  // SHAPE_H
+#endif  // ENGINE_SHAPE_H

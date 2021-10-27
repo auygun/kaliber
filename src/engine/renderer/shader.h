@@ -1,12 +1,12 @@
-#ifndef SHADER_H
-#define SHADER_H
+#ifndef ENGINE_RENDERER_SHADER_H
+#define ENGINE_RENDERER_SHADER_H
 
 #include <memory>
 #include <string>
 
-#include "../../base/vecmath.h"
-#include "render_resource.h"
-#include "renderer_types.h"
+#include "base/vecmath.h"
+#include "engine/renderer/render_resource.h"
+#include "engine/renderer/renderer_types.h"
 
 namespace eng {
 
@@ -39,4 +39,4 @@ class Shader : public RenderResource {
 
 }  // namespace eng
 
-#endif  // SHADER_H
+#endif  // ENGINE_RENDERER_SHADER_H

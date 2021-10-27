@@ -1,5 +1,5 @@
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef ENGINE_RENDERER_RENDERER_H
+#define ENGINE_RENDERER_RENDERER_H
 
 #include <memory>
 #include <string>
@@ -9,9 +9,9 @@
 #include <X11/Xutil.h>
 #endif
 
-#include "../../base/closure.h"
-#include "../../base/vecmath.h"
-#include "renderer_types.h"
+#include "base/closure.h"
+#include "base/vecmath.h"
+#include "engine/renderer/renderer_types.h"
 
 #if defined(__ANDROID__)
 struct ANativeWindow;
@@ -127,4 +127,4 @@ class Renderer {
 
 }  // namespace eng
 
-#endif  // RENDERER_H
+#endif  // ENGINE_RENDERER_RENDERER_H

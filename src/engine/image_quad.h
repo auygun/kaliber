@@ -1,14 +1,14 @@
-#ifndef IMAGE_QUAD_H
-#define IMAGE_QUAD_H
-
-#include "../base/vecmath.h"
-#include "animatable.h"
+#ifndef ENGINE_IMAGE_QUAD_H
+#define ENGINE_IMAGE_QUAD_H
 
 #include <array>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <variant>
+
+#include "base/vecmath.h"
+#include "engine/animatable.h"
 
 namespace eng {
 
@@ -76,4 +76,4 @@ class ImageQuad : public Animatable {
 
 }  // namespace eng
 
-#endif  // IMAGE_QUAD_H
+#endif  // ENGINE_IMAGE_QUAD_H

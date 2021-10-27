@@ -1,5 +1,5 @@
-#ifndef MISC_H
-#define MISC_H
+#ifndef BASE_MISC_H
+#define BASE_MISC_H
 
 #define CRASH *((int*)nullptr) = 0;
 
@@ -31,4 +31,4 @@ inline int RoundUpToPow2(int val) {
 
 }  // namespace base
 
-#endif  // MISC_H
+#endif  // BASE_MISC_H

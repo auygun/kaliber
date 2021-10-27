@@ -1,9 +1,9 @@
 #include "animator.h"
 
-#include "../base/interpolation.h"
-#include "../base/log.h"
-#include "animatable.h"
-#include "engine.h"
+#include "base/interpolation.h"
+#include "base/log.h"
+#include "engine/animatable.h"
+#include "engine/engine.h"
 
 using namespace base;
 

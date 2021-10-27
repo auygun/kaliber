@@ -1,5 +1,5 @@
-#ifndef SOUND_H
-#define SOUND_H
+#ifndef ENGINE_SOUND_H
+#define ENGINE_SOUND_H
 
 #include <stdint.h>
 #include <memory>
@@ -76,4 +76,4 @@ class Sound {
 
 }  // namespace eng
 
-#endif  // SOUND_H
+#endif  // ENGINE_SOUND_H
