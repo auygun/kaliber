@@ -37,13 +37,10 @@ Engine::Engine(Platform* platform, Renderer* renderer, Audio* audio)
   solid_shader_ = CreateRenderResource<Shader>();
 
   stats_ = std::make_unique<ImageQuad>();
-  stats_->SetZOrder(std::numeric_limits<int>::max());
 }
 
 Engine::~Engine() {
-  game_.reset();
   stats_.reset();
-
   singleton = nullptr;
 }
 
@@ -91,6 +88,7 @@ bool Engine::Initialize() {
     return false;
 
   SetImageSource("stats_tex", std::bind(&Engine::PrintStats, this));
+  stats_->SetZOrder(std::numeric_limits<int>::max());
 
   game_ = GameFactoryBase::CreateGame("");
   if (!game_) {
@@ -108,6 +106,9 @@ bool Engine::Initialize() {
 
 void Engine::Shutdown() {
   LOG << "Shutting down engine.";
+  game_.reset();
+  stats_->Destory();
+  textures_.clear();
 }
 
 void Engine::Update(float delta_time) {
@@ -118,12 +119,6 @@ void Engine::Update(float delta_time) {
     d->Update(delta_time);
 
   game_->Update(delta_time);
-
-  // Destroy unused textures.
-  for (auto& t : textures_) {
-    if (!t.second.persistent && t.second.texture.use_count() == 1)
-      t.second.texture->Destroy();
-  }
 
   fps_seconds_ += delta_time;
   if (fps_seconds_ >= 1) {
@@ -227,15 +222,16 @@ void Engine::SetImageSource(const std::string& asset_name,
 void Engine::SetImageSource(const std::string& asset_name,
                             CreateImageCB create_image,
                             bool persistent) {
-  std::shared_ptr<Texture> texture;
+  Texture* texture;
   auto it = textures_.find(asset_name);
   if (it != textures_.end()) {
-    texture = it->second.texture;
+    texture = it->second.texture.get();
     it->second.create_image = create_image;
     it->second.persistent = persistent;
   } else {
-    texture = CreateRenderResource<Texture>();
-    textures_[asset_name] = {texture, create_image, persistent};
+    auto& t = textures_[asset_name] = {CreateRenderResource<Texture>(),
+                                       create_image, persistent, 0};
+    texture = t.texture.get();
   }
 
   if (persistent) {
@@ -259,18 +255,33 @@ void Engine::RefreshImage(const std::string& asset_name) {
     it->second.texture->Destroy();
 }
 
-std::shared_ptr<Texture> Engine::GetTexture(const std::string& asset_name) {
+Texture* Engine::AcquireTexture(const std::string& asset_name) {
   auto it = textures_.find(asset_name);
   if (it != textures_.end()) {
     if (!it->second.texture->IsValid())
       RefreshImage(it->first);
-    return it->second.texture;
+    it->second.use_count++;
+    return it->second.texture.get();
   }
 
-  std::shared_ptr<Texture> texture = CreateRenderResource<Texture>();
-  textures_[asset_name] = {texture};
+  auto& t = textures_[asset_name] = {CreateRenderResource<Texture>(), nullptr,
+                                     false, 1};
+  return t.texture.get();
+}
 
-  return texture;
+void Engine::ReleaseTexture(const std::string& asset_name) {
+  auto it = textures_.find(asset_name);
+  if (it == textures_.end())
+    return;
+
+  if (it->second.use_count == 0) {
+    DCHECK(!it->second.texture->IsValid());
+    return;
+  }
+
+  it->second.use_count--;
+  if (!it->second.persistent && it->second.use_count == 0)
+    it->second.texture->Destroy();
 }
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {

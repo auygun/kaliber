@@ -10,11 +10,17 @@ using namespace base;
 
 namespace eng {
 
+ImageQuad::ImageQuad() = default;
+
+ImageQuad::~ImageQuad() {
+  Destory();
+}
+
 void ImageQuad::Create(const std::string& asset_name,
                        std::array<int, 2> num_frames,
                        int frame_width,
                        int frame_height) {
-  texture_ = Engine::Get().GetTexture(asset_name);
+  texture_ = Engine::Get().AcquireTexture(asset_name);
 
   num_frames_ = std::move(num_frames);
   frame_width_ = frame_width;
@@ -27,7 +33,8 @@ void ImageQuad::Create(const std::string& asset_name,
 }
 
 void ImageQuad::Destory() {
-  texture_.reset();
+  Engine::Get().ReleaseTexture(asset_name_);
+  texture_ = nullptr;
 }
 
 void ImageQuad::AutoScale() {
@@ -40,7 +47,7 @@ void ImageQuad::AutoScale() {
   SetSize(size);
 }
 
-void ImageQuad::SetCustomShader(std::shared_ptr<Shader> shader) {
+void ImageQuad::SetCustomShader(Shader* shader) {
   custom_shader_ = shader;
   custom_uniforms_.clear();
 }
@@ -66,8 +73,8 @@ void ImageQuad::Draw(float frame_frac) {
   Vector2f tex_scale = {GetFrameWidth() / texture_->GetWidth(),
                         GetFrameHeight() / texture_->GetHeight()};
 
-  Shader* shader = custom_shader_ ? custom_shader_.get()
-                                  : Engine::Get().GetPassThroughShader();
+  Shader* shader =
+      custom_shader_ ? custom_shader_ : Engine::Get().GetPassThroughShader();
 
   shader->Activate();
   shader->SetUniform("offset", position_);

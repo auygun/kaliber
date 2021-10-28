@@ -22,9 +22,9 @@ void Texture::Update(std::unique_ptr<Image> image) {
 
 void Texture::Destroy() {
   if (IsValid()) {
+    DLOG << "Texture destroyed. resource_id: " << resource_id_;
     renderer_->DestroyTexture(resource_id_);
     resource_id_ = 0;
-    DLOG << "Texture destroyed. resource_id: " << resource_id_;
   }
 }
 

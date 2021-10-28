@@ -420,7 +420,7 @@ void Enemy::StopAllEnemyUnits(bool chromatic_aberration_effect) {
       continue;
 
     if (chromatic_aberration_effect) {
-      e.sprite.SetCustomShader(chromatic_aberration_);
+      e.sprite.SetCustomShader(chromatic_aberration_.get());
       e.chromatic_aberration_active_ = true;
     }
 

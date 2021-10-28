@@ -2,7 +2,6 @@
 #define ENGINE_IMAGE_QUAD_H
 
 #include <array>
-#include <memory>
 #include <string>
 #include <unordered_map>
 #include <variant>
@@ -17,8 +16,8 @@ class Texture;
 
 class ImageQuad : public Animatable {
  public:
-  ImageQuad() = default;
-  ~ImageQuad() override = default;
+  ImageQuad();
+  ~ImageQuad() override;
 
   void Create(const std::string& asset_name,
               std::array<int, 2> num_frames = {1, 1},
@@ -29,7 +28,7 @@ class ImageQuad : public Animatable {
 
   void AutoScale();
 
-  void SetCustomShader(std::shared_ptr<Shader> shader);
+  void SetCustomShader(Shader* shader);
 
   template <typename T>
   void SetCustomUniform(const std::string& name, T value) {
@@ -54,9 +53,9 @@ class ImageQuad : public Animatable {
                                     float,
                                     int>;
 
-  std::shared_ptr<Texture> texture_;
+  Texture* texture_ = nullptr;
 
-  std::shared_ptr<Shader> custom_shader_;
+  Shader* custom_shader_ = nullptr;
   std::unordered_map<std::string, UniformValue> custom_uniforms_;
 
   size_t current_frame_ = 0;

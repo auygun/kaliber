@@ -106,7 +106,7 @@ class Enemy {
     eng::SoundPlayer hit;
   };
 
-  std::shared_ptr<eng::Shader> chromatic_aberration_;
+  std::unique_ptr<eng::Shader> chromatic_aberration_;
   float chromatic_aberration_offset_ = 0;
 
   eng::ImageQuad boss_;

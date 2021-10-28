@@ -76,7 +76,8 @@ class Engine {
 
   void RefreshImage(const std::string& asset_name);
 
-  std::shared_ptr<Texture> GetTexture(const std::string& asset_name);
+  Texture* AcquireTexture(const std::string& asset_name);
+  void ReleaseTexture(const std::string& asset_name);
 
   void AddInputEvent(std::unique_ptr<InputEvent> event);
   std::unique_ptr<InputEvent> GetNextInputEvent();
@@ -151,9 +152,10 @@ class Engine {
   // Class holding information about texture resources managed by engine.
   // Texture is created from the image returned by create_image callback.
   struct TextureResource {
-    std::shared_ptr<Texture> texture;
+    std::unique_ptr<Texture> texture;
     CreateImageCB create_image;
     bool persistent = false;
+    size_t use_count = 0;
   };
 
   static Engine* singleton;
