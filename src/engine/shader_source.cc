@@ -22,7 +22,6 @@ const char kVertexShaderMacros[] = R"(
   #define PARAM(X) params.X
   #else
   #define UNIFORM_BEGIN
-  #define UNIFORM uniform
   #define UNIFORM_V(X) uniform X;
   #define UNIFORM_F(X)
   #define UNIFORM_END

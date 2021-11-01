@@ -274,11 +274,7 @@ void Engine::ReleaseTexture(const std::string& asset_name) {
   if (it == textures_.end())
     return;
 
-  if (it->second.use_count == 0) {
-    DCHECK(!it->second.texture->IsValid());
-    return;
-  }
-
+  DCHECK(it->second.use_count > 0);
   it->second.use_count--;
   if (!it->second.persistent && it->second.use_count == 0)
     it->second.texture->Destroy();

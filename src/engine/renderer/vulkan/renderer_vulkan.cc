@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstring>
 #include <sstream>
+#include <utility>
 
 #include "base/log.h"
 #include "base/vecmath.h"
@@ -23,8 +24,8 @@ using namespace base;
 namespace {
 
 using VertexInputDescription =
-    std::tuple<std::vector<VkVertexInputBindingDescription>,
-               std::vector<VkVertexInputAttributeDescription>>;
+    std::pair<std::vector<VkVertexInputBindingDescription>,
+              std::vector<VkVertexInputAttributeDescription>>;
 
 constexpr VkPrimitiveTopology kVkPrimitiveType[eng::kPrimitive_Max] = {
     VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
@@ -180,7 +181,7 @@ VertexInputDescription GetVertexInputDescription(
   bindings[0].stride = vertex_offset;
   bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-  return std::make_tuple(std::move(bindings), std::move(attributes));
+  return std::make_pair(std::move(bindings), std::move(attributes));
 }
 
 VkIndexType GetIndexType(eng::DataType data_type) {
@@ -214,41 +215,35 @@ VkFormat GetImageFormat(eng::Image::Format format) {
   return VK_FORMAT_R8G8B8A8_UNORM;
 }
 
-void GetBlockSizeForImageFormat(VkFormat format, int& size, int& height) {
+std::pair<int, int> GetBlockSizeForImageFormat(VkFormat format) {
   switch (format) {
     case VK_FORMAT_R8G8B8A8_UNORM:
-      size = 4;
-      height = 1;
-      return;
+      return {4, 1};
     case VK_FORMAT_BC1_RGB_UNORM_BLOCK:
-      size = 8;
-      height = 4;
-      return;
+      return {8, 4};
     case VK_FORMAT_BC3_UNORM_BLOCK:
-      size = 16;
-      height = 4;
-      return;
+      return {16, 4};
     default:
       break;
   }
   NOTREACHED << "Invalid format: " << format;
+  return {0, 0};
 }
 
-void GetNumBlocksForImageFormat(VkFormat format,
-                                int& num_blocks_x,
-                                int& num_blocks_y) {
+std::pair<int, int> GetNumBlocksForImageFormat(VkFormat format,
+                                               int width,
+                                               int height) {
   switch (format) {
     case VK_FORMAT_R8G8B8A8_UNORM:
-      return;
+      return {width, height};
     case VK_FORMAT_BC1_RGB_UNORM_BLOCK:
     case VK_FORMAT_BC3_UNORM_BLOCK:
-      num_blocks_x = (num_blocks_x + 3) / 4;
-      num_blocks_y = (num_blocks_y + 3) / 4;
-      return;
+      return {(width + 3) / 4, (height + 3) / 4};
     default:
       break;
   }
   NOTREACHED << "Invalid format: " << format;
+  return {width, height};
 }
 
 }  // namespace
@@ -1482,12 +1477,10 @@ void RendererVulkan::UpdateImage(VkImage image,
                                  const uint8_t* data,
                                  int width,
                                  int height) {
-  int num_blocks_x = width;
-  int num_blocks_y = height;
-  GetNumBlocksForImageFormat(format, num_blocks_x, num_blocks_y);
+  auto [num_blocks_x, num_blocks_y] =
+      GetNumBlocksForImageFormat(format, width, height);
 
-  int block_size, block_height;
-  GetBlockSizeForImageFormat(format, block_size, block_height);
+  auto [block_size, block_height] = GetBlockSizeForImageFormat(format);
 
   size_t to_submit = num_blocks_x * num_blocks_y * block_size;
   size_t submit_from = 0;
