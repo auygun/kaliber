@@ -229,8 +229,10 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
     Vector2f pos[2] = {platform->pointer_pos_[0], platform->pointer_pos_[1]};
     for (auto i = 0; i < count; ++i) {
       int32_t id = AMotionEvent_getPointerId(event, i);
-      pos[id] = {AMotionEvent_getX(event, i), AMotionEvent_getY(event, i)};
-      pos[id] = platform->engine_->ToPosition(pos[id]);
+      if (id < 2) {
+        pos[id] = {AMotionEvent_getX(event, i), AMotionEvent_getY(event, i)};
+        pos[id] = platform->engine_->ToPosition(pos[id]);
+      }
     }
 
     if (pointer_id >= 2)
