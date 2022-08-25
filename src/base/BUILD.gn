@@ -10,7 +10,6 @@ source_set("base") {
     "log.h",
     "mem.h",
     "misc.h",
-    "random.cc",
     "random.h",
     "sinc_resampler.cc",
     "sinc_resampler.h",

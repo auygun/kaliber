@@ -109,8 +109,9 @@ bool Menu::Initialize() {
     logo_[1].SetFrame(0);
     logo_animator_[1].SetFrames(12, 20);
     logo_animator_[1].SetTimer(
-        Lerp(3.0f, 8.0f, Engine::Get().GetRandomGenerator().GetFloat()));
-    logo_animator_[1].Play(Animator::kFrames | Animator::kTimer, true);
+        Lerp(3.0f, 8.0f, Engine::Get().GetRandomGenerator().Rand()));
+    logo_animator_[1].Play(Animator::kFrames, true);
+    logo_animator_[1].Play(Animator::kTimer, false);
   });
 
   logo_animator_[1].Attach(&logo_[1]);
@@ -119,7 +120,7 @@ bool Menu::Initialize() {
     logo_[1].SetFrame(12);
     logo_animator_[1].SetFrames(9, 30);
     logo_animator_[1].SetTimer(
-        Lerp(3.0f, 8.0f, Engine::Get().GetRandomGenerator().GetFloat()));
+        Lerp(3.0f, 8.0f, Engine::Get().GetRandomGenerator().Rand()));
     logo_animator_[1].Play(Animator::kFrames | Animator::kTimer, false);
   });
   logo_animator_[1].SetEndCallback(Animator::kFrames, [&]() -> void {
@@ -308,7 +309,8 @@ void Menu::Show() {
     high_score_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
       high_score_animator_.SetBlending(kColorFadeOut, 0.3f);
       high_score_animator_.SetTimer(5);
-      high_score_animator_.Play(Animator::kBlending | Animator::kTimer, true);
+      high_score_animator_.Play(Animator::kBlending, true);
+      high_score_animator_.Play(Animator::kTimer, false);
     });
     high_score_animator_.SetEndCallback(Animator::kTimer, [&]() -> void {
       high_score_animator_.Play(Animator::kBlending | Animator::kTimer, false);

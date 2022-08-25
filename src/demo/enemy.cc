@@ -70,7 +70,7 @@ void SetupFadeOutAnim(Animator& animator, float delay) {
 float SnapSpawnPosX(int col) {
   Vector2f s = eng::Engine::Get().GetScreenSize();
   float offset = base::Lerp(s.x * -0.02f, s.x * 0.02f,
-                            eng::Engine::Get().GetRandomGenerator().GetFloat());
+                            eng::Engine::Get().GetRandomGenerator().Rand());
   return (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2 + offset;
 }
 
@@ -135,7 +135,7 @@ void Enemy::Update(float delta_time) {
       UpdateWave(delta_time);
   }
 
-  Random& rnd = Engine::Get().GetRandomGenerator();
+  Randomf& rnd = Engine::Get().GetRandomGenerator();
 
   chromatic_aberration_offset_ += 0.8f * delta_time;
 
@@ -449,7 +449,7 @@ void Enemy::KillAllEnemyUnits(bool randomize_order) {
         e.enemy_type <= kEnemyType_Unit_Last) {
       if (randomize_order) {
         e.kill_timer = Lerp(0.0f, engine.GetScreenSize().y * 0.5f * 0.15f,
-                            engine.GetRandomGenerator().GetFloat());
+                            engine.GetRandomGenerator().Rand());
       } else {
         float dist = e.sprite.GetPosition().y -
                      game->GetPlayer().GetWeaponPos(kDamageType_Green).y;
@@ -924,7 +924,8 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
         boss_.SetFrame(11);
       });
       boss_animator_.SetTimer(1.25f);
-      boss_animator_.Play(Animator::kFrames | Animator::kTimer, true);
+      boss_animator_.Play(Animator::kFrames, true);
+      boss_animator_.Play(Animator::kTimer, false);
     }
   } else {
     Vector2f s = target->health_base.GetSize();
@@ -946,8 +947,8 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
       target->movement_animator.Pause(Animator::kMovement);
       target->sprite_animator.Pause(Animator::kFrames);
 
-      Random& rnd = Engine::Get().GetRandomGenerator();
-      float stealth_timer = Lerp(2.0f, 5.0f, rnd.GetFloat());
+      Randomf& rnd = Engine::Get().GetRandomGenerator();
+      float stealth_timer = Lerp(2.0f, 5.0f, rnd.Rand());
       target->sprite_animator.SetEndCallback(
           Animator::kTimer, [&, target]() -> void {
             // No horizontal teleport in boss fight.
@@ -960,7 +961,7 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
             // Vertical teleport (wave 6+).
             float ct = target->movement_animator.GetTime(Animator::kMovement);
             if (wave_ >= 6 && ct < 0.6f) {
-              float t = Lerp(0.0f, 0.5f, rnd.GetFloat());
+              float t = Lerp(0.0f, 0.5f, rnd.Rand());
               float nt = std::min(ct + t, 0.6f);
               target->movement_animator.SetTime(Animator::kMovement, nt, true);
             }
@@ -1005,7 +1006,8 @@ void Enemy::TakeDamage(EnemyUnit* target, int damage) {
         boss_animator_.Play(Animator::kFrames, true);
       });
       boss_animator_.SetTimer(0.2f);
-      boss_animator_.Play(Animator::kFrames | Animator::kTimer, true);
+      boss_animator_.Play(Animator::kFrames, true);
+      boss_animator_.Play(Animator::kTimer, false);
     }
   }
 }
@@ -1015,7 +1017,7 @@ void Enemy::UpdateWave(float delta_time) {
     seconds_since_last_spawn_[i] += delta_time;
 
   Engine& engine = Engine::Get();
-  Random& rnd = engine.GetRandomGenerator();
+  Randomf& rnd = engine.GetRandomGenerator();
 
   EnemyType enemy_type = kEnemyType_Invalid;
 
@@ -1027,7 +1029,7 @@ void Enemy::UpdateWave(float delta_time) {
       seconds_since_last_spawn_[i] = 0;
       seconds_to_next_spawn_[i] =
           Lerp(kSpawnPeriod[i][0] * spawn_factor_,
-               kSpawnPeriod[i][1] * spawn_factor_, rnd.GetFloat());
+               kSpawnPeriod[i][1] * spawn_factor_, rnd.Rand());
       break;
     }
   }
@@ -1078,8 +1080,7 @@ void Enemy::UpdateWave(float delta_time) {
       SpawnUnit(kEnemyType_PowerUp, kDamageType_Any, pos, 6);
     }
     seconds_since_last_power_up_ = 0;
-    seconds_to_next_power_up_ =
-        Lerp(1.3f * 60.0f, 1.8f * 60.0f, rnd.GetFloat());
+    seconds_to_next_power_up_ = Lerp(1.3f * 60.0f, 1.8f * 60.0f, rnd.Rand());
   }
 }
 
@@ -1091,7 +1092,7 @@ void Enemy::UpdateBoss(float delta_time) {
   for (int i = 0; i < kEnemyType_Unit_Last + 1; ++i)
     seconds_since_last_spawn_[i] += delta_time;
 
-  Random& rnd = Engine::Get().GetRandomGenerator();
+  Randomf& rnd = Engine::Get().GetRandomGenerator();
 
   boss_spawn_time_ += delta_time;
   float boss_spawn_factor =
@@ -1112,13 +1113,13 @@ void Enemy::UpdateBoss(float delta_time) {
       seconds_since_last_spawn_[i] = 0;
       seconds_to_next_spawn_[i] =
           Lerp(kSpawnPeriod[i][0] * boss_spawn_factor,
-               kSpawnPeriod[i][1] * boss_spawn_factor, rnd.GetFloat());
+               kSpawnPeriod[i][1] * boss_spawn_factor, rnd.Rand());
       break;
     } else if (seconds_to_next_spawn_[i] >
                kSpawnPeriod[i][1] * boss_spawn_factor) {
       seconds_to_next_spawn_[i] =
           Lerp(kSpawnPeriod[i][0] * boss_spawn_factor,
-               kSpawnPeriod[i][1] * boss_spawn_factor, rnd.GetFloat());
+               kSpawnPeriod[i][1] * boss_spawn_factor, rnd.Rand());
     }
   }
 
@@ -1140,8 +1141,8 @@ void Enemy::UpdateBoss(float delta_time) {
                                : (DamageType)(rnd.Roll(2) - 1);
 
   int col = (last_spawn_col_++) % 2;
-  float offset = Lerp(boss_.GetSize().x * -0.12f, boss_.GetSize().x * 0.12f,
-                      rnd.GetFloat());
+  float offset =
+      Lerp(boss_.GetSize().x * -0.12f, boss_.GetSize().x * 0.12f, rnd.Rand());
   float x = (boss_.GetSize().x / 3) * (col ? 1 : -1) + offset;
   Vector2f pos = {x, boss_.GetPosition().y - boss_.GetSize().y / 2};
 

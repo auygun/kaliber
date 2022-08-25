@@ -14,11 +14,6 @@ inline T Lerp(const T& a, const T& b, float t) {
   return a + (b - a) * t;
 }
 
-template <>
-inline int Lerp<int>(const int& a, const int& b, float t) {
-  return Round(a + (b - a) * t);
-}
-
 inline float SmoothStep(float t) {
   return t * t * (3 - 2 * t);
 }

@@ -31,8 +31,6 @@ void Animator::Play(int animation, bool loop) {
     loop_flags_ |= animation;
   else
     loop_flags_ &= ~animation;
-  if ((loop_flags_ & kTimer) != 0)
-    loop_flags_ &= ~kTimer;
 }
 
 void Animator::Pause(int animation) {
@@ -52,7 +50,6 @@ void Animator::Stop(int animation) {
     timer_time_ = 0;
 
   play_flags_ |= animation;
-  Update(0);
   Evaluate(0);
   play_flags_ &= ~animation;
   loop_flags_ &= ~animation;
@@ -97,7 +94,6 @@ void Animator::SetTime(int animation, float time, bool force_update) {
   if (force_update) {
     unsigned play_flags = play_flags_;
     play_flags_ = animation;
-    Update(0);
     Evaluate(0);
     play_flags_ = play_flags;
   }
@@ -107,16 +103,15 @@ void Animator::SetEndCallback(int animation, base::Closure cb) {
   if ((inside_cb_ & animation) != 0) {
     has_pending_cb_ = true;
     pending_cb_ = std::move(cb);
-  }
-  if ((animation & kMovement) != 0 && inside_cb_ != kMovement)
+  } else if ((animation & kMovement) != 0)
     movement_cb_ = std::move(cb);
-  if ((animation & kRotation) != 0 && inside_cb_ != kRotation)
+  else if ((animation & kRotation) != 0)
     rotation_cb_ = std::move(cb);
-  if ((animation & kBlending) != 0 && inside_cb_ != kBlending)
+  else if ((animation & kBlending) != 0)
     blending_cb_ = std::move(cb);
-  if ((animation & kFrames) != 0 && inside_cb_ != kFrames)
+  else if ((animation & kFrames) != 0)
     frame_cb_ = std::move(cb);
-  if ((animation & kTimer) != 0 && inside_cb_ != kTimer)
+  else if ((animation & kTimer) != 0)
     timer_cb_ = std::move(cb);
 }
 
@@ -248,30 +243,24 @@ void Animator::UpdateAnimTime(float delta_time,
                               float anim_speed,
                               float& anim_time,
                               base::Closure& cb) {
-  if ((loop_flags_ & anim) == 0 && anim_time == 1.0f) {
-    anim_time = 0;
-    play_flags_ &= ~anim;
-    if (cb) {
-      inside_cb_ = (Flags)anim;
-      cb();
-      inside_cb_ = kNone;
-      if (has_pending_cb_) {
-        has_pending_cb_ = false;
-        cb = std::move(pending_cb_);
+  anim_time += anim_speed * delta_time;
+  if (anim_time > 1.0f) {
+    if (loop_flags_ & anim) {
+      anim_time = fmod(anim_time, 1.0f);
+    } else {
+      anim_time = 0;
+      play_flags_ &= ~anim;
+      if (cb) {
+        inside_cb_ = (Flags)anim;
+        cb();
+        inside_cb_ = kNone;
+        if (has_pending_cb_) {
+          has_pending_cb_ = false;
+          cb = std::move(pending_cb_);
+        }
       }
     }
-    return;
-  } else if ((anim & kFrames) != 0 && (loop_flags_ & kFrames) != 0 &&
-             anim_time == 1.0f) {
-    anim_time = 0;
   }
-
-  anim_time += anim_speed * delta_time;
-  if (anim_time > 1)
-    anim_time = (anim & kFrames) != 0 || (anim & kTimer) != 0 ||
-                        (loop_flags_ & anim) == 0
-                    ? 1
-                    : fmod(anim_time, 1.0f);
 }
 
 }  // namespace eng

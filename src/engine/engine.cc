@@ -354,7 +354,7 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
 void Engine::StartRecording(const Json::Value& payload) {
   if (!replaying_ && !recording_) {
     recording_ = true;
-    random_ = Random();
+    random_ = Randomf();
     replay_data_.root()["seed"] = random_.seed();
     replay_data_.root()["payload"] = payload;
     tick_ = 0;
@@ -375,7 +375,7 @@ bool Engine::Replay(const std::string file_name, Json::Value& payload) {
   if (!replaying_ && !recording_ &&
       replay_data_.Load(file_name, PersistentData::kShared)) {
     replaying_ = true;
-    random_ = Random(replay_data_.root()["seed"].asUInt());
+    random_ = Randomf(replay_data_.root()["seed"].asUInt());
     payload = replay_data_.root()["payload"];
     tick_ = 0;
     replay_index_ = 0;

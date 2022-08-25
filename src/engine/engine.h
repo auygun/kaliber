@@ -111,7 +111,7 @@ class Engine {
 
   const Font* GetSystemFont() { return system_font_.get(); }
 
-  base::Random& GetRandomGenerator() { return random_; }
+  base::Randomf& GetRandomGenerator() { return random_; }
 
   TextureCompressor* GetTextureCompressor(bool opacity);
 
@@ -208,7 +208,7 @@ class Engine {
   bool replaying_ = false;
   int replay_index_ = 0;
 
-  base::Random random_;
+  base::Randomf random_;
 
   void ContextLost();
 

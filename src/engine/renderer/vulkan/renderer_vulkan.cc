@@ -904,23 +904,7 @@ void RendererVulkan::BeginFrame() {
   context_.AppendCommandBuffer(frames_[current_frame_].setup_command_buffer);
   context_.AppendCommandBuffer(frames_[current_frame_].draw_command_buffer);
 
-  task_runner_.PostTask(HERE, [&]() {
-    vkResetCommandPool(device_, frames_[current_frame_].setup_command_pool, 0);
-
-    VkCommandBufferBeginInfo cmdbuf_begin;
-    cmdbuf_begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    cmdbuf_begin.pNext = nullptr;
-    cmdbuf_begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    cmdbuf_begin.pInheritanceInfo = nullptr;
-    VkResult err = vkBeginCommandBuffer(
-        frames_[current_frame_].setup_command_buffer, &cmdbuf_begin);
-    if (err) {
-      DLOG << "vkBeginCommandBuffer failed with error " << std::to_string(err);
-      return;
-    }
-  });
-  semaphore_.Release();
-
+  vkResetCommandPool(device_, frames_[current_frame_].setup_command_pool, 0);
   vkResetCommandPool(device_, frames_[current_frame_].draw_command_pool, 0);
 
   VkCommandBufferBeginInfo cmdbuf_begin;
@@ -928,8 +912,16 @@ void RendererVulkan::BeginFrame() {
   cmdbuf_begin.pNext = nullptr;
   cmdbuf_begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
   cmdbuf_begin.pInheritanceInfo = nullptr;
+
   VkResult err = vkBeginCommandBuffer(
-      frames_[current_frame_].draw_command_buffer, &cmdbuf_begin);
+      frames_[current_frame_].setup_command_buffer, &cmdbuf_begin);
+  if (err) {
+    DLOG << "vkBeginCommandBuffer failed with error " << std::to_string(err);
+    return;
+  }
+
+  err = vkBeginCommandBuffer(frames_[current_frame_].draw_command_buffer,
+                             &cmdbuf_begin);
   if (err) {
     DLOG << "vkBeginCommandBuffer failed with error " << std::to_string(err);
     return;

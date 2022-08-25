@@ -50,7 +50,6 @@ set(CMAKE_SHARED_LINKER_FLAGS
 add_library(kaliber SHARED
     ../../../src/base/collusion_test.cc
     ../../../src/base/log.cc
-    ../../../src/base/random.cc
     ../../../src/base/sinc_resampler.cc
     ../../../src/base/task_runner.cc
     ../../../src/base/thread_pool.cc

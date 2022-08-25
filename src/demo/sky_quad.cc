@@ -14,7 +14,7 @@ using namespace eng;
 SkyQuad::SkyQuad()
     : shader_(Engine::Get().CreateRenderResource<Shader>()),
       sky_offset_{
-          0, Lerp(0.0f, 10.0f, Engine::Get().GetRandomGenerator().GetFloat())} {
+          0, Lerp(0.0f, 10.0f, Engine::Get().GetRandomGenerator().Rand())} {
   last_sky_offset_ = sky_offset_;
 }
 

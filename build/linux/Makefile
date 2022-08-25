@@ -77,7 +77,6 @@ objs_from_src_in = $(call objs_from_src, $(shell find $(1) -name "*.cc" -o -name
 ENGINE_SRC := \
   $(SRC_ROOT)/base/collusion_test.cc \
   $(SRC_ROOT)/base/log.cc \
-  $(SRC_ROOT)/base/random.cc \
   $(SRC_ROOT)/base/sinc_resampler.cc \
   $(SRC_ROOT)/base/task_runner.cc \
   $(SRC_ROOT)/base/thread_pool.cc \
