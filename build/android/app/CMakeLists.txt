@@ -137,7 +137,7 @@ add_library(kaliber SHARED
     ../../../src/third_party/glslang/SPIRV/SPVRemapper.cpp
     ../../../src/third_party/glslang/SPIRV/SpvTools.cpp
     ../../../src/third_party/glslang/StandAlone/ResourceLimits.cpp
-    ../../../src/third_party/jsoncpp/jsoncpp.cc
+    ../../../src/third_party/jsoncpp/jsoncpp.cpp
     ../../../src/third_party/minizip/ioapi.c
     ../../../src/third_party/minizip/unzip.c
     ../../../src/third_party/spirv-reflect/spirv_reflect.c

@@ -1,7 +1,7 @@
 source_set("third_party") {
   sources = [
     "jsoncpp/json.h",
-    "jsoncpp/jsoncpp.cc",
+    "jsoncpp/jsoncpp.cpp",
     "minimp3/minimp3_ex.h",
     "minimp3/minimp3.h",
     "stb/stb_image.h",

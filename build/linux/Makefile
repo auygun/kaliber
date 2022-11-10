@@ -155,7 +155,7 @@ ENGINE_SRC := \
   $(SRC_ROOT)/third_party/glslang/SPIRV/SPVRemapper.cpp \
   $(SRC_ROOT)/third_party/glslang/SPIRV/SpvTools.cpp \
   $(SRC_ROOT)/third_party/glslang/StandAlone/ResourceLimits.cpp \
-  $(SRC_ROOT)/third_party/jsoncpp/jsoncpp.cc \
+  $(SRC_ROOT)/third_party/jsoncpp/jsoncpp.cpp \
   $(SRC_ROOT)/third_party/spirv-reflect/spirv_reflect.c \
   $(SRC_ROOT)/third_party/texture_compressor/dxt_encoder_internals.cc \
   $(SRC_ROOT)/third_party/texture_compressor/dxt_encoder.cc \
