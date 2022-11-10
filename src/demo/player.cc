@@ -171,7 +171,7 @@ void Player::Reset() {
 Vector2f Player::GetWeaponPos(DamageType type) const {
   return Engine::Get().GetScreenSize() /
              Vector2f(type == kDamageType_Green ? 3.5f : -3.5f, -2) +
-         Vector2f(0, weapon_[type].GetSize().y * 0.7f);
+         Vector2f(0, weapon_[type].GetSize().y * 0.95f);
 }
 
 Vector2f Player::GetWeaponScale() const {
@@ -256,13 +256,12 @@ void Player::SetupWeapons() {
     drag_sign_[i].SetZOrder(21);
     drag_sign_[i].SetFrame(i * 8);
 
-    Vector2f pos = GetWeaponPos((DamageType)i);
-
     // Setup weapon.
     weapon_[i].Create("weapon_tex", {8, 2});
     weapon_[i].SetZOrder(24);
     weapon_[i].SetVisible(true);
     weapon_[i].SetFrame(wepon_warmup_frame[i]);
+    Vector2f pos = GetWeaponPos((DamageType)i);
     weapon_[i].SetPosition(pos);
 
     // Setup beam.
