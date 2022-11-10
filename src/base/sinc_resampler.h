@@ -1,4 +1,4 @@
-// Copyright (c) 2012 The Chromium Authors. All rights reserved.
+// Copyright 2012 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -15,37 +15,41 @@ namespace base {
 // SincResampler is a high-quality single-channel sample-rate converter.
 class SincResampler {
  public:
-  enum {
-    // The kernel size can be adjusted for quality (higher is better) at the
-    // expense of performance.  Must be a multiple of 32.
-    // TODO(dalecurtis): Test performance to see if we can jack this up to 64+.
-    kKernelSize = 32,
+  // The kernel size can be adjusted for quality (higher is better) at the
+  // expense of performance.  Must be a multiple of 32.
+  // TODO(dalecurtis): Test performance to see if we can jack this up to 64+.
+  static constexpr int kKernelSize = 32;
 
-    // Default request size.  Affects how often and for how much SincResampler
-    // calls back for input.  Must be greater than kKernelSize.
-    kDefaultRequestSize = 512,
+  // Default request size.  Affects how often and for how much SincResampler
+  // calls back for input.  Must be greater than kKernelSize.
+  static constexpr int kDefaultRequestSize = 512;
 
-    // The kernel offset count is used for interpolation and is the number of
-    // sub-sample kernel shifts.  Can be adjusted for quality (higher is better)
-    // at the expense of allocating more memory.
-    kKernelOffsetCount = 32,
-    kKernelStorageSize = kKernelSize * (kKernelOffsetCount + 1),
-  };
+  // The kernel offset count is used for interpolation and is the number of
+  // sub-sample kernel shifts.  Can be adjusted for quality (higher is better)
+  // at the expense of allocating more memory.
+  static constexpr int kKernelOffsetCount = 32;
+  static constexpr int kKernelStorageSize =
+      kKernelSize * (kKernelOffsetCount + 1);
 
   // Callback type for providing more data into the resampler.  Expects |frames|
   // of data to be rendered into |destination|; zero padded if not enough frames
   // are available to satisfy the request.
   typedef std::function<void(int frames, float* destination)> ReadCB;
 
-  // Constructs a SincResampler.  |io_sample_rate_ratio| is the ratio
+  // Constructs a SincResampler with the specified |read_cb|, which is used to
+  // acquire audio data for resampling.  |io_sample_rate_ratio| is the ratio
   // of input / output sample rates.  |request_frames| controls the size in
   // frames of the buffer requested by each |read_cb| call.  The value must be
-  // greater than kKernelSize.  Specify kDefaultRequestSize if there are no
+  // greater than 1.5*kKernelSize.  Specify kDefaultRequestSize if there are no
   // request size constraints.
   SincResampler(double io_sample_rate_ratio, int request_frames);
+
+  SincResampler(const SincResampler&) = delete;
+  SincResampler& operator=(const SincResampler&) = delete;
+
   ~SincResampler();
 
-  // Resample |frames| of data from |read_cb| into |destination|.
+  // Resample |frames| of data from |read_cb_| into |destination|.
   void Resample(int frames, float* destination, ReadCB read_cb);
 
   // The maximum size in frames that guarantees Resample() will only make a
@@ -97,12 +101,20 @@ class SincResampler {
                             const float* k1,
                             const float* k2,
                             double kernel_interpolation_factor);
+  static float Convolve_AVX2(const float* input_ptr,
+                             const float* k1,
+                             const float* k2,
+                             double kernel_interpolation_factor);
 #elif defined(_M_ARM64) || defined(__aarch64__)
   static float Convolve_NEON(const float* input_ptr,
                              const float* k1,
                              const float* k2,
                              double kernel_interpolation_factor);
 #endif
+
+  // Selects runtime specific CPU features like SSE.  Must be called before
+  // using SincResampler.
+  void InitializeCPUSpecificFeatures();
 
   // The ratio of input / output sample rates.
   double io_sample_rate_ratio_;
@@ -130,12 +142,19 @@ class SincResampler {
   // Contains kKernelOffsetCount kernels back-to-back, each of size kKernelSize.
   // The kernel offsets are sub-sample shifts of a windowed sinc shifted from
   // 0.0 to 1.0 sample.
-  base::AlignedMemPtr<float[]> kernel_storage_;
-  base::AlignedMemPtr<float[]> kernel_pre_sinc_storage_;
-  base::AlignedMemPtr<float[]> kernel_window_storage_;
+  AlignedMemPtr<float[]> kernel_storage_;
+  AlignedMemPtr<float[]> kernel_pre_sinc_storage_;
+  AlignedMemPtr<float[]> kernel_window_storage_;
 
   // Data from the source is copied into this buffer for each processing pass.
-  base::AlignedMemPtr<float[]> input_buffer_;
+  AlignedMemPtr<float[]> input_buffer_;
+
+  // Stores the runtime selection of which Convolve function to use.
+  using ConvolveProc = float (*)(const float*,
+                                 const float*,
+                                 const float*,
+                                 double);
+  ConvolveProc convolve_proc_;
 
   // Pointers to the various regions inside |input_buffer_|.  See the diagram at
   // the top of the .cc file for more information.
@@ -144,9 +163,6 @@ class SincResampler {
   float* const r2_;
   float* r3_;
   float* r4_;
-
-  SincResampler(SincResampler const&) = delete;
-  SincResampler& operator=(SincResampler const&) = delete;
 };
 
 }  // namespace base
