@@ -32,6 +32,9 @@ LDFLAGS = -lX11 -lGL -pthread -lasound -ldl
 # Always enable debug information.
 CFLAGS += -g
 
+# Make all warnings into errors.
+CFLAGS += -Werror
+
 # Flags to generate dependency information.
 CFLAGS += -MD -MP -MT $@
 
@@ -55,8 +58,8 @@ CFLAGS += -msse2
 # Let C++ inherit all C flags.
 CXXFLAGS = $(CFLAGS) -I$(SRC_ROOT)
 
-# Enable C++17
-CXXFLAGS += -std=c++17
+# Enable C++20
+CXXFLAGS += -std=c++20
 
 # Vulkan config
 CFLAGS += -DVK_USE_PLATFORM_XLIB_KHR

@@ -187,8 +187,10 @@ void Font::Print(int x,
       //     q.x0, q.y0, q.x1, q.y1, q.s0, q.t0, q.s1, q.t1);
 
       int ix0 = (int)q.x0, iy0 = (int)q.y0, ix1 = (int)q.x1, iy1 = (int)q.y1,
-          iu0 = (int)(q.s0 * kGlyphSize), iv0 = (int)(q.t0 * kGlyphSize),
-          iu1 = (int)(q.s1 * kGlyphSize), iv1 = (int)(q.t1 * kGlyphSize);
+          iu0 = (int)(q.s0 * (float)kGlyphSize),
+          iv0 = (int)(q.t0 * (float)kGlyphSize),
+          iu1 = (int)(q.s1 * (float)kGlyphSize),
+          iv1 = (int)(q.t1 * (float)kGlyphSize);
 
       StretchBlit_I8_to_RGBA32(ix0, iy0, ix1, iy1, iu0, iv0, iu1, iv1, buffer,
                                width, glyph_cache_.get(), kGlyphSize);
