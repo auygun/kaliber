@@ -1,0 +1,22 @@
+import("//build/rules.gni")
+
+game("gel") {
+  sources = [
+    "exec.cc",
+    "exec.h",
+    "gel.cc",
+    "gel.h",
+    "git.cc",
+    "git.h",
+    "git_diff.cc",
+    "git_diff.h",
+    "git_log.cc",
+    "git_log.h",
+    "pipe.cc",
+    "pipe.h",
+  ]
+  deps = [
+    "//src/base",
+    "//src/engine",
+  ]
+}
