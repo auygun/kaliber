@@ -1,0 +1,18 @@
+import("//build/rules.gni")
+
+game("gel") {
+  sources = [
+    "exec.cc",
+    "exec.h",
+    "gel.cc",
+    "gel.h",
+    "pipe.cc",
+    "pipe.h",
+    "proc_runner.cc",
+    "proc_runner.h",
+  ]
+  deps = [
+    "//src/base",
+    "//src/engine",
+  ]
+}
