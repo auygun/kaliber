@@ -33,7 +33,7 @@ void ThreadPool::Shutdown() {
     return;
 
   quit_.store(true, std::memory_order_relaxed);
-  semaphore_.Release();
+  semaphore_.release(threads_.size());
 
   for (auto& thread : threads_)
     thread.join();
@@ -44,7 +44,7 @@ void ThreadPool::PostTask(const Location& from, Closure task) {
   DCHECK((!threads_.empty()));
 
   task_runner_.PostTask(from, std::move(task));
-  semaphore_.Release();
+  semaphore_.release();
 }
 
 void ThreadPool::PostTaskAndReply(const Location& from,
@@ -53,17 +53,15 @@ void ThreadPool::PostTaskAndReply(const Location& from,
   DCHECK((!threads_.empty()));
 
   task_runner_.PostTaskAndReply(from, std::move(task), std::move(reply));
-  semaphore_.Release();
+  semaphore_.release();
 }
 
 void ThreadPool::WorkerMain() {
   for (;;) {
-    semaphore_.Acquire();
+    semaphore_.acquire();
 
-    if (quit_.load(std::memory_order_relaxed)) {
-      semaphore_.Release();
+    if (quit_.load(std::memory_order_relaxed))
       return;
-    }
 
     task_runner_.MultiConsumerRun();
   }

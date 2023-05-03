@@ -55,7 +55,7 @@ void RendererOpenGL::HandleCmdPresent(RenderCommand* cmd) {
   if (display_) {
     glXSwapBuffers(display_, window_);
 #ifdef THREADED_RENDERING
-    draw_complete_semaphore_.Release();
+    draw_complete_semaphore_.release();
 #endif  // THREADED_RENDERING
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     active_shader_id_ = 0;

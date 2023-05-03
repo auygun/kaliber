@@ -1,5 +1,7 @@
 #include "base/task_runner.h"
 
+#include <thread>
+
 #include "base/log.h"
 
 namespace {
@@ -33,7 +35,7 @@ TaskRunner* TaskRunner::GetThreadLocalTaskRunner() {
 void TaskRunner::PostTask(const Location& from, Closure task) {
   DCHECK(task) << LOCATION(from);
 
-  task_count_.fetch_add(1, std::memory_order_relaxed);
+  task_count_.fetch_add(1, std::memory_order_release);
   std::lock_guard<std::mutex> scoped_lock(lock_);
   queue_.emplace_back(from, std::move(task));
 }
@@ -68,7 +70,7 @@ void TaskRunner::MultiConsumerRun() {
 #endif
 
     task_cb();
-    task_count_.fetch_sub(1, std::memory_order_relaxed);
+    task_count_.fetch_sub(1, std::memory_order_release);
   }
 }
 
@@ -90,16 +92,13 @@ void TaskRunner::SingleConsumerRun() {
 #endif
 
     task_cb();
-    task_count_.fetch_sub(1, std::memory_order_relaxed);
+    task_count_.fetch_sub(1, std::memory_order_release);
   }
-  cv_.notify_one();
 }
 
 void TaskRunner::WaitForCompletion() {
-  std::unique_lock<std::mutex> scoped_lock(lock_);
-  cv_.wait(scoped_lock, [&]() -> bool {
-    return task_count_.load(std::memory_order_relaxed) == 0;
-  });
+  while (task_count_.load(std::memory_order_acquire) > 0)
+    std::this_thread::yield();
 }
 
 }  // namespace base

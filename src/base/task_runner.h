@@ -2,7 +2,6 @@
 #define BASE_TASK_RUNNER_H
 
 #include <atomic>
-#include <condition_variable>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -74,7 +73,6 @@ class TaskRunner {
 
   std::deque<Task> queue_;
   mutable std::mutex lock_;
-  std::condition_variable cv_;
   std::atomic<size_t> task_count_{0};
 
   static thread_local std::unique_ptr<TaskRunner> thread_local_task_runner;

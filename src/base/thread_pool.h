@@ -2,11 +2,11 @@
 #define BASE_THREAD_POOL_H
 
 #include <atomic>
+#include <semaphore>
 #include <thread>
 #include <vector>
 
 #include "base/closure.h"
-#include "base/semaphore.h"
 #include "base/task_runner.h"
 
 namespace base {
@@ -36,13 +36,13 @@ class ThreadPool {
                                   std::function<void(ReturnType)> reply) {
     task_runner_.PostTaskAndReplyWithResult(from, std::move(task),
                                             std::move(reply));
-    semaphore_.Release();
+    semaphore_.release();
   }
 
  private:
   std::vector<std::thread> threads_;
 
-  Semaphore semaphore_;
+  std::counting_semaphore<> semaphore_{0};
   std::atomic<bool> quit_{false};
 
   base::TaskRunner task_runner_;

@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <memory>
+#include <semaphore>
 #include <string>
 #include <thread>
 #include <tuple>
@@ -11,7 +12,6 @@
 
 #include "engine/renderer/vulkan/vulkan_context.h"
 
-#include "base/semaphore.h"
 #include "base/task_runner.h"
 #include "engine/renderer/renderer.h"
 #include "third_party/vma/vk_mem_alloc.h"
@@ -181,7 +181,7 @@ class RendererVulkan : public Renderer {
 
   std::thread setup_thread_;
   base::TaskRunner task_runner_;
-  base::Semaphore semaphore_;
+  std::counting_semaphore<> semaphore_{0};
   std::atomic<bool> quit_{false};
 
   bool InitializeInternal();

@@ -295,7 +295,7 @@ uint64_t RendererVulkan::CreateGeometry(std::unique_ptr<Mesh> mesh) {
     // Transfer mesh ownership to the background thread.
     std::unique_ptr<Mesh> own(mesh);
   });
-  semaphore_.Release();
+  semaphore_.release();
 
   return last_resource_id_;
 }
@@ -387,7 +387,7 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
     // Transfer image ownership to the background thread.
     std::unique_ptr<Image> own(image);
   });
-  semaphore_.Release();
+  semaphore_.release();
 }
 
 void RendererVulkan::DestroyTexture(uint64_t resource_id) {
@@ -867,7 +867,7 @@ void RendererVulkan::Shutdown() {
   DestroyAllResources();
 
   quit_.store(true, std::memory_order_relaxed);
-  semaphore_.Release();
+  semaphore_.release();
   setup_thread_.join();
 
   vkDeviceWaitIdle(device_);
@@ -1877,7 +1877,7 @@ void RendererVulkan::SetupThreadMain(int preallocate) {
   }
 
   for (;;) {
-    semaphore_.Acquire();
+    semaphore_.acquire();
     if (quit_.load(std::memory_order_relaxed))
       break;
 

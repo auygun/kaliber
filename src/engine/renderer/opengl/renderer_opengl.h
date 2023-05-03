@@ -13,9 +13,8 @@
 #include <deque>
 #include <future>
 #include <mutex>
+#include <semaphore>
 #include <thread>
-
-#include "base/semaphore.h"
 #endif  // THREADED_RENDERING
 
 #include "engine/renderer/opengl/opengl.h"
@@ -147,7 +146,7 @@ class RendererOpenGL : public Renderer {
   std::thread render_thread_;
   bool terminate_render_thread_ = false;
 
-  base::Semaphore draw_complete_semaphore_;
+  std::counting_semaphore<> draw_complete_semaphore_{0};
 
   base::TaskRunner* main_thread_task_runner_;
 #endif  // THREADED_RENDERING

@@ -184,7 +184,7 @@ void RendererOpenGL::SetUniform(uint64_t resource_id,
 void RendererOpenGL::Present() {
   EnqueueCommand(std::make_unique<CmdPresent>());
 #ifdef THREADED_RENDERING
-  draw_complete_semaphore_.Acquire();
+  draw_complete_semaphore_.acquire();
 #endif  // THREADED_RENDERING
   fps_++;
 }
