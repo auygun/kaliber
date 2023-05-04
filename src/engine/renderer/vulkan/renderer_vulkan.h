@@ -113,7 +113,7 @@ class RendererVulkan : public Renderer {
     std::unique_ptr<char[]> push_constants;
     size_t push_constants_size = 0;
     std::vector<std::string> sampler_uniform_names;
-    int desc_set_count = 0;
+    size_t desc_set_count = 0;
     VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
     VkPipeline pipeline = VK_NULL_HANDLE;
   };

@@ -127,7 +127,7 @@ class Menu {
   Button toggle_music_;
   Button toggle_vibration_;
 
-  int high_score_value_ = 0;
+  size_t high_score_value_ = 0;
 
   eng::ImageQuad high_score_;
   eng::Animator high_score_animator_;

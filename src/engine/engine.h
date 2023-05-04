@@ -206,7 +206,7 @@ class Engine {
   PersistentData replay_data_;
   bool recording_ = false;
   bool replaying_ = false;
-  int replay_index_ = 0;
+  unsigned int replay_index_ = 0;
 
   base::Randomf random_;
 

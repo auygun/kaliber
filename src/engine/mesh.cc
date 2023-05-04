@@ -106,7 +106,7 @@ bool Mesh::Load(const std::string& file_name) {
   vertices_ = std::make_unique<char[]>(vertex_buffer_size);
 
   char* dst = vertices_.get();
-  int i = 0;
+  unsigned int i = 0;
   while (i < vertices.size()) {
     for (auto& attr : vertex_description_) {
       auto [attrib_type, data_type, num_elements, type_size] = attr;

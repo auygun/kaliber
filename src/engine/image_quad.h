@@ -70,7 +70,7 @@ class ImageQuad : public Animatable {
   float GetFrameWidth() const;
   float GetFrameHeight() const;
 
-  base::Vector2f GetUVOffset(int frame) const;
+  base::Vector2f GetUVOffset(size_t frame) const;
 };
 
 }  // namespace eng

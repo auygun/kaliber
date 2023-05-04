@@ -107,7 +107,7 @@ float ImageQuad::GetFrameHeight() const {
 }
 
 // Return the uv offset for the given frame.
-Vector2f ImageQuad::GetUVOffset(int frame) const {
+Vector2f ImageQuad::GetUVOffset(size_t frame) const {
   DCHECK(frame < GetNumFrames())
       << "asset: " << asset_name_ << " frame: " << frame;
   return {(float)(frame % num_frames_[0]), (float)(frame / num_frames_[0])};

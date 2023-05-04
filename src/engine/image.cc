@@ -120,8 +120,8 @@ bool Image::CreateMip(const Image& other) {
   } else {
     const uint32_t* s = reinterpret_cast<const uint32_t*>(other.buffer_.get());
     uint32_t* d = reinterpret_cast<uint32_t*>(buffer_.get());
-    for (size_t y = 0; y < height_; ++y) {
-      for (size_t x = 0; x < width_; ++x) {
+    for (int y = 0; y < height_; ++y) {
+      for (int x = 0; x < width_; ++x) {
         *d++ = Mix4(s[0], s[1], s[other.width_], s[other.width_ + 1]);
         s += 2;
       }

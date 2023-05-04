@@ -32,8 +32,8 @@ LDFLAGS = -lX11 -lGL -pthread -lasound -ldl
 # Always enable debug information.
 CFLAGS += -g
 
-# Make all warnings into errors.
-CFLAGS += -Werror
+# Enable extra warnings and make all warnings into errors.
+CFLAGS += -Wextra -Werror
 
 # Flags to generate dependency information.
 CFLAGS += -MD -MP -MT $@
@@ -75,15 +75,26 @@ app_exe = $(OUTPUT_DIR)/$(1)_$(ARCH)_$(BUILD)
 objs_from_src = $(patsubst $(SRC_ROOT)/%, $(BUILD_DIR)/%.o, $(basename $(1)))
 objs_from_src_in = $(call objs_from_src, $(shell find $(1) -name "*.cc" -o -name "*.cpp" -o -name "*.c"))
 
-# --- Engine ---
+# --- Base ---
 
-ENGINE_SRC := \
+BASE_SRC := \
   $(SRC_ROOT)/base/collusion_test.cc \
   $(SRC_ROOT)/base/log.cc \
   $(SRC_ROOT)/base/sinc_resampler.cc \
   $(SRC_ROOT)/base/task_runner.cc \
   $(SRC_ROOT)/base/thread_pool.cc \
-  $(SRC_ROOT)/base/timer.cc \
+  $(SRC_ROOT)/base/timer.cc
+
+BASE_LIB := $(BUILD_DIR)/libengine.a
+BASE_OBJS := $(call objs_from_src, $(BASE_SRC))
+LIBS += $(BASE_LIB)
+OBJS += $(BASE_OBJS)
+
+$(BASE_LIB): $(BASE_OBJS)
+
+# --- Engine ---
+
+ENGINE_SRC := \
   $(SRC_ROOT)/engine/animatable.cc \
   $(SRC_ROOT)/engine/animator.cc \
   $(SRC_ROOT)/engine/audio/audio_alsa.cc \
@@ -113,7 +124,25 @@ ENGINE_SRC := \
   $(SRC_ROOT)/engine/shader_source.cc \
   $(SRC_ROOT)/engine/solid_quad.cc \
   $(SRC_ROOT)/engine/sound_player.cc \
-  $(SRC_ROOT)/engine/sound.cc \
+  $(SRC_ROOT)/engine/sound.cc
+
+ENGINE_LIB := $(BUILD_DIR)/libengine.a
+ENGINE_OBJS := $(call objs_from_src, $(ENGINE_SRC))
+LIBS += $(ENGINE_LIB)
+OBJS += $(ENGINE_OBJS)
+
+$(ENGINE_LIB): $(ENGINE_OBJS)
+
+# --- Third-party ---
+
+# Ignore warnings.
+THIRD_PARTY_CFLAGS = $(CFLAGS)
+THIRD_PARTY_CFLAGS := $(filter-out -Wextra -Werror, $(THIRD_PARTY_CFLAGS))
+
+THIRD_PARTY_CXXFLAGS = $(CXXFLAGS)
+THIRD_PARTY_CXXFLAGS := $(filter-out -Wextra -Werror, $(THIRD_PARTY_CXXFLAGS))
+
+THIRD_PARTY_SRC := \
   $(SRC_ROOT)/third_party/glew/glew.c \
   $(SRC_ROOT)/third_party/glslang/glslang/CInterface/glslang_c_interface.cpp \
   $(SRC_ROOT)/third_party/glslang/glslang/GenericCodeGen/CodeGen.cpp \
@@ -160,6 +189,7 @@ ENGINE_SRC := \
   $(SRC_ROOT)/third_party/glslang/StandAlone/ResourceLimits.cpp \
   $(SRC_ROOT)/third_party/jsoncpp/jsoncpp.cpp \
   $(SRC_ROOT)/third_party/spirv-reflect/spirv_reflect.c \
+  $(SRC_ROOT)/third_party/stb/stb_image.c \
   $(SRC_ROOT)/third_party/texture_compressor/dxt_encoder_internals.cc \
   $(SRC_ROOT)/third_party/texture_compressor/dxt_encoder.cc \
   $(SRC_ROOT)/third_party/texture_compressor/texture_compressor_etc1.cc \
@@ -176,12 +206,24 @@ ENGINE_SRC := \
   $(SRC_ROOT)/third_party/vulkan/loader/unknown_ext_chain.c \
   $(SRC_ROOT)/third_party/vulkan/loader/wsi.c
 
-ENGINE_LIB := $(BUILD_DIR)/libengine.a
-ENGINE_OBJS := $(call objs_from_src, $(ENGINE_SRC))
-LIBS += $(ENGINE_LIB)
-OBJS += $(ENGINE_OBJS)
+$(BUILD_DIR)/third_party/%.o: $(SRC_ROOT)/third_party/%.c
+	@mkdir -p $(@D)
+	$(HUSH_COMPILE) $(CC) -c $(THIRD_PARTY_CFLAGS) -o $@ $<
 
-$(ENGINE_LIB): $(ENGINE_OBJS)
+$(BUILD_DIR)/third_party/%.o: $(SRC_ROOT)/third_party/%.cc
+	@mkdir -p $(@D)
+	$(HUSH_COMPILE) $(CXX) -c $(THIRD_PARTY_CXXFLAGS) -o $@ $<
+
+$(BUILD_DIR)/third_party/%.o: $(SRC_ROOT)/third_party/%.cpp
+	@mkdir -p $(@D)
+	$(HUSH_COMPILE) $(CXX) -c $(THIRD_PARTY_CXXFLAGS) -o $@ $<
+
+THIRD_PARTY_LIB := $(BUILD_DIR)/libthirdparty.a
+THIRD_PARTY_OBJS := $(call objs_from_src, $(THIRD_PARTY_SRC))
+LIBS += $(THIRD_PARTY_LIB)
+OBJS += $(THIRD_PARTY_OBJS)
+
+$(THIRD_PARTY_LIB): $(THIRD_PARTY_OBJS)
 
 # --- demo application ---
 

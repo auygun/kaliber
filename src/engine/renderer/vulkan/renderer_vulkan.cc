@@ -619,7 +619,7 @@ void RendererVulkan::ActivateShader(uint64_t resource_id) {
     vkCmdBindPipeline(frames_[current_frame_].draw_command_buffer,
                       VK_PIPELINE_BIND_POINT_GRAPHICS, it->second.pipeline);
   }
-  for (int i = 0; i < it->second.desc_set_count; ++i) {
+  for (size_t i = 0; i < it->second.desc_set_count; ++i) {
     if (active_descriptor_sets_[i] != penging_descriptor_sets_[i]) {
       active_descriptor_sets_[i] = penging_descriptor_sets_[i];
       vkCmdBindDescriptorSets(frames_[current_frame_].draw_command_buffer,
@@ -735,7 +735,7 @@ bool RendererVulkan::InitializeInternal() {
   allocator_info.instance = context_.GetInstance();
   vmaCreateAllocator(&allocator_info, &allocator_);
 
-  for (int i = 0; i < frames_.size(); i++) {
+  for (size_t i = 0; i < frames_.size(); i++) {
     // Create command pool, one per frame is recommended.
     VkCommandPoolCreateInfo cmd_pool_info;
     cmd_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -872,7 +872,7 @@ void RendererVulkan::Shutdown() {
 
   vkDeviceWaitIdle(device_);
 
-  for (int i = 0; i < frames_.size(); ++i) {
+  for (size_t i = 0; i < frames_.size(); ++i) {
     FreePendingResources(i);
     vkDestroyCommandPool(device_, frames_[i].setup_command_pool, nullptr);
     vkDestroyCommandPool(device_, frames_[i].draw_command_pool, nullptr);
@@ -1081,7 +1081,7 @@ bool RendererVulkan::AllocateStagingBuffer(uint32_t amount,
             FlushSetupBuffer();
 
             // Clear the whole staging buffer.
-            for (int i = 0; i < staging_buffers_.size(); i++) {
+            for (size_t i = 0; i < staging_buffers_.size(); i++) {
               staging_buffers_[i].frame_used = 0;
               staging_buffers_[i].fill_amount = 0;
             }
@@ -1115,9 +1115,9 @@ bool RendererVulkan::AllocateStagingBuffer(uint32_t amount,
         // executed.
         vkDeviceWaitIdle(device_);
 
-        for (int i = 0; i < staging_buffers_.size(); i++) {
+        for (size_t i = 0; i < staging_buffers_.size(); i++) {
           // Clear all blocks but the ones from this frame.
-          int block_idx =
+          size_t block_idx =
               (i + current_staging_buffer_) % staging_buffers_.size();
           if (staging_buffers_[block_idx].frame_used == frames_drawn_) {
             break;  // We reached something from this frame, abort.
@@ -1621,7 +1621,7 @@ bool RendererVulkan::CreatePipelineLayout(
         break;
       }
 
-      for (int i = 0; i < binding_count; ++i) {
+      for (size_t i = 0; i < binding_count; ++i) {
         const SpvReflectDescriptorBinding& binding = *bindings[i];
 
         DLOG << __func__ << " name: " << binding.name
@@ -1735,7 +1735,7 @@ bool RendererVulkan::CreatePipelineLayout(
 
     // Use the same layout for all decriptor sets.
     std::vector<VkDescriptorSetLayout> desc_set_layouts;
-    for (int i = 0; i < binding_count; ++i)
+    for (size_t i = 0; i < binding_count; ++i)
       desc_set_layouts.push_back(descriptor_set_layout_);
 
     VkPipelineLayoutCreateInfo pipeline_layout_create_info;
@@ -1884,7 +1884,7 @@ void RendererVulkan::SetupThreadMain(int preallocate) {
     task_runner_.SingleConsumerRun();
   }
 
-  for (int i = 0; i < staging_buffers_.size(); i++) {
+  for (size_t i = 0; i < staging_buffers_.size(); i++) {
     auto [buffer, allocation] = staging_buffers_[i].buffer;
     vmaDestroyBuffer(allocator_, buffer, allocation);
   }

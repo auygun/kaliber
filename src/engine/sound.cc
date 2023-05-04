@@ -39,7 +39,7 @@ std::array<std::unique_ptr<T[]>, 2> Deinterleave(size_t num_channels,
     // Deinterleave into separate channels.
     channels[0] = std::make_unique<T[]>(num_samples);
     channels[1] = std::make_unique<T[]>(num_samples);
-    for (int i = 0, j = 0; i < num_samples * 2; i += 2) {
+    for (size_t i = 0, j = 0; i < num_samples * 2; i += 2) {
       channels[0].get()[j] = static_cast<T>(input_buffer[i]);
       channels[1].get()[j++] = static_cast<T>(input_buffer[i + 1]);
     }
@@ -230,8 +230,8 @@ void Sound::Preprocess(std::unique_ptr<float[]> input_buffer,
   } else {
     size_t num_resampled_samples = resampler_[0]->ChunkSize();
     DCHECK(num_resampled_samples ==
-           (int)(((float)hw_sample_rate_ / (float)sample_rate_) *
-                 samples_per_channel));
+           (size_t)(((float)hw_sample_rate_ / (float)sample_rate_) *
+                    samples_per_channel));
 
     if (!back_buffer_[0]) {
       if (max_samples_ < num_resampled_samples)
@@ -243,7 +243,7 @@ void Sound::Preprocess(std::unique_ptr<float[]> input_buffer,
     num_samples_back_ = num_resampled_samples;
 
     // Resample to match the system sample rate.
-    for (int i = 0; i < num_channels_; ++i) {
+    for (size_t i = 0; i < num_channels_; ++i) {
       resampler_[i]->Resample(num_resampled_samples, back_buffer_[i].get(),
                               [&](int frames, float* destination) {
                                 memcpy(destination, channels[i].get(),
