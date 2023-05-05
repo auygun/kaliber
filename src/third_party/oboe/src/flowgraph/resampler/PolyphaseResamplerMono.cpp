@@ -16,6 +16,8 @@
 
 #include "PolyphaseResamplerMono.h"
 
+#include <assert.h>
+
 using namespace resampler;
 
 #define MONO  1

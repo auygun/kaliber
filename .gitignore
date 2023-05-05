@@ -1,5 +1,6 @@
 build/android/.gradle
 build/android/*.apk
+build/android/*.idsig
 build/android/app/.cxx
 build/android/app/build
 build/android/build

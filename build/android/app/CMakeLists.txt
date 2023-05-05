@@ -14,7 +14,8 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.4.1)
+cmake_minimum_required(VERSION 3.22.1)
+project(kaliber)
 
 # OBOE Library
 set (OBOE_DIR ../../../src/third_party/oboe)
@@ -36,9 +37,9 @@ add_library(native_app_glue STATIC
 
 # now build app's shared lib
 if (CMAKE_BUILD_TYPE MATCHES Debug)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Werror -D_DEBUG -DVK_USE_PLATFORM_ANDROID_KHR")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -Wall -Werror -Wno-unused-but-set-variable -Wno-deprecated-enum-enum-conversion -Wno-unused-parameter -Wno-unsequenced -D_DEBUG -DVK_USE_PLATFORM_ANDROID_KHR")
 else ()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Werror -DVK_USE_PLATFORM_ANDROID_KHR")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -Wall -Werror -Wno-unused-but-set-variable -Wno-deprecated-enum-enum-conversion -Wno-unused-parameter -Wno-unsequenced -DVK_USE_PLATFORM_ANDROID_KHR")
 endif ()
 
 
@@ -141,6 +142,7 @@ add_library(kaliber SHARED
     ../../../src/third_party/minizip/ioapi.c
     ../../../src/third_party/minizip/unzip.c
     ../../../src/third_party/spirv-reflect/spirv_reflect.c
+    ../../../src/third_party/stb/stb_image.c
     ../../../src/third_party/texture_compressor/dxt_encoder_internals.cc
     ../../../src/third_party/texture_compressor/dxt_encoder.cc
     ../../../src/third_party/texture_compressor/texture_compressor_etc1.cc

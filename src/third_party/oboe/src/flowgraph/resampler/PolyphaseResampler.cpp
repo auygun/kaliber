@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <assert.h>
 #include <math.h>
 #include "IntegerRatio.h"
 #include "PolyphaseResampler.h"

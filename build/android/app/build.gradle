@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 29
-    ndkVersion '21.3.6528147'
+    compileSdk 33
+    ndkVersion '25.1.8937393'
 
     defaultConfig {
         applicationId = 'com.woom.game'
-        minSdkVersion 21
-        targetSdkVersion 29
+        minSdk 24
+        targetSdk 33
         externalNativeBuild {
             cmake {
                 arguments '-DANDROID_STL=c++_static'
@@ -29,7 +29,7 @@ android {
     }
     externalNativeBuild {
         cmake {
-            version '3.10.2'
+            version '3.22.1'
             path 'CMakeLists.txt'
         }
     }
@@ -39,11 +39,12 @@ android {
             assets.srcDirs = ['../../../assets']
         }
     }
+    namespace 'com.woom.game'
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.0.2'
-    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-    implementation 'com.google.android.gms:play-services-ads:19.1.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'com.google.android.gms:play-services-ads:22.0.0'
 }

@@ -18,6 +18,8 @@
 
 #include "SincResamplerStereo.h"
 
+#include <assert.h>
+
 using namespace resampler;
 
 #define STEREO  2

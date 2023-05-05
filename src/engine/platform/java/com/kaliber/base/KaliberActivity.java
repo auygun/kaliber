@@ -11,11 +11,18 @@ import android.util.Log;
 import android.view.WindowManager;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
-import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
 import com.woom.game.R;
 
 import java.io.File;
@@ -35,7 +42,13 @@ public class KaliberActivity extends NativeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mInterstitialAd = newInterstitialAd();
+
+        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {
+                Log.d("kaliber", "MobileAds initialization complete.");
+            }
+        });
         loadInterstitialAd();
     }
 
@@ -52,44 +65,13 @@ public class KaliberActivity extends NativeActivity {
         });
     }
 
-    private InterstitialAd newInterstitialAd() {
-        InterstitialAd interstitialAd = new InterstitialAd(this);
-        interstitialAd.setAdUnitId(getString(R.string.interstitial_ad_unit_id));
-        interstitialAd.setAdListener(new AdListener() {
-            @Override
-            public void onAdLoaded() {
-                Log.w("kaliber", "Ad loaded.");
-            }
-
-            @Override
-            public void onAdFailedToLoad(int errorCode) {
-                Log.w("kaliber", "Ad failed to load. errorCode: " + errorCode);
-                sHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!mInterstitialAd.isLoaded())
-                            loadInterstitialAd();
-                    }
-                }, 1000 * 10);
-            }
-
-            @Override
-            public void onAdClosed() {
-                loadInterstitialAd();
-                onShowAdResult(true);
-            }
-        });
-        return interstitialAd;
-    }
-
     public void showInterstitialAd() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (mInterstitialAd.isLoaded()) {
-                    mInterstitialAd.show();
+                if (mInterstitialAd != null) {
+                    mInterstitialAd.show(KaliberActivity.this);
                 } else {
-                    loadInterstitialAd();
                     onShowAdResult(false);
                 }
             }
@@ -123,10 +105,49 @@ public class KaliberActivity extends NativeActivity {
     }
 
     private void loadInterstitialAd() {
-        if (!mInterstitialAd.isLoading()) {
-            AdRequest adRequest = new AdRequest.Builder()
-                    .setRequestAgent("android_studio:ad_template").build();
-            mInterstitialAd.loadAd(adRequest);
-        }
+        AdRequest adRequest = new AdRequest.Builder().build();
+        InterstitialAd.load(this, getString(R.string.interstitial_ad_unit_id), adRequest,
+                new InterstitialAdLoadCallback() {
+                    @Override
+                    public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                        Log.d("kaliber", "Ad loaded.");
+                        mInterstitialAd = interstitialAd;
+                        interstitialAd.setFullScreenContentCallback(
+                                new FullScreenContentCallback() {
+                                    @Override
+                                    public void onAdDismissedFullScreenContent() {
+                                        Log.d("kaliber", "The ad was dismissed.");
+                                        mInterstitialAd = null;
+                                        loadInterstitialAd();
+                                        onShowAdResult(true);
+                                    }
+
+                                    @Override
+                                    public void onAdFailedToShowFullScreenContent(AdError adError) {
+                                        Log.d("kaliber", "The ad failed to show.");
+                                        mInterstitialAd = null;
+                                        loadInterstitialAd();
+                                        onShowAdResult(false);
+                                    }
+
+                                    @Override
+                                    public void onAdShowedFullScreenContent() {
+                                        Log.d("kaliber", "The ad was shown.");
+                                    }
+                                });
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                        Log.d("kaliber", "Ad failed to load. errorCode: " + loadAdError);
+                        mInterstitialAd = null;
+                        sHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                loadInterstitialAd();
+                            }
+                        }, 1000 * 10);
+                    }
+                });
     }
 }
