@@ -14,11 +14,6 @@ Android:
 cd build/android
 ./gradlew :app:assembleRelease
 ```
-GN (linux only for now):
-```text
-gn gen --args='is_debug=false' out/release
-ninja -C out/release
-```
 #### Third-party libraries:
 [glew](https://github.com/nigels-com/glew),
 [jsoncpp](https://github.com/open-source-parsers/jsoncpp),
