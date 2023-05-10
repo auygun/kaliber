@@ -5,11 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-#if defined(__ANDROID__)
-#include "third_party/android/vulkan_wrapper.h"
-#else
-#include "third_party/vulkan/vulkan.h"
-#endif
+#include "third_party/volk/volk.h"
 
 #if defined(__ANDROID__)
 struct ANativeWindow;

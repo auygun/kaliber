@@ -1,52 +1,50 @@
-#
-# Copyright (C) The Android Open Source Project
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-
 cmake_minimum_required(VERSION 3.22.1)
-project(kaliber)
 
-# OBOE Library
+# common_config
+add_library(common_config INTERFACE)
+
+target_compile_options(common_config INTERFACE
+    $<$<COMPILE_LANGUAGE:CXX>:-std=c++20>
+    #$<$<NOT:$<CONFIG:DEBUG>>:-Ofast>
+    -Wall
+    -Werror
+    -Wno-unused-but-set-variable
+    -Wno-deprecated-enum-enum-conversion
+    -Wno-unsequenced
+    -Wno-nullability-completeness
+)
+
+target_compile_definitions(common_config INTERFACE
+    VK_USE_PLATFORM_ANDROID_KHR
+    VMA_STATIC_VULKAN_FUNCTIONS=1
+    $<$<CONFIG:DEBUG>:_DEBUG>
+)
+
+target_include_directories(common_config INTERFACE
+    ../../../src
+    ../../../src/third_party/glslang
+    ../../../src/third_party/vulkan/include
+)
+
+# oboe
 set (OBOE_DIR ../../../src/third_party/oboe)
 add_subdirectory(${OBOE_DIR} ./oboe-bin)
 
 # cpufeatures
-include_directories(${ANDROID_NDK}/sources/android/cpufeatures)
-add_library(cpufeatures STATIC
-    ${ANDROID_NDK}/sources/android/cpufeatures/cpu-features.c)
+add_library(cpufeatures STATIC ${ANDROID_NDK}/sources/android/cpufeatures/cpu-features.c)
+target_include_directories(cpufeatures PUBLIC ${ANDROID_NDK}/sources/android/cpufeatures)
 
-# build native_app_glue as a static lib
-if (CMAKE_BUILD_TYPE MATCHES Debug)
-    set(${CMAKE_C_FLAGS}, "${CMAKE_C_FLAGS} -D_DEBUG")
-else ()
-    set(${CMAKE_C_FLAGS}, "${CMAKE_C_FLAGS}")
-endif ()
-add_library(native_app_glue STATIC
-    ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
-
-# now build app's shared lib
-if (CMAKE_BUILD_TYPE MATCHES Debug)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -Wall -Werror -Wno-unused-but-set-variable -Wno-deprecated-enum-enum-conversion -Wno-unused-parameter -Wno-unsequenced -D_DEBUG -DVK_USE_PLATFORM_ANDROID_KHR")
-else ()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 -Wall -Werror -Wno-unused-but-set-variable -Wno-deprecated-enum-enum-conversion -Wno-unused-parameter -Wno-unsequenced -DVK_USE_PLATFORM_ANDROID_KHR")
-endif ()
-
+# native_app_glue
+add_library(native_app_glue STATIC ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
+target_include_directories(native_app_glue PUBLIC ${ANDROID_NDK}/sources/android/native_app_glue)
+set_property(TARGET native_app_glue PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 # Export ANativeActivity_onCreate(),
 # Refer to: https://github.com/android-ndk/ndk/issues/381.
-set(CMAKE_SHARED_LINKER_FLAGS
-    "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -u ANativeActivity_onCreate")
+
+# kaliber
+project(kaliber)
 
 add_library(kaliber SHARED
     ../../../src/base/collusion_test.cc
@@ -94,8 +92,6 @@ add_library(kaliber SHARED
     ../../../src/engine/sound.cc
     ../../../src/third_party/android/gl3stub.c
     ../../../src/third_party/android/GLContext.cpp
-    ../../../src/third_party/android/vulkan_wrapper.cpp
-    ../../../src/third_party/glslang/glslang/CInterface/glslang_c_interface.cpp
     ../../../src/third_party/glslang/glslang/GenericCodeGen/CodeGen.cpp
     ../../../src/third_party/glslang/glslang/GenericCodeGen/Link.cpp
     ../../../src/third_party/glslang/glslang/MachineIndependent/attribute.cpp
@@ -123,11 +119,11 @@ add_library(kaliber SHARED
     ../../../src/third_party/glslang/glslang/MachineIndependent/RemoveTree.cpp
     ../../../src/third_party/glslang/glslang/MachineIndependent/Scan.cpp
     ../../../src/third_party/glslang/glslang/MachineIndependent/ShaderLang.cpp
+    ../../../src/third_party/glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp
     ../../../src/third_party/glslang/glslang/MachineIndependent/SymbolTable.cpp
     ../../../src/third_party/glslang/glslang/MachineIndependent/Versions.cpp
     ../../../src/third_party/glslang/glslang/OSDependent/Unix/ossource.cpp
     ../../../src/third_party/glslang/OGLCompilersDLL/InitializeDll.cpp
-    ../../../src/third_party/glslang/SPIRV/CInterface/spirv_c_interface.cpp
     ../../../src/third_party/glslang/SPIRV/disassemble.cpp
     ../../../src/third_party/glslang/SPIRV/doc.cpp
     ../../../src/third_party/glslang/SPIRV/GlslangToSpv.cpp
@@ -137,7 +133,6 @@ add_library(kaliber SHARED
     ../../../src/third_party/glslang/SPIRV/SpvPostProcess.cpp
     ../../../src/third_party/glslang/SPIRV/SPVRemapper.cpp
     ../../../src/third_party/glslang/SPIRV/SpvTools.cpp
-    ../../../src/third_party/glslang/StandAlone/ResourceLimits.cpp
     ../../../src/third_party/jsoncpp/jsoncpp.cpp
     ../../../src/third_party/minizip/ioapi.c
     ../../../src/third_party/minizip/unzip.c
@@ -148,6 +143,7 @@ add_library(kaliber SHARED
     ../../../src/third_party/texture_compressor/texture_compressor_etc1.cc
     ../../../src/third_party/texture_compressor/texture_compressor.cc
     ../../../src/third_party/vma/vk_mem_alloc.cpp
+    ../../../src/third_party/volk/volk.c
 )
 
 if (ANDROID_ABI STREQUAL armeabi-v7a)
@@ -162,13 +158,8 @@ if (ANDROID_ABI STREQUAL arm64-v8a)
     target_sources(kaliber PRIVATE ../../../src/third_party/texture_compressor/texture_compressor_etc1_neon.cc)
 endif()
 
-target_include_directories(kaliber PRIVATE
-    ../../../src
-    ${ANDROID_NDK}/sources/android/native_app_glue
-    )
-
-# add lib dependencies
-target_link_libraries(kaliber
+target_link_libraries(kaliber PRIVATE
+    common_config
     android
     native_app_glue
     oboe
@@ -176,4 +167,5 @@ target_link_libraries(kaliber
     EGL
     GLESv2
     log
-    z)
+    z
+)

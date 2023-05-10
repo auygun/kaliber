@@ -35,13 +35,9 @@ VulkanContext::~VulkanContext() {
 }
 
 bool VulkanContext::Initialize() {
-#if defined(__ANDROID__)
-  // Initialize the Vulkan function pointers.
-  if (!InitVulkan()) {
-    LOG << "Vulkan is not availbale.";
+  if (volkInitialize() != VK_SUCCESS) {
     return false;
   }
-#endif
 
   if (!CreatePhysicalDevice())
     return false;
@@ -417,6 +413,8 @@ bool VulkanContext::CreatePhysicalDevice() {
       return false;
     }
   }
+
+  volkLoadInstance(instance_);
 
   // Make initial call to query gpu_count.
   VkResult err = vkEnumeratePhysicalDevices(instance_, &gpu_count, nullptr);
