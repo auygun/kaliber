@@ -35,63 +35,60 @@ namespace eng {
 
 struct RenderCommand;
 
-class RendererOpenGL : public Renderer {
+class RendererOpenGL final : public Renderer {
  public:
   RendererOpenGL();
-  ~RendererOpenGL() override;
+  ~RendererOpenGL() final;
 
 #if defined(__ANDROID__)
-  bool Initialize(ANativeWindow* window) override;
+  bool Initialize(ANativeWindow* window) final;
 #elif defined(__linux__)
-  bool Initialize(Display* display, Window window) override;
+  bool Initialize(Display* display, Window window) final;
 #endif
 
-  void Shutdown() override;
+  void Shutdown() final;
 
-  uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) override;
-  void DestroyGeometry(uint64_t resource_id) override;
-  void Draw(uint64_t resource_id) override;
+  uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) final;
+  void DestroyGeometry(uint64_t resource_id) final;
+  void Draw(uint64_t resource_id) final;
 
-  uint64_t CreateTexture() override;
-  void UpdateTexture(uint64_t resource_id,
-                     std::unique_ptr<Image> image) override;
-  void DestroyTexture(uint64_t resource_id) override;
-  void ActivateTexture(uint64_t resource_id) override;
+  uint64_t CreateTexture() final;
+  void UpdateTexture(uint64_t resource_id, std::unique_ptr<Image> image) final;
+  void DestroyTexture(uint64_t resource_id) final;
+  void ActivateTexture(uint64_t resource_id) final;
 
   uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
                         const VertexDescripton& vertex_description,
                         Primitive primitive,
-                        bool enable_depth_test) override;
-  void DestroyShader(uint64_t resource_id) override;
-  void ActivateShader(uint64_t resource_id) override;
+                        bool enable_depth_test) final;
+  void DestroyShader(uint64_t resource_id) final;
+  void ActivateShader(uint64_t resource_id) final;
 
   void SetUniform(uint64_t resource_id,
                   const std::string& name,
-                  const base::Vector2f& val) override;
+                  const base::Vector2f& val) final;
   void SetUniform(uint64_t resource_id,
                   const std::string& name,
-                  const base::Vector3f& val) override;
+                  const base::Vector3f& val) final;
   void SetUniform(uint64_t resource_id,
                   const std::string& name,
-                  const base::Vector4f& val) override;
+                  const base::Vector4f& val) final;
   void SetUniform(uint64_t resource_id,
                   const std::string& name,
-                  const base::Matrix4f& val) override;
+                  const base::Matrix4f& val) final;
   void SetUniform(uint64_t resource_id,
                   const std::string& name,
-                  float val) override;
-  void SetUniform(uint64_t resource_id,
-                  const std::string& name,
-                  int val) override;
-  void UploadUniforms(uint64_t resource_id) override {}
+                  float val) final;
+  void SetUniform(uint64_t resource_id, const std::string& name, int val) final;
+  void UploadUniforms(uint64_t resource_id) final {}
 
-  void PrepareForDrawing() override {}
-  void Present() override;
+  void PrepareForDrawing() final {}
+  void Present() final;
 
-  size_t GetAndResetFPS() override;
+  size_t GetAndResetFPS() final;
 
 #if defined(__linux__) && !defined(__ANDROID__)
-  XVisualInfo* GetXVisualInfo(Display* display) override;
+  XVisualInfo* GetXVisualInfo(Display* display) final;
 #endif
 
  private:

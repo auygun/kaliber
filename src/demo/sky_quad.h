@@ -27,14 +27,14 @@ class SkyQuad : public eng::Animatable {
   void Update(float delta_time);
 
   // Animatable interface.
-  void SetFrame(size_t frame) override {}
-  size_t GetFrame() const override { return 0; }
-  size_t GetNumFrames() const override { return 0; }
-  void SetColor(const base::Vector4f& color) override { nebula_color_ = color; }
-  base::Vector4f GetColor() const override { return nebula_color_; }
+  void SetFrame(size_t frame) final {}
+  size_t GetFrame() const final { return 0; }
+  size_t GetNumFrames() const final { return 0; }
+  void SetColor(const base::Vector4f& color) final { nebula_color_ = color; }
+  base::Vector4f GetColor() const final { return nebula_color_; }
 
   // Drawable interface.
-  void Draw(float frame_frac) override;
+  void Draw(float frame_frac) final;
 
   void ContextLost();
 

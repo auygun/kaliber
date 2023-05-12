@@ -5,20 +5,20 @@
 
 namespace eng {
 
-class SolidQuad : public Animatable {
+class SolidQuad final : public Animatable {
  public:
   SolidQuad() = default;
-  ~SolidQuad() override = default;
+  ~SolidQuad() final = default;
 
   // Animatable interface.
-  void SetFrame(size_t frame) override {}
-  size_t GetFrame() const override { return 0; }
-  size_t GetNumFrames() const override { return 0; }
-  void SetColor(const base::Vector4f& color) override { color_ = color; }
-  base::Vector4f GetColor() const override { return color_; }
+  void SetFrame(size_t frame) final {}
+  size_t GetFrame() const final { return 0; }
+  size_t GetNumFrames() const final { return 0; }
+  void SetColor(const base::Vector4f& color) final { color_ = color; }
+  base::Vector4f GetColor() const final { return color_; }
 
   // Drawable interface.
-  void Draw(float frame_frac) override;
+  void Draw(float frame_frac) final;
 
  private:
   base::Vector4f color_ = {1, 1, 1, 1};

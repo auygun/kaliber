@@ -18,20 +18,20 @@
 
 // #define LOAD_TEST
 
-class Demo : public eng::Game {
+class Demo final : public eng::Game {
  public:
   Demo();
-  ~Demo() override;
+  ~Demo() final;
 
-  bool Initialize() override;
+  bool Initialize() final;
 
-  void Update(float delta_time) override;
+  void Update(float delta_time) final;
 
-  void ContextLost() override;
+  void ContextLost() final;
 
-  void LostFocus() override;
+  void LostFocus() final;
 
-  void GainedFocus(bool from_interstitial_ad) override;
+  void GainedFocus(bool from_interstitial_ad) final;
 
   void AddScore(size_t score);
 

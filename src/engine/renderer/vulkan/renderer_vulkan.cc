@@ -466,13 +466,13 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
       (it->second.width != image->GetWidth() ||
        it->second.height != image->GetHeight())) {
     // Size mismatch. Recreate the texture.
-    FreeTexture(std::move(it->second.image), it->second.view,
-                std::move(it->second.desc_set));
+    FreeImage(std::move(it->second.image), it->second.view,
+              std::move(it->second.desc_set));
     it->second = {};
   }
 
   if (it->second.view == VK_NULL_HANDLE) {
-    CreateTexture(it->second.image, it->second.view, it->second.desc_set,
+    AllocateImage(it->second.image, it->second.view, it->second.desc_set,
                   format, image->GetWidth(), image->GetHeight(),
                   VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                   VMA_MEMORY_USAGE_GPU_ONLY);
@@ -514,8 +514,8 @@ void RendererVulkan::DestroyTexture(uint64_t resource_id) {
   if (it == textures_.end())
     return;
 
-  FreeTexture(std::move(it->second.image), it->second.view,
-              std::move(it->second.desc_set));
+  FreeImage(std::move(it->second.image), it->second.view,
+            std::move(it->second.desc_set));
   textures_.erase(it);
 }
 
@@ -1458,7 +1458,7 @@ void RendererVulkan::BufferMemoryBarrier(VkBuffer buffer,
                        &buffer_mem_barrier, 0, nullptr);
 }
 
-bool RendererVulkan::CreateTexture(Buffer<VkImage>& image,
+bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
                                    VkImageView& view,
                                    DescSet& desc_set,
                                    VkFormat format,
@@ -1575,9 +1575,9 @@ bool RendererVulkan::CreateTexture(Buffer<VkImage>& image,
   return true;
 }
 
-void RendererVulkan::FreeTexture(Buffer<VkImage> image,
-                                 VkImageView image_view,
-                                 DescSet desc_set) {
+void RendererVulkan::FreeImage(Buffer<VkImage> image,
+                               VkImageView image_view,
+                               DescSet desc_set) {
   frames_[current_frame_].images_to_destroy.push_back(
       std::make_tuple(std::move(image), image_view));
   frames_[current_frame_].desc_sets_to_destroy.push_back(std::move(desc_set));

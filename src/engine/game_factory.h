@@ -38,14 +38,14 @@ class GameFactoryBase {
 };
 
 template <typename Type>
-class GameFactory : public GameFactoryBase {
+class GameFactory final : public GameFactoryBase {
  public:
-  ~GameFactory() override = default;
+  ~GameFactory() final = default;
 
  private:
   using GameType = Type;
 
-  std::unique_ptr<Game> CreateGame() override {
+  std::unique_ptr<Game> CreateGame() final {
     return std::make_unique<GameType>();
   }
 };

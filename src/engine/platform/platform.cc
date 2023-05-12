@@ -7,7 +7,7 @@
 #include "engine/renderer/opengl/renderer_opengl.h"
 #include "engine/renderer/vulkan/renderer_vulkan.h"
 
-#define VULKAN_RENDERER
+#define USE_VULKAN_RENDERER 1
 
 using namespace base;
 
@@ -31,7 +31,7 @@ void Platform::InitializeCommon() {
     throw internal_error;
   }
 
-#if defined(VULKAN_RENDERER)
+#if (USE_VULKAN_RENDERER == 1)
   renderer_ = std::make_unique<RendererVulkan>();
 #else
   renderer_ = std::make_unique<RendererOpenGL>();

@@ -6,9 +6,9 @@
 #include "base/interpolation.h"
 #include "base/log.h"
 #include "base/misc.h"
-#include "third_party/texture_compressor/texture_compressor.h"
 #include "engine/engine.h"
 #include "engine/platform/asset_file.h"
+#include "third_party/texture_compressor/texture_compressor.h"
 
 // This 3rd party library is written in C and uses malloc, which means that we
 // have to do the same.

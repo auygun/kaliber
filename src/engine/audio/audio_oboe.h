@@ -25,17 +25,17 @@ class AudioOboe : public AudioBase {
   int GetHardwareSampleRate();
 
  private:
-  class StreamCallback : public oboe::AudioStreamCallback {
+  class StreamCallback final : public oboe::AudioStreamCallback {
    public:
     StreamCallback(AudioOboe* audio);
-    ~StreamCallback() override;
+    ~StreamCallback() final;
 
     oboe::DataCallbackResult onAudioReady(oboe::AudioStream* oboe_stream,
                                           void* audio_data,
-                                          int32_t num_frames) override;
+                                          int32_t num_frames) final;
 
     void onErrorAfterClose(oboe::AudioStream* oboe_stream,
-                           oboe::Result error) override;
+                           oboe::Result error) final;
 
    private:
     AudioOboe* audio_;

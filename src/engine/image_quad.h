@@ -14,10 +14,10 @@ namespace eng {
 class Shader;
 class Texture;
 
-class ImageQuad : public Animatable {
+class ImageQuad final : public Animatable {
  public:
   ImageQuad();
-  ~ImageQuad() override;
+  ~ImageQuad() final;
 
   void Create(const std::string& asset_name,
               std::array<int, 2> num_frames = {1, 1},
@@ -36,14 +36,14 @@ class ImageQuad : public Animatable {
   }
 
   // Animatable interface.
-  void SetFrame(size_t frame) override;
-  size_t GetFrame() const override { return current_frame_; }
-  size_t GetNumFrames() const override;
-  void SetColor(const base::Vector4f& color) override { color_ = color; }
-  base::Vector4f GetColor() const override { return color_; }
+  void SetFrame(size_t frame) final;
+  size_t GetFrame() const final { return current_frame_; }
+  size_t GetNumFrames() const final;
+  void SetColor(const base::Vector4f& color) final { color_ = color; }
+  base::Vector4f GetColor() const final { return color_; }
 
   // Drawable interface.
-  void Draw(float frame_frac) override;
+  void Draw(float frame_frac) final;
 
  private:
   using UniformValue = std::variant<base::Vector2f,

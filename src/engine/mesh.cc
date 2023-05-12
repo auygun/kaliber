@@ -3,9 +3,9 @@
 #include <string.h>
 
 #include "base/log.h"
-#include "third_party/jsoncpp/json.h"
 #include "engine/engine.h"
 #include "engine/platform/asset_file.h"
+#include "third_party/jsoncpp/json.h"
 
 namespace eng {
 
