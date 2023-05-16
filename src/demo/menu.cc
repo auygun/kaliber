@@ -81,7 +81,12 @@ bool Menu::Initialize() {
 
     items_[i].select_item_cb_ = [&, i]() -> void {
       items_[i].text_animator.SetEndCallback(Animator::kBlending, nullptr);
-      selected_option_ = (Option)i;
+      // Wait until click sound ends before exiting.
+      if (i == kExit)
+        click_.SetEndCallback(
+            [&, i]() -> void { selected_option_ = (Option)i; });
+      else
+        selected_option_ = (Option)i;
     };
     items_[i].text_animator.Attach(&items_[i].text);
   }

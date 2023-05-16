@@ -33,8 +33,10 @@ void ImageQuad::Create(const std::string& asset_name,
 }
 
 void ImageQuad::Destory() {
-  Engine::Get().ReleaseTexture(asset_name_);
-  texture_ = nullptr;
+  if (texture_) {
+    Engine::Get().ReleaseTexture(asset_name_);
+    texture_ = nullptr;
+  }
 }
 
 void ImageQuad::AutoScale() {

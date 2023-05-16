@@ -288,7 +288,7 @@ void Player::SetupWeapons() {
 
     weapon_[i].SetFrame(wepon_warmup_frame[i]);
     warmup_animator_[i].SetFrames(wepon_warmup_frame_count, wepon_anim_speed);
-    warmup_animator_[i].SetRotation(M_PI * 2, 8.0f);
+    warmup_animator_[i].SetRotation(M_PI * 2, 20.0f);
     warmup_animator_[i].Attach(&weapon_[i]);
     warmup_animator_[i].Play(Animator::kRotation, true);
 

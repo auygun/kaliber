@@ -96,8 +96,6 @@ class VulkanContext {
   uint32_t queue_family_count_ = 0;
   std::unique_ptr<VkQueueFamilyProperties[]> queue_props_ = nullptr;
 
-  bool buffers_prepared_ = false;
-
   bool queues_initialized_ = false;
   bool separate_present_queue_ = false;
 

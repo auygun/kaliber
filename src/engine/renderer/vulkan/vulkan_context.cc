@@ -58,7 +58,6 @@ void VulkanContext::Shutdown() {
     vkDestroyDevice(device_, nullptr);
     device_ = VK_NULL_HANDLE;
   }
-  buffers_prepared_ = false;
   queues_initialized_ = false;
   separate_present_queue_ = false;
   swapchain_image_count_ = 0;
@@ -788,10 +787,7 @@ void VulkanContext::DestroyWindow() {
 }
 
 VkFramebuffer VulkanContext::GetFramebuffer() {
-  return buffers_prepared_
-             ? window_.swapchain_image_resources[window_.current_buffer]
-                   .frame_buffer
-             : VK_NULL_HANDLE;
+  return window_.swapchain_image_resources[window_.current_buffer].frame_buffer;
 }
 
 bool VulkanContext::CleanUpSwapChain(Window* window) {
@@ -1421,22 +1417,19 @@ bool VulkanContext::PrepareBuffers() {
     if (err == VK_ERROR_OUT_OF_DATE_KHR) {
       // swapchain is out of date (e.g. the window was resized) and must be
       // recreated:
-      DLOG << "Swapchain is out of date.";
+      DLOG << "Swapchain is out of date, recreating.";
       UpdateSwapChain(&window_);
     } else if (err == VK_SUBOPTIMAL_KHR) {
-      DLOG << "Swapchain is suboptimal.";
       // swapchain is not as optimal as it could be, but the platform's
       // presentation engine will still present the image correctly.
+      DLOG << "Swapchain is suboptimal, recreating.";
+      UpdateSwapChain(&window_);
       break;
-    } else {
-      if (err) {
-        DLOG << "AcquireNextImageKHR failed. Error: " << err;
-        return false;
-      }
+    } else if (err != VK_SUCCESS) {
+      DLOG << "AcquireNextImageKHR failed. Error: " << err;
+      return false;
     }
   } while (err != VK_SUCCESS);
-
-  buffers_prepared_ = true;
 
   return true;
 }
@@ -1552,7 +1545,6 @@ bool VulkanContext::SwapBuffers() {
     return false;
   }
 
-  buffers_prepared_ = false;
   return true;
 }
 

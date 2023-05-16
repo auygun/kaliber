@@ -447,9 +447,9 @@ void Demo::StartNextStage(bool boss) {
         Vector4f c = {Lerp(0.75f, 0.95f, rnd.Rand()) * weights[0],
                       Lerp(0.75f, 0.95f, rnd.Rand()) * weights[1],
                       Lerp(0.75f, 0.95f, rnd.Rand()) * weights[2], 1};
-        c += {Lerp(0.1f, 0.5f, rnd.Rand()) * (1 - weights[0]),
-              Lerp(0.1f, 0.5f, rnd.Rand()) * (1 - weights[1]),
-              Lerp(0.1f, 0.5f, rnd.Rand()) * (1 - weights[2]), 1};
+        c += {Lerp(0.1f, 0.7f, rnd.Rand()) * (1 - weights[0]),
+              Lerp(0.1f, 0.7f, rnd.Rand()) * (1 - weights[1]),
+              Lerp(0.1f, 0.7f, rnd.Rand()) * (1 - weights[2]), 1};
         sky_.SwitchColor(c);
 
         ++wave_;
@@ -457,9 +457,9 @@ void Demo::StartNextStage(bool boss) {
         hud_.SetProgress(1);
 
         if (boss_fight_)
-          player_.TakeDamage(-3);
+          player_.TakeDamage(-1);
 
-        total_enemies_ = 20.0f + 23.0897f * log((float)wave_);
+        total_enemies_ = 23.0897f * log((float)wave_ + 1.0f) - 10.0f;
         last_num_enemies_killed_ = 0;
         boss_fight_ = false;
         DLOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
@@ -489,6 +489,7 @@ void Demo::Dimmer(bool enable) {
     dimmer_.SetColor(kBgColor * Vector4f(0, 0, 0, 0));
     dimmer_animator_.SetBlending(kBgColor, kFadeSpeed);
     dimmer_animator_.Play(Animator::kBlending, false);
+    dimmer_animator_.SetEndCallback(Animator::kBlending, nullptr);
     dimmer_animator_.SetVisible(true);
   } else if (!enable && dimmer_active_) {
     dimmer_active_ = false;

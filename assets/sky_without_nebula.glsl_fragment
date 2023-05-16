@@ -1,9 +1,5 @@
 #ifdef GL_ES
 precision highp float;
-#else
-#define lowp
-#define mediump
-#define highp
 #endif
 
 IN(0) vec2 tex_coord_0;
@@ -35,7 +31,7 @@ float stars(in vec2 p, float num_cells, float size) {
 void main() {
   vec2 layer1_coord = tex_coord_0 + PARAM(sky_offset);
   vec2 layer2_coord = tex_coord_0 + PARAM(sky_offset)  * 0.7;
-  mediump vec3 result = vec3(0.);
+  vec3 result = vec3(0.);
 
   float c = stars(layer1_coord, 8.0, 0.05);
   result += vec3(0.97, 0.74, 0.74) * c;

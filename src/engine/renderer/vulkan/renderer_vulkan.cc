@@ -971,7 +971,7 @@ bool RendererVulkan::InitializeInternal() {
   // Begin the first command buffer for the first frame.
   BeginFrame();
 
-  if (context_lost_cb_) {
+  if (context_lost_ && context_lost_cb_) {
     LOG << "Context lost.";
     context_lost_cb_();
   }
@@ -984,6 +984,7 @@ void RendererVulkan::Shutdown() {
 
   LOG << "Shutting down renderer.";
   DestroyAllResources();
+  context_lost_ = true;
 
   quit_.store(true, std::memory_order_relaxed);
   semaphore_.release();

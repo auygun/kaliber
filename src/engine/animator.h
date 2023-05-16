@@ -120,6 +120,8 @@ class Animator {
   base::Closure pending_cb_;
   Flags inside_cb_ = kNone;
 
+  bool did_evaluate_ = false;
+
   void UpdateAnimTime(float delta_time,
                       int anim,
                       float anim_speed,

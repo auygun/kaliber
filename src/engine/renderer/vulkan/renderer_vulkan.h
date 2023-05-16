@@ -152,6 +152,8 @@ class RendererVulkan final : public Renderer {
   std::unordered_map<uint64_t, TextureVulkan> textures_;
   uint64_t last_resource_id_ = 0;
 
+  bool context_lost_ = false;
+
   VulkanContext context_;
 
   VmaAllocator allocator_ = nullptr;

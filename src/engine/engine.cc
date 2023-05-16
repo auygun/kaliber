@@ -222,31 +222,27 @@ void Engine::SetImageSource(const std::string& asset_name,
 void Engine::SetImageSource(const std::string& asset_name,
                             CreateImageCB create_image,
                             bool persistent) {
-  Texture* texture;
-  auto it = textures_.find(asset_name);
-  if (it != textures_.end()) {
-    texture = it->second.texture.get();
-    it->second.create_image = create_image;
-    it->second.persistent = persistent;
-  } else {
-    auto& t = textures_[asset_name] = {CreateRenderResource<Texture>(),
-                                       create_image, persistent, 0};
-    texture = t.texture.get();
+  if (textures_.contains(asset_name) && textures_[asset_name].use_count > 0) {
+    DLOG << "Texture in use: " << asset_name;
+    return;
   }
+
+  auto& t = textures_[asset_name] = {CreateRenderResource<Texture>(),
+                                     create_image, persistent, 0};
 
   if (persistent) {
     auto image = create_image();
     if (image)
-      texture->Update(std::move(image));
-    else
-      texture->Destroy();
+      t.texture->Update(std::move(image));
   }
 }
 
 void Engine::RefreshImage(const std::string& asset_name) {
   auto it = textures_.find(asset_name);
-  if (it == textures_.end())
+  if (it == textures_.end()) {
+    DLOG << "Texture not found: " << asset_name;
     return;
+  }
 
   auto image = it->second.create_image();
   if (image)
@@ -257,22 +253,23 @@ void Engine::RefreshImage(const std::string& asset_name) {
 
 Texture* Engine::AcquireTexture(const std::string& asset_name) {
   auto it = textures_.find(asset_name);
-  if (it != textures_.end()) {
-    if (!it->second.texture->IsValid())
-      RefreshImage(it->first);
-    it->second.use_count++;
-    return it->second.texture.get();
+  if (it == textures_.end()) {
+    DLOG << "Texture not found: " << asset_name;
+    return nullptr;
   }
 
-  auto& t = textures_[asset_name] = {CreateRenderResource<Texture>(), nullptr,
-                                     false, 1};
-  return t.texture.get();
+  if (!it->second.texture->IsValid())
+    RefreshImage(it->first);
+  it->second.use_count++;
+  return it->second.texture.get();
 }
 
 void Engine::ReleaseTexture(const std::string& asset_name) {
   auto it = textures_.find(asset_name);
-  if (it == textures_.end())
+  if (it == textures_.end()) {
+    DLOG << "Texture not found: " << asset_name;
     return;
+  }
 
   DCHECK(it->second.use_count > 0);
   it->second.use_count--;

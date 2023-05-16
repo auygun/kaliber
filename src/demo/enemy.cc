@@ -148,7 +148,8 @@ void Enemy::Update(float delta_time) {
 
     if (it->chromatic_aberration_active_) {
       it->sprite.SetCustomUniform(
-          "aberration_offset", Lerp(0.0f, 0.01f, chromatic_aberration_offset_));
+          "aberration_offset",
+          Lerp(0.0f, 0.015f, chromatic_aberration_offset_));
     }
 #if defined(LOAD_TEST)
     else if (it->kill_timer <= 0 &&
@@ -406,6 +407,8 @@ bool Enemy::IsBossAlive() const {
 }
 
 void Enemy::PauseProgress() {
+  DeselectTarget(kDamageType_Green);
+  DeselectTarget(kDamageType_Blue);
   progress_paused_ = true;
 }
 
@@ -784,8 +787,7 @@ void Enemy::SpawnBoss() {
     auto& e = enemies_.emplace_front();
     e.enemy_type = kEnemyType_Boss;
     e.damage_type = kDamageType_Any;
-    e.total_health = e.hit_points =
-        -15.0845f + 41.1283f * log((float)game->wave());
+    e.total_health = e.hit_points = 41.1283f * log((float)game->wave()) - 20.0f;
     DLOG << " Boss health: " << e.total_health;
 
     Vector2f hit_box_pos =
@@ -1080,7 +1082,7 @@ void Enemy::UpdateWave(float delta_time) {
       SpawnUnit(kEnemyType_PowerUp, kDamageType_Any, pos, 6);
     }
     seconds_since_last_power_up_ = 0;
-    seconds_to_next_power_up_ = Lerp(1.3f * 60.0f, 1.8f * 60.0f, rnd.Rand());
+    seconds_to_next_power_up_ = Lerp(60.0f, 80.0f, rnd.Rand());
   }
 }
 
@@ -1099,9 +1101,6 @@ void Enemy::UpdateBoss(float delta_time) {
       0.4f - (0.0684f * log(boss_spawn_time_ * boss_spawn_time_factor_));
   if (boss_spawn_factor < 0.1f)
     boss_spawn_factor = 0.1f;
-
-  DLOG << "boss_spawn_time_: " << boss_spawn_time_
-       << " boss_spawn_factor: " << boss_spawn_factor;
 
   EnemyType enemy_type = kEnemyType_Invalid;
 

@@ -180,9 +180,13 @@ void Animator::Update(float delta_time) {
     UpdateAnimTime(delta_time, kFrames, frame_speed_, frame_time_, frame_cb_);
   if (play_flags_ & kTimer)
     UpdateAnimTime(delta_time, kTimer, timer_speed_, timer_time_, timer_cb_);
+
+  did_evaluate_ = false;
 }
 
 void Animator::Evaluate(float frame_frac_time) {
+  did_evaluate_ = true;
+
   Vector2f pos = {0, 0};
   if (play_flags_ & kMovement) {
     float time = movement_time_ + movement_speed_ * frame_frac_time;
@@ -248,6 +252,8 @@ void Animator::UpdateAnimTime(float delta_time,
     if (loop_flags_ & anim) {
       anim_time = fmod(anim_time, 1.0f);
     } else {
+      if (!did_evaluate_)
+        Evaluate(0);
       anim_time = 0;
       play_flags_ &= ~anim;
       if (cb) {
