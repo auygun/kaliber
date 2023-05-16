@@ -22,7 +22,7 @@ using namespace eng;
 
 namespace {
 
-constexpr char kVersionStr[] = "Version 1.0.1";
+constexpr char kVersionStr[] = "Version 1.0.2";
 
 constexpr char kMenuOption[Menu::kOption_Max][10] = {"continue", "start",
                                                      "credits", "exit"};
