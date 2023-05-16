@@ -18,6 +18,7 @@
 #include "third_party/glslang/glslang/Include/Types.h"
 #include "third_party/glslang/glslang/Public/ShaderLang.h"
 #include "third_party/spirv-reflect/spirv_reflect.h"
+#include "third_party/vulkan/vk_enum_string_helper.h"
 
 using namespace base;
 
@@ -345,7 +346,7 @@ std::pair<int, int> GetBlockSizeForImageFormat(VkFormat format) {
     default:
       break;
   }
-  NOTREACHED << "Invalid format: " << format;
+  NOTREACHED << "Invalid format: " << string_VkFormat(format);
   return {0, 0};
 }
 
@@ -361,7 +362,7 @@ std::pair<int, int> GetNumBlocksForImageFormat(VkFormat format,
     default:
       break;
   }
-  NOTREACHED << "Invalid format: " << format;
+  NOTREACHED << "Invalid format: " << string_VkFormat(format);
   return {width, height};
 }
 
@@ -865,14 +866,14 @@ bool RendererVulkan::InitializeInternal() {
     VkResult err = vkCreateCommandPool(device_, &cmd_pool_info, nullptr,
                                        &frames_[i].setup_command_pool);
     if (err) {
-      DLOG << "vkCreateCommandPool failed with error " << std::to_string(err);
+      DLOG << "vkCreateCommandPool failed with error " << string_VkResult(err);
       return false;
     }
 
     err = vkCreateCommandPool(device_, &cmd_pool_info, nullptr,
                               &frames_[i].draw_command_pool);
     if (err) {
-      DLOG << "vkCreateCommandPool failed with error " << std::to_string(err);
+      DLOG << "vkCreateCommandPool failed with error " << string_VkResult(err);
       return false;
     }
 
@@ -888,7 +889,7 @@ bool RendererVulkan::InitializeInternal() {
                                    &frames_[i].setup_command_buffer);
     if (err) {
       DLOG << "vkAllocateCommandBuffers failed with error "
-           << std::to_string(err);
+           << string_VkResult(err);
       continue;
     }
 
@@ -897,7 +898,7 @@ bool RendererVulkan::InitializeInternal() {
                                    &frames_[i].draw_command_buffer);
     if (err) {
       DLOG << "vkAllocateCommandBuffers failed with error "
-           << std::to_string(err);
+           << string_VkResult(err);
       continue;
     }
   }
@@ -918,10 +919,10 @@ bool RendererVulkan::InitializeInternal() {
   ds_layout_info.bindingCount = 1;
   ds_layout_info.pBindings = &ds_layout_binding;
 
-  VkResult res = vkCreateDescriptorSetLayout(device_, &ds_layout_info, nullptr,
+  VkResult err = vkCreateDescriptorSetLayout(device_, &ds_layout_info, nullptr,
                                              &descriptor_set_layout_);
-  if (res) {
-    DLOG << "Error (" << std::to_string(res)
+  if (err) {
+    DLOG << "Error (" << string_VkResult(err)
          << ") creating descriptor set layout for set";
     return false;
   }
@@ -947,9 +948,9 @@ bool RendererVulkan::InitializeInternal() {
   sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
   sampler_info.unnormalizedCoordinates = VK_FALSE;
 
-  res = vkCreateSampler(device_, &sampler_info, nullptr, &sampler_);
-  if (res) {
-    DLOG << "vkCreateSampler failed with error " << std::to_string(res);
+  err = vkCreateSampler(device_, &sampler_info, nullptr, &sampler_);
+  if (err) {
+    DLOG << "vkCreateSampler failed with error " << string_VkResult(err);
     return false;
   }
 
@@ -1036,14 +1037,14 @@ void RendererVulkan::BeginFrame() {
   VkResult err = vkBeginCommandBuffer(
       frames_[current_frame_].setup_command_buffer, &cmdbuf_begin);
   if (err) {
-    DLOG << "vkBeginCommandBuffer failed with error " << std::to_string(err);
+    DLOG << "vkBeginCommandBuffer failed with error " << string_VkResult(err);
     return;
   }
 
   err = vkBeginCommandBuffer(frames_[current_frame_].draw_command_buffer,
                              &cmdbuf_begin);
   if (err) {
-    DLOG << "vkBeginCommandBuffer failed with error " << std::to_string(err);
+    DLOG << "vkBeginCommandBuffer failed with error " << string_VkResult(err);
     return;
   }
 
@@ -1074,7 +1075,7 @@ void RendererVulkan::FlushSetupBuffer() {
   VkResult err = vkBeginCommandBuffer(
       frames_[current_frame_].setup_command_buffer, &cmdbuf_begin);
   if (err) {
-    DLOG << "vkBeginCommandBuffer failed with error " << std::to_string(err);
+    DLOG << "vkBeginCommandBuffer failed with error " << string_VkResult(err);
     return;
   }
   context_.AppendCommandBuffer(frames_[current_frame_].setup_command_buffer,
@@ -1287,7 +1288,7 @@ bool RendererVulkan::InsertStagingBuffer() {
                                  &std::get<0>(block.buffer),
                                  &std::get<1>(block.buffer), &block.alloc_info);
   if (err) {
-    DLOG << "vmaCreateBuffer failed with error " << std::to_string(err);
+    DLOG << "vmaCreateBuffer failed with error " << string_VkResult(err);
     return false;
   }
 
@@ -1325,11 +1326,11 @@ RendererVulkan::DescPool* RendererVulkan::AllocateDescriptorPool() {
     descriptor_pool_create_info.pPoolSizes = &sizes;
 
     VkDescriptorPool desc_pool;
-    VkResult res = vkCreateDescriptorPool(device_, &descriptor_pool_create_info,
+    VkResult err = vkCreateDescriptorPool(device_, &descriptor_pool_create_info,
                                           nullptr, &desc_pool);
-    if (res) {
+    if (err) {
       DLOG << "vkCreateDescriptorPool failed with error "
-           << std::to_string(res);
+           << string_VkResult(err);
       return VK_NULL_HANDLE;
     }
 
@@ -1385,7 +1386,7 @@ bool RendererVulkan::AllocateBuffer(Buffer<VkBuffer>& buffer,
                                  &vk_buffer, &allocation, nullptr);
   if (err) {
     DLOG << "Can't create buffer of size: " << std::to_string(size)
-         << ", error " << std::to_string(err);
+         << ", error " << string_VkResult(err);
     return false;
   }
 
@@ -1501,7 +1502,7 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
   VkResult err = vmaCreateImage(allocator_, &image_create_info, &allocInfo,
                                 &vk_image, &allocation, nullptr);
   if (err) {
-    DLOG << "vmaCreateImage failed with error " << std::to_string(err);
+    DLOG << "vmaCreateImage failed with error " << string_VkResult(err);
     return false;
   }
 
@@ -1527,7 +1528,7 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
 
   if (err) {
     vmaDestroyImage(allocator_, vk_image, allocation);
-    DLOG << "vkCreateImageView failed with error " << std::to_string(err);
+    DLOG << "vkCreateImageView failed with error " << string_VkResult(err);
     return false;
   }
 
@@ -1544,11 +1545,11 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
   descriptor_set_allocate_info.pSetLayouts = &descriptor_set_layout_;
 
   VkDescriptorSet descriptor_set;
-  VkResult res = vkAllocateDescriptorSets(
-      device_, &descriptor_set_allocate_info, &descriptor_set);
-  if (res) {
+  err = vkAllocateDescriptorSets(device_, &descriptor_set_allocate_info,
+                                 &descriptor_set);
+  if (err) {
     --std::get<1>(*desc_pool);
-    DLOG << "Cannot allocate descriptor sets, error " << std::to_string(res);
+    DLOG << "Cannot allocate descriptor sets, error " << string_VkResult(err);
     return false;
   }
 
