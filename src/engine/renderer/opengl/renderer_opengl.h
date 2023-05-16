@@ -87,6 +87,8 @@ class RendererOpenGL final : public Renderer {
 
   size_t GetAndResetFPS() final;
 
+  const char* GetDebugName() final { return "OpenGL"; }
+
 #if defined(__linux__) && !defined(__ANDROID__)
   XVisualInfo* GetXVisualInfo(Display* display) final;
 #endif

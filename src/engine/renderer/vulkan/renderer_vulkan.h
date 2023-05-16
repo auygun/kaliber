@@ -22,7 +22,7 @@ class Image;
 
 class RendererVulkan final : public Renderer {
  public:
-  RendererVulkan();
+  RendererVulkan(std::unique_ptr<VulkanContext> context);
   ~RendererVulkan() final;
 
 #if defined(__ANDROID__)
@@ -71,6 +71,8 @@ class RendererVulkan final : public Renderer {
   void Present() final;
 
   size_t GetAndResetFPS() final;
+
+  const char* GetDebugName() final { return "Vulkan"; }
 
 #if defined(__linux__) && !defined(__ANDROID__)
   XVisualInfo* GetXVisualInfo(Display* display) final;
@@ -154,7 +156,7 @@ class RendererVulkan final : public Renderer {
 
   bool context_lost_ = false;
 
-  VulkanContext context_;
+  std::unique_ptr<VulkanContext> context_;
 
   VmaAllocator allocator_ = nullptr;
 

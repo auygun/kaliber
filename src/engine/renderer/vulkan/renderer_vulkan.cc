@@ -370,7 +370,8 @@ std::pair<int, int> GetNumBlocksForImageFormat(VkFormat format,
 
 namespace eng {
 
-RendererVulkan::RendererVulkan() = default;
+RendererVulkan::RendererVulkan(std::unique_ptr<VulkanContext> context)
+    : context_{std::move(context)} {}
 
 RendererVulkan::~RendererVulkan() = default;
 
@@ -706,7 +707,7 @@ uint64_t RendererVulkan::CreateShader(
   pipeline_info.pDepthStencilState = &depth_stencil;
   pipeline_info.pDynamicState = &dynamic_state_create_info;
   pipeline_info.layout = shader.pipeline_layout;
-  pipeline_info.renderPass = context_.GetRenderPass();
+  pipeline_info.renderPass = context_->GetRenderPass();
   pipeline_info.subpass = 0;
   pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
 
@@ -827,7 +828,7 @@ void RendererVulkan::UploadUniforms(uint64_t resource_id) {
 }
 
 void RendererVulkan::PrepareForDrawing() {
-  context_.PrepareBuffers();
+  context_->PrepareBuffers();
   DrawListBegin();
 }
 
@@ -839,20 +840,20 @@ void RendererVulkan::Present() {
 bool RendererVulkan::InitializeInternal() {
   glslang::InitializeProcess();
 
-  device_ = context_.GetDevice();
+  device_ = context_->GetDevice();
 
   // Allocate one extra frame to ensure it's unused at any time without having
   // to use a fence.
-  int frame_count = context_.GetSwapchainImageCount() + 1;
+  int frame_count = context_->GetSwapchainImageCount() + 1;
   frames_.resize(frame_count);
   frames_drawn_ = frame_count;
 
   // Initialize allocator
   VmaAllocatorCreateInfo allocator_info;
   memset(&allocator_info, 0, sizeof(VmaAllocatorCreateInfo));
-  allocator_info.physicalDevice = context_.GetPhysicalDevice();
+  allocator_info.physicalDevice = context_->GetPhysicalDevice();
   allocator_info.device = device_;
-  allocator_info.instance = context_.GetInstance();
+  allocator_info.instance = context_->GetInstance();
   vmaCreateAllocator(&allocator_info, &allocator_);
 
   for (size_t i = 0; i < frames_.size(); i++) {
@@ -860,7 +861,7 @@ bool RendererVulkan::InitializeInternal() {
     VkCommandPoolCreateInfo cmd_pool_info;
     cmd_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     cmd_pool_info.pNext = nullptr;
-    cmd_pool_info.queueFamilyIndex = context_.GetGraphicsQueue();
+    cmd_pool_info.queueFamilyIndex = context_->GetGraphicsQueue();
     cmd_pool_info.flags = 0;
 
     VkResult err = vkCreateCommandPool(device_, &cmd_pool_info, nullptr,
@@ -1013,8 +1014,8 @@ void RendererVulkan::Shutdown() {
   current_staging_buffer_ = 0;
   staging_buffer_used_ = false;
 
-  context_.DestroyWindow();
-  context_.Shutdown();
+  context_->DestroyWindow();
+  context_->Shutdown();
 
   glslang::FinalizeProcess();
 }
@@ -1022,8 +1023,8 @@ void RendererVulkan::Shutdown() {
 void RendererVulkan::BeginFrame() {
   FreePendingResources(current_frame_);
 
-  context_.AppendCommandBuffer(frames_[current_frame_].setup_command_buffer);
-  context_.AppendCommandBuffer(frames_[current_frame_].draw_command_buffer);
+  context_->AppendCommandBuffer(frames_[current_frame_].setup_command_buffer);
+  context_->AppendCommandBuffer(frames_[current_frame_].draw_command_buffer);
 
   vkResetCommandPool(device_, frames_[current_frame_].setup_command_pool, 0);
   vkResetCommandPool(device_, frames_[current_frame_].draw_command_pool, 0);
@@ -1062,7 +1063,7 @@ void RendererVulkan::BeginFrame() {
 void RendererVulkan::FlushSetupBuffer() {
   vkEndCommandBuffer(frames_[current_frame_].setup_command_buffer);
 
-  context_.Flush(false);
+  context_->Flush(false);
 
   vkResetCommandPool(device_, frames_[current_frame_].setup_command_pool, 0);
 
@@ -1078,8 +1079,8 @@ void RendererVulkan::FlushSetupBuffer() {
     DLOG << "vkBeginCommandBuffer failed with error " << string_VkResult(err);
     return;
   }
-  context_.AppendCommandBuffer(frames_[current_frame_].setup_command_buffer,
-                               true);
+  context_->AppendCommandBuffer(frames_[current_frame_].setup_command_buffer,
+                                true);
 }
 
 void RendererVulkan::FreePendingResources(int frame) {
@@ -1906,8 +1907,8 @@ void RendererVulkan::DrawListBegin() {
   VkRenderPassBeginInfo render_pass_begin;
   render_pass_begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   render_pass_begin.pNext = nullptr;
-  render_pass_begin.renderPass = context_.GetRenderPass();
-  render_pass_begin.framebuffer = context_.GetFramebuffer();
+  render_pass_begin.renderPass = context_->GetRenderPass();
+  render_pass_begin.framebuffer = context_->GetFramebuffer();
 
   render_pass_begin.renderArea.extent.width = screen_width_;
   render_pass_begin.renderArea.extent.height = screen_height_;
@@ -1973,7 +1974,7 @@ void RendererVulkan::SwapBuffers() {
   vkEndCommandBuffer(frames_[current_frame_].setup_command_buffer);
   vkEndCommandBuffer(frames_[current_frame_].draw_command_buffer);
 
-  context_.SwapBuffers();
+  context_->SwapBuffers();
   current_frame_ = (current_frame_ + 1) % frames_.size();
 
   active_pipeline_ = VK_NULL_HANDLE;
@@ -2032,13 +2033,13 @@ bool RendererVulkan::SetUniformInternal(ShaderVulkan& shader,
 
 bool RendererVulkan::IsFormatSupported(VkFormat format) {
   VkFormatProperties properties;
-  vkGetPhysicalDeviceFormatProperties(context_.GetPhysicalDevice(), format,
+  vkGetPhysicalDeviceFormatProperties(context_->GetPhysicalDevice(), format,
                                       &properties);
   return properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
 }
 
 size_t RendererVulkan::GetAndResetFPS() {
-  return context_.GetAndResetFPS();
+  return context_->GetAndResetFPS();
 }
 
 void RendererVulkan::DestroyAllResources() {

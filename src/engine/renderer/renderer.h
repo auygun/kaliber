@@ -92,6 +92,8 @@ class Renderer {
 
   virtual size_t GetAndResetFPS() = 0;
 
+  virtual const char* GetDebugName() = 0;
+
 #if defined(__linux__) && !defined(__ANDROID__)
   virtual XVisualInfo* GetXVisualInfo(Display* display) = 0;
 #endif

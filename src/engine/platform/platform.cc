@@ -7,8 +7,6 @@
 #include "engine/renderer/opengl/renderer_opengl.h"
 #include "engine/renderer/vulkan/renderer_vulkan.h"
 
-#define USE_VULKAN_RENDERER 1
-
 using namespace base;
 
 namespace eng {
@@ -31,11 +29,13 @@ void Platform::InitializeCommon() {
     throw internal_error;
   }
 
-#if (USE_VULKAN_RENDERER == 1)
-  renderer_ = std::make_unique<RendererVulkan>();
-#else
-  renderer_ = std::make_unique<RendererOpenGL>();
-#endif
+  auto context = std::make_unique<VulkanContext>();
+  if (context->Initialize()) {
+    renderer_ = std::make_unique<RendererVulkan>(std::move(context));
+  } else {
+    LOG << "Failed to initialize Vulkan context. Fallback to OpenGL.";
+    renderer_ = std::make_unique<RendererOpenGL>();
+  }
 }
 
 void Platform::ShutdownCommon() {

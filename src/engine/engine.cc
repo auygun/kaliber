@@ -507,10 +507,7 @@ std::unique_ptr<Image> Engine::PrintStats() {
   line = "fps: ";
   line += std::to_string(fps_);
   lines.push_back(line);
-  // line = "cmd: ";
-  // line += std::to_string(renderer_->global_queue_size() +
-  //                        renderer_->render_queue_size());
-  // lines.push_back(line);
+  lines.push_back(renderer_->GetDebugName());
 
   constexpr int margin = 5;
   int line_height = system_font_->GetLineHeight();
