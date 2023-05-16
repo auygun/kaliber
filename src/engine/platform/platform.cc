@@ -12,6 +12,8 @@
 #include "engine/audio/audio_driver_alsa.h"
 #endif
 
+#define USE_VULKAN_RENDERER 1
+
 using namespace base;
 
 namespace eng {
@@ -34,13 +36,11 @@ void Platform::InitializeCommon() {
   bool res = audio_driver_->Initialize();
   CHECK(res) << "Failed to initialize audio driver.";
 
-  auto context = std::make_unique<VulkanContext>();
-  if (context->Initialize()) {
-    renderer_ = std::make_unique<RendererVulkan>(std::move(context));
-  } else {
-    LOG << "Failed to initialize Vulkan context. Fallback to OpenGL.";
-    renderer_ = std::make_unique<RendererOpenGL>();
-  }
+#if (USE_VULKAN_RENDERER == 1)
+  renderer_ = std::make_unique<RendererVulkan>();
+#else
+  renderer_ = std::make_unique<RendererOpenGL>();
+#endif
 }
 
 void Platform::ShutdownCommon() {

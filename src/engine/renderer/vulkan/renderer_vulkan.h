@@ -22,7 +22,7 @@ class Image;
 
 class RendererVulkan final : public Renderer {
  public:
-  RendererVulkan(std::unique_ptr<VulkanContext> context);
+  RendererVulkan();
   ~RendererVulkan() final;
 
 #if defined(__ANDROID__)
@@ -156,7 +156,7 @@ class RendererVulkan final : public Renderer {
 
   bool context_lost_ = false;
 
-  std::unique_ptr<VulkanContext> context_;
+  VulkanContext context_;
 
   VmaAllocator allocator_ = nullptr;
 
