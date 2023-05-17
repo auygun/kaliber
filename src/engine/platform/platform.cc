@@ -2,10 +2,15 @@
 
 #include "base/log.h"
 #include "base/task_runner.h"
-#include "engine/audio/audio.h"
 #include "engine/engine.h"
 #include "engine/renderer/opengl/renderer_opengl.h"
 #include "engine/renderer/vulkan/renderer_vulkan.h"
+
+#if defined(__ANDROID__)
+#include "engine/audio/audio_driver_oboe.h"
+#elif defined(__linux__)
+#include "engine/audio/audio_driver_alsa.h"
+#endif
 
 using namespace base;
 
@@ -23,9 +28,13 @@ void Platform::InitializeCommon() {
   thread_pool_.Initialize();
   TaskRunner::CreateThreadLocalTaskRunner();
 
-  audio_ = std::make_unique<Audio>();
-  if (!audio_->Initialize()) {
-    LOG << "Failed to initialize audio system.";
+#if defined(__ANDROID__)
+  audio_driver_ = std::make_unique<AudioDriverOboe>();
+#elif defined(__linux__)
+  audio_driver_ = std::make_unique<AudioDriverAlsa>();
+#endif
+  if (!audio_driver_->Initialize()) {
+    LOG << "Failed to initialize audio driver.";
     throw internal_error;
   }
 
@@ -41,12 +50,13 @@ void Platform::InitializeCommon() {
 void Platform::ShutdownCommon() {
   LOG << "Shutting down platform.";
 
-  audio_->Shutdown();
+  audio_driver_->Shutdown();
   renderer_->Shutdown();
 }
 
 void Platform::RunMainLoop() {
-  engine_ = std::make_unique<Engine>(this, renderer_.get(), audio_.get());
+  engine_ =
+      std::make_unique<Engine>(this, renderer_.get(), audio_driver_.get());
   if (!engine_->Initialize()) {
     LOG << "Failed to initialize the engine.";
     throw internal_error;

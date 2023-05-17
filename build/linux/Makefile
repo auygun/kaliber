@@ -95,8 +95,8 @@ $(BASE_LIB): $(BASE_OBJS)
 ENGINE_SRC := \
   $(SRC_ROOT)/engine/animatable.cc \
   $(SRC_ROOT)/engine/animator.cc \
-  $(SRC_ROOT)/engine/audio/audio_alsa.cc \
-  $(SRC_ROOT)/engine/audio/audio_base.cc \
+  $(SRC_ROOT)/engine/audio/audio_driver_alsa.cc \
+  $(SRC_ROOT)/engine/audio/audio_mixer.cc \
   $(SRC_ROOT)/engine/drawable.cc \
   $(SRC_ROOT)/engine/engine.cc \
   $(SRC_ROOT)/engine/font.cc \

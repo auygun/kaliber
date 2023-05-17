@@ -9,7 +9,6 @@
 
 #include "base/random.h"
 #include "base/vecmath.h"
-#include "engine/audio/audio_forward.h"
 #include "engine/persistent_data.h"
 
 class TextureCompressor;
@@ -17,6 +16,8 @@ class TextureCompressor;
 namespace eng {
 
 class Animator;
+class AudioDriver;
+class AudioMixer;
 class Font;
 class Game;
 class Drawable;
@@ -33,7 +34,7 @@ class Engine {
  public:
   using CreateImageCB = std::function<std::unique_ptr<Image>()>;
 
-  Engine(Platform* platform, Renderer* renderer, Audio* audio);
+  Engine(Platform* platform, Renderer* renderer, AudioDriver* audio_driver);
   ~Engine();
 
   static Engine& Get();
@@ -107,7 +108,7 @@ class Engine {
 
   void SetEnableVibration(bool enable) { vibration_enabled_ = enable; }
 
-  Audio* GetAudio() { return audio_; }
+  AudioMixer* GetAudioMixer() { return audio_mixer_.get(); }
 
   // Access to the render resources.
   Geometry* GetQuad() { return quad_.get(); }
@@ -172,11 +173,10 @@ class Engine {
   static Engine* singleton;
 
   Platform* platform_ = nullptr;
-
   Renderer* renderer_ = nullptr;
+  AudioDriver* audio_driver_ = nullptr;
 
-  Audio* audio_ = nullptr;
-
+  std::unique_ptr<AudioMixer> audio_mixer_;
   std::unique_ptr<Game> game_;
 
   std::unique_ptr<Geometry> quad_;

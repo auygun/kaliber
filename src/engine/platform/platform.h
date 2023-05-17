@@ -7,7 +7,6 @@
 
 #include "base/thread_pool.h"
 #include "base/timer.h"
-#include "engine/audio/audio_forward.h"
 
 #if defined(__ANDROID__)
 
@@ -25,6 +24,7 @@ struct AInputEvent;
 
 namespace eng {
 
+class AudioDriver;
 class Renderer;
 class Engine;
 
@@ -80,7 +80,7 @@ class Platform {
   bool has_focus_ = false;
   bool should_exit_ = false;
 
-  std::unique_ptr<Audio> audio_;
+  std::unique_ptr<AudioDriver> audio_driver_;
   std::unique_ptr<Renderer> renderer_;
   std::unique_ptr<Engine> engine_;
 

@@ -1,20 +1,26 @@
-#include "engine/audio/audio_alsa.h"
+#include "engine/audio/audio_driver_alsa.h"
 
 #include <memory>
 
 #include <alsa/asoundlib.h>
 
 #include "base/log.h"
+#include "engine/audio/audio_driver_delegate.h"
 
 using namespace base;
 
 namespace eng {
 
-AudioAlsa::AudioAlsa() = default;
+AudioDriverAlsa::AudioDriverAlsa() = default;
 
-AudioAlsa::~AudioAlsa() = default;
+AudioDriverAlsa::~AudioDriverAlsa() = default;
 
-bool AudioAlsa::Initialize() {
+void AudioDriverAlsa::SetDelegate(AudioDriverDelegate* delegate) {
+  delegate_ = delegate;
+  Resume();
+}
+
+bool AudioDriverAlsa::Initialize() {
   LOG << "Initializing audio system.";
 
   int err;
@@ -136,51 +142,43 @@ bool AudioAlsa::Initialize() {
   return false;
 }
 
-void AudioAlsa::Shutdown() {
+void AudioDriverAlsa::Shutdown() {
   LOG << "Shutting down audio system.";
-
   TerminateAudioThread();
   snd_pcm_drop(device_);
   snd_pcm_close(device_);
 }
 
-void AudioAlsa::Suspend() {
-  DCHECK(!terminate_audio_thread_.load(std::memory_order_relaxed));
-
+void AudioDriverAlsa::Suspend() {
   suspend_audio_thread_.store(true, std::memory_order_relaxed);
 }
 
-void AudioAlsa::Resume() {
-  DCHECK(!terminate_audio_thread_.load(std::memory_order_relaxed));
-
+void AudioDriverAlsa::Resume() {
   suspend_audio_thread_.store(false, std::memory_order_relaxed);
 }
 
-int AudioAlsa::GetHardwareSampleRate() {
+int AudioDriverAlsa::GetHardwareSampleRate() {
   return sample_rate_;
 }
 
-void AudioAlsa::StartAudioThread() {
+void AudioDriverAlsa::StartAudioThread() {
   LOG << "Starting audio thread.";
-
-  DCHECK(!terminate_audio_thread_.load(std::memory_order_relaxed));
-
-  audio_thread_ = std::thread(&AudioAlsa::AudioThreadMain, this);
+  terminate_audio_thread_.store(false, std::memory_order_relaxed);
+  suspend_audio_thread_.store(true, std::memory_order_relaxed);
+  audio_thread_ = std::thread(&AudioDriverAlsa::AudioThreadMain, this);
 }
 
-void AudioAlsa::TerminateAudioThread() {
+void AudioDriverAlsa::TerminateAudioThread() {
   if (terminate_audio_thread_.load(std::memory_order_relaxed))
     return;
 
   LOG << "Terminating audio thread";
-
-  // Notify worker thread and wait for it to terminate.
   terminate_audio_thread_.store(true, std::memory_order_relaxed);
   suspend_audio_thread_.store(true, std::memory_order_relaxed);
   audio_thread_.join();
 }
 
-void AudioAlsa::AudioThreadMain() {
+void AudioDriverAlsa::AudioThreadMain() {
   size_t num_frames = period_size_ / (num_channels_ * sizeof(float));
   auto buffer = std::make_unique<float[]>(num_frames * 2);
 
@@ -192,11 +190,11 @@ void AudioAlsa::AudioThreadMain() {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
-    RenderAudio(buffer.get(), num_frames);
+    delegate_->RenderAudio(buffer.get(), num_frames);
 
     while (snd_pcm_writei(device_, buffer.get(), num_frames) < 0) {
       snd_pcm_prepare(device_);
-      DLOG << "Audio buffer underrun!";
+      DLOG << "Alsa buffer underrun!";
     }
   }
 }

@@ -2,7 +2,8 @@
 
 #include "base/log.h"
 #include "engine/animator.h"
-#include "engine/audio/audio.h"
+#include "engine/audio/audio_driver.h"
+#include "engine/audio/audio_mixer.h"
 #include "engine/drawable.h"
 #include "engine/font.h"
 #include "engine/game.h"
@@ -25,11 +26,17 @@ namespace eng {
 
 Engine* Engine::singleton = nullptr;
 
-Engine::Engine(Platform* platform, Renderer* renderer, Audio* audio)
-    : platform_(platform), renderer_(renderer), audio_(audio) {
+Engine::Engine(Platform* platform,
+               Renderer* renderer,
+               AudioDriver* audio_driver)
+    : platform_(platform),
+      renderer_(renderer),
+      audio_driver_(audio_driver),
+      audio_mixer_{std::make_unique<AudioMixer>()} {
   DCHECK(!singleton);
   singleton = this;
 
+  audio_driver_->SetDelegate(audio_mixer_.get());
   renderer_->SetContextLostCB(std::bind(&Engine::ContextLost, this));
 
   quad_ = CreateRenderResource<Geometry>();
@@ -151,14 +158,14 @@ void Engine::Draw(float frame_frac) {
 }
 
 void Engine::LostFocus() {
-  audio_->Suspend();
+  audio_driver_->Suspend();
 
   if (game_)
     game_->LostFocus();
 }
 
 void Engine::GainedFocus(bool from_interstitial_ad) {
-  audio_->Resume();
+  audio_driver_->Resume();
 
   if (game_)
     game_->GainedFocus(from_interstitial_ad);
@@ -436,7 +443,7 @@ void Engine::SetKeepScreenOn(bool keep_screen_on) {
 }
 
 void Engine::SetEnableAudio(bool enable) {
-  audio_->SetEnableAudio(enable);
+  audio_mixer_->SetEnableAudio(enable);
 }
 
 TextureCompressor* Engine::GetTextureCompressor(bool opacity) {
@@ -474,7 +481,7 @@ const std::string& Engine::GetSharedDataPath() const {
 }
 
 int Engine::GetAudioHardwareSampleRate() {
-  return audio_->GetHardwareSampleRate();
+  return audio_driver_->GetHardwareSampleRate();
 }
 
 bool Engine::IsMobile() const {

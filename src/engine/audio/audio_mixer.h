@@ -1,12 +1,14 @@
-#ifndef ENGINE_AUDIO_AUDIO_BASE_H
-#define ENGINE_AUDIO_AUDIO_BASE_H
+#ifndef ENGINE_AUDIO_AUDIO_MIXER_H
+#define ENGINE_AUDIO_AUDIO_MIXER_H
 
+#include <atomic>
 #include <list>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
 
 #include "base/closure.h"
+#include "engine/audio/audio_driver_delegate.h"
 
 namespace base {
 class TaskRunner;
@@ -16,11 +18,14 @@ namespace eng {
 
 class Sound;
 
-// Class representing the end-point for rendered audio. A platform specific
-// implementation is expected to periodically call RenderAudio() in a background
+// Mix and render audio with low overhead. A platform specific AudioDriver
+// implementation is expected to periodically call Render() in a background
 // thread.
-class AudioBase {
+class AudioMixer : public AudioDriverDelegate {
  public:
+  AudioMixer();
+  ~AudioMixer();
+
   uint64_t CreateResource();
   void DestroyResource(uint64_t resource_id);
 
@@ -39,21 +44,15 @@ class AudioBase {
 
   void SetEnableAudio(bool enable) { audio_enabled_ = enable; }
 
- protected:
-  static constexpr int kChannelCount = 2;
-
-  AudioBase();
-  ~AudioBase();
-
-  void RenderAudio(float* output_buffer, size_t num_frames);
-
  private:
   enum SampleFlags { kLoop = 1, kStopped = 2, kSimulateStereo = 4 };
+  static constexpr int kChannelCount = 2;
 
   struct Resource {
     // Accessed by main thread only.
     bool active = false;
     base::Closure end_cb;
+    base::Closure restart_cb;
 
     // Initialized by main thread, used by audio thread.
     std::shared_ptr<Sound> sound;
@@ -83,14 +82,17 @@ class AudioBase {
 
   bool audio_enabled_ = true;
 
+  // AudioDriverDelegate implementation
+  void RenderAudio(float* output_buffer, size_t num_frames) final;
+
   void DoStream(std::shared_ptr<Resource> sample, bool loop);
 
   void EndCallback(std::shared_ptr<Resource> sample);
 
-  AudioBase(const AudioBase&) = delete;
-  AudioBase& operator=(const AudioBase&) = delete;
+  AudioMixer(const AudioMixer&) = delete;
+  AudioMixer& operator=(const AudioMixer&) = delete;
 };
 
 }  // namespace eng
 
-#endif  // ENGINE_AUDIO_AUDIO_BASE_H
+#endif  // ENGINE_AUDIO_AUDIO_MIXER_H

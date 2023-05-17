@@ -1,62 +1,70 @@
-#include "engine/audio/audio_oboe.h"
+#include "engine/audio/audio_driver_oboe.h"
 
 #include "base/log.h"
+#include "engine/audio/audio_driver_delegate.h"
 #include "third_party/oboe/include/oboe/Oboe.h"
 
 using namespace base;
 
 namespace eng {
 
-AudioOboe::AudioOboe() : callback_(std::make_unique<StreamCallback>(this)) {}
+AudioDriverOboe::AudioDriverOboe()
+    : callback_(std::make_unique<StreamCallback>(this)) {}
 
-AudioOboe::~AudioOboe() = default;
+AudioDriverOboe::~AudioDriverOboe() = default;
 
-bool AudioOboe::Initialize() {
-  LOG << "Initializing audio system.";
-
-  return RestartStream();
+void AudioDriverOboe::SetDelegate(AudioDriverDelegate* delegate) {
+  delegate_ = delegate;
+  Resume();
 }
 
-void AudioOboe::Shutdown() {
+bool AudioDriverOboe::Initialize() {
+  LOG << "Initializing audio system.";
+
+  return RestartStream(true);
+}
+
+void AudioDriverOboe::Shutdown() {
   LOG << "Shutting down audio system.";
 
   stream_->stop();
 }
 
-void AudioOboe::Suspend() {
+void AudioDriverOboe::Suspend() {
   stream_->stop();
 }
 
-void AudioOboe::Resume() {
+void AudioDriverOboe::Resume() {
   RestartStream();
 }
 
-int AudioOboe::GetHardwareSampleRate() {
+int AudioDriverOboe::GetHardwareSampleRate() {
   return stream_->getSampleRate();
 }
 
-AudioOboe::StreamCallback::StreamCallback(AudioOboe* audio) : audio_(audio) {}
+AudioDriverOboe::StreamCallback::StreamCallback(AudioDriverOboe* driver)
+    : driver_(driver) {}
 
-AudioOboe::StreamCallback::~StreamCallback() = default;
+AudioDriverOboe::StreamCallback::~StreamCallback() = default;
 
-oboe::DataCallbackResult AudioOboe::StreamCallback::onAudioReady(
+oboe::DataCallbackResult AudioDriverOboe::StreamCallback::onAudioReady(
     oboe::AudioStream* oboe_stream,
     void* audio_data,
     int32_t num_frames) {
   float* output_buffer = static_cast<float*>(audio_data);
-  audio_->RenderAudio(output_buffer, num_frames);
+  driver_->delegate_->RenderAudio(output_buffer, num_frames);
   return oboe::DataCallbackResult::Continue;
 }
 
-void AudioOboe::StreamCallback::onErrorAfterClose(
+void AudioDriverOboe::StreamCallback::onErrorAfterClose(
     oboe::AudioStream* oboe_stream,
     oboe::Result error) {
   LOG << "Error after close. Error: " << oboe::convertToText(error);
 
-  audio_->RestartStream();
+  driver_->RestartStream();
 }
 
-bool AudioOboe::RestartStream() {
+bool AudioDriverOboe::RestartStream(bool suspended) {
   oboe::AudioStreamBuilder builder;
   oboe::Result result =
       builder.setSharingMode(oboe::SharingMode::Exclusive)
@@ -80,7 +88,8 @@ bool AudioOboe::RestartStream() {
     return false;
   }
 
-  stream_->start();
+  if (!suspended)
+    stream_->start();
   return true;
 }
 
