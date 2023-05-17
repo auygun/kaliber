@@ -126,10 +126,10 @@ void Animator::SetMovement(Vector2f direction,
     a.movement_last_pos = {0, 0};
 }
 
-void Animator::SetRotation(float trget,
+void Animator::SetRotation(float target,
                            float duration,
                            Interpolator interpolator) {
-  rotation_target_ = trget;
+  rotation_target_ = target;
   rotation_speed_ = 1.0f / duration;
   rotation_interpolator_ = std::move(interpolator);
 
@@ -153,7 +153,7 @@ void Animator::SetFrames(int count,
   frame_count_ = count;
   frame_speed_ = (float)frames_per_second / (float)count;
   for (auto& a : elements_)
-    a.frame_start_ = a.animatable->GetFrame();
+    a.frame_start = a.animatable->GetFrame();
   frame_interpolator_ = std::move(interpolator);
 }
 
@@ -180,66 +180,43 @@ void Animator::Update(float delta_time) {
     UpdateAnimTime(delta_time, kFrames, frame_speed_, frame_time_, frame_cb_);
   if (play_flags_ & kTimer)
     UpdateAnimTime(delta_time, kTimer, timer_speed_, timer_time_, timer_cb_);
-
-  did_evaluate_ = false;
 }
 
-void Animator::Evaluate(float frame_frac_time) {
-  did_evaluate_ = true;
+void Animator::Evaluate(float frame_frac) {
+  if (play_flags_ & kMovement)
+    EvaluateAnimation<Vector2f, true>(
+        frame_frac, movement_speed_, movement_time_, movement_interpolator_,
+        movement_direction_, [](Element& a, Vector2f pos) {
+          a.animatable->Translate(pos - a.movement_last_pos);
+          a.movement_last_pos = pos;
+        });
 
-  Vector2f pos = {0, 0};
-  if (play_flags_ & kMovement) {
-    float time = movement_time_ + movement_speed_ * frame_frac_time;
-    float interpolated_time =
-        movement_interpolator_ ? movement_interpolator_(time) : time;
-    pos = base::Lerp({0, 0}, movement_direction_, interpolated_time);
-  }
+  if (play_flags_ & kRotation)
+    EvaluateAnimation<float, true>(
+        frame_frac, rotation_speed_, rotation_time_, rotation_interpolator_,
+        rotation_target_, [](Element& a, float theta) {
+          a.animatable->Rotate(theta - a.rotation_last_theta);
+          a.rotation_last_theta = theta;
+        });
 
-  float theta = 0;
-  if (play_flags_ & kRotation) {
-    float time = rotation_time_ + rotation_speed_ * frame_frac_time;
-    float interpolated_time =
-        rotation_interpolator_ ? rotation_interpolator_(time) : time;
-    theta = base::Lerp(0.0f, rotation_target_, interpolated_time);
-  }
+  if (play_flags_ & kBlending)
+    EvaluateAnimation<float, false>(
+        frame_frac, blending_speed_, blending_time_, blending_interpolator_, {},
+        [&](Element& a, float interpolated_time) {
+          Vector4f blending =
+              base::Lerp(a.blending_start, blending_target_, interpolated_time);
+          a.animatable->SetColor(blending);
+        });
 
-  float blending_itime = 0;
-  if (play_flags_ & kBlending) {
-    float time = blending_time_ + blending_speed_ * frame_frac_time;
-    blending_itime =
-        blending_interpolator_ ? blending_interpolator_(time) : time;
-  }
-
-  float frame_itime = 0;
-  if (play_flags_ & kFrames) {
-    float time = frame_time_ + frame_speed_ * frame_frac_time;
-    frame_itime = frame_interpolator_ ? frame_interpolator_(time) : time;
-  }
-
-  for (auto& a : elements_) {
-    if (play_flags_ & kMovement) {
-      a.animatable->Translate(pos - a.movement_last_pos);
-      a.movement_last_pos = pos;
-    }
-
-    if (play_flags_ & kRotation) {
-      a.animatable->Rotate(theta - a.rotation_last_theta);
-      a.rotation_last_theta = theta;
-    }
-
-    if (play_flags_ & kBlending) {
-      Vector4f blending =
-          base::Lerp(a.blending_start, blending_target_, blending_itime);
-      a.animatable->SetColor(blending);
-    }
-
-    if (play_flags_ & kFrames) {
-      int target = a.frame_start_ + frame_count_;
-      int frame = base::Lerp(a.frame_start_, target, frame_itime);
-      if (frame < target)
-        a.animatable->SetFrame(frame);
-    }
-  }
+  if (play_flags_ & kFrames)
+    EvaluateAnimation<float, false>(
+        frame_frac, frame_speed_, frame_time_, frame_interpolator_, {},
+        [&](Element& a, float interpolated_time) {
+          int target = a.frame_start + frame_count_;
+          int frame = base::Lerp(a.frame_start, target, interpolated_time);
+          if (frame < target)
+            a.animatable->SetFrame(frame);
+        });
 }
 
 void Animator::UpdateAnimTime(float delta_time,
@@ -252,8 +229,8 @@ void Animator::UpdateAnimTime(float delta_time,
     if (loop_flags_ & anim) {
       anim_time = fmod(anim_time, 1.0f);
     } else {
-      if (!did_evaluate_)
-        Evaluate(0);
+      anim_time = 1.0f;
+      Evaluate(0);
       anim_time = 0;
       play_flags_ &= ~anim;
       if (cb) {
@@ -266,6 +243,26 @@ void Animator::UpdateAnimTime(float delta_time,
         }
       }
     }
+  }
+}
+
+template <typename T, bool relative>
+void Animator::EvaluateAnimation(float frame_frac,
+                                 float anim_speed,
+                                 float anim_time,
+                                 Interpolator& interpolator,
+                                 T target,
+                                 ResultSetter<T> set_result) {
+  float time = anim_time + anim_speed * frame_frac;
+  float interpolated_time = interpolator ? interpolator(time) : time;
+
+  if constexpr (relative) {
+    T result = base::Lerp(T{0}, target, interpolated_time);
+    for (auto& a : elements_)
+      set_result(a, result);
+  } else {
+    for (auto& a : elements_)
+      set_result(a, interpolated_time);
   }
 }
 

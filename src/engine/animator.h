@@ -40,7 +40,7 @@ class Animator {
   float GetTime(int animation);
   void SetTime(int animation, float time, bool force_update = false);
 
-  // Set callback ro be called once animation ends.
+  // Set callback to be called once animation ends.
   void SetEndCallback(int animation, base::Closure cb);
 
   // Distance is the magnitude of direction vector. Duration is in seconds.
@@ -69,7 +69,7 @@ class Animator {
   void SetVisible(bool visible);
 
   void Update(float delta_time);
-  void Evaluate(float frame_frac_time);
+  void Evaluate(float frame_frac);
 
   bool IsPlaying(int animation) const { return play_flags_ & animation; }
 
@@ -79,7 +79,7 @@ class Animator {
     base::Vector2f movement_last_pos = {0, 0};
     float rotation_last_theta = 0;
     base::Vector4f blending_start = {0, 0, 0, 0};
-    int frame_start_ = 0;
+    int frame_start = 0;
   };
 
   unsigned int play_flags_ = 0;
@@ -120,13 +120,22 @@ class Animator {
   base::Closure pending_cb_;
   Flags inside_cb_ = kNone;
 
-  bool did_evaluate_ = false;
-
   void UpdateAnimTime(float delta_time,
                       int anim,
                       float anim_speed,
                       float& anim_time,
                       base::Closure& cb);
+
+  template <typename T>
+  using ResultSetter = std::function<void(Element&, T)>;
+
+  template <typename T, bool relative>
+  void EvaluateAnimation(float frame_frac,
+                         float anim_speed,
+                         float anim_time,
+                         Interpolator& interpolator,
+                         T target,
+                         ResultSetter<T> set_result);
 };
 
 }  // namespace eng
