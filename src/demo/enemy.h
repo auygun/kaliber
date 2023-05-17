@@ -15,7 +15,6 @@
 
 namespace eng {
 class Image;
-class Shader;
 class Sound;
 }  // namespace eng
 
@@ -29,8 +28,6 @@ class Enemy {
   void Update(float delta_time);
 
   void Pause(bool pause);
-
-  void ContextLost();
 
   bool HasTarget(DamageType damage_type);
   base::Vector2f GetTargetPos(DamageType damage_type);
@@ -106,7 +103,6 @@ class Enemy {
     eng::SoundPlayer hit;
   };
 
-  std::unique_ptr<eng::Shader> chromatic_aberration_;
   float chromatic_aberration_offset_ = 0;
 
   eng::ImageQuad boss_;
@@ -169,7 +165,6 @@ class Enemy {
   std::unique_ptr<eng::Image> GetScoreImage(EnemyType enemy_type);
 
   bool CreateRenderResources();
-  bool CreateShaders();
 
   void TranslateEnemyUnit(EnemyUnit& e, const base::Vector2f& delta);
 };

@@ -13,8 +13,6 @@
 #include "engine/font.h"
 #include "engine/image.h"
 #include "engine/renderer/geometry.h"
-#include "engine/renderer/shader.h"
-#include "engine/shader_source.h"
 #include "engine/sound.h"
 
 #include "demo/demo.h"
@@ -76,8 +74,7 @@ float SnapSpawnPosX(int col) {
 
 }  // namespace
 
-Enemy::Enemy()
-    : chromatic_aberration_(Engine::Get().CreateRenderResource<Shader>()) {}
+Enemy::Enemy() = default;
 
 Enemy::~Enemy() = default;
 
@@ -203,10 +200,6 @@ void Enemy::Pause(bool pause) {
     e.movement_animator.PauseOrResumeAll(pause);
   }
   boss_animator_.PauseOrResumeAll(pause);
-}
-
-void Enemy::ContextLost() {
-  CreateShaders();
 }
 
 bool Enemy::HasTarget(DamageType damage_type) {
@@ -423,7 +416,7 @@ void Enemy::StopAllEnemyUnits(bool chromatic_aberration_effect) {
       continue;
 
     if (chromatic_aberration_effect) {
-      e.sprite.SetCustomShader(chromatic_aberration_.get());
+      e.sprite.SetCustomShader("chromatic_aberration");
       e.chromatic_aberration_active_ = true;
     }
 
@@ -1193,9 +1186,6 @@ std::unique_ptr<Image> Enemy::GetScoreImage(EnemyType enemy_type) {
 }
 
 bool Enemy::CreateRenderResources() {
-  if (!CreateShaders())
-    return false;
-
   Engine::Get().SetImageSource("skull_tex", "enemy_anims_01_frames_ok.png",
                                true);
   Engine::Get().SetImageSource("bug_tex", "enemy_anims_02_frames_ok.png", true);
@@ -1213,16 +1203,9 @@ bool Enemy::CreateRenderResources() {
         "score_tex"s + std::to_string(i),
         std::bind(&Enemy::GetScoreImage, this, (EnemyType)i), true);
 
-  return true;
-}
+  Engine::Get().LoadCustomShader("chromatic_aberration",
+                                 "chromatic_aberration.glsl");
 
-bool Enemy::CreateShaders() {
-  auto source = std::make_unique<ShaderSource>();
-  if (!source->Load("chromatic_aberration.glsl"))
-    return false;
-  chromatic_aberration_->Create(std::move(source),
-                                Engine::Get().GetQuad()->vertex_description(),
-                                Engine::Get().GetQuad()->primitive(), false);
   return true;
 }
 

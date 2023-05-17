@@ -50,6 +50,10 @@ Demo::~Demo() {
 bool Demo::Initialize() {
   saved_data_.Load(kSaveFileName);
 
+  Engine::Get().LoadCustomShader("sky_without_nebula",
+                                 "sky_without_nebula.glsl");
+  Engine::Get().LoadCustomShader("sky", "sky.glsl");
+
   if (!font_.Load("PixelCaps!.ttf"))
     return false;
 
@@ -160,11 +164,6 @@ void Demo::Update(float delta_time) {
     UpdateMenuState(delta_time);
   else if (state_ == kGame || state_ == kGameOver)
     UpdateGameState(delta_time);
-}
-
-void Demo::ContextLost() {
-  sky_.ContextLost();
-  enemy_.ContextLost();
 }
 
 void Demo::LostFocus() {}

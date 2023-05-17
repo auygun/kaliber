@@ -49,8 +49,8 @@ void ImageQuad::AutoScale() {
   SetSize(size);
 }
 
-void ImageQuad::SetCustomShader(Shader* shader) {
-  custom_shader_ = shader;
+void ImageQuad::SetCustomShader(const std::string& asset_name) {
+  custom_shader_ = Engine::Get().GetCustomShader(asset_name);
   custom_uniforms_.clear();
 }
 

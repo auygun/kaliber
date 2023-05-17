@@ -79,6 +79,11 @@ class Engine {
   Texture* AcquireTexture(const std::string& asset_name);
   void ReleaseTexture(const std::string& asset_name);
 
+  void LoadCustomShader(const std::string& asset_name,
+                        const std::string& file_name);
+  Shader* GetCustomShader(const std::string& asset_name);
+  void RemoveCustomShader(const std::string& asset_name);
+
   void AddInputEvent(std::unique_ptr<InputEvent> event);
   std::unique_ptr<InputEvent> GetNextInputEvent();
 
@@ -158,6 +163,12 @@ class Engine {
     size_t use_count = 0;
   };
 
+  // Class holding information about shader resources managed by engine.
+  struct ShaderResource {
+    std::unique_ptr<Shader> shader;
+    std::string file_name;
+  };
+
   static Engine* singleton;
 
   Platform* platform_ = nullptr;
@@ -184,8 +195,9 @@ class Engine {
 
   std::list<Animator*> animators_;
 
-  // Textures mapped by asset name.
+  // Managed render resources mapped by asset name.
   std::unordered_map<std::string, TextureResource> textures_;
+  std::unordered_map<std::string, ShaderResource> shaders_;
 
   std::unique_ptr<ImageQuad> stats_;
 

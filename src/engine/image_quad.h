@@ -28,7 +28,7 @@ class ImageQuad final : public Animatable {
 
   void AutoScale();
 
-  void SetCustomShader(Shader* shader);
+  void SetCustomShader(const std::string& asset_name);
 
   template <typename T>
   void SetCustomUniform(const std::string& name, T value) {

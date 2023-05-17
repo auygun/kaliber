@@ -6,14 +6,12 @@
 #include "engine/engine.h"
 #include "engine/renderer/geometry.h"
 #include "engine/renderer/shader.h"
-#include "engine/shader_source.h"
 
 using namespace base;
 using namespace eng;
 
 SkyQuad::SkyQuad()
-    : shader_(Engine::Get().CreateRenderResource<Shader>()),
-      sky_offset_{
+    : sky_offset_{
           0, Lerp(0.0f, 10.0f, Engine::Get().GetRandomGenerator().Rand())} {
   last_sky_offset_ = sky_offset_;
 }
@@ -22,10 +20,9 @@ SkyQuad::~SkyQuad() = default;
 
 bool SkyQuad::Create(bool without_nebula) {
   without_nebula_ = without_nebula;
-  if (!CreateShaders())
-    return false;
-
   scale_ = Engine::Get().GetScreenSize();
+  shader_ = Engine::Get().GetCustomShader(
+      without_nebula ? "sky_without_nebula" : "sky");
 
   color_animator_.Attach(this);
 
@@ -54,27 +51,12 @@ void SkyQuad::Draw(float frame_frac) {
   Engine::Get().GetQuad()->Draw();
 }
 
-void SkyQuad::ContextLost() {
-  CreateShaders();
-}
-
 void SkyQuad::SwitchColor(const Vector4f& color) {
   color_animator_.Pause(Animator::kBlending);
   color_animator_.SetTime(Animator::kBlending, 0);
   color_animator_.SetBlending(color, 5,
                               std::bind(SmoothStep, std::placeholders::_1));
   color_animator_.Play(Animator::kBlending, false);
-}
-
-bool SkyQuad::CreateShaders() {
-  Engine& engine = Engine::Get();
-
-  auto source = std::make_unique<ShaderSource>();
-  if (!source->Load(without_nebula_ ? "sky_without_nebula.glsl" : "sky.glsl"))
-    return false;
-  shader_->Create(std::move(source), engine.GetQuad()->vertex_description(),
-                  Engine::Get().GetQuad()->primitive(), false);
-  return true;
 }
 
 void SkyQuad::SetSpeed(float speed) {

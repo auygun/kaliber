@@ -36,8 +36,6 @@ class SkyQuad : public eng::Animatable {
   // Drawable interface.
   void Draw(float frame_frac) final;
 
-  void ContextLost();
-
   void SwitchColor(const base::Vector4f& color);
 
   void SetSpeed(float speed);
@@ -45,7 +43,7 @@ class SkyQuad : public eng::Animatable {
   const base::Vector4f& nebula_color() { return nebula_color_; }
 
  private:
-  std::unique_ptr<eng::Shader> shader_;
+  eng::Shader* shader_;
 
   base::Vector2f sky_offset_ = {0, 0};
   base::Vector2f last_sky_offset_ = {0, 0};
@@ -57,8 +55,6 @@ class SkyQuad : public eng::Animatable {
   float speed_ = 0;
 
   bool without_nebula_ = false;
-
-  bool CreateShaders();
 };
 
 #endif  // DEMO_SKY_QUAD_H

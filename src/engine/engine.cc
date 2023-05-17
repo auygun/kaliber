@@ -109,6 +109,7 @@ void Engine::Shutdown() {
   game_.reset();
   stats_->Destory();
   textures_.clear();
+  shaders_.clear();
 }
 
 void Engine::Update(float delta_time) {
@@ -275,6 +276,42 @@ void Engine::ReleaseTexture(const std::string& asset_name) {
   it->second.use_count--;
   if (!it->second.persistent && it->second.use_count == 0)
     it->second.texture->Destroy();
+}
+
+void Engine::LoadCustomShader(const std::string& asset_name,
+                              const std::string& file_name) {
+  if (shaders_.contains(asset_name)) {
+    DLOG << "Shader already exists: " << asset_name;
+    return;
+  }
+
+  auto& s = shaders_[asset_name] = {CreateRenderResource<Shader>(), file_name};
+
+  auto source = std::make_unique<ShaderSource>();
+  if (!source->Load(file_name))
+    return;
+  s.shader->Create(std::move(source), quad_->vertex_description(),
+                   quad_->primitive(), false);
+}
+
+Shader* Engine::GetCustomShader(const std::string& asset_name) {
+  auto it = shaders_.find(asset_name);
+  if (it == shaders_.end()) {
+    DLOG << "Shader not found: " << asset_name;
+    return nullptr;
+  }
+
+  return it->second.shader.get();
+}
+
+void Engine::RemoveCustomShader(const std::string& asset_name) {
+  auto it = shaders_.find(asset_name);
+  if (it == shaders_.end()) {
+    DLOG << "Shader not found: " << asset_name;
+    return;
+  }
+
+  shaders_.erase(it);
 }
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
@@ -450,6 +487,13 @@ void Engine::ContextLost() {
   for (auto& t : textures_) {
     t.second.texture->Destroy();
     RefreshImage(t.first);
+  }
+
+  for (auto& s : shaders_) {
+    auto source = std::make_unique<ShaderSource>();
+    if (source->Load(s.second.file_name))
+      s.second.shader->Create(std::move(source), quad_->vertex_description(),
+                              quad_->primitive(), false);
   }
 
   game_->ContextLost();
