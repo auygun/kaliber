@@ -17,17 +17,14 @@ namespace {
 bool g_showing_interstitial_ad = false;
 
 extern "C" {
-JNIEXPORT void JNICALL
-Java_com_kaliber_base_KaliberActivity_onShowAdResult(JNIEnv* env,
-                                                     jobject obj,
-                                                     jboolean succeeded);
-};
 
 JNIEXPORT void JNICALL
 Java_com_kaliber_base_KaliberActivity_onShowAdResult(JNIEnv* env,
                                                      jobject obj,
                                                      jboolean succeeded) {
   g_showing_interstitial_ad = !!succeeded;
+}
+
 }
 
 std::string GetApkPath(ANativeActivity* activity) {

@@ -708,23 +708,33 @@ bool VulkanContext::InitializeQueues(VkSurfaceKHR surface) {
   // If the format list includes just one entry of VK_FORMAT_UNDEFINED, the
   // surface has no preferred format. Otherwise, at least one supported format
   // will be returned.
-  if (true ||
-      (format_count == 1 && surf_formats[0].format == VK_FORMAT_UNDEFINED)) {
+  if (format_count == 1 && surf_formats[0].format == VK_FORMAT_UNDEFINED) {
     format_ = desired_format;
+    color_space_ = surf_formats[0].colorSpace;
+  } else if (format_count < 1) {
+    DLOG << "Format count less than 1.";
+    return false;
   } else {
-    if (format_count < 1) {
-      DLOG << "Format count less than 1.";
-      return false;
-    }
-    format_ = surf_formats[0].format;
-    for (unsigned i = 0; i < format_count; ++i) {
-      if (surf_formats[i].format == desired_format) {
-        format_ = desired_format;
-        break;
+    // Find the first format that we support.
+    format_ = VK_FORMAT_UNDEFINED;
+    const VkFormat allowed_formats[] = {VK_FORMAT_B8G8R8A8_UNORM,
+                                        VK_FORMAT_R8G8B8A8_UNORM};
+    for (uint32_t afi = 0; afi < std::size(allowed_formats); afi++) {
+      for (uint32_t sfi = 0; sfi < format_count; sfi++) {
+        if (surf_formats[sfi].format == allowed_formats[afi]) {
+          format_ = surf_formats[sfi].format;
+          color_space_ = surf_formats[sfi].colorSpace;
+          goto end_of_find_format;
+        }
       }
     }
+
+  end_of_find_format:
+    if (format_ == VK_FORMAT_UNDEFINED) {
+      DLOG << "No usable surface format found.";
+      return false;
+    }
   }
-  color_space_ = surf_formats[0].colorSpace;
 
   if (!CreateSemaphores())
     return false;
@@ -972,10 +982,10 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
   VkCompositeAlphaFlagBitsKHR composite_alpha =
       VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
   VkCompositeAlphaFlagBitsKHR composite_alpha_flags[4] = {
-      VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
       VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
       VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
       VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
+      VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
   };
   for (uint32_t i = 0; i < std::size(composite_alpha_flags); i++) {
     if (surf_capabilities.supportedCompositeAlpha & composite_alpha_flags[i]) {
@@ -1019,7 +1029,7 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
   err = GetSwapchainImagesKHR(device_, window->swapchain, &sp_image_count,
                               nullptr);
   if (err) {
-    DLOG << "CreateSwapchainKHR failed. Error: " << string_VkResult(err);
+    DLOG << "GetSwapchainImagesKHR failed. Error: " << string_VkResult(err);
     return false;
   }
 
