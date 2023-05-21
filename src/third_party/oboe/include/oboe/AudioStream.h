@@ -130,7 +130,7 @@ public:
      *
      * @return state or a negative error.
      */
-    virtual StreamState getState() const = 0;
+    virtual StreamState getState() = 0;
 
     /**
      * Wait until the stream's current state no longer matches the input state.
@@ -191,7 +191,7 @@ public:
      * @return a result which is either Result::OK with the xRun count as the value, or a
      * Result::Error* code
      */
-    virtual ResultWithValue<int32_t> getXRunCount() const {
+    virtual ResultWithValue<int32_t> getXRunCount() {
         return ResultWithValue<int32_t>(Result::ErrorUnimplemented);
     }
 
@@ -205,7 +205,9 @@ public:
      *
      * @return burst size
      */
-    virtual int32_t getFramesPerBurst() = 0;
+    int32_t getFramesPerBurst() const {
+        return mFramesPerBurst;
+    }
 
     /**
      * Get the number of bytes in each audio frame. This is calculated using the channel count
@@ -260,6 +262,10 @@ public:
      * The latency of an OUTPUT stream is generally higher than the INPUT latency
      * because an app generally tries to keep the OUTPUT buffer full and the INPUT buffer empty.
      *
+     * Note that due to issues in Android before R, we recommend NOT calling
+     * this method from a data callback. See this tech note for more details.
+     * https://github.com/google/oboe/blob/main/docs/notes/rlsbuffer.md
+     *
      * @return a ResultWithValue which has a result of Result::OK and a value containing the latency
      * in milliseconds, or a result of Result::Error*.
      */
@@ -277,6 +283,10 @@ public:
      *
      * The time is based on the implementation's best effort, using whatever knowledge is available
      * to the system, but cannot account for any delay unknown to the implementation.
+     *
+     * Note that due to issues in Android before R, we recommend NOT calling
+     * this method from a data callback. See this tech note for more details.
+     * https://github.com/google/oboe/blob/main/docs/notes/rlsbuffer.md
      *
      * @deprecated since 1.0, use AudioStream::getTimestamp(clockid_t clockId) instead, which
      * returns ResultWithValue
@@ -301,6 +311,11 @@ public:
      * The time is based on the implementation's best effort, using whatever knowledge is available
      * to the system, but cannot account for any delay unknown to the implementation.
      *
+     * Note that due to issues in Android before R, we recommend NOT calling
+     * this method from a data callback. See this tech note for more details.
+     * https://github.com/google/oboe/blob/main/docs/notes/rlsbuffer.md
+     *
+     * See 
      * @param clockId the type of clock to use e.g. CLOCK_MONOTONIC
      * @return a FrameTimestamp containing the position and time at which a particular audio frame
      * entered or left the audio processing pipeline, or an error if the operation failed.
@@ -373,11 +388,6 @@ public:
     }
 
     /**
-     * Launch a thread that will stop the stream.
-     */
-    void launchStopThread();
-
-    /**
      * Update mFramesWritten.
      * For internal use only.
      */
@@ -393,12 +403,25 @@ public:
      * Swap old callback for new callback.
      * This not atomic.
      * This should only be used internally.
-     * @param streamCallback
-     * @return previous streamCallback
+     * @param dataCallback
+     * @return previous dataCallback
      */
-    AudioStreamCallback *swapCallback(AudioStreamCallback *streamCallback) {
-        AudioStreamCallback *previousCallback = mStreamCallback;
-        mStreamCallback = streamCallback;
+    AudioStreamDataCallback *swapDataCallback(AudioStreamDataCallback *dataCallback) {
+        AudioStreamDataCallback *previousCallback = mDataCallback;
+        mDataCallback = dataCallback;
+        return previousCallback;
+    }
+
+    /*
+     * Swap old callback for new callback.
+     * This not atomic.
+     * This should only be used internally.
+     * @param errorCallback
+     * @return previous errorCallback
+     */
+    AudioStreamErrorCallback *swapErrorCallback(AudioStreamErrorCallback *errorCallback) {
+        AudioStreamErrorCallback *previousCallback = mErrorCallback;
+        mErrorCallback = errorCallback;
         return previousCallback;
     }
 
@@ -418,6 +441,36 @@ public:
      */
     ResultWithValue<int32_t> waitForAvailableFrames(int32_t numFrames,
                                                     int64_t timeoutNanoseconds);
+
+    /**
+     * @return last result passed from an error callback
+     */
+    virtual oboe::Result getLastErrorCallbackResult() const {
+        return mErrorCallbackResult;
+    }
+
+
+    int32_t getDelayBeforeCloseMillis() const {
+        return mDelayBeforeCloseMillis;
+    }
+
+    /**
+     * Set the time to sleep before closing the internal stream.
+     *
+     * Sometimes a callback can occur shortly after a stream has been stopped and
+     * even after a close! If the stream has been closed then the callback
+     * might access memory that has been freed, which could cause a crash.
+     * This seems to be more likely in Android P or earlier.
+     * But it can also occur in later versions. By sleeping, we give time for
+     * the callback threads to finish.
+     *
+     * Note that this only has an effect when OboeGlobals::areWorkaroundsEnabled() is true.
+     *
+     * @param delayBeforeCloseMillis time to sleep before close.
+     */
+    void setDelayBeforeCloseMillis(int32_t delayBeforeCloseMillis) {
+        mDelayBeforeCloseMillis = delayBeforeCloseMillis;
+    }
 
 protected:
 
@@ -480,6 +533,21 @@ protected:
         mDataCallbackEnabled = enabled;
     }
 
+    /**
+     * This should only be called as a stream is being opened.
+     * Otherwise we might override setDelayBeforeCloseMillis().
+     */
+    void calculateDefaultDelayBeforeCloseMillis();
+
+    /**
+     * Try to avoid a race condition when closing.
+     */
+    void sleepBeforeClose() {
+        if (mDelayBeforeCloseMillis > 0) {
+            usleep(mDelayBeforeCloseMillis * 1000);
+        }
+    }
+
     /*
      * Set a weak_ptr to this stream from the shared_ptr so that we can
      * later use a shared_ptr in the error callback.
@@ -515,15 +583,27 @@ protected:
 
     std::mutex           mLock; // for synchronizing start/stop/close
 
+    oboe::Result         mErrorCallbackResult = oboe::Result::OK;
+
+    /**
+     * Number of frames which will be copied to/from the audio device in a single read/write
+     * operation
+     */
+    int32_t              mFramesPerBurst = kUnspecified;
+
+    // Time to sleep in order to prevent a race condition with a callback after a close().
+    // Two milliseconds may be enough but 10 msec is even safer.
+    static constexpr int kMinDelayBeforeCloseMillis = 10;
+    int32_t              mDelayBeforeCloseMillis = kMinDelayBeforeCloseMillis;
 
 private:
+
     // Log the scheduler if it changes.
     void                 checkScheduler();
     int                  mPreviousScheduler = -1;
 
     std::atomic<bool>    mDataCallbackEnabled{false};
     std::atomic<bool>    mErrorCallbackCalled{false};
-
 };
 
 /**

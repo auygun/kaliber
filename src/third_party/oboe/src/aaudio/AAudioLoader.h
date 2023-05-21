@@ -52,17 +52,34 @@ typedef int32_t aaudio_usage_t;
 typedef int32_t aaudio_content_type_t;
 typedef int32_t aaudio_input_preset_t;
 typedef int32_t aaudio_session_id_t;
+
+// There are a few definitions used by Oboe.
+#define AAUDIO_OK                      static_cast<aaudio_result_t>(Result::OK)
+#define AAUDIO_ERROR_TIMEOUT           static_cast<aaudio_result_t>(Result::ErrorTimeout)
+#define AAUDIO_STREAM_STATE_STARTING   static_cast<aaudio_stream_state_t>(StreamState::Starting)
+#define AAUDIO_STREAM_STATE_STARTED    static_cast<aaudio_stream_state_t>(StreamState::Started)
 #else
 #include <aaudio/AAudio.h>
-#include <android/ndk-version.h>
 #endif
 
 #ifndef __NDK_MAJOR__
 #define __NDK_MAJOR__ 0
 #endif
 
-namespace oboe {
+#if __NDK_MAJOR__ < 24
+// Defined in SC_V2
+typedef uint32_t aaudio_channel_mask_t;
+#endif
 
+#ifndef __ANDROID_API_S__
+#define __ANDROID_API_S__ 31
+#endif
+
+#ifndef __ANDROID_API_S_V2__
+#define __ANDROID_API_S_V2__ 32
+#endif
+
+namespace oboe {
 
 /**
  * The AAudio API was not available in early versions of Android.
@@ -82,6 +99,7 @@ class AAudioLoader {
     // P = Pointer to following data type
     // C = Const prefix
     // H = cHar
+    // U = uint32_t
     typedef int32_t  (*signature_I_PPB)(AAudioStreamBuilder **builder);
 
     typedef const char * (*signature_CPH_I)(int32_t);
@@ -92,6 +110,11 @@ class AAudioLoader {
     typedef int32_t (*signature_I_PB)(AAudioStreamBuilder *);  // AAudioStreamBuilder_delete()
     // AAudioStreamBuilder_setSampleRate()
     typedef void    (*signature_V_PBI)(AAudioStreamBuilder *, int32_t);
+
+    // AAudioStreamBuilder_setChannelMask()
+    typedef void    (*signature_V_PBU)(AAudioStreamBuilder *, uint32_t);
+
+    typedef void    (*signature_V_PBCPH)(AAudioStreamBuilder *, const char *);
 
     typedef int32_t (*signature_I_PS)(AAudioStream *);  // AAudioStream_getSampleRate()
     typedef int64_t (*signature_L_PS)(AAudioStream *);  // AAudioStream_getFramesRead()
@@ -120,6 +143,8 @@ class AAudioLoader {
 
     typedef bool    (*signature_B_PS)(AAudioStream *);
 
+    typedef uint32_t (*signature_U_PS)(AAudioStream *);
+
     static AAudioLoader* getInstance(); // singleton
 
     /**
@@ -132,6 +157,8 @@ class AAudioLoader {
      * @return 0 if successful or negative error.
      */
     int open();
+
+    void *getLibHandle() const { return mLibHandle; }
 
     // Function pointers into the AAudio shared library.
     signature_I_PPB   createStreamBuilder = nullptr;
@@ -147,11 +174,15 @@ class AAudioLoader {
     signature_V_PBI builder_setPerformanceMode = nullptr;
     signature_V_PBI builder_setSampleRate = nullptr;
     signature_V_PBI builder_setSharingMode = nullptr;
+    signature_V_PBU builder_setChannelMask = nullptr;
 
     signature_V_PBI builder_setUsage = nullptr;
     signature_V_PBI builder_setContentType = nullptr;
     signature_V_PBI builder_setInputPreset = nullptr;
     signature_V_PBI builder_setSessionId = nullptr;
+
+    signature_V_PBCPH builder_setPackageName = nullptr;
+    signature_V_PBCPH builder_setAttributionTag = nullptr;
 
     signature_V_PBPDPV  builder_setDataCallback = nullptr;
     signature_V_PBPEPV  builder_setErrorCallback = nullptr;
@@ -166,8 +197,6 @@ class AAudioLoader {
     signature_I_PSTPTL  stream_waitForStateChange = nullptr;
 
     signature_I_PSKPLPL stream_getTimestamp = nullptr;
-
-    signature_B_PS      stream_isMMapUsed = nullptr;
 
     signature_I_PS   stream_close = nullptr;
 
@@ -199,6 +228,8 @@ class AAudioLoader {
     signature_I_PS   stream_getInputPreset = nullptr;
     signature_I_PS   stream_getSessionId = nullptr;
 
+    signature_U_PS   stream_getChannelMask = nullptr;
+
   private:
     AAudioLoader() {}
     ~AAudioLoader();
@@ -207,6 +238,7 @@ class AAudioLoader {
     signature_I_PPB     load_I_PPB(const char *name);
     signature_CPH_I     load_CPH_I(const char *name);
     signature_V_PBI     load_V_PBI(const char *name);
+    signature_V_PBCPH   load_V_PBCPH(const char *name);
     signature_V_PBPDPV  load_V_PBPDPV(const char *name);
     signature_V_PBPEPV  load_V_PBPEPV(const char *name);
     signature_I_PB      load_I_PB(const char *name);
@@ -220,6 +252,8 @@ class AAudioLoader {
     signature_I_PSCPVIL load_I_PSCPVIL(const char *name);
     signature_I_PSTPTL  load_I_PSTPTL(const char *name);
     signature_I_PSKPLPL load_I_PSKPLPL(const char *name);
+    signature_V_PBU     load_V_PBU(const char *name);
+    signature_U_PS      load_U_PS(const char *name);
 
     void *mLibHandle = nullptr;
 };

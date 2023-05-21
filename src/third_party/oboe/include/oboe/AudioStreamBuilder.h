@@ -19,6 +19,7 @@
 
 #include "oboe/Definitions.h"
 #include "oboe/AudioStreamBase.h"
+#include "oboe/Utilities.h"
 #include "ResultWithValue.h"
 
 namespace oboe {
@@ -42,11 +43,35 @@ public:
      *
      * Default is kUnspecified. If the value is unspecified then
      * the application should query for the actual value after the stream is opened.
+     *
+     * As the channel count here may be different from the corresponding channel count of
+     * provided channel mask used in setChannelMask(). The last called will be respected
+     * if this function and setChannelMask() are called.
      */
     AudioStreamBuilder *setChannelCount(int channelCount) {
         mChannelCount = channelCount;
+        mChannelMask = ChannelMask::Unspecified;
         return this;
     }
+
+    /**
+     * Request a specific channel mask.
+     *
+     * Default is kUnspecified. If the value is unspecified then the application
+     * should query for the actual value after the stream is opened.
+     *
+     * As the corresponding channel count of provided channel mask here may be different
+     * from the channel count used in setChannelCount(). The last called will be respected
+     * if this function and setChannelCount() are called.
+     *
+     * As the setChannelMask API is available on Android 32+, this call will only take effects
+     * on Android 32+.
+     */
+     AudioStreamBuilder *setChannelMask(ChannelMask channelMask) {
+         mChannelMask = channelMask;
+         mChannelCount = getChannelCountFromChannelMask(channelMask);
+         return this;
+     }
 
     /**
      * Request the direction for a stream. The default is Direction::Output.
@@ -75,6 +100,13 @@ public:
     }
 
     /**
+     * @deprecated use `setFramesPerDataCallback` instead.
+     */
+    AudioStreamBuilder *setFramesPerCallback(int framesPerCallback) {
+        return setFramesPerDataCallback(framesPerCallback);
+    }
+
+    /**
      * Request a specific number of frames for the data callback.
      *
      * Default is kUnspecified. If the value is unspecified then
@@ -85,10 +117,18 @@ public:
      * the callbacks. But if your application is, for example, doing FFTs or other block
      * oriented operations, then call this function to get the sizes you need.
      *
+     * Calling setFramesPerDataCallback() does not guarantee anything about timing.
+     * This just collects the data into a the number of frames that your app requires.
+     * We encourage leaving this unspecified in most cases.
+     *
+     * If this number is larger than the burst size, some bursts will not receive a callback.
+     * If this number is smaller than the burst size, there may be multiple callbacks in a single
+     * burst.
+     *
      * @param framesPerCallback
      * @return pointer to the builder so calls can be chained
      */
-    AudioStreamBuilder *setFramesPerCallback(int framesPerCallback) {
+    AudioStreamBuilder *setFramesPerDataCallback(int framesPerCallback) {
         mFramesPerCallback = framesPerCallback;
         return this;
     }
@@ -198,10 +238,11 @@ public:
 
 
     /**
-     * Set the intended use case for the stream.
+     * Set the intended use case for an output stream.
      *
      * The system will use this information to optimize the behavior of the stream.
      * This could, for example, affect how volume and focus is handled for the stream.
+     * The usage is ignored for input streams.
      *
      * The default, if you do not call this function, is Usage::Media.
      *
@@ -215,10 +256,11 @@ public:
     }
 
     /**
-     * Set the type of audio data that the stream will carry.
+     * Set the type of audio data that an output stream will carry.
      *
      * The system will use this information to optimize the behavior of the stream.
      * This could, for example, affect whether a stream is paused when a notification occurs.
+     * The contentType is ignored for input streams.
      *
      * The default, if you do not call this function, is ContentType::Music.
      *
@@ -286,11 +328,14 @@ public:
      * In most cases, the primary device will be the appropriate device to use, and the
      * deviceId can be left kUnspecified.
      *
-     * On Android, for example, the ID could be obtained from the Java AudioManager.
-     * AudioManager.getDevices() returns an array of AudioDeviceInfo[], which contains
-     * a getId() method (as well as other type information), that should be passed
-     * to this method.
+     * The ID could be obtained from the Java AudioManager.
+     * AudioManager.getDevices() returns an array of AudioDeviceInfo,
+     * which contains a getId() method. That ID can be passed to this function.
      *
+     * It is possible that you may not get the device that you requested.
+     * So if it is important to you, you should call
+     * stream->getDeviceId() after the stream is opened to
+     * verify the actual ID.
      *
      * Note that when using OpenSL ES, this will be ignored and the created
      * stream will have deviceId kUnspecified.
@@ -304,7 +349,84 @@ public:
     }
 
     /**
+     * Specifies an object to handle data related callbacks from the underlying API.
+     *
+     * <strong>Important: See AudioStreamCallback for restrictions on what may be called
+     * from the callback methods.</strong>
+     *
+     * We pass a shared_ptr so that the sharedDataCallback object cannot be deleted
+     * before the stream is deleted.
+     *
+     * @param dataCallback
+     * @return pointer to the builder so calls can be chained
+     */
+    AudioStreamBuilder *setDataCallback(std::shared_ptr<AudioStreamDataCallback> sharedDataCallback) {
+        // Use this raw pointer in the rest of the code to retain backwards compatibility.
+        mDataCallback = sharedDataCallback.get();
+        // Hold a shared_ptr to protect the raw pointer for the lifetime of the stream.
+        mSharedDataCallback = sharedDataCallback;
+        return this;
+    }
+
+    /**
+    * Pass a raw pointer to a data callback. This is not recommended because the dataCallback
+    * object might get deleted by the app while it is being used.
+    *
+    * @deprecated Call setDataCallback(std::shared_ptr<AudioStreamDataCallback>) instead.
+    * @param dataCallback
+    * @return pointer to the builder so calls can be chained
+    */
+    AudioStreamBuilder *setDataCallback(AudioStreamDataCallback *dataCallback) {
+        mDataCallback = dataCallback;
+        mSharedDataCallback = nullptr;
+        return this;
+    }
+
+    /**
+     * Specifies an object to handle error related callbacks from the underlying API.
+     * This can occur when a stream is disconnected because a headset is plugged in or unplugged.
+     * It can also occur if the audio service fails or if an exclusive stream is stolen by
+     * another stream.
+     *
+     * <strong>Important: See AudioStreamCallback for restrictions on what may be called
+     * from the callback methods.</strong>
+     *
+     * <strong>When an error callback occurs, the associated stream must be stopped and closed
+     * in a separate thread.</strong>
+     *
+     * We pass a shared_ptr so that the errorCallback object cannot be deleted before the stream is deleted.
+     * If the stream was created using a shared_ptr then the stream cannot be deleted before the
+     * error callback has finished running.
+     *
+     * @param sharedErrorCallback
+     * @return pointer to the builder so calls can be chained
+     */
+    AudioStreamBuilder *setErrorCallback(std::shared_ptr<AudioStreamErrorCallback> sharedErrorCallback) {
+        // Use this raw pointer in the rest of the code to retain backwards compatibility.
+        mErrorCallback = sharedErrorCallback.get();
+        // Hold a shared_ptr to protect the raw pointer for the lifetime of the stream.
+        mSharedErrorCallback = sharedErrorCallback;
+        return this;
+    }
+
+    /**
+    * Pass a raw pointer to an error callback. This is not recommended because the errorCallback
+    * object might get deleted by the app while it is being used.
+    *
+    * @deprecated Call setErrorCallback(std::shared_ptr<AudioStreamErrorCallback>) instead.
+    * @param errorCallback
+    * @return pointer to the builder so calls can be chained
+    */
+    AudioStreamBuilder *setErrorCallback(AudioStreamErrorCallback *errorCallback) {
+        mErrorCallback = errorCallback;
+        mSharedErrorCallback = nullptr;
+        return this;
+    }
+
+    /**
      * Specifies an object to handle data or error related callbacks from the underlying API.
+     *
+     * This is the equivalent of calling both setDataCallback() and setErrorCallback().
      *
      * <strong>Important: See AudioStreamCallback for restrictions on what may be called
      * from the callback methods.</strong>
@@ -325,7 +447,9 @@ public:
      * @return pointer to the builder so calls can be chained
      */
     AudioStreamBuilder *setCallback(AudioStreamCallback *streamCallback) {
-        mStreamCallback = streamCallback;
+        // Use the same callback object for both, dual inheritance.
+        mDataCallback = streamCallback;
+        mErrorCallback = streamCallback;
         return this;
     }
 
@@ -336,7 +460,7 @@ public:
      * On some devices, mono streams might be broken, so a stereo stream might be opened
      * and converted to mono.
      *
-     * Default is true.
+     * Default is false.
      */
     AudioStreamBuilder *setChannelConversionAllowed(bool allowed) {
         mChannelConversionAllowed = allowed;
@@ -344,11 +468,11 @@ public:
     }
 
     /**
-     * If true then  Oboe might convert data formats to achieve optimal results.
+     * If true then Oboe might convert data formats to achieve optimal results.
      * On some versions of Android, for example, a float stream could not get a
      * low latency data path. So an I16 stream might be opened and converted to float.
      *
-     * Default is true.
+     * Default is false.
      */
     AudioStreamBuilder *setFormatConversionAllowed(bool allowed) {
         mFormatConversionAllowed = allowed;
@@ -372,6 +496,43 @@ public:
     }
 
     /**
+    * Declare the name of the package creating the stream.
+    *
+    * This is usually {@code Context#getPackageName()}.
+    *
+    * The default, if you do not call this function, is a random package in the calling uid.
+    * The vast majority of apps have only one package per calling UID.
+    * If an invalid package name is set, input streams may not be given permission to
+    * record when started.
+    *
+    * The package name is usually the applicationId in your app's build.gradle file.
+    *
+    * Available since API level 31.
+    *
+    * @param packageName packageName of the calling app.
+    */
+    AudioStreamBuilder *setPackageName(std::string packageName) {
+        mPackageName = packageName;
+        return this;
+    }
+
+    /**
+    * Declare the attribution tag of the context creating the stream.
+    *
+    * This is usually {@code Context#getAttributionTag()}.
+    *
+    * The default, if you do not call this function, is null.
+    *
+    * Available since API level 31.
+    *
+    * @param attributionTag attributionTag of the calling context.
+    */
+    AudioStreamBuilder *setAttributionTag(std::string attributionTag) {
+        mAttributionTag = attributionTag;
+        return this;
+    }
+
+    /**
      * @return true if AAudio will be used based on the current settings.
      */
     bool willUseAAudio() const {
@@ -382,7 +543,8 @@ public:
     /**
      * Create and open a stream object based on the current settings.
      *
-     * The caller owns the pointer to the AudioStream object.
+     * The caller owns the pointer to the AudioStream object
+     * and must delete it when finished.
      *
      * @deprecated Use openStream(std::shared_ptr<oboe::AudioStream> &stream) instead.
      * @param stream pointer to a variable to receive the stream address
@@ -408,6 +570,8 @@ public:
      * The caller must create a unique ptr, and pass by reference so it can be
      * modified to point to an opened stream. The caller owns the unique ptr,
      * and it will be automatically closed and deleted when going out of scope.
+     *
+     * @deprecated Use openStream(std::shared_ptr<oboe::AudioStream> &stream) instead.
      * @param stream Reference to the ManagedStream (uniqueptr) used to keep track of stream
      * @return OBOE_OK if successful or a negative error code.
      */
