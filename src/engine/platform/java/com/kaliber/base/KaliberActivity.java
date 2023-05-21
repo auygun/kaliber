@@ -2,6 +2,7 @@ package com.kaliber.base;
 
 import android.app.NativeActivity;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -37,19 +38,26 @@ public class KaliberActivity extends NativeActivity {
 
     private InterstitialAd mInterstitialAd;
 
+    boolean mIsDebuggable = false;
+
     public static native void onShowAdResult(boolean succeeded);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        MobileAds.initialize(this, new OnInitializationCompleteListener() {
-            @Override
-            public void onInitializationComplete(InitializationStatus initializationStatus) {
-                Log.d("kaliber", "MobileAds initialization complete.");
-            }
-        });
-        loadInterstitialAd();
+        ApplicationInfo appInfo = getApplicationContext().getApplicationInfo();
+        mIsDebuggable = (appInfo.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+
+        if (!mIsDebuggable) {
+            MobileAds.initialize(this, new OnInitializationCompleteListener() {
+                @Override
+                public void onInitializationComplete(InitializationStatus initializationStatus) {
+                    Log.d("kaliber", "MobileAds initialization complete.");
+                }
+            });
+            loadInterstitialAd();
+        }
     }
 
     public void setKeepScreenOn(final boolean keepScreenOn) {
@@ -66,6 +74,8 @@ public class KaliberActivity extends NativeActivity {
     }
 
     public void showInterstitialAd() {
+        if (mIsDebuggable) return;
+
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
