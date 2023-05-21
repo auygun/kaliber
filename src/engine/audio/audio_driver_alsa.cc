@@ -164,7 +164,8 @@ int AudioDriverAlsa::GetHardwareSampleRate() {
 void AudioDriverAlsa::StartAudioThread() {
   LOG << "Starting audio thread.";
   terminate_audio_thread_.store(false, std::memory_order_relaxed);
-  suspend_audio_thread_.store(true, std::memory_order_relaxed);
+  suspend_audio_thread_.store(delegate_ ? false : true,
+                              std::memory_order_relaxed);
   audio_thread_ = std::thread(&AudioDriverAlsa::AudioThreadMain, this);
 }
 

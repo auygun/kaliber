@@ -15,13 +15,13 @@ AudioDriverOboe::~AudioDriverOboe() = default;
 
 void AudioDriverOboe::SetDelegate(AudioDriverDelegate* delegate) {
   delegate_ = delegate;
-  Resume();
+  stream_->start();
 }
 
 bool AudioDriverOboe::Initialize() {
   LOG << "Initializing audio system.";
 
-  return RestartStream(true);
+  return RestartStream();
 }
 
 void AudioDriverOboe::Shutdown() {
@@ -31,11 +31,11 @@ void AudioDriverOboe::Shutdown() {
 }
 
 void AudioDriverOboe::Suspend() {
-  stream_->stop();
+  stream_->pause();
 }
 
 void AudioDriverOboe::Resume() {
-  RestartStream();
+  stream_->start();
 }
 
 int AudioDriverOboe::GetHardwareSampleRate() {
@@ -64,7 +64,7 @@ void AudioDriverOboe::StreamCallback::onErrorAfterClose(
   driver_->RestartStream();
 }
 
-bool AudioDriverOboe::RestartStream(bool suspended) {
+bool AudioDriverOboe::RestartStream() {
   oboe::AudioStreamBuilder builder;
   oboe::Result result =
       builder.setSharingMode(oboe::SharingMode::Exclusive)
@@ -88,7 +88,7 @@ bool AudioDriverOboe::RestartStream(bool suspended) {
     return false;
   }
 
-  if (!suspended)
+  if (delegate_)
     stream_->start();
   return true;
 }

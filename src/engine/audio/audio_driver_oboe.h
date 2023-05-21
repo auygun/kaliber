@@ -50,7 +50,7 @@ class AudioDriverOboe final : public AudioDriver {
 
   AudioDriverDelegate* delegate_ = nullptr;
 
-  bool RestartStream(bool suspended = false);
+  bool RestartStream();
 };
 
 }  // namespace eng
