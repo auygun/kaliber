@@ -14,6 +14,7 @@
 
 struct android_app;
 struct AInputEvent;
+struct ANativeWindow;
 
 #elif defined(__linux__)
 
@@ -95,6 +96,21 @@ class Platform {
 
   static int32_t HandleInput(android_app* app, AInputEvent* event);
   static void HandleCmd(android_app* app, int32_t cmd);
+
+  using PFN_ANativeWindow_setFrameRate = int32_t (*)(ANativeWindow* window,
+                                                     float frameRate,
+                                                     int8_t compatibility);
+  using PFN_ANativeWindow_setFrameRateWithChangeStrategy =
+      int32_t (*)(ANativeWindow* window,
+                  float frameRate,
+                  int8_t compatibility,
+                  int8_t changeFrameRateStrategy);
+
+  PFN_ANativeWindow_setFrameRate ANativeWindow_setFrameRate = nullptr;
+  PFN_ANativeWindow_setFrameRateWithChangeStrategy
+      ANativeWindow_setFrameRateWithChangeStrategy = nullptr;
+
+  void SetFrameRate(float frame_rate);
 
 #elif defined(__linux__)
 

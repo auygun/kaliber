@@ -1,6 +1,7 @@
 #include "engine/platform/platform.h"
 
 #include <android_native_app_glue.h>
+#include <dlfcn.h>
 #include <jni.h>
 #include <unistd.h>
 
@@ -24,7 +25,6 @@ Java_com_kaliber_base_KaliberActivity_onShowAdResult(JNIEnv* env,
                                                      jboolean succeeded) {
   g_showing_interstitial_ad = !!succeeded;
 }
-
 }
 
 std::string GetApkPath(ANativeActivity* activity) {
@@ -294,6 +294,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
     case APP_CMD_INIT_WINDOW:
       DLOG << "APP_CMD_INIT_WINDOW";
       if (app->window != NULL) {
+        platform->SetFrameRate(60);
         if (!platform->renderer_->Initialize(app->window)) {
           LOG << "Failed to initialize the renderer.";
           throw internal_error;
@@ -371,6 +372,18 @@ void Platform::Initialize(android_app* app) {
   app->onAppCmd = Platform::HandleCmd;
   app->onInputEvent = Platform::HandleInput;
 
+  // Get pointers for functions that are supported from API > minSdk if
+  // available.
+  void* mLibAndroid = dlopen("libandroid.so", RTLD_NOW | RTLD_LOCAL);
+  if (mLibAndroid) {
+    ANativeWindow_setFrameRate =
+        reinterpret_cast<PFN_ANativeWindow_setFrameRate>(
+            dlsym(mLibAndroid, "ANativeWindow_setFrameRate"));
+    ANativeWindow_setFrameRateWithChangeStrategy =
+        reinterpret_cast<PFN_ANativeWindow_setFrameRateWithChangeStrategy>(
+            dlsym(mLibAndroid, "ANativeWindow_setFrameRateWithChangeStrategy"));
+  }
+
   Update();
 }
 
@@ -415,6 +428,17 @@ void Platform::ShareFile(const std::string& file_name) {
 
 void Platform::SetKeepScreenOn(bool keep_screen_on) {
   ::SetKeepScreenOn(app_->activity, keep_screen_on);
+}
+
+void Platform::SetFrameRate(float frame_rate) {
+  if (ANativeWindow_setFrameRateWithChangeStrategy) {
+    ANativeWindow_setFrameRateWithChangeStrategy(
+        app_->window, frame_rate,
+        ANATIVEWINDOW_FRAME_RATE_COMPATIBILITY_DEFAULT, 1);
+  } else if (ANativeWindow_setFrameRate) {
+    ANativeWindow_setFrameRate(app_->window, frame_rate,
+                               ANATIVEWINDOW_FRAME_RATE_COMPATIBILITY_DEFAULT);
+  }
 }
 
 }  // namespace eng
