@@ -23,15 +23,12 @@ void Platform::Initialize() {
   shared_data_path_ = "./";
   LOG << "Shared data path: " << shared_data_path_.c_str();
 
-  if (!CreateWindow(800, 1205)) {
-    LOG << "Failed to create window.";
-    throw internal_error;
-  }
+  bool res = CreateWindow(800, 1205);
+  CHECK(res) << "Failed to create window.";
 
-  if (!renderer_->Initialize(display_, window_)) {
-    LOG << "Failed to initialize renderer.";
-    throw internal_error;
-  }
+  res = renderer_->Initialize(display_, window_);
+  CHECK(res) << "Failed to initialize " << renderer_->GetDebugName()
+             << " renderer.";
 
   XSelectInput(display_, window_,
                KeyPressMask | Button1MotionMask | ButtonPressMask |
@@ -164,12 +161,8 @@ void Platform::DestroyWindow() {
 
 int main(int argc, char** argv) {
   eng::Platform platform;
-  try {
-    platform.Initialize();
-    platform.RunMainLoop();
-    platform.Shutdown();
-  } catch (eng::Platform::InternalError& e) {
-    return -1;
-  }
+  platform.Initialize();
+  platform.RunMainLoop();
+  platform.Shutdown();
   return 0;
 }

@@ -1,7 +1,6 @@
 #ifndef ENGINE_PLATFORM_PLATFORM_H
 #define ENGINE_PLATFORM_PLATFORM_H
 
-#include <exception>
 #include <memory>
 #include <string>
 
@@ -65,9 +64,6 @@ class Platform {
   const std::string& GetSharedDataPath() const { return shared_data_path_; }
 
   bool mobile_device() const { return mobile_device_; }
-
-  static class InternalError : public std::exception {
-  } internal_error;
 
  protected:
   base::Timer timer_;

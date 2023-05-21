@@ -16,8 +16,6 @@ using namespace base;
 
 namespace eng {
 
-Platform::InternalError Platform::internal_error;
-
 Platform::Platform() = default;
 
 Platform::~Platform() = default;
@@ -33,10 +31,8 @@ void Platform::InitializeCommon() {
 #elif defined(__linux__)
   audio_driver_ = std::make_unique<AudioDriverAlsa>();
 #endif
-  if (!audio_driver_->Initialize()) {
-    LOG << "Failed to initialize audio driver.";
-    throw internal_error;
-  }
+  bool res = audio_driver_->Initialize();
+  CHECK(res) << "Failed to initialize audio driver.";
 
   auto context = std::make_unique<VulkanContext>();
   if (context->Initialize()) {
@@ -57,10 +53,8 @@ void Platform::ShutdownCommon() {
 void Platform::RunMainLoop() {
   engine_ =
       std::make_unique<Engine>(this, renderer_.get(), audio_driver_.get());
-  if (!engine_->Initialize()) {
-    LOG << "Failed to initialize the engine.";
-    throw internal_error;
-  }
+  bool res = engine_->Initialize();
+  CHECK(res) << "Failed to initialize the engine.";
 
   // Use fixed time steps.
   float time_step = engine_->time_step();
