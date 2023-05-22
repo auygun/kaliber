@@ -10,16 +10,14 @@
 
 namespace eng {
 
+class AudioDriverDelegate;
+
 class AudioDriverOboe final : public AudioDriver {
  public:
-  AudioDriverOboe();
+  AudioDriverOboe(AudioDriverDelegate* delegate);
   ~AudioDriverOboe() final;
 
-  void SetDelegate(AudioDriverDelegate* delegate) final;
-
   bool Initialize() final;
-
-  void Shutdown() final;
 
   void Suspend() final;
   void Resume() final;
@@ -27,8 +25,6 @@ class AudioDriverOboe final : public AudioDriver {
   int GetHardwareSampleRate() final;
 
  private:
-  static constexpr int kChannelCount = 2;
-
   class StreamCallback final : public oboe::AudioStreamCallback {
    public:
     StreamCallback(AudioDriverOboe* audio);

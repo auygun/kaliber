@@ -7,12 +7,26 @@
 #include "base/thread_pool.h"
 #include "engine/sound.h"
 
+#if defined(__ANDROID__)
+#include "engine/audio/audio_driver_oboe.h"
+#elif defined(__linux__)
+#include "engine/audio/audio_driver_alsa.h"
+#endif
+
 using namespace base;
 
 namespace eng {
 
 AudioMixer::AudioMixer()
-    : main_thread_task_runner_(TaskRunner::GetThreadLocalTaskRunner()) {}
+    : main_thread_task_runner_(TaskRunner::GetThreadLocalTaskRunner()),
+#if defined(__ANDROID__)
+      audio_driver_{std::make_unique<AudioDriverOboe>(this)} {
+#elif defined(__linux__)
+      audio_driver_{std::make_unique<AudioDriverAlsa>(this)} {
+#endif
+  bool res = audio_driver_->Initialize();
+  CHECK(res) << "Failed to initialize audio driver.";
+}
 
 AudioMixer::~AudioMixer() = default;
 
@@ -137,6 +151,18 @@ void AudioMixer::SetEndCallback(uint64_t resource_id, base::Closure cb) {
     return;
 
   it->second->end_cb = std::move(cb);
+}
+
+void AudioMixer::Suspend() {
+  audio_driver_->Suspend();
+}
+
+void AudioMixer::Resume() {
+  audio_driver_->Resume();
+}
+
+int AudioMixer::GetHardwareSampleRate() {
+  return audio_driver_->GetHardwareSampleRate();
 }
 
 void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {

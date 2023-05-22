@@ -11,17 +11,19 @@ using namespace base;
 
 namespace eng {
 
-AudioDriverAlsa::AudioDriverAlsa() = default;
+AudioDriverAlsa::AudioDriverAlsa(AudioDriverDelegate* delegate)
+    : delegate_(delegate) {}
 
-AudioDriverAlsa::~AudioDriverAlsa() = default;
+AudioDriverAlsa::~AudioDriverAlsa() {
+  LOG << "Shutting down audio.";
 
-void AudioDriverAlsa::SetDelegate(AudioDriverDelegate* delegate) {
-  delegate_ = delegate;
-  Resume();
+  TerminateAudioThread();
+  snd_pcm_drop(device_);
+  snd_pcm_close(device_);
 }
 
 bool AudioDriverAlsa::Initialize() {
-  LOG << "Initializing audio system.";
+  LOG << "Initializing audio.";
 
   int err;
 
@@ -142,13 +144,6 @@ bool AudioDriverAlsa::Initialize() {
   return false;
 }
 
-void AudioDriverAlsa::Shutdown() {
-  LOG << "Shutting down audio system.";
-  TerminateAudioThread();
-  snd_pcm_drop(device_);
-  snd_pcm_close(device_);
-}
-
 void AudioDriverAlsa::Suspend() {
   suspend_audio_thread_.store(true, std::memory_order_relaxed);
 }
@@ -162,15 +157,16 @@ int AudioDriverAlsa::GetHardwareSampleRate() {
 }
 
 void AudioDriverAlsa::StartAudioThread() {
+  DCHECK(!audio_thread_.joinable());
+
   LOG << "Starting audio thread.";
   terminate_audio_thread_.store(false, std::memory_order_relaxed);
-  suspend_audio_thread_.store(delegate_ ? false : true,
-                              std::memory_order_relaxed);
+  suspend_audio_thread_.store(false, std::memory_order_relaxed);
   audio_thread_ = std::thread(&AudioDriverAlsa::AudioThreadMain, this);
 }
 
 void AudioDriverAlsa::TerminateAudioThread() {
-  if (terminate_audio_thread_.load(std::memory_order_relaxed))
+  if (!audio_thread_.joinable())
     return;
 
   LOG << "Terminating audio thread";
@@ -180,6 +176,8 @@ void AudioDriverAlsa::TerminateAudioThread() {
 }
 
 void AudioDriverAlsa::AudioThreadMain() {
+  DCHECK(delegate_);
+
   size_t num_frames = period_size_ / (num_channels_ * sizeof(float));
   auto buffer = std::make_unique<float[]>(num_frames * 2);
 

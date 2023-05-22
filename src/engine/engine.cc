@@ -2,7 +2,6 @@
 
 #include "base/log.h"
 #include "engine/animator.h"
-#include "engine/audio/audio_driver.h"
 #include "engine/audio/audio_mixer.h"
 #include "engine/drawable.h"
 #include "engine/font.h"
@@ -26,17 +25,13 @@ namespace eng {
 
 Engine* Engine::singleton = nullptr;
 
-Engine::Engine(Platform* platform,
-               Renderer* renderer,
-               AudioDriver* audio_driver)
+Engine::Engine(Platform* platform, Renderer* renderer)
     : platform_(platform),
       renderer_(renderer),
-      audio_driver_(audio_driver),
       audio_mixer_{std::make_unique<AudioMixer>()} {
   DCHECK(!singleton);
   singleton = this;
 
-  audio_driver_->SetDelegate(audio_mixer_.get());
   renderer_->SetContextLostCB(std::bind(&Engine::ContextLost, this));
 
   quad_ = CreateRenderResource<Geometry>();
@@ -143,14 +138,14 @@ void Engine::Draw(float frame_frac) {
 }
 
 void Engine::LostFocus() {
-  audio_driver_->Suspend();
+  audio_mixer_->Suspend();
 
   if (game_)
     game_->LostFocus();
 }
 
 void Engine::GainedFocus(bool from_interstitial_ad) {
-  audio_driver_->Resume();
+  audio_mixer_->Resume();
 
   if (game_)
     game_->GainedFocus(from_interstitial_ad);
@@ -488,7 +483,7 @@ const std::string& Engine::GetSharedDataPath() const {
 }
 
 int Engine::GetAudioHardwareSampleRate() {
-  return audio_driver_->GetHardwareSampleRate();
+  return audio_mixer_->GetHardwareSampleRate();
 }
 
 bool Engine::IsMobile() const {

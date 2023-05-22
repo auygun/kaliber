@@ -6,12 +6,6 @@
 #include "engine/renderer/opengl/renderer_opengl.h"
 #include "engine/renderer/vulkan/renderer_vulkan.h"
 
-#if defined(__ANDROID__)
-#include "engine/audio/audio_driver_oboe.h"
-#elif defined(__linux__)
-#include "engine/audio/audio_driver_alsa.h"
-#endif
-
 #define USE_VULKAN_RENDERER 1
 
 using namespace base;
@@ -47,14 +41,6 @@ void Platform::InitializeCommon() {
   thread_pool_.Initialize();
   TaskRunner::CreateThreadLocalTaskRunner();
 
-#if defined(__ANDROID__)
-  audio_driver_ = std::make_unique<AudioDriverOboe>();
-#elif defined(__linux__)
-  audio_driver_ = std::make_unique<AudioDriverAlsa>();
-#endif
-  bool res = audio_driver_->Initialize();
-  CHECK(res) << "Failed to initialize audio driver.";
-
 #if (USE_VULKAN_RENDERER == 1)
   renderer_ = std::make_unique<RendererVulkan>();
 #else
@@ -65,13 +51,12 @@ void Platform::InitializeCommon() {
 void Platform::ShutdownCommon() {
   LOG << "Shutting down platform.";
 
-  audio_driver_->Shutdown();
   renderer_->Shutdown();
 }
 
 void Platform::RunMainLoop() {
   engine_ =
-      std::make_unique<Engine>(this, renderer_.get(), audio_driver_.get());
+      std::make_unique<Engine>(this, renderer_.get());
   bool res = engine_->Initialize();
   CHECK(res) << "Failed to initialize the engine.";
 

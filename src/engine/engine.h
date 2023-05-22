@@ -16,7 +16,6 @@ class TextureCompressor;
 namespace eng {
 
 class Animator;
-class AudioDriver;
 class AudioMixer;
 class Font;
 class Game;
@@ -34,7 +33,7 @@ class Engine {
  public:
   using CreateImageCB = std::function<std::unique_ptr<Image>()>;
 
-  Engine(Platform* platform, Renderer* renderer, AudioDriver* audio_driver);
+  Engine(Platform* platform, Renderer* renderer);
   ~Engine();
 
   static Engine& Get();
@@ -176,9 +175,9 @@ class Engine {
 
   Platform* platform_ = nullptr;
   Renderer* renderer_ = nullptr;
-  AudioDriver* audio_driver_ = nullptr;
 
   std::unique_ptr<AudioMixer> audio_mixer_;
+
   std::unique_ptr<Game> game_;
 
   std::unique_ptr<Geometry> quad_;

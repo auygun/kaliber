@@ -16,10 +16,11 @@ class TaskRunner;
 
 namespace eng {
 
+class AudioDriver;
 class Sound;
 
 // Mix and render audio with low overhead. A platform specific AudioDriver
-// implementation is expected to periodically call Render() in a background
+// implementation is expected to periodically call RenderAudio() in a background
 // thread.
 class AudioMixer : public AudioDriverDelegate {
  public:
@@ -43,6 +44,11 @@ class AudioMixer : public AudioDriverDelegate {
   void SetEndCallback(uint64_t resource_id, base::Closure cb);
 
   void SetEnableAudio(bool enable) { audio_enabled_ = enable; }
+
+  void Suspend();
+  void Resume();
+
+  int GetHardwareSampleRate();
 
  private:
   enum SampleFlags { kLoop = 1, kStopped = 2, kSimulateStereo = 4 };
@@ -80,9 +86,12 @@ class AudioMixer : public AudioDriverDelegate {
 
   base::TaskRunner* main_thread_task_runner_;
 
+  std::unique_ptr<AudioDriver> audio_driver_;
+
   bool audio_enabled_ = true;
 
   // AudioDriverDelegate implementation
+  int GetChannelCount() final { return kChannelCount; }
   void RenderAudio(float* output_buffer, size_t num_frames) final;
 
   void DoStream(std::shared_ptr<Resource> sample, bool loop);

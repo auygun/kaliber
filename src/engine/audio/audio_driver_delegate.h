@@ -10,6 +10,8 @@ class AudioDriverDelegate {
   AudioDriverDelegate() = default;
   virtual ~AudioDriverDelegate() = default;
 
+  virtual int GetChannelCount() = 0;
+
   virtual void RenderAudio(float* output_buffer, size_t num_frames) = 0;
 };
 

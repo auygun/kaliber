@@ -10,16 +10,14 @@ typedef struct _snd_pcm snd_pcm_t;
 
 namespace eng {
 
+class AudioDriverDelegate;
+
 class AudioDriverAlsa final : public AudioDriver {
  public:
-  AudioDriverAlsa();
+  AudioDriverAlsa(AudioDriverDelegate* delegate);
   ~AudioDriverAlsa() final;
 
-  void SetDelegate(AudioDriverDelegate* delegate) final;
-
   bool Initialize() final;
-
-  void Shutdown() final;
 
   void Suspend() final;
   void Resume() final;

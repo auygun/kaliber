@@ -8,26 +8,17 @@ using namespace base;
 
 namespace eng {
 
-AudioDriverOboe::AudioDriverOboe()
-    : callback_(std::make_unique<StreamCallback>(this)) {}
+AudioDriverOboe::AudioDriverOboe(AudioDriverDelegate* delegate)
+    : callback_(std::make_unique<StreamCallback>(this)), delegate_(delegate) {}
 
-AudioDriverOboe::~AudioDriverOboe() = default;
-
-void AudioDriverOboe::SetDelegate(AudioDriverDelegate* delegate) {
-  delegate_ = delegate;
-  stream_->start();
+AudioDriverOboe::~AudioDriverOboe() {
+  LOG << "Shutting down audio.";
+  stream_->stop();
 }
 
 bool AudioDriverOboe::Initialize() {
-  LOG << "Initializing audio system.";
-
+  LOG << "Initializing audio.";
   return RestartStream();
-}
-
-void AudioDriverOboe::Shutdown() {
-  LOG << "Shutting down audio system.";
-
-  stream_->stop();
 }
 
 void AudioDriverOboe::Suspend() {
@@ -70,7 +61,7 @@ bool AudioDriverOboe::RestartStream() {
       builder.setSharingMode(oboe::SharingMode::Exclusive)
           ->setPerformanceMode(oboe::PerformanceMode::LowLatency)
           ->setFormat(oboe::AudioFormat::Float)
-          ->setChannelCount(kChannelCount)
+          ->setChannelCount(delegate_->GetChannelCount())
           ->setDirection(oboe::Direction::Output)
           ->setUsage(oboe::Usage::Game)
           ->setCallback(callback_.get())
@@ -88,8 +79,7 @@ bool AudioDriverOboe::RestartStream() {
     return false;
   }
 
-  if (delegate_)
-    stream_->start();
+  stream_->start();
   return true;
 }
 

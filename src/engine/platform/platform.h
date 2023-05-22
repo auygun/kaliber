@@ -24,7 +24,6 @@ struct ANativeWindow;
 
 namespace eng {
 
-class AudioDriver;
 class Renderer;
 class Engine;
 
@@ -79,7 +78,6 @@ class Platform {
   bool has_focus_ = false;
   bool should_exit_ = false;
 
-  std::unique_ptr<AudioDriver> audio_driver_;
   std::unique_ptr<Renderer> renderer_;
   std::unique_ptr<Engine> engine_;
 
