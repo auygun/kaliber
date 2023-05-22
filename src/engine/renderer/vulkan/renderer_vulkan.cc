@@ -372,7 +372,9 @@ namespace eng {
 
 RendererVulkan::RendererVulkan() = default;
 
-RendererVulkan::~RendererVulkan() = default;
+RendererVulkan::~RendererVulkan() {
+  Shutdown();
+}
 
 uint64_t RendererVulkan::CreateGeometry(std::unique_ptr<Mesh> mesh) {
   auto& geometry = geometries_[++last_resource_id_] = {};

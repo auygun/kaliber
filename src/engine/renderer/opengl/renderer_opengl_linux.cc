@@ -18,12 +18,6 @@ bool RendererOpenGL::Initialize(Display* display, Window window) {
   return StartRenderThread();
 }
 
-void RendererOpenGL::Shutdown() {
-  LOG << "Shutting down renderer.";
-
-  TerminateRenderThread();
-}
-
 bool RendererOpenGL::InitInternal() {
   // Create the OpenGL context.
   glx_context_ =

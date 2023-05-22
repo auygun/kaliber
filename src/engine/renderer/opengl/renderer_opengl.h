@@ -170,7 +170,6 @@ class RendererOpenGL final : public Renderer {
   void DestroyAllResources();
 
   bool StartRenderThread();
-  void TerminateRenderThread();
 
 #ifdef THREADED_RENDERING
   void RenderThreadMain(std::promise<bool> promise);

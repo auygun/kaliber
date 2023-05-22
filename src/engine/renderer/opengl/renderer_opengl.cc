@@ -46,7 +46,27 @@ RendererOpenGL::RendererOpenGL()
 RendererOpenGL::RendererOpenGL() = default;
 #endif  // THREADED_RENDERING
 
-RendererOpenGL::~RendererOpenGL() = default;
+RendererOpenGL::~RendererOpenGL() {
+  Shutdown();
+}
+
+void RendererOpenGL::Shutdown() {
+#ifdef THREADED_RENDERING
+  if (terminate_render_thread_)
+    return;
+
+  LOG << "Shutting down renderer.";
+  {
+    std::unique_lock<std::mutex> scoped_lock(mutex_);
+    terminate_render_thread_ = true;
+  }
+  cv_.notify_one();
+  LOG << "Terminating render thread";
+  render_thread_.join();
+#else
+  ShutdownInternal();
+#endif  // THREADED_RENDERING
+}
 
 uint64_t RendererOpenGL::CreateGeometry(std::unique_ptr<Mesh> mesh) {
   auto cmd = std::make_unique<CmdCreateGeometry>();
@@ -345,24 +365,6 @@ bool RendererOpenGL::StartRenderThread() {
 #else
   LOG << "Single threaded rendering.";
   return InitInternal();
-#endif  // THREADED_RENDERING
-}
-
-void RendererOpenGL::TerminateRenderThread() {
-#ifdef THREADED_RENDERING
-  if (terminate_render_thread_)
-    return;
-
-  // Notify worker thread and wait for it to terminate.
-  {
-    std::unique_lock<std::mutex> scoped_lock(mutex_);
-    terminate_render_thread_ = true;
-  }
-  cv_.notify_one();
-  LOG << "Terminating render thread";
-  render_thread_.join();
-#else
-  ShutdownInternal();
 #endif  // THREADED_RENDERING
 }
 

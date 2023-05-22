@@ -14,11 +14,6 @@ bool RendererOpenGL::Initialize(ANativeWindow* window) {
   return StartRenderThread();
 }
 
-void RendererOpenGL::Shutdown() {
-  LOG << "Shutting down renderer.";
-  TerminateRenderThread();
-}
-
 bool RendererOpenGL::InitInternal() {
   ndk_helper::GLContext* gl_context = ndk_helper::GLContext::GetInstance();
 
