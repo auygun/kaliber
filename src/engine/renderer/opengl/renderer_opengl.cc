@@ -48,6 +48,7 @@ RendererOpenGL::RendererOpenGL() = default;
 
 RendererOpenGL::~RendererOpenGL() {
   Shutdown();
+  OnDestroy();
 }
 
 void RendererOpenGL::Shutdown() {

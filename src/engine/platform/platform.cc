@@ -22,6 +22,25 @@ Platform::Platform() = default;
 
 Platform::~Platform() = default;
 
+Renderer* Platform::SwitchRenderer(bool vulkan) {
+  DCHECK(renderer_);
+
+  if ((dynamic_cast<RendererVulkan*>(renderer_.get()) && vulkan) ||
+      (dynamic_cast<RendererOpenGL*>(renderer_.get()) && !vulkan))
+    return renderer_.get();
+
+  if (vulkan)
+    renderer_ = std::make_unique<RendererVulkan>();
+  else
+    renderer_ = std::make_unique<RendererOpenGL>();
+
+  bool result = InitializeRenderer();
+  CHECK(result) << "Failed to initialize " << renderer_->GetDebugName()
+                << " renderer.";
+  LOG << "Switched to " << renderer_->GetDebugName() << " renderer.";
+  return renderer_.get();
+}
+
 void Platform::InitializeCommon() {
   LOG << "Initializing platform.";
 

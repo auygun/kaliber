@@ -165,6 +165,8 @@ class RendererOpenGL final : public Renderer {
   bool InitCommon();
   void ShutdownInternal();
 
+  void OnDestroy();
+
   void ContextLost();
 
   void DestroyAllResources();

@@ -55,6 +55,8 @@ class Engine {
   void AddAnimator(Animator* animator);
   void RemoveAnimator(Animator* animator);
 
+  void SwitchRenderer(bool vulkan);
+
   void Exit();
 
   // Convert size from pixels to viewport scale.
@@ -221,6 +223,8 @@ class Engine {
   unsigned int replay_index_ = 0;
 
   base::Randomf random_;
+
+  void CreateTextureCompressors();
 
   void ContextLost();
 

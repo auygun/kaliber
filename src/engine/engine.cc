@@ -71,22 +71,7 @@ bool Engine::Initialize() {
 
   LOG << "image scale factor: " << GetImageScaleFactor();
 
-  if (renderer_->SupportsDXT5()) {
-    tex_comp_alpha_ = TextureCompressor::Create(TextureCompressor::kFormatDXT5);
-  } else if (renderer_->SupportsATC()) {
-    tex_comp_alpha_ =
-        TextureCompressor::Create(TextureCompressor::kFormatATCIA);
-  }
-
-  if (renderer_->SupportsDXT1()) {
-    tex_comp_opaque_ =
-        TextureCompressor::Create(TextureCompressor::kFormatDXT1);
-  } else if (renderer_->SupportsATC()) {
-    tex_comp_opaque_ = TextureCompressor::Create(TextureCompressor::kFormatATC);
-  } else if (renderer_->SupportsETC1()) {
-    tex_comp_opaque_ =
-        TextureCompressor::Create(TextureCompressor::kFormatETC1);
-  }
+  CreateTextureCompressors();
 
   system_font_ = std::make_unique<Font>();
   system_font_->Load("engine/RobotoMono-Regular.ttf");
@@ -197,6 +182,28 @@ void Engine::RemoveAnimator(Animator* animator) {
     animators_.erase(it);
     return;
   }
+}
+
+void Engine::SwitchRenderer(bool vulkan) {
+  Renderer* new_renderer = platform_->SwitchRenderer(vulkan);
+  if (new_renderer == renderer_)
+    return;
+
+  renderer_ = new_renderer;
+  renderer_->SetContextLostCB(std::bind(&Engine::ContextLost, this));
+  CreateTextureCompressors();
+
+  for (auto& t : textures_)
+    t.second.texture->SetRenderer(renderer_);
+
+  for (auto& s : shaders_)
+    s.second.shader->SetRenderer(renderer_);
+
+  quad_->SetRenderer(renderer_);
+  pass_through_shader_->SetRenderer(renderer_);
+  solid_shader_->SetRenderer(renderer_);
+
+  ContextLost();
 }
 
 void Engine::Exit() {
@@ -486,6 +493,28 @@ int Engine::GetAudioHardwareSampleRate() {
 
 bool Engine::IsMobile() const {
   return platform_->mobile_device();
+}
+
+void Engine::CreateTextureCompressors() {
+  tex_comp_alpha_.reset();
+  tex_comp_opaque_.reset();
+
+  if (renderer_->SupportsDXT5()) {
+    tex_comp_alpha_ = TextureCompressor::Create(TextureCompressor::kFormatDXT5);
+  } else if (renderer_->SupportsATC()) {
+    tex_comp_alpha_ =
+        TextureCompressor::Create(TextureCompressor::kFormatATCIA);
+  }
+
+  if (renderer_->SupportsDXT1()) {
+    tex_comp_opaque_ =
+        TextureCompressor::Create(TextureCompressor::kFormatDXT1);
+  } else if (renderer_->SupportsATC()) {
+    tex_comp_opaque_ = TextureCompressor::Create(TextureCompressor::kFormatATC);
+  } else if (renderer_->SupportsETC1()) {
+    tex_comp_opaque_ =
+        TextureCompressor::Create(TextureCompressor::kFormatETC1);
+  }
 }
 
 void Engine::ContextLost() {

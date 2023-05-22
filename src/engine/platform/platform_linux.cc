@@ -26,7 +26,7 @@ void Platform::Initialize() {
   bool res = CreateWindow(800, 1205);
   CHECK(res) << "Failed to create window.";
 
-  res = renderer_->Initialize(display_, window_);
+  res = InitializeRenderer();
   CHECK(res) << "Failed to initialize " << renderer_->GetDebugName()
              << " renderer.";
 
@@ -155,6 +155,10 @@ void Platform::DestroyWindow() {
     display_ = nullptr;
     window_ = 0;
   }
+}
+
+bool Platform::InitializeRenderer() {
+  return renderer_->Initialize(display_, window_);
 }
 
 }  // namespace eng

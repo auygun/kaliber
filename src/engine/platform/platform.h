@@ -45,6 +45,8 @@ class Platform {
 
   void Exit();
 
+  Renderer* SwitchRenderer(bool vulkan);
+
   void Vibrate(int duration);
 
   void ShowInterstitialAd();
@@ -120,6 +122,8 @@ class Platform {
 
   void InitializeCommon();
   void ShutdownCommon();
+
+  bool InitializeRenderer();
 
   Platform(const Platform&) = delete;
   Platform& operator=(const Platform&) = delete;

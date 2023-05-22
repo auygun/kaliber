@@ -15,6 +15,11 @@ class RenderResource {
 
   uint64_t resource_id() { return resource_id_; }
 
+  void SetRenderer(Renderer* renderer) {
+    renderer_ = renderer;
+    resource_id_ = 0;
+  }
+
  protected:
   uint64_t resource_id_ = 0;
   Renderer* renderer_ = nullptr;

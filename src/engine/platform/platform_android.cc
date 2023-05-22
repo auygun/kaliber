@@ -295,7 +295,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       DLOG << "APP_CMD_INIT_WINDOW";
       if (app->window != NULL) {
         platform->SetFrameRate(60);
-        bool res = platform->renderer_->Initialize(app->window);
+        bool res = platform->InitializeRenderer();
         CHECK(res) << "Failed to initialize "
                    << platform->renderer_->GetDebugName() << " renderer.";
       }
@@ -314,7 +314,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
         if (width != ANativeWindow_getWidth(app->window) ||
             height != ANativeWindow_getHeight(app->window)) {
           platform->renderer_->Shutdown();
-          bool res = platform->renderer_->Initialize(platform->app_->window);
+          bool res = platform->InitializeRenderer();
           CHECK(res) << "Failed to initialize "
                      << platform->renderer_->GetDebugName() << " renderer.";
         }
@@ -437,6 +437,10 @@ void Platform::SetFrameRate(float frame_rate) {
     ANativeWindow_setFrameRate(app_->window, frame_rate,
                                ANATIVEWINDOW_FRAME_RATE_COMPATIBILITY_DEFAULT);
   }
+}
+
+bool Platform::InitializeRenderer() {
+  return renderer_->Initialize(app_->window);
 }
 
 }  // namespace eng

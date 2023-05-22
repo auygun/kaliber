@@ -14,6 +14,10 @@ bool RendererOpenGL::Initialize(ANativeWindow* window) {
   return StartRenderThread();
 }
 
+void RendererOpenGL::OnDestroy() {
+  ndk_helper::GLContext::GetInstance()->Invalidate();
+}
+
 bool RendererOpenGL::InitInternal() {
   ndk_helper::GLContext* gl_context = ndk_helper::GLContext::GetInstance();
 
