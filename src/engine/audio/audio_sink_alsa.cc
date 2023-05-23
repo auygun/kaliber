@@ -1,20 +1,20 @@
-#include "engine/audio/audio_driver_alsa.h"
+#include "engine/audio/audio_sink_alsa.h"
 
 #include <memory>
 
 #include <alsa/asoundlib.h>
 
 #include "base/log.h"
-#include "engine/audio/audio_driver_delegate.h"
+#include "engine/audio/audio_sink_delegate.h"
 
 using namespace base;
 
 namespace eng {
 
-AudioDriverAlsa::AudioDriverAlsa(AudioDriverDelegate* delegate)
+AudioSinkAlsa::AudioSinkAlsa(AudioSinkDelegate* delegate)
     : delegate_(delegate) {}
 
-AudioDriverAlsa::~AudioDriverAlsa() {
+AudioSinkAlsa::~AudioSinkAlsa() {
   LOG << "Shutting down audio.";
 
   TerminateAudioThread();
@@ -22,7 +22,7 @@ AudioDriverAlsa::~AudioDriverAlsa() {
   snd_pcm_close(device_);
 }
 
-bool AudioDriverAlsa::Initialize() {
+bool AudioSinkAlsa::Initialize() {
   LOG << "Initializing audio.";
 
   int err;
@@ -144,28 +144,28 @@ bool AudioDriverAlsa::Initialize() {
   return false;
 }
 
-void AudioDriverAlsa::Suspend() {
+void AudioSinkAlsa::Suspend() {
   suspend_audio_thread_.store(true, std::memory_order_relaxed);
 }
 
-void AudioDriverAlsa::Resume() {
+void AudioSinkAlsa::Resume() {
   suspend_audio_thread_.store(false, std::memory_order_relaxed);
 }
 
-int AudioDriverAlsa::GetHardwareSampleRate() {
+int AudioSinkAlsa::GetHardwareSampleRate() {
   return sample_rate_;
 }
 
-void AudioDriverAlsa::StartAudioThread() {
+void AudioSinkAlsa::StartAudioThread() {
   DCHECK(!audio_thread_.joinable());
 
   LOG << "Starting audio thread.";
   terminate_audio_thread_.store(false, std::memory_order_relaxed);
   suspend_audio_thread_.store(false, std::memory_order_relaxed);
-  audio_thread_ = std::thread(&AudioDriverAlsa::AudioThreadMain, this);
+  audio_thread_ = std::thread(&AudioSinkAlsa::AudioThreadMain, this);
 }
 
-void AudioDriverAlsa::TerminateAudioThread() {
+void AudioSinkAlsa::TerminateAudioThread() {
   if (!audio_thread_.joinable())
     return;
 
@@ -175,7 +175,7 @@ void AudioDriverAlsa::TerminateAudioThread() {
   audio_thread_.join();
 }
 
-void AudioDriverAlsa::AudioThreadMain() {
+void AudioSinkAlsa::AudioThreadMain() {
   DCHECK(delegate_);
 
   size_t num_frames = period_size_ / (num_channels_ * sizeof(float));

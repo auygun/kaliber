@@ -1,21 +1,21 @@
-#ifndef ENGINE_AUDIO_AUDIO_DRIVER_OBOE_H
-#define ENGINE_AUDIO_AUDIO_DRIVER_OBOE_H
+#ifndef ENGINE_AUDIO_AUDIO_SINK_OBOE_H
+#define ENGINE_AUDIO_AUDIO_SINK_OBOE_H
 
 #include <memory>
 
 #include "third_party/oboe/include/oboe/AudioStream.h"
 #include "third_party/oboe/include/oboe/AudioStreamCallback.h"
 
-#include "engine/audio/audio_driver.h"
+#include "engine/audio/audio_sink.h"
 
 namespace eng {
 
-class AudioDriverDelegate;
+class AudioSinkDelegate;
 
-class AudioDriverOboe final : public AudioDriver {
+class AudioSinkOboe final : public AudioSink {
  public:
-  AudioDriverOboe(AudioDriverDelegate* delegate);
-  ~AudioDriverOboe() final;
+  AudioSinkOboe(AudioSinkDelegate* delegate);
+  ~AudioSinkOboe() final;
 
   bool Initialize() final;
 
@@ -27,7 +27,7 @@ class AudioDriverOboe final : public AudioDriver {
  private:
   class StreamCallback final : public oboe::AudioStreamCallback {
    public:
-    StreamCallback(AudioDriverOboe* audio);
+    StreamCallback(AudioSinkOboe* audio);
     ~StreamCallback() final;
 
     oboe::DataCallbackResult onAudioReady(oboe::AudioStream* oboe_stream,
@@ -38,17 +38,17 @@ class AudioDriverOboe final : public AudioDriver {
                            oboe::Result error) final;
 
    private:
-    AudioDriverOboe* driver_;
+    AudioSinkOboe* audio_sink_;
   };
 
   oboe::ManagedStream stream_;
   std::unique_ptr<StreamCallback> callback_;
 
-  AudioDriverDelegate* delegate_ = nullptr;
+  AudioSinkDelegate* delegate_ = nullptr;
 
   bool RestartStream();
 };
 
 }  // namespace eng
 
-#endif  // ENGINE_AUDIO_AUDIO_DRIVER_OBOE_H
+#endif  // ENGINE_AUDIO_AUDIO_SINK_OBOE_H

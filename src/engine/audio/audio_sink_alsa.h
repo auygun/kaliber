@@ -1,21 +1,21 @@
-#ifndef ENGINE_AUDIO_AUDIO_DRIVER_ALSA_H
-#define ENGINE_AUDIO_AUDIO_DRIVER_ALSA_H
+#ifndef ENGINE_AUDIO_AUDIO_SINK_ALSA_H
+#define ENGINE_AUDIO_AUDIO_SINK_ALSA_H
 
 #include <atomic>
 #include <thread>
 
-#include "engine/audio/audio_driver.h"
+#include "engine/audio/audio_sink.h"
 
 typedef struct _snd_pcm snd_pcm_t;
 
 namespace eng {
 
-class AudioDriverDelegate;
+class AudioSinkDelegate;
 
-class AudioDriverAlsa final : public AudioDriver {
+class AudioSinkAlsa final : public AudioSink {
  public:
-  AudioDriverAlsa(AudioDriverDelegate* delegate);
-  ~AudioDriverAlsa() final;
+  AudioSinkAlsa(AudioSinkDelegate* delegate);
+  ~AudioSinkAlsa() final;
 
   bool Initialize() final;
 
@@ -36,7 +36,7 @@ class AudioDriverAlsa final : public AudioDriver {
   int sample_rate_ = 0;
   size_t period_size_ = 0;
 
-  AudioDriverDelegate* delegate_ = nullptr;
+  AudioSinkDelegate* delegate_ = nullptr;
 
   void StartAudioThread();
   void TerminateAudioThread();
@@ -46,4 +46,4 @@ class AudioDriverAlsa final : public AudioDriver {
 
 }  // namespace eng
 
-#endif  // ENGINE_AUDIO_AUDIO_DRIVER_ALSA_H
+#endif  // ENGINE_AUDIO_AUDIO_SINK_ALSA_H

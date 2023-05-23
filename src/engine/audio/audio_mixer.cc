@@ -8,9 +8,9 @@
 #include "engine/sound.h"
 
 #if defined(__ANDROID__)
-#include "engine/audio/audio_driver_oboe.h"
+#include "engine/audio/audio_sink_oboe.h"
 #elif defined(__linux__)
-#include "engine/audio/audio_driver_alsa.h"
+#include "engine/audio/audio_sink_alsa.h"
 #endif
 
 using namespace base;
@@ -20,12 +20,12 @@ namespace eng {
 AudioMixer::AudioMixer()
     : main_thread_task_runner_(TaskRunner::GetThreadLocalTaskRunner()),
 #if defined(__ANDROID__)
-      audio_driver_{std::make_unique<AudioDriverOboe>(this)} {
+      audio_sink_{std::make_unique<AudioSinkOboe>(this)} {
 #elif defined(__linux__)
-      audio_driver_{std::make_unique<AudioDriverAlsa>(this)} {
+      audio_sink_{std::make_unique<AudioSinkAlsa>(this)} {
 #endif
-  bool res = audio_driver_->Initialize();
-  CHECK(res) << "Failed to initialize audio driver.";
+  bool res = audio_sink_->Initialize();
+  CHECK(res) << "Failed to initialize audio sink.";
 }
 
 AudioMixer::~AudioMixer() = default;
@@ -154,15 +154,15 @@ void AudioMixer::SetEndCallback(uint64_t resource_id, base::Closure cb) {
 }
 
 void AudioMixer::Suspend() {
-  audio_driver_->Suspend();
+  audio_sink_->Suspend();
 }
 
 void AudioMixer::Resume() {
-  audio_driver_->Resume();
+  audio_sink_->Resume();
 }
 
 int AudioMixer::GetHardwareSampleRate() {
-  return audio_driver_->GetHardwareSampleRate();
+  return audio_sink_->GetHardwareSampleRate();
 }
 
 void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
@@ -264,7 +264,7 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
             ThreadPool::Get().PostTask(
                 HERE,
                 std::bind(&AudioMixer::DoStream, this, *it, flags & kLoop));
-          } else if (num_samples) {
+          } else {
             DLOG << "Mixer buffer underrun!";
           }
         }

@@ -1,61 +1,61 @@
-#include "engine/audio/audio_driver_oboe.h"
+#include "engine/audio/audio_sink_oboe.h"
 
 #include "base/log.h"
-#include "engine/audio/audio_driver_delegate.h"
+#include "engine/audio/audio_sink_delegate.h"
 #include "third_party/oboe/include/oboe/Oboe.h"
 
 using namespace base;
 
 namespace eng {
 
-AudioDriverOboe::AudioDriverOboe(AudioDriverDelegate* delegate)
+AudioSinkOboe::AudioSinkOboe(AudioSinkDelegate* delegate)
     : callback_(std::make_unique<StreamCallback>(this)), delegate_(delegate) {}
 
-AudioDriverOboe::~AudioDriverOboe() {
+AudioSinkOboe::~AudioSinkOboe() {
   LOG << "Shutting down audio.";
   stream_->stop();
 }
 
-bool AudioDriverOboe::Initialize() {
+bool AudioSinkOboe::Initialize() {
   LOG << "Initializing audio.";
   return RestartStream();
 }
 
-void AudioDriverOboe::Suspend() {
+void AudioSinkOboe::Suspend() {
   stream_->pause();
 }
 
-void AudioDriverOboe::Resume() {
+void AudioSinkOboe::Resume() {
   stream_->start();
 }
 
-int AudioDriverOboe::GetHardwareSampleRate() {
+int AudioSinkOboe::GetHardwareSampleRate() {
   return stream_->getSampleRate();
 }
 
-AudioDriverOboe::StreamCallback::StreamCallback(AudioDriverOboe* driver)
-    : driver_(driver) {}
+AudioSinkOboe::StreamCallback::StreamCallback(AudioSinkOboe* audio_sink)
+    : audio_sink_(audio_sink) {}
 
-AudioDriverOboe::StreamCallback::~StreamCallback() = default;
+AudioSinkOboe::StreamCallback::~StreamCallback() = default;
 
-oboe::DataCallbackResult AudioDriverOboe::StreamCallback::onAudioReady(
+oboe::DataCallbackResult AudioSinkOboe::StreamCallback::onAudioReady(
     oboe::AudioStream* oboe_stream,
     void* audio_data,
     int32_t num_frames) {
   float* output_buffer = static_cast<float*>(audio_data);
-  driver_->delegate_->RenderAudio(output_buffer, num_frames);
+  audio_sink_->delegate_->RenderAudio(output_buffer, num_frames);
   return oboe::DataCallbackResult::Continue;
 }
 
-void AudioDriverOboe::StreamCallback::onErrorAfterClose(
+void AudioSinkOboe::StreamCallback::onErrorAfterClose(
     oboe::AudioStream* oboe_stream,
     oboe::Result error) {
   LOG << "Error after close. Error: " << oboe::convertToText(error);
 
-  driver_->RestartStream();
+  audio_sink_->RestartStream();
 }
 
-bool AudioDriverOboe::RestartStream() {
+bool AudioSinkOboe::RestartStream() {
   oboe::AudioStreamBuilder builder;
   oboe::Result result =
       builder.setSharingMode(oboe::SharingMode::Exclusive)

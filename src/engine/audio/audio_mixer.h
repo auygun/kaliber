@@ -8,7 +8,7 @@
 #include <unordered_map>
 
 #include "base/closure.h"
-#include "engine/audio/audio_driver_delegate.h"
+#include "engine/audio/audio_sink_delegate.h"
 
 namespace base {
 class TaskRunner;
@@ -16,13 +16,13 @@ class TaskRunner;
 
 namespace eng {
 
-class AudioDriver;
+class AudioSink;
 class Sound;
 
-// Mix and render audio with low overhead. A platform specific AudioDriver
+// Mix and render audio with low overhead. A platform specific AudioSink
 // implementation is expected to periodically call RenderAudio() in a background
 // thread.
-class AudioMixer : public AudioDriverDelegate {
+class AudioMixer : public AudioSinkDelegate {
  public:
   AudioMixer();
   ~AudioMixer();
@@ -54,6 +54,7 @@ class AudioMixer : public AudioDriverDelegate {
   enum SampleFlags { kLoop = 1, kStopped = 2, kSimulateStereo = 4 };
   static constexpr int kChannelCount = 2;
 
+  // An audio resource that gets mixed and rendered to the audio sink.
   struct Resource {
     // Accessed by main thread only.
     bool active = false;
@@ -86,11 +87,11 @@ class AudioMixer : public AudioDriverDelegate {
 
   base::TaskRunner* main_thread_task_runner_;
 
-  std::unique_ptr<AudioDriver> audio_driver_;
+  std::unique_ptr<AudioSink> audio_sink_;
 
   bool audio_enabled_ = true;
 
-  // AudioDriverDelegate implementation
+  // AudioSinkDelegate implementation
   int GetChannelCount() final { return kChannelCount; }
   void RenderAudio(float* output_buffer, size_t num_frames) final;
 
