@@ -8,8 +8,11 @@
 #include <unordered_map>
 
 #include "base/random.h"
+#include "base/thread_pool.h"
+#include "base/timer.h"
 #include "base/vecmath.h"
 #include "engine/persistent_data.h"
+#include "engine/platform/platform_observer.h"
 
 class TextureCompressor;
 
@@ -29,24 +32,16 @@ class Shader;
 class Texture;
 class Platform;
 
-class Engine {
+class Engine : public PlatformObserver {
  public:
   using CreateImageCB = std::function<std::unique_ptr<Image>()>;
 
-  Engine(Platform* platform, Renderer* renderer);
+  Engine(Platform* platform);
   ~Engine();
 
   static Engine& Get();
 
-  bool Initialize();
-
-  void Shutdown();
-
-  void Update(float delta_time);
-  void Draw(float frame_frac);
-
-  void LostFocus();
-  void GainedFocus(bool from_interstitial_ad);
+  void Run();
 
   void AddDrawable(Drawable* drawable);
   void RemoveDrawable(Drawable* drawable);
@@ -54,7 +49,7 @@ class Engine {
   void AddAnimator(Animator* animator);
   void RemoveAnimator(Animator* animator);
 
-  void SwitchRenderer(bool vulkan);
+  void CreateRenderer(bool vulkan);
 
   void Exit();
 
@@ -66,7 +61,7 @@ class Engine {
 
   template <typename T>
   std::unique_ptr<T> CreateRenderResource() {
-    return std::unique_ptr<T>(static_cast<T*>(new T(renderer_)));
+    return std::unique_ptr<T>(static_cast<T*>(new T(renderer_.get())));
   }
 
   void SetImageSource(const std::string& asset_name,
@@ -86,7 +81,6 @@ class Engine {
   Shader* GetCustomShader(const std::string& asset_name);
   void RemoveCustomShader(const std::string& asset_name);
 
-  void AddInputEvent(std::unique_ptr<InputEvent> event);
   std::unique_ptr<InputEvent> GetNextInputEvent();
 
   void StartRecording(const Json::Value& payload);
@@ -174,10 +168,9 @@ class Engine {
   static Engine* singleton;
 
   Platform* platform_ = nullptr;
-  Renderer* renderer_ = nullptr;
 
+  std::unique_ptr<Renderer> renderer_;
   std::unique_ptr<AudioMixer> audio_mixer_;
-
   std::unique_ptr<Game> game_;
 
   std::unique_ptr<Geometry> quad_;
@@ -221,13 +214,28 @@ class Engine {
   bool replaying_ = false;
   unsigned int replay_index_ = 0;
 
+  base::ThreadPool thread_pool_;
+  base::Timer timer_;
   base::Randomf random_;
+
+  void Initialize();
+
+  void Update(float delta_time);
+  void Draw(float frame_frac);
+
+  // PlatformObserver implementation
+  void OnWindowCreated() final;
+  void OnWindowDestroyed() final;
+  void OnWindowResized(int width, int height) final;
+  void LostFocus() final;
+  void GainedFocus(bool from_interstitial_ad) final;
+  void AddInputEvent(std::unique_ptr<InputEvent> event) final;
+
+  bool InitializeRenderer();
 
   void CreateTextureCompressors();
 
   void ContextLost();
-
-  bool CreateRenderResources();
 
   void SetSatsVisible(bool visible);
   std::unique_ptr<Image> PrintStats();

@@ -24,13 +24,4 @@ bool RendererVulkan::Initialize(Display* display, Window window) {
   return InitializeInternal();
 }
 
-XVisualInfo* RendererVulkan::GetXVisualInfo(Display* display) {
-  long visual_mask = VisualScreenMask;
-  int num_visuals;
-  XVisualInfo visual_info_template = {};
-  visual_info_template.screen = DefaultScreen(display);
-  return XGetVisualInfo(display, visual_mask, &visual_info_template,
-                        &num_visuals);
-}
-
 }  // namespace eng

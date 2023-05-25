@@ -1,11 +1,7 @@
 #ifndef ENGINE_PLATFORM_PLATFORM_H
 #define ENGINE_PLATFORM_PLATFORM_H
 
-#include <memory>
 #include <string>
-
-#include "base/thread_pool.h"
-#include "base/timer.h"
 
 #if defined(__ANDROID__)
 
@@ -24,27 +20,22 @@ struct ANativeWindow;
 
 namespace eng {
 
-class Renderer;
-class Engine;
+class PlatformObserver;
 
 class Platform {
  public:
-  Platform();
-  ~Platform();
-
 #if defined(__ANDROID__)
-  void Initialize(android_app* app);
+  Platform(android_app* app);
 #elif defined(__linux__)
-  void Initialize();
+  Platform();
 #endif
-
-  void Shutdown();
+  ~Platform();
 
   void Update();
 
   void Exit();
 
-  Renderer* SwitchRenderer(bool vulkan);
+  void SetObserver(PlatformObserver* observer) { observer_ = observer; }
 
   void Vibrate(int duration);
 
@@ -53,8 +44,6 @@ class Platform {
   void ShareFile(const std::string& file_name);
 
   void SetKeepScreenOn(bool keep_screen_on);
-
-  void RunMainLoop();
 
   int GetDeviceDpi() const { return device_dpi_; }
 
@@ -66,9 +55,16 @@ class Platform {
 
   bool mobile_device() const { return mobile_device_; }
 
- protected:
-  base::Timer timer_;
+  bool should_exit() const { return should_exit_; }
 
+#if defined(__ANDROID__)
+  ANativeWindow* GetWindow();
+#elif defined(__linux__)
+  Display* GetDisplay();
+  Window GetWindow();
+#endif
+
+ private:
   bool mobile_device_ = false;
   int device_dpi_ = 100;
   std::string root_path_;
@@ -78,10 +74,7 @@ class Platform {
   bool has_focus_ = false;
   bool should_exit_ = false;
 
-  std::unique_ptr<Renderer> renderer_;
-  std::unique_ptr<Engine> engine_;
-
-  base::ThreadPool thread_pool_;
+  PlatformObserver* observer_ = nullptr;
 
 #if defined(__ANDROID__)
 
@@ -116,12 +109,9 @@ class Platform {
   bool CreateWindow(int width, int height);
   void DestroyWindow();
 
+  XVisualInfo* GetXVisualInfo(Display* display);
+
 #endif
-
-  void InitializeCommon();
-  void ShutdownCommon();
-
-  bool InitializeRenderer();
 
   Platform(const Platform&) = delete;
   Platform& operator=(const Platform&) = delete;

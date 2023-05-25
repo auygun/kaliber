@@ -95,7 +95,7 @@ void Credits::Show() {
 void Credits::Hide() {
   text_animator_.SetEndCallback(Animator::kBlending, [&]() -> void {
     for (int i = 0; i < kNumLines; ++i)
-      text_[i].Destory();
+      text_[i].Destroy();
     text_animator_.SetEndCallback(Animator::kBlending, nullptr);
     text_animator_.SetVisible(false);
   });

@@ -1,19 +1,19 @@
 #include "engine/platform/platform.h"
 
+#include <memory>
+
 #include "base/log.h"
-#include "base/task_runner.h"
 #include "base/vecmath.h"
-#include "engine/engine.h"
 #include "engine/input_event.h"
-#include "engine/renderer/renderer.h"
+#include "engine/platform/platform_observer.h"
 
 using namespace base;
 
 namespace eng {
 
-void Platform::Initialize() {
-  Platform::InitializeCommon();
+void KaliberMain(Platform* platform);
 
+Platform::Platform() {
   root_path_ = "../../";
   LOG << "Root path: " << root_path_.c_str();
 
@@ -26,10 +26,6 @@ void Platform::Initialize() {
   bool res = CreateWindow(800, 1205);
   CHECK(res) << "Failed to create window.";
 
-  res = InitializeRenderer();
-  CHECK(res) << "Failed to initialize " << renderer_->GetDebugName()
-             << " renderer.";
-
   XSelectInput(display_, window_,
                KeyPressMask | Button1MotionMask | ButtonPressMask |
                    ButtonReleaseMask | FocusChangeMask);
@@ -37,9 +33,8 @@ void Platform::Initialize() {
   XSetWMProtocols(display_, window_, &WM_DELETE_WINDOW, 1);
 }
 
-void Platform::Shutdown() {
-  Platform::ShutdownCommon();
-
+Platform::~Platform() {
+  LOG << "Shutting down platform.";
   DestroyWindow();
 }
 
@@ -52,47 +47,41 @@ void Platform::Update() {
         KeySym key = XLookupKeysym(&e.xkey, 0);
         auto input_event =
             std::make_unique<InputEvent>(InputEvent::kKeyPress, (char)key);
-        engine_->AddInputEvent(std::move(input_event));
+        observer_->AddInputEvent(std::move(input_event));
         // TODO: e.xkey.state & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask))
         break;
       }
       case MotionNotify: {
         Vector2f v(e.xmotion.x, e.xmotion.y);
-        v = engine_->ToPosition(v);
-        // DLOG << "drag: " << v;
-        auto input_event = std::make_unique<InputEvent>(InputEvent::kDrag, 0,
-                                                        v * Vector2f(1, -1));
-        engine_->AddInputEvent(std::move(input_event));
+        auto input_event =
+            std::make_unique<InputEvent>(InputEvent::kDrag, 0, v);
+        observer_->AddInputEvent(std::move(input_event));
         break;
       }
       case ButtonPress: {
         if (e.xbutton.button == 1) {
           Vector2f v(e.xbutton.x, e.xbutton.y);
-          v = engine_->ToPosition(v);
-          // DLOG << "drag-start: " << v;
-          auto input_event = std::make_unique<InputEvent>(
-              InputEvent::kDragStart, 0, v * Vector2f(1, -1));
-          engine_->AddInputEvent(std::move(input_event));
+          auto input_event =
+              std::make_unique<InputEvent>(InputEvent::kDragStart, 0, v);
+          observer_->AddInputEvent(std::move(input_event));
         }
         break;
       }
       case ButtonRelease: {
         if (e.xbutton.button == 1) {
           Vector2f v(e.xbutton.x, e.xbutton.y);
-          v = engine_->ToPosition(v);
-          // DLOG << "drag-end!";
-          auto input_event = std::make_unique<InputEvent>(
-              InputEvent::kDragEnd, 0, v * Vector2f(1, -1));
-          engine_->AddInputEvent(std::move(input_event));
+          auto input_event =
+              std::make_unique<InputEvent>(InputEvent::kDragEnd, 0, v);
+          observer_->AddInputEvent(std::move(input_event));
         }
         break;
       }
       case FocusOut: {
-        engine_->LostFocus();
+        observer_->LostFocus();
         break;
       }
       case FocusIn: {
-        engine_->GainedFocus(false);
+        observer_->GainedFocus(false);
         break;
       }
       case ClientMessage: {
@@ -127,7 +116,7 @@ bool Platform::CreateWindow(int width, int height) {
 
   Window root_window = DefaultRootWindow(display_);
 
-  XVisualInfo* visual_info = renderer_->GetXVisualInfo(display_);
+  XVisualInfo* visual_info = GetXVisualInfo(display_);
   if (!visual_info) {
     LOG << "No appropriate visual found.";
     return false;
@@ -151,22 +140,35 @@ bool Platform::CreateWindow(int width, int height) {
 void Platform::DestroyWindow() {
   if (display_) {
     XDestroyWindow(display_, window_);
+#if 0  // TODO: Figure out why XCloseDisplay is crashing
     XCloseDisplay(display_);
+#endif
     display_ = nullptr;
     window_ = 0;
   }
 }
 
-bool Platform::InitializeRenderer() {
-  return renderer_->Initialize(display_, window_);
+Display* Platform::GetDisplay() {
+  return display_;
+}
+
+Window Platform::GetWindow() {
+  return window_;
+}
+
+XVisualInfo* Platform::GetXVisualInfo(Display* display) {
+  long visual_mask = VisualScreenMask;
+  int num_visuals;
+  XVisualInfo visual_info_template = {};
+  visual_info_template.screen = DefaultScreen(display);
+  return XGetVisualInfo(display, visual_mask, &visual_info_template,
+                        &num_visuals);
 }
 
 }  // namespace eng
 
 int main(int argc, char** argv) {
   eng::Platform platform;
-  platform.Initialize();
-  platform.RunMainLoop();
-  platform.Shutdown();
+  eng::KaliberMain(&platform);
   return 0;
 }

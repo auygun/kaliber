@@ -1,6 +1,7 @@
 #include "engine/engine.h"
 
 #include "base/log.h"
+#include "base/task_runner.h"
 #include "engine/animator.h"
 #include "engine/audio/audio_mixer.h"
 #include "engine/drawable.h"
@@ -13,36 +14,52 @@
 #include "engine/mesh.h"
 #include "engine/platform/platform.h"
 #include "engine/renderer/geometry.h"
+#include "engine/renderer/opengl/renderer_opengl.h"
 #include "engine/renderer/renderer.h"
 #include "engine/renderer/shader.h"
 #include "engine/renderer/texture.h"
+#include "engine/renderer/vulkan/renderer_vulkan.h"
 #include "engine/shader_source.h"
 #include "third_party/texture_compressor/texture_compressor.h"
+
+#define USE_VULKAN_RENDERER 1
 
 using namespace base;
 
 namespace eng {
 
+extern void KaliberMain(Platform* platform) {
+  TaskRunner::CreateThreadLocalTaskRunner();
+  Engine(platform).Run();
+}
+
 Engine* Engine::singleton = nullptr;
 
-Engine::Engine(Platform* platform, Renderer* renderer)
+Engine::Engine(Platform* platform)
     : platform_(platform),
-      renderer_(renderer),
-      audio_mixer_{std::make_unique<AudioMixer>()} {
+      audio_mixer_{std::make_unique<AudioMixer>()},
+      quad_{std::make_unique<Geometry>(nullptr)},
+      pass_through_shader_{std::make_unique<Shader>(nullptr)},
+      solid_shader_{std::make_unique<Shader>(nullptr)} {
   DCHECK(!singleton);
   singleton = this;
 
-  renderer_->SetContextLostCB(std::bind(&Engine::ContextLost, this));
-
-  quad_ = CreateRenderResource<Geometry>();
-  pass_through_shader_ = CreateRenderResource<Shader>();
-  solid_shader_ = CreateRenderResource<Shader>();
+  platform_->SetObserver(this);
 
   stats_ = std::make_unique<ImageQuad>();
 }
 
 Engine::~Engine() {
+  LOG << "Shutting down engine.";
+
+  game_.reset();
   stats_.reset();
+  textures_.clear();
+  shaders_.clear();
+  quad_.reset();
+  pass_through_shader_.reset();
+  solid_shader_.reset();
+  renderer_.reset();
   singleton = nullptr;
 }
 
@@ -50,7 +67,43 @@ Engine& Engine::Get() {
   return *singleton;
 }
 
-bool Engine::Initialize() {
+void Engine::Run() {
+  Initialize();
+
+  timer_.Reset();
+  float accumulator = 0.0;
+  float frame_frac = 0.0f;
+
+  for (;;) {
+    Draw(frame_frac);
+
+    // Accumulate time.
+    timer_.Update();
+    accumulator += timer_.GetSecondsPassed();
+
+    // Subdivide the frame time using fixed time steps.
+    while (accumulator >= time_step_) {
+      TaskRunner::GetThreadLocalTaskRunner()->SingleConsumerRun();
+
+      platform_->Update();
+      Update(time_step_);
+
+      if (platform_->should_exit()) {
+        return;
+      }
+      accumulator -= time_step_;
+    };
+
+    // Calculate frame fraction from remainder of the frame time.
+    frame_frac = accumulator / time_step_;
+  }
+}
+
+void Engine::Initialize() {
+  thread_pool_.Initialize();
+
+  CreateRenderer(true);
+
   // Normalize viewport.
   if (GetScreenWidth() > GetScreenHeight()) {
     float aspect_ratio = (float)GetScreenWidth() / (float)GetScreenHeight();
@@ -66,37 +119,16 @@ bool Engine::Initialize() {
 
   LOG << "image scale factor: " << GetImageScaleFactor();
 
-  CreateTextureCompressors();
-
   system_font_ = std::make_unique<Font>();
   system_font_->Load("engine/RobotoMono-Regular.ttf");
-
-  if (!CreateRenderResources())
-    return false;
 
   SetImageSource("stats_tex", std::bind(&Engine::PrintStats, this));
   stats_->SetZOrder(std::numeric_limits<int>::max());
 
   game_ = GameFactoryBase::CreateGame("");
-  if (!game_) {
-    LOG << "No game found to run.";
-    return false;
-  }
+  CHECK(game_) << "No game found to run.";
 
-  if (!game_->Initialize()) {
-    LOG << "Failed to initialize the game.";
-    return false;
-  }
-
-  return true;
-}
-
-void Engine::Shutdown() {
-  LOG << "Shutting down engine.";
-  game_.reset();
-  stats_->Destory();
-  textures_.clear();
-  shaders_.clear();
+  CHECK(game_->Initialize()) << "Failed to initialize the game.";
 }
 
 void Engine::Update(float delta_time) {
@@ -137,20 +169,6 @@ void Engine::Draw(float frame_frac) {
   renderer_->Present();
 }
 
-void Engine::LostFocus() {
-  audio_mixer_->Suspend();
-
-  if (game_)
-    game_->LostFocus();
-}
-
-void Engine::GainedFocus(bool from_interstitial_ad) {
-  audio_mixer_->Resume();
-
-  if (game_)
-    game_->GainedFocus(from_interstitial_ad);
-}
-
 void Engine::AddDrawable(Drawable* drawable) {
   DCHECK(std::find(drawables_.begin(), drawables_.end(), drawable) ==
          drawables_.end());
@@ -179,25 +197,30 @@ void Engine::RemoveAnimator(Animator* animator) {
   }
 }
 
-void Engine::SwitchRenderer(bool vulkan) {
-  Renderer* new_renderer = platform_->SwitchRenderer(vulkan);
-  if (new_renderer == renderer_)
+void Engine::CreateRenderer(bool vulkan) {
+  if ((dynamic_cast<RendererVulkan*>(renderer_.get()) && vulkan) ||
+      (dynamic_cast<RendererOpenGL*>(renderer_.get()) && !vulkan))
     return;
 
-  renderer_ = new_renderer;
+  if (vulkan)
+    renderer_ = std::make_unique<RendererVulkan>();
+  else
+    renderer_ = std::make_unique<RendererOpenGL>();
   renderer_->SetContextLostCB(std::bind(&Engine::ContextLost, this));
+
+  bool result = InitializeRenderer();
+  LOG_IF(!result) << "Failed to initialize " << renderer_->GetDebugName()
+                  << " renderer.";
+  if (!result && vulkan) {
+    LOG << "Fallback to OpenGL renderer.";
+    renderer_ = std::make_unique<RendererOpenGL>();
+    renderer_->SetContextLostCB(std::bind(&Engine::ContextLost, this));
+    result = InitializeRenderer();
+  }
+  CHECK(result) << "Failed to initialize " << renderer_->GetDebugName()
+                << " renderer.";
+
   CreateTextureCompressors();
-
-  for (auto& t : textures_)
-    t.second.texture->SetRenderer(renderer_);
-
-  for (auto& s : shaders_)
-    s.second.shader->SetRenderer(renderer_);
-
-  quad_->SetRenderer(renderer_);
-  pass_through_shader_->SetRenderer(renderer_);
-  solid_shader_->SetRenderer(renderer_);
-
   ContextLost();
 }
 
@@ -321,40 +344,6 @@ void Engine::RemoveCustomShader(const std::string& asset_name) {
   }
 
   shaders_.erase(it);
-}
-
-void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
-  if (replaying_)
-    return;
-
-  switch (event->GetType()) {
-    case InputEvent::kDragEnd:
-      if (((GetScreenSize() / 2) * 0.9f - event->GetVector()).Length() <=
-          0.25f) {
-        SetSatsVisible(!stats_->IsVisible());
-        // TODO: Enqueue DragCancel so we can consume this event.
-      }
-      break;
-    case InputEvent::kKeyPress:
-      if (event->GetKeyPress() == 's') {
-        SetSatsVisible(!stats_->IsVisible());
-        // Consume event.
-        return;
-      }
-      break;
-    case InputEvent::kDrag:
-      if (stats_->IsVisible()) {
-        if ((stats_->GetPosition() - event->GetVector()).Length() <=
-            stats_->GetSize().y)
-          stats_->SetPosition(event->GetVector());
-        // TODO: Enqueue DragCancel so we can consume this event.
-      }
-      break;
-    default:
-      break;
-  }
-
-  input_queue_.push_back(std::move(event));
 }
 
 std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
@@ -490,6 +479,81 @@ bool Engine::IsMobile() const {
   return platform_->mobile_device();
 }
 
+void Engine::OnWindowCreated() {
+  InitializeRenderer();
+}
+
+void Engine::OnWindowDestroyed() {
+  renderer_->Shutdown();
+}
+
+void Engine::OnWindowResized(int width, int height) {
+  if (width != renderer_->screen_width() ||
+      height != renderer_->screen_height()) {
+    renderer_->Shutdown();
+    InitializeRenderer();
+  }
+}
+
+void Engine::LostFocus() {
+  audio_mixer_->Suspend();
+
+  if (game_)
+    game_->LostFocus();
+}
+
+void Engine::GainedFocus(bool from_interstitial_ad) {
+  timer_.Reset();
+  audio_mixer_->Resume();
+
+  if (game_)
+    game_->GainedFocus(from_interstitial_ad);
+}
+
+void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
+  if (replaying_)
+    return;
+
+  event->SetVector(ToPosition(event->GetVector()) * Vector2f(1, -1));
+
+  switch (event->GetType()) {
+    case InputEvent::kDragEnd:
+      if (((GetScreenSize() / 2) * 0.9f - event->GetVector()).Length() <=
+          0.25f) {
+        SetSatsVisible(!stats_->IsVisible());
+        // TODO: Enqueue DragCancel so we can consume this event.
+      }
+      break;
+    case InputEvent::kKeyPress:
+      if (event->GetKeyPress() == 's') {
+        SetSatsVisible(!stats_->IsVisible());
+        // Consume event.
+        return;
+      }
+      break;
+    case InputEvent::kDrag:
+      if (stats_->IsVisible()) {
+        if ((stats_->GetPosition() - event->GetVector()).Length() <=
+            stats_->GetSize().y)
+          stats_->SetPosition(event->GetVector());
+        // TODO: Enqueue DragCancel so we can consume this event.
+      }
+      break;
+    default:
+      break;
+  }
+
+  input_queue_.push_back(std::move(event));
+}
+
+bool Engine::InitializeRenderer() {
+#if defined(__ANDROID__)
+  return renderer_->Initialize(platform_->GetWindow());
+#elif defined(__linux__)
+  return renderer_->Initialize(platform_->GetDisplay(), platform_->GetWindow());
+#endif
+}
+
 void Engine::CreateTextureCompressors() {
   tex_comp_alpha_.reset();
   tex_comp_opaque_.reset();
@@ -513,24 +577,10 @@ void Engine::CreateTextureCompressors() {
 }
 
 void Engine::ContextLost() {
-  CreateRenderResources();
+  quad_->SetRenderer(renderer_.get());
+  pass_through_shader_->SetRenderer(renderer_.get());
+  solid_shader_->SetRenderer(renderer_.get());
 
-  for (auto& t : textures_) {
-    t.second.texture->Destroy();
-    RefreshImage(t.first);
-  }
-
-  for (auto& s : shaders_) {
-    auto source = std::make_unique<ShaderSource>();
-    if (source->Load(s.second.file_name))
-      s.second.shader->Create(std::move(source), quad_->vertex_description(),
-                              quad_->primitive(), false);
-  }
-
-  game_->ContextLost();
-}
-
-bool Engine::CreateRenderResources() {
   // This creates a normalized unit sized quad.
   static const char vertex_description[] = "p2f;t2f";
   static const float vertices[] = {
@@ -545,23 +595,37 @@ bool Engine::CreateRenderResources() {
 
   // Create the shader we can reuse for texture rendering.
   auto source = std::make_unique<ShaderSource>();
-  if (!source->Load("engine/pass_through.glsl")) {
+  if (source->Load("engine/pass_through.glsl")) {
+    pass_through_shader_->Create(std::move(source), quad_->vertex_description(),
+                                 quad_->primitive(), false);
+  } else {
     LOG << "Could not create pass through shader.";
-    return false;
   }
-  pass_through_shader_->Create(std::move(source), quad_->vertex_description(),
-                               quad_->primitive(), false);
 
   // Create the shader we can reuse for solid rendering.
   source = std::make_unique<ShaderSource>();
-  if (!source->Load("engine/solid.glsl")) {
+  if (source->Load("engine/solid.glsl")) {
+    solid_shader_->Create(std::move(source), quad_->vertex_description(),
+                          quad_->primitive(), false);
+  } else {
     LOG << "Could not create solid shader.";
-    return false;
   }
-  solid_shader_->Create(std::move(source), quad_->vertex_description(),
-                        quad_->primitive(), false);
 
-  return true;
+  for (auto& t : textures_) {
+    t.second.texture->SetRenderer(renderer_.get());
+    RefreshImage(t.first);
+  }
+
+  for (auto& s : shaders_) {
+    s.second.shader->SetRenderer(renderer_.get());
+    auto source = std::make_unique<ShaderSource>();
+    if (source->Load(s.second.file_name))
+      s.second.shader->Create(std::move(source), quad_->vertex_description(),
+                              quad_->primitive(), false);
+  }
+
+  if (game_)
+    game_->ContextLost();
 }
 
 void Engine::SetSatsVisible(bool visible) {
@@ -569,7 +633,7 @@ void Engine::SetSatsVisible(bool visible) {
   if (visible)
     stats_->Create("stats_tex");
   else
-    stats_->Destory();
+    stats_->Destroy();
 }
 
 std::unique_ptr<Image> Engine::PrintStats() {

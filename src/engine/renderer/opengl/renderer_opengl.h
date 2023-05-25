@@ -89,10 +89,6 @@ class RendererOpenGL final : public Renderer {
 
   const char* GetDebugName() final { return "OpenGL"; }
 
-#if defined(__linux__) && !defined(__ANDROID__)
-  XVisualInfo* GetXVisualInfo(Display* display) final;
-#endif
-
  private:
   struct GeometryOpenGL {
     struct Element {

@@ -24,7 +24,7 @@ class ImageQuad final : public Animatable {
               int frame_width = 0,
               int frame_height = 0);
 
-  void Destory();
+  void Destroy();
 
   void AutoScale();
 

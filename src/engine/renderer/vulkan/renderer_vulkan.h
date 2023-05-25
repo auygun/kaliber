@@ -74,10 +74,6 @@ class RendererVulkan final : public Renderer {
 
   const char* GetDebugName() final { return "Vulkan"; }
 
-#if defined(__linux__) && !defined(__ANDROID__)
-  XVisualInfo* GetXVisualInfo(Display* display) final;
-#endif
-
  private:
   // VkBuffer or VkImage with allocator.
   template <typename T>

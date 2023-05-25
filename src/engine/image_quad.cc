@@ -13,7 +13,7 @@ namespace eng {
 ImageQuad::ImageQuad() = default;
 
 ImageQuad::~ImageQuad() {
-  Destory();
+  Destroy();
 }
 
 void ImageQuad::Create(const std::string& asset_name,
@@ -32,7 +32,8 @@ void ImageQuad::Create(const std::string& asset_name,
   asset_name_ = asset_name;
 }
 
-void ImageQuad::Destory() {
+// TODO: typo
+void ImageQuad::Destroy() {
   if (texture_) {
     Engine::Get().ReleaseTexture(asset_name_);
     texture_ = nullptr;

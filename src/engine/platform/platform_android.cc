@@ -1,15 +1,15 @@
 #include "engine/platform/platform.h"
 
+#include <memory>
+
 #include <android_native_app_glue.h>
 #include <dlfcn.h>
 #include <jni.h>
 #include <unistd.h>
 
 #include "base/log.h"
-#include "base/task_runner.h"
-#include "engine/engine.h"
 #include "engine/input_event.h"
-#include "engine/renderer/renderer.h"
+#include "engine/platform/platform_observer.h"
 
 using namespace base;
 
@@ -201,10 +201,12 @@ int32_t GetDensityDpi(android_app* app) {
 
 namespace eng {
 
+void KaliberMain(Platform* platform);
+
 int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
   Platform* platform = reinterpret_cast<Platform*>(app->userData);
 
-  if (!platform->engine_)
+  if (!platform->observer_)
     return 0;
 
   if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY &&
@@ -212,7 +214,7 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
     if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_UP) {
       auto input_event =
           std::make_unique<InputEvent>(InputEvent::kNavigateBack);
-      platform->engine_->AddInputEvent(std::move(input_event));
+      platform->observer_->AddInputEvent(std::move(input_event));
     }
     return 1;
   } else if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
@@ -227,7 +229,6 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
       int32_t id = AMotionEvent_getPointerId(event, i);
       if (id < 2) {
         pos[id] = {AMotionEvent_getX(event, i), AMotionEvent_getY(event, i)};
-        pos[id] = platform->engine_->ToPosition(pos[id]);
       }
     }
 
@@ -239,34 +240,30 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
     switch (flags) {
       case AMOTION_EVENT_ACTION_DOWN:
       case AMOTION_EVENT_ACTION_POINTER_DOWN:
-        // DLOG << "AMOTION_EVENT_ACTION_DOWN - pointer_id: " << pointer_id;
         platform->pointer_pos_[pointer_id] = pos[pointer_id];
         platform->pointer_down_[pointer_id] = true;
-        input_event =
-            std::make_unique<InputEvent>(InputEvent::kDragStart, pointer_id,
-                                         pos[pointer_id] * Vector2f(1, -1));
+        input_event = std::make_unique<InputEvent>(InputEvent::kDragStart,
+                                                   pointer_id, pos[pointer_id]);
         break;
 
       case AMOTION_EVENT_ACTION_UP:
       case AMOTION_EVENT_ACTION_POINTER_UP:
-        // DLOG << "AMOTION_EVENT_ACTION_UP -   pointer_id: " << pointer_id;
         platform->pointer_pos_[pointer_id] = pos[pointer_id];
         platform->pointer_down_[pointer_id] = false;
-        input_event =
-            std::make_unique<InputEvent>(InputEvent::kDragEnd, pointer_id,
-                                         pos[pointer_id] * Vector2f(1, -1));
+        input_event = std::make_unique<InputEvent>(InputEvent::kDragEnd,
+                                                   pointer_id, pos[pointer_id]);
         break;
 
       case AMOTION_EVENT_ACTION_MOVE:
         if (platform->pointer_down_[0] && pos[0] != platform->pointer_pos_[0]) {
           platform->pointer_pos_[0] = pos[0];
-          input_event = std::make_unique<InputEvent>(InputEvent::kDrag, 0,
-                                                     pos[0] * Vector2f(1, -1));
+          input_event =
+              std::make_unique<InputEvent>(InputEvent::kDrag, 0, pos[0]);
         }
         if (platform->pointer_down_[1] && pos[1] != platform->pointer_pos_[1]) {
           platform->pointer_pos_[1] = pos[1];
-          input_event = std::make_unique<InputEvent>(InputEvent::kDrag, 1,
-                                                     pos[1] * Vector2f(1, -1));
+          input_event =
+              std::make_unique<InputEvent>(InputEvent::kDrag, 1, pos[1]);
         }
         break;
 
@@ -276,7 +273,7 @@ int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
     }
 
     if (input_event) {
-      platform->engine_->AddInputEvent(std::move(input_event));
+      platform->observer_->AddInputEvent(std::move(input_event));
       return 1;
     }
   }
@@ -295,30 +292,23 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       DLOG << "APP_CMD_INIT_WINDOW";
       if (app->window != NULL) {
         platform->SetFrameRate(60);
-        bool res = platform->InitializeRenderer();
-        CHECK(res) << "Failed to initialize "
-                   << platform->renderer_->GetDebugName() << " renderer.";
+        if (platform->observer_)
+          platform->observer_->OnWindowCreated();
       }
       break;
 
     case APP_CMD_TERM_WINDOW:
       DLOG << "APP_CMD_TERM_WINDOW";
-      platform->renderer_->Shutdown();
+      if (platform->observer_)
+        platform->observer_->OnWindowDestroyed();
       break;
 
     case APP_CMD_CONFIG_CHANGED:
       DLOG << "APP_CMD_CONFIG_CHANGED";
-      if (platform->app_->window != NULL) {
-        int width = platform->renderer_->screen_width();
-        int height = platform->renderer_->screen_height();
-        if (width != ANativeWindow_getWidth(app->window) ||
-            height != ANativeWindow_getHeight(app->window)) {
-          platform->renderer_->Shutdown();
-          bool res = platform->InitializeRenderer();
-          CHECK(res) << "Failed to initialize "
-                     << platform->renderer_->GetDebugName() << " renderer.";
-        }
-      }
+      if (platform->app_->window != NULL && platform->observer_)
+        platform->observer_->OnWindowResized(
+            ANativeWindow_getWidth(app->window),
+            ANativeWindow_getHeight(app->window));
       break;
 
     case APP_CMD_STOP:
@@ -327,18 +317,18 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
 
     case APP_CMD_GAINED_FOCUS:
       DLOG << "APP_CMD_GAINED_FOCUS";
-      platform->timer_.Reset();
+      // platform->timer_.Reset();
       platform->has_focus_ = true;
-      if (platform->engine_)
-        platform->engine_->GainedFocus(g_showing_interstitial_ad);
+      if (platform->observer_)
+        platform->observer_->GainedFocus(g_showing_interstitial_ad);
       g_showing_interstitial_ad = false;
       break;
 
     case APP_CMD_LOST_FOCUS:
       DLOG << "APP_CMD_LOST_FOCUS";
       platform->has_focus_ = false;
-      if (platform->engine_)
-        platform->engine_->LostFocus();
+      if (platform->observer_)
+        platform->observer_->LostFocus();
       break;
 
     case APP_CMD_LOW_MEMORY:
@@ -347,11 +337,8 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
   }
 }
 
-void Platform::Initialize(android_app* app) {
-  Platform::InitializeCommon();
-
+Platform::Platform(android_app* app) {
   app_ = app;
-
   mobile_device_ = true;
 
   root_path_ = ::GetApkPath(app->activity);
@@ -385,8 +372,8 @@ void Platform::Initialize(android_app* app) {
   Update();
 }
 
-void Platform::Shutdown() {
-  Platform::ShutdownCommon();
+Platform::~Platform() {
+  LOG << "Shutting down platform.";
 }
 
 void Platform::Update() {
@@ -439,16 +426,14 @@ void Platform::SetFrameRate(float frame_rate) {
   }
 }
 
-bool Platform::InitializeRenderer() {
-  return renderer_->Initialize(app_->window);
+ANativeWindow* Platform::GetWindow() {
+  return app_->window;
 }
 
 }  // namespace eng
 
 void android_main(android_app* app) {
-  eng::Platform platform;
-  platform.Initialize(app);
-  platform.RunMainLoop();
-  platform.Shutdown();
+  eng::Platform platform(app);
+  eng::KaliberMain(&platform);
   _exit(0);
 }

@@ -21,9 +21,11 @@ bool RendererOpenGL::Initialize(Display* display, Window window) {
 void RendererOpenGL::OnDestroy() {}
 
 bool RendererOpenGL::InitInternal() {
-  // Create the OpenGL context.
+  GLint glx_attributes[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER,
+                            None};
+  XVisualInfo* visual_info = glXChooseVisual(display_, 0, glx_attributes);
   glx_context_ =
-      glXCreateContext(display_, GetXVisualInfo(display_), NULL, GL_TRUE);
+      glXCreateContext(display_, visual_info, NULL, GL_TRUE);
   if (!glx_context_) {
     LOG << "Couldn't create the glx context.";
     return false;
@@ -57,13 +59,6 @@ void RendererOpenGL::HandleCmdPresent(RenderCommand* cmd) {
     active_shader_id_ = 0;
     active_texture_id_ = 0;
   }
-}
-
-XVisualInfo* RendererOpenGL::GetXVisualInfo(Display* display) {
-  // Look for the right visual to set up the OpenGL context.
-  GLint glx_attributes[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER,
-                            None};
-  return glXChooseVisual(display, 0, glx_attributes);
 }
 
 }  // namespace eng

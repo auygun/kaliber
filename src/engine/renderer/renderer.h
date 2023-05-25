@@ -94,10 +94,6 @@ class Renderer {
 
   virtual const char* GetDebugName() = 0;
 
-#if defined(__linux__) && !defined(__ANDROID__)
-  virtual XVisualInfo* GetXVisualInfo(Display* display) = 0;
-#endif
-
  protected:
   struct TextureCompression {
     unsigned etc1 : 1;
