@@ -3,14 +3,15 @@
 #include <android/native_window.h>
 
 #include "base/log.h"
+#include "engine/platform/platform.h"
 #include "third_party/android/GLContext.h"
 
 namespace eng {
 
-bool RendererOpenGL::Initialize(ANativeWindow* window) {
+bool RendererOpenGL::Initialize(Platform* platform) {
   LOG << "Initializing renderer.";
 
-  window_ = window;
+  window_ = platform->GetWindow();
   return StartRenderThread();
 }
 

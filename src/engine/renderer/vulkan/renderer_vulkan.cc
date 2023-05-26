@@ -370,7 +370,8 @@ std::pair<int, int> GetNumBlocksForImageFormat(VkFormat format,
 
 namespace eng {
 
-RendererVulkan::RendererVulkan() = default;
+RendererVulkan::RendererVulkan(base::Closure context_lost_cb)
+    : Renderer(context_lost_cb) {}
 
 RendererVulkan::~RendererVulkan() {
   Shutdown();

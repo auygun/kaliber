@@ -1,14 +1,15 @@
 #include "engine/renderer/opengl/renderer_opengl.h"
 
 #include "base/log.h"
+#include "engine/platform/platform.h"
 
 namespace eng {
 
-bool RendererOpenGL::Initialize(Display* display, Window window) {
+bool RendererOpenGL::Initialize(Platform* platform) {
   LOG << "Initializing renderer.";
 
-  display_ = display;
-  window_ = window;
+  display_ = platform->GetDisplay();
+  window_ = platform->GetWindow();
 
   XWindowAttributes xwa;
   XGetWindowAttributes(display_, window_, &xwa);
@@ -24,8 +25,7 @@ bool RendererOpenGL::InitInternal() {
   GLint glx_attributes[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER,
                             None};
   XVisualInfo* visual_info = glXChooseVisual(display_, 0, glx_attributes);
-  glx_context_ =
-      glXCreateContext(display_, visual_info, NULL, GL_TRUE);
+  glx_context_ = glXCreateContext(display_, visual_info, NULL, GL_TRUE);
   if (!glx_context_) {
     LOG << "Couldn't create the glx context.";
     return false;

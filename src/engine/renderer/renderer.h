@@ -4,40 +4,26 @@
 #include <memory>
 #include <string>
 
-#if defined(__linux__) && !defined(__ANDROID__)
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#endif
-
 #include "base/closure.h"
 #include "base/vecmath.h"
 #include "engine/renderer/renderer_types.h"
-
-#if defined(__ANDROID__)
-struct ANativeWindow;
-#endif
 
 namespace eng {
 
 class Image;
 class ShaderSource;
 class Mesh;
+class Platform;
 
 class Renderer {
  public:
   const unsigned kInvalidId = 0;
 
-  Renderer() = default;
+  Renderer(base::Closure context_lost_cb)
+      : context_lost_cb_{std::move(context_lost_cb)} {}
   virtual ~Renderer() = default;
 
-  void SetContextLostCB(base::Closure cb) { context_lost_cb_ = std::move(cb); }
-
-#if defined(__ANDROID__)
-  virtual bool Initialize(ANativeWindow* window) = 0;
-#elif defined(__linux__)
-  virtual bool Initialize(Display* display, Window window) = 0;
-#endif
-
+  virtual bool Initialize(Platform* platform) = 0;
   virtual void Shutdown() = 0;
 
   virtual uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) = 0;

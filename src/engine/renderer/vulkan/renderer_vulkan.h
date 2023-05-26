@@ -18,19 +18,12 @@
 
 namespace eng {
 
-class Image;
-
 class RendererVulkan final : public Renderer {
  public:
-  RendererVulkan();
+  RendererVulkan(base::Closure context_lost_cb);
   ~RendererVulkan() final;
 
-#if defined(__ANDROID__)
-  bool Initialize(ANativeWindow* window) final;
-#elif defined(__linux__)
-  bool Initialize(Display* display, Window window) final;
-#endif
-
+  virtual bool Initialize(Platform* platform) final;
   void Shutdown() final;
 
   uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) final;

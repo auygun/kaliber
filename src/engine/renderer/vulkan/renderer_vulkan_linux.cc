@@ -1,14 +1,15 @@
 #include "engine/renderer/vulkan/renderer_vulkan.h"
 
 #include "base/log.h"
+#include "engine/platform/platform.h"
 
 namespace eng {
 
-bool RendererVulkan::Initialize(Display* display, Window window) {
+bool RendererVulkan::Initialize(Platform* platform) {
   LOG << "Initializing renderer.";
 
   XWindowAttributes xwa;
-  XGetWindowAttributes(display, window, &xwa);
+  XGetWindowAttributes(platform->GetDisplay(), platform->GetWindow(), &xwa);
   screen_width_ = xwa.width;
   screen_height_ = xwa.height;
 
@@ -16,7 +17,8 @@ bool RendererVulkan::Initialize(Display* display, Window window) {
     LOG << "Failed to initialize Vulkan context.";
     return false;
   }
-  if (!context_.CreateWindow(display, window, screen_width_, screen_height_)) {
+  if (!context_.CreateWindow(platform->GetDisplay(), platform->GetWindow(),
+                             screen_width_, screen_height_)) {
     LOG << "Vulkan context failed to create window.";
     return false;
   }

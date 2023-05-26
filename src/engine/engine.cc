@@ -84,14 +84,12 @@ void Engine::Run() {
     // Subdivide the frame time using fixed time steps.
     while (accumulator >= time_step_) {
       TaskRunner::GetThreadLocalTaskRunner()->SingleConsumerRun();
-
       platform_->Update();
       Update(time_step_);
-
-      if (platform_->should_exit()) {
-        return;
-      }
       accumulator -= time_step_;
+
+      if (platform_->should_exit())
+        return;
     };
 
     // Calculate frame fraction from remainder of the frame time.
@@ -100,6 +98,8 @@ void Engine::Run() {
 }
 
 void Engine::Initialize() {
+  LOG << "Initializing engine.";
+
   thread_pool_.Initialize();
 
   CreateRenderer(true);
@@ -203,19 +203,18 @@ void Engine::CreateRenderer(bool vulkan) {
     return;
 
   if (vulkan)
-    renderer_ = std::make_unique<RendererVulkan>();
+    renderer_ =
+        std::make_unique<RendererVulkan>(std::bind(&Engine::ContextLost, this));
   else
-    renderer_ = std::make_unique<RendererOpenGL>();
-  renderer_->SetContextLostCB(std::bind(&Engine::ContextLost, this));
+    renderer_ =
+        std::make_unique<RendererOpenGL>(std::bind(&Engine::ContextLost, this));
 
-  bool result = InitializeRenderer();
-  LOG_IF(!result) << "Failed to initialize " << renderer_->GetDebugName()
-                  << " renderer.";
+  bool result = renderer_->Initialize(platform_);
   if (!result && vulkan) {
+    LOG << "Failed to initialize " << renderer_->GetDebugName() << " renderer.";
     LOG << "Fallback to OpenGL renderer.";
-    renderer_ = std::make_unique<RendererOpenGL>();
-    renderer_->SetContextLostCB(std::bind(&Engine::ContextLost, this));
-    result = InitializeRenderer();
+    CreateRenderer(false);
+    return;
   }
   CHECK(result) << "Failed to initialize " << renderer_->GetDebugName()
                 << " renderer.";
@@ -480,7 +479,7 @@ bool Engine::IsMobile() const {
 }
 
 void Engine::OnWindowCreated() {
-  InitializeRenderer();
+  renderer_->Initialize(platform_);
 }
 
 void Engine::OnWindowDestroyed() {
@@ -491,7 +490,7 @@ void Engine::OnWindowResized(int width, int height) {
   if (width != renderer_->screen_width() ||
       height != renderer_->screen_height()) {
     renderer_->Shutdown();
-    InitializeRenderer();
+    renderer_->Initialize(platform_);
   }
 }
 
@@ -544,14 +543,6 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
   }
 
   input_queue_.push_back(std::move(event));
-}
-
-bool Engine::InitializeRenderer() {
-#if defined(__ANDROID__)
-  return renderer_->Initialize(platform_->GetWindow());
-#elif defined(__linux__)
-  return renderer_->Initialize(platform_->GetDisplay(), platform_->GetWindow());
-#endif
 }
 
 void Engine::CreateTextureCompressors() {

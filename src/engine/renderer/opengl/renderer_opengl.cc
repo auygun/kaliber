@@ -40,8 +40,9 @@ const std::string kAttributeNames[eng::kAttribType_Max] = {
 namespace eng {
 
 #ifdef THREADED_RENDERING
-RendererOpenGL::RendererOpenGL()
-    : main_thread_task_runner_(TaskRunner::GetThreadLocalTaskRunner()) {}
+RendererOpenGL::RendererOpenGL(base::Closure context_lost_cb)
+    : Renderer(context_lost_cb),
+      main_thread_task_runner_(TaskRunner::GetThreadLocalTaskRunner()) {}
 #else
 RendererOpenGL::RendererOpenGL() = default;
 #endif  // THREADED_RENDERING

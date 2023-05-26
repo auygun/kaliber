@@ -338,6 +338,8 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
 }
 
 Platform::Platform(android_app* app) {
+  LOG << "Initializing platform.";
+
   app_ = app;
   mobile_device_ = true;
 

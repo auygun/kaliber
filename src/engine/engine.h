@@ -231,8 +231,6 @@ class Engine : public PlatformObserver {
   void GainedFocus(bool from_interstitial_ad) final;
   void AddInputEvent(std::unique_ptr<InputEvent> event) final;
 
-  bool InitializeRenderer();
-
   void CreateTextureCompressors();
 
   void ContextLost();

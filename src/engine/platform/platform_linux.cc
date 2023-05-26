@@ -14,6 +14,8 @@ namespace eng {
 void KaliberMain(Platform* platform);
 
 Platform::Platform() {
+  LOG << "Initializing platform.";
+
   root_path_ = "../../";
   LOG << "Root path: " << root_path_.c_str();
 
