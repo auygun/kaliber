@@ -35,9 +35,11 @@ VulkanContext::~VulkanContext() {
 }
 
 bool VulkanContext::Initialize() {
-  if (volkInitialize() != VK_SUCCESS) {
+  if (instance_ != VK_NULL_HANDLE)
+    return true;
+
+  if (volkInitialize() != VK_SUCCESS)
     return false;
-  }
 
   if (!CreatePhysicalDevice())
     return false;
