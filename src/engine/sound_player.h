@@ -7,15 +7,14 @@
 
 namespace eng {
 
-class Sound;
+class AudioBus;
 
 class SoundPlayer {
  public:
   SoundPlayer();
   ~SoundPlayer();
 
-  void SetSound(std::shared_ptr<Sound> sound);
-  void SetSound(std::unique_ptr<Sound> sound);
+  void SetSound(std::shared_ptr<AudioBus> sound);
 
   void Play(bool loop, float fade_in_duration = 0);
 
@@ -37,7 +36,7 @@ class SoundPlayer {
 
  private:
   uint64_t resource_id_ = 0;
-  std::shared_ptr<Sound> sound_;
+  std::shared_ptr<AudioBus> sound_;
 
   float max_amplitude_ = 1.0f;
 

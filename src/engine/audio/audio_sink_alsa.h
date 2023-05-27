@@ -22,7 +22,7 @@ class AudioSinkAlsa final : public AudioSink {
   void Suspend() final;
   void Resume() final;
 
-  int GetHardwareSampleRate() final;
+  size_t GetHardwareSampleRate() final;
 
  private:
   // Handle for the PCM device.
@@ -33,7 +33,7 @@ class AudioSinkAlsa final : public AudioSink {
   std::atomic<bool> suspend_audio_thread_{false};
 
   size_t num_channels_ = 0;
-  int sample_rate_ = 0;
+  size_t sample_rate_ = 0;
   size_t period_size_ = 0;
 
   AudioSinkDelegate* delegate_ = nullptr;

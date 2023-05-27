@@ -22,7 +22,7 @@ class AudioSinkOboe final : public AudioSink {
   void Suspend() final;
   void Resume() final;
 
-  int GetHardwareSampleRate() final;
+  size_t GetHardwareSampleRate() final;
 
  private:
   class StreamCallback final : public oboe::AudioStreamCallback {

@@ -1,16 +1,18 @@
 // Copyright 2012 The Chromium Authors
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+//
+// Modified for Kaliber engine.
 
-#ifndef BASE_SINC_RESAMPLER_H
-#define BASE_SINC_RESAMPLER_H
+#ifndef ENGINE_AUDIO__SINC_RESAMPLER_H
+#define ENGINE_AUDIO__SINC_RESAMPLER_H
 
 #include <functional>
 #include <memory>
 
 #include "base/mem.h"
 
-namespace base {
+namespace eng {
 
 // SincResampler is a high-quality single-channel sample-rate converter.
 class SincResampler {
@@ -163,12 +165,12 @@ class SincResampler {
   // Contains kKernelOffsetCount kernels back-to-back, each of size
   // `kernel_size_`. The kernel offsets are sub-sample shifts of a windowed sinc
   // shifted from 0.0 to 1.0 sample.
-  AlignedMemPtr<float[]> kernel_storage_;
-  AlignedMemPtr<float[]> kernel_pre_sinc_storage_;
-  AlignedMemPtr<float[]> kernel_window_storage_;
+  base::AlignedMemPtr<float[]> kernel_storage_;
+  base::AlignedMemPtr<float[]> kernel_pre_sinc_storage_;
+  base::AlignedMemPtr<float[]> kernel_window_storage_;
 
   // Data from the source is copied into this buffer for each processing pass.
-  AlignedMemPtr<float[]> input_buffer_;
+  base::AlignedMemPtr<float[]> input_buffer_;
 
   // Stores the runtime selection of which Convolve function to use.
   using ConvolveProc =
@@ -184,6 +186,6 @@ class SincResampler {
   float* r4_;
 };
 
-}  // namespace base
+}  // namespace eng
 
-#endif  // BASE_SINC_RESAMPLER_H
+#endif  // ENGINE_AUDIO__SINC_RESAMPLER_H

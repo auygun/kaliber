@@ -474,7 +474,7 @@ const std::string& Engine::GetSharedDataPath() const {
   return platform_->GetSharedDataPath();
 }
 
-int Engine::GetAudioHardwareSampleRate() {
+size_t Engine::GetAudioHardwareSampleRate() {
   return audio_mixer_->GetHardwareSampleRate();
 }
 

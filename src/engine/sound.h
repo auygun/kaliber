@@ -5,11 +5,9 @@
 #include <memory>
 #include <string>
 
-typedef struct mp3dec_ex mp3dec_ex_t;
+#include "engine/audio/audio_bus.h"
 
-namespace base {
-class SincResampler;
-}  // namespace base
+typedef struct mp3dec_ex mp3dec_ex_t;
 
 namespace eng {
 
@@ -17,61 +15,30 @@ namespace eng {
 // files. Resamples the decoded audio to match the system sample rate if
 // necessary. Non-streaming sounds Can be shared between multiple audio
 // resources and played simultaneously.
-class Sound {
+class Sound final : public AudioBus {
  public:
   Sound();
-  ~Sound();
+  ~Sound() final;
 
   bool Load(const std::string& file_name, bool stream);
 
-  bool Stream(bool loop);
-
-  void SwapBuffers();
-
-  void ResetStream();
-
-  float* GetBuffer(int channel) const;
-
-  size_t GetNumSamples() const { return num_samples_front_; }
-
-  size_t num_channels() const { return num_channels_; }
-  int sample_rate() const { return sample_rate_; }
-
-  bool is_streaming_sound() const { return is_streaming_sound_; }
-
-  bool eof() const { return eof_; }
+  // AudioBus interface
+  void Stream(bool loop) final;
+  void SwapBuffers() final;
+  void ResetStream() final;
+  bool IsEndOfStream() const final { return eos_; }
 
  private:
   // Buffer holding decoded audio.
-  std::unique_ptr<float[]> back_buffer_[2];
-  std::unique_ptr<float[]> front_buffer_[2];
-
-  size_t num_samples_back_ = 0;
-  size_t num_samples_front_ = 0;
-  size_t max_samples_ = 0;
-
-  size_t cur_sample_front_ = 0;
-  size_t cur_sample_back_ = 0;
-
-  size_t num_channels_ = 0;
-  int sample_rate_ = 0;
-
-  int hw_sample_rate_ = 0;
+  std::unique_ptr<float[]> interleaved_data_;
+  size_t samples_per_channel_ = 0;
 
   std::unique_ptr<char[]> encoded_data_;
-
   std::unique_ptr<mp3dec_ex_t> mp3_dec_;
+  uint64_t read_pos_ = 0;
+  bool eos_ = false;
 
-  std::unique_ptr<base::SincResampler> resampler_[2];
-
-  bool eof_ = false;
-
-  bool is_streaming_sound_ = false;
-
-  bool StreamInternal(size_t num_samples, bool loop);
-
-  void Preprocess(std::unique_ptr<float[]> input_buffer,
-                  size_t samples_per_channel);
+  void StreamInternal(size_t num_samples, bool loop);
 };
 
 }  // namespace eng

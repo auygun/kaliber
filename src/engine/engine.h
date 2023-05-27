@@ -137,7 +137,7 @@ class Engine : public PlatformObserver {
 
   const std::string& GetSharedDataPath() const;
 
-  int GetAudioHardwareSampleRate();
+  size_t GetAudioHardwareSampleRate();
 
   bool IsMobile() const;
 

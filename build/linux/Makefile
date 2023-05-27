@@ -78,7 +78,6 @@ objs_from_src_in = $(call objs_from_src, $(shell find $(1) -name "*.cc" -o -name
 BASE_SRC := \
   $(SRC_ROOT)/base/collusion_test.cc \
   $(SRC_ROOT)/base/log.cc \
-  $(SRC_ROOT)/base/sinc_resampler.cc \
   $(SRC_ROOT)/base/task_runner.cc \
   $(SRC_ROOT)/base/thread_pool.cc \
   $(SRC_ROOT)/base/timer.cc
@@ -95,8 +94,10 @@ $(BASE_LIB): $(BASE_OBJS)
 ENGINE_SRC := \
   $(SRC_ROOT)/engine/animatable.cc \
   $(SRC_ROOT)/engine/animator.cc \
+  $(SRC_ROOT)/engine/audio/audio_bus.cc \
   $(SRC_ROOT)/engine/audio/audio_mixer.cc \
   $(SRC_ROOT)/engine/audio/audio_sink_alsa.cc \
+  $(SRC_ROOT)/engine/audio/sinc_resampler.cc \
   $(SRC_ROOT)/engine/drawable.cc \
   $(SRC_ROOT)/engine/engine.cc \
   $(SRC_ROOT)/engine/font.cc \

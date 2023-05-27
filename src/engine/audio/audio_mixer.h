@@ -17,7 +17,7 @@ class TaskRunner;
 namespace eng {
 
 class AudioSink;
-class Sound;
+class AudioBus;
 
 // Mix and render audio with low overhead. A platform specific AudioSink
 // implementation is expected to periodically call RenderAudio() in a background
@@ -31,7 +31,7 @@ class AudioMixer : public AudioSinkDelegate {
   void DestroyResource(uint64_t resource_id);
 
   void Play(uint64_t resource_id,
-            std::shared_ptr<Sound> sound,
+            std::shared_ptr<AudioBus> sound,
             float amplitude,
             bool reset_pos);
   void Stop(uint64_t resource_id);
@@ -48,7 +48,7 @@ class AudioMixer : public AudioSinkDelegate {
   void Suspend();
   void Resume();
 
-  int GetHardwareSampleRate();
+  size_t GetHardwareSampleRate();
 
  private:
   enum SampleFlags { kLoop = 1, kStopped = 2, kSimulateStereo = 4 };
@@ -62,7 +62,7 @@ class AudioMixer : public AudioSinkDelegate {
     base::Closure restart_cb;
 
     // Initialized by main thread, used by audio thread.
-    std::shared_ptr<Sound> sound;
+    std::shared_ptr<AudioBus> sound;
     size_t src_index = 0;
     size_t accumulator = 0;
     float amplitude = 1.0f;

@@ -49,7 +49,6 @@ project(kaliber)
 add_library(kaliber SHARED
     ../../../src/base/collusion_test.cc
     ../../../src/base/log.cc
-    ../../../src/base/sinc_resampler.cc
     ../../../src/base/task_runner.cc
     ../../../src/base/thread_pool.cc
     ../../../src/base/timer.cc
@@ -62,8 +61,10 @@ add_library(kaliber SHARED
     ../../../src/demo/sky_quad.cc
     ../../../src/engine/animatable.cc
     ../../../src/engine/animator.cc
+    ../../../src/engine/audio/audio_bus.cc
     ../../../src/engine/audio/audio_mixer.cc
     ../../../src/engine/audio/audio_sink_oboe.cc
+    ../../../src/engine/audio/sinc_resampler.cc
     ../../../src/engine/drawable.cc
     ../../../src/engine/engine.cc
     ../../../src/engine/font.cc

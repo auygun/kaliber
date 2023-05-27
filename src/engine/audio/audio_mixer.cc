@@ -5,7 +5,7 @@
 #include "base/log.h"
 #include "base/task_runner.h"
 #include "base/thread_pool.h"
-#include "engine/sound.h"
+#include "engine/audio/audio_bus.h"
 
 #if defined(__ANDROID__)
 #include "engine/audio/audio_sink_oboe.h"
@@ -49,7 +49,7 @@ void AudioMixer::DestroyResource(uint64_t resource_id) {
 }
 
 void AudioMixer::Play(uint64_t resource_id,
-                      std::shared_ptr<Sound> sound,
+                      std::shared_ptr<AudioBus> sound,
                       float amplitude,
                       bool reset_pos) {
   if (!audio_enabled_)
@@ -76,6 +76,8 @@ void AudioMixer::Play(uint64_t resource_id,
     it->second->src_index = 0;
     it->second->accumulator = 0;
     sound->ResetStream();
+  } else if (it->second->src_index >= sound->samples_per_channel()) {
+    return;
   }
 
   it->second->active = true;
@@ -161,7 +163,7 @@ void AudioMixer::Resume() {
   audio_sink_->Resume();
 }
 
-int AudioMixer::GetHardwareSampleRate() {
+size_t AudioMixer::GetHardwareSampleRate() {
   return audio_sink_->GetHardwareSampleRate();
 }
 
@@ -182,11 +184,12 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
     if (flags & kStopped) {
       marked_for_removal = true;
     } else {
-      const float* src[2] = {sound->GetBuffer(0), sound->GetBuffer(1)};
+      const float* src[2] = {sound->GetChannelData(0),
+                             sound->GetChannelData(1)};
       if (!src[1])
         src[1] = src[0];  // mono.
 
-      size_t num_samples = sound->GetNumSamples();
+      size_t num_samples = sound->samples_per_channel();
       size_t src_index = it->get()->src_index;
       size_t step = it->get()->step.load(std::memory_order_relaxed);
       size_t accumulator = it->get()->accumulator;
@@ -195,71 +198,59 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
           it->get()->amplitude_inc.load(std::memory_order_relaxed);
       float max_amplitude =
           it->get()->max_amplitude.load(std::memory_order_relaxed);
-
       size_t channel_offset =
-          (flags & kSimulateStereo) && !sound->is_streaming_sound()
-              ? sound->sample_rate() / 10
-              : 0;
+          (flags & kSimulateStereo) ? sound->sample_rate() / 10 : 0;
 
-      DCHECK(num_samples || sound->is_streaming_sound());
+      DCHECK(num_samples > 0);
 
       for (size_t i = 0; i < num_frames * kChannelCount;) {
-        if (num_samples) {
-          // Mix the 1st channel.
-          output_buffer[i++] += src[0][src_index] * amplitude;
+        // Mix the 1st channel.
+        output_buffer[i++] += src[0][src_index] * amplitude;
 
-          // Mix the 2nd channel. Offset the source index for stereo simulation.
-          size_t ind = channel_offset + src_index;
-          if (ind < num_samples)
-            output_buffer[i++] += src[1][ind] * amplitude;
-          else if (flags & kLoop)
-            output_buffer[i++] += src[1][ind % num_samples] * amplitude;
-          else
-            i++;
+        // Mix the 2nd channel. Offset the source index for stereo simulation.
+        size_t ind = channel_offset + src_index;
+        if (ind < num_samples)
+          output_buffer[i++] += src[1][ind] * amplitude;
+        else if (flags & kLoop)
+          output_buffer[i++] += src[1][ind % num_samples] * amplitude;
+        else
+          i++;
 
-          // Apply amplitude modification.
-          amplitude += amplitude_inc;
-          if (amplitude <= 0) {
-            marked_for_removal = true;
-            break;
-          } else if (amplitude > max_amplitude) {
-            amplitude = max_amplitude;
-          }
-
-          // Advance source index. Apply basic resampling for variations.
-          accumulator += step;
-          src_index += accumulator / 100;
-          accumulator %= 100;
+        // Apply amplitude modification.
+        amplitude += amplitude_inc;
+        if (amplitude <= 0) {
+          marked_for_removal = true;
+          break;
+        } else if (amplitude > max_amplitude) {
+          amplitude = max_amplitude;
         }
+
+        // Advance source index. Apply basic resampling for variations.
+        accumulator += step;
+        src_index += accumulator / 100;
+        accumulator %= 100;
 
         // Remove, loop or stream if the source data is consumed
         if (src_index >= num_samples) {
-          if (num_samples)
-            src_index %= num_samples;
+          src_index %= num_samples;
 
-          if (!sound->is_streaming_sound()) {
-            if (!(flags & kLoop)) {
-              marked_for_removal = true;
-              break;
-            }
-          } else if (!it->get()->streaming_in_progress.load(
-                         std::memory_order_acquire)) {
-            if (sound->eof()) {
-              DCHECK((flags & kLoop) == 0);
-              marked_for_removal = true;
-              break;
-            }
+          if (sound->IsEndOfStream()) {
+            marked_for_removal = true;
+            break;
+          }
 
+          if (!it->get()->streaming_in_progress.load(
+                  std::memory_order_acquire)) {
             it->get()->streaming_in_progress.store(true,
                                                    std::memory_order_relaxed);
 
             // Swap buffers and start streaming in background.
             sound->SwapBuffers();
-            src[0] = sound->GetBuffer(0);
-            src[1] = sound->GetBuffer(1);
+            src[0] = sound->GetChannelData(0);
+            src[1] = sound->GetChannelData(1);
             if (!src[1])
               src[1] = src[0];  // mono.
-            num_samples = sound->GetNumSamples();
+            num_samples = sound->samples_per_channel();
 
             ThreadPool::Get().PostTask(
                 HERE,
@@ -284,8 +275,7 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
   }
 
   for (auto it = end_list_.begin(); it != end_list_.end();) {
-    if ((!it->get()->sound->is_streaming_sound() ||
-         !it->get()->streaming_in_progress.load(std::memory_order_relaxed))) {
+    if (!it->get()->streaming_in_progress.load(std::memory_order_relaxed)) {
       main_thread_task_runner_->PostTask(
           HERE, std::bind(&AudioMixer::EndCallback, this, *it));
       it = end_list_.erase(it);

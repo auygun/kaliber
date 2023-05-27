@@ -15,7 +15,7 @@ class AudioSink {
   virtual void Suspend() = 0;
   virtual void Resume() = 0;
 
-  virtual int GetHardwareSampleRate() = 0;
+  virtual size_t GetHardwareSampleRate() = 0;
 
  private:
   AudioSink(const AudioSink&) = delete;

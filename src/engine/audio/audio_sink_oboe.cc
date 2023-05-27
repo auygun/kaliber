@@ -29,7 +29,7 @@ void AudioSinkOboe::Resume() {
   stream_->start();
 }
 
-int AudioSinkOboe::GetHardwareSampleRate() {
+size_t AudioSinkOboe::GetHardwareSampleRate() {
   return stream_->getSampleRate();
 }
 

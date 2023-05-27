@@ -74,7 +74,7 @@
 // Note: we're glossing over how the sub-sample handling works with
 // |virtual_source_idx_|, etc.
 
-#include "base/sinc_resampler.h"
+#include "engine/audio/sinc_resampler.h"
 
 #include <cmath>
 #include <cstring>
@@ -94,7 +94,9 @@
 #include <arm_neon.h>
 #endif
 
-namespace base {
+using namespace base;
+
+namespace eng {
 
 namespace {
 
@@ -257,14 +259,14 @@ void SincResampler::InitializeKernel() {
     for (int i = 0; i < kernel_size_; ++i) {
       const int idx = i + offset_idx * kernel_size_;
       const float pre_sinc =
-          base::kPiFloat * (i - kernel_size_ / 2 - subsample_offset);
+          kPiFloat * (i - kernel_size_ / 2 - subsample_offset);
       kernel_pre_sinc_storage_[idx] = pre_sinc;
 
       // Compute Blackman window, matching the offset of the sinc().
       const float x = (i - subsample_offset) / kernel_size_;
       const float window =
-          static_cast<float>(kA0 - kA1 * cos(2.0 * base::kPiDouble * x) +
-                             kA2 * cos(4.0 * base::kPiDouble * x));
+          static_cast<float>(kA0 - kA1 * cos(2.0 * kPiDouble * x) +
+                             kA2 * cos(4.0 * kPiDouble * x));
       kernel_window_storage_[idx] = window;
 
       // Compute the sinc with offset, then window the sinc() function and store
@@ -545,4 +547,4 @@ float SincResampler::Convolve_NEON(const int kernel_size,
 }
 #endif
 
-}  // namespace base
+}  // namespace eng

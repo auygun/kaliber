@@ -2,9 +2,9 @@
 
 #include "base/interpolation.h"
 #include "base/log.h"
+#include "engine/audio/audio_bus.h"
 #include "engine/audio/audio_mixer.h"
 #include "engine/engine.h"
-#include "engine/sound.h"
 
 using namespace base;
 
@@ -17,14 +17,8 @@ SoundPlayer::~SoundPlayer() {
   Engine::Get().GetAudioMixer()->DestroyResource(resource_id_);
 }
 
-void SoundPlayer::SetSound(std::shared_ptr<Sound> sound) {
-  CHECK(!sound->is_streaming_sound()) << "Streaming sound cannot be shared.";
-
+void SoundPlayer::SetSound(std::shared_ptr<AudioBus> sound) {
   sound_ = sound;
-}
-
-void SoundPlayer::SetSound(std::unique_ptr<Sound> sound) {
-  sound_ = std::move(sound);
 }
 
 void SoundPlayer::Play(bool loop, float fade_in_duration) {
