@@ -22,8 +22,6 @@
 #include "engine/shader_source.h"
 #include "third_party/texture_compressor/texture_compressor.h"
 
-#define USE_VULKAN_RENDERER 1
-
 using namespace base;
 
 namespace eng {
@@ -519,13 +517,13 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
     case InputEvent::kDragEnd:
       if (((GetScreenSize() / 2) * 0.9f - event->GetVector()).Length() <=
           0.25f) {
-        SetSatsVisible(!stats_->IsVisible());
+        SetStatsVisible(!stats_->IsVisible());
         // TODO: Enqueue DragCancel so we can consume this event.
       }
       break;
     case InputEvent::kKeyPress:
       if (event->GetKeyPress() == 's') {
-        SetSatsVisible(!stats_->IsVisible());
+        SetStatsVisible(!stats_->IsVisible());
         // Consume event.
         return;
       }
@@ -619,7 +617,7 @@ void Engine::ContextLost() {
     game_->ContextLost();
 }
 
-void Engine::SetSatsVisible(bool visible) {
+void Engine::SetStatsVisible(bool visible) {
   stats_->SetVisible(visible);
   if (visible)
     stats_->Create("stats_tex");

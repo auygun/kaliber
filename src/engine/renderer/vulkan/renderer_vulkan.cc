@@ -907,7 +907,7 @@ bool RendererVulkan::InitializeInternal() {
   }
 
   // In this simple engine we use only one descriptor set layout that is for
-  // textures. We use push contants for everything else.
+  // textures. We use push constants for everything else.
   VkDescriptorSetLayoutBinding ds_layout_binding;
   ds_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
   ds_layout_binding.descriptorCount = 1;

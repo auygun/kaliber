@@ -235,7 +235,7 @@ class Engine : public PlatformObserver {
 
   void ContextLost();
 
-  void SetSatsVisible(bool visible);
+  void SetStatsVisible(bool visible);
   std::unique_ptr<Image> PrintStats();
 
   Engine(const Engine&) = delete;

@@ -1,0 +1,6 @@
+#!/bin/bash
+BUILD="$1"
+if [[ -z "$1" ]]; then
+    BUILD="debug"
+fi
+adb logcat | ndk-stack -sym ./app/build/intermediates/merged_native_libs/"$BUILD"/out/lib/arm64-v8a
