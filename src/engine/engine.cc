@@ -22,8 +22,6 @@
 #include "engine/shader_source.h"
 #include "third_party/texture_compressor/texture_compressor.h"
 
-#define USE_VULKAN_RENDERER 1
-
 using namespace base;
 
 namespace eng {
