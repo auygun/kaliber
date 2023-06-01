@@ -350,8 +350,8 @@ void Enemy::HitTarget(DamageType damage_type) {
 
   if (target->damage_type != kDamageType_Any &&
       target->damage_type != damage_type) {
-    // No shield until wave 4.
-    if (wave_ <= 3)
+    // No shield until wave 8.
+    if (wave_ <= 8)
       return;
 
     if (!target->shield_active) {

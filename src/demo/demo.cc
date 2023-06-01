@@ -261,15 +261,15 @@ void Demo::EnterGameOverState() {
   hud_.ShowMessage("Game Over", 3);
   state_ = kGameOver;
 
-  if (boss_fight_) {
-    music_.Resume(10);
-    boss_music_.Stop(10);
-  }
-
   SetDelayedWork(1, [&]() -> void {
     enemy_.RemoveAll();
-    // hud_.Hide();
     SetDelayedWork(3, [&]() -> void {
+      if (saved_data_.root().get("music", Json::Value(true)).asBool()) {
+        if (boss_fight_) {
+          music_.Resume(10);
+          boss_music_.Stop(10);
+        }
+      }
       wave_ = 0;
       boss_fight_ = false;
       EnterMenuState();
@@ -396,14 +396,6 @@ void Demo::StartNextStage(bool boss) {
   enemy_.PauseProgress();
   enemy_.StopAllEnemyUnits();
 
-  if (boss) {
-    boss_music_.Play(true, 10);
-    music_.Stop(10);
-  } else if (boss_fight_) {
-    music_.Resume(10);
-    boss_music_.Stop(10);
-  }
-
   SetDelayedWork(1.25f, [&, boss]() -> void {
     enemy_.KillAllEnemyUnits();
 
@@ -413,6 +405,10 @@ void Demo::StartNextStage(bool boss) {
 
         hud_.HideProgress();
 
+        if (saved_data_.root().get("music", Json::Value(true)).asBool()) {
+          boss_music_.Play(true, 10);
+          music_.Stop(10);
+        }
         boss_fight_ = true;
         DLOG << "Boss fight.";
       } else {
@@ -455,8 +451,13 @@ void Demo::StartNextStage(bool boss) {
         hud_.Show();
         hud_.SetProgress(1);
 
-        if (boss_fight_)
+        if (boss_fight_) {
           player_.TakeDamage(-1);
+          if (saved_data_.root().get("music", Json::Value(true)).asBool()) {
+            music_.Resume(10);
+            boss_music_.Stop(10);
+          }
+        }
 
         total_enemies_ = 23.0897f * log((float)wave_ + 1.0f) - 10.0f;
         last_num_enemies_killed_ = 0;
