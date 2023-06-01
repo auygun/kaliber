@@ -20,17 +20,18 @@ namespace eng {
 
 class Animator;
 class AudioMixer;
+class Drawable;
 class Font;
 class Game;
-class Drawable;
-class InputEvent;
+class Geometry;
 class Image;
 class ImageQuad;
+class InputEvent;
+class Platform;
 class Renderer;
-class Geometry;
 class Shader;
 class Texture;
-class Platform;
+enum class RendererType;
 
 class Engine : public PlatformObserver {
  public:
@@ -49,7 +50,8 @@ class Engine : public PlatformObserver {
   void AddAnimator(Animator* animator);
   void RemoveAnimator(Animator* animator);
 
-  void CreateRenderer(bool vulkan);
+  void CreateRenderer(RendererType type);
+  RendererType GetRendererType();
 
   void Exit();
 

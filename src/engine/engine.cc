@@ -106,7 +106,7 @@ void Engine::Initialize() {
 
   thread_pool_.Initialize();
 
-  CreateRenderer(true);
+  CreateRenderer(RendererType::kVulkan);
 
   // Normalize viewport.
   if (GetScreenWidth() > GetScreenHeight()) {
@@ -201,23 +201,27 @@ void Engine::RemoveAnimator(Animator* animator) {
   }
 }
 
-void Engine::CreateRenderer(bool vulkan) {
-  if ((dynamic_cast<RendererVulkan*>(renderer_.get()) && vulkan) ||
-      (dynamic_cast<RendererOpenGL*>(renderer_.get()) && !vulkan))
+void Engine::CreateRenderer(RendererType type) {
+  if ((dynamic_cast<RendererVulkan*>(renderer_.get()) &&
+       type == RendererType::kVulkan) ||
+      (dynamic_cast<RendererOpenGL*>(renderer_.get()) &&
+       type == RendererType::kOpenGL))
     return;
 
-  if (vulkan)
+  if (type == RendererType::kVulkan)
     renderer_ =
         std::make_unique<RendererVulkan>(std::bind(&Engine::ContextLost, this));
-  else
+  else if (type == RendererType::kOpenGL)
     renderer_ =
         std::make_unique<RendererOpenGL>(std::bind(&Engine::ContextLost, this));
+  else
+    NOTREACHED;
 
   bool result = renderer_->Initialize(platform_);
-  if (!result && vulkan) {
+  if (!result && type == RendererType::kVulkan) {
     LOG << "Failed to initialize " << renderer_->GetDebugName() << " renderer.";
     LOG << "Fallback to OpenGL renderer.";
-    CreateRenderer(false);
+    CreateRenderer(RendererType::kOpenGL);
     return;
   }
   CHECK(result) << "Failed to initialize " << renderer_->GetDebugName()
@@ -225,6 +229,12 @@ void Engine::CreateRenderer(bool vulkan) {
 
   CreateTextureCompressors();
   ContextLost();
+}
+
+RendererType Engine::GetRendererType() {
+  if (renderer_)
+    return renderer_->GetRendererType();
+  return RendererType::kUnknown;
 }
 
 void Engine::Exit() {

@@ -86,6 +86,8 @@ class RendererOpenGL final : public Renderer {
 
   const char* GetDebugName() final { return "OpenGL"; }
 
+  RendererType GetRendererType() final { return RendererType::kOpenGL; }
+
  private:
   struct GeometryOpenGL {
     struct Element {

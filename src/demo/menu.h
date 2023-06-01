@@ -55,12 +55,16 @@ class Menu {
                 int frame2,
                 base::Closure pressed_cb,
                 bool switch_control,
-                bool enabled);
+                bool enabled,
+                const base::Vector4f& fade_out_color,
+                const std::array<base::Vector4f, 2>& switch_color);
 
     bool OnInputEvent(eng::InputEvent* event);
 
     void Show();
     void Hide();
+
+    void SetEnabled(bool enable);
 
     eng::ImageQuad& image() { return image_; };
 
@@ -77,7 +81,8 @@ class Menu {
     bool enabled_ = false;
     base::Vector2f tap_pos_[2] = {{0, 0}, {0, 0}};
 
-    void SetEnabled(bool enable);
+    base::Vector4f fade_out_color_;
+    std::array<base::Vector4f, 2> switch_color_;
   };
 
   class Radio {
@@ -126,6 +131,7 @@ class Menu {
   Button toggle_audio_;
   Button toggle_music_;
   Button toggle_vibration_;
+  Button renderer_type_;
 
   size_t high_score_value_ = 0;
 

@@ -69,6 +69,8 @@ class RendererVulkan final : public Renderer {
 
   const char* GetDebugName() final { return "Vulkan"; }
 
+  RendererType GetRendererType() final { return RendererType::kVulkan; }
+
  private:
   // VkBuffer or VkImage with allocator.
   template <typename T>

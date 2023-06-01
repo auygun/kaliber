@@ -15,6 +15,8 @@ class ShaderSource;
 class Mesh;
 class Platform;
 
+enum class RendererType { kUnknown, kVulkan, kOpenGL };
+
 class Renderer {
  public:
   const unsigned kInvalidId = 0;
@@ -81,6 +83,8 @@ class Renderer {
   virtual size_t GetAndResetFPS() = 0;
 
   virtual const char* GetDebugName() = 0;
+
+  virtual RendererType GetRendererType() { return RendererType::kUnknown; }
 
  protected:
   struct TextureCompression {

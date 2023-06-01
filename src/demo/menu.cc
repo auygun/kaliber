@@ -11,6 +11,7 @@
 #include "engine/font.h"
 #include "engine/image.h"
 #include "engine/input_event.h"
+#include "engine/renderer/renderer.h"
 #include "engine/sound.h"
 
 #include "demo/demo.h"
@@ -33,9 +34,10 @@ const Vector4f kColorNormal = {1, 1, 1, 1};
 const Vector4f kColorHighlight = {20, 20, 20, 1};
 constexpr float kBlendingSpeed = 0.12f;
 
-const Vector4f kColorSwitch[2] = {{0.003f, 0.91f, 0.99f, 1},
-                                  {0.33f, 0.47, 0.51f, 1}};
+const std::array<Vector4f, 2> kColorSwitch = {Vector4f{0.003f, 0.91f, 0.99f, 1},
+                                              Vector4f{0.33f, 0.47, 0.51f, 1}};
 
+const Vector4f kColorFadeIn = {1, 1, 1, 1};
 const Vector4f kColorFadeOut = {1, 1, 1, 0};
 constexpr float kFadeSpeed = 0.2f;
 
@@ -150,7 +152,8 @@ bool Menu::Initialize() {
         }
         game->saved_data().root()["audio"] = toggle_audio_.enabled();
       },
-      true, game->saved_data().root().get("audio", Json::Value(true)).asBool());
+      true, game->saved_data().root().get("audio", Json::Value(true)).asBool(),
+      kColorFadeOut, kColorSwitch);
   toggle_audio_.image().SetPosition(Engine::Get().GetScreenSize() *
                                     Vector2f(0, -0.25f));
   toggle_audio_.image().Scale(0.7f);
@@ -162,7 +165,8 @@ bool Menu::Initialize() {
         game->SetEnableMusic(toggle_music_.enabled());
         game->saved_data().root()["music"] = toggle_music_.enabled();
       },
-      true, game->saved_data().root().get("music", Json::Value(true)).asBool());
+      true, game->saved_data().root().get("music", Json::Value(true)).asBool(),
+      kColorFadeOut, kColorSwitch);
   toggle_music_.image().SetPosition(Engine::Get().GetScreenSize() *
                                     Vector2f(0, -0.25f));
   toggle_music_.image().Scale(0.7f);
@@ -177,7 +181,8 @@ bool Menu::Initialize() {
         game->saved_data().root()["vibration"] = toggle_vibration_.enabled();
       },
       true,
-      game->saved_data().root().get("vibration", Json::Value(true)).asBool());
+      game->saved_data().root().get("vibration", Json::Value(true)).asBool(),
+      kColorFadeOut, kColorSwitch);
   toggle_vibration_.image().SetPosition(Engine::Get().GetScreenSize() *
                                         Vector2f(0, -0.25f));
   toggle_vibration_.image().Scale(0.7f);
@@ -187,6 +192,21 @@ bool Menu::Initialize() {
   toggle_vibration_.image().PlaceToRightOf(toggle_music_.image());
   toggle_vibration_.image().Translate(
       {toggle_music_.image().GetSize().x / 2, 0});
+
+  renderer_type_.Create(
+      "renderer_logo", {2, 1}, 0, 1,
+      [&] {
+        Engine::Get().CreateRenderer(renderer_type_.enabled()
+                                         ? RendererType::kVulkan
+                                         : RendererType::kOpenGL);
+        renderer_type_.SetEnabled(
+            (Engine::Get().GetRendererType() == RendererType::kVulkan));
+      },
+      true, Engine::Get().GetRendererType() == RendererType::kVulkan,
+      kColorFadeOut, {Vector4f{1, 1, 1, 1}, Vector4f{1, 1, 1, 1}});
+  renderer_type_.image().PlaceToBottomOf(toggle_music_.image());
+  renderer_type_.image().Translate(toggle_music_.image().GetPosition() *
+                                   Vector2f(0, 1.1f));
 
   high_score_value_ = game->GetHighScore();
 
@@ -226,7 +246,7 @@ bool Menu::Initialize() {
         starting_wave_.image().SetFrame(start_from_wave_ / 3);
         click_.Play(false);
       },
-      false, true);
+      false, true, kColorFadeOut, kColorSwitch);
   wave_up_.image().Scale(1.5f);
 
   return true;
@@ -236,6 +256,7 @@ void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
   if (toggle_audio_.OnInputEvent(event.get()) ||
       toggle_music_.OnInputEvent(event.get()) ||
       toggle_vibration_.OnInputEvent(event.get()) ||
+      renderer_type_.OnInputEvent(event.get()) ||
       (wave_up_.image().IsVisible() && wave_up_.OnInputEvent(event.get())))
     return;
 
@@ -350,6 +371,7 @@ void Menu::Show() {
   toggle_audio_.Show();
   toggle_music_.Show();
   toggle_vibration_.Show();
+  renderer_type_.Show();
 
   Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
 
@@ -410,6 +432,7 @@ void Menu::Hide(Closure cb) {
   toggle_audio_.Hide();
   toggle_music_.Hide();
   toggle_vibration_.Hide();
+  renderer_type_.Hide();
 
   if (starting_wave_.image().IsVisible()) {
     starting_wave_.Hide();
@@ -425,6 +448,7 @@ bool Menu::CreateRenderResources() {
   Engine::Get().SetImageSource("buttons_tex", "menu_icons.png");
   Engine::Get().SetImageSource("high_score_tex",
                                std::bind(&Menu::CreateHighScoreImage, this));
+  Engine::Get().SetImageSource("renderer_logo", "renderer_logo.png");
 
   Engine::Get().SetImageSource("wave_up_tex", []() -> std::unique_ptr<Image> {
     const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
@@ -520,16 +544,20 @@ void Menu::Button::Create(const std::string& asset_name,
                           int frame2,
                           Closure pressed_cb,
                           bool switch_control,
-                          bool enabled) {
+                          bool enabled,
+                          const Vector4f& fade_out_color,
+                          const std::array<Vector4f, 2>& switch_color) {
   frame1_ = frame1;
   frame2_ = frame2;
   pressed_cb_ = std::move(pressed_cb);
   switch_control_ = switch_control;
   enabled_ = enabled;
+  fade_out_color_ = fade_out_color;
+  switch_color_ = switch_color;
 
   image_.Create(asset_name, num_frames);
   image_.SetFrame(enabled ? frame1 : frame2);
-  image_.SetColor(kColorFadeOut);
+  image_.SetColor(fade_out_color_);
   image_.SetZOrder(41);
   image_.SetVisible(false);
 
@@ -562,14 +590,14 @@ bool Menu::Button::OnInputEvent(eng::InputEvent* event) {
 
 void Menu::Button::Show() {
   animator_.SetVisible(true);
-  animator_.SetBlending(enabled_ ? kColorSwitch[0] : kColorSwitch[1],
+  animator_.SetBlending(enabled_ ? switch_color_[0] : switch_color_[1],
                         kBlendingSpeed);
   animator_.Play(Animator::kBlending, false);
   animator_.SetEndCallback(Animator::kBlending, nullptr);
 }
 
 void Menu::Button::Hide() {
-  animator_.SetBlending(kColorFadeOut, kBlendingSpeed);
+  animator_.SetBlending(fade_out_color_, kBlendingSpeed);
   animator_.Play(Animator::kBlending, false);
   animator_.SetEndCallback(Animator::kBlending,
                            [&]() -> void { animator_.SetVisible(false); });
@@ -579,7 +607,7 @@ void Menu::Button::SetEnabled(bool enable) {
   if (switch_control_) {
     enabled_ = enable;
     image_.SetFrame(enabled_ ? frame1_ : frame2_);
-    image_.SetColor(enabled_ ? kColorSwitch[0] : kColorSwitch[1]);
+    image_.SetColor(enabled_ ? switch_color_[0] : switch_color_[1]);
   }
 }
 
