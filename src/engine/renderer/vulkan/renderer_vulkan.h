@@ -23,8 +23,10 @@ class RendererVulkan final : public Renderer {
   RendererVulkan(base::Closure context_lost_cb);
   ~RendererVulkan() final;
 
-  virtual bool Initialize(Platform* platform) final;
+  bool Initialize(Platform* platform) final;
   void Shutdown() final;
+
+  bool IsInitialzed() const final { return device_ != VK_NULL_HANDLE; }
 
   uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) final;
   void DestroyGeometry(uint64_t resource_id) final;

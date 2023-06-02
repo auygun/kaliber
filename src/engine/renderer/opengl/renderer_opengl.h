@@ -40,8 +40,10 @@ class RendererOpenGL final : public Renderer {
   RendererOpenGL(base::Closure context_lost_cb);
   ~RendererOpenGL() final;
 
-  virtual bool Initialize(Platform* platform) final;
+  bool Initialize(Platform* platform) final;
   void Shutdown() final;
+
+  bool IsInitialzed() const final { return is_initialized_; }
 
   uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) final;
   void DestroyGeometry(uint64_t resource_id) final;
@@ -123,6 +125,8 @@ class RendererOpenGL final : public Renderer {
 
   bool vertex_array_objects_ = false;
   bool npot_ = false;
+
+  bool is_initialized_ = false;
 
 #ifdef THREADED_RENDERING
   // Global commands are independent from frames and guaranteed to be processed.

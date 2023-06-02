@@ -26,6 +26,8 @@ class Renderer {
   virtual bool Initialize(Platform* platform) = 0;
   virtual void Shutdown() = 0;
 
+  virtual bool IsInitialzed() const = 0;
+
   virtual uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) = 0;
   virtual void DestroyGeometry(uint64_t resource_id) = 0;
   virtual void Draw(uint64_t resource_id) = 0;

@@ -53,6 +53,8 @@ RendererOpenGL::~RendererOpenGL() {
 }
 
 void RendererOpenGL::Shutdown() {
+  is_initialized_ = false;
+
 #ifdef THREADED_RENDERING
   if (terminate_render_thread_)
     return;
@@ -312,6 +314,8 @@ bool RendererOpenGL::InitCommon() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   glClearColor(0, 0, 0, 1);
+
+  is_initialized_ = true;
 
   return true;
 }

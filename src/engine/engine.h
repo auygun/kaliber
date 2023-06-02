@@ -199,7 +199,6 @@ class Engine : public PlatformObserver {
   int fps_ = 0;
 
   float seconds_accumulated_ = 0.0f;
-
   float time_step_ = 1.0f / 60.0f;
   size_t tick_ = 0;
 

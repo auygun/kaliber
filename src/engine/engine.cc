@@ -73,6 +73,17 @@ void Engine::Run() {
   float frame_frac = 0.0f;
 
   for (;;) {
+    TaskRunner::GetThreadLocalTaskRunner()->SingleConsumerRun();
+
+    platform_->Update();
+    if (platform_->should_exit())
+      return;
+
+    if (!renderer_->IsInitialzed()) {
+      timer_.Reset();
+      continue;
+    }
+
     Draw(frame_frac);
 
     // Accumulate time.
@@ -81,13 +92,8 @@ void Engine::Run() {
 
     // Subdivide the frame time using fixed time steps.
     while (accumulator >= time_step_) {
-      TaskRunner::GetThreadLocalTaskRunner()->SingleConsumerRun();
-      platform_->Update();
       Update(time_step_);
       accumulator -= time_step_;
-
-      if (platform_->should_exit())
-        return;
     };
 
     // Calculate frame fraction from remainder of the frame time.
