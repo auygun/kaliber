@@ -26,7 +26,7 @@ class Sound final : public AudioBus {
   void Stream(bool loop) final;
   void SwapBuffers() final;
   void ResetStream() final;
-  bool IsEndOfStream() const final { return eos_; }
+  bool EndOfStream() const final { return eos_; }
 
  private:
   // Buffer holding decoded audio.

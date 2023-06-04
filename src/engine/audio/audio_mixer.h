@@ -31,7 +31,7 @@ class AudioMixer : public AudioSink::Delegate {
   void DestroyResource(uint64_t resource_id);
 
   void Play(uint64_t resource_id,
-            std::shared_ptr<AudioBus> sound,
+            std::shared_ptr<AudioBus> audio_bus,
             float amplitude,
             bool reset_pos);
   void Stop(uint64_t resource_id);
@@ -62,7 +62,7 @@ class AudioMixer : public AudioSink::Delegate {
     base::Closure restart_cb;
 
     // Initialized by main thread, used by audio thread.
-    std::shared_ptr<AudioBus> sound;
+    std::shared_ptr<AudioBus> audio_bus;
     size_t src_index = 0;
     size_t accumulator = 0;
     float amplitude = 1.0f;

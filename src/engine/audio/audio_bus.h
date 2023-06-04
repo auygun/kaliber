@@ -19,7 +19,7 @@ class AudioBus {
   virtual void Stream(bool loop) = 0;
   virtual void SwapBuffers() = 0;
   virtual void ResetStream() = 0;
-  virtual bool IsEndOfStream() const = 0;
+  virtual bool EndOfStream() const = 0;
 
   float* GetChannelData(int channel) const {
     return channel_data_[channel].get();

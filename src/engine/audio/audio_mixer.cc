@@ -49,7 +49,7 @@ void AudioMixer::DestroyResource(uint64_t resource_id) {
 }
 
 void AudioMixer::Play(uint64_t resource_id,
-                      std::shared_ptr<AudioBus> sound,
+                      std::shared_ptr<AudioBus> audio_bus,
                       float amplitude,
                       bool reset_pos) {
   if (!audio_enabled_)
@@ -64,9 +64,9 @@ void AudioMixer::Play(uint64_t resource_id,
       it->second->flags.fetch_or(kStopped, std::memory_order_relaxed);
 
     if (it->second->flags.load(std::memory_order_relaxed) & kStopped)
-      it->second->restart_cb = [&, resource_id, sound, amplitude,
+      it->second->restart_cb = [&, resource_id, audio_bus, amplitude,
                                 reset_pos]() -> void {
-        Play(resource_id, sound, amplitude, reset_pos);
+        Play(resource_id, audio_bus, amplitude, reset_pos);
       };
 
     return;
@@ -75,14 +75,14 @@ void AudioMixer::Play(uint64_t resource_id,
   if (reset_pos) {
     it->second->src_index = 0;
     it->second->accumulator = 0;
-    sound->ResetStream();
-  } else if (it->second->src_index >= sound->samples_per_channel()) {
+    audio_bus->ResetStream();
+  } else if (it->second->src_index >= audio_bus->samples_per_channel()) {
     return;
   }
 
   it->second->active = true;
   it->second->flags.fetch_and(~kStopped, std::memory_order_relaxed);
-  it->second->sound = sound;
+  it->second->audio_bus = audio_bus;
   if (amplitude >= 0)
     it->second->amplitude = amplitude;
 
@@ -177,19 +177,19 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
   memset(output_buffer, 0, sizeof(float) * num_frames * kChannelCount);
 
   for (auto it = play_list_[1].begin(); it != play_list_[1].end();) {
-    auto sound = it->get()->sound.get();
+    auto audio_bus = it->get()->audio_bus.get();
     unsigned flags = it->get()->flags.load(std::memory_order_relaxed);
     bool marked_for_removal = false;
 
     if (flags & kStopped) {
       marked_for_removal = true;
     } else {
-      const float* src[2] = {sound->GetChannelData(0),
-                             sound->GetChannelData(1)};
+      const float* src[2] = {audio_bus->GetChannelData(0),
+                             audio_bus->GetChannelData(1)};
       if (!src[1])
         src[1] = src[0];  // mono.
 
-      size_t num_samples = sound->samples_per_channel();
+      size_t num_samples = audio_bus->samples_per_channel();
       size_t src_index = it->get()->src_index;
       size_t step = it->get()->step.load(std::memory_order_relaxed);
       size_t accumulator = it->get()->accumulator;
@@ -199,7 +199,7 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
       float max_amplitude =
           it->get()->max_amplitude.load(std::memory_order_relaxed);
       size_t channel_offset =
-          (flags & kSimulateStereo) ? sound->sample_rate() / 10 : 0;
+          (flags & kSimulateStereo) ? audio_bus->sample_rate() / 10 : 0;
 
       DCHECK(num_samples > 0);
 
@@ -234,7 +234,7 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
         if (src_index >= num_samples) {
           src_index %= num_samples;
 
-          if (sound->IsEndOfStream()) {
+          if (audio_bus->EndOfStream()) {
             marked_for_removal = true;
             break;
           }
@@ -245,12 +245,12 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
                                                    std::memory_order_relaxed);
 
             // Swap buffers and start streaming in background.
-            sound->SwapBuffers();
-            src[0] = sound->GetChannelData(0);
-            src[1] = sound->GetChannelData(1);
+            audio_bus->SwapBuffers();
+            src[0] = audio_bus->GetChannelData(0);
+            src[1] = audio_bus->GetChannelData(1);
             if (!src[1])
               src[1] = src[0];  // mono.
-            num_samples = sound->samples_per_channel();
+            num_samples = audio_bus->samples_per_channel();
 
             ThreadPool::Get().PostTask(
                 HERE,
@@ -286,7 +286,7 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
 }
 
 void AudioMixer::DoStream(std::shared_ptr<Resource> resource, bool loop) {
-  resource->sound->Stream(loop);
+  resource->audio_bus->Stream(loop);
   resource->streaming_in_progress.store(false, std::memory_order_release);
 }
 
