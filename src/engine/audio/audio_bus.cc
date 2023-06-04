@@ -11,28 +11,28 @@ namespace eng {
 namespace {
 
 template <typename T>
-std::array<std::unique_ptr<T[]>, 2> Deinterleave(size_t num_channels,
-                                                 size_t num_samples,
-                                                 float* input_buffer) {
+std::array<std::unique_ptr<T[]>, 2> Deinterleave(
+    size_t num_channels,
+    size_t num_samples,
+    std::unique_ptr<float[]> source_buffer) {
   std::array<std::unique_ptr<T[]>, 2> channels;
 
   if (num_channels == 1) {
-    // Single channel.
     if constexpr (std::is_same<float, T>::value) {
-      channels[0] = std::make_unique<T[]>(num_samples);
-      memcpy(channels[0].get(), input_buffer, num_samples * sizeof(float));
+      // Passthrough
+      channels[0] = std::move(source_buffer);
     } else {
       channels[0] = std::make_unique<T[]>(num_samples);
       for (int i = 0; i < num_samples; ++i)
-        channels[0].get()[i] = static_cast<T>(input_buffer[i]);
+        channels[0].get()[i] = static_cast<T>(source_buffer.get()[i]);
     }
   } else {
     // Deinterleave into separate channels.
     channels[0] = std::make_unique<T[]>(num_samples);
     channels[1] = std::make_unique<T[]>(num_samples);
     for (size_t i = 0, j = 0; i < num_samples * 2; i += 2) {
-      channels[0].get()[j] = static_cast<T>(input_buffer[i]);
-      channels[1].get()[j++] = static_cast<T>(input_buffer[i + 1]);
+      channels[0].get()[j] = static_cast<T>(source_buffer.get()[i]);
+      channels[1].get()[j++] = static_cast<T>(source_buffer.get()[i + 1]);
     }
   }
 
@@ -59,15 +59,15 @@ void AudioBus::SetAudioConfig(size_t num_channels, size_t sample_rate) {
   sample_rate_ = sample_rate;
 }
 
-void AudioBus::FromInterleaved(std::unique_ptr<float[]> input_buffer,
+void AudioBus::FromInterleaved(std::unique_ptr<float[]> source_buffer,
                                size_t samples_per_channel) {
   auto channels = Deinterleave<float>(num_channels_, samples_per_channel,
-                                      input_buffer.get());
+                                      std::move(source_buffer));
 
   size_t hw_sample_rate = Engine::Get().GetAudioHardwareSampleRate();
 
   if (hw_sample_rate == sample_rate_) {
-    // No need for resmapling.
+    // Passthrough
     channel_data_[0] = std::move(channels[0]);
     if (num_channels_ == 2)
       channel_data_[1] = std::move(channels[1]);

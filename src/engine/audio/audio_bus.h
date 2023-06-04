@@ -7,6 +7,10 @@ namespace eng {
 
 class SincResampler;
 
+// Represents a sequence of audio samples for each channels. The data layout is
+// planar as opposed to interleaved. The memory for the data is allocated and
+// owned by the AudioBus. Max two channels are supported. An AudioBus with one
+// channel is mono, with two channels is stereo.
 class AudioBus {
  public:
   AudioBus();
@@ -28,7 +32,11 @@ class AudioBus {
  protected:
   void SetAudioConfig(size_t num_channels, size_t sample_rate);
 
-  void FromInterleaved(std::unique_ptr<float[]> input_buffer,
+  // Overwrites the sample values stored in this AudioBus instance with values
+  // from a given interleaved source_buffer. The expected layout of the
+  // source_buffer is [ch0, ch1, ch0, ch1, ...]. A sample-rate conversion to the
+  // system sample-rate will be made if it doesn't match.
+  void FromInterleaved(std::unique_ptr<float[]> source_buffer,
                        size_t samples_per_channel);
 
  private:
