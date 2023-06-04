@@ -8,7 +8,7 @@
 #include <unordered_map>
 
 #include "base/closure.h"
-#include "engine/audio/audio_sink_delegate.h"
+#include "engine/audio/audio_sink.h"
 
 namespace base {
 class TaskRunner;
@@ -22,7 +22,7 @@ class AudioBus;
 // Mix and render audio with low overhead. A platform specific AudioSink
 // implementation is expected to periodically call RenderAudio() in a background
 // thread.
-class AudioMixer : public AudioSinkDelegate {
+class AudioMixer : public AudioSink::Delegate {
  public:
   AudioMixer();
   ~AudioMixer();
@@ -91,7 +91,7 @@ class AudioMixer : public AudioSinkDelegate {
 
   bool audio_enabled_ = true;
 
-  // AudioSinkDelegate implementation
+  // AudioSink::Delegate implementation
   int GetChannelCount() final { return kChannelCount; }
   void RenderAudio(float* output_buffer, size_t num_frames) final;
 

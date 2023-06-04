@@ -4,9 +4,19 @@
 namespace eng {
 
 // Models an audio sink sending mixed audio to the audio driver. Audio data from
-// the mixer source is delivered on a pull model using AudioSinkDelegate.
+// the mixer source is delivered on a pull model using Delegate.
 class AudioSink {
  public:
+  class Delegate {
+   public:
+    Delegate() = default;
+    virtual ~Delegate() = default;
+
+    virtual int GetChannelCount() = 0;
+
+    virtual void RenderAudio(float* output_buffer, size_t num_frames) = 0;
+  };
+
   AudioSink() = default;
   virtual ~AudioSink() = default;
 

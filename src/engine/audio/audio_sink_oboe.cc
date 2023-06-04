@@ -1,14 +1,13 @@
 #include "engine/audio/audio_sink_oboe.h"
 
 #include "base/log.h"
-#include "engine/audio/audio_sink_delegate.h"
 #include "third_party/oboe/include/oboe/Oboe.h"
 
 using namespace base;
 
 namespace eng {
 
-AudioSinkOboe::AudioSinkOboe(AudioSinkDelegate* delegate)
+AudioSinkOboe::AudioSinkOboe(AudioSink::Delegate* delegate)
     : callback_(std::make_unique<StreamCallback>(this)), delegate_(delegate) {}
 
 AudioSinkOboe::~AudioSinkOboe() {

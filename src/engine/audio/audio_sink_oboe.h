@@ -10,11 +10,9 @@
 
 namespace eng {
 
-class AudioSinkDelegate;
-
 class AudioSinkOboe final : public AudioSink {
  public:
-  AudioSinkOboe(AudioSinkDelegate* delegate);
+  AudioSinkOboe(AudioSink::Delegate* delegate);
   ~AudioSinkOboe() final;
 
   bool Initialize() final;
@@ -44,7 +42,7 @@ class AudioSinkOboe final : public AudioSink {
   oboe::ManagedStream stream_;
   std::unique_ptr<StreamCallback> callback_;
 
-  AudioSinkDelegate* delegate_ = nullptr;
+  AudioSink::Delegate* delegate_ = nullptr;
 
   bool RestartStream();
 };

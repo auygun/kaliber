@@ -5,13 +5,12 @@
 #include <alsa/asoundlib.h>
 
 #include "base/log.h"
-#include "engine/audio/audio_sink_delegate.h"
 
 using namespace base;
 
 namespace eng {
 
-AudioSinkAlsa::AudioSinkAlsa(AudioSinkDelegate* delegate)
+AudioSinkAlsa::AudioSinkAlsa(AudioSink::Delegate* delegate)
     : delegate_(delegate) {}
 
 AudioSinkAlsa::~AudioSinkAlsa() {

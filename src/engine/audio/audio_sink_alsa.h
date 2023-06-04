@@ -10,11 +10,9 @@ typedef struct _snd_pcm snd_pcm_t;
 
 namespace eng {
 
-class AudioSinkDelegate;
-
 class AudioSinkAlsa final : public AudioSink {
  public:
-  AudioSinkAlsa(AudioSinkDelegate* delegate);
+  AudioSinkAlsa(AudioSink::Delegate* delegate);
   ~AudioSinkAlsa() final;
 
   bool Initialize() final;
@@ -36,7 +34,7 @@ class AudioSinkAlsa final : public AudioSink {
   size_t sample_rate_ = 0;
   size_t period_size_ = 0;
 
-  AudioSinkDelegate* delegate_ = nullptr;
+  AudioSink::Delegate* delegate_ = nullptr;
 
   void StartAudioThread();
   void TerminateAudioThread();
