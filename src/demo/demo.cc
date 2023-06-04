@@ -179,9 +179,9 @@ void Demo::LostFocus() {}
 void Demo::GainedFocus(bool from_interstitial_ad) {
   DLOG << __func__ << " from_interstitial_ad: " << from_interstitial_ad;
   if (!from_interstitial_ad) {
-    if (saved_data_.root().get(kLaunchCount, Json::Value(0)).asInt() >
-        kLaunchCountBeforeAd)
-      Engine::Get().ShowInterstitialAd();
+    // if (saved_data_.root().get(kLaunchCount, Json::Value(0)).asInt() >
+    //     kLaunchCountBeforeAd)
+    //   Engine::Get().ShowInterstitialAd();
     if (state_ == kGame)
       EnterMenuState();
   }
