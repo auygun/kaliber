@@ -396,6 +396,10 @@ std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
   return event;
 }
 
+void Engine::ConsumeInputEvents() {
+  input_queue_.clear();
+}
+
 void Engine::StartRecording(const Json::Value& payload) {
   if (!replaying_ && !recording_) {
     recording_ = true;

@@ -84,6 +84,7 @@ class Engine : public PlatformObserver {
   void RemoveCustomShader(const std::string& asset_name);
 
   std::unique_ptr<InputEvent> GetNextInputEvent();
+  void ConsumeInputEvents();
 
   void StartRecording(const Json::Value& payload);
   void EndRecording(const std::string file_name);

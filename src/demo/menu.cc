@@ -201,6 +201,7 @@ bool Menu::Initialize() {
                                          : RendererType::kOpenGL);
         renderer_type_.SetEnabled(
             (Engine::Get().GetRendererType() == RendererType::kVulkan));
+        Engine::Get().ConsumeInputEvents();
       },
       true, Engine::Get().GetRendererType() == RendererType::kVulkan,
       kColorFadeOut, {Vector4f{1, 1, 1, 1}, Vector4f{1, 1, 1, 1}});
