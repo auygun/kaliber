@@ -987,12 +987,12 @@ void RendererVulkan::Shutdown() {
     return;
 
   LOG << "Shutting down renderer.";
-  DestroyAllResources();
-  context_lost_ = true;
-
   quit_.store(true, std::memory_order_relaxed);
   semaphore_.release();
   setup_thread_.join();
+
+  DestroyAllResources();
+  context_lost_ = true;
 
   vkDeviceWaitIdle(device_);
 
