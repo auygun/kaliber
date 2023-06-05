@@ -27,7 +27,7 @@ class Demo final : public eng::Game {
 
   void Update(float delta_time) final;
 
-  void ContextLost() final {}
+  void ContextLost() final;
 
   void LostFocus() final;
 

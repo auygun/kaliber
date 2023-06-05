@@ -130,11 +130,11 @@ void Demo::Update(float delta_time) {
 
   if (do_benchmark_) {
     benchmark_time_ += delta_time;
-    if (benchmark_time_ > 1) {
+    if (benchmark_time_ > 3) {
       avarage_fps_ += Engine::Get().fps();
       ++num_benchmark_samples_;
     }
-    if (benchmark_time_ > 6) {
+    if (benchmark_time_ > 5) {
       avarage_fps_ /= num_benchmark_samples_;
       do_benchmark_ = false;
       BenchmarkResult(avarage_fps_);
@@ -164,6 +164,14 @@ void Demo::Update(float delta_time) {
     UpdateMenuState(delta_time);
   else if (state_ == kGame || state_ == kGameOver)
     UpdateGameState(delta_time);
+}
+
+void Demo::ContextLost() {
+  if (do_benchmark_) {
+    benchmark_time_ = 0;
+    num_benchmark_samples_ = 0;
+    avarage_fps_ = 0;
+  }
 }
 
 void Demo::LostFocus() {}
