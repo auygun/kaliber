@@ -60,9 +60,9 @@ class TaskRunner {
   }
 
   void MultiConsumerRun();
-
   void SingleConsumerRun();
 
+  void CancelTasks();
   void WaitForCompletion();
 
   static void CreateThreadLocalTaskRunner();
@@ -74,8 +74,11 @@ class TaskRunner {
   std::deque<Task> queue_;
   mutable std::mutex lock_;
   std::atomic<size_t> task_count_{0};
+  std::atomic<bool> cancel_tasks_{false};
 
   static thread_local std::unique_ptr<TaskRunner> thread_local_task_runner;
+
+  void CancelTasksInternal();
 
   TaskRunner(TaskRunner const&) = delete;
   TaskRunner& operator=(TaskRunner const&) = delete;

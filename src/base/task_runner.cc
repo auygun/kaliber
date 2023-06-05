@@ -35,7 +35,7 @@ TaskRunner* TaskRunner::GetThreadLocalTaskRunner() {
 void TaskRunner::PostTask(const Location& from, Closure task) {
   DCHECK(task) << LOCATION(from);
 
-  task_count_.fetch_add(1, std::memory_order_release);
+  task_count_.fetch_add(1, std::memory_order_relaxed);
   std::lock_guard<std::mutex> scoped_lock(lock_);
   queue_.emplace_back(from, std::move(task));
 }
@@ -71,6 +71,11 @@ void TaskRunner::MultiConsumerRun() {
 
     task_cb();
     task_count_.fetch_sub(1, std::memory_order_release);
+
+    if (cancel_tasks_.load(std::memory_order_relaxed)) {
+      CancelTasksInternal();
+      break;
+    }
   }
 }
 
@@ -93,12 +98,28 @@ void TaskRunner::SingleConsumerRun() {
 
     task_cb();
     task_count_.fetch_sub(1, std::memory_order_release);
+
+    if (cancel_tasks_.load(std::memory_order_relaxed)) {
+      CancelTasksInternal();
+      break;
+    }
   }
+}
+
+void TaskRunner::CancelTasks() {
+  cancel_tasks_.store(true, std::memory_order_relaxed);
 }
 
 void TaskRunner::WaitForCompletion() {
   while (task_count_.load(std::memory_order_acquire) > 0)
     std::this_thread::yield();
+}
+
+void TaskRunner::CancelTasksInternal() {
+  cancel_tasks_.store(false, std::memory_order_relaxed);
+  task_count_.store(0, std::memory_order_relaxed);
+  std::lock_guard<std::mutex> scoped_lock(lock_);
+  queue_.clear();
 }
 
 }  // namespace base
