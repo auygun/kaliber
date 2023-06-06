@@ -56,6 +56,10 @@ void ThreadPool::PostTaskAndReply(const Location& from,
   semaphore_.release();
 }
 
+void ThreadPool::CancelTasks() {
+  task_runner_.CancelTasks();
+}
+
 void ThreadPool::WorkerMain() {
   for (;;) {
     semaphore_.acquire();

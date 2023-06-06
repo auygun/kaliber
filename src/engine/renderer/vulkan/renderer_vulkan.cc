@@ -987,6 +987,7 @@ void RendererVulkan::Shutdown() {
     return;
 
   LOG << "Shutting down renderer.";
+  task_runner_.CancelTasks();
   quit_.store(true, std::memory_order_relaxed);
   semaphore_.release();
   setup_thread_.join();

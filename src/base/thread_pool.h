@@ -39,6 +39,8 @@ class ThreadPool {
     semaphore_.release();
   }
 
+  void CancelTasks();
+
  private:
   std::vector<std::thread> threads_;
 

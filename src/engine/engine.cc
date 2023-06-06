@@ -50,6 +50,9 @@ Engine::Engine(Platform* platform)
 Engine::~Engine() {
   LOG << "Shutting down engine.";
 
+  thread_pool_.CancelTasks();
+  thread_pool_.Shutdown();
+
   game_.reset();
   stats_.reset();
   textures_.clear();
