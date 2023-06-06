@@ -631,6 +631,8 @@ void Engine::ContextLost() {
 
   if (game_)
     game_->ContextLost();
+
+  input_queue_.clear();
 }
 
 void Engine::SetStatsVisible(bool visible) {
