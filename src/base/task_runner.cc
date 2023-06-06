@@ -20,6 +20,10 @@ void PostTaskAndReplyRelay(base::Location from,
 
 namespace base {
 
+// The task runner that belongs to the thread it's created in. Tasks to be run
+// on a specific thread can be posted to this task runner.
+// TaskRunner::GetThreadLocalTaskRunner()->SingleConsumerRun() is expected to be
+// periodically called.
 thread_local std::unique_ptr<TaskRunner> TaskRunner::thread_local_task_runner;
 
 void TaskRunner::CreateThreadLocalTaskRunner() {

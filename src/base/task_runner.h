@@ -34,9 +34,9 @@ void ReplyAdapter(std::function<void(ReturnType)> callback,
 
 // Runs queued tasks (in the form of Closure objects). All methods are
 // thread-safe and can be called on any thread.
-// Tasks run in FIFO order. When consumed concurrently by multiple threads, it
-// doesn't guarantee whether tasks overlap, or whether they run on a particular
-// thread.
+// Tasks run in FIFO order when consumed by a single thread. When consumed
+// concurrently by multiple threads, it doesn't guarantee whether tasks overlap,
+// or whether they run on a particular thread.
 class TaskRunner {
  public:
   TaskRunner() = default;
