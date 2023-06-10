@@ -293,11 +293,13 @@ void Engine::RefreshImage(const std::string& asset_name) {
     return;
   }
 
-  auto image = it->second.create_image();
-  if (image)
-    it->second.texture->Update(std::move(image));
-  else
-    it->second.texture->Destroy();
+  if (it->second.persistent || it->second.use_count > 0) {
+    auto image = it->second.create_image();
+    if (image)
+      it->second.texture->Update(std::move(image));
+    else
+      it->second.texture->Destroy();
+  }
 }
 
 Texture* Engine::AcquireTexture(const std::string& asset_name) {
@@ -307,9 +309,9 @@ Texture* Engine::AcquireTexture(const std::string& asset_name) {
     return nullptr;
   }
 
+  it->second.use_count++;
   if (!it->second.texture->IsValid())
     RefreshImage(it->first);
-  it->second.use_count++;
   return it->second.texture.get();
 }
 
