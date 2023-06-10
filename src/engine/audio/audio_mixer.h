@@ -16,7 +16,6 @@ class TaskRunner;
 
 namespace eng {
 
-class AudioSink;
 class AudioBus;
 
 // Mix and render audio with low overhead. A platform specific AudioSink
@@ -91,7 +90,7 @@ class AudioMixer : public AudioSink::Delegate {
 
   bool audio_enabled_ = true;
 
-  // AudioSink::Delegate implementation
+  // AudioSink::Delegate interface
   int GetChannelCount() final { return kChannelCount; }
   void RenderAudio(float* output_buffer, size_t num_frames) final;
 
