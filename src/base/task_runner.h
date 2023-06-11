@@ -26,7 +26,7 @@ void ReturnAsParamAdapter(std::function<ReturnType()> func,
 template <typename ReturnType>
 void ReplyAdapter(std::function<void(ReturnType)> callback,
                   ReturnType* result) {
-  callback(*result);
+  callback(std::move(*result));
   delete result;
 }
 
