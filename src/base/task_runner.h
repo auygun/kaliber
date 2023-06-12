@@ -42,6 +42,9 @@ class TaskRunner {
   TaskRunner() = default;
   ~TaskRunner() = default;
 
+  static void CreateThreadLocalTaskRunner();
+  static std::shared_ptr<TaskRunner> GetThreadLocalTaskRunner();
+
   void PostTask(Location from, Closure task);
 
   void PostTaskAndReply(Location from, Closure task, Closure reply);
@@ -59,14 +62,11 @@ class TaskRunner {
                   result));
   }
 
-  void MultiConsumerRun();
-  void SingleConsumerRun();
-
   void CancelTasks();
+
   void WaitForCompletion();
 
-  static void CreateThreadLocalTaskRunner();
-  static std::shared_ptr<TaskRunner> GetThreadLocalTaskRunner();
+  void RunTasks();
 
  private:
   using Task = std::tuple<Location, Closure>;
@@ -74,11 +74,8 @@ class TaskRunner {
   std::deque<Task> queue_;
   mutable std::mutex lock_;
   std::atomic<size_t> task_count_{0};
-  std::atomic<bool> cancel_tasks_{false};
 
   static thread_local std::shared_ptr<TaskRunner> thread_local_task_runner;
-
-  void CancelTasksInternal();
 
   TaskRunner(TaskRunner const&) = delete;
   TaskRunner& operator=(TaskRunner const&) = delete;

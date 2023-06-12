@@ -2006,7 +2006,7 @@ void RendererVulkan::SetupThreadMain(int preallocate) {
     if (quit_.load(std::memory_order_relaxed))
       break;
 
-    task_runner_.SingleConsumerRun();
+    task_runner_.RunTasks();
   }
 
   for (size_t i = 0; i < staging_buffers_.size(); i++) {

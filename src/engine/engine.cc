@@ -76,7 +76,7 @@ void Engine::Run() {
   float frame_frac = 0.0f;
 
   for (;;) {
-    TaskRunner::GetThreadLocalTaskRunner()->SingleConsumerRun();
+    TaskRunner::GetThreadLocalTaskRunner()->RunTasks();
 
     platform_->Update();
     if (platform_->should_exit())

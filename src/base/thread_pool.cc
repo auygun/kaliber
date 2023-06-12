@@ -61,11 +61,10 @@ void ThreadPool::CancelTasks() {
 void ThreadPool::WorkerMain() {
   for (;;) {
     semaphore_.acquire();
-
     if (quit_.load(std::memory_order_relaxed))
       return;
 
-    task_runner_.MultiConsumerRun();
+    task_runner_.RunTasks();
   }
 }
 

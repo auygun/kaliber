@@ -22,7 +22,7 @@ void PostTaskAndReplyRelay(Location from,
 
 // The task runner that belongs to the thread it's created in. Tasks to be run
 // on a specific thread can be posted to this task runner.
-// TaskRunner::GetThreadLocalTaskRunner()->SingleConsumerRun() is expected to be
+// TaskRunner::GetThreadLocalTaskRunner()->RunTasks() is expected to be
 // periodically called.
 thread_local std::shared_ptr<TaskRunner> TaskRunner::thread_local_task_runner;
 
@@ -54,7 +54,18 @@ void TaskRunner::PostTaskAndReply(Location from, Closure task, Closure reply) {
   PostTask(from, std::move(relay));
 }
 
-void TaskRunner::MultiConsumerRun() {
+void TaskRunner::CancelTasks() {
+  std::lock_guard<std::mutex> scoped_lock(lock_);
+  task_count_.fetch_sub(queue_.size(), std::memory_order_release);
+  queue_.clear();
+}
+
+void TaskRunner::WaitForCompletion() {
+  while (task_count_.load(std::memory_order_acquire) > 0)
+    std::this_thread::yield();
+}
+
+void TaskRunner::RunTasks() {
   for (;;) {
     Task task;
     {
@@ -73,55 +84,7 @@ void TaskRunner::MultiConsumerRun() {
 
     task_cb();
     task_count_.fetch_sub(1, std::memory_order_release);
-
-    if (cancel_tasks_.load(std::memory_order_relaxed)) {
-      CancelTasksInternal();
-      break;
-    }
   }
-}
-
-void TaskRunner::SingleConsumerRun() {
-  std::deque<Task> queue;
-  {
-    std::lock_guard<std::mutex> scoped_lock(lock_);
-    if (queue_.empty())
-      return;
-    queue.swap(queue_);
-  }
-
-  while (!queue.empty()) {
-    auto [from, task_cb] = queue.front();
-    queue.pop_front();
-
-#if 0
-    LOG << __func__ << " from: " << LOCATION(from);
-#endif
-
-    task_cb();
-    task_count_.fetch_sub(1, std::memory_order_release);
-
-    if (cancel_tasks_.load(std::memory_order_relaxed)) {
-      CancelTasksInternal();
-      break;
-    }
-  }
-}
-
-void TaskRunner::CancelTasks() {
-  cancel_tasks_.store(true, std::memory_order_relaxed);
-}
-
-void TaskRunner::WaitForCompletion() {
-  while (task_count_.load(std::memory_order_acquire) > 0)
-    std::this_thread::yield();
-}
-
-void TaskRunner::CancelTasksInternal() {
-  cancel_tasks_.store(false, std::memory_order_relaxed);
-  task_count_.store(0, std::memory_order_relaxed);
-  std::lock_guard<std::mutex> scoped_lock(lock_);
-  queue_.clear();
 }
 
 }  // namespace base
