@@ -40,16 +40,14 @@ void ThreadPool::Shutdown() {
   threads_.clear();
 }
 
-void ThreadPool::PostTask(const Location& from, Closure task) {
+void ThreadPool::PostTask(Location from, Closure task) {
   DCHECK((!threads_.empty()));
 
   task_runner_.PostTask(from, std::move(task));
   semaphore_.release();
 }
 
-void ThreadPool::PostTaskAndReply(const Location& from,
-                                  Closure task,
-                                  Closure reply) {
+void ThreadPool::PostTaskAndReply(Location from, Closure task, Closure reply) {
   DCHECK((!threads_.empty()));
 
   task_runner_.PostTaskAndReply(from, std::move(task), std::move(reply));

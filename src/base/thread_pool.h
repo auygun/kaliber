@@ -26,12 +26,12 @@ class ThreadPool {
 
   void Shutdown();
 
-  void PostTask(const Location& from, Closure task);
+  void PostTask(Location from, Closure task);
 
-  void PostTaskAndReply(const Location& from, Closure task, Closure reply);
+  void PostTaskAndReply(Location from, Closure task, Closure reply);
 
   template <typename ReturnType>
-  void PostTaskAndReplyWithResult(const Location& from,
+  void PostTaskAndReplyWithResult(Location from,
                                   std::function<ReturnType()> task,
                                   std::function<void(ReturnType)> reply) {
     task_runner_.PostTaskAndReplyWithResult(from, std::move(task),

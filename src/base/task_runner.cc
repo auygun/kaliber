@@ -36,7 +36,7 @@ TaskRunner* TaskRunner::GetThreadLocalTaskRunner() {
   return thread_local_task_runner.get();
 }
 
-void TaskRunner::PostTask(const Location& from, Closure task) {
+void TaskRunner::PostTask(Location from, Closure task) {
   DCHECK(task) << LOCATION(from);
 
   task_count_.fetch_add(1, std::memory_order_relaxed);
@@ -44,9 +44,7 @@ void TaskRunner::PostTask(const Location& from, Closure task) {
   queue_.emplace_back(from, std::move(task));
 }
 
-void TaskRunner::PostTaskAndReply(const Location& from,
-                                  Closure task,
-                                  Closure reply) {
+void TaskRunner::PostTaskAndReply(Location from, Closure task, Closure reply) {
   DCHECK(task) << LOCATION(from);
   DCHECK(reply) << LOCATION(from);
   DCHECK(thread_local_task_runner) << LOCATION(from);

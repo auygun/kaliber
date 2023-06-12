@@ -12,12 +12,11 @@
 
 // Helper for logging location info, e.g. LOG << LOCATION(from)
 #define LOCATION(from)                                                 \
-  std::get<0>(from) << "() [" << [](const char* path) -> std::string { \
-    std::string file_name(path);                                       \
-    size_t last_slash_pos = file_name.find_last_of("\\/");             \
+  std::get<0>(from) << "() [" << [](std::string path) -> std::string { \
+    size_t last_slash_pos = path.find_last_of("\\/");                  \
     if (last_slash_pos != std::string::npos)                           \
-      file_name = file_name.substr(last_slash_pos + 1);                \
-    return file_name;                                                  \
+      path = path.substr(last_slash_pos + 1);                          \
+    return path;                                                       \
   }(std::get<1>(from)) << ":"                                          \
                        << std::get<2>(from) << "]"
 
@@ -36,7 +35,7 @@ using Closure = std::function<void()>;
 
 // Provides location info (function name, file name and line number) where of a
 // Closure was constructed.
-using Location = std::tuple<const char*, const char*, int>;
+using Location = std::tuple<std::string, std::string, int>;
 
 #else
 
