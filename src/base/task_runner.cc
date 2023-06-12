@@ -4,12 +4,14 @@
 
 #include "base/log.h"
 
+namespace base {
+
 namespace {
 
-void PostTaskAndReplyRelay(base::Location from,
-                           base::Closure task_cb,
-                           base::Closure reply_cb,
-                           base::TaskRunner* destination) {
+void PostTaskAndReplyRelay(Location from,
+                           Closure task_cb,
+                           Closure reply_cb,
+                           std::shared_ptr<TaskRunner> destination) {
   task_cb();
 
   if (reply_cb)
@@ -18,22 +20,20 @@ void PostTaskAndReplyRelay(base::Location from,
 
 }  // namespace
 
-namespace base {
-
 // The task runner that belongs to the thread it's created in. Tasks to be run
 // on a specific thread can be posted to this task runner.
 // TaskRunner::GetThreadLocalTaskRunner()->SingleConsumerRun() is expected to be
 // periodically called.
-thread_local std::unique_ptr<TaskRunner> TaskRunner::thread_local_task_runner;
+thread_local std::shared_ptr<TaskRunner> TaskRunner::thread_local_task_runner;
 
 void TaskRunner::CreateThreadLocalTaskRunner() {
   DCHECK(!thread_local_task_runner);
 
-  thread_local_task_runner = std::make_unique<TaskRunner>();
+  thread_local_task_runner = std::make_shared<TaskRunner>();
 }
 
-TaskRunner* TaskRunner::GetThreadLocalTaskRunner() {
-  return thread_local_task_runner.get();
+std::shared_ptr<TaskRunner> TaskRunner::GetThreadLocalTaskRunner() {
+  return thread_local_task_runner;
 }
 
 void TaskRunner::PostTask(Location from, Closure task) {
@@ -49,8 +49,8 @@ void TaskRunner::PostTaskAndReply(Location from, Closure task, Closure reply) {
   DCHECK(reply) << LOCATION(from);
   DCHECK(thread_local_task_runner) << LOCATION(from);
 
-  auto relay = std::bind(::PostTaskAndReplyRelay, from, std::move(task),
-                         std::move(reply), thread_local_task_runner.get());
+  auto relay = std::bind(PostTaskAndReplyRelay, from, std::move(task),
+                         std::move(reply), thread_local_task_runner);
   PostTask(from, std::move(relay));
 }
 

@@ -84,7 +84,7 @@ class AudioMixer : public AudioSink::Delegate {
 
   std::list<std::shared_ptr<Resource>> end_list_;
 
-  base::TaskRunner* main_thread_task_runner_;
+  std::shared_ptr<base::TaskRunner> main_thread_task_runner_;
 
   std::unique_ptr<AudioSink> audio_sink_;
 

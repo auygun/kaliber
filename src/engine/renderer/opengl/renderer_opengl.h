@@ -144,7 +144,7 @@ class RendererOpenGL final : public Renderer {
 
   std::counting_semaphore<> draw_complete_semaphore_{0};
 
-  base::TaskRunner* main_thread_task_runner_;
+  std::shared_ptr<base::TaskRunner> main_thread_task_runner_;
 #endif  // THREADED_RENDERING
 
   // Stats.

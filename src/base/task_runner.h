@@ -66,7 +66,7 @@ class TaskRunner {
   void WaitForCompletion();
 
   static void CreateThreadLocalTaskRunner();
-  static TaskRunner* GetThreadLocalTaskRunner();
+  static std::shared_ptr<TaskRunner> GetThreadLocalTaskRunner();
 
  private:
   using Task = std::tuple<Location, Closure>;
@@ -76,7 +76,7 @@ class TaskRunner {
   std::atomic<size_t> task_count_{0};
   std::atomic<bool> cancel_tasks_{false};
 
-  static thread_local std::unique_ptr<TaskRunner> thread_local_task_runner;
+  static thread_local std::shared_ptr<TaskRunner> thread_local_task_runner;
 
   void CancelTasksInternal();
 
