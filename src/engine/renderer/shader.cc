@@ -14,7 +14,7 @@ Shader::~Shader() {
 }
 
 void Shader::Create(std::unique_ptr<ShaderSource> source,
-                    const VertexDescripton& vd,
+                    const VertexDescription& vd,
                     Primitive primitive,
                     bool enable_depth_test) {
   Destroy();

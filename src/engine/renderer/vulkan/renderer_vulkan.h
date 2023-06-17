@@ -38,7 +38,7 @@ class RendererVulkan final : public Renderer {
   void ActivateTexture(uint64_t resource_id) final;
 
   uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
-                        const VertexDescripton& vertex_description,
+                        const VertexDescription& vertex_description,
                         Primitive primitive,
                         bool enable_depth_test) final;
   void DestroyShader(uint64_t resource_id) final;

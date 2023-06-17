@@ -23,14 +23,14 @@ class Geometry : public RenderResource {
 
   void Draw();
 
-  const VertexDescripton& vertex_description() const {
+  const VertexDescription& vertex_description() const {
     return vertex_description_;
   }
 
   Primitive primitive() { return primitive_; }
 
  private:
-  VertexDescripton vertex_description_;
+  VertexDescription vertex_description_;
   Primitive primitive_ = kPrimitive_Invalid;
 };
 

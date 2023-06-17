@@ -277,7 +277,7 @@ std::vector<uint8_t> CompileGlsl(EShLanguage stage,
 }
 
 VertexInputDescription GetVertexInputDescription(
-    const eng::VertexDescripton& vd) {
+    const eng::VertexDescription& vd) {
   unsigned vertex_offset = 0;
   unsigned location = 0;
 
@@ -534,7 +534,7 @@ void RendererVulkan::ActivateTexture(uint64_t resource_id) {
 
 uint64_t RendererVulkan::CreateShader(
     std::unique_ptr<ShaderSource> source,
-    const VertexDescripton& vertex_description,
+    const VertexDescription& vertex_description,
     Primitive primitive,
     bool enable_depth_test) {
   auto it = spirv_cache_.find(source->name());

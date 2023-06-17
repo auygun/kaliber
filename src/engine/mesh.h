@@ -30,7 +30,7 @@ class Mesh {
   size_t GetIndexSize() const;
 
   Primitive primitive() const { return primitive_; }
-  const VertexDescripton& vertex_description() const {
+  const VertexDescription& vertex_description() const {
     return vertex_description_;
   }
   size_t num_vertices() const { return num_vertices_; }
@@ -41,7 +41,7 @@ class Mesh {
 
  private:
   Primitive primitive_ = kPrimitive_TriangleStrip;
-  VertexDescripton vertex_description_;
+  VertexDescription vertex_description_;
   size_t num_vertices_ = 0;
   DataType index_description_ = kDataType_Invalid;
   size_t num_indices_ = 0;

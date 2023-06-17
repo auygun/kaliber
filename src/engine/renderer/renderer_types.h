@@ -38,10 +38,10 @@ enum DataType {
 using ElementCount = size_t;
 using DataTypeSize = size_t;
 
-using VertexDescripton =
+using VertexDescription =
     std::vector<std::tuple<AttribType, DataType, ElementCount, DataTypeSize>>;
 
-bool ParseVertexDescription(std::string vd_str, VertexDescripton& out);
+bool ParseVertexDescription(std::string vd_str, VertexDescription& out);
 
 }  // namespace eng
 

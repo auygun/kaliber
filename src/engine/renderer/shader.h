@@ -19,7 +19,7 @@ class Shader : public RenderResource {
   ~Shader();
 
   void Create(std::unique_ptr<ShaderSource> source,
-              const VertexDescripton& vd,
+              const VertexDescription& vd,
               Primitive primitive,
               bool enable_depth_test);
 

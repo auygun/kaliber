@@ -121,7 +121,7 @@ void RendererOpenGL::ActivateTexture(uint64_t resource_id) {
 
 uint64_t RendererOpenGL::CreateShader(
     std::unique_ptr<ShaderSource> source,
-    const VertexDescripton& vertex_description,
+    const VertexDescription& vertex_description,
     Primitive primitive,
     bool enable_depth_test) {
   auto cmd = std::make_unique<CmdCreateShader>();
@@ -853,7 +853,7 @@ void RendererOpenGL::BindTexture(GLuint id) {
 }
 
 bool RendererOpenGL::SetupVertexLayout(
-    const VertexDescripton& vd,
+    const VertexDescription& vd,
     GLuint vertex_size,
     bool use_vao,
     std::vector<GeometryOpenGL::Element>& vertex_layout) {
@@ -918,7 +918,7 @@ GLuint RendererOpenGL::CreateShader(const char* source, GLenum type) {
 }
 
 bool RendererOpenGL::BindAttributeLocation(GLuint id,
-                                           const VertexDescripton& vd) {
+                                           const VertexDescription& vd) {
   int current = 0;
   int tex_coord = 0;
 

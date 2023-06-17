@@ -55,7 +55,7 @@ class RendererOpenGL final : public Renderer {
   void ActivateTexture(uint64_t resource_id) final;
 
   uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
-                        const VertexDescripton& vertex_description,
+                        const VertexDescription& vertex_description,
                         Primitive primitive,
                         bool enable_depth_test) final;
   void DestroyShader(uint64_t resource_id) final;
@@ -196,12 +196,12 @@ class RendererOpenGL final : public Renderer {
   void HandleCmdSetUniformInt(RenderCommand* cmd);
 
   void BindTexture(GLuint id);
-  bool SetupVertexLayout(const VertexDescripton& vd,
+  bool SetupVertexLayout(const VertexDescription& vd,
                          GLuint vertex_size,
                          bool use_vao,
                          std::vector<GeometryOpenGL::Element>& vertex_layout);
   GLuint CreateShader(const char* source, GLenum type);
-  bool BindAttributeLocation(GLuint id, const VertexDescripton& vd);
+  bool BindAttributeLocation(GLuint id, const VertexDescription& vd);
   GLint GetUniformLocation(GLuint id,
                            const std::string& name,
                            std::unordered_map<std::string, GLuint>& uniforms);
