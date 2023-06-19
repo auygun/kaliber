@@ -32,7 +32,6 @@ void ImageQuad::Create(const std::string& asset_name,
   asset_name_ = asset_name;
 }
 
-// TODO: typo
 void ImageQuad::Destroy() {
   if (texture_) {
     Engine::Get().ReleaseTexture(asset_name_);

@@ -276,14 +276,8 @@ void Engine::SetImageSource(const std::string& asset_name,
     return;
   }
 
-  auto& t = textures_[asset_name] = {CreateRenderResource<Texture>(),
-                                     create_image, persistent, 0};
-
-  if (persistent) {
-    auto image = create_image();
-    if (image)
-      t.texture->Update(std::move(image));
-  }
+  textures_[asset_name] = {std::make_unique<Texture>(renderer_.get()),
+                           create_image, persistent, 0};
 }
 
 void Engine::RefreshImage(const std::string& asset_name) {
@@ -297,8 +291,6 @@ void Engine::RefreshImage(const std::string& asset_name) {
     auto image = it->second.create_image();
     if (image)
       it->second.texture->Update(std::move(image));
-    else
-      it->second.texture->Destroy();
   }
 }
 
@@ -310,8 +302,11 @@ Texture* Engine::AcquireTexture(const std::string& asset_name) {
   }
 
   it->second.use_count++;
-  if (!it->second.texture->IsValid())
-    RefreshImage(it->first);
+  if (!it->second.texture->IsValid()) {
+    auto image = it->second.create_image();
+    if (image)
+      it->second.texture->Update(std::move(image));
+  }
   return it->second.texture.get();
 }
 
@@ -335,7 +330,8 @@ void Engine::LoadCustomShader(const std::string& asset_name,
     return;
   }
 
-  auto& s = shaders_[asset_name] = {CreateRenderResource<Shader>(), file_name};
+  auto& s = shaders_[asset_name] = {std::make_unique<Shader>(renderer_.get()),
+                                    file_name};
 
   auto source = std::make_unique<ShaderSource>();
   if (!source->Load(file_name))
@@ -623,7 +619,11 @@ void Engine::ContextLost() {
 
   for (auto& t : textures_) {
     t.second.texture->SetRenderer(renderer_.get());
-    RefreshImage(t.first);
+    if (t.second.persistent || t.second.use_count > 0) {
+      auto image = t.second.create_image();
+      if (image)
+        t.second.texture->Update(std::move(image));
+    }
   }
 
   for (auto& s : shaders_) {

@@ -61,11 +61,6 @@ class Engine : public PlatformObserver {
   // Convert position form pixels to viewport coordinates.
   base::Vector2f ToPosition(const base::Vector2f& vec);
 
-  template <typename T>
-  std::unique_ptr<T> CreateRenderResource() {
-    return std::unique_ptr<T>(static_cast<T*>(new T(renderer_.get())));
-  }
-
   void SetImageSource(const std::string& asset_name,
                       const std::string& file_name,
                       bool persistent = false);

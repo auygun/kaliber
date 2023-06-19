@@ -5,11 +5,6 @@
 #include "engine/animatable.h"
 #include "engine/animator.h"
 
-#include <array>
-#include <memory>
-#include <string>
-#include <vector>
-
 namespace eng {
 class Shader;
 }  // namespace eng
