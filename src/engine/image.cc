@@ -12,7 +12,6 @@
 
 // This 3rd party library is written in C and uses malloc, which means that we
 // have to do the same.
-#define STBI_NO_STDIO
 #include "../third_party/stb/stb_image.h"
 
 using namespace base;

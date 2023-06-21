@@ -8,6 +8,7 @@
 #include "engine/platform/asset_file.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
+#define STBTT_STATIC
 #include "../third_party/stb/stb_truetype.h"
 
 namespace eng {
