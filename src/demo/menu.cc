@@ -53,7 +53,7 @@ Menu::Menu() = default;
 
 Menu::~Menu() = default;
 
-bool Menu::Initialize() {
+bool Menu::PreInitialize() {
   click_sound_ = std::make_shared<Sound>();
   if (!click_sound_->Load("menu_click.mp3", false))
     return false;
@@ -70,8 +70,59 @@ bool Menu::Initialize() {
       max_text_width_ = width;
   }
 
-  if (!CreateRenderResources())
-    return false;
+  Engine::Get().SetImageSource("menu_tex",
+                               std::bind(&Menu::CreateMenuImage, this), true);
+  Engine::Get().SetImageSource("logo_tex0", "woom_logo_start_frames_01.png",
+                               true);
+  Engine::Get().SetImageSource("logo_tex1", "woom_logo_start_frames_02-03.png",
+                               true);
+  Engine::Get().SetImageSource("buttons_tex", "menu_icons.png", true);
+  Engine::Get().SetImageSource("renderer_logo", "renderer_logo.png", true);
+
+  Engine::Get().SetImageSource(
+      "version_tex",
+      []() -> std::unique_ptr<Image> {
+        const Font* font = Engine::Get().GetSystemFont();
+
+        int w, h;
+        font->CalculateBoundingBox(kVersionStr, w, h);
+
+        auto image = std::make_unique<Image>();
+        image->Create(w, font->GetLineHeight());
+        image->Clear({1, 1, 1, 0});
+
+        font->Print(0, 0, kVersionStr, image->GetBuffer(), image->GetWidth());
+
+        image->Compress();
+        return image;
+      },
+      true);
+
+  Engine::Get().SetImageSource("high_score_tex",
+                               std::bind(&Menu::CreateHighScoreImage, this));
+  Engine::Get().SetImageSource("wave_up_tex", []() -> std::unique_ptr<Image> {
+    const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
+
+    constexpr char btn_text[] = "[  ]";
+
+    int w, h;
+    font.CalculateBoundingBox(btn_text, w, h);
+
+    auto image = std::make_unique<Image>();
+    image->Create(w, h);
+    image->Clear({1, 1, 1, 0});
+
+    font.Print(0, 0, btn_text, image->GetBuffer(), image->GetWidth());
+
+    image->Compress();
+    return image;
+  });
+
+  return true;
+}
+
+bool Menu::Initialize() {
+  Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
 
   for (int i = 0; i < kOption_Max; ++i) {
     items_[i].text.Create("menu_tex", {1, 4});
@@ -199,8 +250,6 @@ bool Menu::Initialize() {
         Engine::Get().CreateRenderer(renderer_type_.enabled()
                                          ? RendererType::kVulkan
                                          : RendererType::kOpenGL);
-        renderer_type_.SetEnabled(
-            (Engine::Get().GetRendererType() == RendererType::kVulkan));
       },
       true, Engine::Get().GetRendererType() == RendererType::kVulkan,
       kColorFadeOut, {Vector4f{1, 1, 1, 1}, Vector4f{1, 1, 1, 1}});
@@ -318,6 +367,11 @@ void Menu::SetOptionEnabled(Option o, bool enable) {
     if (!items_[i].hide)
       items_[i].text.Translate({0, center_offset_y});
   }
+}
+
+void Menu::SetRendererType() {
+  renderer_type_.SetEnabled(
+      (Engine::Get().GetRendererType() == RendererType::kVulkan));
 }
 
 void Menu::Show() {
@@ -438,53 +492,6 @@ void Menu::Hide(Closure cb) {
     starting_wave_.Hide();
     wave_up_.Hide();
   }
-}
-
-bool Menu::CreateRenderResources() {
-  Engine::Get().SetImageSource("menu_tex",
-                               std::bind(&Menu::CreateMenuImage, this));
-  Engine::Get().SetImageSource("logo_tex0", "woom_logo_start_frames_01.png");
-  Engine::Get().SetImageSource("logo_tex1", "woom_logo_start_frames_02-03.png");
-  Engine::Get().SetImageSource("buttons_tex", "menu_icons.png");
-  Engine::Get().SetImageSource("high_score_tex",
-                               std::bind(&Menu::CreateHighScoreImage, this));
-  Engine::Get().SetImageSource("renderer_logo", "renderer_logo.png");
-
-  Engine::Get().SetImageSource("wave_up_tex", []() -> std::unique_ptr<Image> {
-    const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
-
-    constexpr char btn_text[] = "[  ]";
-
-    int w, h;
-    font.CalculateBoundingBox(btn_text, w, h);
-
-    auto image = std::make_unique<Image>();
-    image->Create(w, h);
-    image->Clear({1, 1, 1, 0});
-
-    font.Print(0, 0, btn_text, image->GetBuffer(), image->GetWidth());
-
-    image->Compress();
-    return image;
-  });
-
-  Engine::Get().SetImageSource("version_tex", []() -> std::unique_ptr<Image> {
-    const Font* font = Engine::Get().GetSystemFont();
-
-    int w, h;
-    font->CalculateBoundingBox(kVersionStr, w, h);
-
-    auto image = std::make_unique<Image>();
-    image->Create(w, font->GetLineHeight());
-    image->Clear({1, 1, 1, 0});
-
-    font->Print(0, 0, kVersionStr, image->GetBuffer(), image->GetWidth());
-
-    image->Compress();
-    return image;
-  });
-
-  return true;
 }
 
 std::unique_ptr<Image> Menu::CreateMenuImage() {

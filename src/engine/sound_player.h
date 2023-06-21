@@ -2,6 +2,7 @@
 #define ENGINE_AUDIO_PLAYER_H
 
 #include <memory>
+#include <string>
 
 #include "base/closure.h"
 
@@ -14,6 +15,7 @@ class SoundPlayer {
   SoundPlayer();
   ~SoundPlayer();
 
+  void SetSound(const std::string& asset_name);
   void SetSound(std::shared_ptr<AudioBus> sound);
 
   void Play(bool loop, float fade_in_duration = 0);

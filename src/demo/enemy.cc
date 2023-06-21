@@ -13,7 +13,6 @@
 #include "engine/font.h"
 #include "engine/image.h"
 #include "engine/renderer/geometry.h"
-#include "engine/sound.h"
 
 #include "demo/demo.h"
 
@@ -78,46 +77,44 @@ Enemy::Enemy() = default;
 
 Enemy::~Enemy() = default;
 
+bool Enemy::PreInitialize() {
+  Engine::Get().SetImageSource("skull_tex", "enemy_anims_01_frames_ok.png",
+                               true);
+  Engine::Get().SetImageSource("bug_tex", "enemy_anims_02_frames_ok.png", true);
+  Engine::Get().SetImageSource("boss_tex1", "Boss_ok.png", true);
+  Engine::Get().SetImageSource("boss_tex2", "Boss_ok_lvl2.png", true);
+  Engine::Get().SetImageSource("boss_tex3", "Boss_ok_lvl3.png", true);
+  Engine::Get().SetImageSource("target_tex", "enemy_target_single_ok.png",
+                               true);
+  Engine::Get().SetImageSource("blast_tex", "enemy_anims_blast_ok.png", true);
+  Engine::Get().SetImageSource("shield_tex", "woom_enemy_shield.png", true);
+  Engine::Get().SetImageSource("crate_tex", "nuke_pack_OK.png", true);
+
+  for (int i = 0; i < kEnemyType_Max; ++i)
+    Engine::Get().SetImageSource(
+        "score_tex"s + std::to_string(i),
+        std::bind(&Enemy::GetScoreImage, this, (EnemyType)i), true);
+
+  Engine::Get().SetShaderSource("chromatic_aberration",
+                                "chromatic_aberration.glsl");
+
+  Engine::Get().AsyncLoadSound("boss_intro", "boss_intro.mp3");
+  Engine::Get().AsyncLoadSound("boss_explosion", "boss_explosion.mp3");
+  Engine::Get().AsyncLoadSound("explosion", "explosion.mp3");
+  Engine::Get().AsyncLoadSound("stealth", "stealth.mp3");
+  Engine::Get().AsyncLoadSound("shield", "shield.mp3");
+  Engine::Get().AsyncLoadSound("hit", "hit.mp3");
+  Engine::Get().AsyncLoadSound("powerup-spawn", "powerup-spawn.mp3");
+  Engine::Get().AsyncLoadSound("powerup-pick", "powerup-pick.mp3");
+
+  return true;
+}
+
 bool Enemy::Initialize() {
-  boss_intro_sound_ = std::make_shared<Sound>();
-  if (!boss_intro_sound_->Load("boss_intro.mp3", false))
-    return false;
-
-  boss_explosion_sound_ = std::make_shared<Sound>();
-  if (!boss_explosion_sound_->Load("boss_explosion.mp3", false))
-    return false;
-
-  explosion_sound_ = std::make_shared<Sound>();
-  if (!explosion_sound_->Load("explosion.mp3", false))
-    return false;
-
-  stealth_sound_ = std::make_shared<Sound>();
-  if (!stealth_sound_->Load("stealth.mp3", false))
-    return false;
-
-  shield_on_sound_ = std::make_shared<Sound>();
-  if (!shield_on_sound_->Load("shield.mp3", false))
-    return false;
-
-  hit_sound_ = std::make_shared<Sound>();
-  if (!hit_sound_->Load("hit.mp3", false))
-    return false;
-
-  power_up_spawn_sound_ = std::make_shared<Sound>();
-  if (!power_up_spawn_sound_->Load("powerup-spawn.mp3", false))
-    return false;
-
-  power_up_pick_sound_ = std::make_shared<Sound>();
-  if (!power_up_pick_sound_->Load("powerup-pick.mp3", false))
-    return false;
-
-  if (!CreateRenderResources())
-    return false;
-
   boss_.SetZOrder(10);
   boss_animator_.Attach(&boss_);
 
-  boss_intro_.SetSound(boss_intro_sound_);
+  boss_intro_.SetSound("boss_intro");
   boss_intro_.SetVariate(false);
   boss_intro_.SetSimulateStereo(false);
 
@@ -729,29 +726,29 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.movement_animator.Play(Animator::kMovement, false);
 
   if (e.enemy_type == kEnemyType_PowerUp) {
-    e.explosion.SetSound(power_up_pick_sound_);
+    e.explosion.SetSound("powerup-pick");
 
-    e.spawn.SetSound(power_up_spawn_sound_);
+    e.spawn.SetSound("powerup-spawn");
     e.spawn.SetMaxAplitude(2.0f);
     e.spawn.Play(false);
   } else {
-    e.explosion.SetSound(explosion_sound_);
+    e.explosion.SetSound("explosion");
     e.explosion.SetVariate(true);
     e.explosion.SetSimulateStereo(true);
     e.explosion.SetMaxAplitude(0.9f);
   }
 
-  e.stealth.SetSound(stealth_sound_);
+  e.stealth.SetSound("stealth");
   e.stealth.SetVariate(false);
   e.stealth.SetSimulateStereo(false);
   e.stealth.SetMaxAplitude(0.7f);
 
-  e.shield_on.SetSound(shield_on_sound_);
+  e.shield_on.SetSound("shield");
   e.shield_on.SetVariate(false);
   e.shield_on.SetSimulateStereo(false);
   e.shield_on.SetMaxAplitude(0.5f);
 
-  e.hit.SetSound(hit_sound_);
+  e.hit.SetSound("hit");
   e.hit.SetVariate(true);
   e.hit.SetSimulateStereo(false);
   e.hit.SetMaxAplitude(0.5f);
@@ -825,11 +822,11 @@ void Enemy::SpawnBoss() {
         Animator::kMovement, [&]() -> void { e.marked_for_removal = true; });
     e.score_animator.Attach(&e.score);
 
-    e.explosion.SetSound(boss_explosion_sound_);
+    e.explosion.SetSound("boss_explosion");
     e.explosion.SetVariate(false);
     e.explosion.SetSimulateStereo(false);
 
-    e.hit.SetSound(hit_sound_);
+    e.hit.SetSound("hit");
     e.hit.SetVariate(true);
     e.hit.SetSimulateStereo(false);
     e.hit.SetMaxAplitude(0.5f);
@@ -1183,30 +1180,6 @@ std::unique_ptr<Image> Enemy::GetScoreImage(EnemyType enemy_type) {
 
   image->Compress();
   return image;
-}
-
-bool Enemy::CreateRenderResources() {
-  Engine::Get().SetImageSource("skull_tex", "enemy_anims_01_frames_ok.png",
-                               true);
-  Engine::Get().SetImageSource("bug_tex", "enemy_anims_02_frames_ok.png", true);
-  Engine::Get().SetImageSource("boss_tex1", "Boss_ok.png", true);
-  Engine::Get().SetImageSource("boss_tex2", "Boss_ok_lvl2.png", true);
-  Engine::Get().SetImageSource("boss_tex3", "Boss_ok_lvl3.png", true);
-  Engine::Get().SetImageSource("target_tex", "enemy_target_single_ok.png",
-                               true);
-  Engine::Get().SetImageSource("blast_tex", "enemy_anims_blast_ok.png", true);
-  Engine::Get().SetImageSource("shield_tex", "woom_enemy_shield.png", true);
-  Engine::Get().SetImageSource("crate_tex", "nuke_pack_OK.png", true);
-
-  for (int i = 0; i < kEnemyType_Max; ++i)
-    Engine::Get().SetImageSource(
-        "score_tex"s + std::to_string(i),
-        std::bind(&Enemy::GetScoreImage, this, (EnemyType)i), true);
-
-  Engine::Get().LoadCustomShader("chromatic_aberration",
-                                 "chromatic_aberration.glsl");
-
-  return true;
 }
 
 void Enemy::TranslateEnemyUnit(EnemyUnit& e, const Vector2f& delta) {

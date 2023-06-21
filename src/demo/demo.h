@@ -23,14 +23,12 @@ class Demo final : public eng::Game {
   Demo();
   ~Demo() final;
 
+  // Game interface
+  bool PreInitialize() final;
   bool Initialize() final;
-
   void Update(float delta_time) final;
-
   void ContextLost() final;
-
   void LostFocus() final;
-
   void GainedFocus(bool from_interstitial_ad) final;
 
   void AddScore(size_t score);

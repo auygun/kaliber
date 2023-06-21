@@ -5,7 +5,6 @@
 #include "engine/engine.h"
 #include "engine/font.h"
 #include "engine/input_event.h"
-#include "engine/sound.h"
 
 #include "demo/demo.h"
 
@@ -29,22 +28,20 @@ Player::Player() = default;
 
 Player::~Player() = default;
 
+bool Player::PreInitialize() {
+  Engine::Get().SetImageSource("weapon_tex", "enemy_anims_flare_ok.png", true);
+  Engine::Get().SetImageSource("beam_tex", "enemy_ray_ok.png", true);
+  Engine::Get().SetImageSource("nuke_symbol_tex", "nuke_frames.png", true);
+  Engine::Get().SetImageSource("health_bead", "bead.png", true);
+
+  Engine::Get().AsyncLoadSound("laser", "laser.mp3");
+  Engine::Get().AsyncLoadSound("nuke", "nuke.mp3");
+  Engine::Get().AsyncLoadSound("no_nuke", "no_nuke.mp3");
+
+  return true;
+}
+
 bool Player::Initialize() {
-  if (!CreateRenderResources())
-    return false;
-
-  laser_shot_sound_ = std::make_shared<Sound>();
-  if (!laser_shot_sound_->Load("laser.mp3", false))
-    return false;
-
-  nuke_explosion_sound_ = std::make_shared<Sound>();
-  if (!nuke_explosion_sound_->Load("nuke.mp3", false))
-    return false;
-
-  no_nuke_sound_ = std::make_shared<Sound>();
-  if (!no_nuke_sound_->Load("no_nuke.mp3", false))
-    return false;
-
   SetupWeapons();
 
   Vector2f hb_pos = Engine::Get().GetScreenSize() / Vector2f(2, -2) +
@@ -75,12 +72,12 @@ bool Player::Initialize() {
 
   nuke_symbol_animator_.Attach(&nuke_symbol_);
 
-  nuke_explosion_.SetSound(nuke_explosion_sound_);
+  nuke_explosion_.SetSound("nuke");
   nuke_explosion_.SetVariate(false);
   nuke_explosion_.SetSimulateStereo(false);
   nuke_explosion_.SetMaxAplitude(0.8f);
 
-  no_nuke_.SetSound(no_nuke_sound_);
+  no_nuke_.SetSound("no_nuke");
 
   return true;
 }
@@ -306,7 +303,7 @@ void Player::SetupWeapons() {
     beam_animator_[i].SetBlending({1, 1, 1, 0}, 0.16f);
     beam_animator_[i].Attach(&beam_[i]);
 
-    laser_shot_[i].SetSound(laser_shot_sound_);
+    laser_shot_[i].SetSound("laser");
     laser_shot_[i].SetVariate(true);
     laser_shot_[i].SetSimulateStereo(false);
     laser_shot_[i].SetMaxAplitude(0.4f);
@@ -484,13 +481,4 @@ void Player::NavigateBack() {
   DragCancel(1);
   Engine& engine = Engine::Get();
   static_cast<Demo*>(engine.GetGame())->EnterMenuState();
-}
-
-bool Player::CreateRenderResources() {
-  Engine::Get().SetImageSource("weapon_tex", "enemy_anims_flare_ok.png", true);
-  Engine::Get().SetImageSource("beam_tex", "enemy_ray_ok.png", true);
-  Engine::Get().SetImageSource("nuke_symbol_tex", "nuke_frames.png", true);
-  Engine::Get().SetImageSource("health_bead", "bead.png", true);
-
-  return true;
 }

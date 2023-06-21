@@ -20,6 +20,7 @@
 #include "engine/renderer/texture.h"
 #include "engine/renderer/vulkan/renderer_vulkan.h"
 #include "engine/shader_source.h"
+#include "engine/sound.h"
 #include "third_party/texture_compressor/texture_compressor.h"
 
 using namespace base;
@@ -84,6 +85,7 @@ void Engine::Run() {
 
     if (!renderer_->IsInitialzed()) {
       timer_.Reset();
+      input_queue_.clear();
       continue;
     }
 
@@ -109,7 +111,7 @@ void Engine::Initialize() {
 
   thread_pool_.Initialize();
 
-  CreateRenderer(RendererType::kVulkan);
+  CreateRendererInternal(RendererType::kVulkan);
 
   // Normalize viewport.
   if (GetScreenWidth() > GetScreenHeight()) {
@@ -134,7 +136,11 @@ void Engine::Initialize() {
 
   game_ = GameFactoryBase::CreateGame("");
   CHECK(game_) << "No game found to run.";
+  CHECK(game_->PreInitialize()) << "Failed to pre-initialize the game.";
 
+  // Create resources and let the game finalize initialization.
+  CreateRenderResources();
+  WaitForAsyncWork();
   CHECK(game_->Initialize()) << "Failed to initialize the game.";
 }
 
@@ -205,33 +211,12 @@ void Engine::RemoveAnimator(Animator* animator) {
 }
 
 void Engine::CreateRenderer(RendererType type) {
-  if ((dynamic_cast<RendererVulkan*>(renderer_.get()) &&
-       type == RendererType::kVulkan) ||
-      (dynamic_cast<RendererOpenGL*>(renderer_.get()) &&
-       type == RendererType::kOpenGL))
-    return;
-
-  if (type == RendererType::kVulkan)
-    renderer_ =
-        std::make_unique<RendererVulkan>(std::bind(&Engine::ContextLost, this));
-  else if (type == RendererType::kOpenGL)
-    renderer_ =
-        std::make_unique<RendererOpenGL>(std::bind(&Engine::ContextLost, this));
-  else
-    NOTREACHED;
-
-  bool result = renderer_->Initialize(platform_);
-  if (!result && type == RendererType::kVulkan) {
-    LOG << "Failed to initialize " << renderer_->GetDebugName() << " renderer.";
-    LOG << "Fallback to OpenGL renderer.";
-    CreateRenderer(RendererType::kOpenGL);
-    return;
-  }
-  CHECK(result) << "Failed to initialize " << renderer_->GetDebugName()
-                << " renderer.";
-
-  CreateTextureCompressors();
-  ContextLost();
+  // Create a new renderer next cycle.
+  TaskRunner::TaskRunner::GetThreadLocalTaskRunner()->PostTask(
+      HERE, std::bind(&Engine::CreateRendererInternal, this, type));
+  TaskRunner::TaskRunner::GetThreadLocalTaskRunner()->PostTask(
+      HERE, std::bind(&Engine::ContextLost, this));
+  input_queue_.clear();
 }
 
 RendererType Engine::GetRendererType() {
@@ -323,41 +308,58 @@ void Engine::ReleaseTexture(const std::string& asset_name) {
     it->second.texture->Destroy();
 }
 
-void Engine::LoadCustomShader(const std::string& asset_name,
-                              const std::string& file_name) {
+void Engine::SetShaderSource(const std::string& asset_name,
+                             const std::string& file_name) {
   if (shaders_.contains(asset_name)) {
     DLOG << "Shader already exists: " << asset_name;
     return;
   }
 
-  auto& s = shaders_[asset_name] = {std::make_unique<Shader>(renderer_.get()),
-                                    file_name};
-
-  auto source = std::make_unique<ShaderSource>();
-  if (!source->Load(file_name))
-    return;
-  s.shader->Create(std::move(source), quad_->vertex_description(),
-                   quad_->primitive(), false);
+  shaders_[asset_name] = {std::make_unique<Shader>(renderer_.get()), file_name};
 }
 
-Shader* Engine::GetCustomShader(const std::string& asset_name) {
+Shader* Engine::GetShader(const std::string& asset_name) {
   auto it = shaders_.find(asset_name);
   if (it == shaders_.end()) {
     DLOG << "Shader not found: " << asset_name;
     return nullptr;
   }
 
+  if (!it->second.shader->IsValid()) {
+    auto source = std::make_unique<ShaderSource>();
+    if (source->Load(it->second.file_name))
+      it->second.shader->Create(std::move(source), quad_->vertex_description(),
+                                quad_->primitive(), false);
+  }
+
   return it->second.shader.get();
 }
 
-void Engine::RemoveCustomShader(const std::string& asset_name) {
-  auto it = shaders_.find(asset_name);
-  if (it == shaders_.end()) {
-    DLOG << "Shader not found: " << asset_name;
+void Engine::AsyncLoadSound(const std::string& asset_name,
+                            const std::string& file_name,
+                            bool stream) {
+  if (audio_buses_.contains(asset_name)) {
+    DLOG << "AudioBus already exists: " << asset_name;
     return;
   }
 
-  shaders_.erase(it);
+  auto sound = std::make_shared<Sound>();
+  audio_buses_[asset_name] = sound;
+
+  ++async_work_count_;
+  thread_pool_.PostTaskAndReply(
+      HERE, std::bind(&Sound::Load, sound, file_name, stream),
+      [&]() -> void { --async_work_count_; });
+}
+
+std::shared_ptr<AudioBus> Engine::GetAudioBus(const std::string& asset_name) {
+  auto it = audio_buses_.find(asset_name);
+  if (it == audio_buses_.end()) {
+    DLOG << "AudioBus not found: " << asset_name;
+    return nullptr;
+  }
+
+  return it->second;
 }
 
 std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
@@ -560,6 +562,35 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
   input_queue_.push_back(std::move(event));
 }
 
+void Engine::CreateRendererInternal(RendererType type) {
+  if ((dynamic_cast<RendererVulkan*>(renderer_.get()) &&
+       type == RendererType::kVulkan) ||
+      (dynamic_cast<RendererOpenGL*>(renderer_.get()) &&
+       type == RendererType::kOpenGL))
+    return;
+
+  if (type == RendererType::kVulkan)
+    renderer_ =
+        std::make_unique<RendererVulkan>(std::bind(&Engine::ContextLost, this));
+  else if (type == RendererType::kOpenGL)
+    renderer_ =
+        std::make_unique<RendererOpenGL>(std::bind(&Engine::ContextLost, this));
+  else
+    NOTREACHED;
+
+  bool result = renderer_->Initialize(platform_);
+  if (!result && type == RendererType::kVulkan) {
+    LOG << "Failed to initialize " << renderer_->GetDebugName() << " renderer.";
+    LOG << "Fallback to OpenGL renderer.";
+    CreateRendererInternal(RendererType::kOpenGL);
+    return;
+  }
+  CHECK(result) << "Failed to initialize " << renderer_->GetDebugName()
+                << " renderer.";
+
+  CreateTextureCompressors();
+}
+
 void Engine::CreateTextureCompressors() {
   tex_comp_alpha_.reset();
   tex_comp_opaque_.reset();
@@ -583,6 +614,15 @@ void Engine::CreateTextureCompressors() {
 }
 
 void Engine::ContextLost() {
+  CreateRenderResources();
+  WaitForAsyncWork();
+  input_queue_.clear();
+
+  if (game_)
+    game_->ContextLost();
+}
+
+void Engine::CreateRenderResources() {
   quad_->SetRenderer(renderer_.get());
   pass_through_shader_->SetRenderer(renderer_.get());
   solid_shader_->SetRenderer(renderer_.get());
@@ -620,24 +660,44 @@ void Engine::ContextLost() {
   for (auto& t : textures_) {
     t.second.texture->SetRenderer(renderer_.get());
     if (t.second.persistent || t.second.use_count > 0) {
-      auto image = t.second.create_image();
-      if (image)
-        t.second.texture->Update(std::move(image));
+      ++async_work_count_;
+      thread_pool_.PostTaskAndReplyWithResult<std::unique_ptr<Image>>(
+          HERE, t.second.create_image,
+          [&,
+           ptr = t.second.texture.get()](std::unique_ptr<Image> image) -> void {
+            --async_work_count_;
+            if (image)
+              ptr->Update(std::move(image));
+          });
     }
   }
 
   for (auto& s : shaders_) {
     s.second.shader->SetRenderer(renderer_.get());
-    auto source = std::make_unique<ShaderSource>();
-    if (source->Load(s.second.file_name))
-      s.second.shader->Create(std::move(source), quad_->vertex_description(),
-                              quad_->primitive(), false);
+    ++async_work_count_;
+    thread_pool_.PostTaskAndReplyWithResult<std::unique_ptr<ShaderSource>>(
+        HERE,
+        [file_name = s.second.file_name]() -> std::unique_ptr<ShaderSource> {
+          auto source = std::make_unique<ShaderSource>();
+          if (!source->Load(file_name))
+            return nullptr;
+          return source;
+        },
+        [&, ptr = s.second.shader.get()](
+            std::unique_ptr<ShaderSource> source) -> void {
+          --async_work_count_;
+          if (source)
+            ptr->Create(std::move(source), quad_->vertex_description(),
+                        quad_->primitive(), false);
+        });
   }
+}
 
-  if (game_)
-    game_->ContextLost();
-
-  input_queue_.clear();
+void Engine::WaitForAsyncWork() {
+  while (async_work_count_ > 0) {
+    TaskRunner::GetThreadLocalTaskRunner()->RunTasks();
+    platform_->Update();
+  }
 }
 
 void Engine::SetStatsVisible(bool visible) {

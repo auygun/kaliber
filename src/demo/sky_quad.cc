@@ -21,8 +21,8 @@ SkyQuad::~SkyQuad() = default;
 bool SkyQuad::Create(bool without_nebula) {
   without_nebula_ = without_nebula;
   scale_ = Engine::Get().GetScreenSize();
-  shader_ = Engine::Get().GetCustomShader(
-      without_nebula ? "sky_without_nebula" : "sky");
+  shader_ =
+      Engine::Get().GetShader(without_nebula ? "sky_without_nebula" : "sky");
 
   color_animator_.Attach(this);
 

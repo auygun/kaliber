@@ -25,6 +25,8 @@ Platform::Platform() {
   shared_data_path_ = "./";
   LOG << "Shared data path: " << shared_data_path_.c_str();
 
+  XInitThreads();
+
   bool res = CreateWindow(800, 1205);
   CHECK(res) << "Failed to create window.";
 

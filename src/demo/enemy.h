@@ -15,7 +15,6 @@
 
 namespace eng {
 class Image;
-class Sound;
 }  // namespace eng
 
 class Enemy {
@@ -23,6 +22,7 @@ class Enemy {
   Enemy();
   ~Enemy();
 
+  bool PreInitialize();
   bool Initialize();
 
   void Update(float delta_time);
@@ -109,15 +109,6 @@ class Enemy {
   eng::Animator boss_animator_;
   eng::SoundPlayer boss_intro_;
 
-  std::shared_ptr<eng::Sound> boss_intro_sound_;
-  std::shared_ptr<eng::Sound> boss_explosion_sound_;
-  std::shared_ptr<eng::Sound> explosion_sound_;
-  std::shared_ptr<eng::Sound> stealth_sound_;
-  std::shared_ptr<eng::Sound> shield_on_sound_;
-  std::shared_ptr<eng::Sound> hit_sound_;
-  std::shared_ptr<eng::Sound> power_up_spawn_sound_;
-  std::shared_ptr<eng::Sound> power_up_pick_sound_;
-
   std::list<EnemyUnit> enemies_;
 
   int num_enemies_killed_in_current_wave_ = 0;
@@ -163,8 +154,6 @@ class Enemy {
   int GetScore(EnemyType enemy_type);
 
   std::unique_ptr<eng::Image> GetScoreImage(EnemyType enemy_type);
-
-  bool CreateRenderResources();
 
   void TranslateEnemyUnit(EnemyUnit& e, const base::Vector2f& delta);
 };

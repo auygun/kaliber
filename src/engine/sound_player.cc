@@ -17,6 +17,10 @@ SoundPlayer::~SoundPlayer() {
   Engine::Get().GetAudioMixer()->DestroyResource(resource_id_);
 }
 
+void SoundPlayer::SetSound(const std::string& asset_name) {
+  sound_ = Engine::Get().GetAudioBus(asset_name);
+}
+
 void SoundPlayer::SetSound(std::shared_ptr<AudioBus> sound) {
   sound_ = sound;
 }

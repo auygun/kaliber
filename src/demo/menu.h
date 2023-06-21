@@ -30,11 +30,13 @@ class Menu {
   Menu();
   ~Menu();
 
+  bool PreInitialize();
   bool Initialize();
 
   void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
 
   void SetOptionEnabled(Option o, bool enable);
+  void SetRendererType();
 
   void Show();
   void Hide(base::Closure cb = nullptr);
@@ -145,9 +147,6 @@ class Menu {
 
   Radio starting_wave_;
   Button wave_up_;
-  Button wave_down_;
-
-  bool CreateRenderResources();
 
   std::unique_ptr<eng::Image> CreateMenuImage();
   std::unique_ptr<eng::Image> CreateHighScoreImage();

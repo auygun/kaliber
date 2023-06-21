@@ -13,7 +13,6 @@
 
 namespace eng {
 class InputEvent;
-class Sound;
 }  //  namespace eng
 
 class Player {
@@ -21,6 +20,7 @@ class Player {
   Player();
   ~Player();
 
+  bool PreInitialize();
   bool Initialize();
 
   void Update(float delta_time);
@@ -41,10 +41,6 @@ class Player {
   int nuke_count() { return nuke_count_; }
 
  private:
-  std::shared_ptr<eng::Sound> nuke_explosion_sound_;
-  std::shared_ptr<eng::Sound> no_nuke_sound_;
-  std::shared_ptr<eng::Sound> laser_shot_sound_;
-
   eng::ImageQuad drag_sign_[2];
   eng::ImageQuad weapon_[2];
   eng::ImageQuad beam_[2];
@@ -101,8 +97,6 @@ class Player {
   bool ValidateDrag(int i);
 
   void NavigateBack();
-
-  bool CreateRenderResources();
 };
 
 #endif  // DEMO_PLAYER_H

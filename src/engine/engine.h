@@ -19,6 +19,7 @@ class TextureCompressor;
 namespace eng {
 
 class Animator;
+class AudioBus;
 class AudioMixer;
 class Drawable;
 class Font;
@@ -73,10 +74,14 @@ class Engine : public PlatformObserver {
   Texture* AcquireTexture(const std::string& asset_name);
   void ReleaseTexture(const std::string& asset_name);
 
-  void LoadCustomShader(const std::string& asset_name,
-                        const std::string& file_name);
-  Shader* GetCustomShader(const std::string& asset_name);
-  void RemoveCustomShader(const std::string& asset_name);
+  void SetShaderSource(const std::string& asset_name,
+                       const std::string& file_name);
+  Shader* GetShader(const std::string& asset_name);
+
+  void AsyncLoadSound(const std::string& asset_name,
+                      const std::string& file_name,
+                      bool stream = false);
+  std::shared_ptr<AudioBus> GetAudioBus(const std::string& asset_name);
 
   std::unique_ptr<InputEvent> GetNextInputEvent();
 
@@ -186,9 +191,12 @@ class Engine : public PlatformObserver {
 
   std::list<Animator*> animators_;
 
-  // Managed render resources mapped by asset name.
+  // Resources mapped by asset name.
   std::unordered_map<std::string, TextureResource> textures_;
   std::unordered_map<std::string, ShaderResource> shaders_;
+  std::unordered_map<std::string, std::shared_ptr<AudioBus>> audio_buses_;
+
+  size_t async_work_count_ = 0;
 
   std::unique_ptr<ImageQuad> stats_;
 
@@ -227,9 +235,15 @@ class Engine : public PlatformObserver {
   void GainedFocus(bool from_interstitial_ad) final;
   void AddInputEvent(std::unique_ptr<InputEvent> event) final;
 
+  void CreateRendererInternal(RendererType type);
+
   void CreateTextureCompressors();
 
   void ContextLost();
+
+  void CreateRenderResources();
+
+  void WaitForAsyncWork();
 
   void SetStatsVisible(bool visible);
   std::unique_ptr<Image> PrintStats();

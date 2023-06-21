@@ -13,7 +13,6 @@
 #include "engine/engine.h"
 #include "engine/game_factory.h"
 #include "engine/input_event.h"
-#include "engine/sound.h"
 
 DECLARE_GAME_BEGIN
 DECLARE_GAME(Demo)
@@ -47,15 +46,37 @@ Demo::~Demo() {
   saved_data_.Save();
 }
 
-bool Demo::Initialize() {
-  saved_data_.Load(kSaveFileName);
-
-  Engine::Get().LoadCustomShader("sky_without_nebula",
-                                 "sky_without_nebula.glsl");
-  Engine::Get().LoadCustomShader("sky", "sky.glsl");
-
+bool Demo::PreInitialize() {
   if (!font_.Load("PixelCaps!.ttf"))
     return false;
+
+  Engine::Get().SetShaderSource("sky_without_nebula",
+                                "sky_without_nebula.glsl");
+  Engine::Get().SetShaderSource("sky", "sky.glsl");
+
+  Engine::Get().AsyncLoadSound("music", "Game_2_Main.mp3");
+  Engine::Get().AsyncLoadSound("boss_music", "Game_2_Boss.mp3");
+
+  if (!enemy_.PreInitialize()) {
+    LOG << "Failed to create the enemy.";
+    return false;
+  }
+
+  if (!player_.PreInitialize()) {
+    LOG << "Failed to create the enemy.";
+    return false;
+  }
+
+  if (!menu_.PreInitialize()) {
+    LOG << "Failed to create the menu.";
+    return false;
+  }
+
+  return true;
+}
+
+bool Demo::Initialize() {
+  saved_data_.Load(kSaveFileName);
 
   if (!sky_.Create(false)) {
     LOG << "Could not create the sky.";
@@ -87,18 +108,10 @@ bool Demo::Initialize() {
     return false;
   }
 
-  auto sound = std::make_unique<Sound>();
-  if (!sound->Load("Game_2_Main.mp3", true))
-    return false;
-
-  auto boss_sound = std::make_unique<Sound>();
-  if (!boss_sound->Load("Game_2_Boss.mp3", true))
-    return false;
-
-  music_.SetSound(std::move(sound));
+  music_.SetSound("music");
   music_.SetMaxAplitude(0.5f);
 
-  boss_music_.SetSound(std::move(boss_sound));
+  boss_music_.SetSound("boss_music");
   boss_music_.SetMaxAplitude(0.5f);
 
   if (!saved_data_.root().get("audio", Json::Value(true)).asBool())
@@ -172,6 +185,7 @@ void Demo::ContextLost() {
     num_benchmark_samples_ = 0;
     avarage_fps_ = 0;
   }
+  menu_.SetRendererType();
 }
 
 void Demo::LostFocus() {}
