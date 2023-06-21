@@ -44,7 +44,8 @@ RendererOpenGL::RendererOpenGL(base::Closure context_lost_cb)
     : Renderer(context_lost_cb),
       main_thread_task_runner_(TaskRunner::GetThreadLocalTaskRunner()) {}
 #else
-RendererOpenGL::RendererOpenGL() = default;
+RendererOpenGL::RendererOpenGL(base::Closure context_lost_cb)
+    : Renderer(context_lost_cb) {}
 #endif  // THREADED_RENDERING
 
 RendererOpenGL::~RendererOpenGL() {
