@@ -18,16 +18,15 @@ namespace internal {
 // one that returns via an output parameter.
 template <typename ReturnType>
 void ReturnAsParamAdapter(std::function<ReturnType()> func,
-                          ReturnType* result) {
+                          std::shared_ptr<ReturnType> result) {
   *result = func();
 }
 
 // Adapts a ReturnType* result to a callblack that expects a ReturnType.
 template <typename ReturnType>
 void ReplyAdapter(std::function<void(ReturnType)> callback,
-                  ReturnType* result) {
+                  std::shared_ptr<ReturnType> result) {
   callback(std::move(*result));
-  delete result;
 }
 
 }  // namespace internal
@@ -57,13 +56,20 @@ class TaskRunner {
                                   std::function<ReturnType()> task,
                                   std::function<void(ReturnType)> reply,
                                   bool front = false) {
-    auto* result = new ReturnType;
+    auto result = std::make_shared<ReturnType>();
     return PostTaskAndReply(
         from,
         std::bind(internal::ReturnAsParamAdapter<ReturnType>, std::move(task),
                   result),
-        std::bind(internal::ReplyAdapter<ReturnType>, std::move(reply),
-                  result), front);
+        std::bind(internal::ReplyAdapter<ReturnType>, std::move(reply), result),
+        front);
+  }
+
+  // Posts a task to delete the given object.
+  template <class T>
+  void Delete(Location from, std::unique_ptr<T> object) {
+    std::shared_ptr<T> owned = std::move(object);
+    PostTask(HERE, [owned]() {});
   }
 
   void CancelTasks();

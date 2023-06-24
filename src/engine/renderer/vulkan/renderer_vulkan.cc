@@ -414,10 +414,7 @@ uint64_t RendererVulkan::CreateGeometry(std::unique_ptr<Mesh> mesh) {
                                   VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
                                   VK_ACCESS_TRANSFER_WRITE_BIT,
                                   VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT));
-  task_runner_.PostTask(HERE, [&, mesh = mesh.release()]() {
-    // Transfer mesh ownership to the background thread.
-    std::unique_ptr<Mesh> own(mesh);
-  });
+  task_runner_.Delete(HERE, std::move(mesh));
   semaphore_.release();
 
   return last_resource_id_;
@@ -506,10 +503,7 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
                 0, VK_ACCESS_SHADER_READ_BIT,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
-  task_runner_.PostTask(HERE, [&, image = image.release()]() {
-    // Transfer image ownership to the background thread.
-    std::unique_ptr<Image> own(image);
-  });
+  task_runner_.Delete(HERE, std::move(image));
   semaphore_.release();
 }
 
