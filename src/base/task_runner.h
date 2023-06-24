@@ -45,21 +45,25 @@ class TaskRunner {
   static void CreateThreadLocalTaskRunner();
   static std::shared_ptr<TaskRunner> GetThreadLocalTaskRunner();
 
-  void PostTask(Location from, Closure task);
+  void PostTask(Location from, Closure task, bool front = false);
 
-  void PostTaskAndReply(Location from, Closure task, Closure reply);
+  void PostTaskAndReply(Location from,
+                        Closure task,
+                        Closure reply,
+                        bool front = false);
 
   template <typename ReturnType>
   void PostTaskAndReplyWithResult(Location from,
                                   std::function<ReturnType()> task,
-                                  std::function<void(ReturnType)> reply) {
+                                  std::function<void(ReturnType)> reply,
+                                  bool front = false) {
     auto* result = new ReturnType;
     return PostTaskAndReply(
         from,
         std::bind(internal::ReturnAsParamAdapter<ReturnType>, std::move(task),
                   result),
         std::bind(internal::ReplyAdapter<ReturnType>, std::move(reply),
-                  result));
+                  result), front);
   }
 
   void CancelTasks();

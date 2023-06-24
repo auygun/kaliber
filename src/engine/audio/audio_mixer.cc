@@ -254,7 +254,8 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
 
             ThreadPool::Get().PostTask(
                 HERE,
-                std::bind(&AudioMixer::DoStream, this, *it, flags & kLoop));
+                std::bind(&AudioMixer::DoStream, this, *it, flags & kLoop),
+                true);
           } else {
             DLOG << "Mixer buffer underrun!";
           }

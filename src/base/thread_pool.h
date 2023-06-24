@@ -24,16 +24,20 @@ class ThreadPool {
 
   void Shutdown();
 
-  void PostTask(Location from, Closure task);
+  void PostTask(Location from, Closure task, bool front = false);
 
-  void PostTaskAndReply(Location from, Closure task, Closure reply);
+  void PostTaskAndReply(Location from,
+                        Closure task,
+                        Closure reply,
+                        bool front = false);
 
   template <typename ReturnType>
   void PostTaskAndReplyWithResult(Location from,
                                   std::function<ReturnType()> task,
-                                  std::function<void(ReturnType)> reply) {
+                                  std::function<void(ReturnType)> reply,
+                                  bool front = false) {
     task_runner_.PostTaskAndReplyWithResult(from, std::move(task),
-                                            std::move(reply));
+                                            std::move(reply), front);
     semaphore_.release();
   }
 
