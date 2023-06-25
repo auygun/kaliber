@@ -94,16 +94,18 @@ $(BASE_LIB): $(BASE_OBJS)
 ENGINE_SRC := \
   $(SRC_ROOT)/engine/animatable.cc \
   $(SRC_ROOT)/engine/animator.cc \
+  $(SRC_ROOT)/engine/asset/font.cc \
+  $(SRC_ROOT)/engine/asset/image.cc \
+  $(SRC_ROOT)/engine/asset/mesh.cc \
+  $(SRC_ROOT)/engine/asset/shader_source.cc \
+  $(SRC_ROOT)/engine/asset/sound.cc \
   $(SRC_ROOT)/engine/audio/audio_bus.cc \
   $(SRC_ROOT)/engine/audio/audio_mixer.cc \
   $(SRC_ROOT)/engine/audio/audio_sink_alsa.cc \
   $(SRC_ROOT)/engine/audio/sinc_resampler.cc \
   $(SRC_ROOT)/engine/drawable.cc \
   $(SRC_ROOT)/engine/engine.cc \
-  $(SRC_ROOT)/engine/font.cc \
   $(SRC_ROOT)/engine/image_quad.cc \
-  $(SRC_ROOT)/engine/image.cc \
-  $(SRC_ROOT)/engine/mesh.cc \
   $(SRC_ROOT)/engine/persistent_data.cc \
   $(SRC_ROOT)/engine/platform/asset_file_linux.cc \
   $(SRC_ROOT)/engine/platform/asset_file.cc \
@@ -119,10 +121,8 @@ ENGINE_SRC := \
   $(SRC_ROOT)/engine/renderer/vulkan/renderer_vulkan.cc \
   $(SRC_ROOT)/engine/renderer/vulkan/vulkan_context_linux.cc \
   $(SRC_ROOT)/engine/renderer/vulkan/vulkan_context.cc \
-  $(SRC_ROOT)/engine/shader_source.cc \
   $(SRC_ROOT)/engine/solid_quad.cc \
-  $(SRC_ROOT)/engine/sound_player.cc \
-  $(SRC_ROOT)/engine/sound.cc
+  $(SRC_ROOT)/engine/sound_player.cc
 
 ENGINE_LIB := $(BUILD_DIR)/libengine.a
 ENGINE_OBJS := $(call objs_from_src, $(ENGINE_SRC))

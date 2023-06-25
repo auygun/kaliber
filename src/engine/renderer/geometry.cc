@@ -1,6 +1,6 @@
 #include "engine/renderer/geometry.h"
 
-#include "engine/mesh.h"
+#include "engine/asset/mesh.h"
 #include "engine/renderer/renderer.h"
 
 namespace eng {

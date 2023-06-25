@@ -1,5 +1,5 @@
-#ifndef ENGINE_FONT_H
-#define ENGINE_FONT_H
+#ifndef ENGINE_ASSET_FONT_H
+#define ENGINE_ASSET_FONT_H
 
 #include <cstdint>
 #include <memory>
@@ -51,4 +51,4 @@ class Font {
 
 }  // namespace eng
 
-#endif  // ENGINE_FONT_H
+#endif  // ENGINE_ASSET_FONT_H

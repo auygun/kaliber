@@ -1,5 +1,5 @@
-#ifndef ENGINE_MESH_H
-#define ENGINE_MESH_H
+#ifndef ENGINE_ASSET_MESH_H
+#define ENGINE_ASSET_MESH_H
 
 #include <memory>
 #include <string>
@@ -51,4 +51,4 @@ class Mesh {
 
 }  // namespace eng
 
-#endif  // ENGINE_MESH_H
+#endif  // ENGINE_ASSET_MESH_H

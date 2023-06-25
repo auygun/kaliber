@@ -3,9 +3,9 @@
 #include "base/interpolation.h"
 #include "base/log.h"
 #include "base/vecmath.h"
+#include "engine/asset/font.h"
+#include "engine/asset/image.h"
 #include "engine/engine.h"
-#include "engine/font.h"
-#include "engine/image.h"
 
 #include "demo/demo.h"
 

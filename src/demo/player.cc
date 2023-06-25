@@ -2,8 +2,8 @@
 
 #include "base/interpolation.h"
 #include "base/log.h"
+#include "engine/asset/font.h"
 #include "engine/engine.h"
-#include "engine/font.h"
 #include "engine/input_event.h"
 
 #include "demo/demo.h"

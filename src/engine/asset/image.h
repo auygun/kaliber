@@ -1,5 +1,5 @@
-#ifndef ENGINE_IMAGE_H
-#define ENGINE_IMAGE_H
+#ifndef ENGINE_ASSET_IMAGE_H
+#define ENGINE_ASSET_IMAGE_H
 
 #include <stdint.h>
 #include <string>
@@ -56,4 +56,4 @@ class Image {
 
 }  // namespace eng
 
-#endif  // ENGINE_IMAGE_H
+#endif  // ENGINE_ASSET_IMAGE_H

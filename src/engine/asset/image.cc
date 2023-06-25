@@ -1,4 +1,4 @@
-#include "engine/image.h"
+#include "engine/asset/image.h"
 
 #include <algorithm>
 #include <cmath>
@@ -12,7 +12,7 @@
 
 // This 3rd party library is written in C and uses malloc, which means that we
 // have to do the same.
-#include "../third_party/stb/stb_image.h"
+#include "third_party/stb/stb_image.h"
 
 using namespace base;
 

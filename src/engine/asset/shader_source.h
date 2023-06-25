@@ -1,5 +1,5 @@
-#ifndef ENGINE_SHADER_CODE_H
-#define ENGINE_SHADER_CODE_H
+#ifndef ENGINE_ASSET_SHADER_CODE_H
+#define ENGINE_ASSET_SHADER_CODE_H
 
 #include <memory>
 #include <string>
@@ -38,4 +38,4 @@ class ShaderSource {
 
 }  // namespace eng
 
-#endif  // ENGINE_SHADER_CODE_H
+#endif  // ENGINE_ASSET_SHADER_CODE_H

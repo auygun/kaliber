@@ -61,16 +61,18 @@ add_library(kaliber SHARED
     ../../../src/demo/sky_quad.cc
     ../../../src/engine/animatable.cc
     ../../../src/engine/animator.cc
+    ../../../src/engine/asset/font.cc
+    ../../../src/engine/asset/image.cc
+    ../../../src/engine/asset/mesh.cc
+    ../../../src/engine/asset/shader_source.cc
+    ../../../src/engine/asset/sound.cc
     ../../../src/engine/audio/audio_bus.cc
     ../../../src/engine/audio/audio_mixer.cc
     ../../../src/engine/audio/audio_sink_oboe.cc
     ../../../src/engine/audio/sinc_resampler.cc
     ../../../src/engine/drawable.cc
     ../../../src/engine/engine.cc
-    ../../../src/engine/font.cc
     ../../../src/engine/image_quad.cc
-    ../../../src/engine/image.cc
-    ../../../src/engine/mesh.cc
     ../../../src/engine/persistent_data.cc
     ../../../src/engine/platform/asset_file_android.cc
     ../../../src/engine/platform/asset_file.cc
@@ -86,10 +88,8 @@ add_library(kaliber SHARED
     ../../../src/engine/renderer/vulkan/renderer_vulkan.cc
     ../../../src/engine/renderer/vulkan/vulkan_context_android.cc
     ../../../src/engine/renderer/vulkan/vulkan_context.cc
-    ../../../src/engine/shader_source.cc
     ../../../src/engine/solid_quad.cc
     ../../../src/engine/sound_player.cc
-    ../../../src/engine/sound.cc
     ../../../src/third_party/android/gl3stub.c
     ../../../src/third_party/android/GLContext.cpp
     ../../../src/third_party/glslang/glslang/GenericCodeGen/CodeGen.cpp

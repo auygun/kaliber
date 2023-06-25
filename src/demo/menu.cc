@@ -7,12 +7,12 @@
 #include "base/collusion_test.h"
 #include "base/interpolation.h"
 #include "base/log.h"
+#include "engine/asset/font.h"
+#include "engine/asset/image.h"
+#include "engine/asset/sound.h"
 #include "engine/engine.h"
-#include "engine/font.h"
-#include "engine/image.h"
 #include "engine/input_event.h"
 #include "engine/renderer/renderer.h"
-#include "engine/sound.h"
 
 #include "demo/demo.h"
 

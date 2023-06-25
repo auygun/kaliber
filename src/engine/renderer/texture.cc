@@ -1,7 +1,7 @@
 #include "engine/renderer/texture.h"
 
 #include "base/log.h"
-#include "engine//image.h"
+#include "engine/asset/image.h"
 #include "engine/renderer/renderer.h"
 
 namespace eng {

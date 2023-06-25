@@ -3,7 +3,7 @@
 
 #include "base/closure.h"
 #include "engine/animator.h"
-#include "engine/font.h"
+#include "engine/asset/font.h"
 #include "engine/game.h"
 #include "engine/persistent_data.h"
 #include "engine/solid_quad.h"

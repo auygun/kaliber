@@ -1,4 +1,4 @@
-#include "engine/font.h"
+#include "engine/asset/font.h"
 
 #include <codecvt>
 #include <locale>
@@ -9,7 +9,7 @@
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STBTT_STATIC
-#include "../third_party/stb/stb_truetype.h"
+#include "third_party/stb/stb_truetype.h"
 
 namespace eng {
 

@@ -1,5 +1,5 @@
-#ifndef ENGINE_SOUND_H
-#define ENGINE_SOUND_H
+#ifndef ENGINE_ASSET_SOUND_H
+#define ENGINE_ASSET_SOUND_H
 
 #include <stdint.h>
 #include <memory>
@@ -43,4 +43,4 @@ class Sound final : public AudioBus {
 
 }  // namespace eng
 
-#endif  // ENGINE_SOUND_H
+#endif  // ENGINE_ASSET_SOUND_H

@@ -13,13 +13,13 @@
 #ifdef THREADED_RENDERING
 #include "base/task_runner.h"
 #endif  // THREADED_RENDERING
-#include "engine/image.h"
-#include "engine/mesh.h"
+#include "engine/asset/image.h"
+#include "engine/asset/mesh.h"
+#include "engine/asset/shader_source.h"
 #include "engine/renderer/geometry.h"
 #include "engine/renderer/opengl/render_command.h"
 #include "engine/renderer/shader.h"
 #include "engine/renderer/texture.h"
-#include "engine/shader_source.h"
 
 using namespace base;
 

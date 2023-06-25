@@ -3,9 +3,9 @@
 #include "base/log.h"
 #include "base/vecmath.h"
 #include "demo/demo.h"
+#include "engine/asset/font.h"
+#include "engine/asset/image.h"
 #include "engine/engine.h"
-#include "engine/font.h"
-#include "engine/image.h"
 #include "engine/input_event.h"
 
 using namespace base;
