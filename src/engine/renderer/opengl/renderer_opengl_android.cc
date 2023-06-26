@@ -12,14 +12,6 @@ bool RendererOpenGL::Initialize(Platform* platform) {
   LOG << "Initializing renderer.";
 
   window_ = platform->GetWindow();
-  return StartRenderThread();
-}
-
-void RendererOpenGL::OnDestroy() {
-  ndk_helper::GLContext::GetInstance()->Invalidate();
-}
-
-bool RendererOpenGL::InitInternal() {
   ndk_helper::GLContext* gl_context = ndk_helper::GLContext::GetInstance();
 
   if (!gl_context->IsInitialzed()) {
@@ -48,21 +40,23 @@ bool RendererOpenGL::InitInternal() {
   return InitCommon();
 }
 
+void RendererOpenGL::OnDestroy() {
+  ndk_helper::GLContext::GetInstance()->Invalidate();
+}
+
 void RendererOpenGL::ShutdownInternal() {
   ndk_helper::GLContext::GetInstance()->Suspend();
 }
 
-void RendererOpenGL::HandleCmdPresent(RenderCommand* cmd) {
+void RendererOpenGL::Present() {
   if (EGL_SUCCESS != ndk_helper::GLContext::GetInstance()->Swap()) {
     ContextLost();
     return;
   }
-#ifdef THREADED_RENDERING
-  draw_complete_semaphore_.release();
-#endif  // THREADED_RENDERING
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   active_shader_id_ = 0;
   active_texture_id_ = 0;
+  fps_++;
 }
 
 }  // namespace eng

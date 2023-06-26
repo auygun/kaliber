@@ -16,12 +16,6 @@ bool RendererOpenGL::Initialize(Platform* platform) {
   screen_width_ = xwa.width;
   screen_height_ = xwa.height;
 
-  return StartRenderThread();
-}
-
-void RendererOpenGL::OnDestroy() {}
-
-bool RendererOpenGL::InitInternal() {
   GLint glx_attributes[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER,
                             None};
   XVisualInfo* visual_info = glXChooseVisual(display_, 0, glx_attributes);
@@ -41,6 +35,8 @@ bool RendererOpenGL::InitInternal() {
   return InitCommon();
 }
 
+void RendererOpenGL::OnDestroy() {}
+
 void RendererOpenGL::ShutdownInternal() {
   if (display_ && glx_context_) {
     glXMakeCurrent(display_, None, NULL);
@@ -49,16 +45,12 @@ void RendererOpenGL::ShutdownInternal() {
   }
 }
 
-void RendererOpenGL::HandleCmdPresent(RenderCommand* cmd) {
-  if (display_) {
-    glXSwapBuffers(display_, window_);
-#ifdef THREADED_RENDERING
-    draw_complete_semaphore_.release();
-#endif  // THREADED_RENDERING
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    active_shader_id_ = 0;
-    active_texture_id_ = 0;
-  }
+void RendererOpenGL::Present() {
+  glXSwapBuffers(display_, window_);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  active_shader_id_ = 0;
+  active_texture_id_ = 0;
+  fps_++;
 }
 
 }  // namespace eng

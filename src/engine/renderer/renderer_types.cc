@@ -14,7 +14,7 @@ const char kLayoutDelimiter[] = ";/ \t";
 
 namespace eng {
 
-bool ParseVertexDescription(std::string vd_str, VertexDescription& out) {
+bool ParseVertexDescription(const std::string& vd_str, VertexDescription& out) {
   // Parse the description.
   char buffer[32];
   strcpy(buffer, vd_str.c_str());

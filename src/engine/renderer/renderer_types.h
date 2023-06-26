@@ -41,7 +41,7 @@ using DataTypeSize = size_t;
 using VertexDescription =
     std::vector<std::tuple<AttribType, DataType, ElementCount, DataTypeSize>>;
 
-bool ParseVertexDescription(std::string vd_str, VertexDescription& out);
+bool ParseVertexDescription(const std::string& vd_str, VertexDescription& out);
 
 }  // namespace eng
 

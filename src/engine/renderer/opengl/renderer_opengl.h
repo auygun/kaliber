@@ -6,34 +6,14 @@
 #include <unordered_map>
 #include <vector>
 
-#define THREADED_RENDERING
-
-#ifdef THREADED_RENDERING
-#include <condition_variable>
-#include <deque>
-#include <future>
-#include <mutex>
-#include <semaphore>
-#include <thread>
-#endif  // THREADED_RENDERING
-
 #include "engine/renderer/opengl/opengl.h"
-
 #include "engine/renderer/renderer.h"
 
 #if defined(__ANDROID__)
 struct ANativeWindow;
 #endif
 
-#ifdef THREADED_RENDERING
-namespace base {
-class TaskRunner;
-}
-#endif  // THREADED_RENDERING
-
 namespace eng {
-
-struct RenderCommand;
 
 class RendererOpenGL final : public Renderer {
  public:
@@ -113,13 +93,9 @@ class RendererOpenGL final : public Renderer {
     bool enable_depth_test = false;
   };
 
-  struct TextureOpenGL {
-    GLuint id = 0;
-  };
-
   std::unordered_map<uint64_t, GeometryOpenGL> geometries_;
   std::unordered_map<uint64_t, ShaderOpenGL> shaders_;
-  std::unordered_map<uint64_t, TextureOpenGL> textures_;
+  std::unordered_map<uint64_t, GLuint> textures_;
   uint64_t last_resource_id_ = 0;
 
   GLuint active_shader_id_ = 0;
@@ -129,23 +105,6 @@ class RendererOpenGL final : public Renderer {
   bool npot_ = false;
 
   bool is_initialized_ = false;
-
-#ifdef THREADED_RENDERING
-  // Global commands are independent from frames and guaranteed to be processed.
-  std::deque<std::unique_ptr<RenderCommand>> global_commands_;
-  // Draw commands are fame specific and can be discarded if the rendering is
-  // not throttled.
-  std::deque<std::unique_ptr<RenderCommand>> draw_commands_[2];
-
-  std::condition_variable cv_;
-  std::mutex mutex_;
-  std::thread render_thread_;
-  bool terminate_render_thread_ = false;
-
-  std::counting_semaphore<> draw_complete_semaphore_{0};
-
-  std::shared_ptr<base::TaskRunner> main_thread_task_runner_;
-#endif  // THREADED_RENDERING
 
   // Stats.
   size_t fps_ = 0;
@@ -158,42 +117,11 @@ class RendererOpenGL final : public Renderer {
   GLXContext glx_context_ = NULL;
 #endif
 
-  bool InitInternal();
   bool InitCommon();
   void ShutdownInternal();
-
   void OnDestroy();
-
   void ContextLost();
-
   void DestroyAllResources();
-
-  bool StartRenderThread();
-
-#ifdef THREADED_RENDERING
-  void RenderThreadMain(std::promise<bool> promise);
-#endif  // THREADED_RENDERING
-
-  void EnqueueCommand(std::unique_ptr<RenderCommand> cmd);
-  void ProcessCommand(RenderCommand* cmd);
-
-  void HandleCmdPresent(RenderCommand* cmd);
-  void HandleCmdCreateTexture(RenderCommand* cmd);
-  void HandleCmdUpdateTexture(RenderCommand* cmd);
-  void HandleCmdDestoryTexture(RenderCommand* cmd);
-  void HandleCmdActivateTexture(RenderCommand* cmd);
-  void HandleCmdCreateGeometry(RenderCommand* cmd);
-  void HandleCmdDestroyGeometry(RenderCommand* cmd);
-  void HandleCmdDrawGeometry(RenderCommand* cmd);
-  void HandleCmdCreateShader(RenderCommand* cmd);
-  void HandleCmdDestroyShader(RenderCommand* cmd);
-  void HandleCmdActivateShader(RenderCommand* cmd);
-  void HandleCmdSetUniformVec2(RenderCommand* cmd);
-  void HandleCmdSetUniformVec3(RenderCommand* cmd);
-  void HandleCmdSetUniformVec4(RenderCommand* cmd);
-  void HandleCmdSetUniformMat4(RenderCommand* cmd);
-  void HandleCmdSetUniformFloat(RenderCommand* cmd);
-  void HandleCmdSetUniformInt(RenderCommand* cmd);
 
   void BindTexture(GLuint id);
   bool SetupVertexLayout(const VertexDescription& vd,
