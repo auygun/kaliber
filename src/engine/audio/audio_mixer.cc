@@ -204,43 +204,42 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
       DCHECK(num_samples > 0);
 
       for (size_t i = 0; i < num_frames * kChannelCount;) {
-        // Mix the 1st channel.
-        output_buffer[i++] += src[0][src_index] * amplitude;
+        if (src_index < num_samples) {
+          // Mix the 1st channel.
+          output_buffer[i++] += src[0][src_index] * amplitude;
 
-        // Mix the 2nd channel. Offset the source index for stereo simulation.
-        size_t ind = channel_offset + src_index;
-        if (ind < num_samples)
-          output_buffer[i++] += src[1][ind] * amplitude;
-        else if (flags & kLoop)
-          output_buffer[i++] += src[1][ind % num_samples] * amplitude;
-        else
-          i++;
+          // Mix the 2nd channel. Offset the source index for stereo simulation.
+          size_t ind = channel_offset + src_index;
+          if (ind < num_samples)
+            output_buffer[i++] += src[1][ind] * amplitude;
+          else if (flags & kLoop)
+            output_buffer[i++] += src[1][ind % num_samples] * amplitude;
+          else
+            i++;
 
-        // Apply amplitude modification.
-        amplitude += amplitude_inc;
-        if (amplitude <= 0) {
-          marked_for_removal = true;
-          break;
-        } else if (amplitude > max_amplitude) {
-          amplitude = max_amplitude;
-        }
+          // Apply amplitude modification.
+          amplitude += amplitude_inc;
+          if (amplitude <= 0) {
+            marked_for_removal = true;
+            break;
+          } else if (amplitude > max_amplitude) {
+            amplitude = max_amplitude;
+          }
 
-        // Advance source index. Apply basic resampling for variations.
-        accumulator += step;
-        src_index += accumulator / 100;
-        accumulator %= 100;
-
-        // Remove, loop or stream if the source data is consumed
-        if (src_index >= num_samples) {
-          src_index %= num_samples;
-
+          // Advance source index. Apply basic resampling for variations.
+          accumulator += step;
+          src_index += accumulator / 100;
+          accumulator %= 100;
+        } else {
           if (audio_bus->EndOfStream()) {
+            src_index %= num_samples;
             marked_for_removal = !(flags & kLoop);
             break;
           }
 
           if (!it->get()->streaming_in_progress.load(
                   std::memory_order_acquire)) {
+            src_index %= num_samples;
             it->get()->streaming_in_progress.store(true,
                                                    std::memory_order_relaxed);
 
