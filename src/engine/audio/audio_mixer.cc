@@ -235,7 +235,7 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
           src_index %= num_samples;
 
           if (audio_bus->EndOfStream()) {
-            marked_for_removal = true;
+            marked_for_removal = !(flags & kLoop);
             break;
           }
 
