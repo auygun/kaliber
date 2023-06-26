@@ -169,7 +169,7 @@ class RendererVulkan final : public Renderer {
   std::vector<std::unique_ptr<DescPool>> desc_pools_;
   VkDescriptorSetLayout descriptor_set_layout_ = VK_NULL_HANDLE;
   std::vector<VkDescriptorSet> active_descriptor_sets_;
-  std::vector<VkDescriptorSet> penging_descriptor_sets_;
+  std::vector<VkDescriptorSet> pending_descriptor_sets_;
 
   VkSampler sampler_ = VK_NULL_HANDLE;
 

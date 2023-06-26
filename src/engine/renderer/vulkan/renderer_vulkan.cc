@@ -522,8 +522,8 @@ void RendererVulkan::ActivateTexture(uint64_t resource_id) {
   if (it == textures_.end())
     return;
 
-  // Keep as pengind and bind later in ActivateShader.
-  penging_descriptor_sets_[/*TODO*/ 0] = std::get<0>(it->second.desc_set);
+  // Keep as pending and bind later in ActivateShader.
+  pending_descriptor_sets_[/*TODO*/ 0] = std::get<0>(it->second.desc_set);
 }
 
 uint64_t RendererVulkan::CreateShader(
@@ -737,8 +737,8 @@ void RendererVulkan::ActivateShader(uint64_t resource_id) {
                       VK_PIPELINE_BIND_POINT_GRAPHICS, it->second.pipeline);
   }
   for (size_t i = 0; i < it->second.desc_set_count; ++i) {
-    if (active_descriptor_sets_[i] != penging_descriptor_sets_[i]) {
-      active_descriptor_sets_[i] = penging_descriptor_sets_[i];
+    if (active_descriptor_sets_[i] != pending_descriptor_sets_[i]) {
+      active_descriptor_sets_[i] = pending_descriptor_sets_[i];
       vkCmdBindDescriptorSets(frames_[current_frame_].draw_command_buffer,
                               VK_PIPELINE_BIND_POINT_GRAPHICS,
                               it->second.pipeline_layout, 0, 1,
@@ -1770,7 +1770,7 @@ bool RendererVulkan::CreatePipelineLayout(
 
     if (active_descriptor_sets_.size() < shader.desc_set_count) {
       active_descriptor_sets_.resize(shader.desc_set_count);
-      penging_descriptor_sets_.resize(shader.desc_set_count);
+      pending_descriptor_sets_.resize(shader.desc_set_count);
     }
 
     // Parse push constants.
@@ -1977,7 +1977,7 @@ void RendererVulkan::SwapBuffers() {
   active_pipeline_ = VK_NULL_HANDLE;
   for (auto& ds : active_descriptor_sets_)
     ds = VK_NULL_HANDLE;
-  for (auto& ds : penging_descriptor_sets_)
+  for (auto& ds : pending_descriptor_sets_)
     ds = VK_NULL_HANDLE;
 
   BeginFrame();
