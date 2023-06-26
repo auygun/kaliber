@@ -54,8 +54,8 @@ bool Demo::PreInitialize() {
                                 "sky_without_nebula.glsl");
   Engine::Get().SetShaderSource("sky", "sky.glsl");
 
-  Engine::Get().AsyncLoadSound("music", "Game_2_Main.mp3");
-  Engine::Get().AsyncLoadSound("boss_music", "Game_2_Boss.mp3");
+  Engine::Get().AsyncLoadSound("music", "Game_2_Main.mp3", true);
+  Engine::Get().AsyncLoadSound("boss_music", "Game_2_Boss.mp3", true);
 
   if (!enemy_.PreInitialize()) {
     LOG << "Failed to create the enemy.";
