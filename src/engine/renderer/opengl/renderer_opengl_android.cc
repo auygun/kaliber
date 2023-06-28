@@ -9,7 +9,7 @@
 namespace eng {
 
 bool RendererOpenGL::Initialize(Platform* platform) {
-  LOG << "Initializing renderer.";
+  LOG(0) << "Initializing renderer.";
 
   window_ = platform->GetWindow();
   ndk_helper::GLContext* gl_context = ndk_helper::GLContext::GetInstance();

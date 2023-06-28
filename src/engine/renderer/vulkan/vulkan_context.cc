@@ -12,7 +12,7 @@
   {                                                               \
     entrypoint = (PFN_vk##entrypoint)func(obj, "vk" #entrypoint); \
     if (entrypoint == nullptr) {                                  \
-      DLOG << #func << " failed to find vk";                      \
+      DLOG(0) << #func << " failed to find vk";                   \
       return false;                                               \
     }                                                             \
   }
@@ -164,16 +164,16 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VulkanContext::DebugMessengerCallback(
 
   switch (message_severity) {
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-      LOG << error_message;
+      LOG(0) << error_message;
       break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-      LOG << error_message;
+      LOG(0) << error_message;
       break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-      LOG << error_message;
+      LOG(0) << error_message;
       break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-      LOG << error_message;
+      LOG(0) << error_message;
       break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_FLAG_BITS_MAX_ENUM_EXT:
       break;
@@ -195,7 +195,7 @@ VkBool32 VulkanContext::CheckLayers(uint32_t check_count,
       }
     }
     if (!found) {
-      DLOG << "Can't find layer: " << check_names[i];
+      DLOG(0) << "Can't find layer: " << check_names[i];
       return 0;
     }
   }
@@ -216,8 +216,8 @@ bool VulkanContext::CreateValidationLayers() {
   uint32_t instance_layer_count = 0;
   err = vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr);
   if (err) {
-    DLOG << "vkEnumerateInstanceLayerProperties failed. Error: "
-         << string_VkResult(err);
+    DLOG(0) << "vkEnumerateInstanceLayerProperties failed. Error: "
+            << string_VkResult(err);
     return false;
   }
 
@@ -230,8 +230,8 @@ bool VulkanContext::CreateValidationLayers() {
     err = vkEnumerateInstanceLayerProperties(&instance_layer_count,
                                              instance_layers.get());
     if (err) {
-      DLOG << "vkEnumerateInstanceLayerProperties failed. Error: "
-           << string_VkResult(err);
+      DLOG(0) << "vkEnumerateInstanceLayerProperties failed. Error: "
+              << string_VkResult(err);
       return false;
     }
 
@@ -287,8 +287,8 @@ bool VulkanContext::InitializeExtensions() {
   err = vkEnumerateInstanceExtensionProperties(
       nullptr, &instance_extension_count, nullptr);
   if (err) {
-    DLOG << "vkEnumerateInstanceExtensionProperties failed. Error: "
-         << string_VkResult(err);
+    DLOG(0) << "vkEnumerateInstanceExtensionProperties failed. Error: "
+            << string_VkResult(err);
     return false;
   }
 
@@ -298,8 +298,8 @@ bool VulkanContext::InitializeExtensions() {
     err = vkEnumerateInstanceExtensionProperties(
         nullptr, &instance_extension_count, instance_extensions.get());
     if (err) {
-      DLOG << "vkEnumerateInstanceExtensionProperties failed. Error: "
-           << string_VkResult(err);
+      DLOG(0) << "vkEnumerateInstanceExtensionProperties failed. Error: "
+              << string_VkResult(err);
       return false;
     }
     for (uint32_t i = 0; i < instance_extension_count; i++) {
@@ -331,18 +331,18 @@ bool VulkanContext::InitializeExtensions() {
         }
       }
       if (enabled_extension_count_ >= kMaxExtensions) {
-        DLOG << "Enabled extension count reaches kMaxExtensions";
+        DLOG(0) << "Enabled extension count reaches kMaxExtensions";
         return false;
       }
     }
   }
 
   if (!surfaceExtFound) {
-    DLOG << "No surface extension found.";
+    DLOG(0) << "No surface extension found.";
     return false;
   }
   if (!platformSurfaceExtFound) {
-    DLOG << "No platform surface extension found.";
+    DLOG(0) << "No platform surface extension found.";
     return false;
   }
 
@@ -403,18 +403,18 @@ bool VulkanContext::CreatePhysicalDevice() {
   if (instance_ == VK_NULL_HANDLE) {
     VkResult err = vkCreateInstance(&inst_info, nullptr, &instance_);
     if (err == VK_ERROR_INCOMPATIBLE_DRIVER) {
-      DLOG
+      DLOG(0)
           << "Cannot find a compatible Vulkan installable client driver (ICD).";
       return false;
     }
     if (err == VK_ERROR_EXTENSION_NOT_PRESENT) {
-      DLOG
+      DLOG(0)
           << "Cannot find a specified extension library. Make sure your layers "
              "path is set appropriately. ";
       return false;
     }
     if (err) {
-      DLOG << "vkCreateInstance failed. Error: " << string_VkResult(err);
+      DLOG(0) << "vkCreateInstance failed. Error: " << string_VkResult(err);
       return false;
     }
   }
@@ -424,13 +424,13 @@ bool VulkanContext::CreatePhysicalDevice() {
   // Make initial call to query gpu_count.
   VkResult err = vkEnumeratePhysicalDevices(instance_, &gpu_count, nullptr);
   if (err) {
-    DLOG << "vkEnumeratePhysicalDevices failed. Error: "
-         << string_VkResult(err);
+    DLOG(0) << "vkEnumeratePhysicalDevices failed. Error: "
+            << string_VkResult(err);
     return false;
   }
 
   if (gpu_count == 0) {
-    DLOG << "vkEnumeratePhysicalDevices reported zero accessible devices.";
+    DLOG(0) << "vkEnumeratePhysicalDevices reported zero accessible devices.";
     return false;
   }
 
@@ -438,8 +438,8 @@ bool VulkanContext::CreatePhysicalDevice() {
   err =
       vkEnumeratePhysicalDevices(instance_, &gpu_count, physical_devices.get());
   if (err) {
-    DLOG << "vkEnumeratePhysicalDevices failed. Error: "
-         << string_VkResult(err);
+    DLOG(0) << "vkEnumeratePhysicalDevices failed. Error: "
+            << string_VkResult(err);
     return false;
   }
   // Grab the first physical device for now.
@@ -454,8 +454,8 @@ bool VulkanContext::CreatePhysicalDevice() {
   err = vkEnumerateDeviceExtensionProperties(gpu_, nullptr,
                                              &device_extension_count, nullptr);
   if (err) {
-    DLOG << "vkEnumerateDeviceExtensionProperties failed. Error: "
-         << string_VkResult(err);
+    DLOG(0) << "vkEnumerateDeviceExtensionProperties failed. Error: "
+            << string_VkResult(err);
     return false;
   }
 
@@ -465,8 +465,8 @@ bool VulkanContext::CreatePhysicalDevice() {
     err = vkEnumerateDeviceExtensionProperties(
         gpu_, nullptr, &device_extension_count, device_extensions.get());
     if (err) {
-      DLOG << "vkEnumerateDeviceExtensionProperties failed. Error: "
-           << string_VkResult(err);
+      DLOG(0) << "vkEnumerateDeviceExtensionProperties failed. Error: "
+              << string_VkResult(err);
       return false;
     }
 
@@ -478,7 +478,7 @@ bool VulkanContext::CreatePhysicalDevice() {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME;
       }
       if (enabled_extension_count_ >= kMaxExtensions) {
-        DLOG << "Enabled extension count reaches kMaxExtensions";
+        DLOG(0) << "Enabled extension count reaches kMaxExtensions";
         return false;
       }
     }
@@ -491,15 +491,15 @@ bool VulkanContext::CreatePhysicalDevice() {
             VK_KHR_MAINTENANCE1_EXTENSION_NAME;
       }
       if (enabled_extension_count_ >= kMaxExtensions) {
-        DLOG << "Enabled extension count reaches kMaxExtensions";
+        DLOG(0) << "Enabled extension count reaches kMaxExtensions";
         return false;
       }
     }
   }
 
   if (!swapchain_ext_found) {
-    DLOG << "vkEnumerateDeviceExtensionProperties failed to find "
-            "the " VK_KHR_SWAPCHAIN_EXTENSION_NAME " extension.";
+    DLOG(0) << "vkEnumerateDeviceExtensionProperties failed to find "
+               "the " VK_KHR_SWAPCHAIN_EXTENSION_NAME " extension.";
     return false;
   }
 
@@ -512,7 +512,7 @@ bool VulkanContext::CreatePhysicalDevice() {
             instance_, "vkDestroyDebugUtilsMessengerEXT");
     if (nullptr == CreateDebugUtilsMessengerEXT ||
         nullptr == DestroyDebugUtilsMessengerEXT) {
-      DLOG << "GetProcAddr: Failed to init VK_EXT_debug_utils";
+      DLOG(0) << "GetProcAddr: Failed to init VK_EXT_debug_utils";
       return false;
     }
 
@@ -522,31 +522,31 @@ bool VulkanContext::CreatePhysicalDevice() {
       case VK_SUCCESS:
         break;
       case VK_ERROR_OUT_OF_HOST_MEMORY:
-        DLOG << "CreateDebugUtilsMessengerEXT: out of host memory";
+        DLOG(0) << "CreateDebugUtilsMessengerEXT: out of host memory";
         return false;
       default:
-        DLOG << "CreateDebugUtilsMessengerEXT: unknown failure";
+        DLOG(0) << "CreateDebugUtilsMessengerEXT: unknown failure";
         return false;
         break;
     }
   }
   vkGetPhysicalDeviceProperties(gpu_, &gpu_props_);
 
-  LOG << "Vulkan:";
-  LOG << "  Name: " << gpu_props_.deviceName;
-  LOG << "  Tame: " << string_VkPhysicalDeviceType(gpu_props_.deviceType);
-  LOG << "  Vendor ID: " << gpu_props_.vendorID;
-  LOG << "  API version: " << VK_VERSION_MAJOR(gpu_props_.apiVersion) << "."
-      << VK_VERSION_MINOR(gpu_props_.apiVersion) << "."
-      << VK_VERSION_PATCH(gpu_props_.apiVersion);
-  LOG << "  Driver version: " << VK_VERSION_MAJOR(gpu_props_.driverVersion)
-      << "." << VK_VERSION_MINOR(gpu_props_.driverVersion) << "."
-      << VK_VERSION_PATCH(gpu_props_.driverVersion);
+  LOG(0) << "Vulkan:";
+  LOG(0) << "  Name: " << gpu_props_.deviceName;
+  LOG(0) << "  Tame: " << string_VkPhysicalDeviceType(gpu_props_.deviceType);
+  LOG(0) << "  Vendor ID: " << gpu_props_.vendorID;
+  LOG(0) << "  API version: " << VK_VERSION_MAJOR(gpu_props_.apiVersion) << "."
+         << VK_VERSION_MINOR(gpu_props_.apiVersion) << "."
+         << VK_VERSION_PATCH(gpu_props_.apiVersion);
+  LOG(0) << "  Driver version: " << VK_VERSION_MAJOR(gpu_props_.driverVersion)
+         << "." << VK_VERSION_MINOR(gpu_props_.driverVersion) << "."
+         << VK_VERSION_PATCH(gpu_props_.driverVersion);
 
   // Call with NULL data to get count,
   vkGetPhysicalDeviceQueueFamilyProperties(gpu_, &queue_family_count_, nullptr);
   if (queue_family_count_ == 0) {
-    DLOG << "Failed to query queue family count.";
+    DLOG(0) << "Failed to query queue family count.";
     return false;
   }
 
@@ -610,7 +610,7 @@ bool VulkanContext::CreateDevice() {
   }
   err = vkCreateDevice(gpu_, &sdevice, nullptr, &device_);
   if (err) {
-    DLOG << "vkCreateDevice failed. Error: " << string_VkResult(err);
+    DLOG(0) << "vkCreateDevice failed. Error: " << string_VkResult(err);
     return false;
   }
   return true;
@@ -655,7 +655,7 @@ bool VulkanContext::InitializeQueues(VkSurfaceKHR surface) {
   // Generate error if could not find both a graphics and a present queue
   if (graphics_queue_family_index == std::numeric_limits<uint32_t>::max() ||
       present_queue_family_index == std::numeric_limits<uint32_t>::max()) {
-    DLOG << "Could not find both graphics and present queues.";
+    DLOG(0) << "Could not find both graphics and present queues.";
     return false;
   }
 
@@ -688,16 +688,16 @@ bool VulkanContext::InitializeQueues(VkSurfaceKHR surface) {
   VkResult err =
       GetPhysicalDeviceSurfaceFormatsKHR(gpu_, surface, &format_count, nullptr);
   if (err) {
-    DLOG << "GetPhysicalDeviceSurfaceFormatsKHR failed. Error: "
-         << string_VkResult(err);
+    DLOG(0) << "GetPhysicalDeviceSurfaceFormatsKHR failed. Error: "
+            << string_VkResult(err);
     return false;
   }
   auto surf_formats = std::make_unique<VkSurfaceFormatKHR[]>(format_count);
   err = GetPhysicalDeviceSurfaceFormatsKHR(gpu_, surface, &format_count,
                                            surf_formats.get());
   if (err) {
-    DLOG << "GetPhysicalDeviceSurfaceFormatsKHR failed. Error: "
-         << string_VkResult(err);
+    DLOG(0) << "GetPhysicalDeviceSurfaceFormatsKHR failed. Error: "
+            << string_VkResult(err);
     return false;
   }
 
@@ -714,7 +714,7 @@ bool VulkanContext::InitializeQueues(VkSurfaceKHR surface) {
     format_ = desired_format;
     color_space_ = surf_formats[0].colorSpace;
   } else if (format_count < 1) {
-    DLOG << "Format count less than 1.";
+    DLOG(0) << "Format count less than 1.";
     return false;
   } else {
     // Find the first format that we support.
@@ -733,7 +733,7 @@ bool VulkanContext::InitializeQueues(VkSurfaceKHR surface) {
 
   end_of_find_format:
     if (format_ == VK_FORMAT_UNDEFINED) {
-      DLOG << "No usable surface format found.";
+      DLOG(0) << "No usable surface format found.";
       return false;
     }
   }
@@ -765,26 +765,26 @@ bool VulkanContext::CreateSemaphores() {
   for (uint32_t i = 0; i < kFrameLag; i++) {
     err = vkCreateFence(device_, &fence_ci, nullptr, &fences_[i]);
     if (err) {
-      DLOG << "vkCreateFence failed. Error: " << string_VkResult(err);
+      DLOG(0) << "vkCreateFence failed. Error: " << string_VkResult(err);
       return false;
     }
     err = vkCreateSemaphore(device_, &semaphoreCreateInfo, nullptr,
                             &image_acquired_semaphores_[i]);
     if (err) {
-      DLOG << "vkCreateSemaphore failed. Error: " << string_VkResult(err);
+      DLOG(0) << "vkCreateSemaphore failed. Error: " << string_VkResult(err);
       return false;
     }
     err = vkCreateSemaphore(device_, &semaphoreCreateInfo, nullptr,
                             &draw_complete_semaphores_[i]);
     if (err) {
-      DLOG << "vkCreateSemaphore failed. Error: " << string_VkResult(err);
+      DLOG(0) << "vkCreateSemaphore failed. Error: " << string_VkResult(err);
       return false;
     }
     if (separate_present_queue_) {
       err = vkCreateSemaphore(device_, &semaphoreCreateInfo, nullptr,
                               &image_ownership_semaphores_[i]);
       if (err) {
-        DLOG << "vkCreateSemaphore failed. Error: " << string_VkResult(err);
+        DLOG(0) << "vkCreateSemaphore failed. Error: " << string_VkResult(err);
         return false;
       }
     }
@@ -856,8 +856,8 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
   err = GetPhysicalDeviceSurfaceCapabilitiesKHR(gpu_, window->surface,
                                                 &surf_capabilities);
   if (err) {
-    DLOG << "GetPhysicalDeviceSurfaceCapabilitiesKHR failed. Error: "
-         << string_VkResult(err);
+    DLOG(0) << "GetPhysicalDeviceSurfaceCapabilitiesKHR failed. Error: "
+            << string_VkResult(err);
     return false;
   }
 
@@ -865,8 +865,8 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
   err = GetPhysicalDeviceSurfacePresentModesKHR(gpu_, window->surface,
                                                 &present_mode_count, nullptr);
   if (err) {
-    DLOG << "GetPhysicalDeviceSurfacePresentModesKHR failed. Error: "
-         << string_VkResult(err);
+    DLOG(0) << "GetPhysicalDeviceSurfacePresentModesKHR failed. Error: "
+            << string_VkResult(err);
     return false;
   }
 
@@ -875,8 +875,8 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
   err = GetPhysicalDeviceSurfacePresentModesKHR(
       gpu_, window->surface, &present_mode_count, present_modes.get());
   if (err) {
-    DLOG << "GetPhysicalDeviceSurfacePresentModesKHR failed. Error: "
-         << string_VkResult(err);
+    DLOG(0) << "GetPhysicalDeviceSurfacePresentModesKHR failed. Error: "
+            << string_VkResult(err);
     return false;
   }
 
@@ -947,7 +947,7 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
   }
 
   if (swapchain_present_mode != fallback_present_mode) {
-    LOG << "Present mode " << swapchain_present_mode << " is not supported";
+    LOG(0) << "Present mode " << swapchain_present_mode << " is not supported";
     swapchain_present_mode = fallback_present_mode;
   }
 
@@ -1023,7 +1023,7 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
 
   err = CreateSwapchainKHR(device_, &swapchain_ci, nullptr, &window->swapchain);
   if (err) {
-    DLOG << "CreateSwapchainKHR failed. Error: " << string_VkResult(err);
+    DLOG(0) << "CreateSwapchainKHR failed. Error: " << string_VkResult(err);
     return false;
   }
 
@@ -1031,7 +1031,7 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
   err = GetSwapchainImagesKHR(device_, window->swapchain, &sp_image_count,
                               nullptr);
   if (err) {
-    DLOG << "GetSwapchainImagesKHR failed. Error: " << string_VkResult(err);
+    DLOG(0) << "GetSwapchainImagesKHR failed. Error: " << string_VkResult(err);
     return false;
   }
 
@@ -1039,7 +1039,7 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
     // Assign for the first time.
     swapchain_image_count_ = sp_image_count;
   } else if (swapchain_image_count_ != sp_image_count) {
-    DLOG << "Swapchain image count mismatch";
+    DLOG(0) << "Swapchain image count mismatch";
     return false;
   }
 
@@ -1048,7 +1048,7 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
   err = GetSwapchainImagesKHR(device_, window->swapchain,
                               &swapchain_image_count_, swapchain_images.get());
   if (err) {
-    DLOG << "GetSwapchainImagesKHR failed. Error: " << string_VkResult(err);
+    DLOG(0) << "GetSwapchainImagesKHR failed. Error: " << string_VkResult(err);
     return false;
   }
 
@@ -1085,7 +1085,7 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
     err = vkCreateImageView(device_, &color_image_view, nullptr,
                             &window->swapchain_image_resources[i].view);
     if (err) {
-      DLOG << "vkCreateImageView failed. Error: " << string_VkResult(err);
+      DLOG(0) << "vkCreateImageView failed. Error: " << string_VkResult(err);
       return false;
     }
   }
@@ -1169,7 +1169,7 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
 
     err = vkCreateRenderPass(device_, &rp_info, nullptr, &window->render_pass);
     if (err) {
-      DLOG << "vkCreateRenderPass failed. Error: " << string_VkResult(err);
+      DLOG(0) << "vkCreateRenderPass failed. Error: " << string_VkResult(err);
       return false;
     }
 
@@ -1194,7 +1194,8 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
           device_, &fb_info, nullptr,
           &window->swapchain_image_resources[i].frame_buffer);
       if (err) {
-        DLOG << "vkCreateFramebuffer failed. Error: " << string_VkResult(err);
+        DLOG(0) << "vkCreateFramebuffer failed. Error: "
+                << string_VkResult(err);
         return false;
       }
     }
@@ -1212,7 +1213,7 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
     err = vkCreateCommandPool(device_, &present_cmd_pool_info, nullptr,
                               &window->present_cmd_pool);
     if (err) {
-      DLOG << "vkCreateCommandPool failed. Error: " << string_VkResult(err);
+      DLOG(0) << "vkCreateCommandPool failed. Error: " << string_VkResult(err);
       return false;
     }
 
@@ -1228,8 +1229,8 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
           device_, &present_cmd_info,
           &window->swapchain_image_resources[i].graphics_to_present_cmd);
       if (err) {
-        DLOG << "vkAllocateCommandBuffers failed. Error: "
-             << string_VkResult(err);
+        DLOG(0) << "vkAllocateCommandBuffers failed. Error: "
+                << string_VkResult(err);
         return false;
       }
 
@@ -1243,7 +1244,8 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
           window->swapchain_image_resources[i].graphics_to_present_cmd,
           &cmd_buf_info);
       if (err) {
-        DLOG << "vkBeginCommandBuffer failed. Error: " << string_VkResult(err);
+        DLOG(0) << "vkBeginCommandBuffer failed. Error: "
+                << string_VkResult(err);
         return false;
       }
 
@@ -1267,7 +1269,7 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
       err = vkEndCommandBuffer(
           window->swapchain_image_resources[i].graphics_to_present_cmd);
       if (err) {
-        DLOG << "vkEndCommandBuffer failed. Error: " << string_VkResult(err);
+        DLOG(0) << "vkEndCommandBuffer failed. Error: " << string_VkResult(err);
         return false;
       }
     }
@@ -1306,7 +1308,7 @@ bool VulkanContext::CreateDepthImage(Window* window) {
   VkResult err =
       vkCreateImage(device_, &depth_image_ci, nullptr, &window->depth_image);
   if (err) {
-    DLOG << "vkCreateImage failed. Error: " << string_VkResult(err);
+    DLOG(0) << "vkCreateImage failed. Error: " << string_VkResult(err);
     return false;
   }
 
@@ -1325,7 +1327,7 @@ bool VulkanContext::CreateDepthImage(Window* window) {
     }
   }
   if (mti == memProperties.memoryTypeCount) {
-    DLOG << "Memort type index not found.";
+    DLOG(0) << "Memort type index not found.";
     return false;
   }
 
@@ -1338,7 +1340,7 @@ bool VulkanContext::CreateDepthImage(Window* window) {
   err = vkAllocateMemory(device_, &alloc_info, nullptr,
                          &window->depth_image_memory);
   if (err) {
-    DLOG << "vkAllocateMemory failed. Error: " << string_VkResult(err);
+    DLOG(0) << "vkAllocateMemory failed. Error: " << string_VkResult(err);
     return false;
   }
 
@@ -1375,7 +1377,7 @@ bool VulkanContext::CreateDepthImage(Window* window) {
   if (err) {
     vkDestroyImage(device_, window->depth_image, nullptr);
     vkFreeMemory(device_, window->depth_image_memory, nullptr);
-    DLOG << "vkCreateImageView failed with error " << std::to_string(err);
+    DLOG(0) << "vkCreateImageView failed with error " << std::to_string(err);
     return false;
   }
   return true;
@@ -1408,7 +1410,7 @@ void VulkanContext::Flush(bool all) {
       vkQueueSubmit(graphics_queue_, 1, &submit_info, VK_NULL_HANDLE);
   command_buffers_[0] = nullptr;
   if (err) {
-    DLOG << "vkQueueSubmit failed. Error: " << string_VkResult(err);
+    DLOG(0) << "vkQueueSubmit failed. Error: " << string_VkResult(err);
     return;
   }
 
@@ -1443,16 +1445,16 @@ bool VulkanContext::PrepareBuffers() {
     if (err == VK_ERROR_OUT_OF_DATE_KHR) {
       // swapchain is out of date (e.g. the window was resized) and must be
       // recreated:
-      DLOG << "Swapchain is out of date, recreating.";
+      DLOG(0) << "Swapchain is out of date, recreating.";
       UpdateSwapChain(&window_);
     } else if (err == VK_SUBOPTIMAL_KHR) {
       // swapchain is not as optimal as it could be, but the platform's
       // presentation engine will still present the image correctly.
-      DLOG << "Swapchain is suboptimal, recreating.";
+      DLOG(0) << "Swapchain is suboptimal, recreating.";
       UpdateSwapChain(&window_);
       break;
     } else if (err != VK_SUCCESS) {
-      DLOG << "AcquireNextImageKHR failed. Error: " << string_VkResult(err);
+      DLOG(0) << "AcquireNextImageKHR failed. Error: " << string_VkResult(err);
       return false;
     }
   } while (err != VK_SUCCESS);
@@ -1489,7 +1491,7 @@ bool VulkanContext::SwapBuffers() {
   submit_info.pSignalSemaphores = &draw_complete_semaphores_[frame_index_];
   err = vkQueueSubmit(graphics_queue_, 1, &submit_info, fences_[frame_index_]);
   if (err) {
-    DLOG << "vkQueueSubmit failed. Error: " << string_VkResult(err);
+    DLOG(0) << "vkQueueSubmit failed. Error: " << string_VkResult(err);
     return false;
   }
 
@@ -1520,7 +1522,7 @@ bool VulkanContext::SwapBuffers() {
     submit_info.pSignalSemaphores = &image_ownership_semaphores_[frame_index_];
     err = vkQueueSubmit(present_queue_, 1, &submit_info, null_fence);
     if (err) {
-      DLOG << "vkQueueSubmit failed. Error: " << string_VkResult(err);
+      DLOG(0) << "vkQueueSubmit failed. Error: " << string_VkResult(err);
       return false;
     }
   }
@@ -1561,13 +1563,13 @@ bool VulkanContext::SwapBuffers() {
   if (err == VK_ERROR_OUT_OF_DATE_KHR) {
     // Swapchain is out of date (e.g. the window was resized) and must be
     // recreated.
-    DLOG << "Swapchain is out of date.";
+    DLOG(0) << "Swapchain is out of date.";
   } else if (err == VK_SUBOPTIMAL_KHR) {
     // Swapchain is not as optimal as it could be, but the platform's
     // presentation engine will still present the image correctly.
-    DLOG << "Swapchain is Suboptimal.";
+    DLOG(0) << "Swapchain is Suboptimal.";
   } else if (err) {
-    DLOG << "QueuePresentKHR failed. Error: " << string_VkResult(err);
+    DLOG(0) << "QueuePresentKHR failed. Error: " << string_VkResult(err);
     return false;
   }
 

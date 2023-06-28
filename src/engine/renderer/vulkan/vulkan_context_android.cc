@@ -19,8 +19,8 @@ bool VulkanContext::CreateWindow(ANativeWindow* window, int width, int height) {
   VkResult err =
       vkCreateAndroidSurfaceKHR(instance_, &surface_info, nullptr, &surface);
   if (err != VK_SUCCESS) {
-    LOG << "vkCreateAndroidSurfaceKHR failed with error "
-        << std::to_string(err);
+    LOG(0) << "vkCreateAndroidSurfaceKHR failed with error "
+           << std::to_string(err);
     return false;
   }
 

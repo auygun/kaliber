@@ -6,7 +6,7 @@
 namespace eng {
 
 bool RendererOpenGL::Initialize(Platform* platform) {
-  LOG << "Initializing renderer.";
+  LOG(0) << "Initializing renderer.";
 
   display_ = platform->GetDisplay();
   window_ = platform->GetWindow();
@@ -21,14 +21,14 @@ bool RendererOpenGL::Initialize(Platform* platform) {
   XVisualInfo* visual_info = glXChooseVisual(display_, 0, glx_attributes);
   glx_context_ = glXCreateContext(display_, visual_info, NULL, GL_TRUE);
   if (!glx_context_) {
-    LOG << "Couldn't create the glx context.";
+    LOG(0) << "Couldn't create the glx context.";
     return false;
   }
 
   glXMakeCurrent(display_, window_, glx_context_);
 
   if (GLEW_OK != glewInit()) {
-    LOG << "Couldn't initialize OpenGL extension wrangler.";
+    LOG(0) << "Couldn't initialize OpenGL extension wrangler.";
     return false;
   }
 

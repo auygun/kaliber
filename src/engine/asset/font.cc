@@ -19,7 +19,7 @@ bool Font::Load(const std::string& file_name) {
   auto buffer = AssetFile::ReadWholeFile(
       file_name.c_str(), Engine::Get().GetRootPath().c_str(), &buffer_size);
   if (!buffer) {
-    LOG << "Failed to read font file.";
+    LOG(0) << "Failed to read font file.";
     return false;
   }
 
@@ -29,7 +29,7 @@ bool Font::Load(const std::string& file_name) {
     // It's tighly packed.
     glyph_cache_ = std::make_unique<uint8_t[]>(kGlyphSize * kGlyphSize);
     if (!glyph_cache_) {
-      LOG << "Failed to allocate glyph cache.";
+      LOG(0) << "Failed to allocate glyph cache.";
       break;
     }
 
@@ -38,7 +38,7 @@ bool Font::Load(const std::string& file_name) {
     if (stbtt_BakeFontBitmap((unsigned char*)buffer.get(), 0, kFontHeight,
                              glyph_cache_.get(), kGlyphSize, kGlyphSize,
                              kFirstChar, kNumChars, glyph_info_) <= 0) {
-      LOG << "Failed to bake the glyph cache: ";
+      LOG(0) << "Failed to bake the glyph cache: ";
       glyph_cache_.reset();
       break;
     }
@@ -68,10 +68,10 @@ static void StretchBlit_I8_to_RGBA32(int dst_x0,
                                      int dst_pitch,
                                      const uint8_t* src_i,
                                      int src_pitch) {
-  // LOG << "-- StretchBlit: --";
-  // LOG << "dst: rect(" << dst_x0 << ", " << dst_y0 << ")..("
+  // LOG(0) << "-- StretchBlit: --";
+  // LOG(0) << "dst: rect(" << dst_x0 << ", " << dst_y0 << ")..("
   //     << dst_x1 << ".." << dst_y1 << "), pitch(" << dst_pitch << ")";
-  // LOG << "src: rect(" << src_x0 << ", " << src_y0 << ")..("
+  // LOG(0) << "src: rect(" << src_x0 << ", " << src_y0 << ")..("
   //     << src_x1 << ".." << src_y1 << "), pitch(" << src_pitch << ")";
 
   int dst_width = dst_x1 - dst_x0, dst_height = dst_y1 - dst_y0,
@@ -80,8 +80,8 @@ static void StretchBlit_I8_to_RGBA32(int dst_x0,
   // int dst_dx = dst_width > 0 ? 1 : -1,
   //     dst_dy = dst_height > 0 ? 1 : -1;
 
-  // LOG << "dst_width = " << dst_width << ", dst_height = " << dst_height;
-  // LOG << "src_width = " << src_width << ", src_height = " << src_height;
+  // LOG(0) << "dst_width = " << dst_width << ", dst_height = " << dst_height;
+  // LOG(0) << "src_width = " << src_width << ", src_height = " << src_height;
 
   uint8_t* dst = dst_rgba + (dst_x0 + dst_y0 * dst_pitch) * 4;
   const uint8_t* src = src_i + (src_x0 + src_y0 * src_pitch) * 1;
@@ -159,7 +159,7 @@ void Font::CalculateBoundingBox(const std::string& text,
   CalculateBoundingBox(text, x0, y0, x1, y1);
   width = x1 - x0;
   height = y1 - y0;
-  // LOG << "width = " << width << ", height = " << height;
+  // LOG(0) << "width = " << width << ", height = " << height;
 }
 
 void Font::Print(int x,
@@ -167,7 +167,7 @@ void Font::Print(int x,
                  const std::string& text,
                  uint8_t* buffer,
                  int width) const {
-  // LOG("Font::Print() = %s\n", text);
+  // LOG(0)("Font::Print() = %s\n", text);
 
   if (!glyph_cache_)
     return;
@@ -184,7 +184,7 @@ void Font::Print(int x,
       stbtt_GetBakedQuad(glyph_info_, kGlyphSize, kGlyphSize, *ptr - kFirstChar,
                          &fx, &fy, &q, 1);
 
-      // LOG("-- glyph --\nxy = (%f %f) .. (%f %f)\nuv = (%f %f) .. (%f %f)\n",
+      // LOG(0)("-- glyph --\nxy = (%f %f) .. (%f %f)\nuv = (%f %f) .. (%f %f)\n",
       //     q.x0, q.y0, q.x1, q.y1, q.s0, q.t0, q.s1, q.t1);
 
       int ix0 = (int)q.x0, iy0 = (int)q.y0, ix1 = (int)q.x1, iy1 = (int)q.y1,

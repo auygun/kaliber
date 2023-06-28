@@ -86,7 +86,7 @@ bool ShaderSource::Load(const std::string& name) {
   if (!fragment_source_)
     return false;
 
-  LOG << "Loaded " << name;
+  LOG(0) << "Loaded " << name;
 
   return true;
 }
@@ -99,7 +99,7 @@ size_t ShaderSource::LoadInternal(const std::string& name,
   auto source = AssetFile::ReadWholeFile(
       name.c_str(), Engine::Get().GetRootPath().c_str(), &size, true);
   if (!source) {
-    LOG << "Failed to read file: " << name;
+    LOG(0) << "Failed to read file: " << name;
     return 0;
   }
 

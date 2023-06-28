@@ -86,7 +86,7 @@ void TaskRunner::RunTasks() {
     auto [from, task_cb] = task;
 
 #if 0
-    LOG << __func__ << " from: " << LOCATION(from);
+    LOG(0) << __func__ << " from: " << LOCATION(from);
 #endif
 
     task_cb();

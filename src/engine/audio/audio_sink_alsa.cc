@@ -14,7 +14,7 @@ AudioSinkAlsa::AudioSinkAlsa(AudioSink::Delegate* delegate)
     : delegate_(delegate) {}
 
 AudioSinkAlsa::~AudioSinkAlsa() {
-  LOG << "Shutting down audio.";
+  LOG(0) << "Shutting down audio.";
 
   TerminateAudioThread();
   snd_pcm_drop(device_);
@@ -22,7 +22,7 @@ AudioSinkAlsa::~AudioSinkAlsa() {
 }
 
 bool AudioSinkAlsa::Initialize() {
-  LOG << "Initializing audio.";
+  LOG(0) << "Initializing audio.";
 
   int err;
 
@@ -33,7 +33,7 @@ bool AudioSinkAlsa::Initialize() {
   // direct hardware device with software format conversion.
   if ((err = snd_pcm_open(&device_, "default", SND_PCM_STREAM_PLAYBACK, 0)) <
       0) {
-    LOG << "Cannot open audio device. Error: " << snd_strerror(err);
+    LOG(0) << "Cannot open audio device. Error: " << snd_strerror(err);
     return false;
   }
 
@@ -43,39 +43,40 @@ bool AudioSinkAlsa::Initialize() {
 
     // Init hw_params with full configuration space.
     if ((err = snd_pcm_hw_params_any(device_, hw_params)) < 0) {
-      LOG << "Cannot initialize hardware parameter structure. Error: "
-          << snd_strerror(err);
+      LOG(0) << "Cannot initialize hardware parameter structure. Error: "
+             << snd_strerror(err);
       break;
     }
 
     if ((err = snd_pcm_hw_params_set_access(
              device_, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
-      LOG << "Cannot set access type. Error: " << snd_strerror(err);
+      LOG(0) << "Cannot set access type. Error: " << snd_strerror(err);
       break;
     }
 
     if ((err = snd_pcm_hw_params_set_format(device_, hw_params,
                                             SND_PCM_FORMAT_FLOAT)) < 0) {
-      LOG << "Cannot set sample format. Error: " << snd_strerror(err);
+      LOG(0) << "Cannot set sample format. Error: " << snd_strerror(err);
       break;
     }
 
     // Disable software resampler.
     if ((err = snd_pcm_hw_params_set_rate_resample(device_, hw_params, 0)) <
         0) {
-      LOG << "Cannot disbale software resampler. Error: " << snd_strerror(err);
+      LOG(0) << "Cannot disbale software resampler. Error: "
+             << snd_strerror(err);
       break;
     }
 
     unsigned sample_rate = 48000;
     if ((err = snd_pcm_hw_params_set_rate_near(device_, hw_params, &sample_rate,
                                                0)) < 0) {
-      LOG << "Cannot set sample rate. Error: " << snd_strerror(err);
+      LOG(0) << "Cannot set sample rate. Error: " << snd_strerror(err);
       break;
     }
 
     if ((err = snd_pcm_hw_params_set_channels(device_, hw_params, 2)) < 0) {
-      LOG << "Cannot set channel count. Error: " << snd_strerror(err);
+      LOG(0) << "Cannot set channel count. Error: " << snd_strerror(err);
       break;
     }
 
@@ -83,26 +84,26 @@ bool AudioSinkAlsa::Initialize() {
     unsigned period_time = 4000;
     if ((err = snd_pcm_hw_params_set_period_time_near(device_, hw_params,
                                                       &period_time, 0)) < 0) {
-      LOG << "Cannot set periods. Error: " << snd_strerror(err);
+      LOG(0) << "Cannot set periods. Error: " << snd_strerror(err);
       break;
     }
 
     unsigned periods = 3;
     if ((err = snd_pcm_hw_params_set_periods_near(device_, hw_params, &periods,
                                                   0)) < 0) {
-      LOG << "Cannot set periods. Error: " << snd_strerror(err);
+      LOG(0) << "Cannot set periods. Error: " << snd_strerror(err);
       break;
     }
 
     // Apply HW parameter settings to PCM device and prepare device.
     if ((err = snd_pcm_hw_params(device_, hw_params)) < 0) {
-      LOG << "Cannot set parameters. Error: " << snd_strerror(err);
+      LOG(0) << "Cannot set parameters. Error: " << snd_strerror(err);
       break;
     }
 
     if ((err = snd_pcm_prepare(device_)) < 0) {
-      LOG << "Cannot prepare audio interface for use. Error: "
-          << snd_strerror(err);
+      LOG(0) << "Cannot prepare audio interface for use. Error: "
+             << snd_strerror(err);
       break;
     }
 
@@ -120,15 +121,15 @@ bool AudioSinkAlsa::Initialize() {
     snd_pcm_hw_params_get_periods(hw_params, &periods, nullptr);
     snd_pcm_hw_params_get_buffer_size(hw_params, &buffer_size);
 
-    LOG << "Alsa Audio:";
-    LOG << "  access:        " << snd_pcm_access_name(access);
-    LOG << "  format:        " << snd_pcm_format_name(format);
-    LOG << "  channel count: " << num_channels;
-    LOG << "  sample rate:   " << sample_rate;
-    LOG << "  period size:   " << period_size;
-    LOG << "  period time:   " << period_time;
-    LOG << "  periods:       " << periods;
-    LOG << "  buffer_size:   " << buffer_size;
+    LOG(0) << "Alsa Audio:";
+    LOG(0) << "  access:        " << snd_pcm_access_name(access);
+    LOG(0) << "  format:        " << snd_pcm_format_name(format);
+    LOG(0) << "  channel count: " << num_channels;
+    LOG(0) << "  sample rate:   " << sample_rate;
+    LOG(0) << "  period size:   " << period_size;
+    LOG(0) << "  period time:   " << period_time;
+    LOG(0) << "  periods:       " << periods;
+    LOG(0) << "  buffer_size:   " << buffer_size;
 
     num_channels_ = num_channels;
     sample_rate_ = sample_rate;
@@ -158,7 +159,7 @@ size_t AudioSinkAlsa::GetHardwareSampleRate() {
 void AudioSinkAlsa::StartAudioThread() {
   DCHECK(!audio_thread_.joinable());
 
-  LOG << "Starting audio thread.";
+  LOG(0) << "Starting audio thread.";
   terminate_audio_thread_.store(false, std::memory_order_relaxed);
   suspend_audio_thread_.store(false, std::memory_order_relaxed);
   audio_thread_ = std::thread(&AudioSinkAlsa::AudioThreadMain, this);
@@ -168,7 +169,7 @@ void AudioSinkAlsa::TerminateAudioThread() {
   if (!audio_thread_.joinable())
     return;
 
-  LOG << "Terminating audio thread";
+  LOG(0) << "Terminating audio thread";
   terminate_audio_thread_.store(true, std::memory_order_relaxed);
   suspend_audio_thread_.store(true, std::memory_order_relaxed);
   audio_thread_.join();
@@ -192,7 +193,7 @@ void AudioSinkAlsa::AudioThreadMain() {
 
     while (snd_pcm_writei(device_, buffer.get(), num_frames) < 0) {
       snd_pcm_prepare(device_);
-      DLOG << "Alsa buffer underrun!";
+      DLOG(0) << "Alsa buffer underrun!";
     }
   }
 }

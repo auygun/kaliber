@@ -27,7 +27,7 @@ bool PersistentData::Load(const std::string& file_name, StorageType type) {
     ScopedFILE file;
     file.reset(fopen(file_path.c_str(), "r"));
     if (!file) {
-      LOG << "Failed to open file " << file_path;
+      LOG(0) << "Failed to open file " << file_path;
       return false;
     }
 
@@ -41,8 +41,8 @@ bool PersistentData::Load(const std::string& file_name, StorageType type) {
     buffer = std::make_unique<char[]>(size + 1);
     size_t bytes_read = fread(buffer.get(), 1, size, file.get());
     if (!bytes_read) {
-      LOG << "Failed to read a buffer of size: " << size << " from file "
-          << file_path;
+      LOG(0) << "Failed to read a buffer of size: " << size << " from file "
+             << file_path;
       return false;
     }
     buffer[size] = 0;
@@ -52,7 +52,7 @@ bool PersistentData::Load(const std::string& file_name, StorageType type) {
   Json::CharReaderBuilder builder;
   const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
   if (!reader->parse(buffer.get(), buffer.get() + size, &root_, &err)) {
-    LOG << "Failed to parse save file. Json parser error: " << err;
+    LOG(0) << "Failed to parse save file. Json parser error: " << err;
     return false;
   }
 
@@ -86,13 +86,13 @@ bool PersistentData::SaveAs(const std::string& file_name, StorageType type) {
   ScopedFILE file;
   file.reset(fopen(file_path.c_str(), "w"));
   if (!file) {
-    LOG << "Failed to create file " << file_path;
+    LOG(0) << "Failed to create file " << file_path;
     return false;
   }
 
   std::string data = stream.str();
   if (fwrite(data.c_str(), data.size(), 1, file.get()) != 1) {
-    LOG << "Failed to write to file " << file_path;
+    LOG(0) << "Failed to write to file " << file_path;
     return false;
   }
 

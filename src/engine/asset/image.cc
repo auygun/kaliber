@@ -138,7 +138,7 @@ bool Image::Load(const std::string& file_name) {
   auto file_buffer = AssetFile::ReadWholeFile(
       file_name.c_str(), Engine::Get().GetRootPath().c_str(), &buffer_size);
   if (!file_buffer) {
-    LOG << "Failed to read file: " << file_name;
+    LOG(0) << "Failed to read file: " << file_name;
     return false;
   }
 
@@ -146,16 +146,16 @@ bool Image::Load(const std::string& file_name) {
   buffer_.reset((uint8_t*)stbi_load_from_memory(
       (const stbi_uc*)file_buffer.get(), buffer_size, &w, &h, &c, 0));
   if (!buffer_) {
-    LOG << "Failed to load image file: " << file_name;
+    LOG(0) << "Failed to load image file: " << file_name;
     return false;
   }
 
-  LOG << "Loaded " << file_name << ". number of color components: " << c;
+  LOG(0) << "Loaded " << file_name << ". number of color components: " << c;
 
   uint8_t* converted_buffer = NULL;
   switch (c) {
     case 1:
-      // LOG("Converting image from 1 to 4 channels.\n");
+      // LOG(0)("Converting image from 1 to 4 channels.\n");
       // Assume it's an intensity, duplicate it to RGB and fill A with opaque.
       converted_buffer =
           (uint8_t*)AlignedAlloc<16>(w * h * 4 * sizeof(uint8_t));
@@ -168,7 +168,7 @@ bool Image::Load(const std::string& file_name) {
       break;
 
     case 3:
-      // LOG("Converting image from 3 to 4 channels.\n");
+      // LOG(0)("Converting image from 3 to 4 channels.\n");
       // Add an opaque channel.
       converted_buffer =
           (uint8_t*)AlignedAlloc<16>(w * h * 4 * sizeof(uint8_t));
@@ -185,8 +185,8 @@ bool Image::Load(const std::string& file_name) {
 
     case 2:
     default:
-      LOG << "Image had unsuitable number of color components: " << c << " "
-          << file_name;
+      LOG(0) << "Image had unsuitable number of color components: " << c << " "
+             << file_name;
       buffer_.reset();
       return false;
   }
@@ -234,8 +234,8 @@ void Image::ConvertToPow2() {
   int new_width = RoundUpToPow2(width_);
   int new_height = RoundUpToPow2(height_);
   if ((new_width != width_) || (new_height != height_)) {
-    LOG << "Converting image from (" << width_ << ", " << height_ << ") to ("
-        << new_width << ", " << new_height << ")";
+    LOG(0) << "Converting image from (" << width_ << ", " << height_ << ") to ("
+           << new_width << ", " << new_height << ")";
 
     int bigger_size = new_width * new_height * 4 * sizeof(uint8_t);
     uint8_t* bigger_buffer = (uint8_t*)AlignedAlloc<16>(bigger_size);
@@ -292,7 +292,7 @@ bool Image::Compress() {
       return false;
   }
 
-  LOG << "Compressing image. Format: " << format_;
+  LOG(0) << "Compressing image. Format: " << format_;
 
   unsigned compressedSize = GetSize();
   uint8_t* compressedBuffer =

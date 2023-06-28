@@ -22,7 +22,7 @@ bool Mesh::Create(Primitive primitive,
   num_indices_ = num_indices;
 
   if (!ParseVertexDescription(vertex_description, vertex_description_)) {
-    LOG << "Failed to parse vertex description.";
+    LOG(0) << "Failed to parse vertex description.";
     return false;
   }
 
@@ -50,7 +50,7 @@ bool Mesh::Load(const std::string& file_name) {
                                             Engine::Get().GetRootPath().c_str(),
                                             &buffer_size, true);
   if (!json_mesh) {
-    LOG << "Failed to read file: " << file_name;
+    LOG(0) << "Failed to read file: " << file_name;
     return false;
   }
 
@@ -60,7 +60,7 @@ bool Mesh::Load(const std::string& file_name) {
   const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
   if (!reader->parse(json_mesh.get(), json_mesh.get() + buffer_size, &root,
                      &err)) {
-    LOG << "Failed to load mesh. Json parser error: " << err;
+    LOG(0) << "Failed to load mesh. Json parser error: " << err;
     return false;
   }
 
@@ -70,7 +70,7 @@ bool Mesh::Load(const std::string& file_name) {
   } else if (primitive_str == "TriangleStrip") {
     primitive_ = kPrimitive_TriangleStrip;
   } else {
-    LOG << "Failed to load mesh. Invalid primitive: " << primitive_str;
+    LOG(0) << "Failed to load mesh. Invalid primitive: " << primitive_str;
     return false;
   }
 
@@ -78,7 +78,7 @@ bool Mesh::Load(const std::string& file_name) {
 
   if (!ParseVertexDescription(root["vertex_description"].asString(),
                               vertex_description_)) {
-    LOG << "Failed to parse vertex description.";
+    LOG(0) << "Failed to parse vertex description.";
     return false;
   }
 
@@ -90,18 +90,19 @@ bool Mesh::Load(const std::string& file_name) {
 
   const Json::Value vertices = root["vertices"];
   if (vertices.size() != array_size) {
-    LOG << "Failed to load mesh. Vertex array size: " << vertices.size()
-        << ", expected " << array_size;
+    LOG(0) << "Failed to load mesh. Vertex array size: " << vertices.size()
+           << ", expected " << array_size;
     return false;
   }
 
   int vertex_buffer_size = GetVertexSize() * num_vertices_;
   if (vertex_buffer_size <= 0) {
-    LOG << "Failed to load mesh. Invalid vertex size.";
+    LOG(0) << "Failed to load mesh. Invalid vertex size.";
     return false;
   }
 
-  LOG << "Loaded " << file_name << ". Vertex array size: " << vertices.size();
+  LOG(0) << "Loaded " << file_name
+         << ". Vertex array size: " << vertices.size();
 
   vertices_ = std::make_unique<char[]>(vertex_buffer_size);
 
@@ -131,7 +132,7 @@ bool Mesh::Load(const std::string& file_name) {
             *((unsigned short*)dst) = (unsigned short)vertices[i].asUInt();
             break;
           default:
-            NOTREACHED << "- Unknown data type: " << data_type;
+            NOTREACHED() << "- Unknown data type: " << data_type;
         }
         dst += type_size;
         ++i;

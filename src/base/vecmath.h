@@ -1343,7 +1343,7 @@ class Matrix4 {
         M_x_RotZ(angles[2]);
         break;
       default:
-        NOTREACHED;
+        NOTREACHED();
     }
   }
 
@@ -1534,7 +1534,7 @@ class Matrix4 {
         break;
       }
       default:
-        NOTREACHED;
+        NOTREACHED();
     }
     return -angles;
   }

@@ -11,44 +11,65 @@
 // CHECK(condition) terminates the process if the condition is false.
 // NOTREACHED annotates unreachable codepaths and terminates the process if
 // reached.
-#define LOG base::LogMessage(__FILE__, __LINE__).stream()
-#define LOG_IF(condition) \
-  LAZY_STREAM(condition, base::LogMessage(__FILE__, __LINE__).stream())
-#define CHECK(condition) \
-  LAZY_STREAM(           \
-      !(condition),      \
-      base::LogAbort::Check(__FILE__, __LINE__, #condition).GetLog().stream())
+#define LOG(verbosity_level)      \
+  LAZY_STREAM(                    \
+      LOG_IS_ON(verbosity_level), \
+      ::base::LogMessage(__FILE__, __LINE__, verbosity_level).stream())
+#define LOG_IF(verbosity_level, condition)       \
+  LAZY_STREAM(                                   \
+      LOG_IS_ON(verbosity_level) && (condition), \
+      ::base::LogMessage(__FILE__, __LINE__, verbosity_level).stream())
+#define CHECK(condition)                                              \
+  LAZY_STREAM(!(condition),                                           \
+              ::base::LogAbort::Check(__FILE__, __LINE__, #condition) \
+                  .GetLog()                                           \
+                  .stream())
 
-#define NOTREACHED \
-  base::LogAbort::NotReached(__FILE__, __LINE__).GetLog().stream()
+#define NOTREACHED() \
+  ::base::LogAbort::NotReached(__FILE__, __LINE__).GetLog().stream()
 
 // Macros for logging which are active only in debug builds.
 #ifdef _DEBUG
-#define DLOG base::LogMessage(__FILE__, __LINE__).stream()
-#define DLOG_IF(condition) \
-  LAZY_STREAM(condition, base::LogMessage(__FILE__, __LINE__).stream())
-#define DCHECK(condition)                                            \
-  LAZY_STREAM(!(condition),                                          \
-              base::LogAbort::DCheck(__FILE__, __LINE__, #condition) \
-                  .GetLog()                                          \
+#define DLOG(verbosity_level)     \
+  LAZY_STREAM(                    \
+      LOG_IS_ON(verbosity_level), \
+      ::base::LogMessage(__FILE__, __LINE__, verbosity_level).stream())
+#define DLOG_IF(verbosity_level, condition)      \
+  LAZY_STREAM(                                   \
+      LOG_IS_ON(verbosity_level) && (condition), \
+      ::base::LogMessage(__FILE__, __LINE__, verbosity_level).stream())
+#define DCHECK(condition)                                              \
+  LAZY_STREAM(!(condition),                                            \
+              ::base::LogAbort::DCheck(__FILE__, __LINE__, #condition) \
+                  .GetLog()                                            \
                   .stream())
 #else
 // "debug mode" logging is compiled away to nothing for release builds.
-#define DLOG EAT_STREAM_PARAMETERS
-#define DLOG_IF(condition) EAT_STREAM_PARAMETERS
+#define DLOG(verbosity_level) EAT_STREAM_PARAMETERS
+#define DLOG_IF(verbosity_level, condition) EAT_STREAM_PARAMETERS
 #define DCHECK(condition) EAT_STREAM_PARAMETERS
 #endif
 
 // Helper macro which avoids evaluating the arguments to a stream if
 // the condition doesn't hold.
 #define LAZY_STREAM(condition, stream) \
-  !(condition) ? (void)0 : base::LogMessage::Voidify() & (stream)
+  !(condition) ? (void)0 : ::base::LogMessage::Voidify() & (stream)
 
 // Avoid any pointless instructions to be emitted by the compiler.
 #define EAT_STREAM_PARAMETERS \
-  LAZY_STREAM(false, *base::LogMessage::swallow_stream)
+  LAZY_STREAM(false, *::base::LogMessage::swallow_stream)
+
+#if defined(MAX_LOG_VERBOSITY_LEVEL)
+#define LOG_IS_ON(verbosity_level) \
+  ((verbosity_level) <= MAX_LOG_VERBOSITY_LEVEL)
+#else
+#define LOG_IS_ON(verbosity_level) \
+  ((verbosity_level) <= ::base::GlobalMaxLogVerbosityLevel())
+#endif
 
 namespace base {
+
+int GlobalMaxLogVerbosityLevel();
 
 class LogMessage {
  public:
@@ -61,10 +82,8 @@ class LogMessage {
     void operator&(std::ostream&) {}
   };
 
-  LogMessage(const char* file, int line);
+  LogMessage(const char* file, int line, int verbosity_level);
   ~LogMessage();
-
-  LogMessage& base() { return *this; }
 
   std::ostream& stream() { return stream_; }
 
@@ -72,7 +91,8 @@ class LogMessage {
 
  protected:
   const char* file_;
-  const int line_;
+  int line_;
+  int verbosity_level_;
   std::ostringstream stream_;
 };
 

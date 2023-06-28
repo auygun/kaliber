@@ -41,7 +41,7 @@ RendererOpenGL::~RendererOpenGL() {
 }
 
 void RendererOpenGL::Shutdown() {
-  LOG << "Shutting down renderer.";
+  LOG(0) << "Shutting down renderer.";
   is_initialized_ = false;
   ShutdownInternal();
 }
@@ -50,7 +50,7 @@ uint64_t RendererOpenGL::CreateGeometry(std::unique_ptr<Mesh> mesh) {
   // Verify that we have a valid layout and get the total byte size per vertex.
   GLuint vertex_size = mesh->GetVertexSize();
   if (!vertex_size) {
-    LOG << "Invalid vertex layout";
+    LOG(0) << "Invalid vertex layout";
     return 0;
   }
 
@@ -59,7 +59,7 @@ uint64_t RendererOpenGL::CreateGeometry(std::unique_ptr<Mesh> mesh) {
   std::vector<GeometryOpenGL::Element> vertex_layout;
   if (!SetupVertexLayout(mesh->vertex_description(), vertex_size,
                          vertex_array_objects_, vertex_layout)) {
-    LOG << "Invalid vertex layout";
+    LOG(0) << "Invalid vertex layout";
     return 0;
   }
 
@@ -212,7 +212,7 @@ void RendererOpenGL::UpdateTexture(uint64_t resource_id,
         break;
 #endif
       default:
-        NOTREACHED << "- Unhandled texure format: " << image->GetFormat();
+        NOTREACHED() << "- Unhandled texure format: " << image->GetFormat();
     }
 
     glCompressedTexImage2D(GL_TEXTURE_2D, 0, format, image->GetWidth(),
@@ -230,7 +230,7 @@ void RendererOpenGL::UpdateTexture(uint64_t resource_id,
     }
 
     if (err != GL_NO_ERROR)
-      LOG << "GL ERROR after glCompressedTexImage2D: " << (int)err;
+      LOG(0) << "GL ERROR after glCompressedTexImage2D: " << (int)err;
   } else {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image->GetWidth(),
                  image->GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
@@ -290,7 +290,7 @@ uint64_t RendererOpenGL::CreateShader(
         char* buffer = (char*)malloc(length);
         if (buffer) {
           glGetProgramInfoLog(id, length, NULL, buffer);
-          LOG << "Could not link program:\n" << buffer;
+          LOG(0) << "Could not link program:\n" << buffer;
           free(buffer);
         }
       }
@@ -401,7 +401,7 @@ void RendererOpenGL::SetUniform(uint64_t resource_id,
 }
 
 void RendererOpenGL::ContextLost() {
-  LOG << "Context lost.";
+  LOG(0) << "Context lost.";
 
   DestroyAllResources();
   context_lost_cb_();
@@ -419,13 +419,13 @@ bool RendererOpenGL::InitCommon() {
       reinterpret_cast<const char*>(glGetString(GL_RENDERER));
   const char* version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
 
-  LOG << "OpenGL:";
-  LOG << "  vendor:         " << (const char*)glGetString(GL_VENDOR);
-  LOG << "  renderer:       " << renderer;
-  LOG << "  version:        " << version;
-  LOG << "  shader version: "
-      << (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
-  LOG << "Screen size: " << screen_width_ << ", " << screen_height_;
+  LOG(0) << "OpenGL:";
+  LOG(0) << "  vendor:         " << (const char*)glGetString(GL_VENDOR);
+  LOG(0) << "  renderer:       " << renderer;
+  LOG(0) << "  version:        " << version;
+  LOG(0) << "  shader version: "
+         << (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
+  LOG(0) << "Screen size: " << screen_width_ << ", " << screen_height_;
 
   // Setup extensions.
   std::stringstream stream((const char*)glGetString(GL_EXTENSIONS));
@@ -435,9 +435,9 @@ bool RendererOpenGL::InitCommon() {
     extensions.insert(token);
 
 #if 0
-  LOG << "  extensions:";
+  LOG(0) << "  extensions:";
   for (auto& ext : extensions)
-    LOG << "    " << ext.c_str());
+    LOG(0) << "    " << ext.c_str());
 #endif
 
   // Check for supported texture compression extensions.
@@ -472,16 +472,16 @@ bool RendererOpenGL::InitCommon() {
 
   // Ancient hardware is not supported.
   if (!npot_)
-    LOG << "NPOT not supported.";
+    LOG(0) << "NPOT not supported.";
 
   if (vertex_array_objects_)
-    LOG << "Supports Vertex Array Objects.";
+    LOG(0) << "Supports Vertex Array Objects.";
 
-  LOG << "TextureCompression:";
-  LOG << "  atc:   " << texture_compression_.atc;
-  LOG << "  dxt1:  " << texture_compression_.dxt1;
-  LOG << "  etc1:  " << texture_compression_.etc1;
-  LOG << "  s3tc:  " << texture_compression_.s3tc;
+  LOG(0) << "TextureCompression:";
+  LOG(0) << "  atc:   " << texture_compression_.atc;
+  LOG(0) << "  dxt1:  " << texture_compression_.dxt1;
+  LOG(0) << "  etc1:  " << texture_compression_.etc1;
+  LOG(0) << "  s3tc:  " << texture_compression_.s3tc;
 
   glViewport(0, 0, screen_width_, screen_height_);
 
@@ -580,7 +580,7 @@ GLuint RendererOpenGL::CreateShader(const char* source, GLenum type) {
         char* buffer = (char*)malloc(length);
         if (buffer) {
           glGetShaderInfoLog(shader, length, NULL, buffer);
-          LOG << "Could not compile shader " << type << ":\n" << buffer;
+          LOG(0) << "Could not compile shader " << type << ":\n" << buffer;
           free(buffer);
         }
         glDeleteShader(shader);
@@ -622,8 +622,8 @@ GLint RendererOpenGL::GetUniformLocation(
     if (index >= 0)
       uniforms[name] = index;
     else
-      LOG << "Cannot find uniform " << name.c_str() << " (shader: " << id
-          << ")";
+      LOG(0) << "Cannot find uniform " << name.c_str() << " (shader: " << id
+             << ")";
   }
   return index;
 }

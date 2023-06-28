@@ -256,7 +256,7 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
                 std::bind(&AudioMixer::DoStream, this, *it, flags & kLoop),
                 true);
           } else {
-            DLOG << "Mixer buffer underrun!";
+            DLOG(0) << "Mixer buffer underrun!";
           }
         }
       }

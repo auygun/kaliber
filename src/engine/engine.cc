@@ -49,7 +49,7 @@ Engine::Engine(Platform* platform)
 }
 
 Engine::~Engine() {
-  LOG << "Shutting down engine.";
+  LOG(0) << "Shutting down engine.";
 
   thread_pool_.CancelTasks();
   thread_pool_.Shutdown();
@@ -107,7 +107,7 @@ void Engine::Run() {
 }
 
 void Engine::Initialize() {
-  LOG << "Initializing engine.";
+  LOG(0) << "Initializing engine.";
 
   thread_pool_.Initialize();
 
@@ -116,17 +116,17 @@ void Engine::Initialize() {
   // Normalize viewport.
   if (GetScreenWidth() > GetScreenHeight()) {
     float aspect_ratio = (float)GetScreenWidth() / (float)GetScreenHeight();
-    LOG << "aspect ratio: " << aspect_ratio;
+    LOG(0) << "aspect ratio: " << aspect_ratio;
     screen_size_ = {aspect_ratio * 2.0f, 2.0f};
     projection_.CreateOrthoProjection(-aspect_ratio, aspect_ratio, -1.0f, 1.0f);
   } else {
     float aspect_ratio = (float)GetScreenHeight() / (float)GetScreenWidth();
-    LOG << "aspect_ratio: " << aspect_ratio;
+    LOG(0) << "aspect_ratio: " << aspect_ratio;
     screen_size_ = {2.0f, aspect_ratio * 2.0f};
     projection_.CreateOrthoProjection(-1.0, 1.0, -aspect_ratio, aspect_ratio);
   }
 
-  LOG << "image scale factor: " << GetImageScaleFactor();
+  LOG(0) << "image scale factor: " << GetImageScaleFactor();
 
   system_font_ = std::make_unique<Font>();
   system_font_->Load("engine/RobotoMono-Regular.ttf");
@@ -257,7 +257,7 @@ void Engine::SetImageSource(const std::string& asset_name,
                             CreateImageCB create_image,
                             bool persistent) {
   if (textures_.contains(asset_name) && textures_[asset_name].use_count > 0) {
-    DLOG << "Texture in use: " << asset_name;
+    DLOG(0) << "Texture in use: " << asset_name;
     return;
   }
 
@@ -268,7 +268,7 @@ void Engine::SetImageSource(const std::string& asset_name,
 void Engine::RefreshImage(const std::string& asset_name) {
   auto it = textures_.find(asset_name);
   if (it == textures_.end()) {
-    DLOG << "Texture not found: " << asset_name;
+    DLOG(0) << "Texture not found: " << asset_name;
     return;
   }
 
@@ -282,7 +282,7 @@ void Engine::RefreshImage(const std::string& asset_name) {
 Texture* Engine::AcquireTexture(const std::string& asset_name) {
   auto it = textures_.find(asset_name);
   if (it == textures_.end()) {
-    DLOG << "Texture not found: " << asset_name;
+    DLOG(0) << "Texture not found: " << asset_name;
     return nullptr;
   }
 
@@ -298,7 +298,7 @@ Texture* Engine::AcquireTexture(const std::string& asset_name) {
 void Engine::ReleaseTexture(const std::string& asset_name) {
   auto it = textures_.find(asset_name);
   if (it == textures_.end()) {
-    DLOG << "Texture not found: " << asset_name;
+    DLOG(0) << "Texture not found: " << asset_name;
     return;
   }
 
@@ -311,7 +311,7 @@ void Engine::ReleaseTexture(const std::string& asset_name) {
 void Engine::SetShaderSource(const std::string& asset_name,
                              const std::string& file_name) {
   if (shaders_.contains(asset_name)) {
-    DLOG << "Shader already exists: " << asset_name;
+    DLOG(0) << "Shader already exists: " << asset_name;
     return;
   }
 
@@ -321,7 +321,7 @@ void Engine::SetShaderSource(const std::string& asset_name,
 Shader* Engine::GetShader(const std::string& asset_name) {
   auto it = shaders_.find(asset_name);
   if (it == shaders_.end()) {
-    DLOG << "Shader not found: " << asset_name;
+    DLOG(0) << "Shader not found: " << asset_name;
     return nullptr;
   }
 
@@ -339,7 +339,7 @@ void Engine::AsyncLoadSound(const std::string& asset_name,
                             const std::string& file_name,
                             bool stream) {
   if (audio_buses_.contains(asset_name)) {
-    DLOG << "AudioBus already exists: " << asset_name;
+    DLOG(0) << "AudioBus already exists: " << asset_name;
     return;
   }
 
@@ -355,7 +355,7 @@ void Engine::AsyncLoadSound(const std::string& asset_name,
 std::shared_ptr<AudioBus> Engine::GetAudioBus(const std::string& asset_name) {
   auto it = audio_buses_.find(asset_name);
   if (it == audio_buses_.end()) {
-    DLOG << "AudioBus not found: " << asset_name;
+    DLOG(0) << "AudioBus not found: " << asset_name;
     return nullptr;
   }
 
@@ -569,19 +569,21 @@ void Engine::CreateRendererInternal(RendererType type) {
        type == RendererType::kOpenGL))
     return;
 
-  if (type == RendererType::kVulkan)
+  if (type == RendererType::kVulkan) {
     renderer_ =
         std::make_unique<RendererVulkan>(std::bind(&Engine::ContextLost, this));
-  else if (type == RendererType::kOpenGL)
+  } else if (type == RendererType::kOpenGL) {
     renderer_ =
         std::make_unique<RendererOpenGL>(std::bind(&Engine::ContextLost, this));
-  else
-    NOTREACHED;
+  } else {
+    NOTREACHED();
+  }
 
   bool result = renderer_->Initialize(platform_);
   if (!result && type == RendererType::kVulkan) {
-    LOG << "Failed to initialize " << renderer_->GetDebugName() << " renderer.";
-    LOG << "Fallback to OpenGL renderer.";
+    LOG(0) << "Failed to initialize " << renderer_->GetDebugName()
+           << " renderer.";
+    LOG(0) << "Fallback to OpenGL renderer.";
     CreateRendererInternal(RendererType::kOpenGL);
     return;
   }
@@ -645,7 +647,7 @@ void Engine::CreateRenderResources() {
     pass_through_shader_->Create(std::move(source), quad_->vertex_description(),
                                  quad_->primitive(), false);
   } else {
-    LOG << "Could not create pass through shader.";
+    LOG(0) << "Could not create pass through shader.";
   }
 
   // Create the shader we can reuse for solid rendering.
@@ -654,7 +656,7 @@ void Engine::CreateRenderResources() {
     solid_shader_->Create(std::move(source), quad_->vertex_description(),
                           quad_->primitive(), false);
   } else {
-    LOG << "Could not create solid shader.";
+    LOG(0) << "Could not create solid shader.";
   }
 
   for (auto& t : textures_) {

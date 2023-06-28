@@ -313,7 +313,7 @@ VkIndexType GetIndexType(eng::DataType data_type) {
     default:
       break;
   }
-  NOTREACHED << "Invalid index type: " << data_type;
+  NOTREACHED() << "Invalid index type: " << data_type;
   return VK_INDEX_TYPE_UINT16;
 }
 
@@ -331,7 +331,7 @@ VkFormat GetImageFormat(eng::Image::Format format) {
     default:
       break;
   }
-  NOTREACHED << "Invalid format: " << format;
+  NOTREACHED() << "Invalid format: " << format;
   return VK_FORMAT_R8G8B8A8_UNORM;
 }
 
@@ -346,7 +346,7 @@ std::pair<int, int> GetBlockSizeForImageFormat(VkFormat format) {
     default:
       break;
   }
-  NOTREACHED << "Invalid format: " << string_VkFormat(format);
+  NOTREACHED() << "Invalid format: " << string_VkFormat(format);
   return {0, 0};
 }
 
@@ -362,7 +362,7 @@ std::pair<int, int> GetNumBlocksForImageFormat(VkFormat format,
     default:
       break;
   }
-  NOTREACHED << "Invalid format: " << string_VkFormat(format);
+  NOTREACHED() << "Invalid format: " << string_VkFormat(format);
   return {width, height};
 }
 
@@ -537,11 +537,11 @@ uint64_t RendererVulkan::CreateShader(
     std::string error;
     spirv[0] = CompileGlsl(EShLangVertex, source->GetVertexSource(), &error);
     if (!error.empty())
-      DLOG << source->name() << " vertex shader compile error: " << error;
+      DLOG(0) << source->name() << " vertex shader compile error: " << error;
     spirv[1] =
         CompileGlsl(EShLangFragment, source->GetFragmentSource(), &error);
     if (!error.empty())
-      DLOG << source->name() << " fragment shader compile error: " << error;
+      DLOG(0) << source->name() << " fragment shader compile error: " << error;
     it = spirv_cache_.insert({source->name(), spirv}).first;
   }
 
@@ -558,7 +558,7 @@ uint64_t RendererVulkan::CreateShader(
 
     if (vkCreateShaderModule(device_, &shader_module_info, nullptr,
                              &vert_shader_module) != VK_SUCCESS) {
-      DLOG << "vkCreateShaderModule failed!";
+      DLOG(0) << "vkCreateShaderModule failed!";
       return 0;
     }
   }
@@ -573,7 +573,7 @@ uint64_t RendererVulkan::CreateShader(
 
     if (vkCreateShaderModule(device_, &shader_module_info, nullptr,
                              &frag_shader_module) != VK_SUCCESS) {
-      DLOG << "vkCreateShaderModule failed!";
+      DLOG(0) << "vkCreateShaderModule failed!";
       return 0;
     }
   }
@@ -581,7 +581,7 @@ uint64_t RendererVulkan::CreateShader(
   auto& shader = shaders_[++last_resource_id_] = {};
 
   if (!CreatePipelineLayout(shader, spirv_vertex, spirv_fragment))
-    DLOG << "Failed to create pipeline layout!";
+    DLOG(0) << "Failed to create pipeline layout!";
 
   VkPipelineShaderStageCreateInfo vert_shader_stage_info{};
   vert_shader_stage_info.sType =
@@ -709,7 +709,7 @@ uint64_t RendererVulkan::CreateShader(
 
   if (vkCreateGraphicsPipelines(device_, VK_NULL_HANDLE, 1, &pipeline_info,
                                 nullptr, &shader.pipeline) != VK_SUCCESS)
-    DLOG << "failed to create graphics pipeline.";
+    DLOG(0) << "failed to create graphics pipeline.";
 
   vkDestroyShaderModule(device_, frag_shader_module, nullptr);
   vkDestroyShaderModule(device_, vert_shader_module, nullptr);
@@ -863,14 +863,16 @@ bool RendererVulkan::InitializeInternal() {
     VkResult err = vkCreateCommandPool(device_, &cmd_pool_info, nullptr,
                                        &frames_[i].setup_command_pool);
     if (err) {
-      DLOG << "vkCreateCommandPool failed with error " << string_VkResult(err);
+      DLOG(0) << "vkCreateCommandPool failed with error "
+              << string_VkResult(err);
       return false;
     }
 
     err = vkCreateCommandPool(device_, &cmd_pool_info, nullptr,
                               &frames_[i].draw_command_pool);
     if (err) {
-      DLOG << "vkCreateCommandPool failed with error " << string_VkResult(err);
+      DLOG(0) << "vkCreateCommandPool failed with error "
+              << string_VkResult(err);
       return false;
     }
 
@@ -885,8 +887,8 @@ bool RendererVulkan::InitializeInternal() {
     err = vkAllocateCommandBuffers(device_, &cmdbuf_info,
                                    &frames_[i].setup_command_buffer);
     if (err) {
-      DLOG << "vkAllocateCommandBuffers failed with error "
-           << string_VkResult(err);
+      DLOG(0) << "vkAllocateCommandBuffers failed with error "
+              << string_VkResult(err);
       continue;
     }
 
@@ -894,8 +896,8 @@ bool RendererVulkan::InitializeInternal() {
     err = vkAllocateCommandBuffers(device_, &cmdbuf_info,
                                    &frames_[i].draw_command_buffer);
     if (err) {
-      DLOG << "vkAllocateCommandBuffers failed with error "
-           << string_VkResult(err);
+      DLOG(0) << "vkAllocateCommandBuffers failed with error "
+              << string_VkResult(err);
       continue;
     }
   }
@@ -919,8 +921,8 @@ bool RendererVulkan::InitializeInternal() {
   VkResult err = vkCreateDescriptorSetLayout(device_, &ds_layout_info, nullptr,
                                              &descriptor_set_layout_);
   if (err) {
-    DLOG << "Error (" << string_VkResult(err)
-         << ") creating descriptor set layout for set";
+    DLOG(0) << "Error (" << string_VkResult(err)
+            << ") creating descriptor set layout for set";
     return false;
   }
 
@@ -947,18 +949,18 @@ bool RendererVulkan::InitializeInternal() {
 
   err = vkCreateSampler(device_, &sampler_info, nullptr, &sampler_);
   if (err) {
-    DLOG << "vkCreateSampler failed with error " << string_VkResult(err);
+    DLOG(0) << "vkCreateSampler failed with error " << string_VkResult(err);
     return false;
   }
 
   texture_compression_.dxt1 = IsFormatSupported(VK_FORMAT_BC1_RGB_UNORM_BLOCK);
   texture_compression_.s3tc = IsFormatSupported(VK_FORMAT_BC3_UNORM_BLOCK);
 
-  LOG << "TextureCompression:";
-  LOG << "  atc:   " << texture_compression_.atc;
-  LOG << "  dxt1:  " << texture_compression_.dxt1;
-  LOG << "  etc1:  " << texture_compression_.etc1;
-  LOG << "  s3tc:  " << texture_compression_.s3tc;
+  LOG(0) << "TextureCompression:";
+  LOG(0) << "  atc:   " << texture_compression_.atc;
+  LOG(0) << "  dxt1:  " << texture_compression_.dxt1;
+  LOG(0) << "  etc1:  " << texture_compression_.etc1;
+  LOG(0) << "  s3tc:  " << texture_compression_.s3tc;
 
   // Use a background thread for filling up staging buffers and recording setup
   // commands.
@@ -970,7 +972,7 @@ bool RendererVulkan::InitializeInternal() {
   BeginFrame();
 
   if (context_lost_ && context_lost_cb_) {
-    LOG << "Context lost.";
+    LOG(0) << "Context lost.";
     context_lost_cb_();
   }
   return true;
@@ -980,7 +982,7 @@ void RendererVulkan::Shutdown() {
   if (device_ == VK_NULL_HANDLE)
     return;
 
-  LOG << "Shutting down renderer.";
+  LOG(0) << "Shutting down renderer.";
   task_runner_.CancelTasks();
   quit_.store(true, std::memory_order_relaxed);
   semaphore_.release();
@@ -1035,14 +1037,16 @@ void RendererVulkan::BeginFrame() {
   VkResult err = vkBeginCommandBuffer(
       frames_[current_frame_].setup_command_buffer, &cmdbuf_begin);
   if (err) {
-    DLOG << "vkBeginCommandBuffer failed with error " << string_VkResult(err);
+    DLOG(0) << "vkBeginCommandBuffer failed with error "
+            << string_VkResult(err);
     return;
   }
 
   err = vkBeginCommandBuffer(frames_[current_frame_].draw_command_buffer,
                              &cmdbuf_begin);
   if (err) {
-    DLOG << "vkBeginCommandBuffer failed with error " << string_VkResult(err);
+    DLOG(0) << "vkBeginCommandBuffer failed with error "
+            << string_VkResult(err);
     return;
   }
 
@@ -1073,7 +1077,8 @@ void RendererVulkan::FlushSetupBuffer() {
   VkResult err = vkBeginCommandBuffer(
       frames_[current_frame_].setup_command_buffer, &cmdbuf_begin);
   if (err) {
-    DLOG << "vkBeginCommandBuffer failed with error " << string_VkResult(err);
+    DLOG(0) << "vkBeginCommandBuffer failed with error "
+            << string_VkResult(err);
     return;
   }
   context_.AppendCommandBuffer(frames_[current_frame_].setup_command_buffer,
@@ -1286,7 +1291,7 @@ bool RendererVulkan::InsertStagingBuffer() {
                                  &std::get<0>(block.buffer),
                                  &std::get<1>(block.buffer), &block.alloc_info);
   if (err) {
-    DLOG << "vmaCreateBuffer failed with error " << string_VkResult(err);
+    DLOG(0) << "vmaCreateBuffer failed with error " << string_VkResult(err);
     return false;
   }
 
@@ -1327,8 +1332,8 @@ RendererVulkan::DescPool* RendererVulkan::AllocateDescriptorPool() {
     VkResult err = vkCreateDescriptorPool(device_, &descriptor_pool_create_info,
                                           nullptr, &desc_pool);
     if (err) {
-      DLOG << "vkCreateDescriptorPool failed with error "
-           << string_VkResult(err);
+      DLOG(0) << "vkCreateDescriptorPool failed with error "
+              << string_VkResult(err);
       return VK_NULL_HANDLE;
     }
 
@@ -1350,7 +1355,7 @@ void RendererVulkan::FreeDescriptorPool(DescPool* desc_pool) {
         return;
       }
     }
-    NOTREACHED;
+    NOTREACHED();
   }
 }
 
@@ -1383,8 +1388,8 @@ bool RendererVulkan::AllocateBuffer(Buffer<VkBuffer>& buffer,
   VkResult err = vmaCreateBuffer(allocator_, &buffer_info, &allocation_info,
                                  &vk_buffer, &allocation, nullptr);
   if (err) {
-    DLOG << "Can't create buffer of size: " << std::to_string(size)
-         << ", error " << string_VkResult(err);
+    DLOG(0) << "Can't create buffer of size: " << std::to_string(size)
+            << ", error " << string_VkResult(err);
     return false;
   }
 
@@ -1500,7 +1505,7 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
   VkResult err = vmaCreateImage(allocator_, &image_create_info, &allocInfo,
                                 &vk_image, &allocation, nullptr);
   if (err) {
-    DLOG << "vmaCreateImage failed with error " << string_VkResult(err);
+    DLOG(0) << "vmaCreateImage failed with error " << string_VkResult(err);
     return false;
   }
 
@@ -1526,7 +1531,7 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
 
   if (err) {
     vmaDestroyImage(allocator_, vk_image, allocation);
-    DLOG << "vkCreateImageView failed with error " << string_VkResult(err);
+    DLOG(0) << "vkCreateImageView failed with error " << string_VkResult(err);
     return false;
   }
 
@@ -1547,7 +1552,8 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
                                  &descriptor_set);
   if (err) {
     --std::get<1>(*desc_pool);
-    DLOG << "Cannot allocate descriptor sets, error " << string_VkResult(err);
+    DLOG(0) << "Cannot allocate descriptor sets, error "
+            << string_VkResult(err);
     return false;
   }
 
@@ -1682,7 +1688,7 @@ bool RendererVulkan::CreatePipelineLayout(
   SpvReflectResult result = spvReflectCreateShaderModule(
       spirv_vertex.size(), spirv_vertex.data(), &module_vertex);
   if (result != SPV_REFLECT_RESULT_SUCCESS) {
-    DLOG << "SPIR-V reflection failed to parse vertex shader.";
+    DLOG(0) << "SPIR-V reflection failed to parse vertex shader.";
     return false;
   }
 
@@ -1690,7 +1696,7 @@ bool RendererVulkan::CreatePipelineLayout(
   result = spvReflectCreateShaderModule(
       spirv_fragment.size(), spirv_fragment.data(), &module_fragment);
   if (result != SPV_REFLECT_RESULT_SUCCESS) {
-    DLOG << "SPIR-V reflection failed to parse fragment shader.";
+    DLOG(0) << "SPIR-V reflection failed to parse fragment shader.";
     spvReflectDestroyShaderModule(&module_vertex);
     return false;
   }
@@ -1705,13 +1711,13 @@ bool RendererVulkan::CreatePipelineLayout(
     result = spvReflectEnumerateDescriptorBindings(&module_vertex,
                                                    &binding_count, nullptr);
     if (result != SPV_REFLECT_RESULT_SUCCESS) {
-      DLOG << "SPIR-V reflection failed to enumerate fragment shader "
-              "descriptor bindings.";
+      DLOG(0) << "SPIR-V reflection failed to enumerate fragment shader "
+                 "descriptor bindings.";
       break;
     }
     if (binding_count > 0) {
-      DLOG << "SPIR-V reflection found " << binding_count
-           << " descriptor bindings in vertex shader.";
+      DLOG(0) << "SPIR-V reflection found " << binding_count
+              << " descriptor bindings in vertex shader.";
       break;
     }
 
@@ -1719,12 +1725,12 @@ bool RendererVulkan::CreatePipelineLayout(
     result = spvReflectEnumerateDescriptorBindings(&module_fragment,
                                                    &binding_count, nullptr);
     if (result != SPV_REFLECT_RESULT_SUCCESS) {
-      DLOG << "SPIR-V reflection failed to enumerate fragment shader "
-              "descriptor bindings.";
+      DLOG(0) << "SPIR-V reflection failed to enumerate fragment shader "
+                 "descriptor bindings.";
       break;
     }
 
-    DLOG << __func__ << " binding_count: " << binding_count;
+    DLOG(0) << __func__ << " binding_count: " << binding_count;
 
     if (binding_count > 0) {
       // Collect binding names and validate that only COMBINED_IMAGE_SAMPLER
@@ -1735,31 +1741,31 @@ bool RendererVulkan::CreatePipelineLayout(
           &module_fragment, &binding_count, bindings.data());
 
       if (result != SPV_REFLECT_RESULT_SUCCESS) {
-        DLOG << "SPIR-V reflection failed to get descriptor bindings for "
-                "fragment shader.";
+        DLOG(0) << "SPIR-V reflection failed to get descriptor bindings for "
+                   "fragment shader.";
         break;
       }
 
       for (size_t i = 0; i < binding_count; ++i) {
         const SpvReflectDescriptorBinding& binding = *bindings[i];
 
-        DLOG << __func__ << " name: " << binding.name
-             << " descriptor_type: " << binding.descriptor_type
-             << " set: " << binding.set << " binding: " << binding.binding;
+        DLOG(0) << __func__ << " name: " << binding.name
+                << " descriptor_type: " << binding.descriptor_type
+                << " set: " << binding.set << " binding: " << binding.binding;
 
         if (binding.binding > 0) {
-          DLOG << "SPIR-V reflection found " << binding_count
-               << " bindings in vertex shader. Only one binding per set is "
-                  "supported";
+          DLOG(0) << "SPIR-V reflection found " << binding_count
+                  << " bindings in vertex shader. Only one binding per set is "
+                     "supported";
           break;
         }
 
         if (binding.descriptor_type !=
             SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
-          DLOG << "SPIR-V reflection found descriptor type "
-               << binding.descriptor_type
-               << " in fragment shader. Only COMBINED_IMAGE_SAMPLER type is "
-                  "supported.";
+          DLOG(0) << "SPIR-V reflection found descriptor type "
+                  << binding.descriptor_type
+                  << " in fragment shader. Only COMBINED_IMAGE_SAMPLER type is "
+                     "supported.";
           break;
         }
 
@@ -1780,17 +1786,17 @@ bool RendererVulkan::CreatePipelineLayout(
       result =
           spvReflectEnumeratePushConstantBlocks(&module, &pc_count, nullptr);
       if (result != SPV_REFLECT_RESULT_SUCCESS) {
-        DLOG << "SPIR-V reflection failed to enumerate push constats in shader "
-                "stage "
-             << stage;
+        DLOG(0) << "SPIR-V reflection failed to enumerate push constats in "
+                   "shader stage "
+                << stage;
         return false;
       }
 
       if (pc_count) {
         if (pc_count > 1) {
-          DLOG << "SPIR-V reflection found " << pc_count
-               << " push constats blocks in shader stage " << stage
-               << ". Only one push constant block is supported.";
+          DLOG(0) << "SPIR-V reflection found " << pc_count
+                  << " push constats blocks in shader stage " << stage
+                  << ". Only one push constant block is supported.";
           return false;
         }
 
@@ -1798,7 +1804,7 @@ bool RendererVulkan::CreatePipelineLayout(
         result = spvReflectEnumeratePushConstantBlocks(&module, &pc_count,
                                                        pconstants.data());
         if (result != SPV_REFLECT_RESULT_SUCCESS) {
-          DLOG << "SPIR-V reflection failed to obtaining push constants.";
+          DLOG(0) << "SPIR-V reflection failed to obtaining push constants.";
           return false;
         }
       }
@@ -1819,18 +1825,19 @@ bool RendererVulkan::CreatePipelineLayout(
       break;
 
     if (pc_count_vertex != pc_count_fragment) {
-      DLOG << "SPIR-V reflection found different push constant blocks across "
-              "shader stages.";
+      DLOG(0) << "SPIR-V reflection found different push constant blocks "
+                 "across shader stages.";
       break;
     }
 
     if (pc_count_vertex) {
-      DLOG << __func__ << " PushConstants size: " << pconstants_vertex[0]->size
-           << " count: " << pconstants_vertex[0]->member_count;
+      DLOG(0) << __func__
+              << " PushConstants size: " << pconstants_vertex[0]->size
+              << " count: " << pconstants_vertex[0]->member_count;
 
       if (pconstants_vertex[0]->size != pconstants_fragment[0]->size) {
-        DLOG << "SPIR-V reflection found different push constant blocks across "
-                "shader stages.";
+        DLOG(0) << "SPIR-V reflection found different push constant blocks "
+                   "across shader stages.";
         break;
       }
 
@@ -1841,10 +1848,11 @@ bool RendererVulkan::CreatePipelineLayout(
 
       size_t offset = 0;
       for (uint32_t j = 0; j < pconstants_vertex[0]->member_count; j++) {
-        DLOG << __func__ << " name: " << pconstants_vertex[0]->members[j].name
-             << " size: " << pconstants_vertex[0]->members[j].size
-             << " padded_size: "
-             << pconstants_vertex[0]->members[j].padded_size;
+        DLOG(0) << __func__
+                << " name: " << pconstants_vertex[0]->members[j].name
+                << " size: " << pconstants_vertex[0]->members[j].size
+                << " padded_size: "
+                << pconstants_vertex[0]->members[j].padded_size;
 
         shader.variables[pconstants_vertex[0]->members[j].name] = {
             pconstants_vertex[0]->members[j].size, offset};
@@ -1886,7 +1894,7 @@ bool RendererVulkan::CreatePipelineLayout(
 
     if (vkCreatePipelineLayout(device_, &pipeline_layout_create_info, nullptr,
                                &shader.pipeline_layout) != VK_SUCCESS) {
-      DLOG << "Failed to create pipeline layout!";
+      DLOG(0) << "Failed to create pipeline layout!";
       break;
     }
 
@@ -1992,7 +2000,7 @@ void RendererVulkan::SetupThreadMain(int preallocate) {
 
   for (int i = 0; i < preallocate; i++) {
     bool err = InsertStagingBuffer();
-    LOG_IF(!err) << "Failed to create staging buffer.";
+    LOG_IF(0, !err) << "Failed to create staging buffer.";
   }
 
   for (;;) {
@@ -2015,11 +2023,11 @@ bool RendererVulkan::SetUniformInternal(ShaderVulkan& shader,
                                         T val) {
   auto it = shader.variables.find(name);
   if (it == shader.variables.end()) {
-    DLOG << "No variable found with name " << name;
+    DLOG(0) << "No variable found with name " << name;
     return false;
   }
   if (it->second[0] != sizeof(val)) {
-    DLOG << "Size mismatch for variable " << name;
+    DLOG(0) << "Size mismatch for variable " << name;
     return false;
   }
 

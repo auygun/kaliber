@@ -11,12 +11,12 @@ AudioSinkOboe::AudioSinkOboe(AudioSink::Delegate* delegate)
     : callback_(std::make_unique<StreamCallback>(this)), delegate_(delegate) {}
 
 AudioSinkOboe::~AudioSinkOboe() {
-  LOG << "Shutting down audio.";
+  LOG(0) << "Shutting down audio.";
   stream_->stop();
 }
 
 bool AudioSinkOboe::Initialize() {
-  LOG << "Initializing audio.";
+  LOG(0) << "Initializing audio.";
   return RestartStream();
 }
 
@@ -49,7 +49,7 @@ oboe::DataCallbackResult AudioSinkOboe::StreamCallback::onAudioReady(
 void AudioSinkOboe::StreamCallback::onErrorAfterClose(
     oboe::AudioStream* oboe_stream,
     oboe::Result error) {
-  LOG << "Error after close. Error: " << oboe::convertToText(error);
+  LOG(0) << "Error after close. Error: " << oboe::convertToText(error);
 
   audio_sink_->RestartStream();
 }
@@ -66,15 +66,15 @@ bool AudioSinkOboe::RestartStream() {
           ->setCallback(callback_.get())
           ->openManagedStream(stream_);
 
-  LOG << "Oboe Audio Stream:";
-  LOG << "  performance mode: " << (int)stream_->getPerformanceMode();
-  LOG << "  format:           " << (int)stream_->getFormat();
-  LOG << "  channel count:    " << stream_->getChannelCount();
-  LOG << "  sample rate:      " << stream_->getSampleRate();
+  LOG(0) << "Oboe Audio Stream:";
+  LOG(0) << "  performance mode: " << (int)stream_->getPerformanceMode();
+  LOG(0) << "  format:           " << (int)stream_->getFormat();
+  LOG(0) << "  channel count:    " << stream_->getChannelCount();
+  LOG(0) << "  sample rate:      " << stream_->getSampleRate();
 
   if (result != oboe::Result::OK) {
-    LOG << "Failed to create the playback stream. Error: "
-        << oboe::convertToText(result);
+    LOG(0) << "Failed to create the playback stream. Error: "
+           << oboe::convertToText(result);
     return false;
   }
 

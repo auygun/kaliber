@@ -16,14 +16,14 @@ bool AssetFile::Open(const std::string& file_name,
     // Try to open the zip archive.
     archive_ = unzOpen(root_path.c_str());
     if (!archive_) {
-      LOG << "Failed to open zip file: " << root_path;
+      LOG(0) << "Failed to open zip file: " << root_path;
       break;
     }
 
     // Try to find the file.
     std::string full_name = "assets/" + file_name;
     if (UNZ_OK != unzLocateFile(archive_, full_name.c_str(), 1)) {
-      LOG << "Failed to locate file in zip archive: " << file_name;
+      LOG(0) << "Failed to locate file in zip archive: " << file_name;
       break;
     }
 
@@ -31,14 +31,14 @@ bool AssetFile::Open(const std::string& file_name,
     unz_file_info info;
     if (UNZ_OK !=
         unzGetCurrentFileInfo(archive_, &info, NULL, 0, NULL, 0, NULL, 0)) {
-      LOG << "Failed to get file info: " << file_name;
+      LOG(0) << "Failed to get file info: " << file_name;
       break;
     }
     uncompressed_size_ = info.uncompressed_size;
 
     // Open the current file.
     if (UNZ_OK != unzOpenCurrentFile(archive_)) {
-      LOG << "Failed to open file: " << file_name;
+      LOG(0) << "Failed to open file: " << file_name;
       break;
     }
 

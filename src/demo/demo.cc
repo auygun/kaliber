@@ -58,17 +58,17 @@ bool Demo::PreInitialize() {
   Engine::Get().AsyncLoadSound("boss_music", "Game_2_Boss.mp3", true);
 
   if (!enemy_.PreInitialize()) {
-    LOG << "Failed to create the enemy.";
+    LOG(0) << "Failed to create the enemy.";
     return false;
   }
 
   if (!player_.PreInitialize()) {
-    LOG << "Failed to create the enemy.";
+    LOG(0) << "Failed to create the enemy.";
     return false;
   }
 
   if (!menu_.PreInitialize()) {
-    LOG << "Failed to create the menu.";
+    LOG(0) << "Failed to create the menu.";
     return false;
   }
 
@@ -79,32 +79,32 @@ bool Demo::Initialize() {
   saved_data_.Load(kSaveFileName);
 
   if (!sky_.Create(false)) {
-    LOG << "Could not create the sky.";
+    LOG(0) << "Could not create the sky.";
     return false;
   }
 
   if (!enemy_.Initialize()) {
-    LOG << "Failed to create the enemy.";
+    LOG(0) << "Failed to create the enemy.";
     return false;
   }
 
   if (!player_.Initialize()) {
-    LOG << "Failed to create the enemy.";
+    LOG(0) << "Failed to create the enemy.";
     return false;
   }
 
   if (!hud_.Initialize()) {
-    LOG << "Failed to create the hud.";
+    LOG(0) << "Failed to create the hud.";
     return false;
   }
 
   if (!menu_.Initialize()) {
-    LOG << "Failed to create the menu.";
+    LOG(0) << "Failed to create the menu.";
     return false;
   }
 
   if (!credits_.Initialize()) {
-    LOG << "Failed to create the credits.";
+    LOG(0) << "Failed to create the credits.";
     return false;
   }
 
@@ -191,7 +191,7 @@ void Demo::ContextLost() {
 void Demo::LostFocus() {}
 
 void Demo::GainedFocus(bool from_interstitial_ad) {
-  DLOG << __func__ << " from_interstitial_ad: " << from_interstitial_ad;
+  DLOG(0) << __func__ << " from_interstitial_ad: " << from_interstitial_ad;
   if (!from_interstitial_ad) {
     // if (saved_data_.root().get(kLaunchCount, Json::Value(0)).asInt() >
     //     kLaunchCountBeforeAd)
@@ -327,7 +327,7 @@ void Demo::UpdateMenuState(float delta_time) {
       Engine::Get().Exit();
       break;
     default:
-      NOTREACHED << "- Unknown menu option: " << menu_.selected_option();
+      NOTREACHED() << "- Unknown menu option: " << menu_.selected_option();
   }
 }
 
@@ -411,7 +411,7 @@ void Demo::StartNextStage(bool boss) {
   waiting_for_next_wave_ = true;
   hud_.SetProgress(wave_ > 0 ? 0 : 1);
 
-  DLOG_IF(wave_ > 0 && stage_time_ > 0)
+  DLOG_IF(0, wave_ > 0 && stage_time_ > 0)
       << "wave: " << wave_ << " time: " << stage_time_ / 60.0f;
   stage_time_ = 0;
 
@@ -432,7 +432,7 @@ void Demo::StartNextStage(bool boss) {
           music_.Stop(10);
         }
         boss_fight_ = true;
-        DLOG << "Boss fight.";
+        DLOG(0) << "Boss fight.";
       } else {
         size_t bonus_factor = [&]() -> size_t {
           if (wave_ <= 3)
@@ -444,8 +444,8 @@ void Demo::StartNextStage(bool boss) {
           return 100;
         }();
         size_t bonus_score = wave_score_ * (bonus_factor - 1);
-        DLOG << "total_score_" << total_score_ << " wave " << wave_
-             << " score: " << wave_score_ << " bonus: " << bonus_score;
+        DLOG(0) << "total_score_" << total_score_ << " wave " << wave_
+                << " score: " << wave_score_ << " bonus: " << bonus_score;
 
         if (bonus_score > 0) {
           delta_score_ += bonus_score;
@@ -484,7 +484,7 @@ void Demo::StartNextStage(bool boss) {
         total_enemies_ = 23.0897f * log((float)wave_ + 1.0f) - 10.0f;
         last_num_enemies_killed_ = 0;
         boss_fight_ = false;
-        DLOG << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
+        DLOG(0) << "wave: " << wave_ << " total_enemies_: " << total_enemies_;
       }
 
       hud_.SetScore(total_score_, true);
@@ -535,7 +535,7 @@ void Demo::SetDelayedWork(float seconds, base::Closure cb) {
 }
 
 void Demo::BenchmarkResult(int avarage_fps) {
-  LOG << __func__ << " avarage_fps: " << avarage_fps;
+  LOG(0) << __func__ << " avarage_fps: " << avarage_fps;
   if (avarage_fps < 30)
     sky_.Create(true);
 }

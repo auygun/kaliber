@@ -14,16 +14,16 @@ namespace eng {
 void KaliberMain(Platform* platform);
 
 Platform::Platform() {
-  LOG << "Initializing platform.";
+  LOG(0) << "Initializing platform.";
 
   root_path_ = "../../";
-  LOG << "Root path: " << root_path_.c_str();
+  LOG(0) << "Root path: " << root_path_.c_str();
 
   data_path_ = "./";
-  LOG << "Data path: " << data_path_.c_str();
+  LOG(0) << "Data path: " << data_path_.c_str();
 
   shared_data_path_ = "./";
-  LOG << "Shared data path: " << shared_data_path_.c_str();
+  LOG(0) << "Shared data path: " << shared_data_path_.c_str();
 
   bool res = CreateWindow(800, 1205);
   CHECK(res) << "Failed to create window.";
@@ -36,7 +36,7 @@ Platform::Platform() {
 }
 
 Platform::~Platform() {
-  LOG << "Shutting down platform.";
+  LOG(0) << "Shutting down platform.";
   DestroyWindow();
 }
 
@@ -111,8 +111,8 @@ bool Platform::CreateWindow(int width, int height) {
   // Try to open the local display.
   display_ = XOpenDisplay(NULL);
   if (!display_) {
-    LOG << "Can't connect to X server. Try to set the DISPLAY environment "
-           "variable (hostname:number.screen_number).";
+    LOG(0) << "Can't connect to X server. Try to set the DISPLAY environment "
+              "variable (hostname:number.screen_number).";
     return false;
   }
 
@@ -120,10 +120,10 @@ bool Platform::CreateWindow(int width, int height) {
 
   XVisualInfo* visual_info = GetXVisualInfo(display_);
   if (!visual_info) {
-    LOG << "No appropriate visual found.";
+    LOG(0) << "No appropriate visual found.";
     return false;
   }
-  LOG << "Visual " << (void*)visual_info->visualid << " selected";
+  LOG(0) << "Visual " << (void*)visual_info->visualid << " selected";
 
   // Create the main window.
   XSetWindowAttributes window_attributes;

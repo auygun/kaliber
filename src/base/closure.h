@@ -10,7 +10,7 @@
 
 #define HERE std::make_tuple(__func__, __FILE__, __LINE__)
 
-// Helper for logging location info, e.g. LOG << LOCATION(from)
+// Helper for logging location info, e.g. LOG(0) << LOCATION(from)
 #define LOCATION(from)                                                 \
   std::get<0>(from) << "() [" << [](std::string path) -> std::string { \
     size_t last_slash_pos = path.find_last_of("\\/");                  \

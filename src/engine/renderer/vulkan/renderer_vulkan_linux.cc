@@ -6,7 +6,7 @@
 namespace eng {
 
 bool RendererVulkan::Initialize(Platform* platform) {
-  LOG << "Initializing renderer.";
+  LOG(0) << "Initializing renderer.";
 
   XWindowAttributes xwa;
   XGetWindowAttributes(platform->GetDisplay(), platform->GetWindow(), &xwa);
@@ -14,12 +14,12 @@ bool RendererVulkan::Initialize(Platform* platform) {
   screen_height_ = xwa.height;
 
   if (!context_.Initialize()) {
-    LOG << "Failed to initialize Vulkan context.";
+    LOG(0) << "Failed to initialize Vulkan context.";
     return false;
   }
   if (!context_.CreateWindow(platform->GetDisplay(), platform->GetWindow(),
                              screen_width_, screen_height_)) {
-    LOG << "Vulkan context failed to create window.";
+    LOG(0) << "Vulkan context failed to create window.";
     return false;
   }
 

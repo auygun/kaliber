@@ -24,7 +24,7 @@ bool ParseVertexDescription(const std::string& vd_str, VertexDescription& out) {
   while (token) {
     // Check for invalid format.
     if (strlen(token) != 3) {
-      LOG << "Invalid format: " << token;
+      LOG(0) << "Invalid format: " << token;
       return false;
     }
 
@@ -44,14 +44,14 @@ bool ParseVertexDescription(const std::string& vd_str, VertexDescription& out) {
         attrib_type = kAttribType_TexCoord;
         break;
       default:
-        LOG << "Unknown attribute: " << token;
+        LOG(0) << "Unknown attribute: " << token;
         return false;
     }
 
     // There can be between 1 and 4 elements in an attribute.
     ElementCount num_elements = token[1] - '1' + 1;
     if (num_elements < 1 || num_elements > 4) {
-      LOG << "Invalid number of elements: " << token;
+      LOG(0) << "Invalid number of elements: " << token;
       return false;
     }
 
@@ -84,7 +84,7 @@ bool ParseVertexDescription(const std::string& vd_str, VertexDescription& out) {
         type_size = sizeof(unsigned short);
         break;
       default:
-        LOG << "Unknown data type: " << token;
+        LOG(0) << "Unknown data type: " << token;
         return false;
     }
 

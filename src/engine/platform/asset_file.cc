@@ -23,8 +23,8 @@ std::unique_ptr<char[]> AssetFile::ReadWholeFile(const std::string& file_name,
   // Read all of it.
   size_t bytes_read = file.Read(buffer.get(), size);
   if (!bytes_read) {
-    LOG << "Failed to read a buffer of size: " << size << " from file "
-        << file_name;
+    LOG(0) << "Failed to read a buffer of size: " << size << " from file "
+           << file_name;
     return nullptr;
   }
 

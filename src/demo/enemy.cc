@@ -510,7 +510,7 @@ void Enemy::OnWaveStarted(int wave, bool boss_fight) {
         return 1.0f;
       return 1.6f;
     }();
-    DLOG << "boss_spawn_time_factor_: " << boss_spawn_time_factor_;
+    DLOG(0) << "boss_spawn_time_factor_: " << boss_spawn_time_factor_;
     SpawnBoss();
   }
 }
@@ -601,7 +601,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
       e.sprite.Create("crate_tex", {8, 3});
       break;
     default:
-      NOTREACHED << "- Unkown enemy type: " << enemy_type;
+      NOTREACHED() << "- Unkown enemy type: " << enemy_type;
   }
 
   e.sprite.SetZOrder(11);
@@ -778,7 +778,7 @@ void Enemy::SpawnBoss() {
     e.enemy_type = kEnemyType_Boss;
     e.damage_type = kDamageType_Any;
     e.total_health = e.hit_points = 41.1283f * log((float)game->wave()) - 20.0f;
-    DLOG << " Boss health: " << e.total_health;
+    DLOG(0) << " Boss health: " << e.total_health;
 
     Vector2f hit_box_pos =
         boss_.GetPosition() - boss_.GetSize() * Vector2f(0, 0.2f);

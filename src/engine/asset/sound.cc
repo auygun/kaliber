@@ -31,7 +31,7 @@ bool Sound::Load(const std::string& file_name, bool stream) {
                                            Engine::Get().GetRootPath().c_str(),
                                            &buffer_size, false);
   if (!encoded_data_) {
-    LOG << "Failed to read file: " << file_name;
+    LOG(0) << "Failed to read file: " << file_name;
     return false;
   }
 
@@ -44,15 +44,15 @@ bool Sound::Load(const std::string& file_name, bool stream) {
                                reinterpret_cast<uint8_t*>(encoded_data_.get()),
                                buffer_size, MP3D_SEEK_TO_BYTE);
   if (err) {
-    LOG << "Failed to decode file: " << file_name << " error: " << err;
+    LOG(0) << "Failed to decode file: " << file_name << " error: " << err;
     return false;
   }
 
-  LOG << (stream ? "Streaming " : "Loaded ") << file_name << ". "
-      << mp3_dec_->samples << " samples, " << mp3_dec_->info.channels
-      << " channels, " << mp3_dec_->info.hz << " hz, "
-      << "layer " << mp3_dec_->info.layer << ", "
-      << "avg_bitrate_kbps " << mp3_dec_->info.bitrate_kbps;
+  LOG(0) << (stream ? "Streaming " : "Loaded ") << file_name << ". "
+         << mp3_dec_->samples << " samples, " << mp3_dec_->info.channels
+         << " channels, " << mp3_dec_->info.hz << " hz, "
+         << "layer " << mp3_dec_->info.layer << ", "
+         << "avg_bitrate_kbps " << mp3_dec_->info.bitrate_kbps;
 
   SetAudioConfig(mp3_dec_->info.channels, mp3_dec_->info.hz);
 
@@ -120,7 +120,7 @@ void Sound::StreamInternal(size_t num_samples, bool loop) {
     size_t samples_read =
         mp3dec_ex_read(mp3_dec_.get(), buffer.get(), num_samples);
     if (samples_read != num_samples && mp3_dec_->last_error) {
-      LOG << "mp3 decode error: " << mp3_dec_->last_error;
+      LOG(0) << "mp3 decode error: " << mp3_dec_->last_error;
       break;
     }
 

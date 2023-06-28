@@ -289,7 +289,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       break;
 
     case APP_CMD_INIT_WINDOW:
-      DLOG << "APP_CMD_INIT_WINDOW";
+      DLOG(0) << "APP_CMD_INIT_WINDOW";
       if (app->window != NULL) {
         platform->SetFrameRate(60);
         if (platform->observer_)
@@ -298,13 +298,13 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       break;
 
     case APP_CMD_TERM_WINDOW:
-      DLOG << "APP_CMD_TERM_WINDOW";
+      DLOG(0) << "APP_CMD_TERM_WINDOW";
       if (platform->observer_)
         platform->observer_->OnWindowDestroyed();
       break;
 
     case APP_CMD_CONFIG_CHANGED:
-      DLOG << "APP_CMD_CONFIG_CHANGED";
+      DLOG(0) << "APP_CMD_CONFIG_CHANGED";
       if (platform->app_->window != NULL && platform->observer_)
         platform->observer_->OnWindowResized(
             ANativeWindow_getWidth(app->window),
@@ -312,11 +312,11 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       break;
 
     case APP_CMD_STOP:
-      DLOG << "APP_CMD_STOP";
+      DLOG(0) << "APP_CMD_STOP";
       break;
 
     case APP_CMD_GAINED_FOCUS:
-      DLOG << "APP_CMD_GAINED_FOCUS";
+      DLOG(0) << "APP_CMD_GAINED_FOCUS";
       // platform->timer_.Reset();
       platform->has_focus_ = true;
       if (platform->observer_)
@@ -325,35 +325,35 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       break;
 
     case APP_CMD_LOST_FOCUS:
-      DLOG << "APP_CMD_LOST_FOCUS";
+      DLOG(0) << "APP_CMD_LOST_FOCUS";
       platform->has_focus_ = false;
       if (platform->observer_)
         platform->observer_->LostFocus();
       break;
 
     case APP_CMD_LOW_MEMORY:
-      DLOG << "APP_CMD_LOW_MEMORY";
+      DLOG(0) << "APP_CMD_LOW_MEMORY";
       break;
   }
 }
 
 Platform::Platform(android_app* app) {
-  LOG << "Initializing platform.";
+  LOG(0) << "Initializing platform.";
 
   app_ = app;
   mobile_device_ = true;
 
   root_path_ = ::GetApkPath(app->activity);
-  LOG << "Root path: " << root_path_.c_str();
+  LOG(0) << "Root path: " << root_path_.c_str();
 
   data_path_ = ::GetDataPath(app->activity);
-  LOG << "Data path: " << data_path_.c_str();
+  LOG(0) << "Data path: " << data_path_.c_str();
 
   shared_data_path_ = ::GetSharedDataPath(app->activity);
-  LOG << "Shared data path: " << shared_data_path_.c_str();
+  LOG(0) << "Shared data path: " << shared_data_path_.c_str();
 
   device_dpi_ = ::GetDensityDpi(app);
-  LOG << "Device DPI: " << device_dpi_;
+  LOG(0) << "Device DPI: " << device_dpi_;
 
   app->userData = reinterpret_cast<void*>(this);
   app->onAppCmd = Platform::HandleCmd;
@@ -375,7 +375,7 @@ Platform::Platform(android_app* app) {
 }
 
 Platform::~Platform() {
-  LOG << "Shutting down platform.";
+  LOG(0) << "Shutting down platform.";
 }
 
 void Platform::Update() {
@@ -388,7 +388,7 @@ void Platform::Update() {
     if (source != NULL)
       source->process(app_, source);
     if (app_->destroyRequested != 0) {
-      LOG << "App destroy requested.";
+      LOG(0) << "App destroy requested.";
       should_exit_ = true;
       break;
     }
