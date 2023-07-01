@@ -10,15 +10,14 @@ namespace eng {
 bool RendererVulkan::Initialize(Platform* platform) {
   LOG(0) << "Initializing renderer.";
 
-  screen_width_ = ANativeWindow_getWidth(platform->GetWindow());
-  screen_height_ = ANativeWindow_getHeight(platform->GetWindow());
+  int width = ANativeWindow_getWidth(platform->GetWindow());
+  int height = ANativeWindow_getHeight(platform->GetWindow());
 
   if (!context_.Initialize()) {
     LOG(0) << "Failed to initialize Vulkan context.";
     return false;
   }
-  if (!context_.CreateWindow(platform->GetWindow(), screen_width_,
-                             screen_height_)) {
+  if (!context_.CreateWindow(platform->GetWindow(), width, height)) {
     LOG(0) << "Vulkan context failed to create window.";
     return false;
   }

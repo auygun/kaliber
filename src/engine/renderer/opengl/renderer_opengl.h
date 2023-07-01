@@ -25,6 +25,11 @@ class RendererOpenGL final : public Renderer {
 
   bool IsInitialzed() const final { return is_initialized_; }
 
+  void OnWindowResized(int width, int height) final;
+
+  int GetScreenWidth() const final;
+  int GetScreenHeight() const final;
+
   uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) final;
   void DestroyGeometry(uint64_t resource_id) final;
   void Draw(uint64_t resource_id) final;
@@ -108,6 +113,9 @@ class RendererOpenGL final : public Renderer {
 
   // Stats.
   size_t fps_ = 0;
+
+  int screen_width_ = 0;
+  int screen_height_ = 0;
 
 #if defined(__ANDROID__)
   ANativeWindow* window_;

@@ -377,6 +377,18 @@ RendererVulkan::~RendererVulkan() {
   Shutdown();
 }
 
+void RendererVulkan::OnWindowResized(int width, int height) {
+  context_.ResizeWindow(width, height);
+}
+
+int RendererVulkan::GetScreenWidth() const {
+  return context_.GetWindowWidth();
+}
+
+int RendererVulkan::GetScreenHeight() const {
+  return context_.GetWindowHeight();
+}
+
 uint64_t RendererVulkan::CreateGeometry(std::unique_ptr<Mesh> mesh) {
   auto& geometry = geometries_[++last_resource_id_] = {};
 
@@ -1915,8 +1927,8 @@ void RendererVulkan::DrawListBegin() {
   render_pass_begin.renderPass = context_.GetRenderPass();
   render_pass_begin.framebuffer = context_.GetFramebuffer();
 
-  render_pass_begin.renderArea.extent.width = screen_width_;
-  render_pass_begin.renderArea.extent.height = screen_height_;
+  render_pass_begin.renderArea.extent.width = context_.GetWindowWidth();
+  render_pass_begin.renderArea.extent.height = context_.GetWindowHeight();
   render_pass_begin.renderArea.offset.x = 0;
   render_pass_begin.renderArea.offset.y = 0;
 
@@ -1932,9 +1944,9 @@ void RendererVulkan::DrawListBegin() {
 
   VkViewport viewport;
   viewport.x = 0;
-  viewport.y = (float)screen_height_;
-  viewport.width = (float)screen_width_;
-  viewport.height = -(float)screen_height_;
+  viewport.y = (float)context_.GetWindowHeight();
+  viewport.width = (float)context_.GetWindowWidth();
+  viewport.height = -(float)context_.GetWindowHeight();
   viewport.minDepth = 0;
   viewport.maxDepth = 1.0;
 
@@ -1943,8 +1955,8 @@ void RendererVulkan::DrawListBegin() {
   VkRect2D scissor;
   scissor.offset.x = 0;
   scissor.offset.y = 0;
-  scissor.extent.width = screen_width_;
-  scissor.extent.height = screen_height_;
+  scissor.extent.width = context_.GetWindowWidth();
+  scissor.extent.height = context_.GetWindowHeight();
 
   vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 }

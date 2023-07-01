@@ -239,6 +239,8 @@ class Engine : public PlatformObserver {
 
   void CreateTextureCompressors();
 
+  void CreateProjectionMatrix();
+
   void ContextLost();
 
   void CreateRenderResources();

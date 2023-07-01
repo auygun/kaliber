@@ -58,8 +58,8 @@ class VulkanContext {
 
   VkPhysicalDeviceLimits GetDeviceLimits() const { return gpu_props_.limits; }
 
-  int GetWidth() { return window_.width; }
-  int GetHeight() { return window_.height; }
+  int GetWindowWidth() const { return window_.width; }
+  int GetWindowHeight() const { return window_.height; }
 
   size_t GetAndResetFPS();
 

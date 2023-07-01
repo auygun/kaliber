@@ -30,6 +30,11 @@ class Renderer {
 
   virtual bool IsInitialzed() const = 0;
 
+  virtual void OnWindowResized(int width, int height) = 0;
+
+  virtual int GetScreenWidth() const = 0;
+  virtual int GetScreenHeight() const = 0;
+
   virtual uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) = 0;
   virtual void DestroyGeometry(uint64_t resource_id) = 0;
   virtual void Draw(uint64_t resource_id) = 0;
@@ -77,9 +82,6 @@ class Renderer {
   bool SupportsDXT5() const { return texture_compression_.s3tc; }
   bool SupportsATC() const { return texture_compression_.atc; }
 
-  int screen_width() const { return screen_width_; }
-  int screen_height() const { return screen_height_; }
-
   virtual size_t GetAndResetFPS() = 0;
 
   virtual const char* GetDebugName() = 0;
@@ -105,9 +107,6 @@ class Renderer {
   };
 
   TextureCompression texture_compression_;
-
-  int screen_width_ = 0;
-  int screen_height_ = 0;
 
   base::Closure context_lost_cb_;
 

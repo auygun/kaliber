@@ -113,18 +113,7 @@ void Engine::Initialize() {
 
   CreateRendererInternal(RendererType::kVulkan);
 
-  // Normalize viewport.
-  if (GetScreenWidth() > GetScreenHeight()) {
-    float aspect_ratio = (float)GetScreenWidth() / (float)GetScreenHeight();
-    LOG(0) << "aspect ratio: " << aspect_ratio;
-    screen_size_ = {aspect_ratio * 2.0f, 2.0f};
-    projection_.CreateOrthoProjection(-aspect_ratio, aspect_ratio, -1.0f, 1.0f);
-  } else {
-    float aspect_ratio = (float)GetScreenHeight() / (float)GetScreenWidth();
-    LOG(0) << "aspect_ratio: " << aspect_ratio;
-    screen_size_ = {2.0f, aspect_ratio * 2.0f};
-    projection_.CreateOrthoProjection(-1.0, 1.0, -aspect_ratio, aspect_ratio);
-  }
+  CreateProjectionMatrix();
 
   LOG(0) << "image scale factor: " << GetImageScaleFactor();
 
@@ -458,11 +447,11 @@ TextureCompressor* Engine::GetTextureCompressor(bool opacity) {
 }
 
 int Engine::GetScreenWidth() const {
-  return renderer_->screen_width();
+  return renderer_->GetScreenWidth();
 }
 
 int Engine::GetScreenHeight() const {
-  return renderer_->screen_height();
+  return renderer_->GetScreenHeight();
 }
 
 int Engine::GetDeviceDpi() const {
@@ -470,7 +459,7 @@ int Engine::GetDeviceDpi() const {
 }
 
 float Engine::GetImageScaleFactor() const {
-  float width_inch = static_cast<float>(renderer_->screen_width()) /
+  float width_inch = static_cast<float>(renderer_->GetScreenWidth()) /
                      static_cast<float>(platform_->GetDeviceDpi());
   return 2.57143f / width_inch;
 }
@@ -504,10 +493,10 @@ void Engine::OnWindowDestroyed() {
 }
 
 void Engine::OnWindowResized(int width, int height) {
-  if (width != renderer_->screen_width() ||
-      height != renderer_->screen_height()) {
-    renderer_->Shutdown();
-    renderer_->Initialize(platform_);
+  if (width != renderer_->GetScreenWidth() ||
+      height != renderer_->GetScreenHeight()) {
+    renderer_->OnWindowResized(width, height);
+    CreateProjectionMatrix();
   }
 }
 
@@ -612,6 +601,20 @@ void Engine::CreateTextureCompressors() {
   } else if (renderer_->SupportsETC1()) {
     tex_comp_opaque_ =
         TextureCompressor::Create(TextureCompressor::kFormatETC1);
+  }
+}
+
+void Engine::CreateProjectionMatrix() {
+  if (GetScreenWidth() > GetScreenHeight()) {
+    float aspect_ratio = (float)GetScreenWidth() / (float)GetScreenHeight();
+    LOG(0) << "aspect ratio: " << aspect_ratio;
+    screen_size_ = {aspect_ratio * 2.0f, 2.0f};
+    projection_.CreateOrthoProjection(-aspect_ratio, aspect_ratio, -1.0f, 1.0f);
+  } else {
+    float aspect_ratio = (float)GetScreenHeight() / (float)GetScreenWidth();
+    LOG(0) << "aspect_ratio: " << aspect_ratio;
+    screen_size_ = {2.0f, aspect_ratio * 2.0f};
+    projection_.CreateOrthoProjection(-1.0, 1.0, -aspect_ratio, aspect_ratio);
   }
 }
 

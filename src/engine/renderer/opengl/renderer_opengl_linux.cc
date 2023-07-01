@@ -11,11 +11,6 @@ bool RendererOpenGL::Initialize(Platform* platform) {
   display_ = platform->GetDisplay();
   window_ = platform->GetWindow();
 
-  XWindowAttributes xwa;
-  XGetWindowAttributes(display_, window_, &xwa);
-  screen_width_ = xwa.width;
-  screen_height_ = xwa.height;
-
   GLint glx_attributes[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER,
                             None};
   XVisualInfo* visual_info = glXChooseVisual(display_, 0, glx_attributes);
@@ -31,6 +26,10 @@ bool RendererOpenGL::Initialize(Platform* platform) {
     LOG(0) << "Couldn't initialize OpenGL extension wrangler.";
     return false;
   }
+
+  XWindowAttributes xwa;
+  XGetWindowAttributes(display_, window_, &xwa);
+  OnWindowResized(xwa.width, xwa.height);
 
   return InitCommon();
 }

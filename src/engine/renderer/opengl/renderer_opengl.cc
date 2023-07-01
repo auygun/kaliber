@@ -46,6 +46,20 @@ void RendererOpenGL::Shutdown() {
   ShutdownInternal();
 }
 
+void RendererOpenGL::OnWindowResized(int width, int height) {
+  screen_width_ = width;
+  screen_height_ = height;
+  glViewport(0, 0, screen_width_, screen_height_);
+}
+
+int RendererOpenGL::GetScreenWidth() const {
+  return screen_width_;
+}
+
+int RendererOpenGL::GetScreenHeight() const {
+  return screen_height_;
+}
+
 uint64_t RendererOpenGL::CreateGeometry(std::unique_ptr<Mesh> mesh) {
   // Verify that we have a valid layout and get the total byte size per vertex.
   GLuint vertex_size = mesh->GetVertexSize();
@@ -482,8 +496,6 @@ bool RendererOpenGL::InitCommon() {
   LOG(0) << "  dxt1:  " << texture_compression_.dxt1;
   LOG(0) << "  etc1:  " << texture_compression_.etc1;
   LOG(0) << "  s3tc:  " << texture_compression_.s3tc;
-
-  glViewport(0, 0, screen_width_, screen_height_);
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

@@ -28,6 +28,11 @@ class RendererVulkan final : public Renderer {
 
   bool IsInitialzed() const final { return device_ != VK_NULL_HANDLE; }
 
+  void OnWindowResized(int width, int height) final;
+
+  int GetScreenWidth() const final;
+  int GetScreenHeight() const final;
+
   uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) final;
   void DestroyGeometry(uint64_t resource_id) final;
   void Draw(uint64_t resource_id) final;

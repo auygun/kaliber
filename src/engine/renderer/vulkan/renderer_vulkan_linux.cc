@@ -10,15 +10,13 @@ bool RendererVulkan::Initialize(Platform* platform) {
 
   XWindowAttributes xwa;
   XGetWindowAttributes(platform->GetDisplay(), platform->GetWindow(), &xwa);
-  screen_width_ = xwa.width;
-  screen_height_ = xwa.height;
 
   if (!context_.Initialize()) {
     LOG(0) << "Failed to initialize Vulkan context.";
     return false;
   }
   if (!context_.CreateWindow(platform->GetDisplay(), platform->GetWindow(),
-                             screen_width_, screen_height_)) {
+                             xwa.width, xwa.height)) {
     LOG(0) << "Vulkan context failed to create window.";
     return false;
   }

@@ -30,7 +30,7 @@ Platform::Platform() {
 
   XSelectInput(display_, window_,
                KeyPressMask | Button1MotionMask | ButtonPressMask |
-                   ButtonReleaseMask | FocusChangeMask);
+                   ButtonReleaseMask | FocusChangeMask | StructureNotifyMask);
   Atom WM_DELETE_WINDOW = XInternAtom(display_, "WM_DELETE_WINDOW", false);
   XSetWMProtocols(display_, window_, &WM_DELETE_WINDOW, 1);
 }
@@ -90,6 +90,10 @@ void Platform::Update() {
         // WM_DELETE_WINDOW is the only registered type for now.
         should_exit_ = true;
         break;
+      }
+      case ConfigureNotify: {
+        XConfigureEvent xce = e.xconfigure;
+        observer_->OnWindowResized(xce.width, xce.height);
       }
     }
   }
