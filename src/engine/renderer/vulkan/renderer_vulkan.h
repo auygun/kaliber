@@ -256,7 +256,7 @@ class RendererVulkan final : public Renderer {
 
   void SwapBuffers();
 
-  void SetupThreadMain(int preallocate);
+  void SetupThreadMain();
 
   template <typename T>
   bool SetUniformInternal(ShaderVulkan& shader, const std::string& name, T val);

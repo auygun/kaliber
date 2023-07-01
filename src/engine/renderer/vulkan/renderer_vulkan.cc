@@ -974,11 +974,21 @@ bool RendererVulkan::InitializeInternal() {
   LOG(0) << "  etc1:  " << texture_compression_.etc1;
   LOG(0) << "  s3tc:  " << texture_compression_.s3tc;
 
+  current_staging_buffer_ = 0;
+  staging_buffer_used_ = false;
+
+  if (max_staging_buffer_size_ < staging_buffer_size_ * 4)
+    max_staging_buffer_size_ = staging_buffer_size_ * 4;
+
+  for (int i = 0; i < frame_count; i++) {
+    bool err = InsertStagingBuffer();
+    LOG_IF(0, !err) << "Failed to create staging buffer.";
+  }
+
   // Use a background thread for filling up staging buffers and recording setup
   // commands.
   quit_.store(false, std::memory_order_relaxed);
-  setup_thread_ =
-      std::thread(&RendererVulkan::SetupThreadMain, this, frame_count);
+  setup_thread_ = std::thread(&RendererVulkan::SetupThreadMain, this);
 
   // Begin the first command buffer for the first frame.
   BeginFrame();
@@ -999,6 +1009,11 @@ void RendererVulkan::Shutdown() {
   quit_.store(true, std::memory_order_relaxed);
   semaphore_.release();
   setup_thread_.join();
+
+  for (size_t i = 0; i < staging_buffers_.size(); i++) {
+    auto [buffer, allocation] = staging_buffers_[i].buffer;
+    vmaDestroyBuffer(allocator_, buffer, allocation);
+  }
 
   DestroyAllResources();
   context_lost_ = true;
@@ -1065,7 +1080,8 @@ void RendererVulkan::BeginFrame() {
   // Advance current frame.
   frames_drawn_++;
 
-  // Advance staging buffer if used.
+  // Advance staging buffer if used. All tasks in bg thread are complete so this
+  // is thread safe.
   if (staging_buffer_used_) {
     current_staging_buffer_ =
         (current_staging_buffer_ + 1) % staging_buffers_.size();
@@ -1971,16 +1987,15 @@ void RendererVulkan::DrawListEnd() {
 #ifdef FORCE_FULL_BARRIER
   FullBarrier(true);
 #else
-  MemoryBarrier(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
-                    VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-                VK_PIPELINE_STAGE_VERTEX_INPUT_BIT |
-                    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT |
-                    VK_PIPELINE_STAGE_TRANSFER_BIT,
-                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT |
-                    VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                VK_ACCESS_INDEX_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT |
-                    VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_SHADER_READ_BIT |
-                    VK_ACCESS_SHADER_WRITE_BIT);
+  MemoryBarrier(
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
+          VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+      VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_TRANSFER_BIT,
+      VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT |
+          VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+      VK_ACCESS_INDEX_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT |
+          VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_SHADER_READ_BIT |
+          VK_ACCESS_SHADER_WRITE_BIT);
 #endif
 }
 
@@ -2003,29 +2018,13 @@ void RendererVulkan::SwapBuffers() {
   BeginFrame();
 }
 
-void RendererVulkan::SetupThreadMain(int preallocate) {
-  if (max_staging_buffer_size_ < staging_buffer_size_ * 4)
-    max_staging_buffer_size_ = staging_buffer_size_ * 4;
-
-  current_staging_buffer_ = 0;
-  staging_buffer_used_ = false;
-
-  for (int i = 0; i < preallocate; i++) {
-    bool err = InsertStagingBuffer();
-    LOG_IF(0, !err) << "Failed to create staging buffer.";
-  }
-
+void RendererVulkan::SetupThreadMain() {
   for (;;) {
     semaphore_.acquire();
     if (quit_.load(std::memory_order_relaxed))
       break;
 
     task_runner_.RunTasks();
-  }
-
-  for (size_t i = 0; i < staging_buffers_.size(); i++) {
-    auto [buffer, allocation] = staging_buffers_[i].buffer;
-    vmaDestroyBuffer(allocator_, buffer, allocation);
   }
 }
 
