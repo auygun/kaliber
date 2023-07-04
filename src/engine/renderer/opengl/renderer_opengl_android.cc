@@ -44,7 +44,9 @@ void RendererOpenGL::OnDestroy() {
   ndk_helper::GLContext::GetInstance()->Invalidate();
 }
 
-void RendererOpenGL::ShutdownInternal() {
+void RendererOpenGL::Shutdown() {
+  LOG(0) << "Shutting down renderer.";
+  is_initialized_ = false;
   ndk_helper::GLContext::GetInstance()->Suspend();
 }
 

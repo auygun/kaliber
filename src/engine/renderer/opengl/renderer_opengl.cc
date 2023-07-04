@@ -40,12 +40,6 @@ RendererOpenGL::~RendererOpenGL() {
   OnDestroy();
 }
 
-void RendererOpenGL::Shutdown() {
-  LOG(0) << "Shutting down renderer.";
-  is_initialized_ = false;
-  ShutdownInternal();
-}
-
 void RendererOpenGL::OnWindowResized(int width, int height) {
   screen_width_ = width;
   screen_height_ = height;
@@ -68,15 +62,6 @@ uint64_t RendererOpenGL::CreateGeometry(std::unique_ptr<Mesh> mesh) {
     return 0;
   }
 
-  // Make sure the vertex format is understood and the attribute pointers are
-  // set up.
-  std::vector<GeometryOpenGL::Element> vertex_layout;
-  if (!SetupVertexLayout(mesh->vertex_description(), vertex_size,
-                         vertex_array_objects_, vertex_layout)) {
-    LOG(0) << "Invalid vertex layout";
-    return 0;
-  }
-
   GLuint vertex_array_id = 0;
   if (vertex_array_objects_) {
     glGenVertexArrays(1, &vertex_array_id);
@@ -89,6 +74,15 @@ uint64_t RendererOpenGL::CreateGeometry(std::unique_ptr<Mesh> mesh) {
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id);
   glBufferData(GL_ARRAY_BUFFER, mesh->num_vertices() * vertex_size,
                mesh->GetVertices(), GL_STATIC_DRAW);
+
+  // Make sure the vertex format is understood and the attribute pointers are
+  // set up.
+  std::vector<GeometryOpenGL::Element> vertex_layout;
+  if (!SetupVertexLayout(mesh->vertex_description(), vertex_size,
+                         vertex_array_objects_, vertex_layout)) {
+    LOG(0) << "Invalid vertex layout";
+    return 0;
+  }
 
   // Create the index buffer and upload the data.
   GLuint index_buffer_id = 0;

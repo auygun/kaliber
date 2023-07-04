@@ -36,7 +36,9 @@ bool RendererOpenGL::Initialize(Platform* platform) {
 
 void RendererOpenGL::OnDestroy() {}
 
-void RendererOpenGL::ShutdownInternal() {
+void RendererOpenGL::Shutdown() {
+  LOG(0) << "Shutting down renderer.";
+  is_initialized_ = false;
   if (display_ && glx_context_) {
     glXMakeCurrent(display_, None, NULL);
     glXDestroyContext(display_, glx_context_);
