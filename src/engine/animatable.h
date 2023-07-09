@@ -51,7 +51,7 @@ class Animatable : public Drawable {
 
  protected:
   base::Vector2f position_ = {0, 0};
-  base::Vector2f size_ = {1, 1};
+  base::Vector2f size_ = {0, 0};
   base::Vector2f scale_ = {1, 1};
   base::Vector2f rotation_ = {0, 1};
   float theta_ = 0;

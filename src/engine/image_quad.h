@@ -26,8 +26,6 @@ class ImageQuad final : public Animatable {
 
   void Destroy();
 
-  void AutoScale();
-
   void SetCustomShader(const std::string& asset_name);
 
   template <typename T>

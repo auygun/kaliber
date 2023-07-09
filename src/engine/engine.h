@@ -99,8 +99,6 @@ class Engine : public PlatformObserver {
 
   void SetKeepScreenOn(bool keep_screen_on);
 
-  void SetImageDpi(float dpi) { image_dpi_ = dpi; }
-
   void SetEnableAudio(bool enable);
 
   void SetEnableVibration(bool enable) { vibration_enabled_ = enable; }
@@ -129,8 +127,6 @@ class Engine : public PlatformObserver {
 
   const base::Matrix4f& GetProjectionMatrix() const { return projection_; }
 
-  int GetDeviceDpi() const;
-
   float GetImageScaleFactor() const;
 
   const std::string& GetRootPath() const;
@@ -144,8 +140,6 @@ class Engine : public PlatformObserver {
   bool IsMobile() const;
 
   float seconds_accumulated() const { return seconds_accumulated_; }
-
-  float image_dpi() const { return image_dpi_; }
 
   float time_step() { return time_step_; }
 
@@ -206,8 +200,6 @@ class Engine : public PlatformObserver {
   float seconds_accumulated_ = 0.0f;
   float time_step_ = 1.0f / 60.0f;
   size_t tick_ = 0;
-
-  float image_dpi_ = 200;
 
   bool vibration_enabled_ = true;
 

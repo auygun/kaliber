@@ -90,10 +90,13 @@ bool Enemy::PreInitialize() {
   Engine::Get().SetImageSource("shield_tex", "woom_enemy_shield.png", true);
   Engine::Get().SetImageSource("crate_tex", "nuke_pack_OK.png", true);
 
-  for (int i = 0; i < kEnemyType_Max; ++i)
+  for (int i = 0; i < kEnemyType_Max; ++i) {
+    if (i == kEnemyType_PowerUp)
+      continue;
     Engine::Get().SetImageSource(
         "score_tex"s + std::to_string(i),
         std::bind(&Enemy::GetScoreImage, this, (EnemyType)i), true);
+  }
 
   Engine::Get().SetShaderSource("chromatic_aberration",
                                 "chromatic_aberration.glsl");
@@ -647,11 +650,13 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.health_bar.PlaceToBottomOf(e.sprite);
   e.health_bar.SetColor({0.161f, 0.89f, 0.322f, 1});
 
-  e.score.Create("score_tex"s + std::to_string(e.enemy_type));
-  e.score.SetZOrder(12);
-  e.score.Scale(1.1f);
-  e.score.SetColor({1, 1, 1, 1});
-  e.score.SetPosition(spawn_pos);
+  if (enemy_type != kEnemyType_PowerUp) {
+    e.score.Create("score_tex"s + std::to_string(e.enemy_type));
+    e.score.SetZOrder(12);
+    e.score.Scale(1.1f);
+    e.score.SetColor({1, 1, 1, 1});
+    e.score.SetPosition(spawn_pos);
+  }
 
   e.target_animator.Attach(&e.target);
 
@@ -1164,11 +1169,7 @@ int Enemy::GetScore(EnemyType enemy_type) {
 std::unique_ptr<Image> Enemy::GetScoreImage(EnemyType enemy_type) {
   const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
 
-  int score = GetScore(enemy_type);
-  if (!score)
-    return nullptr;
-
-  std::string text = std::to_string(score);
+  std::string text = std::to_string(GetScore(enemy_type));
   int width, height;
   font.CalculateBoundingBox(text.c_str(), width, height);
 

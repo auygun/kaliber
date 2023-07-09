@@ -198,7 +198,6 @@ void Hud::ShowMessage(const std::string& text, float duration) {
   message_text_ = text;
   Engine::Get().RefreshImage("message");
 
-  message_.AutoScale();
   message_.Scale(1.5f);
   message_.SetColor({1, 1, 1, 0});
   message_.SetVisible(true);
@@ -215,7 +214,6 @@ void Hud::ShowMessage(const std::string& text, float duration) {
 void Hud::ShowBonus(size_t bonus) {
   bonus_score_ = bonus;
   Engine::Get().RefreshImage("bonus_tex");
-  bonus_.AutoScale();
   bonus_.Scale(1.3f);
   bonus_.SetColor({1, 1, 1, 1});
   bonus_.SetVisible(true);
@@ -245,26 +243,20 @@ std::unique_ptr<Image> Hud::CreateMessageImage() {
   font.Print(x, 0, message_text_.c_str(), image->GetBuffer(),
              image->GetWidth());
   image->Compress();
-
   return image;
 }
 
 std::unique_ptr<Image> Hud::CreateBonusImage() {
   const Font& font = static_cast<Demo*>(Engine::Get().GetGame())->GetFont();
 
-  if (bonus_score_ == 0)
-    return nullptr;
+  auto image = CreateImage();
 
   std::string text = std::to_string(bonus_score_);
-  int width, height;
-  font.CalculateBoundingBox(text.c_str(), width, height);
+  int w, h;
+  font.CalculateBoundingBox(text.c_str(), w, h);
+  float x = (image->GetWidth() - w) / 2;
 
-  auto image = std::make_unique<Image>();
-  image->Create(width, height);
-  image->Clear({1, 1, 1, 0});
-
-  font.Print(0, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
-
+  font.Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
   image->Compress();
   return image;
 }
@@ -282,7 +274,7 @@ std::unique_ptr<Image> Hud::Print(int i, const std::string& text) {
   }
 
   font.Print(x, 0, text.c_str(), image->GetBuffer(), image->GetWidth());
-
+  image->Compress();
   return image;
 }
 

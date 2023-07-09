@@ -21,15 +21,15 @@ void ImageQuad::Create(const std::string& asset_name,
                        int frame_width,
                        int frame_height) {
   texture_ = Engine::Get().AcquireTexture(asset_name);
-
   num_frames_ = std::move(num_frames);
   frame_width_ = frame_width;
   frame_height_ = frame_height;
-
-  if ((frame_width_ > 0 && frame_height_ > 0) || texture_->IsValid())
-    AutoScale();
-
   asset_name_ = asset_name;
+
+  DCHECK((frame_width_ > 0 && frame_height_ > 0) || texture_->IsValid())
+      << asset_name;
+  SetSize(Engine::Get().ToScale({GetFrameWidth(), GetFrameHeight()}) *
+          Engine::Get().GetImageScaleFactor());
 }
 
 void ImageQuad::Destroy() {
@@ -37,16 +37,6 @@ void ImageQuad::Destroy() {
     Engine::Get().ReleaseTexture(asset_name_);
     texture_ = nullptr;
   }
-}
-
-void ImageQuad::AutoScale() {
-  auto& engine = Engine::Get();
-  Vector2f dimensions = {GetFrameWidth(), GetFrameHeight()};
-  Vector2f size = engine.ToScale(dimensions);
-  float s =
-      static_cast<float>(engine.image_dpi()) * engine.GetImageScaleFactor();
-  size *= static_cast<float>(engine.GetDeviceDpi()) / s;
-  SetSize(size);
 }
 
 void ImageQuad::SetCustomShader(const std::string& asset_name) {

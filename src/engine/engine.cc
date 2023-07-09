@@ -115,8 +115,6 @@ void Engine::Initialize() {
 
   CreateProjectionMatrix();
 
-  LOG(0) << "image scale factor: " << GetImageScaleFactor();
-
   system_font_ = std::make_unique<Font>();
   system_font_->Load("engine/RobotoMono-Regular.ttf");
 
@@ -148,10 +146,8 @@ void Engine::Update(float delta_time) {
     fps_seconds_ = 0;
   }
 
-  if (stats_->IsVisible()) {
+  if (stats_->IsVisible())
     RefreshImage("stats_tex");
-    stats_->AutoScale();
-  }
 }
 
 void Engine::Draw(float frame_frac) {
@@ -454,14 +450,8 @@ int Engine::GetScreenHeight() const {
   return renderer_->GetScreenHeight();
 }
 
-int Engine::GetDeviceDpi() const {
-  return platform_->GetDeviceDpi();
-}
-
 float Engine::GetImageScaleFactor() const {
-  float width_inch = static_cast<float>(renderer_->GetScreenWidth()) /
-                     static_cast<float>(platform_->GetDeviceDpi());
-  return 2.57143f / width_inch;
+  return static_cast<float>(renderer_->GetScreenWidth()) / 514.286f;
 }
 
 const std::string& Engine::GetRootPath() const {
@@ -605,17 +595,11 @@ void Engine::CreateTextureCompressors() {
 }
 
 void Engine::CreateProjectionMatrix() {
-  if (GetScreenWidth() > GetScreenHeight()) {
-    float aspect_ratio = (float)GetScreenWidth() / (float)GetScreenHeight();
-    LOG(0) << "aspect ratio: " << aspect_ratio;
-    screen_size_ = {aspect_ratio * 2.0f, 2.0f};
-    projection_.CreateOrthoProjection(-aspect_ratio, aspect_ratio, -1.0f, 1.0f);
-  } else {
-    float aspect_ratio = (float)GetScreenHeight() / (float)GetScreenWidth();
-    LOG(0) << "aspect_ratio: " << aspect_ratio;
-    screen_size_ = {2.0f, aspect_ratio * 2.0f};
-    projection_.CreateOrthoProjection(-1.0, 1.0, -aspect_ratio, aspect_ratio);
-  }
+  float aspect_ratio = (float)GetScreenHeight() / (float)GetScreenWidth();
+  LOG(0) << "aspect_ratio: " << aspect_ratio;
+  screen_size_ = {1.0f, aspect_ratio * 1.0f};
+  projection_.CreateOrthoProjection(-0.5f, 0.5f, -aspect_ratio * 0.5f,
+                                    aspect_ratio * 0.5f);
 }
 
 void Engine::ContextLost() {
