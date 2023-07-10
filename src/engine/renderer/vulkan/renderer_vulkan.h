@@ -106,7 +106,7 @@ class RendererVulkan final : public Renderer {
   };
 
   struct ShaderVulkan {
-    std::unordered_map<std::string, std::array<size_t, 2>> variables;
+    std::vector<std::tuple<std::string, size_t, size_t>> variables;
     std::unique_ptr<char[]> push_constants;
     size_t push_constants_size = 0;
     std::vector<std::string> sampler_uniform_names;

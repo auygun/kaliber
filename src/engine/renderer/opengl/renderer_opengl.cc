@@ -615,18 +615,19 @@ bool RendererOpenGL::BindAttributeLocation(GLuint id,
 GLint RendererOpenGL::GetUniformLocation(
     GLuint id,
     const std::string& name,
-    std::unordered_map<std::string, GLuint>& uniforms) {
+    std::vector<std::pair<std::string, GLuint>>& uniforms) {
   // Check if we've encountered this uniform before.
-  auto i = uniforms.find(name);
+  auto it = std::find_if(uniforms.begin(), uniforms.end(),
+                         [&](auto& r) { return name == std::get<0>(r); });
   GLint index;
-  if (i != uniforms.end()) {
+  if (it != uniforms.end()) {
     // Yes, we already have the mapping.
-    index = i->second;
+    index = std::get<1>(*it);
   } else {
     // No, ask the driver for the mapping and save it.
     index = glGetUniformLocation(id, name.c_str());
     if (index >= 0)
-      uniforms[name] = index;
+      uniforms.emplace_back(std::make_pair(name, index));
     else
       LOG(0) << "Cannot find uniform " << name.c_str() << " (shader: " << id
              << ")";

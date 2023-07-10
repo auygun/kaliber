@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "engine/renderer/opengl/opengl.h"
@@ -94,7 +95,7 @@ class RendererOpenGL final : public Renderer {
 
   struct ShaderOpenGL {
     GLuint id = 0;
-    std::unordered_map<std::string, GLuint> uniforms;
+    std::vector<std::pair<std::string, GLuint>> uniforms;
     bool enable_depth_test = false;
   };
 
@@ -138,9 +139,10 @@ class RendererOpenGL final : public Renderer {
                          std::vector<GeometryOpenGL::Element>& vertex_layout);
   GLuint CreateShader(const char* source, GLenum type);
   bool BindAttributeLocation(GLuint id, const VertexDescription& vd);
-  GLint GetUniformLocation(GLuint id,
-                           const std::string& name,
-                           std::unordered_map<std::string, GLuint>& uniforms);
+  GLint GetUniformLocation(
+      GLuint id,
+      const std::string& name,
+      std::vector<std::pair<std::string, GLuint>>& uniforms);
 };
 
 }  // namespace eng

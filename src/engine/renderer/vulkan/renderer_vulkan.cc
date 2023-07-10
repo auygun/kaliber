@@ -1876,19 +1876,27 @@ bool RendererVulkan::CreatePipelineLayout(
 
       size_t offset = 0;
       for (uint32_t j = 0; j < pconstants_vertex[0]->member_count; j++) {
+        DCHECK(std::find_if(shader.variables.begin(), shader.variables.end(),
+                            [&](auto& r) {
+                              return pconstants_vertex[0]->members[j].name ==
+                                     std::get<0>(r);
+                            }) == shader.variables.end())
+            << "Duplicate uniform name";
+
         DLOG(0) << __func__
                 << " name: " << pconstants_vertex[0]->members[j].name
                 << " size: " << pconstants_vertex[0]->members[j].size
                 << " padded_size: "
                 << pconstants_vertex[0]->members[j].padded_size;
 
-        shader.variables[pconstants_vertex[0]->members[j].name] = {
-            pconstants_vertex[0]->members[j].size, offset};
+        shader.variables.emplace_back(
+            std::make_tuple(pconstants_vertex[0]->members[j].name,
+                            pconstants_vertex[0]->members[j].size, offset));
         offset += pconstants_vertex[0]->members[j].padded_size;
       }
     }
 
-    // Use the same layout for all decriptor sets.
+    // Use the same layout for all descriptor sets.
     std::vector<VkDescriptorSetLayout> desc_set_layouts;
     for (size_t i = 0; i < binding_count; ++i)
       desc_set_layouts.push_back(descriptor_set_layout_);
@@ -2032,17 +2040,20 @@ template <typename T>
 bool RendererVulkan::SetUniformInternal(ShaderVulkan& shader,
                                         const std::string& name,
                                         T val) {
-  auto it = shader.variables.find(name);
+  auto it = std::find_if(shader.variables.begin(), shader.variables.end(),
+                         [&](auto& r) { return name == std::get<0>(r); });
   if (it == shader.variables.end()) {
     DLOG(0) << "No variable found with name " << name;
     return false;
   }
-  if (it->second[0] != sizeof(val)) {
+
+  if (std::get<1>(*it) != sizeof(val)) {
     DLOG(0) << "Size mismatch for variable " << name;
     return false;
   }
 
-  auto* dst = reinterpret_cast<T*>(shader.push_constants.get() + it->second[1]);
+  auto* dst =
+      reinterpret_cast<T*>(shader.push_constants.get() + std::get<2>(*it));
   *dst = val;
   return true;
 }
