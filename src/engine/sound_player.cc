@@ -11,10 +11,10 @@ using namespace base;
 namespace eng {
 
 SoundPlayer::SoundPlayer()
-    : resource_id_(Engine::Get().GetAudioMixer()->CreateResource()) {}
+    : resource_(Engine::Get().GetAudioMixer()->CreateResource()) {}
 
 SoundPlayer::~SoundPlayer() {
-  Engine::Get().GetAudioMixer()->DestroyResource(resource_id_);
+  Engine::Get().GetAudioMixer()->Stop(resource_);
 }
 
 void SoundPlayer::SetSound(const std::string& asset_name) {
@@ -30,15 +30,15 @@ void SoundPlayer::Play(bool loop, float fade_in_duration) {
     return;
 
   int step = variate_ ? Engine::Get().GetRandomGenerator().Roll(3) - 2 : 0;
-  Engine::Get().GetAudioMixer()->SetResampleStep(resource_id_, step * 12);
-  Engine::Get().GetAudioMixer()->SetLoop(resource_id_, loop);
+  Engine::Get().GetAudioMixer()->SetResampleStep(resource_, step * 12);
+  Engine::Get().GetAudioMixer()->SetLoop(resource_, loop);
   if (fade_in_duration > 0)
     Engine::Get().GetAudioMixer()->SetAmplitudeInc(
-        resource_id_, 1.0f / (sound_->sample_rate() * fade_in_duration));
+        resource_, 1.0f / (sound_->sample_rate() * fade_in_duration));
   else
-    Engine::Get().GetAudioMixer()->SetAmplitudeInc(resource_id_, 0);
+    Engine::Get().GetAudioMixer()->SetAmplitudeInc(resource_, 0);
   Engine::Get().GetAudioMixer()->Play(
-      resource_id_, sound_, fade_in_duration > 0 ? 0 : max_amplitude_, true);
+      resource_, sound_, fade_in_duration > 0 ? 0 : max_amplitude_, true);
 }
 
 void SoundPlayer::Resume(float fade_in_duration) {
@@ -47,8 +47,8 @@ void SoundPlayer::Resume(float fade_in_duration) {
 
   if (fade_in_duration > 0)
     Engine::Get().GetAudioMixer()->SetAmplitudeInc(
-        resource_id_, 1.0f / (sound_->sample_rate() * fade_in_duration));
-  Engine::Get().GetAudioMixer()->Play(resource_id_, sound_,
+        resource_, 1.0f / (sound_->sample_rate() * fade_in_duration));
+  Engine::Get().GetAudioMixer()->Play(resource_, sound_,
                                       fade_in_duration > 0 ? 0 : -1, false);
 }
 
@@ -58,9 +58,9 @@ void SoundPlayer::Stop(float fade_out_duration) {
 
   if (fade_out_duration > 0)
     Engine::Get().GetAudioMixer()->SetAmplitudeInc(
-        resource_id_, -1.0f / (sound_->sample_rate() * fade_out_duration));
+        resource_, -1.0f / (sound_->sample_rate() * fade_out_duration));
   else
-    Engine::Get().GetAudioMixer()->Stop(resource_id_);
+    Engine::Get().GetAudioMixer()->Stop(resource_);
 }
 
 void SoundPlayer::SetVariate(bool variate) {
@@ -68,16 +68,16 @@ void SoundPlayer::SetVariate(bool variate) {
 }
 
 void SoundPlayer::SetSimulateStereo(bool simulate) {
-  Engine::Get().GetAudioMixer()->SetSimulateStereo(resource_id_, simulate);
+  Engine::Get().GetAudioMixer()->SetSimulateStereo(resource_, simulate);
 }
 
 void SoundPlayer::SetMaxAplitude(float max_amplitude) {
   max_amplitude_ = max_amplitude;
-  Engine::Get().GetAudioMixer()->SetMaxAmplitude(resource_id_, max_amplitude);
+  Engine::Get().GetAudioMixer()->SetMaxAmplitude(resource_, max_amplitude);
 }
 
 void SoundPlayer::SetEndCallback(base::Closure cb) {
-  Engine::Get().GetAudioMixer()->SetEndCallback(resource_id_, cb);
+  Engine::Get().GetAudioMixer()->SetEndCallback(resource_, cb);
 }
 
 }  // namespace eng

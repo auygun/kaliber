@@ -5,7 +5,6 @@
 #include <list>
 #include <memory>
 #include <mutex>
-#include <unordered_map>
 
 #include "base/closure.h"
 #include "engine/audio/audio_sink.h"
@@ -26,21 +25,20 @@ class AudioMixer : public AudioSink::Delegate {
   AudioMixer();
   ~AudioMixer();
 
-  uint64_t CreateResource();
-  void DestroyResource(uint64_t resource_id);
+  std::shared_ptr<void> CreateResource();
 
-  void Play(uint64_t resource_id,
+  void Play(std::shared_ptr<void> resource,
             std::shared_ptr<AudioBus> audio_bus,
             float amplitude,
             bool reset_pos);
-  void Stop(uint64_t resource_id);
+  void Stop(std::shared_ptr<void> resource);
 
-  void SetLoop(uint64_t resource_id, bool loop);
-  void SetSimulateStereo(uint64_t resource_id, bool simulate);
-  void SetResampleStep(uint64_t resource_id, size_t step);
-  void SetMaxAmplitude(uint64_t resource_id, float max_amplitude);
-  void SetAmplitudeInc(uint64_t resource_id, float amplitude_inc);
-  void SetEndCallback(uint64_t resource_id, base::Closure cb);
+  void SetLoop(std::shared_ptr<void> resource, bool loop);
+  void SetSimulateStereo(std::shared_ptr<void> resource, bool simulate);
+  void SetResampleStep(std::shared_ptr<void> resource, size_t step);
+  void SetMaxAmplitude(std::shared_ptr<void> resource, float max_amplitude);
+  void SetAmplitudeInc(std::shared_ptr<void> resource, float amplitude_inc);
+  void SetEndCallback(std::shared_ptr<void> resource, base::Closure cb);
 
   void SetEnableAudio(bool enable) { audio_enabled_ = enable; }
 
@@ -74,10 +72,9 @@ class AudioMixer : public AudioSink::Delegate {
 
     // Accessed by audio thread and decoder thread.
     std::atomic<bool> streaming_in_progress{false};
-  };
 
-  std::unordered_map<uint64_t, std::shared_ptr<Resource>> resources_;
-  uint64_t last_resource_id_ = 0;
+    ~Resource();
+  };
 
   std::list<std::shared_ptr<Resource>> play_list_[2];
   std::mutex lock_;

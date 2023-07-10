@@ -17,6 +17,10 @@ using namespace base;
 
 namespace eng {
 
+AudioMixer::Resource::~Resource() {
+  DLOG(1) << "Destroying audio resource: " << uintptr_t(this);
+}
+
 AudioMixer::AudioMixer()
     : main_thread_task_runner_(TaskRunner::GetThreadLocalTaskRunner()),
 #if defined(__ANDROID__)
@@ -28,131 +32,102 @@ AudioMixer::AudioMixer()
   CHECK(res) << "Failed to initialize audio sink.";
 }
 
-AudioMixer::~AudioMixer() = default;
-
-uint64_t AudioMixer::CreateResource() {
-  uint64_t resource_id = ++last_resource_id_;
-  resources_[resource_id] = std::make_shared<Resource>();
-  return resource_id;
+AudioMixer::~AudioMixer() {
+  audio_sink_.reset();
 }
 
-void AudioMixer::DestroyResource(uint64_t resource_id) {
-  auto it = resources_.find(resource_id);
-  if (it == resources_.end())
-    return;
-
-  if (it->second->active) {
-    it->second->restart_cb = nullptr;
-    it->second->flags.fetch_or(kStopped, std::memory_order_relaxed);
-  }
-  resources_.erase(it);
+std::shared_ptr<void> AudioMixer::CreateResource() {
+  auto resource = std::make_shared<Resource>();
+  DLOG(1) << "Audio resource created: " << uintptr_t(resource.get());
+  return resource;
 }
 
-void AudioMixer::Play(uint64_t resource_id,
+void AudioMixer::Play(std::shared_ptr<void> resource,
                       std::shared_ptr<AudioBus> audio_bus,
                       float amplitude,
                       bool reset_pos) {
   if (!audio_enabled_)
     return;
 
-  auto it = resources_.find(resource_id);
-  if (it == resources_.end())
-    return;
+  auto resource_ptr = std::static_pointer_cast<Resource>(resource);
 
-  if (it->second->active) {
+  if (resource_ptr->active) {
     if (reset_pos)
-      it->second->flags.fetch_or(kStopped, std::memory_order_relaxed);
+      resource_ptr->flags.fetch_or(kStopped, std::memory_order_relaxed);
 
-    if (it->second->flags.load(std::memory_order_relaxed) & kStopped)
-      it->second->restart_cb = [&, resource_id, audio_bus, amplitude,
-                                reset_pos]() -> void {
-        Play(resource_id, audio_bus, amplitude, reset_pos);
+    if (resource_ptr->flags.load(std::memory_order_relaxed) & kStopped)
+      resource_ptr->restart_cb = [&, resource, audio_bus, amplitude,
+                                  reset_pos]() -> void {
+        Play(resource, audio_bus, amplitude, reset_pos);
       };
 
     return;
   }
 
   if (reset_pos) {
-    it->second->src_index = 0;
-    it->second->accumulator = 0;
+    resource_ptr->src_index = 0;
+    resource_ptr->accumulator = 0;
     audio_bus->ResetStream();
-  } else if (it->second->src_index >= audio_bus->samples_per_channel()) {
+  } else if (resource_ptr->src_index >= audio_bus->samples_per_channel()) {
     return;
   }
 
-  it->second->active = true;
-  it->second->flags.fetch_and(~kStopped, std::memory_order_relaxed);
-  it->second->audio_bus = audio_bus;
+  resource_ptr->active = true;
+  resource_ptr->flags.fetch_and(~kStopped, std::memory_order_relaxed);
+  resource_ptr->audio_bus = audio_bus;
   if (amplitude >= 0)
-    it->second->amplitude = amplitude;
+    resource_ptr->amplitude = amplitude;
 
   std::lock_guard<std::mutex> scoped_lock(lock_);
-  play_list_[0].push_back(it->second);
+  play_list_[0].push_back(resource_ptr);
 }
 
-void AudioMixer::Stop(uint64_t resource_id) {
-  auto it = resources_.find(resource_id);
-  if (it == resources_.end())
-    return;
-
-  if (it->second->active) {
-    it->second->restart_cb = nullptr;
-    it->second->flags.fetch_or(kStopped, std::memory_order_relaxed);
+void AudioMixer::Stop(std::shared_ptr<void> resource) {
+  auto resource_ptr = std::static_pointer_cast<Resource>(resource);
+  if (resource_ptr->active) {
+    resource_ptr->restart_cb = nullptr;
+    resource_ptr->flags.fetch_or(kStopped, std::memory_order_relaxed);
   }
 }
 
-void AudioMixer::SetLoop(uint64_t resource_id, bool loop) {
-  auto it = resources_.find(resource_id);
-  if (it == resources_.end())
-    return;
-
+void AudioMixer::SetLoop(std::shared_ptr<void> resource, bool loop) {
+  auto resource_ptr = std::static_pointer_cast<Resource>(resource);
   if (loop)
-    it->second->flags.fetch_or(kLoop, std::memory_order_relaxed);
+    resource_ptr->flags.fetch_or(kLoop, std::memory_order_relaxed);
   else
-    it->second->flags.fetch_and(~kLoop, std::memory_order_relaxed);
+    resource_ptr->flags.fetch_and(~kLoop, std::memory_order_relaxed);
 }
 
-void AudioMixer::SetSimulateStereo(uint64_t resource_id, bool simulate) {
-  auto it = resources_.find(resource_id);
-  if (it == resources_.end())
-    return;
-
+void AudioMixer::SetSimulateStereo(std::shared_ptr<void> resource,
+                                   bool simulate) {
+  auto resource_ptr = std::static_pointer_cast<Resource>(resource);
   if (simulate)
-    it->second->flags.fetch_or(kSimulateStereo, std::memory_order_relaxed);
+    resource_ptr->flags.fetch_or(kSimulateStereo, std::memory_order_relaxed);
   else
-    it->second->flags.fetch_and(~kSimulateStereo, std::memory_order_relaxed);
+    resource_ptr->flags.fetch_and(~kSimulateStereo, std::memory_order_relaxed);
 }
 
-void AudioMixer::SetResampleStep(uint64_t resource_id, size_t step) {
-  auto it = resources_.find(resource_id);
-  if (it == resources_.end())
-    return;
-
-  it->second->step.store(step + 100, std::memory_order_relaxed);
+void AudioMixer::SetResampleStep(std::shared_ptr<void> resource, size_t step) {
+  auto resource_ptr = std::static_pointer_cast<Resource>(resource);
+  resource_ptr->step.store(step + 100, std::memory_order_relaxed);
 }
 
-void AudioMixer::SetMaxAmplitude(uint64_t resource_id, float max_amplitude) {
-  auto it = resources_.find(resource_id);
-  if (it == resources_.end())
-    return;
-
-  it->second->max_amplitude.store(max_amplitude, std::memory_order_relaxed);
+void AudioMixer::SetMaxAmplitude(std::shared_ptr<void> resource,
+                                 float max_amplitude) {
+  auto resource_ptr = std::static_pointer_cast<Resource>(resource);
+  resource_ptr->max_amplitude.store(max_amplitude, std::memory_order_relaxed);
 }
 
-void AudioMixer::SetAmplitudeInc(uint64_t resource_id, float amplitude_inc) {
-  auto it = resources_.find(resource_id);
-  if (it == resources_.end())
-    return;
-
-  it->second->amplitude_inc.store(amplitude_inc, std::memory_order_relaxed);
+void AudioMixer::SetAmplitudeInc(std::shared_ptr<void> resource,
+                                 float amplitude_inc) {
+  auto resource_ptr = std::static_pointer_cast<Resource>(resource);
+  resource_ptr->amplitude_inc.store(amplitude_inc, std::memory_order_relaxed);
 }
 
-void AudioMixer::SetEndCallback(uint64_t resource_id, base::Closure cb) {
-  auto it = resources_.find(resource_id);
-  if (it == resources_.end())
-    return;
-
-  it->second->end_cb = std::move(cb);
+void AudioMixer::SetEndCallback(std::shared_ptr<void> resource,
+                                base::Closure cb) {
+  auto resource_ptr = std::static_pointer_cast<Resource>(resource);
+  resource_ptr->end_cb = std::move(cb);
 }
 
 void AudioMixer::Suspend() {
@@ -177,8 +152,8 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
   memset(output_buffer, 0, sizeof(float) * num_frames * kChannelCount);
 
   for (auto it = play_list_[1].begin(); it != play_list_[1].end();) {
-    auto audio_bus = it->get()->audio_bus.get();
-    unsigned flags = it->get()->flags.load(std::memory_order_relaxed);
+    auto audio_bus = (*it)->audio_bus.get();
+    unsigned flags = (*it)->flags.load(std::memory_order_relaxed);
     bool marked_for_removal = false;
 
     if (flags & kStopped) {
@@ -190,14 +165,14 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
         src[1] = src[0];  // mono.
 
       size_t num_samples = audio_bus->samples_per_channel();
-      size_t src_index = it->get()->src_index;
-      size_t step = it->get()->step.load(std::memory_order_relaxed);
-      size_t accumulator = it->get()->accumulator;
-      float amplitude = it->get()->amplitude;
+      size_t src_index = (*it)->src_index;
+      size_t step = (*it)->step.load(std::memory_order_relaxed);
+      size_t accumulator = (*it)->accumulator;
+      float amplitude = (*it)->amplitude;
       float amplitude_inc =
-          it->get()->amplitude_inc.load(std::memory_order_relaxed);
+          (*it)->amplitude_inc.load(std::memory_order_relaxed);
       float max_amplitude =
-          it->get()->max_amplitude.load(std::memory_order_relaxed);
+          (*it)->max_amplitude.load(std::memory_order_relaxed);
       size_t channel_offset =
           (flags & kSimulateStereo) ? audio_bus->sample_rate() / 10 : 0;
 
@@ -237,11 +212,9 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
             break;
           }
 
-          if (!it->get()->streaming_in_progress.load(
-                  std::memory_order_acquire)) {
+          if (!(*it)->streaming_in_progress.load(std::memory_order_acquire)) {
             src_index %= num_samples;
-            it->get()->streaming_in_progress.store(true,
-                                                   std::memory_order_relaxed);
+            (*it)->streaming_in_progress.store(true, std::memory_order_relaxed);
 
             // Swap buffers and start streaming in background.
             audio_bus->SwapBuffers();
@@ -261,9 +234,9 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
         }
       }
 
-      it->get()->src_index = src_index;
-      it->get()->accumulator = accumulator;
-      it->get()->amplitude = amplitude;
+      (*it)->src_index = src_index;
+      (*it)->accumulator = accumulator;
+      (*it)->amplitude = amplitude;
     }
 
     if (marked_for_removal) {
@@ -275,7 +248,7 @@ void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
   }
 
   for (auto it = end_list_.begin(); it != end_list_.end();) {
-    if (!it->get()->streaming_in_progress.load(std::memory_order_relaxed)) {
+    if (!(*it)->streaming_in_progress.load(std::memory_order_relaxed)) {
       main_thread_task_runner_->PostTask(
           HERE, std::bind(&AudioMixer::EndCallback, this, *it));
       it = end_list_.erase(it);

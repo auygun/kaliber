@@ -37,7 +37,7 @@ class SoundPlayer {
   void SetEndCallback(base::Closure cb);
 
  private:
-  uint64_t resource_id_ = 0;
+  std::shared_ptr<void> resource_;
   std::shared_ptr<AudioBus> sound_;
 
   float max_amplitude_ = 1.0f;
