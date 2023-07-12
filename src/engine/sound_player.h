@@ -9,6 +9,7 @@
 namespace eng {
 
 class AudioBus;
+struct MixerInput;
 
 class SoundPlayer {
  public:
@@ -31,13 +32,13 @@ class SoundPlayer {
   // Enable or disable stereo simulation effect. Disabled by default.
   void SetSimulateStereo(bool simulate);
 
-  void SetMaxAplitude(float max_amplitude);
+  void SetMaxAplitude(float max_amplitude);  // TODO: typo
 
   // Set callback to be called once playback stops.
   void SetEndCallback(base::Closure cb);
 
  private:
-  std::shared_ptr<void> resource_;
+  std::shared_ptr<MixerInput> input_;
   std::shared_ptr<AudioBus> sound_;
 
   float max_amplitude_ = 1.0f;

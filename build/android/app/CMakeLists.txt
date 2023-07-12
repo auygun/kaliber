@@ -69,6 +69,7 @@ add_library(kaliber SHARED
     ../../../src/engine/audio/audio_bus.cc
     ../../../src/engine/audio/audio_mixer.cc
     ../../../src/engine/audio/audio_sink_oboe.cc
+    ../../../src/engine/audio/mixer_input.cc
     ../../../src/engine/audio/sinc_resampler.cc
     ../../../src/engine/drawable.cc
     ../../../src/engine/engine.cc

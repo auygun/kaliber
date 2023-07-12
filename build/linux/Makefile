@@ -102,6 +102,7 @@ ENGINE_SRC := \
   $(SRC_ROOT)/engine/audio/audio_bus.cc \
   $(SRC_ROOT)/engine/audio/audio_mixer.cc \
   $(SRC_ROOT)/engine/audio/audio_sink_alsa.cc \
+  $(SRC_ROOT)/engine/audio/mixer_input.cc \
   $(SRC_ROOT)/engine/audio/sinc_resampler.cc \
   $(SRC_ROOT)/engine/drawable.cc \
   $(SRC_ROOT)/engine/engine.cc \
