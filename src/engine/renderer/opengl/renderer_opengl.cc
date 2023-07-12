@@ -5,6 +5,7 @@
 #include <sstream>
 #include <unordered_set>
 
+#include "base/hash.h"
 #include "base/log.h"
 #include "base/vecmath.h"
 #include "engine/asset/image.h"
@@ -615,10 +616,11 @@ bool RendererOpenGL::BindAttributeLocation(GLuint id,
 GLint RendererOpenGL::GetUniformLocation(
     GLuint id,
     const std::string& name,
-    std::vector<std::pair<std::string, GLuint>>& uniforms) {
+    std::vector<std::pair<size_t, GLuint>>& uniforms) {
   // Check if we've encountered this uniform before.
+  auto hash = KR2Hash(name);
   auto it = std::find_if(uniforms.begin(), uniforms.end(),
-                         [&](auto& r) { return name == std::get<0>(r); });
+                         [&](auto& r) { return hash == std::get<0>(r); });
   GLint index;
   if (it != uniforms.end()) {
     // Yes, we already have the mapping.
@@ -626,11 +628,16 @@ GLint RendererOpenGL::GetUniformLocation(
   } else {
     // No, ask the driver for the mapping and save it.
     index = glGetUniformLocation(id, name.c_str());
-    if (index >= 0)
-      uniforms.emplace_back(std::make_pair(name, index));
-    else
+    if (index >= 0) {
+      DCHECK(std::find_if(uniforms.begin(), uniforms.end(),
+                          [&](auto& r) { return hash == std::get<0>(r); }) ==
+             uniforms.end())
+          << "Hash collision";
+      uniforms.emplace_back(std::make_pair(hash, index));
+    } else {
       LOG(0) << "Cannot find uniform " << name.c_str() << " (shader: " << id
              << ")";
+    }
   }
   return index;
 }

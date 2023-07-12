@@ -106,7 +106,11 @@ class RendererVulkan final : public Renderer {
   };
 
   struct ShaderVulkan {
-    std::vector<std::tuple<std::string, size_t, size_t>> variables;
+    std::vector<std::tuple<size_t,  // Variable name hash
+                           size_t,  // Variable size
+                           size_t   // Push constant offset
+                           >>
+        variables;
     std::unique_ptr<char[]> push_constants;
     size_t push_constants_size = 0;
     std::vector<std::string> sampler_uniform_names;

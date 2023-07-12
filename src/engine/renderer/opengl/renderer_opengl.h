@@ -95,7 +95,10 @@ class RendererOpenGL final : public Renderer {
 
   struct ShaderOpenGL {
     GLuint id = 0;
-    std::vector<std::pair<std::string, GLuint>> uniforms;
+    std::vector<std::pair<size_t,  // Uniform name hash
+                          GLuint   // Uniform index
+                          >>
+        uniforms;
     bool enable_depth_test = false;
   };
 
@@ -139,10 +142,9 @@ class RendererOpenGL final : public Renderer {
                          std::vector<GeometryOpenGL::Element>& vertex_layout);
   GLuint CreateShader(const char* source, GLenum type);
   bool BindAttributeLocation(GLuint id, const VertexDescription& vd);
-  GLint GetUniformLocation(
-      GLuint id,
-      const std::string& name,
-      std::vector<std::pair<std::string, GLuint>>& uniforms);
+  GLint GetUniformLocation(GLuint id,
+                           const std::string& name,
+                           std::vector<std::pair<size_t, GLuint>>& uniforms);
 };
 
 }  // namespace eng

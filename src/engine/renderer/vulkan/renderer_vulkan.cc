@@ -5,6 +5,7 @@
 #include <sstream>
 #include <utility>
 
+#include "base/hash.h"
 #include "base/log.h"
 #include "base/vecmath.h"
 #include "engine/asset/image.h"
@@ -1876,12 +1877,12 @@ bool RendererVulkan::CreatePipelineLayout(
 
       size_t offset = 0;
       for (uint32_t j = 0; j < pconstants_vertex[0]->member_count; j++) {
-        DCHECK(std::find_if(shader.variables.begin(), shader.variables.end(),
-                            [&](auto& r) {
-                              return pconstants_vertex[0]->members[j].name ==
-                                     std::get<0>(r);
-                            }) == shader.variables.end())
-            << "Duplicate uniform name";
+        DCHECK(std::find_if(
+                   shader.variables.begin(), shader.variables.end(),
+                   [hash = KR2Hash(pconstants_vertex[0]->members[j].name)](
+                       auto& r) { return hash == std::get<0>(r); }) ==
+               shader.variables.end())
+            << "Hash collision";
 
         DLOG(0) << __func__
                 << " name: " << pconstants_vertex[0]->members[j].name
@@ -1890,7 +1891,7 @@ bool RendererVulkan::CreatePipelineLayout(
                 << pconstants_vertex[0]->members[j].padded_size;
 
         shader.variables.emplace_back(
-            std::make_tuple(pconstants_vertex[0]->members[j].name,
+            std::make_tuple(KR2Hash(pconstants_vertex[0]->members[j].name),
                             pconstants_vertex[0]->members[j].size, offset));
         offset += pconstants_vertex[0]->members[j].padded_size;
       }
@@ -2040,8 +2041,9 @@ template <typename T>
 bool RendererVulkan::SetUniformInternal(ShaderVulkan& shader,
                                         const std::string& name,
                                         T val) {
+  auto hash = KR2Hash(name);
   auto it = std::find_if(shader.variables.begin(), shader.variables.end(),
-                         [&](auto& r) { return name == std::get<0>(r); });
+                         [&](auto& r) { return hash == std::get<0>(r); });
   if (it == shader.variables.end()) {
     DLOG(0) << "No variable found with name " << name;
     return false;
