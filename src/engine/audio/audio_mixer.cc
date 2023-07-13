@@ -176,7 +176,12 @@ void AudioMixer::DoStream(std::shared_ptr<MixerInput> input, bool loop) {
 }
 
 void AudioMixer::EndCallback(std::shared_ptr<MixerInput> input) {
-  input->active = false;
+  input->streaming = false;
+
+  if (input->pending_audio_bus) {
+    input->audio_bus = input->pending_audio_bus;
+    input->pending_audio_bus.reset();
+  }
 
   if (input->end_cb)
     input->end_cb();

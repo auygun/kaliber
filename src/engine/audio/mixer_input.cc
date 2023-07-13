@@ -21,45 +21,41 @@ std::shared_ptr<MixerInput> MixerInput::Create() {
   return std::shared_ptr<MixerInput>(new MixerInput());
 }
 
-void MixerInput::Play(AudioMixer* mixer,
-                      std::shared_ptr<AudioBus> bus,
-                      float amp,
-                      bool restart) {
+void MixerInput::SetAudioBus(std::shared_ptr<AudioBus> bus) {
+  if (streaming)
+    pending_audio_bus = bus;
+  else
+    audio_bus = bus;
+}
+
+void MixerInput::Play(AudioMixer* mixer, bool restart) {
   if (!mixer->IsAudioEnabled())
     return;
 
-  if (bus != audio_bus || src_index >= bus->samples_per_channel())
-    restart = true;
-
-  if (active) {
+  // If already streaming check if stream position needs to be reset.
+  if (streaming) {
     if (restart)
       flags.fetch_or(kStopped, std::memory_order_relaxed);
 
     if (flags.load(std::memory_order_relaxed) & kStopped)
-      restart_cb = [&, mixer, bus, amp, restart]() -> void {
-        Play(mixer, bus, amp, restart);
-      };
+      restart_cb = [&, mixer, restart]() -> void { Play(mixer, restart); };
 
     return;
   }
 
-  if (restart) {
+  if (restart || audio_bus->EndOfStream()) {
     src_index = 0;
     accumulator = 0;
-    bus->ResetStream();
+    audio_bus->ResetStream();
   }
 
-  active = true;
+  streaming = true;
   flags.fetch_and(~kStopped, std::memory_order_relaxed);
-  audio_bus = bus;
-  if (amp >= 0)
-    amplitude = amp;
-
   mixer->AddInput(shared_from_this());
 }
 
 void MixerInput::Stop() {
-  if (active) {
+  if (streaming) {
     restart_cb = nullptr;
     flags.fetch_or(kStopped, std::memory_order_relaxed);
   }
@@ -81,6 +77,10 @@ void MixerInput::SetSimulateStereo(bool simulate) {
 
 void MixerInput::SetResampleStep(size_t value) {
   step.store(value + 100, std::memory_order_relaxed);
+}
+
+void MixerInput::SetAmplitude(float value) {
+  amplitude.store(value, std::memory_order_relaxed);
 }
 
 void MixerInput::SetMaxAmplitude(float value) {

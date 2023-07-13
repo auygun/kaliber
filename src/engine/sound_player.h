@@ -39,7 +39,6 @@ class SoundPlayer {
 
  private:
   std::shared_ptr<MixerInput> input_;
-  std::shared_ptr<AudioBus> sound_;
 
   float max_amplitude_ = 1.0f;
 

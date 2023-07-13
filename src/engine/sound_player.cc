@@ -18,45 +18,50 @@ SoundPlayer::~SoundPlayer() {
 }
 
 void SoundPlayer::SetSound(const std::string& asset_name) {
-  sound_ = Engine::Get().GetAudioBus(asset_name);
+  input_->SetAudioBus(Engine::Get().GetAudioBus(asset_name));
 }
 
 void SoundPlayer::SetSound(std::shared_ptr<AudioBus> sound) {
-  sound_ = sound;
+  input_->SetAudioBus(sound);
 }
 
 void SoundPlayer::Play(bool loop, float fade_in_duration) {
-  if (!sound_)
+  if (!input_->audio_bus)
     return;
 
   int step = variate_ ? Engine::Get().GetRandomGenerator().Roll(3) - 2 : 0;
   input_->SetResampleStep(step * 12);
   input_->SetLoop(loop);
-  if (fade_in_duration > 0)
-    input_->SetAmplitudeInc(1.0f / (sound_->sample_rate() * fade_in_duration));
-  else
+  if (fade_in_duration > 0) {
+    input_->SetAmplitude(0);
+    input_->SetAmplitudeInc(
+        1.0f / (input_->audio_bus->sample_rate() * fade_in_duration));
+  } else {
+    input_->SetAmplitude(max_amplitude_);
     input_->SetAmplitudeInc(0);
-  input_->Play(Engine::Get().GetAudioMixer(), sound_,
-               fade_in_duration > 0 ? 0 : max_amplitude_, true);
+  }
+  input_->Play(Engine::Get().GetAudioMixer(), true);
 }
 
 void SoundPlayer::Resume(float fade_in_duration) {
-  if (!sound_)
+  if (!input_->audio_bus)
     return;
 
-  if (fade_in_duration > 0)
-    input_->SetAmplitudeInc(1.0f / (sound_->sample_rate() * fade_in_duration));
-  input_->Play(Engine::Get().GetAudioMixer(), sound_,
-               fade_in_duration > 0 ? 0 : -1, false);
+  if (fade_in_duration > 0) {
+    input_->SetAmplitude(0);
+    input_->SetAmplitudeInc(
+        1.0f / (input_->audio_bus->sample_rate() * fade_in_duration));
+  }
+  input_->Play(Engine::Get().GetAudioMixer(), false);
 }
 
 void SoundPlayer::Stop(float fade_out_duration) {
-  if (!sound_)
+  if (!input_->audio_bus)
     return;
 
   if (fade_out_duration > 0)
-    input_->SetAmplitudeInc(-1.0f /
-                            (sound_->sample_rate() * fade_out_duration));
+    input_->SetAmplitudeInc(
+        -1.0f / (input_->audio_bus->sample_rate() * fade_out_duration));
   else
     input_->Stop();
 }
