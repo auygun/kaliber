@@ -149,7 +149,7 @@ bool Menu::Initialize() {
   click_.SetSound(click_sound_);
   click_.SetVariate(false);
   click_.SetSimulateStereo(false);
-  click_.SetMaxAplitude(1.5f);
+  click_.SetMaxAmplitude(1.5f);
 
   logo_[0].Create("logo_tex0", {3, 8});
   logo_[0].SetZOrder(41);

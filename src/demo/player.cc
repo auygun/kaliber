@@ -75,7 +75,7 @@ bool Player::Initialize() {
   nuke_explosion_.SetSound("nuke");
   nuke_explosion_.SetVariate(false);
   nuke_explosion_.SetSimulateStereo(false);
-  nuke_explosion_.SetMaxAplitude(0.8f);
+  nuke_explosion_.SetMaxAmplitude(0.8f);
 
   no_nuke_.SetSound("no_nuke");
 
@@ -306,7 +306,7 @@ void Player::SetupWeapons() {
     laser_shot_[i].SetSound("laser");
     laser_shot_[i].SetVariate(true);
     laser_shot_[i].SetSimulateStereo(false);
-    laser_shot_[i].SetMaxAplitude(0.4f);
+    laser_shot_[i].SetMaxAmplitude(0.4f);
   }
 }
 

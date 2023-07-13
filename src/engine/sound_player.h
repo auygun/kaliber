@@ -32,7 +32,7 @@ class SoundPlayer {
   // Enable or disable stereo simulation effect. Disabled by default.
   void SetSimulateStereo(bool simulate);
 
-  void SetMaxAplitude(float max_amplitude);  // TODO: typo
+  void SetMaxAmplitude(float max_amplitude);
 
   // Set callback to be called once playback stops.
   void SetEndCallback(base::Closure cb);

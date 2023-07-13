@@ -734,29 +734,29 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
     e.explosion.SetSound("powerup-pick");
 
     e.spawn.SetSound("powerup-spawn");
-    e.spawn.SetMaxAplitude(2.0f);
+    e.spawn.SetMaxAmplitude(2.0f);
     e.spawn.Play(false);
   } else {
     e.explosion.SetSound("explosion");
     e.explosion.SetVariate(true);
     e.explosion.SetSimulateStereo(true);
-    e.explosion.SetMaxAplitude(0.9f);
+    e.explosion.SetMaxAmplitude(0.9f);
   }
 
   e.stealth.SetSound("stealth");
   e.stealth.SetVariate(false);
   e.stealth.SetSimulateStereo(false);
-  e.stealth.SetMaxAplitude(0.7f);
+  e.stealth.SetMaxAmplitude(0.7f);
 
   e.shield_on.SetSound("shield");
   e.shield_on.SetVariate(false);
   e.shield_on.SetSimulateStereo(false);
-  e.shield_on.SetMaxAplitude(0.5f);
+  e.shield_on.SetMaxAmplitude(0.5f);
 
   e.hit.SetSound("hit");
   e.hit.SetVariate(true);
   e.hit.SetSimulateStereo(false);
-  e.hit.SetMaxAplitude(0.5f);
+  e.hit.SetMaxAmplitude(0.5f);
 }
 
 void Enemy::SpawnBoss() {
@@ -834,7 +834,7 @@ void Enemy::SpawnBoss() {
     e.hit.SetSound("hit");
     e.hit.SetVariate(true);
     e.hit.SetSimulateStereo(false);
-    e.hit.SetMaxAplitude(0.5f);
+    e.hit.SetMaxAmplitude(0.5f);
   });
   boss_animator_.Play(Animator::kFrames, true);
   boss_animator_.Play(Animator::kMovement, false);

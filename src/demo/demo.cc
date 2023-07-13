@@ -109,10 +109,10 @@ bool Demo::Initialize() {
   }
 
   music_.SetSound("music");
-  music_.SetMaxAplitude(0.5f);
+  music_.SetMaxAmplitude(0.5f);
 
   boss_music_.SetSound("boss_music");
-  boss_music_.SetMaxAplitude(0.5f);
+  boss_music_.SetMaxAmplitude(0.5f);
 
   if (!saved_data_.root().get("audio", Json::Value(true)).asBool())
     Engine::Get().SetEnableAudio(false);

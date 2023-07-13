@@ -69,7 +69,7 @@ void SoundPlayer::SetSimulateStereo(bool simulate) {
   input_->SetSimulateStereo(simulate);
 }
 
-void SoundPlayer::SetMaxAplitude(float max_amplitude) {
+void SoundPlayer::SetMaxAmplitude(float max_amplitude) {
   max_amplitude_ = max_amplitude;
   input_->SetMaxAmplitude(max_amplitude);
 }
