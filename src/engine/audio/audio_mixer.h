@@ -14,8 +14,7 @@ class TaskRunner;
 
 namespace eng {
 
-class AudioBus;
-struct MixerInput;
+class MixerInput;
 
 // Mix and render audio with low overhead. The mixer has zero or more inputs
 // which can be added at any time. The mixer will pull from each input source
@@ -29,7 +28,7 @@ class AudioMixer : public AudioSink::Delegate {
   AudioMixer();
   ~AudioMixer();
 
-  void AddInput(std::shared_ptr<MixerInput> input);
+  void AddInput(std::shared_ptr<MixerInput> mixer_input);
 
   void SetEnableAudio(bool enable) { audio_enabled_ = enable; }
   bool IsAudioEnabled() const { return audio_enabled_; }
@@ -56,10 +55,6 @@ class AudioMixer : public AudioSink::Delegate {
   // AudioSink::Delegate interface
   int GetChannelCount() final { return kChannelCount; }
   void RenderAudio(float* output_buffer, size_t num_frames) final;
-
-  void DoStream(std::shared_ptr<MixerInput> sample, bool loop);
-
-  void EndCallback(std::shared_ptr<MixerInput> sample);
 
   AudioMixer(const AudioMixer&) = delete;
   AudioMixer& operator=(const AudioMixer&) = delete;

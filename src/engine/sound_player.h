@@ -9,7 +9,7 @@
 namespace eng {
 
 class AudioBus;
-struct MixerInput;
+class MixerInput;
 
 class SoundPlayer {
  public:

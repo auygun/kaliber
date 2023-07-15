@@ -26,7 +26,7 @@ void SoundPlayer::SetSound(std::shared_ptr<AudioBus> sound) {
 }
 
 void SoundPlayer::Play(bool loop, float fade_in_duration) {
-  if (!input_->audio_bus)
+  if (!input_->IsValid())
     return;
 
   int step = variate_ ? Engine::Get().GetRandomGenerator().Roll(3) - 2 : 0;
@@ -35,7 +35,7 @@ void SoundPlayer::Play(bool loop, float fade_in_duration) {
   if (fade_in_duration > 0) {
     input_->SetAmplitude(0);
     input_->SetAmplitudeInc(
-        1.0f / (input_->audio_bus->sample_rate() * fade_in_duration));
+        1.0f / (input_->GetAudioBus()->sample_rate() * fade_in_duration));
   } else {
     input_->SetAmplitude(max_amplitude_);
     input_->SetAmplitudeInc(0);
@@ -44,24 +44,24 @@ void SoundPlayer::Play(bool loop, float fade_in_duration) {
 }
 
 void SoundPlayer::Resume(float fade_in_duration) {
-  if (!input_->audio_bus)
+  if (!input_->IsValid())
     return;
 
   if (fade_in_duration > 0) {
     input_->SetAmplitude(0);
     input_->SetAmplitudeInc(
-        1.0f / (input_->audio_bus->sample_rate() * fade_in_duration));
+        1.0f / (input_->GetAudioBus()->sample_rate() * fade_in_duration));
   }
   input_->Play(Engine::Get().GetAudioMixer(), false);
 }
 
 void SoundPlayer::Stop(float fade_out_duration) {
-  if (!input_->audio_bus)
+  if (!input_->IsValid())
     return;
 
   if (fade_out_duration > 0)
     input_->SetAmplitudeInc(
-        -1.0f / (input_->audio_bus->sample_rate() * fade_out_duration));
+        -1.0f / (input_->GetAudioBus()->sample_rate() * fade_out_duration));
   else
     input_->Stop();
 }
