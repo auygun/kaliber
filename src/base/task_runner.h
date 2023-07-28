@@ -22,7 +22,7 @@ void ReturnAsParamAdapter(std::function<ReturnType()> func,
   *result = func();
 }
 
-// Adapts a ReturnType* result to a callblack that expects a ReturnType.
+// Adapts a ReturnType* result to a callback that expects a ReturnType.
 template <typename ReturnType>
 void ReplyAdapter(std::function<void(ReturnType)> callback,
                   std::shared_ptr<ReturnType> result) {
@@ -65,9 +65,10 @@ class TaskRunner {
         front);
   }
 
-  // Posts a task to delete the given object.
+  // Posts a task that deletes the given object.
   template <class T>
   void Delete(Location from, std::unique_ptr<T> object) {
+    // std::function target must be copy-constructible
     std::shared_ptr<T> owned = std::move(object);
     PostTask(HERE, [owned]() {});
   }
