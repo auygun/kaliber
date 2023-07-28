@@ -112,6 +112,9 @@ class Engine : public PlatformObserver {
 
   const Font* GetSystemFont() { return system_font_.get(); }
 
+  std::unique_ptr<Image> Print(const std::string& text,
+                               base::Vector4f bg_color);
+
   base::Randomf& GetRandomGenerator() { return random_; }
 
   TextureCompressor* GetTextureCompressor(bool opacity);

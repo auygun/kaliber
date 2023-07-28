@@ -442,6 +442,19 @@ TextureCompressor* Engine::GetTextureCompressor(bool opacity) {
   return opacity ? tex_comp_alpha_.get() : tex_comp_opaque_.get();
 }
 
+std::unique_ptr<Image> Engine::Print(const std::string& text,
+                                     Vector4f bg_color) {
+  int width, height;
+  system_font_->CalculateBoundingBox(text.c_str(), width, height);
+
+  auto image = std::make_unique<Image>();
+  image->Create(width, height);
+  image->Clear(bg_color);
+  system_font_->Print(0, 0, text.c_str(), image->GetBuffer(),
+                      image->GetWidth());
+  return image;
+}
+
 int Engine::GetScreenWidth() const {
   return renderer_->GetScreenWidth();
 }

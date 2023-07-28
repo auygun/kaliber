@@ -9,18 +9,18 @@ class Game {
   virtual ~Game() = default;
 
   // Called before async-loading assets.
-  virtual bool PreInitialize() = 0;
+  virtual bool PreInitialize() { return true; }
 
   // Called after resources are created.
-  virtual bool Initialize() = 0;
+  virtual bool Initialize() { return true; }
 
-  virtual void Update(float delta_time) = 0;
+  virtual void Update(float delta_time) {}
 
-  virtual void ContextLost() = 0;
+  virtual void ContextLost() {}
 
-  virtual void LostFocus() = 0;
+  virtual void LostFocus() {}
 
-  virtual void GainedFocus(bool from_interstitial_ad) = 0;
+  virtual void GainedFocus(bool from_interstitial_ad) {}
 
  private:
   Game(const Game&) = delete;
