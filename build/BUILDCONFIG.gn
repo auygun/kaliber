@@ -1,0 +1,71 @@
+declare_args() {
+  is_debug = false
+}
+
+# Platform detection
+if (target_os == "") {
+  target_os = host_os
+}
+if (current_os == "") {
+  current_os = target_os
+}
+
+is_android = current_os == "android"
+is_ios = current_os == "ios"
+is_linux = current_os == "linux"
+is_mac = current_os == "mac"
+is_win = current_os == "win"
+
+is_apple = is_mac || is_ios
+is_desktop = is_mac || is_linux || is_win
+is_mobile = is_android || is_ios
+is_unix = is_android || is_linux
+
+# Optional build components
+have_vulkan = false
+
+if (target_cpu == "") {
+  if (is_mobile) {
+    target_cpu = "arm64"
+  } else {
+    target_cpu = host_cpu
+  }
+}
+if (target_cpu == "x86_64") {
+  target_cpu = "x64"
+}
+if (current_cpu == "") {
+  current_cpu = target_cpu
+}
+
+# Set defaults
+_default_config = [
+  "//build:default",
+  "//build:warnings",
+]
+
+if (is_debug) {
+  _default_config += [ "//build:debug" ]
+} else {
+  _default_config += [ "//build:release" ]
+}
+
+set_defaults("executable") {
+  configs = [ "//build:executable" ] + _default_config
+}
+set_defaults("static_library") {
+  configs = _default_config
+}
+set_defaults("shared_library") {
+  configs = _default_config
+}
+set_defaults("source_set") {
+  configs = _default_config
+}
+
+if (is_win) {
+  set_default_toolchain("//build/toolchain/msvc")
+} else {
+  # Clang behaves like GCC in most cases.
+  set_default_toolchain("//build/toolchain/gcc")
+}

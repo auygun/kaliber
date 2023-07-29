@@ -1,0 +1,88 @@
+source_set("engine") {
+  sources = [
+    "animatable.cc",
+    "animatable.h",
+    "animator.cc",
+    "animator.h",
+    "asset/font.cc",
+    "asset/font.h",
+    "asset/image.cc",
+    "asset/image.h",
+    "asset/mesh.cc",
+    "asset/mesh.h",
+    "asset/shader_source.cc",
+    "asset/shader_source.h",
+    "asset/sound.cc",
+    "asset/sound.h",
+    "audio/audio_bus.cc",
+    "audio/audio_bus.h",
+    "audio/audio_mixer.cc",
+    "audio/audio_mixer.h",
+    "audio/audio_sink.h",
+    "audio/mixer_input.cc",
+    "audio/mixer_input.h",
+    "audio/sinc_resampler.cc",
+    "audio/sinc_resampler.h",
+    "drawable.cc",
+    "drawable.h",
+    "engine.cc",
+    "engine.h",
+    "game.h",
+    "game_factory.h",
+    "image_quad.cc",
+    "image_quad.h",
+    "input_event.h",
+    "persistent_data.cc",
+    "persistent_data.h",
+    "platform/asset_file.cc",
+    "platform/asset_file.h",
+    "platform/platform.h",
+    "platform/platform_observer.h",
+    "renderer/geometry.cc",
+    "renderer/geometry.h",
+    "renderer/opengl/opengl.h",
+    "renderer/opengl/renderer_opengl.cc",
+    "renderer/opengl/renderer_opengl.h",
+    "renderer/render_resource.h",
+    "renderer/renderer.h",
+    "renderer/renderer_types.cc",
+    "renderer/renderer_types.h",
+    "renderer/shader.cc",
+    "renderer/shader.h",
+    "renderer/texture.cc",
+    "renderer/texture.h",
+    "renderer/vulkan/renderer_vulkan.cc",
+    "renderer/vulkan/vulkan_context.cc",
+    "solid_quad.cc",
+    "solid_quad.h",
+    "sound_player.cc",
+    "sound_player.h",
+  ]
+
+  ldflags = []
+  libs = []
+
+  if (target_os == "linux") {
+    sources += [
+      "audio/audio_sink_alsa.cc",
+      "audio/audio_sink_alsa.h",
+      "platform/asset_file_linux.cc",
+      "platform/platform_linux.cc",
+      "renderer/opengl/renderer_opengl_linux.cc",
+      "renderer/vulkan/renderer_vulkan_linux.cc",
+      "renderer/vulkan/vulkan_context_linux.cc",
+    ]
+
+    libs += [
+      "X11",
+      "GL",
+      "asound",
+    ]
+  }
+
+  deps = [
+    "//assets/engine",
+    "//src/base",
+    "//src/third_party",
+  ]
+}

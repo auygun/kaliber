@@ -1,20 +1,38 @@
+## Kaliber
+
 A simple, cross-platform 2D game engine with OpenGL and Vulkan renderers.
 Supports Linux and Android platforms.
 This is a personal hobby project. I've published a little game on
 [Google Play](https://play.google.com/store/apps/details?id=com.woom.game)
 based on this engine. Full game code and assets are included in this repository.
-#### Building the demo
-Linux:
+
+## Pre-requisities for all platforms except Android:
+
+Install:
+* GN: https://gn.googlesource.com/gn/
+
+## Building from the command-line:
+
+### All platforms except Android:
+Setup:
 ```text
-cd build/linux
-make
+gn gen out/release
+gn gen --args='is_debug=true' out/debug
 ```
-Android:
+Building and running:
+```text
+ninja -C out/debug
+./out/debug/hello_world
+./out/debug/demo
+```
+### Android:
 ```text
 cd build/android
-./gradlew :app:assembleRelease
+./gradlew :app:installDebug
 ```
-#### Third-party libraries:
+
+## Third-party libraries:
+
 [glew](https://github.com/nigels-com/glew),
 [jsoncpp](https://github.com/open-source-parsers/jsoncpp),
 [minimp3](https://github.com/lieff/minimp3),
@@ -28,17 +46,10 @@ cd build/android
 [vulkan-sdk](https://vulkan.lunarg.com),
 [volk](https://github.com/zeux/volk)
 
-#### Hello World example:
-Simply shows a rotating "Hello Wolrd!".
-```cpp
-#include "base/interpolation.h"
-#include "engine/animator.h"
-#include "engine/asset/image.h"
-#include "engine/engine.h"
-#include "engine/game.h"
-#include "engine/game_factory.h"
-#include "engine/image_quad.h"
+## Hello World example:
 
+Shows a smoothly rotating "Hello Wolrd!".
+```cpp
 class HelloWorld final : public eng::Game {
  public:
   ~HelloWorld() final = default;

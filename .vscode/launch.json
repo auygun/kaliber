@@ -8,10 +8,10 @@
       "name": "(gdb) Launch",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build/linux/demo_x86_64_debug",
+      "program": "${workspaceFolder}/out/debug/demo",
       "args": [],
       "stopAtEntry": false,
-      "cwd": "${workspaceFolder}/build/linux",
+      "cwd": "${workspaceFolder}/out/debug",
       "environment": [],
       "console": "externalTerminal",
       "MIMode": "gdb",
@@ -22,6 +22,7 @@
           "ignoreFailures": true
         }
       ]
+      "preLaunchTask": "Build project",
     }
   ]
 }

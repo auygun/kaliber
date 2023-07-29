@@ -1,0 +1,24 @@
+source_set("base") {
+  sources = [
+    "closure.h",
+    "collusion_test.cc",
+    "collusion_test.h",
+    "file.h",
+    "hash.h",
+    "interpolation.h",
+    "log.cc",
+    "log.h",
+    "mem.h",
+    "misc.h",
+    "random.h",
+    "task_runner.cc",
+    "task_runner.h",
+    "thread_pool.cc",
+    "thread_pool.h",
+    "timer.cc",
+    "timer.h",
+    "vecmath.h",
+  ]
+
+  deps = []
+}

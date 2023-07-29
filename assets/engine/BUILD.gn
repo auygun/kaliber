@@ -1,0 +1,11 @@
+copy("engine") {
+  sources = [
+    "pass_through.glsl_fragment",
+    "pass_through.glsl_vertex",
+    "RobotoMono-Regular.ttf",
+    "solid.glsl_fragment",
+    "solid.glsl_vertex",
+  ]
+
+  outputs = ["$root_out_dir/assets/engine/{{source_file_part}}"]
+}

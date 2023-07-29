@@ -1,5 +1,8 @@
 #include "engine/platform/platform.h"
 
+#include <limits.h>
+#include <stdio.h>
+#include <cstring>
 #include <memory>
 
 #include "base/log.h"
@@ -16,13 +19,25 @@ void KaliberMain(Platform* platform);
 Platform::Platform() {
   LOG(0) << "Initializing platform.";
 
-  root_path_ = "../../";
-  LOG(0) << "Root path: " << root_path_.c_str();
-
+  root_path_ = "./";
   data_path_ = "./";
-  LOG(0) << "Data path: " << data_path_.c_str();
-
   shared_data_path_ = "./";
+
+  char dest[PATH_MAX];
+  memset(dest, 0, sizeof(dest));
+  if (readlink("/proc/self/exe", dest, PATH_MAX) > 0) {
+    std::string path = dest;
+    std::size_t last_slash_pos = path.find_last_of('/');
+    if (last_slash_pos != std::string::npos)
+      path = path.substr(0, last_slash_pos + 1);
+
+    root_path_ = path;
+    data_path_ = path;
+    shared_data_path_ = path;
+  }
+
+  LOG(0) << "Root path: " << root_path_.c_str();
+  LOG(0) << "Data path: " << data_path_.c_str();
   LOG(0) << "Shared data path: " << shared_data_path_.c_str();
 
   bool res = CreateWindow(800, 1205);

@@ -1,0 +1,6 @@
+group("kaliber") {
+  deps = [
+    "//src/demo",
+    "//src/hello_world",
+  ]
+}
