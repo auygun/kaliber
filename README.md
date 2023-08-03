@@ -6,10 +6,19 @@ This is a personal hobby project. I've published a little game on
 [Google Play](https://play.google.com/store/apps/details?id=com.woom.game)
 based on this engine. Full game code and assets are included in this repository.
 
-## Pre-requisities for all platforms except Android:
+## Pre-requisities:
 
-Install:
-* GN: https://gn.googlesource.com/gn/
+This project uses `GN build system` for all platforms except Android
+(I want to add support for APKs, Java code etc. to the GN configuration and use
+it for all platforms). \
+Building GN from source:
+https://gn.googlesource.com/gn/ \
+Pre-built GN binaries:
+https://chrome-infra-packages.appspot.com/p/gn/gn/
+
+`Gradle`, `Android SDK` and `NDK` are required for Android. 
+If you prefer, you can install `Android Studio` which includes all the
+requirements.
 
 ## Building from the command-line:
 
