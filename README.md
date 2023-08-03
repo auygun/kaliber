@@ -1,4 +1,4 @@
-## Kaliber
+![Logo](kaliber.png)
 
 A simple, cross-platform 2D game engine with OpenGL and Vulkan renderers.
 Supports Linux and Android platforms.
