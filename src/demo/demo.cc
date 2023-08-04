@@ -14,9 +14,7 @@
 #include "engine/game_factory.h"
 #include "engine/input_event.h"
 
-DECLARE_GAME_BEGIN
-DECLARE_GAME(Demo)
-DECLARE_GAME_END
+GAME_FACTORIES{GAME_CLASS(Demo)};
 
 // #define RECORD 15
 // #define REPLAY

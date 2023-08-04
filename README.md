@@ -1,4 +1,4 @@
-![Logo](kaliber.png)
+# Kaliber
 
 A simple, cross-platform 2D game engine with OpenGL and Vulkan renderers.
 Supports Linux and Android platforms.
@@ -8,9 +8,8 @@ based on this engine. Full game code and assets are included in this repository.
 
 ## Pre-requisites:
 
-This project uses **GN build system** for all platforms except Android
-(I want to add support for APKs, Java code etc. to the GN configuration and use
-it for all platforms). \
+**GN build system** is required for all platforms except Android (support for
+APKs, Java code etc. is to be added to the GN configuration). \
 Building GN from source:
 https://gn.googlesource.com/gn/ \
 Pre-built GN binaries:
@@ -18,8 +17,7 @@ https://chrome-infra-packages.appspot.com/p/gn/gn/
 
 Linux is the supported host platform to build Android. **Gradle**,
 **Android SDK** and **NDK** are required. If you prefer, you can install
-**Android Studio** which
-includes all the requirements.
+**Android Studio** which includes all the requirements.
 
 ## Building from the command-line:
 
@@ -70,8 +68,7 @@ class HelloWorld final : public eng::Game {
         std::bind(&eng::Engine::Print, &eng::Engine::Get(), "Hello World!",
                   base::Vector4f(1, 1, 1, 0)));
 
-    hello_world_.Create("hello_world_image");
-    hello_world_.SetVisible(true);
+    hello_world_.Create("hello_world_image").SetVisible(true);
     animator_.Attach(&hello_world_);
     animator_.SetRotation(base::PI2f, 3,
                           std::bind(base::SmootherStep, std::placeholders::_1));
@@ -84,7 +81,5 @@ class HelloWorld final : public eng::Game {
   eng::Animator animator_;
 };
 
-DECLARE_GAME_BEGIN
-DECLARE_GAME(HelloWorld)
-DECLARE_GAME_END
+GAME_FACTORIES{GAME_CLASS(HelloWorld)};
 ```

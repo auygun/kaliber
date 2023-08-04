@@ -16,8 +16,7 @@ class HelloWorld final : public eng::Game {
         std::bind(&eng::Engine::Print, &eng::Engine::Get(), "Hello World!",
                   base::Vector4f(1, 1, 1, 0)));
 
-    hello_world_.Create("hello_world_image");
-    hello_world_.SetVisible(true);
+    hello_world_.Create("hello_world_image").SetVisible(true);
     animator_.Attach(&hello_world_);
     animator_.SetRotation(base::PI2f, 3,
                           std::bind(base::SmootherStep, std::placeholders::_1));
@@ -30,6 +29,4 @@ class HelloWorld final : public eng::Game {
   eng::Animator animator_;
 };
 
-DECLARE_GAME_BEGIN
-DECLARE_GAME(HelloWorld)
-DECLARE_GAME_END
+GAME_FACTORIES{GAME_CLASS(HelloWorld)};

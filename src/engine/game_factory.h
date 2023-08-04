@@ -5,11 +5,11 @@
 #include <string>
 #include <vector>
 
-#define DECLARE_GAME_BEGIN                                   \
+#define GAME_FACTORIES                                       \
   std::vector<std::pair<std::string, eng::GameFactoryBase*>> \
-      eng::GameFactoryBase::game_classes = {
-#define DECLARE_GAME(CLASS) {#CLASS, new eng::GameFactory<CLASS>()},
-#define DECLARE_GAME_END };
+      eng::GameFactoryBase::game_classes
+#define GAME_CLASS(CLASS) \
+  { #CLASS, new eng::GameFactory<CLASS>() }
 
 namespace eng {
 
@@ -19,6 +19,8 @@ class GameFactoryBase {
  public:
   virtual ~GameFactoryBase() = default;
 
+  // Create an instance for the class of the given name. The default factory is
+  // used if the name is empty (which is the first one in the list).
   static std::unique_ptr<Game> CreateGame(const std::string& name) {
     if (name.empty())
       return game_classes.size() > 0

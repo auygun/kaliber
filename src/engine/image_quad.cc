@@ -16,10 +16,10 @@ ImageQuad::~ImageQuad() {
   Destroy();
 }
 
-void ImageQuad::Create(const std::string& asset_name,
-                       std::array<int, 2> num_frames,
-                       int frame_width,
-                       int frame_height) {
+ImageQuad& ImageQuad::Create(const std::string& asset_name,
+                             std::array<int, 2> num_frames,
+                             int frame_width,
+                             int frame_height) {
   texture_ = Engine::Get().AcquireTexture(asset_name);
   num_frames_ = std::move(num_frames);
   frame_width_ = frame_width;
@@ -30,6 +30,7 @@ void ImageQuad::Create(const std::string& asset_name,
       << asset_name;
   SetSize(Engine::Get().ToScale({GetFrameWidth(), GetFrameHeight()}) *
           Engine::Get().GetImageScaleFactor());
+  return *this;
 }
 
 void ImageQuad::Destroy() {
