@@ -15,7 +15,6 @@ source_set("base") {
     "task_runner.h",
     "thread_pool.cc",
     "thread_pool.h",
-    "timer.cc",
     "timer.h",
     "vecmath.h",
   ]

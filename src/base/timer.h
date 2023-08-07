@@ -1,30 +1,46 @@
 #ifndef BASE_TIMER_H
 #define BASE_TIMER_H
 
-#include <sys/time.h>
+#include <chrono>
+#include <thread>
 
 namespace base {
 
-class Timer {
+class ElapsedTimer {
  public:
-  Timer();
-  ~Timer() = default;
+  ElapsedTimer() { time_ = std::chrono::high_resolution_clock::now(); }
 
-  void Reset();
-
-  void Update();
-
-  static void Sleep(float duration);
-
-  float GetSecondsPassed() const { return seconds_passed_; }
-  float GetSecondsAccumulated() const { return seconds_accumulated_; }
+  // Return seconds passed since creating the object.
+  double Elapsed() const {
+    auto current_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = current_time - time_;
+    return diff.count();
+  }
 
  private:
-  float seconds_passed_ = 0.0f;
-  float seconds_accumulated_ = 0.0f;
-
-  timeval last_time_;
+  std::chrono::time_point<std::chrono::high_resolution_clock> time_;
 };
+
+class DeltaTimer {
+ public:
+  DeltaTimer() { time_ = std::chrono::high_resolution_clock::now(); }
+
+  // Return seconds passed since the last call to this function.
+  double Delta() {
+    auto current_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = current_time - time_;
+    time_ = current_time;
+    return diff.count();
+  }
+
+ private:
+  std::chrono::time_point<std::chrono::high_resolution_clock> time_;
+};
+
+inline void Sleep(double seconds) {
+  std::this_thread::sleep_for(
+      std::chrono::duration<double, std::milli>(seconds * 1000));
+}
 
 }  // namespace base
 

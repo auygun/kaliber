@@ -5,6 +5,7 @@
 #include <alsa/asoundlib.h>
 
 #include "base/log.h"
+#include "base/timer.h"
 
 using namespace base;
 
@@ -186,7 +187,7 @@ void AudioSinkAlsa::AudioThreadMain() {
       if (terminate_audio_thread_.load(std::memory_order_relaxed))
         return;
       // Avoid busy-looping.
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      Sleep(1);
     }
 
     delegate_->RenderAudio(buffer.get(), num_frames);

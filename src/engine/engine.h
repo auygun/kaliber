@@ -9,7 +9,6 @@
 
 #include "base/random.h"
 #include "base/thread_pool.h"
-#include "base/timer.h"
 #include "base/vecmath.h"
 #include "engine/persistent_data.h"
 #include "engine/platform/platform_observer.h"
@@ -214,7 +213,6 @@ class Engine : public PlatformObserver {
   unsigned int replay_index_ = 0;
 
   base::ThreadPool thread_pool_;
-  base::Timer timer_;
   base::Randomf random_;
 
   void Initialize();

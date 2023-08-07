@@ -51,7 +51,6 @@ add_library(kaliber SHARED
     ../../../src/base/log.cc
     ../../../src/base/task_runner.cc
     ../../../src/base/thread_pool.cc
-    ../../../src/base/timer.cc
     ../../../src/demo/credits.cc
     ../../../src/demo/demo.cc
     ../../../src/demo/enemy.cc

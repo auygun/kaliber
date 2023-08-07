@@ -2,6 +2,7 @@
 
 #include "base/log.h"
 #include "base/task_runner.h"
+#include "base/timer.h"
 #include "engine/animator.h"
 #include "engine/asset/font.h"
 #include "engine/asset/image.h"
@@ -72,7 +73,7 @@ Engine& Engine::Get() {
 void Engine::Run() {
   Initialize();
 
-  timer_.Reset();
+  DeltaTimer timer;
   float accumulator = 0.0;
   float frame_frac = 0.0f;
 
@@ -83,17 +84,13 @@ void Engine::Run() {
     if (platform_->should_exit())
       return;
 
-    if (!renderer_->IsInitialzed()) {
-      timer_.Reset();
-      input_queue_.clear();
+    if (!renderer_->IsInitialzed())
       continue;
-    }
 
     Draw(frame_frac);
 
     // Accumulate time.
-    timer_.Update();
-    accumulator += timer_.GetSecondsPassed();
+    accumulator += timer.Delta();
 
     // Subdivide the frame time using fixed time steps.
     while (accumulator >= time_step_) {
@@ -511,7 +508,6 @@ void Engine::LostFocus() {
 }
 
 void Engine::GainedFocus(bool from_interstitial_ad) {
-  timer_.Reset();
   audio_mixer_->Resume();
 
   if (game_)
