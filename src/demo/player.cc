@@ -150,7 +150,7 @@ void Player::AddNuke(int n) {
 
   if (!nuke_symbol_animator_.IsPlaying(Animator::kRotation)) {
     nuke_symbol_animator_.SetRotation(
-        M_PI * 5, 2, std::bind(SmootherStep, std::placeholders::_1));
+        PIf * 5, 2, std::bind(SmootherStep, std::placeholders::_1));
     nuke_symbol_animator_.Play(Animator::kRotation, false);
   }
 }
@@ -220,7 +220,7 @@ void Player::Fire(DamageType type, Vector2f dir) {
 
   dir.Normalize();
   float cos_theta = dir.DotProduct(Vector2f(1, 0));
-  float theta = acos(cos_theta) + M_PI;
+  float theta = acos(cos_theta) + PIf;
   beam_[type].SetTheta(theta);
   auto offset = beam_[type].GetRotation() * (len / 2);
   beam_[type].Translate({offset.y, -offset.x});
@@ -285,7 +285,7 @@ void Player::SetupWeapons() {
 
     weapon_[i].SetFrame(wepon_warmup_frame[i]);
     warmup_animator_[i].SetFrames(wepon_warmup_frame_count, wepon_anim_speed);
-    warmup_animator_[i].SetRotation(M_PI * 2, 20.0f);
+    warmup_animator_[i].SetRotation(PIf * 2, 20.0f);
     warmup_animator_[i].Attach(&weapon_[i]);
     warmup_animator_[i].Play(Animator::kRotation, true);
 
