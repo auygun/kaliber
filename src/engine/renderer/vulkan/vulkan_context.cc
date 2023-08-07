@@ -1536,23 +1536,12 @@ bool VulkanContext::SwapBuffers() {
       /*pWaitSemaphores*/
       (separate_present_queue_) ? &image_ownership_semaphores_[frame_index_]
                                 : &draw_complete_semaphores_[frame_index_],
-      /*swapchainCount*/ 0,
-      /*pSwapchain*/ nullptr,
-      /*pImageIndices*/ nullptr,
+      /*swapchainCount*/ 1,
+      /*pSwapchains*/ &window_.swapchain,
+      /*pImageIndices*/ &window_.current_buffer,
       /*pResults*/ nullptr,
   };
-
-  VkSwapchainKHR* swapchains = (VkSwapchainKHR*)alloca(sizeof(VkSwapchainKHR*));
-  uint32_t* pImageIndices = (uint32_t*)alloca(sizeof(uint32_t*));
-
-  present.pSwapchains = swapchains;
-  present.pImageIndices = pImageIndices;
-
   DCHECK(window_.swapchain != VK_NULL_HANDLE);
-
-  swapchains[present.swapchainCount] = window_.swapchain;
-  pImageIndices[present.swapchainCount] = window_.current_buffer;
-  present.swapchainCount++;
 
   err = QueuePresentKHR(present_queue_, &present);
 
