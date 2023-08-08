@@ -2,6 +2,7 @@
 
 #include "base/interpolation.h"
 #include "base/log.h"
+#include "base/vecmath.h"
 #include "engine/asset/font.h"
 #include "engine/engine.h"
 #include "engine/input_event.h"

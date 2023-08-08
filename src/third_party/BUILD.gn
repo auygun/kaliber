@@ -7,6 +7,10 @@ config("third_party_config") {
   if (target_os == "linux") {
     defines = [ "VK_USE_PLATFORM_XLIB_KHR" ]
   }
+
+  if (target_os == "win") {
+    defines = [ "VK_USE_PLATFORM_WIN32_KHR" ]
+  }
 }
 
 source_set("third_party") {
@@ -53,12 +57,13 @@ source_set("third_party") {
     "glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp",
     "glslang/glslang/MachineIndependent/propagateNoContraction.cpp",
     "glslang/glslang/MachineIndependent/reflection.cpp",
-    "glslang/glslang/OSDependent/Unix/ossource.cpp",
     "jsoncpp/json.h",
     "jsoncpp/jsoncpp.cpp",
+    "minimp3/minimp3.cc",
     "minimp3/minimp3.h",
     "minimp3/minimp3_ex.h",
     "spirv-reflect/spirv_reflect.c",
+    "stb/stb_image.cc",
     "stb/stb_image.h",
     "stb/stb_truetype.h",
     "texture_compressor/dxt_encoder.cc",
@@ -74,17 +79,34 @@ source_set("third_party") {
     "volk/volk.c",
   ]
 
-  defines = [ "VMA_STATIC_VULKAN_FUNCTIONS=1" ]
+  defines = [
+    "VMA_STATIC_VULKAN_FUNCTIONS=1",
+    "GLEW_STATIC",
+  ]
 
-  if (target_os == "linux") {
+  if (target_os == "linux" || target_os == "win") {
     sources += [
       "glew/glew.c",
       "glew/glew.h",
+    ]
+  }
+
+  if (target_os == "linux") {
+    sources += [
       "glew/glxew.h",
+      "glslang/glslang/OSDependent/Unix/ossource.cpp",
+    ]
+  }
+
+  if (target_os == "win") {
+    sources += [
+      "glew/wglew.h",
+      "glslang/glslang/OSDependent/Windows/ossource.cpp",
     ]
   }
 
   configs -= [ "//build:warnings" ]
+  configs += [ "//build:third_party_warnings" ]
 
   deps = []
 }

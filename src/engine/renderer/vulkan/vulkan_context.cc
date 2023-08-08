@@ -703,7 +703,7 @@ bool VulkanContext::InitializeQueues(VkSurfaceKHR surface) {
 
 #if defined(__ANDROID__)
   VkFormat desired_format = VK_FORMAT_R8G8B8A8_UNORM;
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(_WIN32)
   VkFormat desired_format = VK_FORMAT_B8G8R8A8_UNORM;
 #endif
 
@@ -797,13 +797,13 @@ bool VulkanContext::CreateSemaphores() {
   return true;
 }
 
-void VulkanContext::ResizeWindow(int width, int height) {
+void VulkanContext::ResizeSurface(int width, int height) {
   window_.width = width;
   window_.height = height;
   UpdateSwapChain(&window_);
 }
 
-void VulkanContext::DestroyWindow() {
+void VulkanContext::DestroySurface() {
   CleanUpSwapChain(&window_);
   vkDestroySurfaceKHR(instance_, window_.surface, nullptr);
 }

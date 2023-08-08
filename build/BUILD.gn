@@ -164,6 +164,14 @@ config("release") {
   }
 }
 
+config("third_party_warnings") {
+  if (is_win) {
+    cflags = [
+      "/wd4242",  # tmp:conversion from 'int' to 'uint8_t'
+    ]
+  }
+}
+
 config("warnings") {
   if (is_win) {
     cflags = [
@@ -173,7 +181,9 @@ config("warnings") {
       # Disable the following warnings:
       "/wd4061",  # enumerator in switch with a default case not explicitly
                   # handled by a case label.
-      "/wd4100",  # unreferenced format parameter.
+      "/wd4100",  # nonstandard extension used: nameless struct/union.
+      "/wd4201",  # enumerator in switch with a default case not explicitly
+                  # handled by a case label.
       "/wd4324",  # structure was padded due to alignment specifier
       "/wd4371",  # layout of class may have changed from a previous version of
                   # the compiler due to better packing of member
@@ -185,53 +195,59 @@ config("warnings") {
                   # switch specified.
 
       # TODO: Not sure how I feel about these conversion warnings.
+      "/Wv:18",
+      "/wd4191",  # 'type cast': unsafe conversion
       "/wd4244",  # conversion, possible loss of data. 'int' to 'float'
-      "/wd4267",  # conversion, possible loss of data.
+      "/wd4245",  # tmp:conversion from 'int' to 'const unsigned int'
+      # "/wd4267",  # conversion, possible loss of data.
       "/wd4305",  # truncation from 'double' to 'float'.
       "/wd4365",  # conversion, signed/unsigned mismatch.
-      "/wd5219",  # conversion, possible loss of data. 'int' to 'float'
+      # "/wd5219",  # conversion, possible loss of data. 'int' to 'float'
+      "/wd4722",  # destructor never returns, potential memory leak
+      "/wd4702",  # unreachable code
 
       # Possible compiler bug? Needs investigation.
       "/wd4668",  # '__STDC_WANT_SECURE_LIB__' is not defined as a preprocessor
                   # macro, replacing with '0' for '#if/#elif'
 
       # TODO:
-      "/wd4263",  # member function does not override any base class virtual
+      # "/wd4263",  # member function does not override any base class virtual
                   # member function
-      "/wd4264",  # no override available for virtual member function, function
+      # "/wd4264",  # no override available for virtual member function, function
                   # is hidden
-      "/wd4266",  # no override available for virtual member function from base,
+      # "/wd4266",  # no override available for virtual member function from base,
                   # function is hidden
-      "/wd4355",  # 'this' used in base member initializer list
-      "/wd4457",  # declaration hides function parameter
-      "/wd4464",  # relative include path contains '..'.
+      # "/wd4355",  # 'this' used in base member initializer list
+      # "/wd4457",  # declaration hides function parameter
+      # "/wd4464",  # relative include path contains '..'.
       "/wd4625",  # copy constructor was implicitly defined as deleted
       "/wd4626",  # assignment operator was implicitly defined as deleted
-      "/wd4706",  # assignment withing conditional expression.
-      "/wd4774",  # format string expected in argument X is not a string literal
-      "/wd4828",  # The file contains a character that is illegal in the current
+      # "/wd4706",  # assignment withing conditional expression.
+      # "/wd4774",  # format string expected in argument X is not a string literal
+      # "/wd4828",  # The file contains a character that is illegal in the current
                   # source character set
-      "/wd4946",  # reinterpret_cast used between related
-      "/wd5026",  # move constructor was implicitly defined as deleted
-      "/wd5027",  # move assignment operator was implicitly defined as deleted
-      "/wd5039",  # pointer or reference to potentially throwing function passed
+      # "/wd4946",  # reinterpret_cast used between related
+      # "/wd5026",  # move constructor was implicitly defined as deleted
+      # "/wd5027",  # move assignment operator was implicitly defined as deleted
+      # "/wd5039",  # pointer or reference to potentially throwing function passed
                   # to 'extern "C"' function under -EHc. Undefined behavior may
                   # occur if this function throws an exception.
 
       # TODO: I don't understand these or how to fix them:
-      "/wd4458",  # declaration hides class member
+      # "/wd4458",  # declaration hides class member
                   # [ GameObject::rtti ]
-      "/wd4582",  # constructor is not implicitly called
+      # "/wd4582",  # constructor is not implicitly called
                   # [ intersection.h Contact ]
-      "/wd4623",  # default constructor was implicitly defined as deleted
+      # "/wd4623",  # default constructor was implicitly defined as deleted
                   # [ intersection.h Contact ]
-      "/wd5243",  # using incomplete class can cause potential one definition
+      # "/wd5243",  # using incomplete class can cause potential one definition
                   # rule violation due to ABI limitation
     ]
 
     defines = [
       "_CRT_NONSTDC_NO_DEPRECATE",
       "_SILENCE_CXX17_STRSTREAM_DEPRECATION_WARNING",
+      "_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS",
     ]
   } else if (is_mac) {
     cflags = [

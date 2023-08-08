@@ -1,21 +1,20 @@
 # Kaliber
 
 A simple, cross-platform 2D game engine with OpenGL and Vulkan renderers.
-Supports Linux and Android platforms.
+Supports Linux, Windows and Android platforms.
 This is a personal hobby project. I've published a little game on
 [Google Play](https://play.google.com/store/apps/details?id=com.woom.game)
 based on this engine. Full game code and assets are included in this repository.
 
 ## Pre-requisites:
 
-**GN build system** is required for all platforms except Android (support for
-APKs, Java code etc. is to be added to the GN configuration). \
-Building GN from source:
-https://gn.googlesource.com/gn/ \
-Pre-built GN binaries:
-https://chrome-infra-packages.appspot.com/p/gn/gn/
+**GN build system** is required for all platforms except Android:\
+https://gn.googlesource.com/gn/
 
-Linux is the supported host platform to build Android. **Gradle**,
+**Build Tools** is required to build for Windows. if you prefer, you can install
+**Visual Studio** which includes the **Build Tools**.
+
+Linux is the supported host platform to build for Android. **Gradle**,
 **Android SDK** and **NDK** are required. If you prefer, you can install
 **Android Studio** which includes all the requirements.
 
@@ -25,7 +24,7 @@ Linux is the supported host platform to build Android. **Gradle**,
 Setup:
 ```text
 gn gen out/release
-gn gen --args='is_debug=true' out/debug
+gn gen --args="is_debug=true" out/debug
 ```
 Building and running:
 ```text
@@ -33,6 +32,9 @@ ninja -C out/debug
 ./out/debug/hello_world
 ./out/debug/demo
 ```
+Building and debugging from VS Code:
+* Select "Debug demo - [platform]" from the "Run and Debug" drop down.
+* Press F5.
 ### Android:
 ```text
 cd build/android

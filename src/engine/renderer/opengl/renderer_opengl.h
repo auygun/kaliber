@@ -122,11 +122,15 @@ class RendererOpenGL final : public Renderer {
   int screen_height_ = 0;
 
 #if defined(__ANDROID__)
-  ANativeWindow* window_;
+  ANativeWindow* window_ = nullptr;
 #elif defined(__linux__)
   Display* display_ = NULL;
   Window window_ = 0;
   GLXContext glx_context_ = NULL;
+#elif defined(_WIN32)
+  HWND wnd_ = nullptr;
+  HDC dc_ = nullptr;
+  HGLRC glrc_ = nullptr;
 #endif
 
   bool InitCommon();

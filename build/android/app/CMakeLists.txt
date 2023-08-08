@@ -134,9 +134,11 @@ add_library(kaliber SHARED
     ../../../src/third_party/glslang/SPIRV/SPVRemapper.cpp
     ../../../src/third_party/glslang/SPIRV/SpvTools.cpp
     ../../../src/third_party/jsoncpp/jsoncpp.cpp
+    ../../../src/third_party/minimp3/minimp3.cc
     ../../../src/third_party/minizip/ioapi.c
     ../../../src/third_party/minizip/unzip.c
     ../../../src/third_party/spirv-reflect/spirv_reflect.c
+    ../../../src/third_party/stb/stb_image.cc
     ../../../src/third_party/texture_compressor/dxt_encoder_internals.cc
     ../../../src/third_party/texture_compressor/dxt_encoder.cc
     ../../../src/third_party/texture_compressor/texture_compressor_etc1.cc

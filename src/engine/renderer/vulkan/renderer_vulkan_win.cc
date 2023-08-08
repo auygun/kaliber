@@ -8,15 +8,15 @@ namespace eng {
 bool RendererVulkan::Initialize(Platform* platform) {
   LOG(0) << "Initializing renderer.";
 
-  XWindowAttributes xwa;
-  XGetWindowAttributes(platform->GetDisplay(), platform->GetWindow(), &xwa);
+  RECT rect;
+  GetClientRect(platform->GetWindow(), &rect);
 
   if (!context_.Initialize()) {
     LOG(0) << "Failed to initialize Vulkan context.";
     return false;
   }
-  if (!context_.CreateSurface(platform->GetDisplay(), platform->GetWindow(),
-                              xwa.width, xwa.height)) {
+  if (!context_.CreateSurface(platform->GetInstance(), platform->GetWindow(),
+                              rect.right, rect.bottom)) {
     LOG(0) << "Vulkan context failed to create window.";
     return false;
   }

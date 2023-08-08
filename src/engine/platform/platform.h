@@ -4,18 +4,15 @@
 #include <string>
 
 #if defined(__ANDROID__)
-
 #include "../../base/vecmath.h"
-
 struct android_app;
 struct AInputEvent;
 struct ANativeWindow;
-
 #elif defined(__linux__)
-
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-
+#elif defined(_WIN32)
+#include <windows.h>
 #endif
 
 namespace eng {
@@ -28,6 +25,8 @@ class Platform {
   Platform(android_app* app);
 #elif defined(__linux__)
   Platform();
+#elif defined(_WIN32)
+  Platform(HINSTANCE instance, int cmd_show);
 #endif
   ~Platform();
 
@@ -64,6 +63,9 @@ class Platform {
 #elif defined(__linux__)
   Display* GetDisplay();
   Window GetWindow();
+#elif defined(_WIN32)
+  HINSTANCE GetInstance();
+  HWND GetWindow();
 #endif
 
  private:
@@ -112,6 +114,14 @@ class Platform {
   void DestroyWindow();
 
   XVisualInfo* GetXVisualInfo(Display* display);
+
+#elif defined(_WIN32)
+
+  HINSTANCE instance_;
+  HWND wnd_;
+  int cmd_show_;
+
+  static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 #endif
 

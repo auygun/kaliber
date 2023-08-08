@@ -5,23 +5,25 @@
 namespace eng {
 
 const char* VulkanContext::GetPlatformSurfaceExtension() const {
-  return VK_KHR_ANDROID_SURFACE_EXTENSION_NAME;
+  return VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
 }
 
-bool VulkanContext::CreateSurface(ANativeWindow* window,
+bool VulkanContext::CreateSurface(HINSTANCE hInstance,
+                                  HWND hWnd,
                                   int width,
                                   int height) {
-  VkAndroidSurfaceCreateInfoKHR surface_info;
-  surface_info.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
-  surface_info.pNext = nullptr;
-  surface_info.flags = 0;
-  surface_info.window = window;
+  VkWin32SurfaceCreateInfoKHR create_info;
+  create_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+  create_info.pNext = nullptr;
+  create_info.flags = 0;
+  create_info.hinstance = hInstance;
+  create_info.hwnd = hWnd;
 
   VkSurfaceKHR surface;
   VkResult err =
-      vkCreateAndroidSurfaceKHR(instance_, &surface_info, nullptr, &surface);
+      vkCreateWin32SurfaceKHR(instance_, &create_info, nullptr, &surface);
   if (err != VK_SUCCESS) {
-    LOG(0) << "vkCreateAndroidSurfaceKHR failed with error "
+    LOG(0) << "vkCreateWin32SurfaceKHR failed with error "
            << std::to_string(err);
     return false;
   }

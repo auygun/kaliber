@@ -17,7 +17,7 @@ bool RendererVulkan::Initialize(Platform* platform) {
     LOG(0) << "Failed to initialize Vulkan context.";
     return false;
   }
-  if (!context_.CreateWindow(platform->GetWindow(), width, height)) {
+  if (!context_.CreateSurface(platform->GetWindow(), width, height)) {
     LOG(0) << "Vulkan context failed to create window.";
     return false;
   }

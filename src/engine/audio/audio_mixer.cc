@@ -11,6 +11,8 @@
 #include "engine/audio/audio_sink_oboe.h"
 #elif defined(__linux__)
 #include "engine/audio/audio_sink_alsa.h"
+#elif defined(_WIN32)
+#include "engine/audio/audio_sink_null.h"
 #endif
 
 using namespace base;
@@ -23,6 +25,9 @@ AudioMixer::AudioMixer()
       audio_sink_{std::make_unique<AudioSinkOboe>(this)} {
 #elif defined(__linux__)
       audio_sink_{std::make_unique<AudioSinkAlsa>(this)} {
+#elif defined(_WIN32)
+      // TODO: Implement AudioSinkWindows
+      audio_sink_{std::make_unique<AudioSinkNull>()} {
 #endif
   bool res = audio_sink_->Initialize();
   CHECK(res) << "Failed to initialize audio sink.";

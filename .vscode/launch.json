@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "(gdb) Launch",
+      "name": "Debug demo - Linux",
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/out/debug/demo",
@@ -23,6 +23,18 @@
         }
       ]
       "preLaunchTask": "Build project",
+    },
+    {
+      "name": "Debug demo - Windows",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}\\out\\debug\\demo.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}\\out\\debug",
+      "environment": [],
+      "externalConsole": false,
+      "preLaunchTask": "Build project",
     }
-  ]
+ ]
 }

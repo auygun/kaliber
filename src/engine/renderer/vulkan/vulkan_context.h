@@ -24,13 +24,15 @@ class VulkanContext {
   void Shutdown();
 
 #if defined(__ANDROID__)
-  bool CreateWindow(ANativeWindow* window, int width, int height);
+  bool CreateSurface(ANativeWindow* window, int width, int height);
 #elif defined(__linux__)
-  bool CreateWindow(Display* display, ::Window window, int width, int height);
+  bool CreateSurface(Display* display, ::Window window, int width, int height);
+#elif defined(_WIN32)
+  bool CreateSurface(HINSTANCE hInstance, HWND hWnd, int width, int height);
 #endif
 
-  void ResizeWindow(int width, int height);
-  void DestroyWindow();
+  void ResizeSurface(int width, int height);
+  void DestroySurface();
 
   VkFramebuffer GetFramebuffer();
 

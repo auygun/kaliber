@@ -7,7 +7,7 @@
 #if defined(__ANDROID__)
 #include <zlib.h>
 #include "third_party/minizip/unzip.h"
-#elif defined(__linux__)
+#else
 #include "base/file.h"
 #endif
 
@@ -34,7 +34,7 @@ class AssetFile {
 #if defined(__ANDROID__)
   unzFile archive_ = 0;
   size_t uncompressed_size_ = 0;
-#elif defined(__linux)
+#else
   base::ScopedFILE file_;
 #endif
 };

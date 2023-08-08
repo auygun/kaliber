@@ -1,7 +1,5 @@
 executable("hello_world") {
-  sources = [
-    "hello_world.cc",
-  ]
+  sources = [ "hello_world.cc" ]
 
   deps = [
     "//src/base",

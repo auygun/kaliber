@@ -379,7 +379,7 @@ RendererVulkan::~RendererVulkan() {
 }
 
 void RendererVulkan::OnWindowResized(int width, int height) {
-  context_.ResizeWindow(width, height);
+  context_.ResizeSurface(width, height);
 }
 
 int RendererVulkan::GetScreenWidth() const {
@@ -1041,7 +1041,7 @@ void RendererVulkan::Shutdown() {
   current_staging_buffer_ = 0;
   staging_buffer_used_ = false;
 
-  context_.DestroyWindow();
+  context_.DestroySurface();
   context_.Shutdown();
 
   glslang::FinalizeProcess();

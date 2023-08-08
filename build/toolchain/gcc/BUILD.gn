@@ -54,7 +54,7 @@ toolchain("gcc") {
   }
 
   if (is_apple) {
-    not_needed([ "ar" ]) # libtool is used instead.
+    not_needed([ "ar" ])  # libtool is used instead.
   }
 
   tool("alink") {

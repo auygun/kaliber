@@ -1247,8 +1247,8 @@ class Matrix4 {
                            T fov_aspect,
                            T width,
                            T height,
-                           T near,
-                           T far) {
+                           T near_plane,
+                           T far_plane) {
     // Calc x and y scale from FOV.
     T scale =
         T(2.0) /
@@ -1257,8 +1257,8 @@ class Matrix4 {
     T x_scale = y_scale / (width / height);
     _M_SET_ROW(0, x_scale / T(2.0), 0, 0, 0);
     _M_SET_ROW(1, 0, (-y_scale) / T(2.0), 0, 0);
-    _M_SET_ROW(2, 0, 0, far / (far - near), 1);
-    _M_SET_ROW(3, 0, 0, -near * far / (far - near), 0);
+    _M_SET_ROW(2, 0, 0, far_plane / (far_plane - near_plane), 1);
+    _M_SET_ROW(3, 0, 0, -near_plane * far_plane / (far_plane - near_plane), 0);
   }
 
   void CreateTranslation(const Vector3<T>& t) {

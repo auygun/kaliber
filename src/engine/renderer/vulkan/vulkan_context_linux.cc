@@ -8,10 +8,10 @@ const char* VulkanContext::GetPlatformSurfaceExtension() const {
   return VK_KHR_XLIB_SURFACE_EXTENSION_NAME;
 }
 
-bool VulkanContext::CreateWindow(Display* display,
-                                 ::Window window,
-                                 int width,
-                                 int height) {
+bool VulkanContext::CreateSurface(Display* display,
+                                  ::Window window,
+                                  int width,
+                                  int height) {
   VkXlibSurfaceCreateInfoKHR surface_info;
   surface_info.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
   surface_info.pNext = nullptr;
