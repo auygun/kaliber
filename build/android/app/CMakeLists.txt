@@ -49,6 +49,7 @@ project(kaliber)
 add_library(kaliber SHARED
     ../../../src/base/collusion_test.cc
     ../../../src/base/log.cc
+    ../../../src/base/mem.cc
     ../../../src/base/task_runner.cc
     ../../../src/base/thread_pool.cc
     ../../../src/demo/credits.cc
@@ -136,7 +137,6 @@ add_library(kaliber SHARED
     ../../../src/third_party/minizip/ioapi.c
     ../../../src/third_party/minizip/unzip.c
     ../../../src/third_party/spirv-reflect/spirv_reflect.c
-    ../../../src/third_party/stb/stb_image.c
     ../../../src/third_party/texture_compressor/dxt_encoder_internals.cc
     ../../../src/third_party/texture_compressor/dxt_encoder.cc
     ../../../src/third_party/texture_compressor/texture_compressor_etc1.cc

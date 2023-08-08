@@ -8,6 +8,7 @@ source_set("base") {
     "interpolation.h",
     "log.cc",
     "log.h",
+    "mem.cc",
     "mem.h",
     "misc.h",
     "random.h",

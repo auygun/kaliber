@@ -1,26 +1,33 @@
 #ifndef BASE_MEM_H
 #define BASE_MEM_H
 
-#include <cstdlib>
+#include <stddef.h>
+#include <stdint.h>
 #include <memory>
 
-#if defined(__ANDROID__)
+#if defined(_WIN32)
 #include <malloc.h>
+#else
+#include <stdlib.h>
 #endif
 
 #include "base/log.h"
-
-#define ALIGN_MEM(alignment) __attribute__((aligned(alignment)))
+#include "base/misc.h"
 
 namespace base {
+
+inline void AlignedFree(void* mem) {
+#if defined(_WIN32)
+  _aligned_free(mem);
+#else
+  free(mem);
+#endif
+}
 
 namespace internal {
 
 struct ScopedAlignedFree {
-  inline void operator()(void* x) const {
-    if (x)
-      free(x);
-  }
+  inline void operator()(void* x) const { AlignedFree(x); }
 };
 
 }  // namespace internal
@@ -28,27 +35,16 @@ struct ScopedAlignedFree {
 template <typename T>
 using AlignedMemPtr = std::unique_ptr<T, internal::ScopedAlignedFree>;
 
-template <int kAlignment>
-inline void* AlignedAlloc(size_t size) {
-  void* ptr = NULL;
-#if defined(__ANDROID__)
-  ptr = memalign(kAlignment, size);
-#else
-  if (posix_memalign(&ptr, kAlignment, size))
-    ptr = NULL;
-#endif
-  DCHECK(ptr);
-  // DCHECK(((unsigned)ptr & (kAlignment - 1)) == 0);
-  return ptr;
-}
+void* AlignedAlloc(size_t size, size_t alignment);
 
-inline void AlignedFree(void* mem) {
-  free(mem);
-}
+void* AlignedRealloc(void* ptr,
+                     size_t old_size,
+                     size_t new_size,
+                     size_t alignment);
 
-template <int kAlignment>
-inline bool IsAligned(void* ptr) {
-  return (reinterpret_cast<uintptr_t>(ptr) & (kAlignment - 1)) == 0U;
+inline bool IsAligned(const void* val, size_t alignment) {
+  DCHECK(IsPow2(alignment)) << alignment << " is not a power of 2";
+  return (reinterpret_cast<uintptr_t>(val) & (alignment - 1)) == 0;
 }
 
 }  // namespace base

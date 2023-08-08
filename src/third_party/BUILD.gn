@@ -59,7 +59,6 @@ source_set("third_party") {
     "minimp3/minimp3.h",
     "minimp3/minimp3_ex.h",
     "spirv-reflect/spirv_reflect.c",
-    "stb/stb_image.c",
     "stb/stb_image.h",
     "stb/stb_truetype.h",
     "texture_compressor/dxt_encoder.cc",

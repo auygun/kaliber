@@ -192,13 +192,13 @@ SincResampler::SincResampler(double io_sample_rate_ratio, int request_frames)
       input_buffer_size_(request_frames_ + kernel_size_),
       // Create input buffers with a 32-byte alignment for SIMD optimizations.
       kernel_storage_(static_cast<float*>(
-          base::AlignedAlloc<32>(sizeof(float) * kernel_storage_size_))),
+          base::AlignedAlloc(sizeof(float) * kernel_storage_size_, 32))),
       kernel_pre_sinc_storage_(static_cast<float*>(
-          base::AlignedAlloc<32>(sizeof(float) * kernel_storage_size_))),
+          base::AlignedAlloc(sizeof(float) * kernel_storage_size_, 32))),
       kernel_window_storage_(static_cast<float*>(
-          base::AlignedAlloc<32>(sizeof(float) * kernel_storage_size_))),
+          base::AlignedAlloc(sizeof(float) * kernel_storage_size_, 32))),
       input_buffer_(static_cast<float*>(
-          base::AlignedAlloc<32>(sizeof(float) * input_buffer_size_))),
+          base::AlignedAlloc(sizeof(float) * input_buffer_size_, 32))),
       r1_(input_buffer_.get()),
       r2_(input_buffer_.get() + kernel_size_ / 2) {
   CHECK(request_frames > kernel_size_ * 3 / 2)

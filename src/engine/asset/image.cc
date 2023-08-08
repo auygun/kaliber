@@ -5,13 +5,19 @@
 
 #include "base/interpolation.h"
 #include "base/log.h"
+#include "base/mem.h"
 #include "base/misc.h"
 #include "engine/engine.h"
 #include "engine/platform/asset_file.h"
 #include "third_party/texture_compressor/texture_compressor.h"
 
-// This 3rd party library is written in C and uses malloc, which means that we
-// have to do the same.
+// Use aligned memory for SIMD in texture compressor.
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_NO_STDIO
+#define STBI_MALLOC(sz) base::AlignedAlloc(sz, 16)
+#define STBI_REALLOC_SIZED(p, oldsz, newsz) \
+  base::AlignedRealloc(p, oldsz, newsz, 16)
+#define STBI_FREE(p) base::AlignedFree(p)
 #include "third_party/stb/stb_image.h"
 
 using namespace base;
@@ -77,7 +83,7 @@ bool Image::Create(int w, int h) {
   width_ = w;
   height_ = h;
 
-  buffer_.reset((uint8_t*)AlignedAlloc<16>(w * h * 4 * sizeof(uint8_t)));
+  buffer_.reset((uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t), 16));
 
   return true;
 }
@@ -85,7 +91,7 @@ bool Image::Create(int w, int h) {
 void Image::Copy(const Image& other) {
   if (other.buffer_) {
     int size = other.GetSize();
-    buffer_.reset((uint8_t*)AlignedAlloc<16>(size));
+    buffer_.reset((uint8_t*)AlignedAlloc(size, 16));
     memcpy(buffer_.get(), other.buffer_.get(), size);
   }
   width_ = other.width_;
@@ -101,7 +107,7 @@ bool Image::CreateMip(const Image& other) {
   width_ = std::max(other.width_ >> 1, 1);
   height_ = std::max(other.height_ >> 1, 1);
   format_ = kRGBA32;
-  buffer_.reset((uint8_t*)AlignedAlloc<16>(GetSize()));
+  buffer_.reset((uint8_t*)AlignedAlloc(GetSize(), 16));
 
   // If the width isn't perfectly divisable with two, then we end up skewing
   // the image because the source offset isn't updated properly.
@@ -158,7 +164,7 @@ bool Image::Load(const std::string& file_name) {
       // LOG(0)("Converting image from 1 to 4 channels.\n");
       // Assume it's an intensity, duplicate it to RGB and fill A with opaque.
       converted_buffer =
-          (uint8_t*)AlignedAlloc<16>(w * h * 4 * sizeof(uint8_t));
+          (uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t), 16);
       for (int i = 0; i < w * h; ++i) {
         converted_buffer[i * 4 + 0] = buffer_[i];
         converted_buffer[i * 4 + 1] = buffer_[i];
@@ -171,7 +177,7 @@ bool Image::Load(const std::string& file_name) {
       // LOG(0)("Converting image from 3 to 4 channels.\n");
       // Add an opaque channel.
       converted_buffer =
-          (uint8_t*)AlignedAlloc<16>(w * h * 4 * sizeof(uint8_t));
+          (uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t), 16);
       for (int i = 0; i < w * h; ++i) {
         converted_buffer[i * 4 + 0] = buffer_[i * 3 + 0];
         converted_buffer[i * 4 + 1] = buffer_[i * 3 + 1];
@@ -238,7 +244,7 @@ void Image::ConvertToPow2() {
            << new_width << ", " << new_height << ")";
 
     int bigger_size = new_width * new_height * 4 * sizeof(uint8_t);
-    uint8_t* bigger_buffer = (uint8_t*)AlignedAlloc<16>(bigger_size);
+    uint8_t* bigger_buffer = (uint8_t*)AlignedAlloc(bigger_size, 16);
 
     // Fill it with black.
     memset(bigger_buffer, 0, bigger_size);
@@ -296,7 +302,7 @@ bool Image::Compress() {
 
   unsigned compressedSize = GetSize();
   uint8_t* compressedBuffer =
-      (uint8_t*)AlignedAlloc<16>(compressedSize * sizeof(uint8_t));
+      (uint8_t*)AlignedAlloc(compressedSize * sizeof(uint8_t), 16);
 
   const uint8_t* src = buffer_.get();
   uint8_t* dst = compressedBuffer;
