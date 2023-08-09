@@ -31,6 +31,8 @@ class Platform {
 #endif
   ~Platform();
 
+  void CreateMainWindow();
+
   void Update();
 
   void Exit();

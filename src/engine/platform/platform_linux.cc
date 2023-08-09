@@ -39,7 +39,9 @@ Platform::Platform() {
   LOG(0) << "Root path: " << root_path_.c_str();
   LOG(0) << "Data path: " << data_path_.c_str();
   LOG(0) << "Shared data path: " << shared_data_path_.c_str();
+}
 
+void Platform::CreateMainWindow() {
   bool res = CreateWindow(800, 1205);
   CHECK(res) << "Failed to create window.";
 
@@ -103,8 +105,10 @@ void Platform::Update() {
       }
       case ClientMessage: {
         // WM_DELETE_WINDOW is the only registered type for now.
+        observer_->OnWindowDestroyed();
+        DestroyWindow();
         should_exit_ = true;
-        break;
+        return;
       }
       case ConfigureNotify: {
         XConfigureEvent xce = e.xconfigure;

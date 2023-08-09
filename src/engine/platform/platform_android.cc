@@ -292,20 +292,18 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       DLOG(0) << "APP_CMD_INIT_WINDOW";
       if (app->window != NULL) {
         platform->SetFrameRate(60);
-        if (platform->observer_)
-          platform->observer_->OnWindowCreated();
+        platform->observer_->OnWindowCreated();
       }
       break;
 
     case APP_CMD_TERM_WINDOW:
       DLOG(0) << "APP_CMD_TERM_WINDOW";
-      if (platform->observer_)
-        platform->observer_->OnWindowDestroyed();
+      platform->observer_->OnWindowDestroyed();
       break;
 
     case APP_CMD_CONFIG_CHANGED:
       DLOG(0) << "APP_CMD_CONFIG_CHANGED";
-      if (platform->app_->window != NULL && platform->observer_)
+      if (platform->app_->window != NULL)
         platform->observer_->OnWindowResized(
             ANativeWindow_getWidth(app->window),
             ANativeWindow_getHeight(app->window));
@@ -319,16 +317,14 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       DLOG(0) << "APP_CMD_GAINED_FOCUS";
       // platform->timer_.Reset();
       platform->has_focus_ = true;
-      if (platform->observer_)
-        platform->observer_->GainedFocus(g_showing_interstitial_ad);
+      platform->observer_->GainedFocus(g_showing_interstitial_ad);
       g_showing_interstitial_ad = false;
       break;
 
     case APP_CMD_LOST_FOCUS:
       DLOG(0) << "APP_CMD_LOST_FOCUS";
       platform->has_focus_ = false;
-      if (platform->observer_)
-        platform->observer_->LostFocus();
+      platform->observer_->LostFocus();
       break;
 
     case APP_CMD_LOW_MEMORY:
@@ -370,8 +366,12 @@ Platform::Platform(android_app* app) {
         reinterpret_cast<PFN_ANativeWindow_setFrameRateWithChangeStrategy>(
             dlsym(mLibAndroid, "ANativeWindow_setFrameRateWithChangeStrategy"));
   }
+}
 
+void Platform::CreateMainWindow() {
+  DCHECK(!app_->window);
   Update();
+  DCHECK(app_->window);
 }
 
 Platform::~Platform() {

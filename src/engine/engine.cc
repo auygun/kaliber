@@ -108,6 +108,8 @@ void Engine::Initialize() {
 
   thread_pool_.Initialize();
 
+  platform_->CreateMainWindow();
+
   CreateRendererInternal(RendererType::kVulkan);
 
   CreateProjectionMatrix();
@@ -485,7 +487,8 @@ bool Engine::IsMobile() const {
 }
 
 void Engine::OnWindowCreated() {
-  renderer_->Initialize(platform_);
+  if (renderer_)
+    renderer_->Initialize(platform_);
 }
 
 void Engine::OnWindowDestroyed() {
@@ -493,8 +496,8 @@ void Engine::OnWindowDestroyed() {
 }
 
 void Engine::OnWindowResized(int width, int height) {
-  if (width != renderer_->GetScreenWidth() ||
-      height != renderer_->GetScreenHeight()) {
+  if (renderer_ && (width != renderer_->GetScreenWidth() ||
+                    height != renderer_->GetScreenHeight())) {
     renderer_->OnWindowResized(width, height);
     CreateProjectionMatrix();
   }
