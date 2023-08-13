@@ -11,13 +11,6 @@ based on this engine. Full game code and assets are included in this repository.
 **GN build system** is required for all platforms except Android:\
 https://gn.googlesource.com/gn/
 
-**Build Tools** is required to build for Windows. if you prefer, you can install
-**Visual Studio** which includes the **Build Tools**.
-
-Linux is the supported host platform to build for Android. **Gradle**,
-**Android SDK** and **NDK** are required. If you prefer, you can install
-**Android Studio** which includes all the requirements.
-
 ## Building from the command-line:
 
 ### All platforms except Android:
@@ -32,13 +25,15 @@ ninja -C out/debug
 ./out/debug/hello_world
 ./out/debug/demo
 ```
-Building and debugging from VS Code:
-* Select "Debug demo - [platform]" from the "Run and Debug" drop down.
-* Press F5.
 ### Android:
 ```text
 cd build/android
 ./gradlew :app:installDebug
+```
+### Generate Visual Studio solution:
+```text
+gn.exe gen --args="is_debug=true" --ide=vs2022 out\vs
+devenv out\vs\all.sln
 ```
 
 ## Third-party libraries:
