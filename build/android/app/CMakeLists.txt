@@ -12,6 +12,7 @@ target_compile_options(common_config INTERFACE
     -Wno-deprecated-enum-enum-conversion
     -Wno-unsequenced
     -Wno-nullability-completeness
+    -Wno-unused-variable
 )
 
 target_compile_definitions(common_config INTERFACE

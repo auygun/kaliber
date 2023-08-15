@@ -84,6 +84,8 @@ source_set("third_party") {
     "GLEW_STATIC",
   ]
 
+  cflags = []
+
   if (target_os == "linux" || target_os == "win") {
     sources += [
       "glew/glew.c",
@@ -103,10 +105,13 @@ source_set("third_party") {
       "glew/wglew.h",
       "glslang/glslang/OSDependent/Windows/ossource.cpp",
     ]
+
+    cflags += [
+      "/wd4242",  # tmp:conversion from 'int' to 'uint8_t'
+    ]
   }
 
   configs -= [ "//build:warnings" ]
-  configs += [ "//build:third_party_warnings" ]
 
   deps = []
 }

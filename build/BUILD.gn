@@ -164,14 +164,6 @@ config("release") {
   }
 }
 
-config("third_party_warnings") {
-  if (is_win) {
-    cflags = [
-      "/wd4242",  # tmp:conversion from 'int' to 'uint8_t'
-    ]
-  }
-}
-
 config("warnings") {
   if (is_win) {
     cflags = [
