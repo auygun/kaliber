@@ -1,16 +1,10 @@
-# Note that this uses the 'cc' and 'c++' environment variables or links that
-# should map to GCC on linux systems and clang on macs.
-
-# This also means that you can install clang or another compiler and it should
-# automatically use that instead.
-
 toolchain("gcc") {
   lib_switch = "-l"
   lib_dir_switch = "-L"
 
   tool("asm") {
     depfile = "{{output}}.d"
-    command = "cc -MD -MF $depfile {{defines}} {{include_dirs}} {{asmflags}} -c {{source}} -o {{output}}"
+    command = "$cc -MD -MF $depfile {{defines}} {{include_dirs}} {{asmflags}} -c {{source}} -o {{output}}"
     depsformat = "gcc"
     outputs =
         [ "{{source_out_dir}}/{{target_output_name}}.{{source_name_part}}.o" ]
@@ -19,7 +13,7 @@ toolchain("gcc") {
 
   tool("cc") {
     depfile = "{{output}}.d"
-    command = "cc -MMD -MF $depfile {{defines}} {{include_dirs}} {{cflags}} {{cflags_c}} -c {{source}} -o {{output}}"
+    command = "$cc -MMD -MF $depfile {{defines}} {{include_dirs}} {{cflags}} {{cflags_c}} -c {{source}} -o {{output}}"
     depsformat = "gcc"
     outputs =
         [ "{{source_out_dir}}/{{target_output_name}}.{{source_name_part}}.o" ]
@@ -28,7 +22,7 @@ toolchain("gcc") {
 
   tool("cxx") {
     depfile = "{{output}}.d"
-    command = "c++ -MMD -MF $depfile {{defines}} {{include_dirs}} {{cflags}} {{cflags_cc}} -c {{source}} -o {{output}}"
+    command = "$cxx -MMD -MF $depfile {{defines}} {{include_dirs}} {{cflags}} {{cflags_cc}} -c {{source}} -o {{output}}"
     depsformat = "gcc"
     outputs =
         [ "{{source_out_dir}}/{{target_output_name}}.{{source_name_part}}.o" ]
@@ -37,7 +31,7 @@ toolchain("gcc") {
 
   tool("objc") {
     depfile = "{{output}}.d"
-    command = "cc -MMD -MF $depfile {{defines}} {{include_dirs}} {{framework_dirs}} {{cflags}} {{cflags_c}} {{cflags_objc}} -c {{source}} -o {{output}}"
+    command = "$cc -MMD -MF $depfile {{defines}} {{include_dirs}} {{framework_dirs}} {{cflags}} {{cflags_c}} {{cflags_objc}} -c {{source}} -o {{output}}"
     depsformat = "gcc"
     outputs =
         [ "{{source_out_dir}}/{{target_output_name}}.{{source_name_part}}.o" ]
@@ -46,7 +40,7 @@ toolchain("gcc") {
 
   tool("objcxx") {
     depfile = "{{output}}.d"
-    command = "c++ -MMD -MF $depfile {{defines}} {{include_dirs}} {{framework_dirs}} {{cflags}} {{cflags_cc}} {{cflags_objcc}} -c {{source}} -o {{output}}"
+    command = "$cxx -MMD -MF $depfile {{defines}} {{include_dirs}} {{framework_dirs}} {{cflags}} {{cflags_cc}} {{cflags_objcc}} -c {{source}} -o {{output}}"
     depsformat = "gcc"
     outputs =
         [ "{{source_out_dir}}/{{target_output_name}}.{{source_name_part}}.o" ]
@@ -62,7 +56,7 @@ toolchain("gcc") {
       command =
           "libtool -static -o {{output}} -no_warning_for_no_symbols {{inputs}}"
     } else {
-      command = "rm -f {{output}} && ar rcs {{output}} {{inputs}}"
+      command = "rm -f {{output}} && $ar rcs {{output}} {{inputs}}"
     }
     outputs =
         [ "{{target_out_dir}}/{{target_output_name}}{{output_extension}}" ]
@@ -82,7 +76,7 @@ toolchain("gcc") {
       os_specific_option = "-Wl,-soname=$soname"
       rspfile_content = "-Wl,--whole-archive {{inputs}} {{solibs}} -Wl,--no-whole-archive {{libs}}"
     }
-    command = "c++ -shared {{ldflags}} {{frameworks}} -o $sofile $os_specific_option @$rspfile"
+    command = "$cxx -shared {{ldflags}} {{frameworks}} -o $sofile $os_specific_option @$rspfile"
     default_output_extension = ".so"
     default_output_dir = "{{root_out_dir}}"
     outputs = [ sofile ]
@@ -97,22 +91,40 @@ toolchain("gcc") {
     rspfile = "$outfile.rsp"
     rspfile_content = "{{inputs}}"
     if (is_apple) {
-      command = "c++ {{ldflags}} {{solibs}} {{libs}} {{frameworks}} -o $outfile @$rspfile"
+      command = "$cxx {{ldflags}} {{solibs}} {{libs}} {{frameworks}} -o $outfile @$rspfile"
     } else {
-      command = "c++ {{ldflags}} -o $outfile -Wl,--start-group @$rspfile {{solibs}} -Wl,--end-group {{libs}}"
+      command = "$cxx {{ldflags}} -o $outfile -Wl,--start-group @$rspfile {{solibs}} -Wl,--end-group {{libs}}"
     }
     default_output_dir = "{{root_out_dir}}"
     outputs = [ outfile ]
     description = "link $outfile"
   }
 
-  tool("stamp") {
-    command = "touch {{output}}"
-    description = "stamp {{output}}"
-  }
+  if (host_os == "win") {
+    tool("stamp") {
+      command = "cmd.exe /c echo > {{output}}"
+      description = "stamp {{output}}"
+    }
 
-  tool("copy") {
-    command = "cp -af {{source}} {{output}}"
-    description = "copy {{source}} {{output}}"
+    tool("copy") {
+      # Note: The build in copy command can't handle forward slashes as path separators.
+      # Use a python script as a work around.
+      # command = "cmd.exe /c copy /Y {{source}} {{output}}"
+
+      copy_cmd = rebase_path("../copy.py")
+      command = "python \"$copy_cmd\" {{source}} {{output}}"
+
+      description = "copy {{source}} {{output}}"
+    }
+  } else {
+    tool("stamp") {
+      command = "touch {{output}}"
+      description = "stamp {{output}}"
+    }
+
+    tool("copy") {
+      command = "cp -af {{source}} {{output}}"
+      description = "copy {{source}} {{output}}"
+    }
   }
 }

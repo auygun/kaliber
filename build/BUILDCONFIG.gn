@@ -1,5 +1,14 @@
 declare_args() {
   is_debug = false
+
+  # Note that this uses the 'cc' and 'c++' links that should map to GCC on linux
+  # systems and clang on macs.
+  ar = "ar"
+  cc = "cc"
+  cxx = "c++"
+
+  ndk = ""
+  ndk_api = 24
 }
 
 # Platform detection
@@ -21,9 +30,6 @@ is_desktop = is_mac || is_linux || is_win
 is_mobile = is_android || is_ios
 is_unix = is_android || is_linux
 
-# Optional build components
-have_vulkan = false
-
 if (target_cpu == "") {
   if (is_mobile) {
     target_cpu = "arm64"
@@ -36,6 +42,42 @@ if (target_cpu == "x86_64") {
 }
 if (current_cpu == "") {
   current_cpu = target_cpu
+}
+
+if (is_android) {
+  assert(ndk != "", "NDK path argument is empty")
+
+  ndk_host = ""
+  ndk_target = ""
+
+  if (host_os == "linux") {
+    ndk_host = "linux-x86_64"
+  } else if (host_os == "mac") {
+    ndk_host = "darwin-x86_64"
+  } else if (host_os == "win") {
+    ndk_host = "windows-x86_64"
+  }
+
+  if (target_cpu == "arm64") {
+    ndk_target = "aarch64-linux-android"
+  } else if (target_cpu == "arm") {
+    ndk_target = "armv7a-linux-androideabi"
+  } else if (target_cpu == "x64") {
+    ndk_target = "x86_64-linux-android"
+  } else if (target_cpu == "x86") {
+    ndk_target = "i686-linux-android"
+  }
+
+  _prefix = "$ndk/toolchains/llvm/prebuilt/$ndk_host/bin"
+  if (host_os == "win") {
+    ar = "$_prefix/llvm-ar.exe"
+    cc = "$_prefix/clang.exe --target=$ndk_target$ndk_api -fno-addrsig"
+    cxx = "$_prefix/clang++.exe --target=$ndk_target$ndk_api -fno-addrsig"
+  } else {
+    ar = "$_prefix/llvm-ar"
+    cc = "$_prefix/$ndk_target$ndk_api-clang"
+    cxx = "$_prefix/$ndk_target$ndk_api-clang++"
+  }
 }
 
 # Set defaults

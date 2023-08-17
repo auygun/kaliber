@@ -54,9 +54,9 @@ config("default") {
     # ]
 
     if (is_linux) {
-      # cflags += [
-      #   "-fPIC",  # Emit position-independent code suitable for dynamic linking.
-      # ]
+      cflags += [
+        "-fPIC",  # Emit position-independent code suitable for dynamic linking.
+      ]
       libs = [
         "pthread",  # Use the POSIX thread library.
       ]
@@ -74,6 +74,12 @@ config("default") {
         "-target",
         "arm64-apple-macos11",
       ]
+    } else if (is_android) {
+      cflags += [
+        "--sysroot=$ndk/toolchains/llvm/prebuilt/$ndk_host/sysroot",
+        "-fPIC",  # Emit position-independent code suitable for dynamic linking.
+      ]
+      ldflags = [ "-static-libstdc++" ]
     }
   }
 
@@ -82,6 +88,13 @@ config("default") {
     # "//",
     "//src",
   ]
+  if (is_android) {
+    include_dirs += [
+      "$ndk/sources/android",
+      "$ndk/sources/android/native_app_glue",
+      "$ndk/sources/android/cpufeatures",
+    ]
+  }
 }
 
 config("debug") {
@@ -191,9 +204,11 @@ config("warnings") {
       "/wd4191",  # 'type cast': unsafe conversion
       "/wd4244",  # conversion, possible loss of data. 'int' to 'float'
       "/wd4245",  # tmp:conversion from 'int' to 'const unsigned int'
+
       # "/wd4267",  # conversion, possible loss of data.
       "/wd4305",  # truncation from 'double' to 'float'.
       "/wd4365",  # conversion, signed/unsigned mismatch.
+
       # "/wd5219",  # conversion, possible loss of data. 'int' to 'float'
       "/wd4722",  # destructor never returns, potential memory leak
       "/wd4702",  # unreachable code
@@ -260,6 +275,7 @@ config("warnings") {
 
       # Disable the following warnings:
       "-Wno-unused-parameter",
+      "-Wno-sign-compare",
     ]
   }
 }
@@ -277,6 +293,34 @@ config("executable") {
     #                 # the program.
     #   "-Wl,-rpath,\$ORIGIN",  # Add directory to runtime library search path.
     # ]
+  } else if (is_mac) {
+    ldflags = [ "-Wl,-rpath,@loader_path/." ]
+  } else if (is_win) {
+    ldflags = [
+      "/DYNAMICBASE",  # Use address space layout randomization.
+      "/INCREMENTAL:NO",  # Incremental linking interferes with both ninja and
+                          # release optimizations.
+
+      # Leave the target architecture to environment settings.
+      # "/MACHINE:X64",
+    ]
+  }
+}
+
+config("shared_library") {
+  if (is_android) {
+    ldflags = [
+      "-Wl,--build-id=sha1",
+      "-Wl,--no-rosegment",
+      "-Wl,--fatal-warnings",
+      "-Wl,--no-undefined",
+      "-Qunused-arguments",
+      "-u ANativeActivity_onCreate",
+    ]
+  } else if (is_linux) {
+    ldflags = [
+      "-Wl,-rpath,\$ORIGIN",  # Add directory to runtime library search path.
+    ]
   } else if (is_mac) {
     ldflags = [ "-Wl,-rpath,@loader_path/." ]
   } else if (is_win) {

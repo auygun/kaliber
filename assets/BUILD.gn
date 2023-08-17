@@ -6,7 +6,6 @@ copy("assets") {
     "Boss_ok_lvl2.png",
     "Boss_ok_lvl3.png",
     "Boss_ok.png",
-    "BUILD.gn",
     "chromatic_aberration.glsl_fragment",
     "chromatic_aberration.glsl_vertex",
     "enemy_anims_01_frames_ok.png",

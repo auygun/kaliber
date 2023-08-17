@@ -1,6 +1,7 @@
-executable("hello_world") {
-  sources = [ "hello_world.cc" ]
+import("//build/utils.gni")
 
+game_tmpl("hello_world") {
+  sources = [ "hello_world.cc" ]
   deps = [
     "//src/base",
     "//src/engine",

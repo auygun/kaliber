@@ -1,4 +1,6 @@
-executable("demo") {
+import("//build/utils.gni")
+
+game_tmpl("demo") {
   sources = [
     "credits.cc",
     "credits.h",
@@ -16,7 +18,6 @@ executable("demo") {
     "sky_quad.cc",
     "sky_quad.h",
   ]
-
   deps = [
     "//assets",
     "//src/base",

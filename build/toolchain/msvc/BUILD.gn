@@ -82,7 +82,7 @@ toolchain("msvc") {
     # Use a python script as a work around.
     # command = "cmd.exe /c copy /Y {{source}} {{output}}"
 
-    copy_cmd = rebase_path("copy.py")
+    copy_cmd = rebase_path("../copy.py")
     command = "python \"$copy_cmd\" {{source}} {{output}}"
 
     description = "copy {{source}} {{output}}"

@@ -98,6 +98,26 @@ source_set("engine") {
     ]
   }
 
+  if (target_os == "android") {
+    sources += [
+      "audio/audio_sink_oboe.cc",
+      "audio/audio_sink_oboe.h",
+      "platform/asset_file_android.cc",
+      "platform/platform_android.cc",
+      "renderer/opengl/renderer_opengl_android.cc",
+      "renderer/vulkan/renderer_vulkan_android.cc",
+      "renderer/vulkan/vulkan_context_android.cc",
+    ]
+
+    libs += [
+      "android",
+      "EGL",
+      "GLESv2",
+      "log",
+      "z",
+    ]
+  }
+
   deps = [
     "//assets/engine",
     "//src/base",
