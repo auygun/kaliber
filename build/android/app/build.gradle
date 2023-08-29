@@ -1,20 +1,103 @@
-apply plugin: 'com.android.application'
+@CacheableTask
+abstract class WriteFileTask extends DefaultTask {
+    @Input
+    abstract Property<String> getContent()
 
-android {
-    compileSdk 33
-    ndkVersion '25.2.9519653'
+    @OutputFile
+    abstract RegularFileProperty getTarget()
 
-    defaultConfig {
-        applicationId = 'com.woom.game'
-        minSdk 24
-        targetSdk 33
-        externalNativeBuild {
-            cmake {
-                arguments '-DANDROID_STL=c++_static'
+    @TaskAction
+    void run() {
+        def file = target.get().asFile
+        file.parentFile.mkdirs()
+        def text = content.get()
+        if (!file.exists() || text != file.text)
+            file.text = text
+    }
+}
+
+class Utils implements Plugin<Project> {
+    final def BUILD_TYPES = ['Debug', 'Release'].asImmutable()
+    final def BUILD_TYPES_REG_EXP = BUILD_TYPES.join('|')
+
+    final def ABI_CODES = ["Arm7": "armeabi-v7a",
+                           "Arm8": "arm64-v8a",
+                           "X86_64": "x86_64",
+                           "X86": "x86"].asImmutable()
+    final def CPU_CODES = ["Arm7": "arm",
+                           "Arm8": "arm64",
+                           "X86_64": "x64",
+                           "X86": "x86"].asImmutable()
+
+    def project
+
+    @Inject
+    Utils(Project project) {
+        this.project = project
+    }
+
+    void apply(Project project) {
+        project.extensions.create('utils', Utils)
+    }
+
+    void addTask(String prefix, Closure taskClosure) {
+        forEachBuildVariant { String arch, String buildType ->
+            def taskName = "${prefix}${arch}${buildType}"
+            taskClosure(taskName, buildType, arch)
+        }
+    }
+
+    void forEachBuildVariant(Closure callback) {
+        project.rootProject.ext.targetArchs.each { arch ->
+            BUILD_TYPES.each { buildType ->
+                callback(arch, buildType)
             }
         }
+    }
+}
+
+def generateGnArgsContent(String buildType, String arch) {
+    def content = 'target_os="android"\n'
+    content += 'target_cpu="' + utils.CPU_CODES[arch] + '"\n'
+    content += "is_debug=${buildType != 'Release'}\n"
+    content += 'ndk="' + android.ndkDirectory + '"\n'
+    content += "ndk_api=${rootProject.ext.minSdk}\n"
+    return content
+}
+
+def getOutDir(String buildType) {
+    return "${project.buildDir}/gn_out/${buildType.toLowerCase()}"
+}
+
+def getAssetsDir(String buildType) {
+    return "${project.buildDir}/gn_out/${buildType.toLowerCase()}/assets"
+}
+
+def getJniLibsDir(String buildType) {
+    return "${project.buildDir}/gn_out/jniLibs/${buildType.toLowerCase()}"
+}
+
+apply plugin: 'com.android.application'
+apply plugin: Utils
+
+rootProject.ext.targetArchs.each { arch ->
+    assert utils.ABI_CODES.containsKey(arch)
+    assert utils.CPU_CODES.containsKey(arch)
+}
+
+android {
+    compileSdk rootProject.ext.compileSdk
+    ndkVersion rootProject.ext.ndkVersion
+
+    defaultConfig {
+        applicationId rootProject.ext.applicationId
+        minSdk rootProject.ext.minSdk
+        targetSdk rootProject.ext.targetSdk
         ndk {
-            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'
+            abiFilters = []
+            rootProject.ext.targetArchs.each { arch ->
+                abiFilters.add(utils.ABI_CODES[arch])
+            }
         }
     }
     buildTypes {
@@ -22,24 +105,24 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'),
                     'proguard-rules.pro'
-            ndk {
-                debugSymbolLevel 'FULL'
-            }
-        }
-    }
-    externalNativeBuild {
-        cmake {
-            version '3.22.1'
-            path 'CMakeLists.txt'
         }
     }
     sourceSets {
         main {
             java.srcDirs += ['../../../src/engine/platform/java/com/kaliber/base']
-            assets.srcDirs = ['../../../assets']
+            utils.BUILD_TYPES.each { buildType ->
+                "${buildType.toLowerCase()}" {
+                    assets.srcDirs = [getAssetsDir(buildType)]
+                }
+            }
+        }
+        utils.BUILD_TYPES.each { buildType ->
+            "${buildType.toLowerCase()}" {
+                jniLibs.srcDirs = [getJniLibsDir(buildType)]
+            }
         }
     }
-    namespace 'com.woom.game'
+    namespace rootProject.ext.applicationId
 }
 
 dependencies {
@@ -47,4 +130,80 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'com.google.android.gms:play-services-ads:22.0.0'
+}
+
+utils.addTask('generateGnArgsFor') { String taskName, String buildType, String arch ->
+    task(taskName, type: WriteFileTask) {
+        content = generateGnArgsContent(buildType, arch)
+        target = project.layout.file(provider { new File("${getOutDir(buildType)}/${utils.ABI_CODES[arch]}", 'args.gn') })
+    }
+}
+
+utils.addTask('runGnFor') { String taskName, String buildType, String arch ->
+    task(taskName, type: Exec) {
+        dependsOn "generateGnArgsFor${arch}${buildType}"
+
+        executable rootProject.ext.gn
+        args '--fail-on-unused-args', 'gen', "${getOutDir(buildType)}/${utils.ABI_CODES[arch]}"
+
+        inputs.file(new File("${getOutDir(buildType)}/${utils.ABI_CODES[arch]}", 'args.gn'))
+        outputs.file(new File("${getOutDir(buildType)}/${utils.ABI_CODES[arch]}", 'build.ninja'))
+    }
+}
+
+utils.addTask('runNinjaFor') { String taskName, String buildType, String arch ->
+    task(taskName, type: Exec) {
+        dependsOn "runGnFor${arch}${buildType}"
+
+        executable rootProject.ext.ninja
+        args '-C', "${getOutDir(buildType)}/${utils.ABI_CODES[arch]}", rootProject.ext.targetGame
+
+        inputs.file(new File("${getOutDir(buildType)}/${utils.ABI_CODES[arch]}", 'build.ninja'))
+        outputs.file(new File("${getOutDir(buildType)}/${utils.ABI_CODES[arch]}", "lib${rootProject.ext.targetGame}.so"))
+    }
+}
+
+utils.addTask('copyAssetsFor') { String taskName, String buildType, String arch ->
+    task(taskName, type: Copy) {
+        dependsOn "runNinjaFor${arch}${buildType}"
+
+        from "${getOutDir(buildType)}/${utils.ABI_CODES[arch]}/assets"
+        into getAssetsDir(buildType)
+    }
+}
+
+utils.addTask('copyJniLibsFor') { String taskName, String buildType, String arch ->
+    task(taskName, type: Copy) {
+        dependsOn "runNinjaFor${arch}${buildType}"
+
+        from("${getOutDir(buildType)}/${utils.ABI_CODES[arch]}") {
+            include "lib${rootProject.ext.targetGame}.so"
+            rename "lib${rootProject.ext.targetGame}.so", "libkaliber.so"
+        }
+        into "${getJniLibsDir(buildType)}/${utils.ABI_CODES[arch]}"
+    }
+}
+
+tasks.configureEach { task ->
+    def match = task.name =~ /^merge(${utils.BUILD_TYPES_REG_EXP})JniLibFolders$/
+    if (match) {
+        rootProject.ext.targetArchs.each { arch ->
+            task.dependsOn "copyJniLibsFor${arch}${match.group(1)}"
+            return
+        }
+    }
+    match = task.name =~ /^merge(${utils.BUILD_TYPES_REG_EXP})Assets$/
+    if (match) {
+        rootProject.ext.targetArchs.each { arch ->
+            task.dependsOn "copyAssetsFor${arch}${match.group(1)}"
+            return
+        }
+    }
+    match = task.name =~ /^lintVitalAnalyze(${utils.BUILD_TYPES_REG_EXP})$/
+    if (match) {
+        rootProject.ext.targetArchs.each { arch ->
+            task.dependsOn "copyAssetsFor${arch}${match.group(1)}"
+            return
+        }
+    }
 }

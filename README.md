@@ -8,27 +8,48 @@ based on this engine. Full game code and assets are included in this repository.
 
 ## Pre-requisites:
 
-**GN build system** is required for all platforms except Android:\
+GN build system is required for all platforms:\
 https://gn.googlesource.com/gn/
 
 ## Building from the command-line:
 
 ### All platforms except Android:
-Setup:
+#### Setup:
+Generate build files for Ninja in release and debug modes.
 ```text
 gn gen out/release
-gn gen --args="is_debug=true" out/debug
+gn gen --args='is_debug=true' out/debug
 ```
-Building and running:
+#### Building and running:
+Build all games in release mode and run "hello_world".
 ```text
-ninja -C out/debug
-./out/debug/hello_world
+ninja -C out/release
+./out/release/hello_world
+```
+Build only "demo" in debug mode and run.
+```text
+ninja -C out/debug demo
 ./out/debug/demo
 ```
 ### Android:
+Build the default game ("hello_world") in debug mode for all ABIs and install.
+GN will be run by Gradle so no setup is required. Both Linux and Windows are
+supported as host platforms. The Gradle project can also be
+opened in Android Studio.
 ```text
 cd build/android
 ./gradlew :app:installDebug
+```
+Build in release mode. The generated APK must be signed before installing.
+```text
+./gradlew :app:assembleRelease
+```
+Build configuration can be changed via project properties. The following command
+will build "demo" in debug mode for x86_64 ABI and install. "targetArchs"
+property can be set to any combination of Arm7, Arm8, X86_64, X86. Location of
+gn and ninja executables can also be specified via "gn" and "ninja" properties.
+```text
+./gradlew :app:installDebug -PtargetArchs="X86_64" -PtargetGame="demo"
 ```
 ### Generate Visual Studio solution:
 ```text
@@ -53,7 +74,7 @@ devenv out\vs\all.sln
 
 ## Hello World example:
 
-Shows a smoothly rotating "Hello Wolrd!".
+Shows a smoothly rotating "Hello World!".
 ```cpp
 class HelloWorld final : public eng::Game {
  public:
