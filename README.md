@@ -31,18 +31,13 @@ Build only "demo" in debug mode and run.
 ninja -C out/debug demo
 ./out/debug/demo
 ```
+
 ### Android:
 Build the default game ("hello_world") in debug mode for all ABIs and install.
-GN will be run by Gradle so no setup is required. Both Linux and Windows are
-supported as host platforms. The Gradle project can also be
-opened in Android Studio.
+GN will be run by Gradle so no setup is required.
 ```text
 cd build/android
 ./gradlew :app:installDebug
-```
-Build in release mode. The generated APK must be signed before installing.
-```text
-./gradlew :app:assembleRelease
 ```
 Build configuration can be changed via project properties. The following command
 will build "demo" in debug mode for x86_64 ABI and install. "targetArchs"
@@ -51,26 +46,12 @@ gn and ninja executables can also be specified via "gn" and "ninja" properties.
 ```text
 ./gradlew :app:installDebug -PtargetArchs="X86_64" -PtargetGame="demo"
 ```
+
 ### Generate Visual Studio solution:
 ```text
 gn.exe gen --args="is_debug=true" --ide=vs2022 out\vs
 devenv out\vs\all.sln
 ```
-
-## Third-party libraries:
-
-[glew](https://github.com/nigels-com/glew),
-[jsoncpp](https://github.com/open-source-parsers/jsoncpp),
-[minimp3](https://github.com/lieff/minimp3),
-[oboe](https://github.com/google/oboe),
-[stb](https://github.com/nothings/stb),
-[texture-compressor](https://github.com/auygun/kaliber/tree/master/src/third_party/texture_compressor),
-[minizip](https://github.com/madler/zlib/tree/master/contrib/minizip),
-[glslang](https://github.com/KhronosGroup/glslang),
-[spirv-reflect](https://github.com/KhronosGroup/SPIRV-Reflect),
-[vma](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator),
-[vulkan-sdk](https://vulkan.lunarg.com),
-[volk](https://github.com/zeux/volk)
 
 ## Hello World example:
 
@@ -101,3 +82,18 @@ class HelloWorld final : public eng::Game {
 
 GAME_FACTORIES{GAME_CLASS(HelloWorld)};
 ```
+
+## Third-party libraries:
+
+[glew](https://github.com/nigels-com/glew),
+[jsoncpp](https://github.com/open-source-parsers/jsoncpp),
+[minimp3](https://github.com/lieff/minimp3),
+[oboe](https://github.com/google/oboe),
+[stb](https://github.com/nothings/stb),
+[texture-compressor](https://github.com/auygun/kaliber/tree/master/src/third_party/texture_compressor),
+[minizip](https://github.com/madler/zlib/tree/master/contrib/minizip),
+[glslang](https://github.com/KhronosGroup/glslang),
+[spirv-reflect](https://github.com/KhronosGroup/SPIRV-Reflect),
+[vma](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator),
+[vulkan-sdk](https://vulkan.lunarg.com),
+[volk](https://github.com/zeux/volk)

@@ -158,8 +158,7 @@ utils.addTask('runNinjaFor') { String taskName, String buildType, String arch ->
         executable rootProject.ext.ninja
         args '-C', "${getOutDir(buildType)}/${utils.ABI_CODES[arch]}", rootProject.ext.targetGame
 
-        inputs.file(new File("${getOutDir(buildType)}/${utils.ABI_CODES[arch]}", 'build.ninja'))
-        outputs.file(new File("${getOutDir(buildType)}/${utils.ABI_CODES[arch]}", "lib${rootProject.ext.targetGame}.so"))
+        outputs.upToDateWhen { false }
     }
 }
 
