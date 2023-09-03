@@ -26,25 +26,24 @@ Build all games in release mode and run "hello_world".
 ninja -C out/release
 ./out/release/hello_world
 ```
-Build only "demo" in debug mode and run.
+Build "demo" in debug mode and run.
 ```text
 ninja -C out/debug demo
 ./out/debug/demo
 ```
 
 ### Android:
-Build the default game ("hello_world") in debug mode for all ABIs and install.
-GN will be run by Gradle so no setup is required.
+Build "hello_world" in debug mode for all ABIs and install. GN will be run by
+Gradle so no setup is required.
 ```text
 cd build/android
-./gradlew :app:installDebug
+./gradlew :app:installHelloWorldDebug
 ```
-Build configuration can be changed via project properties. The following command
-will build "demo" in debug mode for x86_64 ABI and install. "targetArchs"
-property can be set to any combination of Arm7, Arm8, X86_64, X86. Location of
-gn and ninja executables can also be specified via "gn" and "ninja" properties.
+Build "demo" in debug mode for x86_64 ABI and install. "targetArchs" can be set
+to any combination of Arm7, Arm8, X86_64, X86. Location of gn and ninja
+executables can also be specified via "gn" and "ninja" properties.
 ```text
-./gradlew :app:installDebug -PtargetArchs="X86_64" -PtargetGame="demo"
+./gradlew :app:installDemoDebug -PtargetArchs="X86_64"
 ```
 
 ### Generate Visual Studio solution:

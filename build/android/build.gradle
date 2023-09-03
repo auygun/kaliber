@@ -21,10 +21,6 @@ task clean(type: Delete) {
 }
 
 ext {
-    if (!project.hasProperty('targetGame')) {
-        targetGame = "hello_world"
-    }
-
     if (!project.hasProperty('targetArchs')) {
         targetArchs = ['Arm7', 'Arm8', 'X86_64', 'X86']
     } else {

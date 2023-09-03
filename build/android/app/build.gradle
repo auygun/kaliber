@@ -41,16 +41,18 @@ class Utils implements Plugin<Project> {
     }
 
     void addTask(String prefix, Closure taskClosure) {
-        forEachBuildVariant { String arch, String buildType ->
-            def taskName = "${prefix}${arch}${buildType}"
-            taskClosure(taskName, buildType, arch)
+        forEachBuildVariant { String game, String arch, String buildType ->
+            def taskName = "${prefix}${game}${arch}${buildType}"
+            taskClosure(taskName, buildType, arch, game)
         }
     }
 
     void forEachBuildVariant(Closure callback) {
-        project.rootProject.ext.targetArchs.each { arch ->
-            BUILD_TYPES.each { buildType ->
-                callback(arch, buildType)
+        project.android.productFlavors.each { flavor ->
+            project.rootProject.ext.targetArchs.each { arch ->
+                BUILD_TYPES.each { buildType ->
+                    callback(flavor.name.capitalize(), arch, buildType)
+                }
             }
         }
     }
@@ -77,6 +79,17 @@ def getJniLibsDir(String buildType) {
     return "${project.buildDir}/gn_out/jniLibs/${buildType.toLowerCase()}"
 }
 
+def getGnTargetFor(String game) {
+    def outStr = ''
+    android.productFlavors.find { flavor ->
+        if (flavor.name.capitalize() == game) {
+            outStr = flavor.ext.gnTarget
+            return true
+        }
+    }
+    return outStr
+}
+
 apply plugin: 'com.android.application'
 apply plugin: Utils
 
@@ -100,6 +113,7 @@ android {
             }
         }
     }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -107,6 +121,24 @@ android {
                     'proguard-rules.pro'
         }
     }
+
+    flavorDimensions 'game'
+
+    productFlavors {
+        helloWorld {
+            dimension 'game'
+            ext {
+                gnTarget = "hello_world"
+            }
+        }
+        demo {
+            dimension 'game'
+            ext {
+                gnTarget = "demo"
+            }
+        }
+    }
+
     sourceSets {
         main {
             java.srcDirs += ['../../../src/engine/platform/java/com/kaliber/base']
@@ -122,6 +154,7 @@ android {
             }
         }
     }
+
     namespace rootProject.ext.applicationId
 }
 
@@ -132,16 +165,16 @@ dependencies {
     implementation 'com.google.android.gms:play-services-ads:22.0.0'
 }
 
-utils.addTask('generateGnArgsFor') { String taskName, String buildType, String arch ->
+utils.addTask('generateGnArgsFor') { String taskName, String buildType, String arch, String game ->
     task(taskName, type: WriteFileTask) {
         content = generateGnArgsContent(buildType, arch)
         target = project.layout.file(provider { new File("${getOutDir(buildType)}/${utils.ABI_CODES[arch]}", 'args.gn') })
     }
 }
 
-utils.addTask('runGnFor') { String taskName, String buildType, String arch ->
+utils.addTask('runGnFor') { String taskName, String buildType, String arch, String game ->
     task(taskName, type: Exec) {
-        dependsOn "generateGnArgsFor${arch}${buildType}"
+        dependsOn "generateGnArgsFor${game}${arch}${buildType}"
 
         executable rootProject.ext.gn
         args '--fail-on-unused-args', 'gen', "${getOutDir(buildType)}/${utils.ABI_CODES[arch]}"
@@ -151,58 +184,58 @@ utils.addTask('runGnFor') { String taskName, String buildType, String arch ->
     }
 }
 
-utils.addTask('runNinjaFor') { String taskName, String buildType, String arch ->
+utils.addTask('runNinjaFor') { String taskName, String buildType, String arch, String game ->
     task(taskName, type: Exec) {
-        dependsOn "runGnFor${arch}${buildType}"
+        dependsOn "runGnFor${game}${arch}${buildType}"
 
         executable rootProject.ext.ninja
-        args '-C', "${getOutDir(buildType)}/${utils.ABI_CODES[arch]}", rootProject.ext.targetGame
+        args '-C', "${getOutDir(buildType)}/${utils.ABI_CODES[arch]}", getGnTargetFor(game)
 
         outputs.upToDateWhen { false }
     }
 }
 
-utils.addTask('copyAssetsFor') { String taskName, String buildType, String arch ->
+utils.addTask('copyAssetsFor') { String taskName, String buildType, String arch, String game ->
     task(taskName, type: Copy) {
-        dependsOn "runNinjaFor${arch}${buildType}"
+        dependsOn "runNinjaFor${game}${arch}${buildType}"
 
         from "${getOutDir(buildType)}/${utils.ABI_CODES[arch]}/assets"
         into getAssetsDir(buildType)
     }
 }
 
-utils.addTask('copyJniLibsFor') { String taskName, String buildType, String arch ->
+utils.addTask('copyJniLibsFor') { String taskName, String buildType, String arch, String game ->
     task(taskName, type: Copy) {
-        dependsOn "runNinjaFor${arch}${buildType}"
+        dependsOn "runNinjaFor${game}${arch}${buildType}"
 
         from("${getOutDir(buildType)}/${utils.ABI_CODES[arch]}") {
-            include "lib${rootProject.ext.targetGame}.so"
-            rename "lib${rootProject.ext.targetGame}.so", "libkaliber.so"
+            include "lib${getGnTargetFor(game)}.so"
+            rename "lib${getGnTargetFor(game)}.so", "libkaliber.so"
         }
         into "${getJniLibsDir(buildType)}/${utils.ABI_CODES[arch]}"
     }
 }
 
 tasks.configureEach { task ->
-    def match = task.name =~ /^merge(${utils.BUILD_TYPES_REG_EXP})JniLibFolders$/
+    def match = task.name =~ /^merge(\w+)(${utils.BUILD_TYPES_REG_EXP})JniLibFolders$/
     if (match) {
         rootProject.ext.targetArchs.each { arch ->
-            task.dependsOn "copyJniLibsFor${arch}${match.group(1)}"
-            return
+            task.dependsOn "copyJniLibsFor${match.group(1)}${arch}${match.group(2)}"
         }
+        return
     }
-    match = task.name =~ /^merge(${utils.BUILD_TYPES_REG_EXP})Assets$/
+    match = task.name =~ /^merge(\w+)(${utils.BUILD_TYPES_REG_EXP})Assets$/
     if (match) {
         rootProject.ext.targetArchs.each { arch ->
-            task.dependsOn "copyAssetsFor${arch}${match.group(1)}"
-            return
+            task.dependsOn "copyAssetsFor${match.group(1)}${arch}${match.group(2)}"
         }
+        return
     }
-    match = task.name =~ /^lintVitalAnalyze(${utils.BUILD_TYPES_REG_EXP})$/
+    match = task.name =~ /^lintVitalAnalyze(\w+)(${utils.BUILD_TYPES_REG_EXP})$/
     if (match) {
         rootProject.ext.targetArchs.each { arch ->
-            task.dependsOn "copyAssetsFor${arch}${match.group(1)}"
-            return
+            task.dependsOn "copyAssetsFor${match.group(1)}${arch}${match.group(2)}"
         }
+        return
     }
 }
