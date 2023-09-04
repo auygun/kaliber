@@ -99,7 +99,7 @@ set_defaults("static_library") {
   configs = _default_config
 }
 set_defaults("shared_library") {
-  configs = _default_config
+  configs = [ "//build:shared_library" ] + _default_config
 }
 set_defaults("source_set") {
   configs = _default_config
