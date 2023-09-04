@@ -1,5 +1,5 @@
 # Build a shared library for Android. Build an executable for other platforms.
-template("game_tmpl") {
+template("game") {
   if (target_os == "android") {
     _target_type = "shared_library"
   } else {

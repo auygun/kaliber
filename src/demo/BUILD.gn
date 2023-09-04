@@ -1,6 +1,6 @@
-import("//build/utils.gni")
+import("//build/rules.gni")
 
-game_tmpl("demo") {
+game("demo") {
   sources = [
     "credits.cc",
     "credits.h",
