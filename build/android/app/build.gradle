@@ -103,7 +103,6 @@ android {
     ndkVersion rootProject.ext.ndkVersion
 
     defaultConfig {
-        applicationId rootProject.ext.applicationId
         minSdk rootProject.ext.minSdk
         targetSdk rootProject.ext.targetSdk
         ndk {
@@ -127,12 +126,20 @@ android {
     productFlavors {
         helloWorld {
             dimension 'game'
+            applicationId 'com.kaliber.helloworld'
+            resValue "string", "provider_name", "${applicationId}.fileprovider"
+            resValue "string", "app_name", "Kaliber Hello World"
+            resValue "string", "interstitial_ad_unit_id", ""
             ext {
                 gnTarget = "hello_world"
             }
         }
         demo {
             dimension 'game'
+            applicationId 'com.kaliber.woom'
+            resValue "string", "provider_name", "${applicationId}.fileprovider"
+            resValue "string", "app_name", "Kaliber Demo"
+            resValue "string", "interstitial_ad_unit_id", "ca-app-pub-1321063817979967/8373182022"
             ext {
                 gnTarget = "demo"
             }
@@ -155,7 +162,7 @@ android {
         }
     }
 
-    namespace rootProject.ext.applicationId
+    namespace "com.kaliber.base"
 }
 
 dependencies {

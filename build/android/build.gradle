@@ -21,18 +21,16 @@ task clean(type: Delete) {
 }
 
 ext {
+    ndkVersion = '25.2.9519653'
+    minSdk = 24
+    compileSdk = 33
+    targetSdk = 33
+
     if (!project.hasProperty('targetArchs')) {
         targetArchs = ['Arm7', 'Arm8', 'X86_64', 'X86']
     } else {
         targetArchs = project.getProperty('targetArchs').split(',')
     }
-
-    applicationId = 'com.woom.game'
-
-    ndkVersion = '25.2.9519653'
-    minSdk = 24
-    compileSdk = 33
-    targetSdk = 33
 
     if (!project.hasProperty('gn')) {
         gn = "gn"
