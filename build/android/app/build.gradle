@@ -52,6 +52,7 @@ class Utils implements Plugin<Project> {
         project.android.productFlavors.each { game ->
             if (game.dimension == 'game') {
                 project.android.productFlavors.each { arch ->
+                    // Only need to add tasks for arch types which maps to a single ABI
                     if (arch.dimension == 'arch' && arch.ndk.abiFilters.size() == 1) {
                         project.android.buildTypes.each { buildType ->
                             callback(game.name.capitalize(), arch.name.capitalize(), buildType.name.capitalize())
@@ -64,7 +65,7 @@ class Utils implements Plugin<Project> {
 
     void forEachBuildType(Closure callback) {
         project.android.buildTypes.each { buildType ->
-            callback(buildType.name.capitalize())
+            callback(buildType.name)
         }
     }
 
@@ -75,48 +76,48 @@ class Utils implements Plugin<Project> {
         }
         return outList
     }
-}
 
-def generateGnArgsContent(String buildType, String arch) {
-    def content = 'target_os="android"\n'
-    content += 'target_cpu="' + utils.CPU_CODES[arch] + '"\n'
-    content += "is_debug=${buildType != 'Release'}\n"
-    content += 'ndk="' + android.ndkDirectory + '"\n'
-    content += "ndk_api=${rootProject.ext.minSdk}\n"
-    return content
-}
-
-def getOutDir(String buildType) {
-    return "${project.buildDir}/gn_out/${buildType.toLowerCase()}"
-}
-
-def getAssetsDir(String buildType) {
-    return "${project.buildDir}/gn_out/${buildType.toLowerCase()}/assets"
-}
-
-def getJniLibsDir(String buildType) {
-    return "${project.buildDir}/gn_out/jniLibs/${buildType.toLowerCase()}"
-}
-
-def getGnTargetFor(String game) {
-    def outStr = ''
-    android.productFlavors.find { flavor ->
-        if (flavor.dimension == 'game' && flavor.name.capitalize() == game) {
-            outStr = flavor.ext.gnTarget
-            return true
+    def getArchTypesRegExp() {
+        def outList = []
+        project.android.productFlavors.each { flavor ->
+            if (flavor.dimension == 'arch') {
+                outList += flavor.name.capitalize()
+            }
         }
+        return outList
     }
-    return outStr
-}
 
-def getArchTypesRegExp() {
-    def outList = []
-    android.productFlavors.each { flavor ->
-        if (flavor.dimension == 'arch') {
-            outList += flavor.name.capitalize()
+    def getGnTargetFor(String game) {
+        def outStr = ''
+        project.android.productFlavors.find { flavor ->
+            if (flavor.dimension == 'game' && flavor.name.capitalize() == game) {
+                outStr = flavor.ext.gnTarget
+                return true
+            }
         }
+        return outStr
     }
-    return outList
+
+    def generateGnArgsContent(String buildType, String arch) {
+        def content = 'target_os="android"\n'
+        content += 'target_cpu="' + CPU_CODES[arch] + '"\n'
+        content += "is_debug=${buildType != 'Release'}\n"
+        content += 'ndk="' + project.android.ndkDirectory + '"\n'
+        content += "ndk_api=${project.rootProject.ext.minSdk}\n"
+        return content
+    }
+
+    def getOutDir(String buildType) {
+        return "${project.buildDir}/gn_out/${buildType.toLowerCase()}"
+    }
+
+    def getAssetsDir(String buildType) {
+        return "${project.buildDir}/gn_out/${buildType.toLowerCase()}/assets"
+    }
+
+    def getJniLibsDir(String buildType) {
+        return "${project.buildDir}/gn_out/jniLibs/${buildType.toLowerCase()}"
+    }
 }
 
 apply plugin: 'com.android.application'
@@ -190,6 +191,7 @@ android {
                 abiFilters = ["x86_64"]
             }
         }
+
         allArchs {
             dimension 'arch'
             ndk {
@@ -214,14 +216,14 @@ android {
         main {
             java.srcDirs += ['../../../src/engine/platform/java/com/kaliber/base']
             utils.forEachBuildType { buildType ->
-                "${buildType.toLowerCase()}" {
-                    assets.srcDirs = [getAssetsDir(buildType)]
+                "${buildType}" {
+                    assets.srcDirs = [utils.getAssetsDir(buildType)]
                 }
             }
         }
         utils.forEachBuildType { buildType ->
-            "${buildType.toLowerCase()}" {
-                jniLibs.srcDirs = [getJniLibsDir(buildType)]
+            "${buildType}" {
+                jniLibs.srcDirs = [utils.getJniLibsDir(buildType)]
             }
         }
     }
@@ -238,8 +240,8 @@ dependencies {
 
 utils.addTask('generateGnArgsFor') { String taskName, String buildType, String arch, String game ->
     task(taskName, type: WriteFileTask) {
-        content = generateGnArgsContent(buildType, arch)
-        target = project.layout.file(provider { new File("${getOutDir(buildType)}/${arch}", 'args.gn') })
+        content = utils.generateGnArgsContent(buildType, arch)
+        target = project.layout.file(provider { new File("${utils.getOutDir(buildType)}/${arch}", 'args.gn') })
     }
 }
 
@@ -248,10 +250,10 @@ utils.addTask('runGnFor') { String taskName, String buildType, String arch, Stri
         dependsOn "generateGnArgsFor${game}${arch}${buildType}"
 
         executable rootProject.ext.gn
-        args '--fail-on-unused-args', 'gen', "${getOutDir(buildType)}/${arch}"
+        args '--fail-on-unused-args', 'gen', "${utils.getOutDir(buildType)}/${arch}"
 
-        inputs.file(new File("${getOutDir(buildType)}/${arch}", 'args.gn'))
-        outputs.file(new File("${getOutDir(buildType)}/${arch}", 'build.ninja'))
+        inputs.file(new File("${utils.getOutDir(buildType)}/${arch}", 'args.gn'))
+        outputs.file(new File("${utils.getOutDir(buildType)}/${arch}", 'build.ninja'))
     }
 }
 
@@ -260,8 +262,9 @@ utils.addTask('runNinjaFor') { String taskName, String buildType, String arch, S
         dependsOn "runGnFor${game}${arch}${buildType}"
 
         executable rootProject.ext.ninja
-        args '-C', "${getOutDir(buildType)}/${arch}", getGnTargetFor(game)
+        args '-C', "${utils.getOutDir(buildType)}/${arch}", utils.getGnTargetFor(game)
 
+        // Always run ninja and let it figure out what needs to be compiled.
         outputs.upToDateWhen { false }
     }
 }
@@ -270,8 +273,8 @@ utils.addTask('copyAssetsFor') { String taskName, String buildType, String arch,
     task(taskName, type: Copy) {
         dependsOn "runNinjaFor${game}${arch}${buildType}"
 
-        from "${getOutDir(buildType)}/${arch}/assets"
-        into getAssetsDir(buildType)
+        from "${utils.getOutDir(buildType)}/${arch}/assets"
+        into utils.getAssetsDir(buildType)
     }
 }
 
@@ -279,16 +282,16 @@ utils.addTask('copyJniLibsFor') { String taskName, String buildType, String arch
     task(taskName, type: Copy) {
         dependsOn "runNinjaFor${game}${arch}${buildType}"
 
-        from("${getOutDir(buildType)}/${arch}") {
-            include "lib${getGnTargetFor(game)}.so"
-            rename "lib${getGnTargetFor(game)}.so", "libkaliber.so"
+        from("${utils.getOutDir(buildType)}/${arch}") {
+            include "lib${utils.getGnTargetFor(game)}.so"
+            rename "lib${utils.getGnTargetFor(game)}.so", "libkaliber.so"
         }
-        into "${getJniLibsDir(buildType)}/${utils.ABI_CODES[arch]}"
+        into "${utils.getJniLibsDir(buildType)}/${utils.ABI_CODES[arch]}"
     }
 }
 
 tasks.configureEach { task ->
-    def variantPattern = /(\w+)(${getArchTypesRegExp().join('|')})(${utils.getBuildTypesRegExp().join('|')})/
+    def variantPattern = /(\w+)(${utils.getArchTypesRegExp().join('|')})(${utils.getBuildTypesRegExp().join('|')})/
 
     def match = task.name =~ /^merge/ + variantPattern + /JniLibFolders$/
     if (match) {
