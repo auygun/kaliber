@@ -38,13 +38,31 @@ class Utils implements Plugin<Project> {
     }
 
     void addTask(String prefix, Closure taskClosure) {
-        forEachBuildVariant { String game, String arch, String buildType ->
+        forEachBuildVariant { String arch, String buildType ->
+            def taskName = "${prefix}${arch}${buildType}"
+            taskClosure(taskName, buildType, arch)
+        }
+    }
+
+    void addGameTask(String prefix, Closure taskClosure) {
+        forEachGameBuildVariant { String game, String arch, String buildType ->
             def taskName = "${prefix}${game}${arch}${buildType}"
             taskClosure(taskName, buildType, arch, game)
         }
     }
 
     void forEachBuildVariant(Closure callback) {
+        project.android.productFlavors.each { arch ->
+            // Only need to add tasks for arch types which maps to a single ABI
+            if (arch.dimension == 'arch' && arch.ndk.abiFilters.size() == 1) {
+                project.android.buildTypes.each { buildType ->
+                    callback(arch.name.capitalize(), buildType.name.capitalize())
+                }
+            }
+        }
+    }
+
+    void forEachGameBuildVariant(Closure callback) {
         project.android.productFlavors.each { game ->
             if (game.dimension == 'game') {
                 project.android.productFlavors.each { arch ->
@@ -70,7 +88,7 @@ class Utils implements Plugin<Project> {
         project.android.buildTypes.each { buildType ->
             outList += buildType.name.capitalize()
         }
-        return outList
+        return outList.join('|')
     }
 
     def getArchTypesRegExp() {
@@ -80,7 +98,7 @@ class Utils implements Plugin<Project> {
                 outList += flavor.name.capitalize()
             }
         }
-        return outList
+        return outList.join('|')
     }
 
     def getAbiCodeFor(String arch) {
@@ -168,6 +186,16 @@ android {
             applicationId 'com.kaliber.woom'
             resValue "string", "provider_name", "${applicationId}.fileprovider"
             resValue "string", "app_name", "Kaliber Demo"
+            resValue "string", "interstitial_ad_unit_id", ""
+            ext {
+                gnTarget = "demo"
+            }
+        }
+        woom {
+            dimension 'game'
+            applicationId 'com.woom.game'
+            resValue "string", "provider_name", "${applicationId}.fileprovider"
+            resValue "string", "app_name", "woom"
             resValue "string", "interstitial_ad_unit_id", "ca-app-pub-1321063817979967/8373182022"
             ext {
                 gnTarget = "demo"
@@ -245,16 +273,16 @@ dependencies {
     implementation 'com.google.android.gms:play-services-ads:22.0.0'
 }
 
-utils.addTask('generateGnArgsFor') { String taskName, String buildType, String arch, String game ->
+utils.addTask('generateGnArgsFor') { String taskName, String buildType, String arch ->
     task(taskName, type: WriteFileTask) {
         content = utils.generateGnArgsContent(buildType, arch)
         target = project.layout.file(provider { new File("${utils.getOutDir(buildType)}/${arch}", 'args.gn') })
     }
 }
 
-utils.addTask('runGnFor') { String taskName, String buildType, String arch, String game ->
+utils.addTask('runGnFor') { String taskName, String buildType, String arch ->
     task(taskName, type: Exec) {
-        dependsOn "generateGnArgsFor${game}${arch}${buildType}"
+        dependsOn "generateGnArgsFor${arch}${buildType}"
 
         executable rootProject.ext.gn
         args '--fail-on-unused-args', 'gen', "${utils.getOutDir(buildType)}/${arch}"
@@ -264,9 +292,9 @@ utils.addTask('runGnFor') { String taskName, String buildType, String arch, Stri
     }
 }
 
-utils.addTask('runNinjaFor') { String taskName, String buildType, String arch, String game ->
+utils.addGameTask('runNinjaFor') { String taskName, String buildType, String arch, String game ->
     task(taskName, type: Exec) {
-        dependsOn "runGnFor${game}${arch}${buildType}"
+        dependsOn "runGnFor${arch}${buildType}"
 
         executable rootProject.ext.ninja
         args '-C', "${utils.getOutDir(buildType)}/${arch}", utils.getGnTargetFor(game)
@@ -276,7 +304,7 @@ utils.addTask('runNinjaFor') { String taskName, String buildType, String arch, S
     }
 }
 
-utils.addTask('copyAssetsFor') { String taskName, String buildType, String arch, String game ->
+utils.addGameTask('copyAssetsFor') { String taskName, String buildType, String arch, String game ->
     task(taskName, type: Copy) {
         dependsOn "runNinjaFor${game}${arch}${buildType}"
 
@@ -285,7 +313,7 @@ utils.addTask('copyAssetsFor') { String taskName, String buildType, String arch,
     }
 }
 
-utils.addTask('copyJniLibsFor') { String taskName, String buildType, String arch, String game ->
+utils.addGameTask('copyJniLibsFor') { String taskName, String buildType, String arch, String game ->
     task(taskName, type: Copy) {
         dependsOn "runNinjaFor${game}${arch}${buildType}"
 
@@ -298,7 +326,7 @@ utils.addTask('copyJniLibsFor') { String taskName, String buildType, String arch
 }
 
 tasks.configureEach { task ->
-    def variantPattern = /(\w+)(${utils.getArchTypesRegExp().join('|')})(${utils.getBuildTypesRegExp().join('|')})/
+    def variantPattern = /(\w+)(${utils.getArchTypesRegExp()})(${utils.getBuildTypesRegExp()})/
 
     def match = task.name =~ /^merge/ + variantPattern + /JniLibFolders$/
     if (match) {
