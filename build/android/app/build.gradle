@@ -17,10 +17,6 @@ abstract class WriteFileTask extends DefaultTask {
 }
 
 class Utils implements Plugin<Project> {
-    final def BUILD_TYPES = ['Debug', 'Release'].asImmutable()
-    final def ARCH_TYPES = ['Arm7', 'Arm8', 'X86_64', 'X86']
-    final def BUILD_TYPES_REG_EXP = BUILD_TYPES.join('|')
-
     final def ABI_CODES = ["Arm7": "armeabi-v7a",
                            "Arm8": "arm64-v8a",
                            "X86_64": "x86_64",
@@ -53,15 +49,31 @@ class Utils implements Plugin<Project> {
     }
 
     void forEachBuildVariant(Closure callback) {
-        project.android.productFlavors.each { flavor ->
-            if (flavor.dimension == 'game') {
-                ARCH_TYPES.each { arch ->
-                    BUILD_TYPES.each { buildType ->
-                        callback(flavor.name.capitalize(), arch, buildType)
+        project.android.productFlavors.each { game ->
+            if (game.dimension == 'game') {
+                project.android.productFlavors.each { arch ->
+                    if (arch.dimension == 'arch' && arch.ndk.abiFilters.size() == 1) {
+                        project.android.buildTypes.each { buildType ->
+                            callback(game.name.capitalize(), arch.name.capitalize(), buildType.name.capitalize())
+                        }
                     }
                 }
             }
         }
+    }
+
+    void forEachBuildType(Closure callback) {
+        project.android.buildTypes.each { buildType ->
+            callback(buildType.name.capitalize())
+        }
+    }
+
+    def getBuildTypesRegExp() {
+        def outList = []
+        project.android.buildTypes.each { buildType ->
+            outList += buildType.name.capitalize()
+        }
+        return outList
     }
 }
 
@@ -201,13 +213,13 @@ android {
     sourceSets {
         main {
             java.srcDirs += ['../../../src/engine/platform/java/com/kaliber/base']
-            utils.BUILD_TYPES.each { buildType ->
+            utils.forEachBuildType { buildType ->
                 "${buildType.toLowerCase()}" {
                     assets.srcDirs = [getAssetsDir(buildType)]
                 }
             }
         }
-        utils.BUILD_TYPES.each { buildType ->
+        utils.forEachBuildType { buildType ->
             "${buildType.toLowerCase()}" {
                 jniLibs.srcDirs = [getJniLibsDir(buildType)]
             }
@@ -276,7 +288,7 @@ utils.addTask('copyJniLibsFor') { String taskName, String buildType, String arch
 }
 
 tasks.configureEach { task ->
-    def variantPattern = /(\w+)(${getArchTypesRegExp().join('|')})(${utils.BUILD_TYPES_REG_EXP})/
+    def variantPattern = /(\w+)(${getArchTypesRegExp().join('|')})(${utils.getBuildTypesRegExp().join('|')})/
 
     def match = task.name =~ /^merge/ + variantPattern + /JniLibFolders$/
     if (match) {
