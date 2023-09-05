@@ -17,10 +17,14 @@ abstract class WriteFileTask extends DefaultTask {
 }
 
 class Utils implements Plugin<Project> {
-    final def ARCH_CODES = ["armeabi-v7a": "Arm",
-                            "arm64-v8a": "Arm64",
-                            "x86_64": "X64",
+    final def ARCH_CODES = ["armeabi-v7a": "Arm7",
+                            "arm64-v8a": "Arm8",
+                            "x86_64": "X86_64",
                             "x86": "X86"].asImmutable()
+    final def GN_CPU_CODES = ["Arm7": "arm",
+                              "Arm8": "arm64",
+                              "X86_64": "x64",
+                              "X86": "x86"].asImmutable()
 
     def project
 
@@ -103,7 +107,7 @@ class Utils implements Plugin<Project> {
 
     def generateGnArgsContent(String buildType, String arch) {
         def content = 'target_os="android"\n'
-        content += 'target_cpu="' + arch.uncapitalize() + '"\n'
+        content += 'target_cpu="' + GN_CPU_CODES[arch] + '"\n'
         content += "is_debug=${buildType != 'Release'}\n"
         content += 'ndk="' + project.android.ndkDirectory + '"\n'
         content += "ndk_api=${project.rootProject.ext.minSdk}\n"
@@ -170,13 +174,13 @@ android {
             }
         }
 
-        arm {
+        arm7 {
             dimension 'arch'
             ndk {
                 abiFilters = ["armeabi-v7a"]
             }
         }
-        arm64 {
+        arm8 {
             dimension 'arch'
             ndk {
                 abiFilters = ["arm64-v8a"]
@@ -188,7 +192,7 @@ android {
                 abiFilters = ["x86"]
             }
         }
-        x64 {
+        x86_64 {
             dimension 'arch'
             ndk {
                 abiFilters = ["x86_64"]

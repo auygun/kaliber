@@ -41,9 +41,9 @@ cd build/android
 ./gradlew :app:installHelloWorldAllArchsDebug
 ```
 Build "demo" in debug mode for x86_64 ABI and install. Valid ABI targets are
-Arm, Arm64, X86, X64, AllArchs, ArmOnly, X86Only.
+Arm7, Arm8, X86, X86_64, AllArchs, ArmOnly, X86Only.
 ```text
-./gradlew :app:installDemoX64Debug
+./gradlew :app:installDemoX86_64Debug
 ```
 
 ### Generate Visual Studio solution:
