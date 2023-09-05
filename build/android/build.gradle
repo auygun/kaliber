@@ -26,12 +26,6 @@ ext {
     compileSdk = 33
     targetSdk = 33
 
-    if (!project.hasProperty('targetArchs')) {
-        targetArchs = ['Arm7', 'Arm8', 'X86_64', 'X86']
-    } else {
-        targetArchs = project.getProperty('targetArchs').split(',')
-    }
-
     if (!project.hasProperty('gn')) {
         gn = "gn"
     }

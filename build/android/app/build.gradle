@@ -18,12 +18,17 @@ abstract class WriteFileTask extends DefaultTask {
 
 class Utils implements Plugin<Project> {
     final def BUILD_TYPES = ['Debug', 'Release'].asImmutable()
+    final def ARCH_TYPES = ['Arm7', 'Arm8', 'X86_64', 'X86']
     final def BUILD_TYPES_REG_EXP = BUILD_TYPES.join('|')
 
     final def ABI_CODES = ["Arm7": "armeabi-v7a",
                            "Arm8": "arm64-v8a",
                            "X86_64": "x86_64",
                            "X86": "x86"].asImmutable()
+    final def ARCH_CODES = ["armeabi-v7a": "Arm7",
+                            "arm64-v8a": "Arm8",
+                            "x86_64": "X86_64",
+                            "x86": "X86"].asImmutable()
     final def CPU_CODES = ["Arm7": "arm",
                            "Arm8": "arm64",
                            "X86_64": "x64",
@@ -49,9 +54,11 @@ class Utils implements Plugin<Project> {
 
     void forEachBuildVariant(Closure callback) {
         project.android.productFlavors.each { flavor ->
-            project.rootProject.ext.targetArchs.each { arch ->
-                BUILD_TYPES.each { buildType ->
-                    callback(flavor.name.capitalize(), arch, buildType)
+            if (flavor.dimension == 'game') {
+                ARCH_TYPES.each { arch ->
+                    BUILD_TYPES.each { buildType ->
+                        callback(flavor.name.capitalize(), arch, buildType)
+                    }
                 }
             }
         }
@@ -82,7 +89,7 @@ def getJniLibsDir(String buildType) {
 def getGnTargetFor(String game) {
     def outStr = ''
     android.productFlavors.find { flavor ->
-        if (flavor.name.capitalize() == game) {
+        if (flavor.dimension == 'game' && flavor.name.capitalize() == game) {
             outStr = flavor.ext.gnTarget
             return true
         }
@@ -90,13 +97,18 @@ def getGnTargetFor(String game) {
     return outStr
 }
 
+def getArchTypesRegExp() {
+    def outList = []
+    android.productFlavors.each { flavor ->
+        if (flavor.dimension == 'arch') {
+            outList += flavor.name.capitalize()
+        }
+    }
+    return outList
+}
+
 apply plugin: 'com.android.application'
 apply plugin: Utils
-
-rootProject.ext.targetArchs.each { arch ->
-    assert utils.ABI_CODES.containsKey(arch)
-    assert utils.CPU_CODES.containsKey(arch)
-}
 
 android {
     compileSdk rootProject.ext.compileSdk
@@ -107,9 +119,6 @@ android {
         targetSdk rootProject.ext.targetSdk
         ndk {
             abiFilters = []
-            rootProject.ext.targetArchs.each { arch ->
-                abiFilters.add(utils.ABI_CODES[arch])
-            }
         }
     }
 
@@ -121,7 +130,7 @@ android {
         }
     }
 
-    flavorDimensions 'game'
+    flavorDimensions 'game', 'arch'
 
     productFlavors {
         helloWorld {
@@ -142,6 +151,49 @@ android {
             resValue "string", "interstitial_ad_unit_id", "ca-app-pub-1321063817979967/8373182022"
             ext {
                 gnTarget = "demo"
+            }
+        }
+
+        arm7 {
+            dimension 'arch'
+            ndk {
+                abiFilters = ["armeabi-v7a"]
+            }
+        }
+        arm8 {
+            dimension 'arch'
+            ndk {
+                abiFilters = ["arm64-v8a"]
+            }
+        }
+        x86 {
+            dimension 'arch'
+            ndk {
+                abiFilters = ["x86"]
+            }
+        }
+        x86_64 {
+            dimension 'arch'
+            ndk {
+                abiFilters = ["x86_64"]
+            }
+        }
+        allArchs {
+            dimension 'arch'
+            ndk {
+                abiFilters = ["armeabi-v7a", "arm64-v8a", "x86_64", "x86"]
+            }
+        }
+        armOnly {
+            dimension 'arch'
+            ndk {
+                abiFilters = ["armeabi-v7a", "arm64-v8a"]
+            }
+        }
+        x86Only {
+            dimension 'arch'
+            ndk {
+                abiFilters = ["x86_64", "x86"]
             }
         }
     }
@@ -175,7 +227,7 @@ dependencies {
 utils.addTask('generateGnArgsFor') { String taskName, String buildType, String arch, String game ->
     task(taskName, type: WriteFileTask) {
         content = generateGnArgsContent(buildType, arch)
-        target = project.layout.file(provider { new File("${getOutDir(buildType)}/${utils.ABI_CODES[arch]}", 'args.gn') })
+        target = project.layout.file(provider { new File("${getOutDir(buildType)}/${arch}", 'args.gn') })
     }
 }
 
@@ -184,10 +236,10 @@ utils.addTask('runGnFor') { String taskName, String buildType, String arch, Stri
         dependsOn "generateGnArgsFor${game}${arch}${buildType}"
 
         executable rootProject.ext.gn
-        args '--fail-on-unused-args', 'gen', "${getOutDir(buildType)}/${utils.ABI_CODES[arch]}"
+        args '--fail-on-unused-args', 'gen', "${getOutDir(buildType)}/${arch}"
 
-        inputs.file(new File("${getOutDir(buildType)}/${utils.ABI_CODES[arch]}", 'args.gn'))
-        outputs.file(new File("${getOutDir(buildType)}/${utils.ABI_CODES[arch]}", 'build.ninja'))
+        inputs.file(new File("${getOutDir(buildType)}/${arch}", 'args.gn'))
+        outputs.file(new File("${getOutDir(buildType)}/${arch}", 'build.ninja'))
     }
 }
 
@@ -196,7 +248,7 @@ utils.addTask('runNinjaFor') { String taskName, String buildType, String arch, S
         dependsOn "runGnFor${game}${arch}${buildType}"
 
         executable rootProject.ext.ninja
-        args '-C', "${getOutDir(buildType)}/${utils.ABI_CODES[arch]}", getGnTargetFor(game)
+        args '-C', "${getOutDir(buildType)}/${arch}", getGnTargetFor(game)
 
         outputs.upToDateWhen { false }
     }
@@ -206,7 +258,7 @@ utils.addTask('copyAssetsFor') { String taskName, String buildType, String arch,
     task(taskName, type: Copy) {
         dependsOn "runNinjaFor${game}${arch}${buildType}"
 
-        from "${getOutDir(buildType)}/${utils.ABI_CODES[arch]}/assets"
+        from "${getOutDir(buildType)}/${arch}/assets"
         into getAssetsDir(buildType)
     }
 }
@@ -215,7 +267,7 @@ utils.addTask('copyJniLibsFor') { String taskName, String buildType, String arch
     task(taskName, type: Copy) {
         dependsOn "runNinjaFor${game}${arch}${buildType}"
 
-        from("${getOutDir(buildType)}/${utils.ABI_CODES[arch]}") {
+        from("${getOutDir(buildType)}/${arch}") {
             include "lib${getGnTargetFor(game)}.so"
             rename "lib${getGnTargetFor(game)}.so", "libkaliber.so"
         }
@@ -224,24 +276,41 @@ utils.addTask('copyJniLibsFor') { String taskName, String buildType, String arch
 }
 
 tasks.configureEach { task ->
-    def match = task.name =~ /^merge(\w+)(${utils.BUILD_TYPES_REG_EXP})JniLibFolders$/
+    def variantPattern = /(\w+)(${getArchTypesRegExp().join('|')})(${utils.BUILD_TYPES_REG_EXP})/
+
+    def match = task.name =~ /^merge/ + variantPattern + /JniLibFolders$/
     if (match) {
-        rootProject.ext.targetArchs.each { arch ->
-            task.dependsOn "copyJniLibsFor${match.group(1)}${arch}${match.group(2)}"
+        android.productFlavors.find { flavor ->
+            if (flavor.dimension == 'arch' && flavor.name.capitalize() == match.group(2)) {
+                flavor.ndk.abiFilters.each { abi ->
+                    task.dependsOn "copyJniLibsFor${match.group(1)}${utils.ARCH_CODES[abi]}${match.group(3)}"
+                }
+                return true
+            }
         }
         return
     }
-    match = task.name =~ /^merge(\w+)(${utils.BUILD_TYPES_REG_EXP})Assets$/
+    match = task.name =~ /^merge/ + variantPattern + /Assets$/
     if (match) {
-        rootProject.ext.targetArchs.each { arch ->
-            task.dependsOn "copyAssetsFor${match.group(1)}${arch}${match.group(2)}"
+        android.productFlavors.find { flavor ->
+            if (flavor.dimension == 'arch' && flavor.name.capitalize() == match.group(2)) {
+                flavor.ndk.abiFilters.each { abi ->
+                    task.dependsOn "copyAssetsFor${match.group(1)}${utils.ARCH_CODES[abi]}${match.group(3)}"
+                }
+                return true
+            }
         }
         return
     }
-    match = task.name =~ /^lintVitalAnalyze(\w+)(${utils.BUILD_TYPES_REG_EXP})$/
+    match = task.name =~ /^lintVitalAnalyze/ + variantPattern + /$/
     if (match) {
-        rootProject.ext.targetArchs.each { arch ->
-            task.dependsOn "copyAssetsFor${match.group(1)}${arch}${match.group(2)}"
+        android.productFlavors.find { flavor ->
+            if (flavor.dimension == 'arch' && flavor.name.capitalize() == match.group(2)) {
+                flavor.ndk.abiFilters.each { abi ->
+                    task.dependsOn "copyAssetsFor${match.group(1)}${utils.ARCH_CODES[abi]}${match.group(3)}"
+                }
+                return true
+            }
         }
         return
     }
