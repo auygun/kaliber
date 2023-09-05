@@ -34,16 +34,16 @@ ninja -C out/debug demo
 
 ### Android:
 Build "hello_world" in debug mode for all ABIs and install. GN will be run by
-Gradle so no setup is required.
+Gradle so no setup is required. Location of gn and ninja executables can be
+specified via "gn" and "ninja" properties (-Pgn="path/gn").
 ```text
 cd build/android
-./gradlew :app:installHelloWorldDebug
+./gradlew :app:installHelloWorldAllArchsDebug
 ```
-Build "demo" in debug mode for x86_64 ABI and install. "targetArchs" can be set
-to any combination of Arm7, Arm8, X86_64, X86. Location of gn and ninja
-executables can also be specified via "gn" and "ninja" properties.
+Build "demo" in debug mode for x86_64 ABI and install. Valid ABI targets are
+Arm, Arm64, X86, X64, AllArchs, ArmOnly, X86Only.
 ```text
-./gradlew :app:installDemoDebug -PtargetArchs="X86_64"
+./gradlew :app:installDemoX64Debug
 ```
 
 ### Generate Visual Studio solution:
