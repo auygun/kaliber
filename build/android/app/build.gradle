@@ -1,150 +1,3 @@
-@CacheableTask
-abstract class WriteFileTask extends DefaultTask {
-    @Input
-    abstract Property<String> getContent()
-
-    @OutputFile
-    abstract RegularFileProperty getTarget()
-
-    @TaskAction
-    void run() {
-        def file = target.get().asFile
-        file.parentFile.mkdirs()
-        def text = content.get()
-        if (!file.exists() || text != file.text)
-            file.text = text
-    }
-}
-
-class Utils implements Plugin<Project> {
-    final def ARCH_CODES = ["armeabi-v7a": "Arm7",
-                            "arm64-v8a": "Arm8",
-                            "x86_64": "X86_64",
-                            "x86": "X86"].asImmutable()
-    final def GN_CPU_CODES = ["Arm7": "arm",
-                              "Arm8": "arm64",
-                              "X86_64": "x64",
-                              "X86": "x86"].asImmutable()
-
-    def project
-
-    @Inject
-    Utils(Project project) {
-        this.project = project
-    }
-
-    void apply(Project project) {
-        project.extensions.create('utils', Utils)
-    }
-
-    void addTask(String prefix, Closure taskClosure) {
-        forEachBuildVariant { String arch, String buildType ->
-            def taskName = "${prefix}${arch}${buildType}"
-            taskClosure(taskName, buildType, arch)
-        }
-    }
-
-    void addGameTask(String prefix, Closure taskClosure) {
-        forEachGameBuildVariant { String game, String arch, String buildType ->
-            def taskName = "${prefix}${game}${arch}${buildType}"
-            taskClosure(taskName, buildType, arch, game)
-        }
-    }
-
-    void forEachBuildVariant(Closure callback) {
-        project.android.productFlavors.each { arch ->
-            // Only need to add tasks for arch types which maps to a single ABI
-            if (arch.dimension == 'arch' && arch.ndk.abiFilters.size() == 1) {
-                project.android.buildTypes.each { buildType ->
-                    callback(arch.name.capitalize(), buildType.name.capitalize())
-                }
-            }
-        }
-    }
-
-    void forEachGameBuildVariant(Closure callback) {
-        project.android.productFlavors.each { game ->
-            if (game.dimension == 'game') {
-                project.android.productFlavors.each { arch ->
-                    // Only need to add tasks for arch types which maps to a single ABI
-                    if (arch.dimension == 'arch' && arch.ndk.abiFilters.size() == 1) {
-                        project.android.buildTypes.each { buildType ->
-                            callback(game.name.capitalize(), arch.name.capitalize(), buildType.name.capitalize())
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    void forEachBuildType(Closure callback) {
-        project.android.buildTypes.each { buildType ->
-            callback(buildType.name)
-        }
-    }
-
-    def getBuildTypesRegExp() {
-        def outList = []
-        project.android.buildTypes.each { buildType ->
-            outList += buildType.name.capitalize()
-        }
-        return outList.join('|')
-    }
-
-    def getArchTypesRegExp() {
-        def outList = []
-        project.android.productFlavors.each { flavor ->
-            if (flavor.dimension == 'arch') {
-                outList += flavor.name.capitalize()
-            }
-        }
-        return outList.join('|')
-    }
-
-    def getAbiCodeFor(String arch) {
-        def outStr = ''
-        project.android.productFlavors.find { flavor ->
-            if (flavor.name.capitalize() == arch) {
-                outStr = flavor.ndk.abiFilters.first()
-                return true
-            }
-        }
-        return outStr
-    }
-
-    def getGnTargetFor(String game) {
-        def outStr = ''
-        project.android.productFlavors.find { flavor ->
-            if (flavor.dimension == 'game' && flavor.name.capitalize() == game) {
-                outStr = flavor.ext.gnTarget
-                return true
-            }
-        }
-        return outStr
-    }
-
-    def generateGnArgsContent(String buildType, String arch) {
-        def content = 'target_os="android"\n'
-        content += 'target_cpu="' + GN_CPU_CODES[arch] + '"\n'
-        content += "is_debug=${buildType != 'Release'}\n"
-        content += 'ndk="' + project.android.ndkDirectory + '"\n'
-        content += "ndk_api=${project.rootProject.ext.minSdk}\n"
-        return content
-    }
-
-    def getOutDir(String buildType) {
-        return "${project.buildDir}/gn_out/${buildType.toLowerCase()}"
-    }
-
-    def getAssetsDir(String buildType) {
-        return "${project.buildDir}/gn_out/${buildType.toLowerCase()}/assets"
-    }
-
-    def getJniLibsDir(String buildType) {
-        return "${project.buildDir}/gn_out/jniLibs/${buildType.toLowerCase()}"
-    }
-}
-
 apply plugin: 'com.android.application'
 apply plugin: Utils
 
@@ -273,6 +126,11 @@ dependencies {
     implementation 'com.google.android.gms:play-services-ads:22.0.0'
 }
 
+//
+// Tasks for GN build
+//
+
+// Generate `args.gn` which is used by GN to take in build arguments.
 utils.addTask('generateGnArgsFor') { String taskName, String buildType, String arch ->
     task(taskName, type: WriteFileTask) {
         content = utils.generateGnArgsContent(buildType, arch)
@@ -280,6 +138,7 @@ utils.addTask('generateGnArgsFor') { String taskName, String buildType, String a
     }
 }
 
+// Run `gn gen` to generate ninja files.
 utils.addTask('runGnFor') { String taskName, String buildType, String arch ->
     task(taskName, type: Exec) {
         dependsOn "generateGnArgsFor${arch}${buildType}"
@@ -287,11 +146,13 @@ utils.addTask('runGnFor') { String taskName, String buildType, String arch ->
         executable rootProject.ext.gn
         args '--fail-on-unused-args', 'gen', "${utils.getOutDir(buildType)}/${arch}"
 
+        // Need to run gn only once unless the configuration in `args.gn` changes.
         inputs.file(new File("${utils.getOutDir(buildType)}/${arch}", 'args.gn'))
         outputs.file(new File("${utils.getOutDir(buildType)}/${arch}", 'build.ninja'))
     }
 }
 
+// Build the native library for the target game using ninja.
 utils.addGameTask('runNinjaFor') { String taskName, String buildType, String arch, String game ->
     task(taskName, type: Exec) {
         dependsOn "runGnFor${arch}${buildType}"
@@ -304,6 +165,8 @@ utils.addGameTask('runNinjaFor') { String taskName, String buildType, String arc
     }
 }
 
+// Assets can be obtained from the output directory of any arch but it would be good to combine them
+// in a single directory in case we are buildig multi-arch and some build config have different assets.
 utils.addGameTask('copyAssetsFor') { String taskName, String buildType, String arch, String game ->
     task(taskName, type: Copy) {
         dependsOn "runNinjaFor${game}${arch}${buildType}"
@@ -313,6 +176,8 @@ utils.addGameTask('copyAssetsFor') { String taskName, String buildType, String a
     }
 }
 
+// Copy the native library to a directory denoting its arch code as the Android Gradle plugin expects.
+// Also rename it to `libkaliber.so` which is the name expected by the engine.
 utils.addGameTask('copyJniLibsFor') { String taskName, String buildType, String arch, String game ->
     task(taskName, type: Copy) {
         dependsOn "runNinjaFor${game}${arch}${buildType}"
@@ -366,5 +231,157 @@ tasks.configureEach { task ->
             }
         }
         return
+    }
+}
+
+//
+// Utils plugin
+//
+
+class Utils implements Plugin<Project> {
+    final def ARCH_CODES = ["armeabi-v7a": "Arm7",
+                            "arm64-v8a": "Arm8",
+                            "x86_64": "X86_64",
+                            "x86": "X86"].asImmutable()
+    final def GN_CPU_CODES = ["Arm7": "arm",
+                              "Arm8": "arm64",
+                              "X86_64": "x64",
+                              "X86": "x86"].asImmutable()
+
+    def project
+
+    @Inject
+    Utils(Project project) {
+        this.project = project
+    }
+
+    void apply(Project project) {
+        project.extensions.create('utils', Utils)
+    }
+
+    // Add a task for archs and buildTypes variants.
+    void addTask(String prefix, Closure taskClosure) {
+        forEachBuildVariant { String arch, String buildType ->
+            def taskName = "${prefix}${arch}${buildType}"
+            taskClosure(taskName, buildType, arch)
+        }
+    }
+
+    // Add a task for games, archs and buildTypes variants.
+    void addGameTask(String prefix, Closure taskClosure) {
+        forEachGameBuildVariant { String game, String arch, String buildType ->
+            def taskName = "${prefix}${game}${arch}${buildType}"
+            taskClosure(taskName, buildType, arch, game)
+        }
+    }
+
+    void forEachBuildVariant(Closure callback) {
+        project.android.productFlavors.each { arch ->
+            // Only need to add tasks for arch types which maps to a single ABI
+            if (arch.dimension == 'arch' && arch.ndk.abiFilters.size() == 1) {
+                project.android.buildTypes.each { buildType ->
+                    callback(arch.name.capitalize(), buildType.name.capitalize())
+                }
+            }
+        }
+    }
+
+    void forEachGameBuildVariant(Closure callback) {
+        project.android.productFlavors.each { game ->
+            if (game.dimension == 'game') {
+                project.android.productFlavors.each { arch ->
+                    // Only need to add tasks for arch types which maps to a single ABI
+                    if (arch.dimension == 'arch' && arch.ndk.abiFilters.size() == 1) {
+                        project.android.buildTypes.each { buildType ->
+                            callback(game.name.capitalize(), arch.name.capitalize(), buildType.name.capitalize())
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    void forEachBuildType(Closure callback) {
+        project.android.buildTypes.each { buildType ->
+            callback(buildType.name)
+        }
+    }
+
+    def getBuildTypesRegExp() {
+        def outList = []
+        project.android.buildTypes.each { buildType ->
+            outList += buildType.name.capitalize()
+        }
+        return outList.join('|')
+    }
+
+    def getArchTypesRegExp() {
+        def outList = []
+        project.android.productFlavors.each { flavor ->
+            if (flavor.dimension == 'arch') {
+                outList += flavor.name.capitalize()
+            }
+        }
+        return outList.join('|')
+    }
+
+    def getAbiCodeFor(String arch) {
+        def outStr = ''
+        project.android.productFlavors.find { flavor ->
+            if (flavor.name.capitalize() == arch) {
+                outStr = flavor.ndk.abiFilters.first()
+                return true
+            }
+        }
+        return outStr
+    }
+
+    def getGnTargetFor(String game) {
+        def outStr = ''
+        project.android.productFlavors.find { flavor ->
+            if (flavor.dimension == 'game' && flavor.name.capitalize() == game) {
+                outStr = flavor.ext.gnTarget
+                return true
+            }
+        }
+        return outStr
+    }
+
+    def generateGnArgsContent(String buildType, String arch) {
+        def content = 'target_os="android"\n'
+        content += 'target_cpu="' + GN_CPU_CODES[arch] + '"\n'
+        content += "is_debug=${buildType != 'Release'}\n"
+        content += 'ndk="' + project.android.ndkDirectory + '"\n'
+        content += "ndk_api=${project.rootProject.ext.minSdk}\n"
+        return content
+    }
+
+    def getOutDir(String buildType) {
+        return "${project.buildDir}/gn_out/${buildType.toLowerCase()}"
+    }
+
+    def getAssetsDir(String buildType) {
+        return "${project.buildDir}/gn_out/${buildType.toLowerCase()}/assets"
+    }
+
+    def getJniLibsDir(String buildType) {
+        return "${project.buildDir}/gn_out/jniLibs/${buildType.toLowerCase()}"
+    }
+}
+
+abstract class WriteFileTask extends DefaultTask {
+    @Input
+    abstract Property<String> getContent()
+
+    @OutputFile
+    abstract RegularFileProperty getTarget()
+
+    @TaskAction
+    void run() {
+        def file = target.get().asFile
+        file.parentFile.mkdirs()
+        def text = content.get()
+        if (!file.exists() || text != file.text)
+            file.text = text
     }
 }
