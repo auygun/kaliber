@@ -27,7 +27,6 @@ android {
         helloWorld {
             dimension 'game'
             applicationId 'com.kaliber.helloworld'
-            resValue "string", "provider_name", "${applicationId}.fileprovider"
             resValue "string", "app_name", "Kaliber Hello World"
             manifestPlaceholders = [appIcon: "@mipmap/ic_launcher"]
             ext {
@@ -37,7 +36,6 @@ android {
         demo {
             dimension 'game'
             applicationId 'com.kaliber.woom'
-            resValue "string", "provider_name", "${applicationId}.fileprovider"
             resValue "string", "app_name", "Kaliber Demo"
             manifestPlaceholders = [appIcon: "@mipmap/ic_launcher"]
             ext {
@@ -47,7 +45,6 @@ android {
         woom {
             dimension 'game'
             applicationId 'com.woom.game'
-            resValue "string", "provider_name", "${applicationId}.fileprovider"
             resValue "string", "app_name", "woom"
             resValue "string", "interstitial_ad_unit_id", "ca-app-pub-1321063817979967/8373182022"
             manifestPlaceholders = [appIcon: "@mipmap/ic_launcher"]
