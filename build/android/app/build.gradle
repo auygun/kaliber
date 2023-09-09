@@ -101,15 +101,15 @@ android {
     sourceSets {
         main {
             java.srcDirs += ['../../../src/engine/platform/java/com/kaliber/base']
-            utils.forEachBuildType { buildType ->
-                "${buildType}" {
-                    assets.srcDirs = [utils.getAssetsDir(buildType)]
+            android.buildTypes.each { buildType ->
+                "${buildType.name}" {
+                    assets.srcDirs = [utils.getAssetsDir(buildType.name)]
                 }
             }
         }
-        utils.forEachBuildType { buildType ->
-            "${buildType}" {
-                jniLibs.srcDirs = [utils.getJniLibsDir(buildType)]
+        android.buildTypes.each { buildType ->
+            "${buildType.name}" {
+                jniLibs.srcDirs = [utils.getJniLibsDir(buildType.name)]
             }
         }
     }
@@ -296,12 +296,6 @@ class Utils implements Plugin<Project> {
                     }
                 }
             }
-        }
-    }
-
-    void forEachBuildType(Closure callback) {
-        project.android.buildTypes.each { buildType ->
-            callback(buildType.name)
         }
     }
 
