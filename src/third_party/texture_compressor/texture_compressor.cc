@@ -10,7 +10,8 @@
 #if defined(__ANDROID__)
 #if defined(__ARMEL__) || defined(__aarch64__) || defined(_M_ARM64)
 #define ANDROID_NEON
-#include <cpu-features.h>
+#include <cpufeatures/cpu-features.h>
+
 #include "dxt_encoder_neon.h"
 #include "texture_compressor_etc1_neon.h"
 #endif
@@ -32,7 +33,7 @@ class TextureCompressorATC : public TextureCompressor {
                 int width,
                 int height,
                 Quality quality) {
-      CompressATC(src, dst, width, height, !supports_opacity_, quality);
+    CompressATC(src, dst, width, height, !supports_opacity_, quality);
   }
 
  private:
@@ -57,7 +58,7 @@ class TextureCompressorATC_NEON : public TextureCompressor {
                 int width,
                 int height,
                 Quality quality) {
-      CompressATC_NEON(src, dst, width, height, !supports_opacity_, quality);
+    CompressATC_NEON(src, dst, width, height, !supports_opacity_, quality);
   }
 
  private:
@@ -82,7 +83,7 @@ class TextureCompressorDXT : public TextureCompressor {
                 int width,
                 int height,
                 Quality quality) {
-      CompressDXT(src, dst, width, height, !supports_opacity_, quality);
+    CompressDXT(src, dst, width, height, !supports_opacity_, quality);
   }
 
  private:
@@ -107,7 +108,7 @@ class TextureCompressorDXT_NEON : public TextureCompressor {
                 int width,
                 int height,
                 Quality quality) {
-      CompressDXT_NEON(src, dst, width, height, !supports_opacity_, quality);
+    CompressDXT_NEON(src, dst, width, height, !supports_opacity_, quality);
   }
 
  private:
@@ -122,8 +123,8 @@ std::unique_ptr<TextureCompressor> TextureCompressor::Create(Format format) {
     case kFormatATCIA:
 #ifdef ANDROID_NEON
       if ((android_getCpuFeatures() & ANDROID_CPU_ARM_FEATURE_NEON) != 0) {
-        return std::make_unique<TextureCompressorATC_NEON>(
-            format == kFormatATCIA);
+        return std::make_unique<TextureCompressorATC_NEON>(format ==
+                                                           kFormatATCIA);
       }
 #endif
       return std::make_unique<TextureCompressorATC>(format == kFormatATCIA);
@@ -132,8 +133,8 @@ std::unique_ptr<TextureCompressor> TextureCompressor::Create(Format format) {
     case kFormatDXT5:
 #ifdef ANDROID_NEON
       if ((android_getCpuFeatures() & ANDROID_CPU_ARM_FEATURE_NEON) != 0) {
-        return std::make_unique<TextureCompressorDXT_NEON>(
-            format == kFormatDXT5);
+        return std::make_unique<TextureCompressorDXT_NEON>(format ==
+                                                           kFormatDXT5);
       }
 #endif
       return std::make_unique<TextureCompressorDXT>(format == kFormatDXT5);

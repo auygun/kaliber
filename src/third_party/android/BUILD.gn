@@ -1,0 +1,23 @@
+config("android_public") {
+  include_dirs = [ "$ndk/sources/android" ]
+}
+
+source_set("android") {
+  assert(target_os == "android")
+
+  configs -= [ "//build:warnings" ]
+  public_configs = [ ":android_public" ]
+
+  sources = [
+    "$ndk/sources/android/cpufeatures/cpu-features.c",
+    "$ndk/sources/android/cpufeatures/cpu-features.h",
+    "$ndk/sources/android/native_app_glue/android_native_app_glue.c",
+    "$ndk/sources/android/native_app_glue/android_native_app_glue.h",
+    "$ndk/sources/android/ndk_helper/gl3stub.c",
+    "$ndk/sources/android/ndk_helper/gl3stub.h",
+    "GLContext.cpp",
+    "GLContext.h",
+  ]
+
+  deps = []
+}

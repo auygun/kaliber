@@ -1,0 +1,10 @@
+source_set("vma") {
+  configs -= [ "//build:warnings" ]
+
+  sources = [
+    "vk_mem_alloc.cpp",
+    "vk_mem_alloc.h",
+  ]
+
+  deps = [ "//src/third_party/vulkan" ]
+}

@@ -1,0 +1,11 @@
+source_set("jsoncpp") {
+  configs -= [ "//build:warnings" ]
+
+  sources = [
+    "json-forwards.h",
+    "json.h",
+    "jsoncpp.cpp",
+  ]
+
+  deps = []
+}

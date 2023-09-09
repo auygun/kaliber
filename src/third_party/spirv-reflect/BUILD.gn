@@ -1,0 +1,10 @@
+source_set("spirv-reflect") {
+  configs -= [ "//build:warnings" ]
+
+  sources = [
+    "include/spirv/unified1/spirv.h",
+    "spirv_reflect.c",
+  ]
+
+  deps = []
+}

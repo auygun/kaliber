@@ -1,0 +1,20 @@
+source_set("glew") {
+  assert(target_os != "android")
+
+  configs -= [ "//build:warnings" ]
+
+  defines = [ "GLEW_STATIC" ]
+
+  sources = [
+    "glew.c",
+    "glew.h",
+  ]
+
+  if (target_os == "linux") {
+    sources += [ "glxew.h" ]
+  } else if (target_os == "win") {
+    sources += [ "wglew.h" ]
+  }
+
+  deps = []
+}

@@ -121,6 +121,24 @@ source_set("engine") {
   deps = [
     "//assets/engine",
     "//src/base",
-    "//src/third_party",
+    "//src/third_party/glslang",
+    "//src/third_party/jsoncpp",
+    "//src/third_party/minimp3",
+    "//src/third_party/spirv-reflect",
+    "//src/third_party/stb",
+    "//src/third_party/texture_compressor",
+    "//src/third_party/vma",
+    "//src/third_party/vulkan",
+    "//src/third_party/volk",
   ]
+
+  if (target_os == "android") {
+    deps += [
+      "//src/third_party/android",
+      "//src/third_party/oboe",
+      "//src/third_party/minizip",
+    ]
+  } else {
+    deps += [ "//src/third_party/glew" ]
+  }
 }

@@ -1,0 +1,10 @@
+source_set("volk") {
+  configs -= [ "//build:warnings" ]
+
+  sources = [
+    "volk.c",
+    "volk.h",
+  ]
+
+  deps = [ "//src/third_party/vulkan" ]
+}

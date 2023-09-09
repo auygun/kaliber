@@ -1,0 +1,34 @@
+source_set("texture_compressor") {
+  sources = [
+    "dxt_encoder.cc",
+    "dxt_encoder.h",
+    "dxt_encoder_implementation_autogen.h",
+    "dxt_encoder_internals.cc",
+    "dxt_encoder_internals.h",
+    "texture_compressor.cc",
+    "texture_compressor.h",
+    "texture_compressor_etc1.cc",
+    "texture_compressor_etc1.h",
+  ]
+
+  if (target_os == "android" &&
+      (target_cpu == "arm" || target_cpu == "arm64")) {
+    sources += [
+      "dxt_encoder_neon.cc",
+      "texture_compressor_etc1_neon.cc",
+    ]
+  }
+
+  cflags = []
+
+  if (target_os == "win") {
+    cflags += [
+      "/wd4242",  # tmp:conversion from 'int' to 'uint8_t'
+    ]
+  }
+
+  deps = []
+  if (target_os == "android") {
+    deps += [ "//src/third_party/android" ]
+  }
+}

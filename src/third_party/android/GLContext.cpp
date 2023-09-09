@@ -25,7 +25,7 @@
 #include <string>
 #include <unistd.h>
 
-#include "gl3stub.h"
+#include <ndk_helper/gl3stub.h>
 
 #include <android/log.h>
 

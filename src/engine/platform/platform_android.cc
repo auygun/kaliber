@@ -2,9 +2,9 @@
 
 #include <memory>
 
-#include <android_native_app_glue.h>
 #include <dlfcn.h>
 #include <jni.h>
+#include <native_app_glue/android_native_app_glue.h>
 #include <unistd.h>
 
 #include "base/log.h"

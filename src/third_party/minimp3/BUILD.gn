@@ -1,0 +1,11 @@
+source_set("minimp3") {
+  configs -= [ "//build:warnings" ]
+
+  sources = [
+    "minimp3.cc",
+    "minimp3.h",
+    "minimp3_ex.h",
+  ]
+
+  deps = []
+}

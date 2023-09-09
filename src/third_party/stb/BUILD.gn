@@ -1,0 +1,11 @@
+source_set("stb") {
+  configs -= [ "//build:warnings" ]
+
+  sources = [
+    "stb_image.cc",
+    "stb_image.h",
+    "stb_truetype.h",
+  ]
+
+  deps = []
+}

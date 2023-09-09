@@ -6,7 +6,7 @@
 // Use the modified Khronos header from ndk-helper. This gives access to
 // additional functionality the drivers may expose but which the system headers
 // do not.
-#include "third_party/android/gl3stub.h"
+#include <ndk_helper/gl3stub.h>
 
 #include <GLES2/gl2ext.h>
 

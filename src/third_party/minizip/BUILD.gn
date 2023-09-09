@@ -1,0 +1,12 @@
+source_set("minizip") {
+  configs -= [ "//build:warnings" ]
+
+  sources = [
+    "ioapi.c",
+    "ioapi.h",
+    "unzip.c",
+    "unzip.h",
+  ]
+
+  deps = []
+}

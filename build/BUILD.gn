@@ -88,13 +88,6 @@ config("default") {
     # "//",
     "//src",
   ]
-  if (is_android) {
-    include_dirs += [
-      "$ndk/sources/android",
-      "$ndk/sources/android/native_app_glue",
-      "$ndk/sources/android/cpufeatures",
-    ]
-  }
 }
 
 config("debug") {
