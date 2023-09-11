@@ -85,7 +85,6 @@ config("default") {
 
   # Avoid relative paths everywhere.
   include_dirs = [
-    # "//",
     "//src",
   ]
 }
@@ -150,12 +149,6 @@ config("release") {
                           # and other math functions.
     ]
 
-    # cflags += [
-    #   # Generate machine code for the current developer computer.
-    #   # TODO: This needs to be set properly before release.
-    #   "-march=native",
-    # ]
-
     if (is_apple) {
       ldflags = [ "-dead-strip" ]
     } else {
@@ -196,52 +189,17 @@ config("warnings") {
       "/Wv:18",
       "/wd4191",  # 'type cast': unsafe conversion
       "/wd4244",  # conversion, possible loss of data. 'int' to 'float'
-      "/wd4245",  # tmp:conversion from 'int' to 'const unsigned int'
-
-      # "/wd4267",  # conversion, possible loss of data.
+      "/wd4245",  # conversion from 'int' to 'const unsigned int'
       "/wd4305",  # truncation from 'double' to 'float'.
       "/wd4365",  # conversion, signed/unsigned mismatch.
-
-      # "/wd5219",  # conversion, possible loss of data. 'int' to 'float'
       "/wd4722",  # destructor never returns, potential memory leak
       "/wd4702",  # unreachable code
+      "/wd4625",  # copy constructor was implicitly defined as deleted
+      "/wd4626",  # assignment operator was implicitly defined as deleted
 
       # Possible compiler bug? Needs investigation.
       "/wd4668",  # '__STDC_WANT_SECURE_LIB__' is not defined as a preprocessor
                   # macro, replacing with '0' for '#if/#elif'
-
-      # TODO:
-      # "/wd4263",  # member function does not override any base class virtual
-                  # member function
-      # "/wd4264",  # no override available for virtual member function, function
-                  # is hidden
-      # "/wd4266",  # no override available for virtual member function from base,
-                  # function is hidden
-      # "/wd4355",  # 'this' used in base member initializer list
-      # "/wd4457",  # declaration hides function parameter
-      # "/wd4464",  # relative include path contains '..'.
-      "/wd4625",  # copy constructor was implicitly defined as deleted
-      "/wd4626",  # assignment operator was implicitly defined as deleted
-      # "/wd4706",  # assignment withing conditional expression.
-      # "/wd4774",  # format string expected in argument X is not a string literal
-      # "/wd4828",  # The file contains a character that is illegal in the current
-                  # source character set
-      # "/wd4946",  # reinterpret_cast used between related
-      # "/wd5026",  # move constructor was implicitly defined as deleted
-      # "/wd5027",  # move assignment operator was implicitly defined as deleted
-      # "/wd5039",  # pointer or reference to potentially throwing function passed
-                  # to 'extern "C"' function under -EHc. Undefined behavior may
-                  # occur if this function throws an exception.
-
-      # TODO: I don't understand these or how to fix them:
-      # "/wd4458",  # declaration hides class member
-                  # [ GameObject::rtti ]
-      # "/wd4582",  # constructor is not implicitly called
-                  # [ intersection.h Contact ]
-      # "/wd4623",  # default constructor was implicitly defined as deleted
-                  # [ intersection.h Contact ]
-      # "/wd5243",  # using incomplete class can cause potential one definition
-                  # rule violation due to ABI limitation
     ]
 
     defines = [
@@ -262,7 +220,6 @@ config("warnings") {
       "-Wall",  # Enable (almost) all warnings.
       "-Wextra",  # Enable even more warnings.
 
-      # "-Wpedantic",  # Issue warnings demanded by strict ISO C/C++ and reject
       # forbidden extensions.
       "-Wvla",  # Warn if variable-length array is used in code.
 
@@ -280,23 +237,11 @@ config("executable") {
       "-rdynamic",
     ]
   } else if (is_linux) {
-    # ldflags = [
-    #   "-rdynamic",  # Tell linker to expose all symbols, not only used ones.
-    #                 # Needed for some uses of dlopen and for backtraces within
-    #                 # the program.
-    #   "-Wl,-rpath,\$ORIGIN",  # Add directory to runtime library search path.
-    # ]
+    ldflags = [
+      "-Wl,-rpath,\$ORIGIN",  # Add directory to runtime library search path.
+    ]
   } else if (is_mac) {
     ldflags = [ "-Wl,-rpath,@loader_path/." ]
-  } else if (is_win) {
-    ldflags = [
-      "/DYNAMICBASE",  # Use address space layout randomization.
-      "/INCREMENTAL:NO",  # Incremental linking interferes with both ninja and
-                          # release optimizations.
-
-      # Leave the target architecture to environment settings.
-      # "/MACHINE:X64",
-    ]
   }
 }
 
@@ -316,15 +261,6 @@ config("shared_library") {
     ]
   } else if (is_mac) {
     ldflags = [ "-Wl,-rpath,@loader_path/." ]
-  } else if (is_win) {
-    ldflags = [
-      "/DYNAMICBASE",  # Use address space layout randomization.
-      "/INCREMENTAL:NO",  # Incremental linking interferes with both ninja and
-                          # release optimizations.
-
-      # Leave the target architecture to environment settings.
-      # "/MACHINE:X64",
-    ]
   }
 }
 

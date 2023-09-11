@@ -4,8 +4,4 @@ build/android/*.idsig
 build/android/app/.cxx
 build/android/app/build
 build/android/build
-build/linux/demo_x86_64_debug
-build/linux/demo_x86_64_release
-build/linux/obj
-build/linux/woom
 out
