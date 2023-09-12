@@ -193,7 +193,7 @@ tasks.configureEach { task ->
 
     def match = task.name =~ /^merge/ + variantPattern + /JniLibFolders$/
     if (match) {
-        android.productFlavors.find { arch ->
+        utils.project.android.productFlavors.find { arch ->
             if (arch.dimension == 'arch' && arch.name.capitalize() == match.group(2)) {
                 // Depends on each arch type for multi-arch build flavors.
                 arch.ndk.abiFilters.each { abi ->
@@ -206,7 +206,7 @@ tasks.configureEach { task ->
     }
     match = task.name =~ /^generate/ + variantPattern + /Assets$/
     if (match) {
-        android.productFlavors.find { arch ->
+        utils.project.android.productFlavors.find { arch ->
             if (arch.dimension == 'arch' && arch.name.capitalize() == match.group(2)) {
                 // Depends on each arch type for multi-arch build flavors.
                 arch.ndk.abiFilters.each { abi ->
@@ -219,7 +219,7 @@ tasks.configureEach { task ->
     }
     match = task.name =~ /^lintVitalAnalyze/ + variantPattern + /$/
     if (match) {
-        android.productFlavors.find { arch ->
+        utils.project.android.productFlavors.find { arch ->
             if (arch.dimension == 'arch' && arch.name.capitalize() == match.group(2)) {
                 // Depends on each arch type for multi-arch build flavors.
                 arch.ndk.abiFilters.each { abi ->
