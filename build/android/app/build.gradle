@@ -204,7 +204,7 @@ tasks.configureEach { task ->
         }
         return
     }
-    match = task.name =~ /^merge/ + variantPattern + /Assets$/
+    match = task.name =~ /^generate/ + variantPattern + /Assets$/
     if (match) {
         android.productFlavors.find { arch ->
             if (arch.dimension == 'arch' && arch.name.capitalize() == match.group(2)) {
