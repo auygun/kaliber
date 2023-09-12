@@ -1,15 +1,12 @@
 config("vulkan_public") {
   include_dirs = [ "include" ]
-  defines = [ "VMA_STATIC_VULKAN_FUNCTIONS=1" ]
-  cflags = []
 
   if (target_os == "linux") {
-    defines += [ "VK_USE_PLATFORM_XLIB_KHR" ]
+    defines = [ "VK_USE_PLATFORM_XLIB_KHR" ]
   } else if (target_os == "win") {
-    defines += [ "VK_USE_PLATFORM_WIN32_KHR" ]
+    defines = [ "VK_USE_PLATFORM_WIN32_KHR" ]
   } else if (target_os == "android") {
-    defines += [ "VK_USE_PLATFORM_ANDROID_KHR" ]
-    cflags += [ "-Wno-nullability-completeness" ]
+    defines = [ "VK_USE_PLATFORM_ANDROID_KHR" ]
   }
 }
 
