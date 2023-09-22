@@ -17,11 +17,9 @@
 #include "engine/input_event.h"
 #include "engine/platform/platform.h"
 #include "engine/renderer/geometry.h"
-#include "engine/renderer/opengl/renderer_opengl.h"
 #include "engine/renderer/renderer.h"
 #include "engine/renderer/shader.h"
 #include "engine/renderer/texture.h"
-#include "engine/renderer/vulkan/renderer_vulkan.h"
 #include "third_party/texture_compressor/texture_compressor.h"
 
 using namespace base;
@@ -554,22 +552,10 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
 }
 
 void Engine::CreateRendererInternal(RendererType type) {
-  if ((dynamic_cast<RendererVulkan*>(renderer_.get()) &&
-       type == RendererType::kVulkan) ||
-      (dynamic_cast<RendererOpenGL*>(renderer_.get()) &&
-       type == RendererType::kOpenGL))
+  if (renderer_ && renderer_->GetRendererType() == type)
     return;
 
-  if (type == RendererType::kVulkan) {
-    renderer_ =
-        std::make_unique<RendererVulkan>(std::bind(&Engine::ContextLost, this));
-  } else if (type == RendererType::kOpenGL) {
-    renderer_ =
-        std::make_unique<RendererOpenGL>(std::bind(&Engine::ContextLost, this));
-  } else {
-    NOTREACHED();
-  }
-
+  renderer_ = Renderer::Create(type, std::bind(&Engine::ContextLost, this));
   bool result = renderer_->Initialize(platform_);
   if (!result && type == RendererType::kVulkan) {
     LOG(0) << "Failed to initialize " << renderer_->GetDebugName()

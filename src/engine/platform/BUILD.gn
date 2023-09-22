@@ -1,0 +1,46 @@
+source_set("platform") {
+  sources = [
+    "asset_file.cc",
+    "asset_file.h",
+    "platform.h",
+    "platform_observer.h",
+  ]
+
+  libs = []
+  deps = [ "//src/base" ]
+
+  if (target_os == "linux" || target_os == "win") {
+    sources += [ "asset_file_generic.cc" ]
+  }
+
+  if (target_os == "linux") {
+    sources += [ "platform_linux.cc" ]
+    libs += [
+      "X11",
+      "GL",
+    ]
+  } else if (target_os == "win") {
+    sources += [ "platform_win.cc" ]
+    libs = [
+      "gdi32.lib",  # Graphics
+      "user32.lib",  # Win32 API core functionality.
+      "opengl32.lib",
+    ]
+  } else if (target_os == "android") {
+    sources += [
+      "asset_file_android.cc",
+      "platform_android.cc",
+    ]
+    libs += [
+      "android",
+      "EGL",
+      "GLESv3",
+      "log",
+      "z",
+    ]
+    deps += [
+      "//src/third_party/android",
+      "//src/third_party/minizip",
+    ]
+  }
+}

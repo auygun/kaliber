@@ -21,6 +21,9 @@ class Renderer {
  public:
   const unsigned kInvalidId = 0;
 
+  static std::unique_ptr<Renderer> Create(RendererType type,
+                                          base::Closure context_lost_cb);
+
   Renderer(base::Closure context_lost_cb)
       : context_lost_cb_{std::move(context_lost_cb)} {}
   virtual ~Renderer() = default;

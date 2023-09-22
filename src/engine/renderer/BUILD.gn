@@ -1,0 +1,55 @@
+source_set("renderer") {
+  sources = [
+    "geometry.cc",
+    "geometry.h",
+    "opengl/opengl.h",
+    "opengl/renderer_opengl.cc",
+    "opengl/renderer_opengl.h",
+    "render_resource.h",
+    "renderer.cc",
+    "renderer.h",
+    "renderer_types.cc",
+    "renderer_types.h",
+    "shader.cc",
+    "shader.h",
+    "texture.cc",
+    "texture.h",
+    "vulkan/renderer_vulkan.cc",
+    "vulkan/vulkan_context.cc",
+  ]
+
+  if (target_os == "linux") {
+    sources += [
+      "opengl/renderer_opengl_linux.cc",
+      "vulkan/renderer_vulkan_linux.cc",
+      "vulkan/vulkan_context_linux.cc",
+    ]
+  } else if (target_os == "win") {
+    sources += [
+      "opengl/renderer_opengl_win.cc",
+      "vulkan/renderer_vulkan_win.cc",
+      "vulkan/vulkan_context_win.cc",
+    ]
+  } else if (target_os == "android") {
+    sources += [
+      "opengl/renderer_opengl_android.cc",
+      "vulkan/renderer_vulkan_android.cc",
+      "vulkan/vulkan_context_android.cc",
+    ]
+  }
+
+  deps = [
+    "//src/base",
+    "//src/third_party/glslang",
+    "//src/third_party/spirv-reflect",
+    "//src/third_party/vma",
+    "//src/third_party/volk",
+    "//src/third_party/vulkan",
+  ]
+
+  if (target_os == "android") {
+    deps += [ "//src/third_party/android" ]
+  } else {
+    deps += [ "//src/third_party/glew" ]
+  }
+}
