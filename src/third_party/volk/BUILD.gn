@@ -6,5 +6,5 @@ source_set("volk") {
     "volk.h",
   ]
 
-  deps = [ "//src/third_party/vulkan" ]
+  public_deps = [ "//src/third_party/vulkan" ]
 }
