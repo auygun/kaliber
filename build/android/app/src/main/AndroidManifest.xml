@@ -27,12 +27,12 @@
             </intent-filter>
             <meta-data
                 android:name="android.app.lib_name"
-                android:value="kaliber" />
+                android:value="@string/lib_name" />
         </activity>
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-1321063817979967~1100949243" />
+            android:value="@string/admob_application_id" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -47,6 +47,7 @@ android {
             applicationId 'com.woom.game'
             resValue "string", "app_name", "woom"
             resValue "string", "interstitial_ad_unit_id", "ca-app-pub-1321063817979967/8373182022"
+            resValue "string", "admob_application_id", "ca-app-pub-1321063817979967~1100949243"
             manifestPlaceholders = [appIcon: "@mipmap/ic_launcher"]
             ext {
                 gnTarget = "demo"
@@ -94,6 +95,16 @@ android {
             dimension 'arch'
             ndk {
                 abiFilters = ["x86_64", "x86"]
+            }
+        }
+
+        // Native library name is same as GN target name.
+        android.productFlavors.each { flavor ->
+            if (flavor.dimension == 'game') {
+                "${flavor.name}" {
+                    resValue "string", "lib_name", flavor.ext.gnTarget
+                    buildConfigField 'String', 'NATIVE_LIBRARY', "\"${flavor.ext.gnTarget}\""
+                }
             }
         }
     }
@@ -175,14 +186,12 @@ utils.addGameTask('copyAssetsFor') { String taskName, String buildType, String a
 }
 
 // Copy the native library to a directory denoting its arch code as the Android Gradle plugin expects.
-// Also rename it to `libkaliber.so` which is the name expected by the engine.
 utils.addGameTask('copyJniLibsFor') { String taskName, String buildType, String arch, String game ->
     task(taskName, type: Copy) {
         dependsOn "runNinjaFor${game}${arch}${buildType}"
 
         from("${utils.getOutDir(buildType)}/${arch}") {
             include "lib${utils.getGnTargetFor(game)}.so"
-            rename "lib${utils.getGnTargetFor(game)}.so", "libkaliber.so"
         }
         into "${utils.getJniLibsDir(buildType)}/${utils.getAbiCodeFor(arch)}"
     }

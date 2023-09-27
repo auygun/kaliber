@@ -32,7 +32,7 @@ public class KaliberActivity extends NativeActivity {
 
     static {
         // Get the native Java methods bound to exported functions.
-        System.loadLibrary("kaliber");
+        System.loadLibrary(BuildConfig.NATIVE_LIBRARY);
     }
 
     private InterstitialAd mInterstitialAd;
