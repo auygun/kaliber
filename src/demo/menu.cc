@@ -55,7 +55,7 @@ Menu::~Menu() = default;
 
 bool Menu::PreInitialize() {
   click_sound_ = std::make_shared<Sound>();
-  if (!click_sound_->Load("menu_click.mp3", false))
+  if (!click_sound_->Load("demo/menu_click.mp3", false))
     return false;
 
   Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
@@ -72,12 +72,12 @@ bool Menu::PreInitialize() {
 
   Engine::Get().SetImageSource("menu_tex",
                                std::bind(&Menu::CreateMenuImage, this), true);
-  Engine::Get().SetImageSource("logo_tex0", "woom_logo_start_frames_01.png",
-                               true);
-  Engine::Get().SetImageSource("logo_tex1", "woom_logo_start_frames_02-03.png",
-                               true);
-  Engine::Get().SetImageSource("buttons_tex", "menu_icons.png", true);
-  Engine::Get().SetImageSource("renderer_logo", "renderer_logo.png", true);
+  Engine::Get().SetImageSource("logo_tex0",
+                               "demo/woom_logo_start_frames_01.png", true);
+  Engine::Get().SetImageSource("logo_tex1",
+                               "demo/woom_logo_start_frames_02-03.png", true);
+  Engine::Get().SetImageSource("buttons_tex", "demo/menu_icons.png", true);
+  Engine::Get().SetImageSource("renderer_logo", "demo/renderer_logo.png", true);
 
   Engine::Get().SetImageSource(
       "version_tex",

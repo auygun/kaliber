@@ -78,17 +78,20 @@ Enemy::Enemy() = default;
 Enemy::~Enemy() = default;
 
 bool Enemy::PreInitialize() {
-  Engine::Get().SetImageSource("skull_tex", "enemy_anims_01_frames_ok.png",
+  Engine::Get().SetImageSource("skull_tex", "demo/enemy_anims_01_frames_ok.png",
                                true);
-  Engine::Get().SetImageSource("bug_tex", "enemy_anims_02_frames_ok.png", true);
-  Engine::Get().SetImageSource("boss_tex1", "Boss_ok.png", true);
-  Engine::Get().SetImageSource("boss_tex2", "Boss_ok_lvl2.png", true);
-  Engine::Get().SetImageSource("boss_tex3", "Boss_ok_lvl3.png", true);
-  Engine::Get().SetImageSource("target_tex", "enemy_target_single_ok.png",
+  Engine::Get().SetImageSource("bug_tex", "demo/enemy_anims_02_frames_ok.png",
                                true);
-  Engine::Get().SetImageSource("blast_tex", "enemy_anims_blast_ok.png", true);
-  Engine::Get().SetImageSource("shield_tex", "woom_enemy_shield.png", true);
-  Engine::Get().SetImageSource("crate_tex", "nuke_pack_OK.png", true);
+  Engine::Get().SetImageSource("boss_tex1", "demo/Boss_ok.png", true);
+  Engine::Get().SetImageSource("boss_tex2", "demo/Boss_ok_lvl2.png", true);
+  Engine::Get().SetImageSource("boss_tex3", "demo/Boss_ok_lvl3.png", true);
+  Engine::Get().SetImageSource("target_tex", "demo/enemy_target_single_ok.png",
+                               true);
+  Engine::Get().SetImageSource("blast_tex", "demo/enemy_anims_blast_ok.png",
+                               true);
+  Engine::Get().SetImageSource("shield_tex", "demo/woom_enemy_shield.png",
+                               true);
+  Engine::Get().SetImageSource("crate_tex", "demo/nuke_pack_OK.png", true);
 
   for (int i = 0; i < kEnemyType_Max; ++i) {
     if (i == kEnemyType_PowerUp)
@@ -99,16 +102,16 @@ bool Enemy::PreInitialize() {
   }
 
   Engine::Get().SetShaderSource("chromatic_aberration",
-                                "chromatic_aberration.glsl");
+                                "demo/chromatic_aberration.glsl");
 
-  Engine::Get().AsyncLoadSound("boss_intro", "boss_intro.mp3");
-  Engine::Get().AsyncLoadSound("boss_explosion", "boss_explosion.mp3");
-  Engine::Get().AsyncLoadSound("explosion", "explosion.mp3");
-  Engine::Get().AsyncLoadSound("stealth", "stealth.mp3");
-  Engine::Get().AsyncLoadSound("shield", "shield.mp3");
-  Engine::Get().AsyncLoadSound("hit", "hit.mp3");
-  Engine::Get().AsyncLoadSound("powerup-spawn", "powerup-spawn.mp3");
-  Engine::Get().AsyncLoadSound("powerup-pick", "powerup-pick.mp3");
+  Engine::Get().AsyncLoadSound("boss_intro", "demo/boss_intro.mp3");
+  Engine::Get().AsyncLoadSound("boss_explosion", "demo/boss_explosion.mp3");
+  Engine::Get().AsyncLoadSound("explosion", "demo/explosion.mp3");
+  Engine::Get().AsyncLoadSound("stealth", "demo/stealth.mp3");
+  Engine::Get().AsyncLoadSound("shield", "demo/shield.mp3");
+  Engine::Get().AsyncLoadSound("hit", "demo/hit.mp3");
+  Engine::Get().AsyncLoadSound("powerup-spawn", "demo/powerup-spawn.mp3");
+  Engine::Get().AsyncLoadSound("powerup-pick", "demo/powerup-pick.mp3");
 
   return true;
 }

@@ -1,4 +1,4 @@
-copy("assets") {
+copy("demo") {
   sources = [
     "bead.png",
     "boss_explosion.mp3",
@@ -40,5 +40,5 @@ copy("assets") {
     "woom_logo_start_frames_02-03.png",
   ]
 
-  outputs = ["$root_out_dir/assets/{{source_file_part}}"]
+  outputs = ["$root_out_dir/assets/demo/{{source_file_part}}"]
 }

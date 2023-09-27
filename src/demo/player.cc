@@ -30,14 +30,15 @@ Player::Player() = default;
 Player::~Player() = default;
 
 bool Player::PreInitialize() {
-  Engine::Get().SetImageSource("weapon_tex", "enemy_anims_flare_ok.png", true);
-  Engine::Get().SetImageSource("beam_tex", "enemy_ray_ok.png", true);
-  Engine::Get().SetImageSource("nuke_symbol_tex", "nuke_frames.png", true);
-  Engine::Get().SetImageSource("health_bead", "bead.png", true);
+  Engine::Get().SetImageSource("weapon_tex", "demo/enemy_anims_flare_ok.png",
+                               true);
+  Engine::Get().SetImageSource("beam_tex", "demo/enemy_ray_ok.png", true);
+  Engine::Get().SetImageSource("nuke_symbol_tex", "demo/nuke_frames.png", true);
+  Engine::Get().SetImageSource("health_bead", "demo/bead.png", true);
 
-  Engine::Get().AsyncLoadSound("laser", "laser.mp3");
-  Engine::Get().AsyncLoadSound("nuke", "nuke.mp3");
-  Engine::Get().AsyncLoadSound("no_nuke", "no_nuke.mp3");
+  Engine::Get().AsyncLoadSound("laser", "demo/laser.mp3");
+  Engine::Get().AsyncLoadSound("nuke", "demo/nuke.mp3");
+  Engine::Get().AsyncLoadSound("no_nuke", "demo/no_nuke.mp3");
 
   return true;
 }

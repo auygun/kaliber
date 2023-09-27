@@ -19,7 +19,7 @@ game("demo") {
     "sky_quad.h",
   ]
   deps = [
-    "//assets",
+    "//assets/demo",
     "//src/base",
     "//src/engine",
   ]

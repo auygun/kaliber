@@ -156,7 +156,7 @@ utils.addGameTask('runNinjaFor') { String taskName, String buildType, String arc
         dependsOn "runGnFor${arch}${buildType}"
 
         executable rootProject.ext.ninja
-        args '-C', "${utils.getOutDir(buildType)}/${arch}", utils.getGnTargetFor(game)
+        args '-C', "${utils.getOutDir(buildType)}/${arch}", "src/${utils.getGnTargetFor(game)}"
 
         // Always run ninja and let it figure out what needs to be compiled.
         outputs.upToDateWhen { false }
