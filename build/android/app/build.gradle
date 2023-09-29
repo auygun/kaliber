@@ -114,13 +114,13 @@ android {
             java.srcDirs += ['../../../src/engine/platform/java/com/kaliber/base']
             android.buildTypes.each { buildType ->
                 "${buildType.name}" {
-                    assets.srcDirs = [utils.getAssetsDir(buildType.name)]
+                    assets.srcDirs = ["${utils.getGnOutDir(buildType.name)}/assets"]
                 }
             }
         }
         android.buildTypes.each { buildType ->
             "${buildType.name}" {
-                jniLibs.srcDirs = [utils.getJniLibsDir(buildType.name)]
+                jniLibs.srcDirs = ["${utils.getGnOutDir(buildType.name)}/jniLibs"]
             }
         }
     }
@@ -143,7 +143,7 @@ dependencies {
 utils.addTask('generateGnArgsFor') { String taskName, String buildType, String arch ->
     task(taskName, type: WriteFileTask) {
         content = utils.generateGnArgsContent(buildType, arch)
-        target = project.layout.file(provider { new File("${utils.getOutDir(buildType)}/${arch}", 'args.gn') })
+        target = project.layout.file(provider { new File("${utils.getGnOutDir(buildType)}/${arch}", 'args.gn') })
     }
 }
 
@@ -153,11 +153,11 @@ utils.addTask('runGnFor') { String taskName, String buildType, String arch ->
         dependsOn "generateGnArgsFor${arch}${buildType}"
 
         executable rootProject.ext.gn
-        args '--fail-on-unused-args', 'gen', "${utils.getOutDir(buildType)}/${arch}"
+        args '--fail-on-unused-args', 'gen', "${utils.getGnOutDir(buildType)}/${arch}"
 
         // Need to run gn only once unless the configuration in `args.gn` changes.
-        inputs.file(new File("${utils.getOutDir(buildType)}/${arch}", 'args.gn'))
-        outputs.file(new File("${utils.getOutDir(buildType)}/${arch}", 'build.ninja'))
+        inputs.file(new File("${utils.getGnOutDir(buildType)}/${arch}", 'args.gn'))
+        outputs.file(new File("${utils.getGnOutDir(buildType)}/${arch}", 'build.ninja'))
     }
 }
 
@@ -167,7 +167,7 @@ utils.addGameTask('runNinjaFor') { String taskName, String buildType, String arc
         dependsOn "runGnFor${arch}${buildType}"
 
         executable rootProject.ext.ninja
-        args '-C', "${utils.getOutDir(buildType)}/${arch}", "src/${utils.getGnTargetFor(game)}"
+        args '-C', "${utils.getGnOutDir(buildType)}/${arch}", "src/${utils.getGnTargetFor(game)}"
 
         // Always run ninja and let it figure out what needs to be compiled.
         outputs.upToDateWhen { false }
@@ -180,8 +180,8 @@ utils.addGameTask('copyAssetsFor') { String taskName, String buildType, String a
     task(taskName, type: Copy) {
         dependsOn "runNinjaFor${game}${arch}${buildType}"
 
-        from "${utils.getOutDir(buildType)}/${arch}/assets"
-        into utils.getAssetsDir(buildType)
+        from "${utils.getGnOutDir(buildType)}/${arch}/assets"
+        into "${utils.getGnOutDir(buildType)}/assets"
     }
 }
 
@@ -190,10 +190,10 @@ utils.addGameTask('copyJniLibsFor') { String taskName, String buildType, String 
     task(taskName, type: Copy) {
         dependsOn "runNinjaFor${game}${arch}${buildType}"
 
-        from("${utils.getOutDir(buildType)}/${arch}") {
+        from("${utils.getGnOutDir(buildType)}/${arch}") {
             include "lib${utils.getGnTargetFor(game)}.so"
         }
-        into "${utils.getJniLibsDir(buildType)}/${utils.getAbiCodeFor(arch)}"
+        into "${utils.getGnOutDir(buildType)}/jniLibs/${utils.getAbiCodeFor(arch)}"
     }
 }
 
@@ -357,16 +357,8 @@ class Utils implements Plugin<Project> {
         return content
     }
 
-    def getOutDir(String buildType) {
+    def getGnOutDir(String buildType) {
         return "${project.buildDir}/gn_out/${buildType.toLowerCase()}"
-    }
-
-    def getAssetsDir(String buildType) {
-        return "${project.buildDir}/gn_out/${buildType.toLowerCase()}/assets"
-    }
-
-    def getJniLibsDir(String buildType) {
-        return "${project.buildDir}/gn_out/jniLibs/${buildType.toLowerCase()}"
     }
 }
 
