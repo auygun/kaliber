@@ -3,15 +3,12 @@
 
 #include <array>
 #include <string>
-#include <unordered_map>
-#include <variant>
 
 #include "base/vecmath.h"
 #include "engine/animatable.h"
 
 namespace eng {
 
-class Shader;
 class Texture;
 
 class ImageQuad final : public Animatable {
@@ -26,13 +23,6 @@ class ImageQuad final : public Animatable {
 
   void Destroy();
 
-  void SetCustomShader(const std::string& asset_name);
-
-  template <typename T>
-  void SetCustomUniform(const std::string& name, T value) {
-    custom_uniforms_[name] = UniformValue(value);
-  }
-
   // Animatable interface.
   void SetFrame(size_t frame) final;
   size_t GetFrame() const final { return current_frame_; }
@@ -44,17 +34,7 @@ class ImageQuad final : public Animatable {
   void Draw(float frame_frac) final;
 
  private:
-  using UniformValue = std::variant<base::Vector2f,
-                                    base::Vector3f,
-                                    base::Vector4f,
-                                    base::Matrix4f,
-                                    float,
-                                    int>;
-
   Texture* texture_ = nullptr;
-
-  Shader* custom_shader_ = nullptr;
-  std::unordered_map<std::string, UniformValue> custom_uniforms_;
 
   size_t current_frame_ = 0;
   std::array<int, 2> num_frames_ = {1, 1};  // horizontal, vertical

@@ -1,9 +1,15 @@
 #ifndef ENGINE_DRAWABLE_H
 #define ENGINE_DRAWABLE_H
 
+#include <string>
+#include <unordered_map>
+#include <variant>
+
 #include "base/vecmath.h"
 
 namespace eng {
+
+class Shader;
 
 class Drawable {
  public:
@@ -21,9 +27,30 @@ class Drawable {
   int GetZOrder() const { return z_order_; }
   bool IsVisible() const { return visible_; }
 
+  void SetCustomShader(const std::string& asset_name);
+
+  template <typename T>
+  void SetCustomUniform(const std::string& name, T value) {
+    custom_uniforms_[name] = UniformValue(value);
+  }
+
+ protected:
+  Shader* GetCustomShader() { return custom_shader_; }
+  void DoSetCustomUniforms();
+
  private:
+  using UniformValue = std::variant<base::Vector2f,
+                                    base::Vector3f,
+                                    base::Vector4f,
+                                    base::Matrix4f,
+                                    float,
+                                    int>;
+
   bool visible_ = false;
   int z_order_ = 0;
+
+  Shader* custom_shader_ = nullptr;
+  std::unordered_map<std::string, UniformValue> custom_uniforms_;
 };
 
 }  // namespace eng

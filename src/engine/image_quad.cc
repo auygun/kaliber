@@ -40,11 +40,6 @@ void ImageQuad::Destroy() {
   }
 }
 
-void ImageQuad::SetCustomShader(const std::string& asset_name) {
-  custom_shader_ = Engine::Get().GetShader(asset_name);
-  custom_uniforms_.clear();
-}
-
 void ImageQuad::SetFrame(size_t frame) {
   DCHECK(frame < GetNumFrames())
       << "asset: " << asset_name_ << " frame: " << frame;
@@ -66,8 +61,9 @@ void ImageQuad::Draw(float frame_frac) {
   Vector2f tex_scale = {GetFrameWidth() / texture_->GetWidth(),
                         GetFrameHeight() / texture_->GetHeight()};
 
-  Shader* shader =
-      custom_shader_ ? custom_shader_ : Engine::Get().GetPassThroughShader();
+  Shader* shader = GetCustomShader();
+  if (!shader)
+    shader = Engine::Get().GetPassThroughShader();
 
   shader->Activate();
   shader->SetUniform("offset", position_);
@@ -78,12 +74,7 @@ void ImageQuad::Draw(float frame_frac) {
   shader->SetUniform("projection", Engine::Get().GetProjectionMatrix());
   shader->SetUniform("color", color_);
   shader->SetUniform("texture_0", 0);
-  if (custom_shader_) {
-    for (auto& cu : custom_uniforms_)
-      std::visit(
-          [shader, &cu](auto&& arg) { shader->SetUniform(cu.first, arg); },
-          cu.second);
-  }
+  DoSetCustomUniforms();
   shader->UploadUniforms();
 
   Engine::Get().GetQuad()->Draw();
