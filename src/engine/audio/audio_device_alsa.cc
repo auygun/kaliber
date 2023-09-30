@@ -1,4 +1,4 @@
-#include "engine/audio/audio_sink_alsa.h"
+#include "engine/audio/audio_device_alsa.h"
 
 #include <memory>
 
@@ -11,10 +11,10 @@ using namespace base;
 
 namespace eng {
 
-AudioSinkAlsa::AudioSinkAlsa(AudioSink::Delegate* delegate)
+AudioDeviceAlsa::AudioDeviceAlsa(AudioDevice::Delegate* delegate)
     : delegate_(delegate) {}
 
-AudioSinkAlsa::~AudioSinkAlsa() {
+AudioDeviceAlsa::~AudioDeviceAlsa() {
   LOG(0) << "Shutting down audio.";
 
   TerminateAudioThread();
@@ -22,7 +22,7 @@ AudioSinkAlsa::~AudioSinkAlsa() {
   snd_pcm_close(device_);
 }
 
-bool AudioSinkAlsa::Initialize() {
+bool AudioDeviceAlsa::Initialize() {
   LOG(0) << "Initializing audio.";
 
   int err;
@@ -145,28 +145,28 @@ bool AudioSinkAlsa::Initialize() {
   return false;
 }
 
-void AudioSinkAlsa::Suspend() {
+void AudioDeviceAlsa::Suspend() {
   suspend_audio_thread_.store(true, std::memory_order_relaxed);
 }
 
-void AudioSinkAlsa::Resume() {
+void AudioDeviceAlsa::Resume() {
   suspend_audio_thread_.store(false, std::memory_order_relaxed);
 }
 
-size_t AudioSinkAlsa::GetHardwareSampleRate() {
+size_t AudioDeviceAlsa::GetHardwareSampleRate() {
   return sample_rate_;
 }
 
-void AudioSinkAlsa::StartAudioThread() {
+void AudioDeviceAlsa::StartAudioThread() {
   DCHECK(!audio_thread_.joinable());
 
   LOG(0) << "Starting audio thread.";
   terminate_audio_thread_.store(false, std::memory_order_relaxed);
   suspend_audio_thread_.store(false, std::memory_order_relaxed);
-  audio_thread_ = std::thread(&AudioSinkAlsa::AudioThreadMain, this);
+  audio_thread_ = std::thread(&AudioDeviceAlsa::AudioThreadMain, this);
 }
 
-void AudioSinkAlsa::TerminateAudioThread() {
+void AudioDeviceAlsa::TerminateAudioThread() {
   if (!audio_thread_.joinable())
     return;
 
@@ -176,7 +176,7 @@ void AudioSinkAlsa::TerminateAudioThread() {
   audio_thread_.join();
 }
 
-void AudioSinkAlsa::AudioThreadMain() {
+void AudioDeviceAlsa::AudioThreadMain() {
   DCHECK(delegate_);
 
   size_t num_frames = period_size_ / (num_channels_ * sizeof(float));

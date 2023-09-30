@@ -2,9 +2,9 @@ source_set("audio") {
   sources = [
     "audio_bus.cc",
     "audio_bus.h",
+    "audio_device.h",
     "audio_mixer.cc",
     "audio_mixer.h",
-    "audio_sink.h",
     "mixer_input.cc",
     "mixer_input.h",
     "sinc_resampler.cc",
@@ -16,16 +16,16 @@ source_set("audio") {
 
   if (target_os == "linux") {
     sources += [
-      "audio_sink_alsa.cc",
-      "audio_sink_alsa.h",
+      "audio_device_alsa.cc",
+      "audio_device_alsa.h",
     ]
     libs += [ "asound" ]
   } else if (target_os == "win") {
-    sources += [ "audio_sink_null.h" ]
+    sources += [ "audio_device_null.h" ]
   } else if (target_os == "android") {
     sources += [
-      "audio_sink_oboe.cc",
-      "audio_sink_oboe.h",
+      "audio_device_oboe.cc",
+      "audio_device_oboe.h",
     ]
     deps += [ "//src/third_party/oboe" ]
   }

@@ -11,8 +11,8 @@ namespace eng {
 class AudioBus;
 class AudioMixer;
 
-// An audio input stream that gets mixed and rendered to the audio sink. Handles
-// playback and volume control.
+// An audio input stream that gets mixed and rendered to the audio device.
+// Handles playback and volume control.
 class MixerInput : public std::enable_shared_from_this<MixerInput> {
  public:
   enum Flags { kLoop = 1, kStopped = 2, kSimulateStereo = 4 };

@@ -1,19 +1,19 @@
-#ifndef ENGINE_AUDIO_AUDIO_SINK_ALSA_H
-#define ENGINE_AUDIO_AUDIO_SINK_ALSA_H
+#ifndef ENGINE_AUDIO_AUDIO_DEVICE_ALSA_H
+#define ENGINE_AUDIO_AUDIO_DEVICE_ALSA_H
 
 #include <atomic>
 #include <thread>
 
-#include "engine/audio/audio_sink.h"
+#include "engine/audio/audio_device.h"
 
 typedef struct _snd_pcm snd_pcm_t;
 
 namespace eng {
 
-class AudioSinkAlsa final : public AudioSink {
+class AudioDeviceAlsa final : public AudioDevice {
  public:
-  AudioSinkAlsa(AudioSink::Delegate* delegate);
-  ~AudioSinkAlsa() final;
+  AudioDeviceAlsa(AudioDevice::Delegate* delegate);
+  ~AudioDeviceAlsa() final;
 
   bool Initialize() final;
 
@@ -34,7 +34,7 @@ class AudioSinkAlsa final : public AudioSink {
   size_t sample_rate_ = 0;
   size_t period_size_ = 0;
 
-  AudioSink::Delegate* delegate_ = nullptr;
+  AudioDevice::Delegate* delegate_ = nullptr;
 
   void StartAudioThread();
   void TerminateAudioThread();
@@ -44,4 +44,4 @@ class AudioSinkAlsa final : public AudioSink {
 
 }  // namespace eng
 
-#endif  // ENGINE_AUDIO_AUDIO_SINK_ALSA_H
+#endif  // ENGINE_AUDIO_AUDIO_DEVICE_ALSA_H

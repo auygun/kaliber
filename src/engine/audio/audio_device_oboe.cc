@@ -1,4 +1,4 @@
-#include "engine/audio/audio_sink_oboe.h"
+#include "engine/audio/audio_device_oboe.h"
 
 #include "base/log.h"
 #include "third_party/oboe/include/oboe/Oboe.h"
@@ -7,54 +7,54 @@ using namespace base;
 
 namespace eng {
 
-AudioSinkOboe::AudioSinkOboe(AudioSink::Delegate* delegate)
+AudioDeviceOboe::AudioDeviceOboe(AudioDevice::Delegate* delegate)
     : callback_(std::make_unique<StreamCallback>(this)), delegate_(delegate) {}
 
-AudioSinkOboe::~AudioSinkOboe() {
+AudioDeviceOboe::~AudioDeviceOboe() {
   LOG(0) << "Shutting down audio.";
   stream_->stop();
 }
 
-bool AudioSinkOboe::Initialize() {
+bool AudioDeviceOboe::Initialize() {
   LOG(0) << "Initializing audio.";
   return RestartStream();
 }
 
-void AudioSinkOboe::Suspend() {
+void AudioDeviceOboe::Suspend() {
   stream_->pause();
 }
 
-void AudioSinkOboe::Resume() {
+void AudioDeviceOboe::Resume() {
   stream_->start();
 }
 
-size_t AudioSinkOboe::GetHardwareSampleRate() {
+size_t AudioDeviceOboe::GetHardwareSampleRate() {
   return stream_->getSampleRate();
 }
 
-AudioSinkOboe::StreamCallback::StreamCallback(AudioSinkOboe* audio_sink)
-    : audio_sink_(audio_sink) {}
+AudioDeviceOboe::StreamCallback::StreamCallback(AudioDeviceOboe* audio_device)
+    : audio_device_(audio_device) {}
 
-AudioSinkOboe::StreamCallback::~StreamCallback() = default;
+AudioDeviceOboe::StreamCallback::~StreamCallback() = default;
 
-oboe::DataCallbackResult AudioSinkOboe::StreamCallback::onAudioReady(
+oboe::DataCallbackResult AudioDeviceOboe::StreamCallback::onAudioReady(
     oboe::AudioStream* oboe_stream,
     void* audio_data,
     int32_t num_frames) {
   float* output_buffer = static_cast<float*>(audio_data);
-  audio_sink_->delegate_->RenderAudio(output_buffer, num_frames);
+  audio_device_->delegate_->RenderAudio(output_buffer, num_frames);
   return oboe::DataCallbackResult::Continue;
 }
 
-void AudioSinkOboe::StreamCallback::onErrorAfterClose(
+void AudioDeviceOboe::StreamCallback::onErrorAfterClose(
     oboe::AudioStream* oboe_stream,
     oboe::Result error) {
   LOG(0) << "Error after close. Error: " << oboe::convertToText(error);
 
-  audio_sink_->RestartStream();
+  audio_device_->RestartStream();
 }
 
-bool AudioSinkOboe::RestartStream() {
+bool AudioDeviceOboe::RestartStream() {
   oboe::AudioStreamBuilder builder;
   oboe::Result result =
       builder.setSharingMode(oboe::SharingMode::Exclusive)

@@ -6,7 +6,7 @@
 #include <mutex>
 
 #include "base/closure.h"
-#include "engine/audio/audio_sink.h"
+#include "engine/audio/audio_device.h"
 
 namespace base {
 class TaskRunner;
@@ -21,9 +21,9 @@ class MixerInput;
 // when it needs more data. Input source will be removed once end-of-stream is
 // reached. Any unfilled frames will be filled with silence. The mixer always
 // outputs audio when active, even if input sources underflow. A platform
-// specific AudioSink implementation is expected to periodically call
+// specific AudioDevice implementation is expected to periodically call
 // RenderAudio() in a background thread.
-class AudioMixer : public AudioSink::Delegate {
+class AudioMixer : public AudioDevice::Delegate {
  public:
   AudioMixer();
   ~AudioMixer();
@@ -48,11 +48,11 @@ class AudioMixer : public AudioSink::Delegate {
 
   std::shared_ptr<base::TaskRunner> main_thread_task_runner_;
 
-  std::unique_ptr<AudioSink> audio_sink_;
+  std::unique_ptr<AudioDevice> audio_device_;
 
   bool audio_enabled_ = true;
 
-  // AudioSink::Delegate interface
+  // AudioDevice::Delegate interface
   int GetChannelCount() final { return kChannelCount; }
   void RenderAudio(float* output_buffer, size_t num_frames) final;
 

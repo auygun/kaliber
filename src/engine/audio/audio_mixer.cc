@@ -8,11 +8,11 @@
 #include "engine/audio/mixer_input.h"
 
 #if defined(__ANDROID__)
-#include "engine/audio/audio_sink_oboe.h"
+#include "engine/audio/audio_device_oboe.h"
 #elif defined(__linux__)
-#include "engine/audio/audio_sink_alsa.h"
+#include "engine/audio/audio_device_alsa.h"
 #elif defined(_WIN32)
-#include "engine/audio/audio_sink_null.h"
+#include "engine/audio/audio_device_null.h"
 #endif
 
 using namespace base;
@@ -22,19 +22,19 @@ namespace eng {
 AudioMixer::AudioMixer()
     : main_thread_task_runner_(TaskRunner::GetThreadLocalTaskRunner()),
 #if defined(__ANDROID__)
-      audio_sink_{std::make_unique<AudioSinkOboe>(this)} {
+      audio_device_{std::make_unique<AudioDeviceOboe>(this)} {
 #elif defined(__linux__)
-      audio_sink_{std::make_unique<AudioSinkAlsa>(this)} {
+      audio_device_{std::make_unique<AudioDeviceAlsa>(this)} {
 #elif defined(_WIN32)
-      // TODO: Implement AudioSinkWindows
-      audio_sink_{std::make_unique<AudioSinkNull>()} {
+      // TODO: Implement AudioDeviceWindows
+      audio_device_{std::make_unique<AudioDeviceNull>()} {
 #endif
-  bool res = audio_sink_->Initialize();
-  CHECK(res) << "Failed to initialize audio sink.";
+  bool res = audio_device_->Initialize();
+  CHECK(res) << "Failed to initialize audio device.";
 }
 
 AudioMixer::~AudioMixer() {
-  audio_sink_.reset();
+  audio_device_.reset();
 }
 
 void AudioMixer::AddInput(std::shared_ptr<MixerInput> mixer_input) {
@@ -45,15 +45,15 @@ void AudioMixer::AddInput(std::shared_ptr<MixerInput> mixer_input) {
 }
 
 void AudioMixer::Suspend() {
-  audio_sink_->Suspend();
+  audio_device_->Suspend();
 }
 
 void AudioMixer::Resume() {
-  audio_sink_->Resume();
+  audio_device_->Resume();
 }
 
 size_t AudioMixer::GetHardwareSampleRate() {
-  return audio_sink_->GetHardwareSampleRate();
+  return audio_device_->GetHardwareSampleRate();
 }
 
 void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
