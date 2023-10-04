@@ -1,5 +1,7 @@
 #include "engine/platform/platform.h"
 
+#include <combaseapi.h>
+
 #include "base/log.h"
 #include "base/vecmath.h"
 #include "engine/input_event.h"
@@ -35,6 +37,9 @@ Platform::Platform(HINSTANCE instance, int cmd_show)
   LOG(0) << "Root path: " << root_path_.c_str();
   LOG(0) << "Data path: " << data_path_.c_str();
   LOG(0) << "Shared data path: " << shared_data_path_.c_str();
+
+  HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+  CHECK(SUCCEEDED(hr)) << "Unable to initialize COM: " << hr;
 
   WNDCLASSEXW wcex;
   wcex.cbSize = sizeof(WNDCLASSEX);

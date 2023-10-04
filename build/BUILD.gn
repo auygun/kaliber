@@ -184,6 +184,7 @@ config("warnings") {
       "/wd4820",  # padding added after data member.
       "/wd5045",  # compiler will insert Spectre mitigation for memory load if
                   # switch specified.
+      "/wd4355",  # 'this': used in base member initializer list
 
       # TODO: Not sure how I feel about these conversion warnings.
       "/Wv:18",

@@ -12,7 +12,7 @@
 #elif defined(__linux__)
 #include "engine/audio/audio_device_alsa.h"
 #elif defined(_WIN32)
-#include "engine/audio/audio_device_null.h"
+#include "engine/audio/audio_device_wasapi.h"
 #endif
 
 using namespace base;
@@ -26,8 +26,7 @@ AudioMixer::AudioMixer()
 #elif defined(__linux__)
       audio_device_{std::make_unique<AudioDeviceAlsa>(this)} {
 #elif defined(_WIN32)
-      // TODO: Implement AudioDeviceWindows
-      audio_device_{std::make_unique<AudioDeviceNull>()} {
+      audio_device_{std::make_unique<AudioDeviceWASAPI>(this)} {
 #endif
   bool res = audio_device_->Initialize();
   CHECK(res) << "Failed to initialize audio device.";

@@ -24,6 +24,7 @@ source_set("platform") {
     libs = [
       "gdi32.lib",  # Graphics
       "user32.lib",  # Win32 API core functionality.
+      "Ole32.lib",  # COM
       "opengl32.lib",
     ]
   } else if (target_os == "android") {

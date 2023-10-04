@@ -21,7 +21,10 @@ source_set("audio") {
     ]
     libs += [ "asound" ]
   } else if (target_os == "win") {
-    sources += [ "audio_device_null.h" ]
+    sources += [
+      "audio_device_wasapi.cc",
+      "audio_device_wasapi.h",
+    ]
   } else if (target_os == "android") {
     sources += [
       "audio_device_oboe.cc",
