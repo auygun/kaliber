@@ -155,10 +155,10 @@ constexpr VkPrimitiveTopology kVkPrimitiveType[eng::kPrimitive_Max] = {
 
 constexpr VkFormat kVkDataType[eng::kDataType_Max][4] = {
     {
-        VK_FORMAT_R8_UINT,
-        VK_FORMAT_R8G8_UINT,
-        VK_FORMAT_R8G8B8_UINT,
-        VK_FORMAT_R8G8B8A8_UINT,
+        VK_FORMAT_R8_UNORM,
+        VK_FORMAT_R8G8_UNORM,
+        VK_FORMAT_R8G8B8_UNORM,
+        VK_FORMAT_R8G8B8A8_UNORM,
     },
     {
         VK_FORMAT_R32_SFLOAT,
@@ -400,7 +400,8 @@ uint64_t RendererVulkan::CreateGeometry(std::unique_ptr<Mesh> mesh) {
   if (mesh->GetIndices()) {
     geometry.num_indices = mesh->num_indices();
     geometry.index_type = GetIndexType(mesh->index_description());
-    index_data_size = mesh->GetIndexSize() * geometry.num_indices;
+    geometry.index_type_size = mesh->GetIndexSize();
+    index_data_size = geometry.index_type_size * geometry.num_indices;
   }
   size_t data_size = vertex_data_size + index_data_size;
 
@@ -414,11 +415,11 @@ uint64_t RendererVulkan::CreateGeometry(std::unique_ptr<Mesh> mesh) {
                                         std::get<0>(geometry.buffer), 0,
                                         mesh->GetVertices(), vertex_data_size));
   if (geometry.num_indices > 0) {
-    geometry.indices_offset = vertex_data_size;
-    task_runner_.PostTask(
-        HERE, std::bind(&RendererVulkan::UpdateBuffer, this,
-                        std::get<0>(geometry.buffer), geometry.indices_offset,
-                        mesh->GetIndices(), index_data_size));
+    geometry.index_data_offset = vertex_data_size;
+    task_runner_.PostTask(HERE, std::bind(&RendererVulkan::UpdateBuffer, this,
+                                          std::get<0>(geometry.buffer),
+                                          geometry.index_data_offset,
+                                          mesh->GetIndices(), index_data_size));
   }
   task_runner_.PostTask(HERE,
                         std::bind(&RendererVulkan::BufferMemoryBarrier, this,
@@ -442,20 +443,27 @@ void RendererVulkan::DestroyGeometry(uint64_t resource_id) {
   geometries_.erase(it);
 }
 
-void RendererVulkan::Draw(uint64_t resource_id) {
+void RendererVulkan::Draw(uint64_t resource_id,
+                          uint64_t num_indices,
+                          uint64_t start_offset) {
   auto it = geometries_.find(resource_id);
   if (it == geometries_.end())
     return;
 
+  uint64_t data_offset = start_offset * it->second.index_type_size;
+  if (num_indices == 0)
+    num_indices = it->second.num_indices;
+
   VkDeviceSize offset = 0;
   vkCmdBindVertexBuffers(frames_[current_frame_].draw_command_buffer, 0, 1,
                          &std::get<0>(it->second.buffer), &offset);
-  if (it->second.num_indices > 0) {
+  if (num_indices > 0) {
     vkCmdBindIndexBuffer(frames_[current_frame_].draw_command_buffer,
                          std::get<0>(it->second.buffer),
-                         it->second.indices_offset, it->second.index_type);
-    vkCmdDrawIndexed(frames_[current_frame_].draw_command_buffer,
-                     it->second.num_indices, 1, 0, 0, 0);
+                         it->second.index_data_offset + data_offset,
+                         it->second.index_type);
+    vkCmdDrawIndexed(frames_[current_frame_].draw_command_buffer, num_indices,
+                     1, 0, 0, 0);
   } else {
     vkCmdDraw(frames_[current_frame_].draw_command_buffer,
               it->second.num_vertices, 1, 0, 0);

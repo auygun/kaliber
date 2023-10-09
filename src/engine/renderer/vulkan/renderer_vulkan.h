@@ -35,7 +35,9 @@ class RendererVulkan final : public Renderer {
 
   uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) final;
   void DestroyGeometry(uint64_t resource_id) final;
-  void Draw(uint64_t resource_id) final;
+  void Draw(uint64_t resource_id,
+            uint64_t num_indices = 0,
+            uint64_t start_offset = 0) final;
 
   uint64_t CreateTexture() final;
   void UpdateTexture(uint64_t resource_id, std::unique_ptr<Image> image) final;
@@ -101,7 +103,8 @@ class RendererVulkan final : public Renderer {
     Buffer<VkBuffer> buffer;
     uint32_t num_vertices = 0;
     uint32_t num_indices = 0;
-    uint64_t indices_offset = 0;
+    uint64_t index_data_offset = 0;
+    uint64_t index_type_size = 0;
     VkIndexType index_type = VK_INDEX_TYPE_UINT16;
   };
 

@@ -40,7 +40,9 @@ class Renderer {
 
   virtual uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) = 0;
   virtual void DestroyGeometry(uint64_t resource_id) = 0;
-  virtual void Draw(uint64_t resource_id) = 0;
+  virtual void Draw(uint64_t resource_id,
+                    uint64_t num_indices = 0,
+                    uint64_t start_offset = 0) = 0;
 
   virtual uint64_t CreateTexture() = 0;
   virtual void UpdateTexture(uint64_t resource_id,

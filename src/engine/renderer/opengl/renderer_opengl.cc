@@ -26,6 +26,9 @@ constexpr GLenum kGlDataType[eng::kDataType_Max] = {
     GL_UNSIGNED_BYTE, GL_FLOAT,        GL_INT,
     GL_SHORT,         GL_UNSIGNED_INT, GL_UNSIGNED_SHORT};
 
+constexpr GLboolean kGlNormalize[eng::kDataType_Max] = {
+    GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE};
+
 const std::string kAttributeNames[eng::kAttribType_Max] = {
     "in_color", "in_normal", "in_position", "in_tex_coord"};
 
@@ -132,10 +135,15 @@ void RendererOpenGL::DestroyGeometry(uint64_t resource_id) {
   geometries_.erase(it);
 }
 
-void RendererOpenGL::Draw(uint64_t resource_id) {
+void RendererOpenGL::Draw(uint64_t resource_id,
+                          uint64_t num_indices,
+                          uint64_t start_offset) {
   auto it = geometries_.find(resource_id);
   if (it == geometries_.end())
     return;
+
+  if (num_indices == 0)
+    num_indices = it->second.num_indices;
 
   // Set up the vertex data.
   if (it->second.vertex_array_id)
@@ -152,14 +160,14 @@ void RendererOpenGL::Draw(uint64_t resource_id) {
                             (const GLvoid*)e.vertex_offset);
     }
 
-    if (it->second.num_indices > 0)
+    if (num_indices > 0)
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, it->second.index_buffer_id);
   }
 
   // Draw the primitive.
-  if (it->second.num_indices > 0)
-    glDrawElements(it->second.primitive, it->second.num_indices,
-                   it->second.index_type, NULL);
+  if (num_indices > 0)
+    glDrawElements(it->second.primitive, num_indices, it->second.index_type,
+                   (void*)(intptr_t)(start_offset * sizeof(unsigned short)));
   else
     glDrawArrays(it->second.primitive, 0, it->second.num_vertices);
 
@@ -446,7 +454,7 @@ bool RendererOpenGL::InitCommon() {
 #if 0
   LOG(0) << "  extensions:";
   for (auto& ext : extensions)
-    LOG(0) << "    " << ext.c_str());
+    LOG(0) << "    " << ext.c_str();
 #endif
 
   // Check for supported texture compression extensions.
@@ -465,7 +473,8 @@ bool RendererOpenGL::InitCommon() {
       extensions.find("GL_ATI_texture_compression_atitc") != extensions.end())
     texture_compression_.atc = true;
 
-  if (extensions.find("GL_OES_vertex_array_object") != extensions.end()) {
+  if (extensions.find("GL_OES_vertex_array_object") != extensions.end() ||
+      extensions.find("GL_ARB_vertex_array_object") != extensions.end()) {
     // This extension seems to be broken on older PowerVR drivers.
     if (!strstr(renderer, "PowerVR SGX 53") &&
         !strstr(renderer, "PowerVR SGX 54") &&
@@ -555,8 +564,9 @@ bool RendererOpenGL::SetupVertexLayout(
     if (use_vao) {
       // This will be saved into the vertex array object.
       glEnableVertexAttribArray(attribute_index);
-      glVertexAttribPointer(attribute_index, num_elements, type, GL_FALSE,
-                            vertex_size, (const GLvoid*)vertex_offset);
+      glVertexAttribPointer(attribute_index, num_elements, type,
+                            kGlNormalize[data_type], vertex_size,
+                            (const GLvoid*)vertex_offset);
     } else {
       // Need to keep this information for when rendering.
       GeometryOpenGL::Element element;
