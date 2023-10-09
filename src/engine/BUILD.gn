@@ -37,6 +37,7 @@ source_set("engine") {
     "//src/engine/audio",
     "//src/engine/platform",
     "//src/engine/renderer",
+    "//src/third_party/imgui",
     "//src/third_party/jsoncpp",
     "//src/third_party/minimp3",
     "//src/third_party/stb",
