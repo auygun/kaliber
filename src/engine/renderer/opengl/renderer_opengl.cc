@@ -58,6 +58,17 @@ int RendererOpenGL::GetScreenHeight() const {
   return screen_height_;
 }
 
+void RendererOpenGL::SetScissor(int x, int y, int width, int height) {
+  DCHECK(x >= 0 && y >= 0 && width >= 0 && height >= 0);
+  DCHECK(x + width <= GetScreenWidth() && y + height <= GetScreenHeight());
+  glScissor(x, screen_height_ - y - height, width, height);
+  glEnable(GL_SCISSOR_TEST);
+}
+
+void RendererOpenGL::ResetScissor() {
+  glDisable(GL_SCISSOR_TEST);
+}
+
 uint64_t RendererOpenGL::CreateGeometry(std::unique_ptr<Mesh> mesh) {
   // Verify that we have a valid layout and get the total byte size per vertex.
   GLuint vertex_size = mesh->GetVertexSize();
@@ -415,6 +426,10 @@ void RendererOpenGL::SetUniform(uint64_t resource_id,
   GLint index = GetUniformLocation(it->second.id, name, it->second.uniforms);
   if (index >= 0)
     glUniform1i(index, val);
+}
+
+void RendererOpenGL::PrepareForDrawing() {
+  glDisable(GL_SCISSOR_TEST);
 }
 
 void RendererOpenGL::ContextLost() {

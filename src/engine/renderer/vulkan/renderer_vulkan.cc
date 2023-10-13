@@ -390,6 +390,27 @@ int RendererVulkan::GetScreenHeight() const {
   return context_.GetWindowHeight();
 }
 
+void RendererVulkan::SetScissor(int x, int y, int width, int height) {
+  DCHECK(x >= 0 && y >= 0 && width >= 0 && height >= 0);
+  DCHECK(x + width <= GetScreenWidth() && y + height <= GetScreenHeight());
+
+  VkRect2D scissor;
+  scissor.offset.x = x;
+  scissor.offset.y = y;
+  scissor.extent.width = width;
+  scissor.extent.height = height;
+  vkCmdSetScissor(frames_[current_frame_].draw_command_buffer, 0, 1, &scissor);
+}
+
+void RendererVulkan::ResetScissor() {
+  VkRect2D scissor;
+  scissor.offset.x = 0;
+  scissor.offset.y = 0;
+  scissor.extent.width = context_.GetWindowWidth();
+  scissor.extent.height = context_.GetWindowHeight();
+  vkCmdSetScissor(frames_[current_frame_].draw_command_buffer, 0, 1, &scissor);
+}
+
 uint64_t RendererVulkan::CreateGeometry(std::unique_ptr<Mesh> mesh) {
   auto& geometry = geometries_[++last_resource_id_] = {};
 

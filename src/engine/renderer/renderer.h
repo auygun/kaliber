@@ -38,6 +38,9 @@ class Renderer {
   virtual int GetScreenWidth() const = 0;
   virtual int GetScreenHeight() const = 0;
 
+  virtual void SetScissor(int x, int y, int width, int height) = 0;
+  virtual void ResetScissor() = 0;
+
   virtual uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) = 0;
   virtual void DestroyGeometry(uint64_t resource_id) = 0;
   virtual void Draw(uint64_t resource_id,

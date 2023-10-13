@@ -33,6 +33,9 @@ class RendererVulkan final : public Renderer {
   int GetScreenWidth() const final;
   int GetScreenHeight() const final;
 
+  void SetScissor(int x, int y, int width, int height) final;
+  void ResetScissor() final;
+
   uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) final;
   void DestroyGeometry(uint64_t resource_id) final;
   void Draw(uint64_t resource_id,

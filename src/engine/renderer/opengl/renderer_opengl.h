@@ -31,6 +31,9 @@ class RendererOpenGL final : public Renderer {
   int GetScreenWidth() const final;
   int GetScreenHeight() const final;
 
+  void SetScissor(int x, int y, int width, int height) final;
+  void ResetScissor() final;
+
   uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) final;
   void DestroyGeometry(uint64_t resource_id) final;
   void Draw(uint64_t resource_id,
@@ -67,7 +70,7 @@ class RendererOpenGL final : public Renderer {
   void SetUniform(uint64_t resource_id, const std::string& name, int val) final;
   void UploadUniforms(uint64_t resource_id) final {}
 
-  void PrepareForDrawing() final {}
+  void PrepareForDrawing() final;
   void Present() final;
 
   size_t GetAndResetFPS() final;
