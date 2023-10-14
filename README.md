@@ -93,4 +93,5 @@ GAME_FACTORIES{GAME_CLASS(HelloWorld)};
 [spirv-reflect](https://github.com/KhronosGroup/SPIRV-Reflect),
 [vma](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator),
 [vulkan-sdk](https://vulkan.lunarg.com),
-[volk](https://github.com/zeux/volk)
+[volk](https://github.com/zeux/volk),
+[imgui](https://github.com/ocornut/imgui)
