@@ -53,6 +53,7 @@ Engine::~Engine() {
   thread_pool_.CancelTasks();
   thread_pool_.Shutdown();
 
+  imgui_backend_.Shutdown();
   game_.reset();
   stats_.reset();
   textures_.clear();
@@ -125,6 +126,9 @@ void Engine::Initialize() {
   // Create resources and let the game finalize initialization.
   CreateRenderResources();
   WaitForAsyncWork();
+
+  imgui_backend_.Initialize();
+
   CHECK(game_->Initialize()) << "Failed to initialize the game.";
 }
 
@@ -161,7 +165,10 @@ void Engine::Draw(float frame_frac) {
       d->Draw(frame_frac);
   }
 
+  imgui_backend_.Render();
+
   renderer_->Present();
+  imgui_backend_.NewFrame();
 }
 
 void Engine::AddDrawable(Drawable* drawable) {
@@ -516,6 +523,10 @@ void Engine::GainedFocus(bool from_interstitial_ad) {
 }
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
+  event = imgui_backend_.OnInputEvent(std::move(event));
+  if (!event)
+    return;
+
   if (replaying_)
     return;
 
@@ -643,6 +654,8 @@ void Engine::CreateRenderResources() {
   } else {
     LOG(0) << "Could not create solid shader.";
   }
+
+  imgui_backend_.CreateRenderResources(renderer_.get());
 
   for (auto& t : textures_) {
     t.second.texture->SetRenderer(renderer_.get());

@@ -10,6 +10,7 @@
 #include "base/random.h"
 #include "base/thread_pool.h"
 #include "base/vecmath.h"
+#include "engine/imgui_backend.h"
 #include "engine/persistent_data.h"
 #include "engine/platform/platform_observer.h"
 
@@ -195,6 +196,8 @@ class Engine : public PlatformObserver {
   size_t async_work_count_ = 0;
 
   std::unique_ptr<ImageQuad> stats_;
+
+  ImguiBackend imgui_backend_;
 
   float fps_seconds_ = 0;
   int fps_ = 0;

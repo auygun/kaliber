@@ -22,6 +22,8 @@ source_set("engine") {
     "game_factory.h",
     "image_quad.cc",
     "image_quad.h",
+    "imgui_backend.cc",
+    "imgui_backend.h",
     "input_event.h",
     "persistent_data.cc",
     "persistent_data.h",
