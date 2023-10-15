@@ -13,13 +13,13 @@
 #include "engine/drawable.h"
 #include "engine/game.h"
 #include "engine/game_factory.h"
-#include "engine/image_quad.h"
 #include "engine/input_event.h"
 #include "engine/platform/platform.h"
 #include "engine/renderer/geometry.h"
 #include "engine/renderer/renderer.h"
 #include "engine/renderer/shader.h"
 #include "engine/renderer/texture.h"
+#include "third_party/imgui/imgui.h"
 #include "third_party/texture_compressor/texture_compressor.h"
 
 using namespace base;
@@ -43,8 +43,6 @@ Engine::Engine(Platform* platform)
   singleton = this;
 
   platform_->SetObserver(this);
-
-  stats_ = std::make_unique<ImageQuad>();
 }
 
 Engine::~Engine() {
@@ -55,7 +53,6 @@ Engine::~Engine() {
 
   imgui_backend_.Shutdown();
   game_.reset();
-  stats_.reset();
   textures_.clear();
   shaders_.clear();
   quad_.reset();
@@ -116,9 +113,6 @@ void Engine::Initialize() {
   system_font_ = std::make_unique<Font>();
   system_font_->Load("engine/RobotoMono-Regular.ttf");
 
-  SetImageSource("stats_tex", std::bind(&Engine::PrintStats, this));
-  stats_->SetZOrder(std::numeric_limits<int>::max());
-
   game_ = GameFactoryBase::CreateGame("");
   CHECK(game_) << "No game found to run.";
   CHECK(game_->PreInitialize()) << "Failed to pre-initialize the game.";
@@ -146,9 +140,6 @@ void Engine::Update(float delta_time) {
     fps_ = renderer_->GetAndResetFPS();
     fps_seconds_ = 0;
   }
-
-  if (stats_->IsVisible())
-    RefreshImage("stats_tex");
 }
 
 void Engine::Draw(float frame_frac) {
@@ -163,6 +154,18 @@ void Engine::Draw(float frame_frac) {
   for (auto d : drawables_) {
     if (d->IsVisible())
       d->Draw(frame_frac);
+  }
+
+  if (stats_visible_) {
+    ImGuiWindowFlags window_flags =
+        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoNav | ImGuiWindowFlags_AlwaysAutoResize;
+    ImGui::Begin("Stats", nullptr, window_flags);
+    ImGui::PushItemWidth(ImGui::GetFontSize() * -12);
+    ImGui::Text("%s", renderer_->GetDebugName());
+    ImGui::Text("%d fps", fps_);
+    ImGui::End();
   }
 
   imgui_backend_.Render();
@@ -536,23 +539,15 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
     case InputEvent::kDragEnd:
       if (((GetScreenSize() / 2) * 0.9f - event->GetVector()).Length() <=
           0.25f) {
-        SetStatsVisible(!stats_->IsVisible());
+        stats_visible_ = !stats_visible_;
         // TODO: Enqueue DragCancel so we can consume this event.
       }
       break;
     case InputEvent::kKeyPress:
       if (event->GetKeyPress() == 's') {
-        SetStatsVisible(!stats_->IsVisible());
+        stats_visible_ = !stats_visible_;
         // Consume event.
         return;
-      }
-      break;
-    case InputEvent::kDrag:
-      if (stats_->IsVisible()) {
-        if ((stats_->GetPosition() - event->GetVector()).Length() <=
-            stats_->GetSize().y)
-          stats_->SetPosition(event->GetVector());
-        // TODO: Enqueue DragCancel so we can consume this event.
       }
       break;
     default:
@@ -698,45 +693,6 @@ void Engine::WaitForAsyncWork() {
     TaskRunner::GetThreadLocalTaskRunner()->RunTasks();
     platform_->Update();
   }
-}
-
-void Engine::SetStatsVisible(bool visible) {
-  stats_->SetVisible(visible);
-  if (visible)
-    stats_->Create("stats_tex");
-  else
-    stats_->Destroy();
-}
-
-std::unique_ptr<Image> Engine::PrintStats() {
-  if (!stats_->IsVisible())
-    return nullptr;
-
-  constexpr int width = 200;
-  std::vector<std::string> lines;
-  std::string line;
-  line = "fps: ";
-  line += std::to_string(fps_);
-  lines.push_back(line);
-  lines.push_back(renderer_->GetDebugName());
-
-  constexpr int margin = 5;
-  int line_height = system_font_->GetLineHeight();
-  int image_width = width + margin * 2;
-  int image_height = (line_height + margin) * lines.size() + margin;
-
-  auto image = std::make_unique<Image>();
-  image->Create(image_width, image_height);
-  image->Clear({1, 1, 1, 0.08f});
-
-  int y = margin;
-  for (auto& text : lines) {
-    system_font_->Print(margin, y, text.c_str(), image->GetBuffer(),
-                        image->GetWidth());
-    y += line_height + margin;
-  }
-
-  return image;
 }
 
 }  // namespace eng

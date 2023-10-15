@@ -26,7 +26,6 @@ class Font;
 class Game;
 class Geometry;
 class Image;
-class ImageQuad;
 class InputEvent;
 class Platform;
 class Renderer;
@@ -195,7 +194,7 @@ class Engine : public PlatformObserver {
 
   size_t async_work_count_ = 0;
 
-  std::unique_ptr<ImageQuad> stats_;
+  bool stats_visible_ = false;
 
   ImguiBackend imgui_backend_;
 
@@ -242,9 +241,6 @@ class Engine : public PlatformObserver {
   void CreateRenderResources();
 
   void WaitForAsyncWork();
-
-  void SetStatsVisible(bool visible);
-  std::unique_ptr<Image> PrintStats();
 
   Engine(const Engine&) = delete;
   Engine& operator=(const Engine&) = delete;
