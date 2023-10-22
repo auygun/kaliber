@@ -15,6 +15,10 @@ using namespace base;
 
 namespace eng {
 
+namespace {
+const char vertex_description[] = "p2f;t2f;c4b";
+}  // namespace
+
 ImguiBackend::ImguiBackend() : shader_{std::make_unique<Shader>(nullptr)} {}
 
 ImguiBackend::~ImguiBackend() = default;
@@ -54,7 +58,6 @@ void ImguiBackend::CreateRenderResources(Renderer* renderer) {
 
   auto source = std::make_unique<ShaderSource>();
   if (source->Load("engine/imgui.glsl")) {
-    static const char vertex_description[] = "p2f;t2f;c4b";
     VertexDescription vd;
     if (!ParseVertexDescription(vertex_description, vd)) {
       DLOG(0) << "Failed to parse vertex description.";
@@ -113,9 +116,12 @@ void ImguiBackend::Render() {
   base::Matrix4f ortho_projection;
   ortho_projection.CreateOrthoProjection(L, R, B, T);
 
+  shader_->Activate();
+  shader_->SetUniform("projection", ortho_projection);
+  shader_->UploadUniforms();
+
   for (int n = 0; n < draw_data->CmdListsCount; n++) {
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
-    static const char vertex_description[] = "p2f;t2f;c4b";
     auto mesh = std::make_unique<Mesh>();
     mesh->Create(kPrimitive_Triangles, vertex_description,
                  cmd_list->VtxBuffer.Size, cmd_list->VtxBuffer.Data,
@@ -126,12 +132,6 @@ void ImguiBackend::Render() {
     for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
       const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
       reinterpret_cast<Texture*>(pcmd->GetTexID())->Activate();
-
-      // Vulkan renderer needs activating the shader again after a texture.
-      // TODO: Fix it in vulkan renderer and active the shader only once.
-      shader_->Activate();
-      shader_->SetUniform("projection", ortho_projection);
-      shader_->UploadUniforms();
 
       if (pcmd->ClipRect.z > pcmd->ClipRect.x &&
           pcmd->ClipRect.w > pcmd->ClipRect.y) {
