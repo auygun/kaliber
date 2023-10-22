@@ -564,8 +564,19 @@ void RendererVulkan::ActivateTexture(uint64_t resource_id) {
   if (it == textures_.end())
     return;
 
-  // Keep as pending and bind later in ActivateShader.
-  pending_descriptor_sets_[/*TODO*/ 0] = std::get<0>(it->second.desc_set);
+  if (active_descriptor_sets_[/*TODO*/ 0] != std::get<0>(it->second.desc_set)) {
+    active_descriptor_sets_[/*TODO*/ 0] = std::get<0>(it->second.desc_set);
+    if (active_shader_id_ != 0) {
+      auto active_shader = shaders_.find(active_shader_id_);
+      if (active_shader != shaders_.end() &&
+          active_shader->second.desc_set_count > 0) {
+        vkCmdBindDescriptorSets(frames_[current_frame_].draw_command_buffer,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                active_shader->second.pipeline_layout, 0, 1,
+                                &active_descriptor_sets_[0], 0, nullptr);
+      }
+    }
+  }
 }
 
 uint64_t RendererVulkan::CreateShader(
@@ -773,19 +784,16 @@ void RendererVulkan::ActivateShader(uint64_t resource_id) {
   if (it == shaders_.end())
     return;
 
-  if (active_pipeline_ != it->second.pipeline) {
-    active_pipeline_ = it->second.pipeline;
+  if (active_shader_id_ != resource_id) {
+    active_shader_id_ = resource_id;
     vkCmdBindPipeline(frames_[current_frame_].draw_command_buffer,
                       VK_PIPELINE_BIND_POINT_GRAPHICS, it->second.pipeline);
-  }
-  for (size_t i = 0; i < it->second.desc_set_count; ++i) {
-    if (active_descriptor_sets_[i] != pending_descriptor_sets_[i]) {
-      active_descriptor_sets_[i] = pending_descriptor_sets_[i];
+    if (it->second.desc_set_count > 0 &&
+        active_descriptor_sets_[/*TODO*/ 0] != VK_NULL_HANDLE) {
       vkCmdBindDescriptorSets(frames_[current_frame_].draw_command_buffer,
                               VK_PIPELINE_BIND_POINT_GRAPHICS,
                               it->second.pipeline_layout, 0, 1,
-                              &active_descriptor_sets_[i], 0, nullptr);
-      break;
+                              &active_descriptor_sets_[0], 0, nullptr);
     }
   }
 }
@@ -1832,10 +1840,8 @@ bool RendererVulkan::CreatePipelineLayout(
       }
     }
 
-    if (active_descriptor_sets_.size() < shader.desc_set_count) {
+    if (active_descriptor_sets_.size() < shader.desc_set_count)
       active_descriptor_sets_.resize(shader.desc_set_count);
-      pending_descriptor_sets_.resize(shader.desc_set_count);
-    }
 
     // Parse push constants.
     auto enumerate_pc = [&](SpvReflectShaderModule& module, uint32_t& pc_count,
@@ -2047,10 +2053,8 @@ void RendererVulkan::SwapBuffers() {
   context_.SwapBuffers();
   current_frame_ = (current_frame_ + 1) % frames_.size();
 
-  active_pipeline_ = VK_NULL_HANDLE;
+  active_shader_id_ = 0;
   for (auto& ds : active_descriptor_sets_)
-    ds = VK_NULL_HANDLE;
-  for (auto& ds : pending_descriptor_sets_)
     ds = VK_NULL_HANDLE;
 
   BeginFrame();

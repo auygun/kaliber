@@ -179,12 +179,11 @@ class RendererVulkan final : public Renderer {
   uint64_t max_staging_buffer_size_ = 16 * 1024 * 1024;
   bool staging_buffer_used_ = false;
 
-  VkPipeline active_pipeline_ = VK_NULL_HANDLE;
+  uint64_t active_shader_id_ = 0;
 
   std::vector<std::unique_ptr<DescPool>> desc_pools_;
   VkDescriptorSetLayout descriptor_set_layout_ = VK_NULL_HANDLE;
   std::vector<VkDescriptorSet> active_descriptor_sets_;
-  std::vector<VkDescriptorSet> pending_descriptor_sets_;
 
   VkSampler sampler_ = VK_NULL_HANDLE;
 
