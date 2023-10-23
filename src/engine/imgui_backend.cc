@@ -106,7 +106,7 @@ void ImguiBackend::Render() {
   ImGui::Render();
 
   ImDrawData* draw_data = ImGui::GetDrawData();
-  if (draw_data->CmdListsCount <= 0)
+  if (draw_data->CmdListsCount < -0)
     return;
 
   float L = draw_data->DisplayPos.x;

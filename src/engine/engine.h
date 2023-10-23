@@ -38,7 +38,7 @@ class Engine : public PlatformObserver {
   using CreateImageCB = std::function<std::unique_ptr<Image>()>;
 
   Engine(Platform* platform);
-  virtual ~Engine();
+  ~Engine();
 
   static Engine& Get();
 
