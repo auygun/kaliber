@@ -45,7 +45,7 @@ class RendererVulkan final : public Renderer {
   uint64_t CreateTexture() final;
   void UpdateTexture(uint64_t resource_id, std::unique_ptr<Image> image) final;
   void DestroyTexture(uint64_t resource_id) final;
-  void ActivateTexture(uint64_t resource_id) final;
+  void ActivateTexture(uint64_t resource_id, uint64_t texture_unit) final;
 
   uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
                         const VertexDescription& vertex_description,

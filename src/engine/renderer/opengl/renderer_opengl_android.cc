@@ -57,7 +57,7 @@ void RendererOpenGL::Present() {
   }
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   active_shader_id_ = 0;
-  active_texture_id_ = 0;
+  active_texture_id_ = {};
   fps_++;
 }
 

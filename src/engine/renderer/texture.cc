@@ -28,9 +28,9 @@ void Texture::Destroy() {
   }
 }
 
-void Texture::Activate() {
+void Texture::Activate(uint64_t texture_unit) {
   if (IsValid())
-    renderer_->ActivateTexture(resource_id_);
+    renderer_->ActivateTexture(resource_id_, texture_unit);
 }
 
 }  // namespace eng

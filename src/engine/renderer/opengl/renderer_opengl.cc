@@ -199,8 +199,7 @@ void RendererOpenGL::Draw(uint64_t resource_id,
 uint64_t RendererOpenGL::CreateTexture() {
   GLuint gl_id = 0;
   glGenTextures(1, &gl_id);
-
-  BindTexture(gl_id);
+  glBindTexture(GL_TEXTURE_2D, gl_id);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -218,7 +217,7 @@ void RendererOpenGL::UpdateTexture(uint64_t resource_id,
   if (it == textures_.end())
     return;
 
-  BindTexture(it->second);
+  glBindTexture(GL_TEXTURE_2D, it->second);
   if (image->IsCompressed()) {
     GLenum format = 0;
     switch (image->GetFormat()) {
@@ -275,13 +274,23 @@ void RendererOpenGL::DestroyTexture(uint64_t resource_id) {
   textures_.erase(it);
 }
 
-void RendererOpenGL::ActivateTexture(uint64_t resource_id) {
+void RendererOpenGL::ActivateTexture(uint64_t resource_id,
+                                     uint64_t texture_unit) {
+  if (texture_unit >= kMaxTextureUnits) {
+    DLOG(0) << "Invalid texture unit " << texture_unit;
+    return;
+  }
+
   auto it = textures_.find(resource_id);
   if (it == textures_.end()) {
     return;
   }
 
-  BindTexture(it->second);
+  if (it->second != active_texture_id_[texture_unit]) {
+    glActiveTexture(GL_TEXTURE0 + texture_unit);
+    glBindTexture(GL_TEXTURE_2D, it->second);
+    active_texture_id_[texture_unit] = it->second;
+  }
 }
 
 uint64_t RendererOpenGL::CreateShader(
@@ -548,13 +557,6 @@ void RendererOpenGL::DestroyAllResources() {
   DCHECK(geometries_.size() == 0);
   DCHECK(shaders_.size() == 0);
   DCHECK(textures_.size() == 0);
-}
-
-void RendererOpenGL::BindTexture(GLuint id) {
-  if (id != active_texture_id_) {
-    glBindTexture(GL_TEXTURE_2D, id);
-    active_texture_id_ = id;
-  }
 }
 
 bool RendererOpenGL::SetupVertexLayout(

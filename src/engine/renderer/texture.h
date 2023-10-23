@@ -20,7 +20,7 @@ class Texture : public RenderResource {
 
   void Destroy();
 
-  void Activate();
+  void Activate(uint64_t texture_unit);
 
   int GetWidth() const { return width_; }
   int GetHeight() const { return height_; }

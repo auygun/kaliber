@@ -19,7 +19,8 @@ enum class RendererType { kUnknown, kVulkan, kOpenGL };
 
 class Renderer {
  public:
-  const unsigned kInvalidId = 0;
+  static const unsigned kInvalidId = 0;
+  static const unsigned kMaxTextureUnits = 8;
 
   static std::unique_ptr<Renderer> Create(RendererType type,
                                           base::Closure context_lost_cb);
@@ -51,7 +52,7 @@ class Renderer {
   virtual void UpdateTexture(uint64_t resource_id,
                              std::unique_ptr<Image> image) = 0;
   virtual void DestroyTexture(uint64_t resource_id) = 0;
-  virtual void ActivateTexture(uint64_t resource_id) = 0;
+  virtual void ActivateTexture(uint64_t resource_id, uint64_t texture_unit) = 0;
 
   virtual uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
                                 const VertexDescription& vertex_description,

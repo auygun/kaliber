@@ -559,21 +559,24 @@ void RendererVulkan::DestroyTexture(uint64_t resource_id) {
   textures_.erase(it);
 }
 
-void RendererVulkan::ActivateTexture(uint64_t resource_id) {
+void RendererVulkan::ActivateTexture(uint64_t resource_id,
+                                     uint64_t texture_unit) {
   auto it = textures_.find(resource_id);
   if (it == textures_.end())
     return;
 
-  if (active_descriptor_sets_[/*TODO*/ 0] != std::get<0>(it->second.desc_set)) {
-    active_descriptor_sets_[/*TODO*/ 0] = std::get<0>(it->second.desc_set);
-    if (active_shader_id_ != 0) {
+  if (active_descriptor_sets_[texture_unit] !=
+      std::get<0>(it->second.desc_set)) {
+    active_descriptor_sets_[texture_unit] = std::get<0>(it->second.desc_set);
+    if (active_shader_id_ != kInvalidId) {
       auto active_shader = shaders_.find(active_shader_id_);
       if (active_shader != shaders_.end() &&
-          active_shader->second.desc_set_count > 0) {
-        vkCmdBindDescriptorSets(frames_[current_frame_].draw_command_buffer,
-                                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                active_shader->second.pipeline_layout, 0, 1,
-                                &active_descriptor_sets_[0], 0, nullptr);
+          active_shader->second.desc_set_count > texture_unit) {
+        vkCmdBindDescriptorSets(
+            frames_[current_frame_].draw_command_buffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            active_shader->second.pipeline_layout, texture_unit, 1,
+            &active_descriptor_sets_[texture_unit], 0, nullptr);
       }
     }
   }
@@ -788,12 +791,14 @@ void RendererVulkan::ActivateShader(uint64_t resource_id) {
     active_shader_id_ = resource_id;
     vkCmdBindPipeline(frames_[current_frame_].draw_command_buffer,
                       VK_PIPELINE_BIND_POINT_GRAPHICS, it->second.pipeline);
-    if (it->second.desc_set_count > 0 &&
-        active_descriptor_sets_[/*TODO*/ 0] != VK_NULL_HANDLE) {
-      vkCmdBindDescriptorSets(frames_[current_frame_].draw_command_buffer,
-                              VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              it->second.pipeline_layout, 0, 1,
-                              &active_descriptor_sets_[0], 0, nullptr);
+
+    for (size_t i = 0; i < it->second.desc_set_count; ++i) {
+      if (active_descriptor_sets_[i] != VK_NULL_HANDLE) {
+        vkCmdBindDescriptorSets(frames_[current_frame_].draw_command_buffer,
+                                VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                it->second.pipeline_layout, i, 1,
+                                &active_descriptor_sets_[i], 0, nullptr);
+      }
     }
   }
 }
@@ -2053,7 +2058,7 @@ void RendererVulkan::SwapBuffers() {
   context_.SwapBuffers();
   current_frame_ = (current_frame_ + 1) % frames_.size();
 
-  active_shader_id_ = 0;
+  active_shader_id_ = kInvalidId;
   for (auto& ds : active_descriptor_sets_)
     ds = VK_NULL_HANDLE;
 

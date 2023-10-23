@@ -131,7 +131,7 @@ void ImguiBackend::Render() {
 
     for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
       const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-      reinterpret_cast<Texture*>(pcmd->GetTexID())->Activate();
+      reinterpret_cast<Texture*>(pcmd->GetTexID())->Activate(0);
 
       if (pcmd->ClipRect.z > pcmd->ClipRect.x &&
           pcmd->ClipRect.w > pcmd->ClipRect.y) {

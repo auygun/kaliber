@@ -1,6 +1,7 @@
 #ifndef ENGINE_RENDERER_OPENGL_RENDERER_OPENGL_H
 #define ENGINE_RENDERER_OPENGL_RENDERER_OPENGL_H
 
+#include <array>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -43,7 +44,7 @@ class RendererOpenGL final : public Renderer {
   uint64_t CreateTexture() final;
   void UpdateTexture(uint64_t resource_id, std::unique_ptr<Image> image) final;
   void DestroyTexture(uint64_t resource_id) final;
-  void ActivateTexture(uint64_t resource_id) final;
+  void ActivateTexture(uint64_t resource_id, uint64_t texture_unit) final;
 
   uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
                         const VertexDescription& vertex_description,
@@ -113,7 +114,7 @@ class RendererOpenGL final : public Renderer {
   uint64_t last_resource_id_ = 0;
 
   GLuint active_shader_id_ = 0;
-  GLuint active_texture_id_ = 0;
+  std::array<GLuint, kMaxTextureUnits> active_texture_id_ = {};
 
   bool vertex_array_objects_ = false;
   bool npot_ = false;
@@ -144,7 +145,6 @@ class RendererOpenGL final : public Renderer {
   void ContextLost();
   void DestroyAllResources();
 
-  void BindTexture(GLuint id);
   bool SetupVertexLayout(const VertexDescription& vd,
                          GLuint vertex_size,
                          bool use_vao,

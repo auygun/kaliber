@@ -56,7 +56,7 @@ void ImageQuad::Draw(float frame_frac) {
   if (!texture_ || !texture_->IsValid())
     return;
 
-  texture_->Activate();
+  texture_->Activate(0);
 
   Vector2f tex_scale = {GetFrameWidth() / texture_->GetWidth(),
                         GetFrameHeight() / texture_->GetHeight()};
