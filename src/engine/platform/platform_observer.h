@@ -7,6 +7,8 @@ class InputEvent;
 
 class PlatformObserver {
  public:
+  virtual ~PlatformObserver() = default;
+
   virtual void OnWindowCreated() = 0;
   virtual void OnWindowDestroyed() = 0;
   virtual void OnWindowResized(int width, int height) = 0;
