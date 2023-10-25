@@ -27,6 +27,7 @@ ImguiBackend::~ImguiBackend() = default;
 void ImguiBackend::Initialize() {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
+  ImGui::GetIO().IniFilename = nullptr;
 
   size_t buffer_size = 0;
   auto buffer = AssetFile::ReadWholeFile("engine/RobotoMono-Regular.ttf",
@@ -42,6 +43,11 @@ void ImguiBackend::Initialize() {
   } else {
     LOG(0) << "Failed to read font file.";
   }
+
+  // Arbitrary scale-up for mobile devices.
+  // TODO: Put some effort into DPI awareness.
+  if (Engine::Get().IsMobile())
+    ImGui::GetStyle().ScaleAllSizes(2.0f);
 
   Engine::Get().SetImageSource(
       "imgui_atlas",
