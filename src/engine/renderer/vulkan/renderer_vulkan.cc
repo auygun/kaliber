@@ -391,8 +391,14 @@ int RendererVulkan::GetScreenHeight() const {
 }
 
 void RendererVulkan::SetScissor(int x, int y, int width, int height) {
-  DCHECK(x >= 0 && y >= 0 && width >= 0 && height >= 0);
-  DCHECK(x + width <= GetScreenWidth() && y + height <= GetScreenHeight());
+  if (x < 0)
+    x = 0;
+  if (y < 0)
+    y = 0;
+  if (x + width > GetScreenWidth())
+    width = GetScreenWidth() - x;
+  if (y + height > GetScreenHeight())
+    height = GetScreenHeight() - y;
 
   VkRect2D scissor;
   scissor.offset.x = x;

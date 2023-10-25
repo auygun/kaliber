@@ -29,7 +29,7 @@ class ImguiBackend {
  private:
   std::unique_ptr<Shader> shader_;
   Renderer* renderer_ = nullptr;
-  base::ElapsedTimer timer_;
+  base::DeltaTimer timer_;
 };
 
 }  // namespace eng

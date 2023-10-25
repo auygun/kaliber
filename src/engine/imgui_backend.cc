@@ -6,6 +6,7 @@
 #include "engine/asset/shader_source.h"
 #include "engine/engine.h"
 #include "engine/input_event.h"
+#include "engine/platform/asset_file.h"
 #include "engine/renderer/renderer.h"
 #include "engine/renderer/shader.h"
 #include "engine/renderer/texture.h"
@@ -26,6 +27,22 @@ ImguiBackend::~ImguiBackend() = default;
 void ImguiBackend::Initialize() {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
+
+  size_t buffer_size = 0;
+  auto buffer = AssetFile::ReadWholeFile("engine/RobotoMono-Regular.ttf",
+                                         Engine::Get().GetRootPath().c_str(),
+                                         &buffer_size);
+  if (buffer) {
+    ImFontConfig font_cfg = ImFontConfig();
+    font_cfg.FontDataOwnedByAtlas = false;
+    float size_pixels = Engine::Get().IsMobile() ? 64 : 32;
+    ImGui::GetIO().Fonts->AddFontFromMemoryTTF(buffer.get(), (int)buffer_size,
+                                               size_pixels, &font_cfg);
+    ImGui::GetIO().Fonts->Build();
+  } else {
+    LOG(0) << "Failed to read font file.";
+  }
+
   Engine::Get().SetImageSource(
       "imgui_atlas",
       []() -> std::unique_ptr<Image> {
@@ -33,7 +50,7 @@ void ImguiBackend::Initialize() {
         unsigned char* pixels;
         int width, height;
         ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-        LOG(0) << "imgui font width: " << width << " height: " << height;
+        LOG(0) << "Font atlas size: " << width << ", " << height;
         auto image = std::make_unique<Image>();
         image->Create(width, height);
         memcpy(image->GetBuffer(), pixels, width * height * 4);
@@ -98,7 +115,7 @@ void ImguiBackend::NewFrame() {
   ImGuiIO& io = ImGui::GetIO();
   io.DisplaySize = ImVec2((float)renderer_->GetScreenWidth(),
                           (float)renderer_->GetScreenHeight());
-  io.DeltaTime = timer_.Elapsed();
+  io.DeltaTime = timer_.Delta();
   ImGui::NewFrame();
 }
 
@@ -131,14 +148,14 @@ void ImguiBackend::Render() {
 
     for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
       const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-      reinterpret_cast<Texture*>(pcmd->GetTexID())->Activate(0);
+      if (pcmd->ClipRect.z <= pcmd->ClipRect.x ||
+          pcmd->ClipRect.w <= pcmd->ClipRect.y)
+        continue;
 
-      if (pcmd->ClipRect.z > pcmd->ClipRect.x &&
-          pcmd->ClipRect.w > pcmd->ClipRect.y) {
-        renderer_->SetScissor(int(pcmd->ClipRect.x), int(pcmd->ClipRect.y),
-                              int(pcmd->ClipRect.z - pcmd->ClipRect.x),
-                              int(pcmd->ClipRect.w - pcmd->ClipRect.y));
-      }
+      reinterpret_cast<Texture*>(pcmd->GetTexID())->Activate(0);
+      renderer_->SetScissor(int(pcmd->ClipRect.x), int(pcmd->ClipRect.y),
+                            int(pcmd->ClipRect.z - pcmd->ClipRect.x),
+                            int(pcmd->ClipRect.w - pcmd->ClipRect.y));
       renderer_->Draw(geometry_id, pcmd->ElemCount, pcmd->IdxOffset);
     }
     renderer_->DestroyGeometry(geometry_id);

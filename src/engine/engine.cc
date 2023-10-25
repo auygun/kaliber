@@ -45,7 +45,7 @@ Engine::Engine(Platform* platform)
   platform_->SetObserver(this);
 }
 
-Engine::~Engine() {
+Engine::~Engine() noexcept {
   LOG(0) << "Shutting down engine.";
 
   thread_pool_.CancelTasks();
@@ -157,12 +157,13 @@ void Engine::Draw(float frame_frac) {
   }
 
   if (stats_visible_) {
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
     ImGuiWindowFlags window_flags =
         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
         ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse |
         ImGuiWindowFlags_NoNav | ImGuiWindowFlags_AlwaysAutoResize;
     ImGui::Begin("Stats", nullptr, window_flags);
-    ImGui::PushItemWidth(ImGui::GetFontSize() * -12);
     ImGui::Text("%s", renderer_->GetDebugName());
     ImGui::Text("%d fps", fps_);
     ImGui::End();

@@ -59,8 +59,6 @@ int RendererOpenGL::GetScreenHeight() const {
 }
 
 void RendererOpenGL::SetScissor(int x, int y, int width, int height) {
-  DCHECK(x >= 0 && y >= 0 && width >= 0 && height >= 0);
-  DCHECK(x + width <= GetScreenWidth() && y + height <= GetScreenHeight());
   glScissor(x, screen_height_ - y - height, width, height);
   glEnable(GL_SCISSOR_TEST);
 }
