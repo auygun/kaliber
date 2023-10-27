@@ -52,7 +52,6 @@ void ImguiBackend::Initialize() {
   Engine::Get().SetImageSource(
       "imgui_atlas",
       []() -> std::unique_ptr<Image> {
-        // Build texture atlas
         unsigned char* pixels;
         int width, height;
         ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
@@ -67,7 +66,7 @@ void ImguiBackend::Initialize() {
   ImGui::GetIO().Fonts->SetTexID(
       (ImTextureID)(intptr_t)Engine::Get().AcquireTexture("imgui_atlas"));
 
-  NewFrame();
+  NewFrame(0);
 }
 
 void ImguiBackend::Shutdown() {
@@ -117,28 +116,31 @@ std::unique_ptr<InputEvent> ImguiBackend::OnInputEvent(
   return event;
 }
 
-void ImguiBackend::NewFrame() {
+void ImguiBackend::NewFrame(float delta_time) {
+  if (is_new_frame_)
+    ImGui::EndFrame();
+  is_new_frame_ = true;
+
   ImGuiIO& io = ImGui::GetIO();
   io.DisplaySize = ImVec2((float)renderer_->GetScreenWidth(),
                           (float)renderer_->GetScreenHeight());
-  io.DeltaTime = timer_.Delta();
+  io.DeltaTime = delta_time;
   ImGui::NewFrame();
 }
 
-void ImguiBackend::Render() {
+void ImguiBackend::Draw() {
+  is_new_frame_ = false;
   ImGui::Render();
-
   ImDrawData* draw_data = ImGui::GetDrawData();
   if (draw_data->CmdListsCount <= 0)
     return;
 
-  float L = draw_data->DisplayPos.x;
-  float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
-  float T = draw_data->DisplayPos.y;
-  float B = draw_data->DisplayPos.y + draw_data->DisplaySize.y;
   base::Matrix4f ortho_projection;
-  ortho_projection.CreateOrthoProjection(L, R, B, T);
-
+  ortho_projection.CreateOrthoProjection(
+      draw_data->DisplayPos.x,
+      draw_data->DisplayPos.x + draw_data->DisplaySize.x,
+      draw_data->DisplayPos.y + draw_data->DisplaySize.y,
+      draw_data->DisplayPos.y);
   shader_->Activate();
   shader_->SetUniform("projection", ortho_projection);
   shader_->UploadUniforms();

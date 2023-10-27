@@ -130,6 +130,8 @@ void Engine::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
   ++tick_;
 
+  imgui_backend_.NewFrame(delta_time);
+
   for (auto d : animators_)
     d->Update(delta_time);
 
@@ -140,6 +142,9 @@ void Engine::Update(float delta_time) {
     fps_ = renderer_->GetAndResetFPS();
     fps_seconds_ = 0;
   }
+
+  if (stats_visible_)
+    ShowStats();
 }
 
 void Engine::Draw(float frame_frac) {
@@ -150,29 +155,12 @@ void Engine::Draw(float frame_frac) {
       [](auto& a, auto& b) { return a->GetZOrder() < b->GetZOrder(); });
 
   renderer_->PrepareForDrawing();
-
   for (auto d : drawables_) {
     if (d->IsVisible())
       d->Draw(frame_frac);
   }
-
-  if (stats_visible_) {
-    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-    ImGuiWindowFlags window_flags =
-        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
-        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoNav | ImGuiWindowFlags_AlwaysAutoResize;
-    ImGui::Begin("Stats", nullptr, window_flags);
-    ImGui::Text("%s", renderer_->GetDebugName());
-    ImGui::Text("%d fps", fps_);
-    ImGui::End();
-  }
-
-  imgui_backend_.Render();
-
+  imgui_backend_.Draw();
   renderer_->Present();
-  imgui_backend_.NewFrame();
 }
 
 void Engine::AddDrawable(Drawable* drawable) {
@@ -694,6 +682,19 @@ void Engine::WaitForAsyncWork() {
     TaskRunner::GetThreadLocalTaskRunner()->RunTasks();
     platform_->Update();
   }
+}
+
+void Engine::ShowStats() {
+  ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+  ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+  ImGuiWindowFlags window_flags =
+      ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
+      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse |
+      ImGuiWindowFlags_NoNav | ImGuiWindowFlags_AlwaysAutoResize;
+  ImGui::Begin("Stats", nullptr, window_flags);
+  ImGui::Text("%s", renderer_->GetDebugName());
+  ImGui::Text("%d fps", fps_);
+  ImGui::End();
 }
 
 }  // namespace eng

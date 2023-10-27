@@ -3,8 +3,6 @@
 
 #include <memory>
 
-#include "base/timer.h"
-
 namespace eng {
 
 class InputEvent;
@@ -23,13 +21,13 @@ class ImguiBackend {
 
   std::unique_ptr<InputEvent> OnInputEvent(std::unique_ptr<InputEvent> event);
 
-  void NewFrame();
-  void Render();
+  void NewFrame(float delta_time);
+  void Draw();
 
  private:
   std::unique_ptr<Shader> shader_;
   Renderer* renderer_ = nullptr;
-  base::DeltaTimer timer_;
+  bool is_new_frame_ = false;
 };
 
 }  // namespace eng

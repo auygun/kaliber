@@ -242,6 +242,8 @@ class Engine : public PlatformObserver {
 
   void WaitForAsyncWork();
 
+  void ShowStats();
+
   Engine(const Engine&) = delete;
   Engine& operator=(const Engine&) = delete;
 };
