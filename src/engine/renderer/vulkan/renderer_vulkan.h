@@ -33,6 +33,9 @@ class RendererVulkan final : public Renderer {
   int GetScreenWidth() const final;
   int GetScreenHeight() const final;
 
+  void SetViewport(int x, int y, int width, int height) final;
+  void ResetViewport() final;
+
   void SetScissor(int x, int y, int width, int height) final;
   void ResetScissor() final;
 

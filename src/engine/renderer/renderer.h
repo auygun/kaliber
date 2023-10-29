@@ -39,6 +39,9 @@ class Renderer {
   virtual int GetScreenWidth() const = 0;
   virtual int GetScreenHeight() const = 0;
 
+  virtual void SetViewport(int x, int y, int width, int height) = 0;
+  virtual void ResetViewport() = 0;
+
   virtual void SetScissor(int x, int y, int width, int height) = 0;
   virtual void ResetScissor() = 0;
 

@@ -390,6 +390,30 @@ int RendererVulkan::GetScreenHeight() const {
   return context_.GetWindowHeight();
 }
 
+void RendererVulkan::SetViewport(int x, int y, int width, int height) {
+  VkViewport viewport;
+  viewport.x = 0;
+  viewport.y = (float)height;
+  viewport.width = (float)width;
+  viewport.height = -(float)height;
+  viewport.minDepth = 0;
+  viewport.maxDepth = 1.0;
+  vkCmdSetViewport(frames_[current_frame_].draw_command_buffer, 0, 1,
+                   &viewport);
+}
+
+void RendererVulkan::ResetViewport() {
+  VkViewport viewport;
+  viewport.x = 0;
+  viewport.y = (float)context_.GetWindowHeight();
+  viewport.width = (float)context_.GetWindowWidth();
+  viewport.height = -(float)context_.GetWindowHeight();
+  viewport.minDepth = 0;
+  viewport.maxDepth = 1.0;
+  vkCmdSetViewport(frames_[current_frame_].draw_command_buffer, 0, 1,
+                   &viewport);
+}
+
 void RendererVulkan::SetScissor(int x, int y, int width, int height) {
   if (x < 0)
     x = 0;
@@ -1990,8 +2014,6 @@ bool RendererVulkan::CreatePipelineLayout(
 }
 
 void RendererVulkan::DrawListBegin() {
-  VkCommandBuffer command_buffer = frames_[current_frame_].draw_command_buffer;
-
   VkRenderPassBeginInfo render_pass_begin;
   render_pass_begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   render_pass_begin.pNext = nullptr;
@@ -2010,26 +2032,11 @@ void RendererVulkan::DrawListBegin() {
   render_pass_begin.clearValueCount = clear_values.size();
   render_pass_begin.pClearValues = clear_values.data();
 
-  vkCmdBeginRenderPass(command_buffer, &render_pass_begin,
-                       VK_SUBPASS_CONTENTS_INLINE);
+  vkCmdBeginRenderPass(frames_[current_frame_].draw_command_buffer,
+                       &render_pass_begin, VK_SUBPASS_CONTENTS_INLINE);
 
-  VkViewport viewport;
-  viewport.x = 0;
-  viewport.y = (float)context_.GetWindowHeight();
-  viewport.width = (float)context_.GetWindowWidth();
-  viewport.height = -(float)context_.GetWindowHeight();
-  viewport.minDepth = 0;
-  viewport.maxDepth = 1.0;
-
-  vkCmdSetViewport(command_buffer, 0, 1, &viewport);
-
-  VkRect2D scissor;
-  scissor.offset.x = 0;
-  scissor.offset.y = 0;
-  scissor.extent.width = context_.GetWindowWidth();
-  scissor.extent.height = context_.GetWindowHeight();
-
-  vkCmdSetScissor(command_buffer, 0, 1, &scissor);
+  ResetViewport();
+  ResetScissor();
 }
 
 void RendererVulkan::DrawListEnd() {

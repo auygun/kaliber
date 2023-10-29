@@ -47,7 +47,6 @@ RendererOpenGL::~RendererOpenGL() {
 void RendererOpenGL::OnWindowResized(int width, int height) {
   screen_width_ = width;
   screen_height_ = height;
-  glViewport(0, 0, screen_width_, screen_height_);
 }
 
 int RendererOpenGL::GetScreenWidth() const {
@@ -56,6 +55,14 @@ int RendererOpenGL::GetScreenWidth() const {
 
 int RendererOpenGL::GetScreenHeight() const {
   return screen_height_;
+}
+
+void RendererOpenGL::SetViewport(int x, int y, int width, int height) {
+  glViewport(0, 0, width, height);
+}
+
+void RendererOpenGL::ResetViewport() {
+  glViewport(0, 0, screen_width_, screen_height_);
 }
 
 void RendererOpenGL::SetScissor(int x, int y, int width, int height) {
@@ -436,6 +443,7 @@ void RendererOpenGL::SetUniform(uint64_t resource_id,
 }
 
 void RendererOpenGL::PrepareForDrawing() {
+  glViewport(0, 0, screen_width_, screen_height_);
   glDisable(GL_SCISSOR_TEST);
 }
 

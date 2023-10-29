@@ -135,6 +135,8 @@ void ImguiBackend::Draw() {
   if (draw_data->CmdListsCount <= 0)
     return;
 
+  renderer_->SetViewport(0, 0, draw_data->DisplaySize.x, draw_data->DisplaySize.y);
+
   base::Matrix4f ortho_projection;
   ortho_projection.CreateOrthoProjection(
       draw_data->DisplayPos.x,
@@ -169,6 +171,7 @@ void ImguiBackend::Draw() {
     renderer_->DestroyGeometry(geometry_id);
   }
   renderer_->ResetScissor();
+  renderer_->ResetViewport();
 }
 
 }  // namespace eng

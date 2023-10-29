@@ -70,20 +70,15 @@ void Engine::Run() {
   Initialize();
 
   DeltaTimer timer;
-  float accumulator = 0.0;
-  float frame_frac = 0.0f;
+  float accumulator = 0.0f;
 
   for (;;) {
-    TaskRunner::GetThreadLocalTaskRunner()->RunTasks();
-
     platform_->Update();
     if (platform_->should_exit())
       return;
 
     if (!renderer_->IsInitialzed())
       continue;
-
-    Draw(frame_frac);
 
     // Accumulate time.
     accumulator += timer.Delta();
@@ -94,8 +89,11 @@ void Engine::Run() {
       accumulator -= time_step_;
     };
 
+    TaskRunner::GetThreadLocalTaskRunner()->RunTasks();
+
     // Calculate frame fraction from remainder of the frame time.
-    frame_frac = accumulator / time_step_;
+    float frame_frac = accumulator / time_step_;
+    Draw(frame_frac);
   }
 }
 
