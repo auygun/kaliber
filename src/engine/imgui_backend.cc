@@ -65,8 +65,6 @@ void ImguiBackend::Initialize() {
   Engine::Get().RefreshImage("imgui_atlas");
   ImGui::GetIO().Fonts->SetTexID(
       (ImTextureID)(intptr_t)Engine::Get().AcquireTexture("imgui_atlas"));
-
-  NewFrame(0);
 }
 
 void ImguiBackend::Shutdown() {
@@ -117,9 +115,9 @@ std::unique_ptr<InputEvent> ImguiBackend::OnInputEvent(
 }
 
 void ImguiBackend::NewFrame(float delta_time) {
-  if (is_new_frame_)
-    ImGui::EndFrame();
-  is_new_frame_ = true;
+  for (auto& id : geometries_)
+    renderer_->DestroyGeometry(id);
+  geometries_.clear();
 
   ImGuiIO& io = ImGui::GetIO();
   io.DisplaySize = ImVec2((float)renderer_->GetScreenWidth(),
@@ -128,11 +126,24 @@ void ImguiBackend::NewFrame(float delta_time) {
   ImGui::NewFrame();
 }
 
-void ImguiBackend::Draw() {
-  is_new_frame_ = false;
+void ImguiBackend::Render() {
   ImGui::Render();
   ImDrawData* draw_data = ImGui::GetDrawData();
-  if (draw_data->CmdListsCount <= 0)
+  geometries_.resize(draw_data->CmdListsCount);
+  for (int n = 0; n < draw_data->CmdListsCount; n++) {
+    const ImDrawList* cmd_list = draw_data->CmdLists[n];
+    auto mesh = std::make_unique<Mesh>();
+    mesh->Create(kPrimitive_Triangles, vertex_description,
+                 cmd_list->VtxBuffer.Size, cmd_list->VtxBuffer.Data,
+                 kDataType_UShort, cmd_list->IdxBuffer.Size,
+                 cmd_list->IdxBuffer.Data);
+    geometries_[n] = renderer_->CreateGeometry(std::move(mesh));
+  }
+}
+
+void ImguiBackend::Draw() {
+  ImDrawData* draw_data = ImGui::GetDrawData();
+  if (!draw_data || draw_data->CmdListsCount <= 0)
     return;
 
   renderer_->SetViewport(0, 0, draw_data->DisplaySize.x, draw_data->DisplaySize.y);
@@ -149,26 +160,17 @@ void ImguiBackend::Draw() {
 
   for (int n = 0; n < draw_data->CmdListsCount; n++) {
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
-    auto mesh = std::make_unique<Mesh>();
-    mesh->Create(kPrimitive_Triangles, vertex_description,
-                 cmd_list->VtxBuffer.Size, cmd_list->VtxBuffer.Data,
-                 kDataType_UShort, cmd_list->IdxBuffer.Size,
-                 cmd_list->IdxBuffer.Data);
-    auto geometry_id = renderer_->CreateGeometry(std::move(mesh));
-
     for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
       const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
       if (pcmd->ClipRect.z <= pcmd->ClipRect.x ||
           pcmd->ClipRect.w <= pcmd->ClipRect.y)
         continue;
-
       reinterpret_cast<Texture*>(pcmd->GetTexID())->Activate(0);
       renderer_->SetScissor(int(pcmd->ClipRect.x), int(pcmd->ClipRect.y),
                             int(pcmd->ClipRect.z - pcmd->ClipRect.x),
                             int(pcmd->ClipRect.w - pcmd->ClipRect.y));
-      renderer_->Draw(geometry_id, pcmd->ElemCount, pcmd->IdxOffset);
+      renderer_->Draw(geometries_[n], pcmd->ElemCount, pcmd->IdxOffset);
     }
-    renderer_->DestroyGeometry(geometry_id);
   }
   renderer_->ResetScissor();
   renderer_->ResetViewport();

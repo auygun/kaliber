@@ -143,6 +143,8 @@ void Engine::Update(float delta_time) {
 
   if (stats_visible_)
     ShowStats();
+
+  imgui_backend_.Render();
 }
 
 void Engine::Draw(float frame_frac) {
