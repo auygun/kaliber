@@ -2,7 +2,6 @@
 
 #include "base/log.h"
 #include "engine/asset/image.h"
-#include "engine/asset/mesh.h"
 #include "engine/asset/shader_source.h"
 #include "engine/engine.h"
 #include "engine/input_event.h"
@@ -28,6 +27,9 @@ void ImguiBackend::Initialize() {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGui::GetIO().IniFilename = nullptr;
+
+  if (!ParseVertexDescription(vertex_description, vertex_description_))
+    LOG(0) << "Failed to parse vertex description.";
 
   size_t buffer_size = 0;
   auto buffer = AssetFile::ReadWholeFile("engine/RobotoMono-Regular.ttf",
@@ -68,6 +70,9 @@ void ImguiBackend::Initialize() {
 }
 
 void ImguiBackend::Shutdown() {
+  for (auto& id : geometries_)
+    renderer_->DestroyGeometry(id);
+  geometries_.clear();
   ImGui::DestroyContext();
   shader_.reset();
 }
@@ -75,6 +80,7 @@ void ImguiBackend::Shutdown() {
 void ImguiBackend::CreateRenderResources(Renderer* renderer) {
   renderer_ = renderer;
   shader_->SetRenderer(renderer);
+  geometries_.clear();
 
   auto source = std::make_unique<ShaderSource>();
   if (source->Load("engine/imgui.glsl")) {
@@ -115,10 +121,6 @@ std::unique_ptr<InputEvent> ImguiBackend::OnInputEvent(
 }
 
 void ImguiBackend::NewFrame(float delta_time) {
-  for (auto& id : geometries_)
-    renderer_->DestroyGeometry(id);
-  geometries_.clear();
-
   ImGuiIO& io = ImGui::GetIO();
   io.DisplaySize = ImVec2((float)renderer_->GetScreenWidth(),
                           (float)renderer_->GetScreenHeight());
@@ -129,15 +131,16 @@ void ImguiBackend::NewFrame(float delta_time) {
 void ImguiBackend::Render() {
   ImGui::Render();
   ImDrawData* draw_data = ImGui::GetDrawData();
-  geometries_.resize(draw_data->CmdListsCount);
+  if (geometries_.size() < draw_data->CmdListsCount)
+    geometries_.resize(draw_data->CmdListsCount, 0);
   for (int n = 0; n < draw_data->CmdListsCount; n++) {
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
-    auto mesh = std::make_unique<Mesh>();
-    mesh->Create(kPrimitive_Triangles, vertex_description,
-                 cmd_list->VtxBuffer.Size, cmd_list->VtxBuffer.Data,
-                 kDataType_UShort, cmd_list->IdxBuffer.Size,
-                 cmd_list->IdxBuffer.Data);
-    geometries_[n] = renderer_->CreateGeometry(std::move(mesh));
+    if (geometries_[n] == 0)
+      geometries_[n] = renderer_->CreateGeometry(
+          kPrimitive_Triangles, vertex_description_, kDataType_UShort);
+    renderer_->UpdateGeometry(
+        geometries_[n], cmd_list->VtxBuffer.Size, cmd_list->VtxBuffer.Data,
+        cmd_list->IdxBuffer.Size, cmd_list->IdxBuffer.Data);
   }
 }
 

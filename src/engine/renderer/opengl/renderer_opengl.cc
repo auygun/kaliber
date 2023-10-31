@@ -72,11 +72,22 @@ void RendererOpenGL::ResetScissor() {
 }
 
 uint64_t RendererOpenGL::CreateGeometry(std::unique_ptr<Mesh> mesh) {
+  auto id = CreateGeometry(mesh->primitive(), mesh->vertex_description(),
+                           mesh->index_description());
+  if (id != kInvalidId)
+    UpdateGeometry(id, mesh->num_vertices(), mesh->GetVertices(),
+                   mesh->num_indices(), mesh->GetIndices());
+  return id;
+}
+
+uint64_t RendererOpenGL::CreateGeometry(Primitive primitive,
+                                        VertexDescription vertex_description,
+                                        DataType index_description) {
   // Verify that we have a valid layout and get the total byte size per vertex.
-  GLuint vertex_size = mesh->GetVertexSize();
+  GLuint vertex_size = GetVertexSize(vertex_description);
   if (!vertex_size) {
     LOG(0) << "Invalid vertex layout";
-    return 0;
+    return kInvalidId;
   }
 
   GLuint vertex_array_id = 0;
@@ -85,30 +96,25 @@ uint64_t RendererOpenGL::CreateGeometry(std::unique_ptr<Mesh> mesh) {
     glBindVertexArray(vertex_array_id);
   }
 
-  // Create the vertex buffer and upload the data.
+  // Create the vertex buffer.
   GLuint vertex_buffer_id = 0;
   glGenBuffers(1, &vertex_buffer_id);
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_id);
-  glBufferData(GL_ARRAY_BUFFER, mesh->num_vertices() * vertex_size,
-               mesh->GetVertices(), GL_STATIC_DRAW);
 
   // Make sure the vertex format is understood and the attribute pointers are
   // set up.
   std::vector<GeometryOpenGL::Element> vertex_layout;
-  if (!SetupVertexLayout(mesh->vertex_description(), vertex_size,
-                         vertex_array_objects_, vertex_layout)) {
+  if (!SetupVertexLayout(vertex_description, vertex_size, vertex_array_objects_,
+                         vertex_layout)) {
     LOG(0) << "Invalid vertex layout";
-    return 0;
+    return kInvalidId;
   }
 
-  // Create the index buffer and upload the data.
+  // Create the index buffer.
   GLuint index_buffer_id = 0;
-  if (mesh->GetIndices()) {
+  if (index_description != kDataType_Invalid) {
     glGenBuffers(1, &index_buffer_id);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer_id);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 mesh->num_indices() * mesh->GetIndexSize(), mesh->GetIndices(),
-                 GL_STATIC_DRAW);
   }
 
   if (vertex_array_id) {
@@ -121,16 +127,46 @@ uint64_t RendererOpenGL::CreateGeometry(std::unique_ptr<Mesh> mesh) {
   }
 
   uint64_t resource_id = ++last_resource_id_;
-  geometries_[resource_id] = {(GLsizei)mesh->num_vertices(),
-                              (GLsizei)mesh->num_indices(),
-                              kGlPrimitive[mesh->primitive()],
-                              kGlDataType[mesh->index_description()],
+  geometries_[resource_id] = {0,
+                              0,
+                              kGlPrimitive[primitive],
+                              kGlDataType[index_description],
                               vertex_layout,
                               vertex_size,
                               vertex_array_id,
                               vertex_buffer_id,
+                              (GLuint)GetIndexSize(index_description),
                               index_buffer_id};
   return resource_id;
+}
+
+void RendererOpenGL::UpdateGeometry(uint64_t resource_id,
+                                    size_t num_vertices,
+                                    const void* vertices,
+                                    size_t num_indices,
+                                    const void* indices) {
+  auto it = geometries_.find(resource_id);
+  if (it == geometries_.end())
+    return;
+
+  // Go with GL_STATIC_DRAW for the first update.
+  GLenum usage = it->second.num_vertices > 0 ? GL_STREAM_DRAW : GL_STATIC_DRAW;
+
+  // Upload the vertex data.
+  glBindBuffer(GL_ARRAY_BUFFER, it->second.vertex_buffer_id);
+  glBufferData(GL_ARRAY_BUFFER, num_vertices * it->second.vertex_size, vertices,
+               usage);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  it->second.num_vertices = (GLsizei)num_vertices;
+
+  // Upload the index data.
+  if (it->second.index_buffer_id) {
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, it->second.index_buffer_id);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices * it->second.index_size,
+                 indices, usage);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    it->second.num_indices = (GLsizei)num_indices;
+  }
 }
 
 void RendererOpenGL::DestroyGeometry(uint64_t resource_id) {

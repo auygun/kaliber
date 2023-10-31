@@ -46,6 +46,15 @@ class Renderer {
   virtual void ResetScissor() = 0;
 
   virtual uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) = 0;
+  virtual uint64_t CreateGeometry(
+      Primitive primitive,
+      VertexDescription vertex_description,
+      DataType index_description = kDataType_Invalid) = 0;
+  virtual void UpdateGeometry(uint64_t resource_id,
+                              size_t num_vertices,
+                              const void* vertices,
+                              size_t num_indices,
+                              const void* indices) = 0;
   virtual void DestroyGeometry(uint64_t resource_id) = 0;
   virtual void Draw(uint64_t resource_id,
                     uint64_t num_indices = 0,

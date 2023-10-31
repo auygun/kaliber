@@ -139,28 +139,16 @@ bool Mesh::Load(const std::string& file_name) {
       }
     }
   }
+  // TODO: Load indices
   return true;
 }
 
 size_t Mesh::GetVertexSize() const {
-  unsigned int size = 0;
-  for (auto& attr : vertex_description_) {
-    size += std::get<2>(attr) * std::get<3>(attr);
-  }
-  return size;
+  return eng::GetVertexSize(vertex_description_);
 }
 
 size_t Mesh::GetIndexSize() const {
-  switch (index_description_) {
-    case kDataType_Byte:
-      return sizeof(char);
-    case kDataType_UShort:
-      return sizeof(unsigned short);
-    case kDataType_UInt:
-      return sizeof(unsigned int);
-    default:
-      return 0;
-  }
+  return eng::GetIndexSize(index_description_);
 }
 
 }  // namespace eng

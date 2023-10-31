@@ -14,6 +14,27 @@ const char kLayoutDelimiter[] = ";/ \t";
 
 namespace eng {
 
+size_t GetVertexSize(const VertexDescription& vertex_description) {
+  size_t size = 0;
+  for (auto& attr : vertex_description) {
+    size += std::get<2>(attr) * std::get<3>(attr);
+  }
+  return size;
+}
+
+size_t GetIndexSize(DataType index_description)  {
+  switch (index_description) {
+    case kDataType_Byte:
+      return sizeof(char);
+    case kDataType_UShort:
+      return sizeof(unsigned short);
+    case kDataType_UInt:
+      return sizeof(unsigned int);
+    default:
+      return 0;
+  }
+}
+
 bool ParseVertexDescription(const std::string& vd_str, VertexDescription& out) {
   // Parse the description.
   char buffer[32];

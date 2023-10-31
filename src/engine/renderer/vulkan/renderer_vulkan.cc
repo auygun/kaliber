@@ -307,6 +307,8 @@ VertexInputDescription GetVertexInputDescription(
 
 VkIndexType GetIndexType(eng::DataType data_type) {
   switch (data_type) {
+    case eng::kDataType_Invalid:
+      return VK_INDEX_TYPE_NONE_KHR;
     case eng::kDataType_UInt:
       return VK_INDEX_TYPE_UINT32;
     case eng::kDataType_UShort:
@@ -315,7 +317,7 @@ VkIndexType GetIndexType(eng::DataType data_type) {
       break;
   }
   NOTREACHED() << "Invalid index type: " << data_type;
-  return VK_INDEX_TYPE_UINT16;
+  return VK_INDEX_TYPE_NONE_KHR;
 }
 
 VkFormat GetImageFormat(eng::Image::Format format) {
@@ -442,47 +444,76 @@ void RendererVulkan::ResetScissor() {
 }
 
 uint64_t RendererVulkan::CreateGeometry(std::unique_ptr<Mesh> mesh) {
-  auto& geometry = geometries_[++last_resource_id_] = {};
+  auto id = CreateGeometry(mesh->primitive(), mesh->vertex_description(),
+                           mesh->index_description());
+  if (id != kInvalidId)
+    UpdateGeometry(id, mesh->num_vertices(), mesh->GetVertices(),
+                   mesh->num_indices(), mesh->GetIndices());
+  task_runner_.Delete(HERE, std::move(mesh));
+  semaphore_.release();
+  return id;
+}
 
-  geometry.num_vertices = mesh->num_vertices();
-  size_t vertex_data_size = mesh->GetVertexSize() * geometry.num_vertices;
+uint64_t RendererVulkan::CreateGeometry(Primitive primitive,
+                                        VertexDescription vertex_description,
+                                        DataType index_description) {
+  auto& geometry = geometries_[++last_resource_id_] = {};
+  geometry.vertex_size = GetVertexSize(vertex_description);
+  geometry.index_type = GetIndexType(index_description);
+  geometry.index_type_size = GetIndexSize(index_description);
+  return last_resource_id_;
+}
+
+void RendererVulkan::UpdateGeometry(uint64_t resource_id,
+                                    size_t num_vertices,
+                                    const void* vertices,
+                                    size_t num_indices,
+                                    const void* indices) {
+  auto it = geometries_.find(resource_id);
+  if (it == geometries_.end())
+    return;
+
+  it->second.num_vertices = num_vertices;
+  size_t vertex_data_size = it->second.vertex_size * it->second.num_vertices;
   size_t index_data_size = 0;
 
-  if (mesh->GetIndices()) {
-    geometry.num_indices = mesh->num_indices();
-    geometry.index_type = GetIndexType(mesh->index_description());
-    geometry.index_type_size = mesh->GetIndexSize();
-    index_data_size = geometry.index_type_size * geometry.num_indices;
+  if (indices) {
+    DCHECK(it->second.index_type != VK_INDEX_TYPE_NONE_KHR);
+    it->second.num_indices = num_indices;
+    index_data_size = it->second.index_type_size * it->second.num_indices;
   }
-  size_t data_size = vertex_data_size + index_data_size;
 
-  AllocateBuffer(geometry.buffer, data_size,
-                 VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-                     VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                 VMA_MEMORY_USAGE_GPU_ONLY);
+  size_t data_size = vertex_data_size + index_data_size;
+  if (it->second.buffer_size < data_size) {
+    DLOG(1) << __func__ << "Reallocate buffer " << data_size;
+    if (it->second.buffer_size > 0)
+      FreeBuffer(std::move(it->second.buffer));
+    AllocateBuffer(it->second.buffer, data_size,
+                   VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+                       VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                   VMA_MEMORY_USAGE_GPU_ONLY);
+    it->second.buffer_size = data_size;
+  }
 
   task_runner_.PostTask(HERE, std::bind(&RendererVulkan::UpdateBuffer, this,
-                                        std::get<0>(geometry.buffer), 0,
-                                        mesh->GetVertices(), vertex_data_size));
-  if (geometry.num_indices > 0) {
-    geometry.index_data_offset = vertex_data_size;
+                                        std::get<0>(it->second.buffer), 0,
+                                        vertices, vertex_data_size));
+  if (it->second.num_indices > 0) {
+    it->second.index_data_offset = vertex_data_size;
     task_runner_.PostTask(HERE, std::bind(&RendererVulkan::UpdateBuffer, this,
-                                          std::get<0>(geometry.buffer),
-                                          geometry.index_data_offset,
-                                          mesh->GetIndices(), index_data_size));
+                                          std::get<0>(it->second.buffer),
+                                          it->second.index_data_offset, indices,
+                                          index_data_size));
   }
   task_runner_.PostTask(HERE,
                         std::bind(&RendererVulkan::BufferMemoryBarrier, this,
-                                  std::get<0>(geometry.buffer), 0, data_size,
+                                  std::get<0>(it->second.buffer), 0, data_size,
                                   VK_PIPELINE_STAGE_TRANSFER_BIT,
                                   VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
                                   VK_ACCESS_TRANSFER_WRITE_BIT,
                                   VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT));
-  task_runner_.Delete(HERE, std::move(mesh));
   semaphore_.release();
-
-  return last_resource_id_;
 }
 
 void RendererVulkan::DestroyGeometry(uint64_t resource_id) {

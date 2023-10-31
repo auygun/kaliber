@@ -39,6 +39,15 @@ class RendererOpenGL final : public Renderer {
   void ResetScissor() final;
 
   uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) final;
+  uint64_t CreateGeometry(Primitive primitive,
+                          VertexDescription vertex_description,
+                          DataType index_description = kDataType_Invalid) final;
+  void UpdateGeometry(uint64_t resource_id,
+                      size_t num_vertices,
+                      const void* vertices,
+                      size_t num_indices,
+                      const void* indices) final;
+
   void DestroyGeometry(uint64_t resource_id) final;
   void Draw(uint64_t resource_id,
             uint64_t num_indices = 0,
@@ -99,6 +108,7 @@ class RendererOpenGL final : public Renderer {
     GLuint vertex_size = 0;
     GLuint vertex_array_id = 0;
     GLuint vertex_buffer_id = 0;
+    GLuint index_size = 0;
     GLuint index_buffer_id = 0;
   };
 

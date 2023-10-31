@@ -4,6 +4,8 @@
 #include <memory>
 #include <vector>
 
+#include "engine/renderer/renderer_types.h"
+
 namespace eng {
 
 class InputEvent;
@@ -27,6 +29,7 @@ class ImguiBackend {
   void Draw();
 
  private:
+  VertexDescription vertex_description_;
   std::vector<uint64_t> geometries_;
   std::unique_ptr<Shader> shader_;
   Renderer* renderer_ = nullptr;
