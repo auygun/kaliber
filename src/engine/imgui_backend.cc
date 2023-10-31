@@ -146,16 +146,16 @@ void ImguiBackend::Draw() {
   if (!draw_data || draw_data->CmdListsCount <= 0)
     return;
 
-  renderer_->SetViewport(0, 0, draw_data->DisplaySize.x, draw_data->DisplaySize.y);
+  renderer_->SetViewport(0, 0, draw_data->DisplaySize.x,
+                         draw_data->DisplaySize.y);
 
-  base::Matrix4f ortho_projection;
-  ortho_projection.CreateOrthoProjection(
-      draw_data->DisplayPos.x,
-      draw_data->DisplayPos.x + draw_data->DisplaySize.x,
-      draw_data->DisplayPos.y + draw_data->DisplaySize.y,
-      draw_data->DisplayPos.y);
+  base::Matrix4f proj;
+  proj.CreateOrthoProjection(draw_data->DisplayPos.x,
+                             draw_data->DisplayPos.x + draw_data->DisplaySize.x,
+                             draw_data->DisplayPos.y + draw_data->DisplaySize.y,
+                             draw_data->DisplayPos.y);
   shader_->Activate();
-  shader_->SetUniform("projection", ortho_projection);
+  shader_->SetUniform("projection", proj);
   shader_->UploadUniforms();
 
   for (int n = 0; n < draw_data->CmdListsCount; n++) {
