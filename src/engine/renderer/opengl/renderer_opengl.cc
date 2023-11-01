@@ -26,9 +26,6 @@ constexpr GLenum kGlDataType[eng::kDataType_Max] = {
     GL_UNSIGNED_BYTE, GL_FLOAT,        GL_INT,
     GL_SHORT,         GL_UNSIGNED_INT, GL_UNSIGNED_SHORT};
 
-constexpr GLboolean kGlNormalize[eng::kDataType_Max] = {
-    GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE};
-
 const std::string kAttributeNames[eng::kAttribType_Max] = {
     "in_color", "in_normal", "in_position", "in_tex_coord"};
 
@@ -162,16 +159,16 @@ void RendererOpenGL::Draw(uint64_t resource_id,
     num_indices = it->second.num_indices;
 
   // Set up the vertex data.
-  if (it->second.vertex_array_id)
+  if (it->second.vertex_array_id) {
     glBindVertexArray(it->second.vertex_array_id);
-  else {
+  } else {
     glBindBuffer(GL_ARRAY_BUFFER, it->second.vertex_buffer_id);
     for (GLuint attribute_index = 0;
          attribute_index < (GLuint)it->second.vertex_layout.size();
          ++attribute_index) {
       GeometryOpenGL::Element& e = it->second.vertex_layout[attribute_index];
       glEnableVertexAttribArray(attribute_index);
-      glVertexAttribPointer(attribute_index, e.num_elements, e.type, GL_FALSE,
+      glVertexAttribPointer(attribute_index, e.num_elements, e.type, GL_TRUE,
                             it->second.vertex_size,
                             (const GLvoid*)e.vertex_offset);
     }
@@ -587,9 +584,8 @@ bool RendererOpenGL::SetupVertexLayout(
     if (use_vao) {
       // This will be saved into the vertex array object.
       glEnableVertexAttribArray(attribute_index);
-      glVertexAttribPointer(attribute_index, num_elements, type,
-                            kGlNormalize[data_type], vertex_size,
-                            (const GLvoid*)vertex_offset);
+      glVertexAttribPointer(attribute_index, num_elements, type, GL_TRUE,
+                            vertex_size, (const GLvoid*)vertex_offset);
     } else {
       // Need to keep this information for when rendering.
       GeometryOpenGL::Element element;
@@ -633,6 +629,8 @@ GLuint RendererOpenGL::CreateShader(const char* source, GLenum type) {
 
 bool RendererOpenGL::BindAttributeLocation(GLuint id,
                                            const VertexDescription& vd) {
+  using namespace std::string_literals;
+
   int current = 0;
   int tex_coord = 0;
 
@@ -640,7 +638,7 @@ bool RendererOpenGL::BindAttributeLocation(GLuint id,
     AttribType attrib_type = std::get<0>(attr);
     std::string attrib_name = kAttributeNames[attrib_type];
     if (attrib_type == kAttribType_TexCoord)
-      attrib_name += std::to_string(tex_coord++);
+      attrib_name += "_"s + std::to_string(tex_coord++);
     glBindAttribLocation(id, current++, attrib_name.c_str());
   }
   return current > 0;
