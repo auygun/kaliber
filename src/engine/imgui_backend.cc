@@ -80,7 +80,10 @@ void ImguiBackend::Shutdown() {
 void ImguiBackend::CreateRenderResources(Renderer* renderer) {
   renderer_ = renderer;
   shader_->SetRenderer(renderer);
+
   geometries_.clear();
+  if (ImGui::GetCurrentContext() && ImGui::GetDrawData())
+    Render();
 
   auto source = std::make_unique<ShaderSource>();
   if (source->Load("engine/imgui.glsl")) {
