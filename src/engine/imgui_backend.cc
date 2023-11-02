@@ -131,7 +131,7 @@ void ImguiBackend::NewFrame(float delta_time) {
 void ImguiBackend::Render() {
   ImGui::Render();
   ImDrawData* draw_data = ImGui::GetDrawData();
-  if (geometries_.size() < draw_data->CmdListsCount)
+  if ((int)geometries_.size() < draw_data->CmdListsCount)
     geometries_.resize(draw_data->CmdListsCount, 0);
   for (int n = 0; n < draw_data->CmdListsCount; n++) {
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
