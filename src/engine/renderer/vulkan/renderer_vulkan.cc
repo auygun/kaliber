@@ -1294,6 +1294,8 @@ bool RendererVulkan::AllocateStagingBuffer(uint32_t amount,
                                            uint32_t segment,
                                            uint32_t& alloc_offset,
                                            uint32_t& alloc_size) {
+  DCHECK(std::this_thread::get_id() == setup_thread_.get_id());
+
   alloc_size = amount;
 
   while (true) {
