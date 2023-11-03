@@ -158,7 +158,7 @@ void ImguiBackend::Draw() {
       if (pcmd->ClipRect.z <= pcmd->ClipRect.x ||
           pcmd->ClipRect.w <= pcmd->ClipRect.y)
         continue;
-      auto texture_id = reinterpret_cast<uint64_t>(pcmd->GetTexID());
+      uint64_t texture_id = reinterpret_cast<uintptr_t>(pcmd->GetTexID());
       renderer_->ActivateTexture(texture_id, 0);
       renderer_->SetScissor(int(pcmd->ClipRect.x), int(pcmd->ClipRect.y),
                             int(pcmd->ClipRect.z - pcmd->ClipRect.x),
