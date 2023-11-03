@@ -6,13 +6,12 @@
 
 #include "base/mem.h"
 #include "base/vecmath.h"
+#include "engine/renderer/renderer_types.h"
 
 namespace eng {
 
 class Image {
  public:
-  enum Format { kRGBA32, kDXT1, kDXT5, kETC1, kATC, kATCIA };
-
   Image();
   Image(const Image& other);
   ~Image();
@@ -31,8 +30,8 @@ class Image {
   int GetWidth() const { return width_; }
   int GetHeight() const { return height_; }
 
-  Format GetFormat() const { return format_; }
-  bool IsCompressed() const { return format_ > kRGBA32; }
+  ImageFormat GetFormat() const { return format_; }
+  bool IsCompressed() const;
 
   size_t GetSize() const;
 
@@ -51,7 +50,7 @@ class Image {
   base::AlignedMemPtr<uint8_t[]> buffer_;
   int width_ = 0;
   int height_ = 0;
-  Format format_ = kRGBA32;
+  ImageFormat format_ = ImageFormat::kRGBA32;
 };
 
 }  // namespace eng

@@ -17,6 +17,8 @@
 
 using namespace base;
 
+namespace eng {
+
 namespace {
 
 constexpr GLenum kGlPrimitive[eng::kPrimitive_Max] = {GL_TRIANGLES,
@@ -30,8 +32,6 @@ const std::string kAttributeNames[eng::kAttribType_Max] = {
     "in_color", "in_normal", "in_position", "in_tex_coord"};
 
 }  // namespace
-
-namespace eng {
 
 RendererOpenGL::RendererOpenGL(base::Closure context_lost_cb)
     : Renderer(context_lost_cb) {}
@@ -259,25 +259,26 @@ void RendererOpenGL::UpdateTexture(uint64_t resource_id,
   if (image->IsCompressed()) {
     GLenum format = 0;
     switch (image->GetFormat()) {
-      case Image::kDXT1:
+      case ImageFormat::kDXT1:
         format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
         break;
-      case Image::kDXT5:
+      case ImageFormat::kDXT5:
         format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
         break;
-      case Image::kETC1:
+      case ImageFormat::kETC1:
         format = GL_ETC1_RGB8_OES;
         break;
 #if defined(__ANDROID__)
-      case Image::kATC:
+      case ImageFormat::kATC:
         format = GL_ATC_RGB_AMD;
         break;
-      case Image::kATCIA:
+      case ImageFormat::kATCIA:
         format = GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD;
         break;
 #endif
       default:
-        NOTREACHED() << "- Unhandled texure format: " << image->GetFormat();
+        NOTREACHED() << "- Unhandled texure format: "
+                     << ImageFormatToString(image->GetFormat());
     }
 
     glCompressedTexImage2D(GL_TEXTURE_2D, 0, format, image->GetWidth(),

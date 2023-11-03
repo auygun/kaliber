@@ -23,6 +23,8 @@
 
 using namespace base;
 
+namespace eng {
+
 namespace {
 
 // Synchronized with glslang/StandAlone/ResourceLimits.cpp which was removed
@@ -148,12 +150,12 @@ using VertexInputDescription =
     std::pair<std::vector<VkVertexInputBindingDescription>,
               std::vector<VkVertexInputAttributeDescription>>;
 
-constexpr VkPrimitiveTopology kVkPrimitiveType[eng::kPrimitive_Max] = {
+constexpr VkPrimitiveTopology kVkPrimitiveType[kPrimitive_Max] = {
     VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
     VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
 };
 
-constexpr VkFormat kVkDataType[eng::kDataType_Max][4] = {
+constexpr VkFormat kVkDataType[kDataType_Max][4] = {
     {
         VK_FORMAT_R8_UNORM,
         VK_FORMAT_R8G8_UNORM,
@@ -277,8 +279,7 @@ std::vector<uint8_t> CompileGlsl(EShLanguage stage,
   return ret;
 }
 
-VertexInputDescription GetVertexInputDescription(
-    const eng::VertexDescription& vd) {
+VertexInputDescription GetVertexInputDescription(const VertexDescription& vd) {
   unsigned vertex_offset = 0;
   unsigned location = 0;
 
@@ -305,13 +306,13 @@ VertexInputDescription GetVertexInputDescription(
   return std::make_pair(std::move(bindings), std::move(attributes));
 }
 
-VkIndexType GetIndexType(eng::DataType data_type) {
+VkIndexType GetIndexType(DataType data_type) {
   switch (data_type) {
-    case eng::kDataType_Invalid:
+    case kDataType_Invalid:
       return VK_INDEX_TYPE_NONE_KHR;
-    case eng::kDataType_UInt:
+    case kDataType_UInt:
       return VK_INDEX_TYPE_UINT32;
-    case eng::kDataType_UShort:
+    case kDataType_UShort:
       return VK_INDEX_TYPE_UINT16;
     default:
       break;
@@ -320,21 +321,21 @@ VkIndexType GetIndexType(eng::DataType data_type) {
   return VK_INDEX_TYPE_NONE_KHR;
 }
 
-VkFormat GetImageFormat(eng::Image::Format format) {
+VkFormat GetImageFormat(ImageFormat format) {
   switch (format) {
-    case eng::Image::kRGBA32:
+    case ImageFormat::kRGBA32:
       return VK_FORMAT_R8G8B8A8_UNORM;
-    case eng::Image::kDXT1:
+    case ImageFormat::kDXT1:
       return VK_FORMAT_BC1_RGB_UNORM_BLOCK;
-    case eng::Image::kDXT5:
+    case ImageFormat::kDXT5:
       return VK_FORMAT_BC3_UNORM_BLOCK;
-    case eng::Image::kETC1:
-    case eng::Image::kATC:
-    case eng::Image::kATCIA:
+    case ImageFormat::kETC1:
+    case ImageFormat::kATC:
+    case ImageFormat::kATCIA:
     default:
       break;
   }
-  NOTREACHED() << "Invalid format: " << format;
+  NOTREACHED() << "Invalid format: " << ImageFormatToString(format);
   return VK_FORMAT_R8G8B8A8_UNORM;
 }
 
@@ -370,8 +371,6 @@ std::pair<int, int> GetNumBlocksForImageFormat(VkFormat format,
 }
 
 }  // namespace
-
-namespace eng {
 
 RendererVulkan::RendererVulkan(base::Closure context_lost_cb)
     : Renderer(context_lost_cb) {}

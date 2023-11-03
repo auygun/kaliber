@@ -7,6 +7,8 @@
 
 namespace eng {
 
+enum class ImageFormat { kRGBA32, kDXT1, kDXT5, kETC1, kATC, kATCIA };
+
 enum Primitive {
   kPrimitive_Invalid = -1,
   kPrimitive_Triangles,
@@ -41,7 +43,14 @@ using DataTypeSize = size_t;
 using VertexDescription =
     std::vector<std::tuple<AttribType, DataType, ElementCount, DataTypeSize>>;
 
+const char* ImageFormatToString(ImageFormat format);
+
+bool IsCompressedFormat(ImageFormat format);
+
+size_t GetImageSize(int width, int height, ImageFormat format);
+
 size_t GetVertexSize(const VertexDescription& vertex_description);
+
 size_t GetIndexSize(DataType index_description);
 
 bool ParseVertexDescription(const std::string& vd_str, VertexDescription& out);

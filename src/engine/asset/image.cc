@@ -95,13 +95,14 @@ void Image::Copy(const Image& other) {
 }
 
 bool Image::CreateMip(const Image& other) {
-  if (other.width_ <= 1 || other.height_ <= 1 || other.GetFormat() != kRGBA32)
+  if (other.width_ <= 1 || other.height_ <= 1 ||
+      other.GetFormat() != ImageFormat::kRGBA32)
     return false;
 
   // Reduce the dimensions.
   width_ = std::max(other.width_ >> 1, 1);
   height_ = std::max(other.height_ >> 1, 1);
-  format_ = kRGBA32;
+  format_ = ImageFormat::kRGBA32;
   buffer_.reset((uint8_t*)AlignedAlloc(GetSize(), 16));
 
   // If the width isn't perfectly divisable with two, then we end up skewing
@@ -214,21 +215,12 @@ bool Image::Load(const std::string& file_name) {
   return !!buffer_;
 }
 
+bool Image::IsCompressed() const {
+  return IsCompressedFormat(format_);
+}
+
 size_t Image::GetSize() const {
-  switch (format_) {
-    case kRGBA32:
-      return width_ * height_ * 4;
-    case kDXT1:
-    case kATC:
-      return ((width_ + 3) / 4) * ((height_ + 3) / 4) * 8;
-    case kDXT5:
-    case kATCIA:
-      return ((width_ + 3) / 4) * ((height_ + 3) / 4) * 16;
-    case kETC1:
-      return (width_ * height_ * 4) / 8;
-    default:
-      return 0;
-  }
+  return GetImageSize(width_, height_, format_);
 }
 
 void Image::ConvertToPow2() {
@@ -275,25 +267,25 @@ bool Image::Compress() {
 
   switch (tc->format()) {
     case TextureCompressor::kFormatATC:
-      format_ = kATC;
+      format_ = ImageFormat::kATC;
       break;
     case TextureCompressor::kFormatATCIA:
-      format_ = kATCIA;
+      format_ = ImageFormat::kATCIA;
       break;
     case TextureCompressor::kFormatDXT1:
-      format_ = kDXT1;
+      format_ = ImageFormat::kDXT1;
       break;
     case TextureCompressor::kFormatDXT5:
-      format_ = kDXT5;
+      format_ = ImageFormat::kDXT5;
       break;
     case TextureCompressor::kFormatETC1:
-      format_ = kETC1;
+      format_ = ImageFormat::kETC1;
       break;
     default:
       return false;
   }
 
-  LOG(0) << "Compressing image. Format: " << format_;
+  LOG(0) << "Compressing image. Format: " << ImageFormatToString(format_);
 
   unsigned compressedSize = GetSize();
   uint8_t* compressedBuffer =

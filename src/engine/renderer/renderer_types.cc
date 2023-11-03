@@ -14,6 +14,60 @@ const char kLayoutDelimiter[] = ";/ \t";
 
 namespace eng {
 
+const char* ImageFormatToString(ImageFormat format) {
+  switch (format) {
+    case ImageFormat::kRGBA32:
+      return "RGBA32";
+    case ImageFormat::kDXT1:
+      return "DXT1";
+    case ImageFormat::kDXT5:
+      return "DXT5";
+    case ImageFormat::kETC1:
+      return "ETC1";
+    case ImageFormat::kATC:
+      return "ATC";
+    case ImageFormat::kATCIA:
+      return "ATCIA";
+    default:
+      NOTREACHED() << "Unknown image format: " << static_cast<int>(format);
+      return nullptr;
+  }
+}
+
+bool IsCompressedFormat(ImageFormat format) {
+  switch (format) {
+    case ImageFormat::kRGBA32:
+      return false;
+    case ImageFormat::kDXT1:
+    case ImageFormat::kDXT5:
+    case ImageFormat::kETC1:
+    case ImageFormat::kATC:
+    case ImageFormat::kATCIA:
+      return true;
+    default:
+      NOTREACHED() << "Unknown image format: " << static_cast<int>(format);
+      return false;
+  }
+}
+
+size_t GetImageSize(int width, int height, ImageFormat format) {
+  switch (format) {
+    case ImageFormat::kRGBA32:
+      return width * height * 4;
+    case ImageFormat::kDXT1:
+    case ImageFormat::kATC:
+      return ((width + 3) / 4) * ((height + 3) / 4) * 8;
+    case ImageFormat::kDXT5:
+    case ImageFormat::kATCIA:
+      return ((width + 3) / 4) * ((height + 3) / 4) * 16;
+    case ImageFormat::kETC1:
+      return (width * height * 4) / 8;
+    default:
+      NOTREACHED() << "Unknown image format: " << static_cast<int>(format);
+      return 0;
+  }
+}
+
 size_t GetVertexSize(const VertexDescription& vertex_description) {
   size_t size = 0;
   for (auto& attr : vertex_description) {
@@ -22,7 +76,7 @@ size_t GetVertexSize(const VertexDescription& vertex_description) {
   return size;
 }
 
-size_t GetIndexSize(DataType index_description)  {
+size_t GetIndexSize(DataType index_description) {
   switch (index_description) {
     case kDataType_Byte:
       return sizeof(char);
