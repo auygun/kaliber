@@ -9,7 +9,6 @@
 namespace eng {
 
 class InputEvent;
-class Shader;
 class Renderer;
 
 class ImguiBackend {
@@ -17,7 +16,7 @@ class ImguiBackend {
   ImguiBackend();
   ~ImguiBackend();
 
-  void Initialize();
+  void Initialize(bool is_mobile, std::string root_path);
   void Shutdown();
 
   void CreateRenderResources(Renderer* renderer);
@@ -31,7 +30,8 @@ class ImguiBackend {
  private:
   VertexDescription vertex_description_;
   std::vector<uint64_t> geometries_;
-  std::unique_ptr<Shader> shader_;
+  uint64_t shader_ = 0;
+  uint64_t font_atlas_ = 0;
   Renderer* renderer_ = nullptr;
 };
 

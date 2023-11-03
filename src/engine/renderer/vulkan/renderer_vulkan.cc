@@ -558,16 +558,27 @@ uint64_t RendererVulkan::CreateTexture() {
 
 void RendererVulkan::UpdateTexture(uint64_t resource_id,
                                    std::unique_ptr<Image> image) {
+  UpdateTexture(resource_id, image->GetWidth(), image->GetHeight(),
+                image->GetFormat(), image->GetSize(), image->GetBuffer());
+  task_runner_.Delete(HERE, std::move(image));
+  semaphore_.release();
+}
+
+void RendererVulkan::UpdateTexture(uint64_t resource_id,
+                                   int width,
+                                   int height,
+                                   ImageFormat format,
+                                   size_t data_size,
+                                   uint8_t* image_data) {
   auto it = textures_.find(resource_id);
   if (it == textures_.end())
     return;
 
   VkImageLayout old_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  VkFormat format = GetImageFormat(image->GetFormat());
+  VkFormat vk_format = GetImageFormat(format);
 
   if (it->second.view != VK_NULL_HANDLE &&
-      (it->second.width != image->GetWidth() ||
-       it->second.height != image->GetHeight())) {
+      (it->second.width != width || it->second.height != height)) {
     // Size mismatch. Recreate the texture.
     FreeImage(std::move(it->second.image), it->second.view,
               std::move(it->second.desc_set));
@@ -576,12 +587,12 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
 
   if (it->second.view == VK_NULL_HANDLE) {
     AllocateImage(it->second.image, it->second.view, it->second.desc_set,
-                  format, image->GetWidth(), image->GetHeight(),
+                  vk_format, width, height,
                   VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                   VMA_MEMORY_USAGE_GPU_ONLY);
     old_layout = VK_IMAGE_LAYOUT_UNDEFINED;
-    it->second.width = image->GetWidth();
-    it->second.height = image->GetHeight();
+    it->second.width = width;
+    it->second.height = height;
   }
 
   task_runner_.PostTask(
@@ -591,10 +602,9 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
                 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                 VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
                 old_layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL));
-  task_runner_.PostTask(
-      HERE, std::bind(&RendererVulkan::UpdateImage, this,
-                      std::get<0>(it->second.image), format, image->GetBuffer(),
-                      image->GetWidth(), image->GetHeight()));
+  task_runner_.PostTask(HERE, std::bind(&RendererVulkan::UpdateImage, this,
+                                        std::get<0>(it->second.image),
+                                        vk_format, image_data, width, height));
   task_runner_.PostTask(
       HERE,
       std::bind(&RendererVulkan::ImageMemoryBarrier, this,
@@ -605,7 +615,6 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
                 0, VK_ACCESS_SHADER_READ_BIT,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
-  task_runner_.Delete(HERE, std::move(image));
   semaphore_.release();
 }
 

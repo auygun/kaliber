@@ -102,6 +102,8 @@ void Engine::Initialize() {
 
   thread_pool_.Initialize();
 
+  imgui_backend_.Initialize(IsMobile(), GetRootPath());
+
   platform_->CreateMainWindow();
 
   CreateRendererInternal(RendererType::kVulkan);
@@ -118,8 +120,6 @@ void Engine::Initialize() {
   // Create resources and let the game finalize initialization.
   CreateRenderResources();
   WaitForAsyncWork();
-
-  imgui_backend_.Initialize();
 
   CHECK(game_->Initialize()) << "Failed to initialize the game.";
 }

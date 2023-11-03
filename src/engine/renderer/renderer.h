@@ -63,6 +63,12 @@ class Renderer {
   virtual uint64_t CreateTexture() = 0;
   virtual void UpdateTexture(uint64_t resource_id,
                              std::unique_ptr<Image> image) = 0;
+  virtual void UpdateTexture(uint64_t resource_id,
+                             int width,
+                             int height,
+                             ImageFormat format,
+                             size_t data_size,
+                             uint8_t* image_data) = 0;
   virtual void DestroyTexture(uint64_t resource_id) = 0;
   virtual void ActivateTexture(uint64_t resource_id, uint64_t texture_unit) = 0;
 

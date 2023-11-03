@@ -251,56 +251,63 @@ uint64_t RendererOpenGL::CreateTexture() {
 
 void RendererOpenGL::UpdateTexture(uint64_t resource_id,
                                    std::unique_ptr<Image> image) {
+  UpdateTexture(resource_id, image->GetWidth(), image->GetHeight(),
+                image->GetFormat(), image->GetSize(), image->GetBuffer());
+}
+
+void RendererOpenGL::UpdateTexture(uint64_t resource_id,
+                                   int width,
+                                   int height,
+                                   ImageFormat format,
+                                   size_t data_size,
+                                   uint8_t* image_data) {
   auto it = textures_.find(resource_id);
   if (it == textures_.end())
     return;
 
   glBindTexture(GL_TEXTURE_2D, it->second);
-  if (image->IsCompressed()) {
-    GLenum format = 0;
-    switch (image->GetFormat()) {
+  if (IsCompressedFormat(format)) {
+    GLenum gl_format = 0;
+    switch (format) {
       case ImageFormat::kDXT1:
-        format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+        gl_format = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
         break;
       case ImageFormat::kDXT5:
-        format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+        gl_format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
         break;
       case ImageFormat::kETC1:
-        format = GL_ETC1_RGB8_OES;
+        gl_format = GL_ETC1_RGB8_OES;
         break;
 #if defined(__ANDROID__)
       case ImageFormat::kATC:
-        format = GL_ATC_RGB_AMD;
+        gl_format = GL_ATC_RGB_AMD;
         break;
       case ImageFormat::kATCIA:
-        format = GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD;
+        gl_format = GL_ATC_RGBA_INTERPOLATED_ALPHA_AMD;
         break;
 #endif
       default:
-        NOTREACHED() << "- Unhandled texure format: "
-                     << ImageFormatToString(image->GetFormat());
+        NOTREACHED() << "- Unhandled texture format: "
+                     << ImageFormatToString(format);
     }
 
-    glCompressedTexImage2D(GL_TEXTURE_2D, 0, format, image->GetWidth(),
-                           image->GetHeight(), 0, image->GetSize(),
-                           image->GetBuffer());
+    glCompressedTexImage2D(GL_TEXTURE_2D, 0, gl_format, width, height, 0,
+                           data_size, image_data);
 
     // On some devices the first glCompressedTexImage2D call after context-lost
     // returns GL_INVALID_VALUE for some reason.
     GLenum err = glGetError();
     if (err == GL_INVALID_VALUE) {
-      glCompressedTexImage2D(GL_TEXTURE_2D, 0, format, image->GetWidth(),
-                             image->GetHeight(), 0, image->GetSize(),
-                             image->GetBuffer());
+      glCompressedTexImage2D(GL_TEXTURE_2D, 0, gl_format, width, height, 0,
+                             data_size, image_data);
       err = glGetError();
     }
 
     if (err != GL_NO_ERROR)
       LOG(0) << "GL ERROR after glCompressedTexImage2D: " << (int)err;
   } else {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image->GetWidth(),
-                 image->GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                 image->GetBuffer());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+                 GL_UNSIGNED_BYTE, image_data);
   }
 }
 

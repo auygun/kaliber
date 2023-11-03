@@ -55,6 +55,12 @@ class RendererOpenGL final : public Renderer {
 
   uint64_t CreateTexture() final;
   void UpdateTexture(uint64_t resource_id, std::unique_ptr<Image> image) final;
+  void UpdateTexture(uint64_t resource_id,
+                     int width,
+                     int height,
+                     ImageFormat format,
+                     size_t data_size,
+                     uint8_t* image_data) final;
   void DestroyTexture(uint64_t resource_id) final;
   void ActivateTexture(uint64_t resource_id, uint64_t texture_unit) final;
 

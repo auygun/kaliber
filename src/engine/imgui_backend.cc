@@ -1,14 +1,10 @@
 #include "engine/imgui_backend.h"
 
 #include "base/log.h"
-#include "engine/asset/image.h"
 #include "engine/asset/shader_source.h"
-#include "engine/engine.h"
 #include "engine/input_event.h"
 #include "engine/platform/asset_file.h"
 #include "engine/renderer/renderer.h"
-#include "engine/renderer/shader.h"
-#include "engine/renderer/texture.h"
 #include "third_party/imgui/imgui.h"
 
 using namespace base;
@@ -19,11 +15,11 @@ namespace {
 const char vertex_description[] = "p2f;t2f;c4b";
 }  // namespace
 
-ImguiBackend::ImguiBackend() : shader_{std::make_unique<Shader>(nullptr)} {}
+ImguiBackend::ImguiBackend() = default;
 
 ImguiBackend::~ImguiBackend() = default;
 
-void ImguiBackend::Initialize() {
+void ImguiBackend::Initialize(bool is_mobile, std::string root_path) {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGui::GetIO().IniFilename = nullptr;
@@ -33,12 +29,11 @@ void ImguiBackend::Initialize() {
 
   size_t buffer_size = 0;
   auto buffer = AssetFile::ReadWholeFile("engine/RobotoMono-Regular.ttf",
-                                         Engine::Get().GetRootPath().c_str(),
-                                         &buffer_size);
+                                         root_path.c_str(), &buffer_size);
   if (buffer) {
     ImFontConfig font_cfg = ImFontConfig();
     font_cfg.FontDataOwnedByAtlas = false;
-    float size_pixels = Engine::Get().IsMobile() ? 64 : 32;
+    float size_pixels = is_mobile ? 64 : 32;
     ImGui::GetIO().Fonts->AddFontFromMemoryTTF(buffer.get(), (int)buffer_size,
                                                size_pixels, &font_cfg);
     ImGui::GetIO().Fonts->Build();
@@ -48,54 +43,45 @@ void ImguiBackend::Initialize() {
 
   // Arbitrary scale-up for mobile devices.
   // TODO: Put some effort into DPI awareness.
-  if (Engine::Get().IsMobile())
+  if (is_mobile)
     ImGui::GetStyle().ScaleAllSizes(2.0f);
-
-  Engine::Get().SetImageSource(
-      "imgui_atlas",
-      []() -> std::unique_ptr<Image> {
-        unsigned char* pixels;
-        int width, height;
-        ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-        LOG(0) << "Font atlas size: " << width << ", " << height;
-        auto image = std::make_unique<Image>();
-        image->Create(width, height);
-        memcpy(image->GetBuffer(), pixels, width * height * 4);
-        return image;
-      },
-      true);
-  Engine::Get().RefreshImage("imgui_atlas");
-  ImGui::GetIO().Fonts->SetTexID(
-      (ImTextureID)(intptr_t)Engine::Get().AcquireTexture("imgui_atlas"));
 }
 
 void ImguiBackend::Shutdown() {
+  ImGui::DestroyContext();
   for (auto& id : geometries_)
     renderer_->DestroyGeometry(id);
   geometries_.clear();
-  ImGui::DestroyContext();
-  shader_.reset();
+  renderer_->DestroyTexture(font_atlas_);
+  renderer_->DestroyShader(shader_);
 }
 
 void ImguiBackend::CreateRenderResources(Renderer* renderer) {
   renderer_ = renderer;
-  shader_->SetRenderer(renderer);
-
   geometries_.clear();
+
+  // Avoid flickering by using the geometries form the last frame if available.
   if (ImGui::GetCurrentContext() && ImGui::GetDrawData())
     Render();
 
+  // Create the shader.
   auto source = std::make_unique<ShaderSource>();
   if (source->Load("engine/imgui.glsl")) {
-    VertexDescription vd;
-    if (!ParseVertexDescription(vertex_description, vd)) {
-      DLOG(0) << "Failed to parse vertex description.";
-    } else {
-      shader_->Create(std::move(source), vd, kPrimitive_Triangles, false);
-    }
+    shader_ = renderer_->CreateShader(std::move(source), vertex_description_,
+                                      kPrimitive_Triangles, false);
   } else {
     LOG(0) << "Could not create imgui shader.";
   }
+
+  // Create a texture for the font atlas.
+  unsigned char* pixels;
+  int width, height;
+  ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+  LOG(0) << "Font atlas size: " << width << ", " << height;
+  font_atlas_ = renderer_->CreateTexture();
+  renderer_->UpdateTexture(font_atlas_, width, height, ImageFormat::kRGBA32,
+                           width * height * 4, pixels);
+  ImGui::GetIO().Fonts->SetTexID((ImTextureID)(intptr_t)font_atlas_);
 }
 
 std::unique_ptr<InputEvent> ImguiBackend::OnInputEvent(
@@ -133,6 +119,7 @@ void ImguiBackend::NewFrame(float delta_time) {
 
 void ImguiBackend::Render() {
   ImGui::Render();
+  // Create a geometry for each draw list and upload the vertex data.
   ImDrawData* draw_data = ImGui::GetDrawData();
   if ((int)geometries_.size() < draw_data->CmdListsCount)
     geometries_.resize(draw_data->CmdListsCount, 0);
@@ -160,9 +147,9 @@ void ImguiBackend::Draw() {
                              draw_data->DisplayPos.x + draw_data->DisplaySize.x,
                              draw_data->DisplayPos.y + draw_data->DisplaySize.y,
                              draw_data->DisplayPos.y);
-  shader_->Activate();
-  shader_->SetUniform("projection", proj);
-  shader_->UploadUniforms();
+  renderer_->ActivateShader(shader_);
+  renderer_->SetUniform(shader_, "projection", proj);
+  renderer_->UploadUniforms(shader_);
 
   for (int n = 0; n < draw_data->CmdListsCount; n++) {
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
@@ -171,7 +158,8 @@ void ImguiBackend::Draw() {
       if (pcmd->ClipRect.z <= pcmd->ClipRect.x ||
           pcmd->ClipRect.w <= pcmd->ClipRect.y)
         continue;
-      reinterpret_cast<Texture*>(pcmd->GetTexID())->Activate(0);
+      auto texture_id = reinterpret_cast<uint64_t>(pcmd->GetTexID());
+      renderer_->ActivateTexture(texture_id, 0);
       renderer_->SetScissor(int(pcmd->ClipRect.x), int(pcmd->ClipRect.y),
                             int(pcmd->ClipRect.z - pcmd->ClipRect.x),
                             int(pcmd->ClipRect.w - pcmd->ClipRect.y));
