@@ -5,6 +5,7 @@
 #include <string>
 
 #include "engine/renderer/render_resource.h"
+#include "engine/renderer/renderer_types.h"
 
 namespace eng {
 
@@ -17,6 +18,11 @@ class Texture : public RenderResource {
   ~Texture();
 
   void Update(std::unique_ptr<Image> image);
+  void Update(int width,
+              int height,
+              ImageFormat format,
+              size_t data_size,
+              uint8_t* image_data);
 
   void Destroy();
 

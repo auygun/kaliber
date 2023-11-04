@@ -20,6 +20,19 @@ void Texture::Update(std::unique_ptr<Image> image) {
   renderer_->UpdateTexture(resource_id_, std::move(image));
 }
 
+void Texture::Update(int width,
+                     int height,
+                     ImageFormat format,
+                     size_t data_size,
+                     uint8_t* image_data) {
+  if (!IsValid())
+    resource_id_ = renderer_->CreateTexture();
+  width_ = width;
+  height_ = height;
+  renderer_->UpdateTexture(resource_id_, width, height, format, data_size,
+                           image_data);
+}
+
 void Texture::Destroy() {
   if (IsValid()) {
     DLOG(0) << "Texture destroyed. resource_id: " << resource_id_;

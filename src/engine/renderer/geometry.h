@@ -18,10 +18,19 @@ class Geometry : public RenderResource {
   ~Geometry();
 
   void Create(std::unique_ptr<Mesh> mesh);
+  void Create(Primitive primitive,
+              VertexDescription vertex_description,
+              DataType index_description = kDataType_Invalid);
+
+  void Update(size_t num_vertices,
+              const void* vertices,
+              size_t num_indices,
+              const void* indices);
 
   void Destroy();
 
   void Draw();
+  void Draw(uint64_t num_indices, uint64_t start_offset);
 
   const VertexDescription& vertex_description() const {
     return vertex_description_;

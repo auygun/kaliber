@@ -10,6 +10,9 @@ namespace eng {
 
 class InputEvent;
 class Renderer;
+class Geometry;
+class Shader;
+class Texture;
 
 class ImguiBackend {
  public:
@@ -29,9 +32,9 @@ class ImguiBackend {
 
  private:
   VertexDescription vertex_description_;
-  std::vector<uint64_t> geometries_;
-  uint64_t shader_ = 0;
-  uint64_t font_atlas_ = 0;
+  std::vector<std::unique_ptr<Geometry>> geometries_;
+  std::unique_ptr<Shader> shader_;
+  std::unique_ptr<Texture> font_atlas_;
   Renderer* renderer_ = nullptr;
 };
 
