@@ -50,8 +50,8 @@ class RendererVulkan final : public Renderer {
                       const void* indices) final;
   void DestroyGeometry(uint64_t resource_id) final;
   void Draw(uint64_t resource_id,
-            uint64_t num_indices = 0,
-            uint64_t start_offset = 0) final;
+            size_t num_indices = 0,
+            size_t start_offset = 0) final;
 
   uint64_t CreateTexture() final;
   void UpdateTexture(uint64_t resource_id, std::unique_ptr<Image> image) final;
@@ -62,7 +62,7 @@ class RendererVulkan final : public Renderer {
                      size_t data_size,
                      uint8_t* image_data) final;
   void DestroyTexture(uint64_t resource_id) final;
-  void ActivateTexture(uint64_t resource_id, uint64_t texture_unit) final;
+  void ActivateTexture(uint64_t resource_id, size_t texture_unit) final;
 
   uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
                         const VertexDescription& vertex_description,

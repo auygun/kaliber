@@ -185,8 +185,8 @@ void RendererOpenGL::DestroyGeometry(uint64_t resource_id) {
 }
 
 void RendererOpenGL::Draw(uint64_t resource_id,
-                          uint64_t num_indices,
-                          uint64_t start_offset) {
+                          size_t num_indices,
+                          size_t start_offset) {
   auto it = geometries_.find(resource_id);
   if (it == geometries_.end())
     return;
@@ -321,7 +321,7 @@ void RendererOpenGL::DestroyTexture(uint64_t resource_id) {
 }
 
 void RendererOpenGL::ActivateTexture(uint64_t resource_id,
-                                     uint64_t texture_unit) {
+                                     size_t texture_unit) {
   if (texture_unit >= kMaxTextureUnits) {
     DLOG(0) << "Invalid texture unit " << texture_unit;
     return;
