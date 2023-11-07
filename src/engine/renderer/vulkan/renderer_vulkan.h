@@ -2,6 +2,7 @@
 #define ENGINE_RENDERER_VULKAN_RENDERER_VULKAN_H
 
 #include <atomic>
+#include <list>
 #include <memory>
 #include <semaphore>
 #include <string>
@@ -39,55 +40,61 @@ class RendererVulkan final : public Renderer {
   void SetScissor(int x, int y, int width, int height) final;
   void ResetScissor() final;
 
-  uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) final;
-  uint64_t CreateGeometry(Primitive primitive,
-                          VertexDescription vertex_description,
-                          DataType index_description = kDataType_Invalid) final;
-  void UpdateGeometry(uint64_t resource_id,
+  std::shared_ptr<void> CreateGeometry(std::unique_ptr<Mesh> mesh) final;
+  std::shared_ptr<void> CreateGeometry(
+      Primitive primitive,
+      VertexDescription vertex_description,
+      DataType index_description = kDataType_Invalid) final;
+  void UpdateGeometry(std::shared_ptr<void> resource,
                       size_t num_vertices,
                       const void* vertices,
                       size_t num_indices,
                       const void* indices) final;
-  void DestroyGeometry(uint64_t resource_id) final;
-  void Draw(uint64_t resource_id,
+  void DestroyGeometry(std::shared_ptr<void> resource) final;
+  void Draw(std::shared_ptr<void> resource,
             size_t num_indices = 0,
             size_t start_offset = 0) final;
 
-  uint64_t CreateTexture() final;
-  void UpdateTexture(uint64_t resource_id, std::unique_ptr<Image> image) final;
-  void UpdateTexture(uint64_t resource_id,
+  std::shared_ptr<void> CreateTexture() final;
+  void UpdateTexture(std::shared_ptr<void> resource,
+                     std::unique_ptr<Image> image) final;
+  void UpdateTexture(std::shared_ptr<void> resource,
                      int width,
                      int height,
                      ImageFormat format,
                      size_t data_size,
                      uint8_t* image_data) final;
-  void DestroyTexture(uint64_t resource_id) final;
-  void ActivateTexture(uint64_t resource_id, size_t texture_unit) final;
+  void DestroyTexture(std::shared_ptr<void> resource) final;
+  void ActivateTexture(std::shared_ptr<void> resource,
+                       size_t texture_unit) final;
 
-  uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
-                        const VertexDescription& vertex_description,
-                        Primitive primitive,
-                        bool enable_depth_test) final;
-  void DestroyShader(uint64_t resource_id) final;
-  void ActivateShader(uint64_t resource_id) final;
+  std::shared_ptr<void> CreateShader(
+      std::unique_ptr<ShaderSource> source,
+      const VertexDescription& vertex_description,
+      Primitive primitive,
+      bool enable_depth_test) final;
+  void DestroyShader(std::shared_ptr<void> resource) final;
+  void ActivateShader(std::shared_ptr<void> resource) final;
 
-  void SetUniform(uint64_t resource_id,
+  void SetUniform(std::shared_ptr<void> resource,
                   const std::string& name,
                   const base::Vector2f& val) final;
-  void SetUniform(uint64_t resource_id,
+  void SetUniform(std::shared_ptr<void> resource,
                   const std::string& name,
                   const base::Vector3f& val) final;
-  void SetUniform(uint64_t resource_id,
+  void SetUniform(std::shared_ptr<void> resource,
                   const std::string& name,
                   const base::Vector4f& val) final;
-  void SetUniform(uint64_t resource_id,
+  void SetUniform(std::shared_ptr<void> resource,
                   const std::string& name,
                   const base::Matrix4f& val) final;
-  void SetUniform(uint64_t resource_id,
+  void SetUniform(std::shared_ptr<void> resource,
                   const std::string& name,
                   float val) final;
-  void SetUniform(uint64_t resource_id, const std::string& name, int val) final;
-  void UploadUniforms(uint64_t resource_id) final;
+  void SetUniform(std::shared_ptr<void> resource,
+                  const std::string& name,
+                  int val) final;
+  void UploadUniforms(std::shared_ptr<void> resource) final;
 
   void PrepareForDrawing() final;
   void Present() final;
@@ -120,6 +127,7 @@ class RendererVulkan final : public Renderer {
       spirv_cache_;
 
   struct GeometryVulkan {
+    std::list<std::shared_ptr<GeometryVulkan>>::iterator it;
     Buffer<VkBuffer> buffer;
     size_t buffer_size = 0;
     uint32_t num_vertices = 0;
@@ -131,6 +139,7 @@ class RendererVulkan final : public Renderer {
   };
 
   struct ShaderVulkan {
+    std::list<std::shared_ptr<ShaderVulkan>>::iterator it;
     std::vector<std::tuple<size_t,  // Variable name hash
                            size_t,  // Variable size
                            size_t   // Push constant offset
@@ -145,6 +154,7 @@ class RendererVulkan final : public Renderer {
   };
 
   struct TextureVulkan {
+    std::list<std::shared_ptr<TextureVulkan>>::iterator it;
     Buffer<VkImage> image;
     VkImageView view = VK_NULL_HANDLE;
     DescSet desc_set = {};
@@ -176,10 +186,9 @@ class RendererVulkan final : public Renderer {
     VmaAllocationInfo alloc_info;
   };
 
-  std::unordered_map<uint64_t, GeometryVulkan> geometries_;
-  std::unordered_map<uint64_t, ShaderVulkan> shaders_;
-  std::unordered_map<uint64_t, TextureVulkan> textures_;
-  uint64_t last_resource_id_ = 0;
+  std::list<std::shared_ptr<GeometryVulkan>> geometries_;
+  std::list<std::shared_ptr<ShaderVulkan>> shaders_;
+  std::list<std::shared_ptr<TextureVulkan>> textures_;
 
   bool context_lost_ = false;
 
@@ -198,7 +207,7 @@ class RendererVulkan final : public Renderer {
   uint64_t max_staging_buffer_size_ = 16 * 1024 * 1024;
   bool staging_buffer_used_ = false;
 
-  uint64_t active_shader_id_ = 0;
+  std::shared_ptr<ShaderVulkan> active_shader_ = 0;
 
   std::vector<std::unique_ptr<DescPool>> desc_pools_;
   VkDescriptorSetLayout descriptor_set_layout_ = VK_NULL_HANDLE;

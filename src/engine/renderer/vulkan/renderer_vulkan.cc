@@ -442,10 +442,11 @@ void RendererVulkan::ResetScissor() {
   vkCmdSetScissor(frames_[current_frame_].draw_command_buffer, 0, 1, &scissor);
 }
 
-uint64_t RendererVulkan::CreateGeometry(std::unique_ptr<Mesh> mesh) {
+std::shared_ptr<void> RendererVulkan::CreateGeometry(
+    std::unique_ptr<Mesh> mesh) {
   auto id = CreateGeometry(mesh->primitive(), mesh->vertex_description(),
                            mesh->index_description());
-  if (id != kInvalidId)
+  if (id)
     UpdateGeometry(id, mesh->num_vertices(), mesh->GetVertices(),
                    mesh->num_indices(), mesh->GetIndices());
   task_runner_.Delete(HERE, std::move(mesh));
@@ -453,61 +454,61 @@ uint64_t RendererVulkan::CreateGeometry(std::unique_ptr<Mesh> mesh) {
   return id;
 }
 
-uint64_t RendererVulkan::CreateGeometry(Primitive primitive,
-                                        VertexDescription vertex_description,
-                                        DataType index_description) {
-  auto& geometry = geometries_[++last_resource_id_] = {};
-  geometry.vertex_size = GetVertexSize(vertex_description);
-  geometry.index_type = GetIndexType(index_description);
-  geometry.index_type_size = GetIndexSize(index_description);
-  return last_resource_id_;
+std::shared_ptr<void> RendererVulkan::CreateGeometry(
+    Primitive primitive,
+    VertexDescription vertex_description,
+    DataType index_description) {
+  auto it =
+      geometries_.insert(geometries_.end(), std::make_shared<GeometryVulkan>());
+  (*it)->vertex_size = GetVertexSize(vertex_description);
+  (*it)->index_type = GetIndexType(index_description);
+  (*it)->index_type_size = GetIndexSize(index_description);
+  return *it;
 }
 
-void RendererVulkan::UpdateGeometry(uint64_t resource_id,
+void RendererVulkan::UpdateGeometry(std::shared_ptr<void> resource,
                                     size_t num_vertices,
                                     const void* vertices,
                                     size_t num_indices,
                                     const void* indices) {
-  auto it = geometries_.find(resource_id);
-  if (it == geometries_.end())
-    return;
+  auto geometry = std::static_pointer_cast<GeometryVulkan>(resource);
 
-  it->second.num_vertices = num_vertices;
-  size_t vertex_data_size = it->second.vertex_size * it->second.num_vertices;
+  geometry->num_vertices = num_vertices;
+  size_t vertex_data_size = geometry->vertex_size * geometry->num_vertices;
   size_t index_data_size = 0;
 
   if (indices) {
-    DCHECK(it->second.index_type != VK_INDEX_TYPE_NONE_KHR);
-    it->second.num_indices = num_indices;
-    index_data_size = it->second.index_type_size * it->second.num_indices;
+    DCHECK(geometry->index_type != VK_INDEX_TYPE_NONE_KHR);
+    geometry->num_indices = num_indices;
+    index_data_size = geometry->index_type_size * geometry->num_indices;
   }
 
   size_t data_size = vertex_data_size + index_data_size;
-  if (it->second.buffer_size < data_size) {
+  if (geometry->buffer_size < data_size) {
     DLOG(1) << __func__ << "Reallocate buffer " << data_size;
-    if (it->second.buffer_size > 0)
-      FreeBuffer(std::move(it->second.buffer));
-    AllocateBuffer(it->second.buffer, data_size,
+    if (geometry->buffer_size > 0)
+      FreeBuffer(std::move(geometry->buffer));
+    AllocateBuffer(geometry->buffer, data_size,
                    VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
                        VK_BUFFER_USAGE_TRANSFER_DST_BIT |
                        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                    VMA_MEMORY_USAGE_GPU_ONLY);
-    it->second.buffer_size = data_size;
+    geometry->buffer_size = data_size;
   }
 
   task_runner_.PostTask(HERE, std::bind(&RendererVulkan::UpdateBuffer, this,
-                                        std::get<0>(it->second.buffer), 0,
+                                        std::get<0>(geometry->buffer), 0,
                                         vertices, vertex_data_size));
-  if (it->second.num_indices > 0) {
-    it->second.index_data_offset = vertex_data_size;
-    task_runner_.PostTask(HERE, std::bind(&RendererVulkan::UpdateBuffer, this,
-                                          std::get<0>(it->second.buffer),
-                                          it->second.index_data_offset, indices,
-                                          index_data_size));
+  if (geometry->num_indices > 0) {
+    geometry->index_data_offset = vertex_data_size;
+    task_runner_.PostTask(
+        HERE, std::bind(&RendererVulkan::UpdateBuffer, this,
+                        std::get<0>(geometry->buffer),
+                        geometry->index_data_offset, indices, index_data_size));
   }
   task_runner_.PostTask(HERE,
                         std::bind(&RendererVulkan::BufferMemoryBarrier, this,
-                                  std::get<0>(it->second.buffer), 0, data_size,
+                                  std::get<0>(geometry->buffer), 0, data_size,
                                   VK_PIPELINE_STAGE_TRANSFER_BIT,
                                   VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
                                   VK_ACCESS_TRANSFER_WRITE_BIT,
@@ -515,143 +516,125 @@ void RendererVulkan::UpdateGeometry(uint64_t resource_id,
   semaphore_.release();
 }
 
-void RendererVulkan::DestroyGeometry(uint64_t resource_id) {
-  auto it = geometries_.find(resource_id);
-  if (it == geometries_.end())
-    return;
-
-  FreeBuffer(std::move(it->second.buffer));
+void RendererVulkan::DestroyGeometry(std::shared_ptr<void> resource) {
+  auto geometry = std::static_pointer_cast<GeometryVulkan>(resource);
+  FreeBuffer(std::move(geometry->buffer));
   geometries_.erase(it);
 }
 
-void RendererVulkan::Draw(uint64_t resource_id,
+void RendererVulkan::Draw(std::shared_ptr<void> resource,
                           size_t num_indices,
                           size_t start_offset) {
-  auto it = geometries_.find(resource_id);
-  if (it == geometries_.end())
-    return;
+  auto geometry = std::static_pointer_cast<GeometryVulkan>(resource);
 
-  uint64_t data_offset = start_offset * it->second.index_type_size;
+  uint64_t data_offset = start_offset * geometry->index_type_size;
   if (num_indices == 0)
-    num_indices = it->second.num_indices;
+    num_indices = geometry->num_indices;
 
   VkDeviceSize offset = 0;
   vkCmdBindVertexBuffers(frames_[current_frame_].draw_command_buffer, 0, 1,
-                         &std::get<0>(it->second.buffer), &offset);
+                         &std::get<0>(geometry->buffer), &offset);
   if (num_indices > 0) {
     vkCmdBindIndexBuffer(frames_[current_frame_].draw_command_buffer,
-                         std::get<0>(it->second.buffer),
-                         it->second.index_data_offset + data_offset,
-                         it->second.index_type);
+                         std::get<0>(geometry->buffer),
+                         geometry->index_data_offset + data_offset,
+                         geometry->index_type);
     vkCmdDrawIndexed(frames_[current_frame_].draw_command_buffer, num_indices,
                      1, 0, 0, 0);
   } else {
     vkCmdDraw(frames_[current_frame_].draw_command_buffer,
-              it->second.num_vertices, 1, 0, 0);
+              geometry->num_vertices, 1, 0, 0);
   }
 }
 
-uint64_t RendererVulkan::CreateTexture() {
-  textures_.insert({++last_resource_id_, {}});
-  return last_resource_id_;
+std::shared_ptr<void> RendererVulkan::CreateTexture() {
+  auto it =
+      textures_.insert(textures_.end(), std::make_shared<TextureVulkan>());
+  (*it)->it = it;
+  return *it;
 }
 
-void RendererVulkan::UpdateTexture(uint64_t resource_id,
+void RendererVulkan::UpdateTexture(std::shared_ptr<void> resource,
                                    std::unique_ptr<Image> image) {
-  UpdateTexture(resource_id, image->GetWidth(), image->GetHeight(),
+  UpdateTexture(resource, image->GetWidth(), image->GetHeight(),
                 image->GetFormat(), image->GetSize(), image->GetBuffer());
   task_runner_.Delete(HERE, std::move(image));
   semaphore_.release();
 }
 
-void RendererVulkan::UpdateTexture(uint64_t resource_id,
+void RendererVulkan::UpdateTexture(std::shared_ptr<void> resource,
                                    int width,
                                    int height,
                                    ImageFormat format,
                                    size_t data_size,
                                    uint8_t* image_data) {
-  auto it = textures_.find(resource_id);
-  if (it == textures_.end())
-    return;
+  auto texture = std::static_pointer_cast<TextureVulkan>(resource);
 
   VkImageLayout old_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   VkFormat vk_format = GetImageFormat(format);
 
-  if (it->second.view != VK_NULL_HANDLE &&
-      (it->second.width != width || it->second.height != height)) {
+  if (texture->view != VK_NULL_HANDLE &&
+      (texture->width != width || texture->height != height)) {
     // Size mismatch. Recreate the texture.
-    FreeImage(std::move(it->second.image), it->second.view,
-              std::move(it->second.desc_set));
+    FreeImage(std::move(texture->image), texture->view,
+              std::move(texture->desc_set));
     it->second = {};
   }
 
-  if (it->second.view == VK_NULL_HANDLE) {
-    AllocateImage(it->second.image, it->second.view, it->second.desc_set,
-                  vk_format, width, height,
+  if (texture->view == VK_NULL_HANDLE) {
+    AllocateImage(texture->image, texture->view, texture->desc_set, vk_format,
+                  width, height,
                   VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                   VMA_MEMORY_USAGE_GPU_ONLY);
     old_layout = VK_IMAGE_LAYOUT_UNDEFINED;
-    it->second.width = width;
-    it->second.height = height;
+    texture->width = width;
+    texture->height = height;
   }
 
   task_runner_.PostTask(
       HERE,
       std::bind(&RendererVulkan::ImageMemoryBarrier, this,
-                std::get<0>(it->second.image),
+                std::get<0>(texture->image),
                 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                 VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
                 old_layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL));
   task_runner_.PostTask(HERE, std::bind(&RendererVulkan::UpdateImage, this,
-                                        std::get<0>(it->second.image),
-                                        vk_format, image_data, width, height));
+                                        std::get<0>(texture->image), vk_format,
+                                        image_data, width, height));
   task_runner_.PostTask(
-      HERE,
-      std::bind(&RendererVulkan::ImageMemoryBarrier, this,
-                std::get<0>(it->second.image), VK_ACCESS_TRANSFER_WRITE_BIT,
-                VK_PIPELINE_STAGE_VERTEX_SHADER_BIT |
-                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
-                    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                0, VK_ACCESS_SHADER_READ_BIT,
-                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+      HERE, std::bind(&RendererVulkan::ImageMemoryBarrier, this,
+                      std::get<0>(texture->image), VK_ACCESS_TRANSFER_WRITE_BIT,
+                      VK_PIPELINE_STAGE_VERTEX_SHADER_BIT |
+                          VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
+                          VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                      0, VK_ACCESS_SHADER_READ_BIT,
+                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
   semaphore_.release();
 }
 
-void RendererVulkan::DestroyTexture(uint64_t resource_id) {
-  auto it = textures_.find(resource_id);
-  if (it == textures_.end())
-    return;
-
-  FreeImage(std::move(it->second.image), it->second.view,
-            std::move(it->second.desc_set));
-  textures_.erase(it);
+void RendererVulkan::DestroyTexture(std::shared_ptr<void> resource) {
+  auto texture = std::static_pointer_cast<TextureVulkan>(resource);
+  FreeImage(std::move(texture->image), texture->view,
+            std::move(texture->desc_set));
+  textures_.erase(texture->it);
 }
 
-void RendererVulkan::ActivateTexture(uint64_t resource_id,
+void RendererVulkan::ActivateTexture(std::shared_ptr<void> resource,
                                      size_t texture_unit) {
-  auto it = textures_.find(resource_id);
-  if (it == textures_.end())
-    return;
-
-  if (active_descriptor_sets_[texture_unit] !=
-      std::get<0>(it->second.desc_set)) {
-    active_descriptor_sets_[texture_unit] = std::get<0>(it->second.desc_set);
-    if (active_shader_id_ != kInvalidId) {
-      auto active_shader = shaders_.find(active_shader_id_);
-      if (active_shader != shaders_.end() &&
-          active_shader->second.desc_set_count > texture_unit) {
-        vkCmdBindDescriptorSets(
-            frames_[current_frame_].draw_command_buffer,
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            active_shader->second.pipeline_layout, texture_unit, 1,
-            &active_descriptor_sets_[texture_unit], 0, nullptr);
-      }
+  auto texture = std::static_pointer_cast<TextureVulkan>(resource);
+  if (active_descriptor_sets_[texture_unit] != std::get<0>(texture->desc_set)) {
+    active_descriptor_sets_[texture_unit] = std::get<0>(texture->desc_set);
+    if (active_shader_ && active_shader_->desc_set_count > texture_unit) {
+      vkCmdBindDescriptorSets(
+          frames_[current_frame_].draw_command_buffer,
+          VK_PIPELINE_BIND_POINT_GRAPHICS, active_shader_->pipeline_layout,
+          texture_unit, 1, &active_descriptor_sets_[texture_unit], 0, nullptr);
     }
   }
 }
 
-uint64_t RendererVulkan::CreateShader(
+std::shared_ptr<void> RendererVulkan::CreateShader(
     std::unique_ptr<ShaderSource> source,
     const VertexDescription& vertex_description,
     Primitive primitive,
@@ -703,9 +686,9 @@ uint64_t RendererVulkan::CreateShader(
     }
   }
 
-  auto& shader = shaders_[++last_resource_id_] = {};
+  auto it = shaders_.insert(shaders_.end(), std::make_shared<ShaderVulkan>());
 
-  if (!CreatePipelineLayout(shader, spirv_vertex, spirv_fragment))
+  if (!CreatePipelineLayout(**it, spirv_vertex, spirv_fragment))
     DLOG(0) << "Failed to create pipeline layout!";
 
   VkPipelineShaderStageCreateInfo vert_shader_stage_info{};
@@ -827,124 +810,97 @@ uint64_t RendererVulkan::CreateShader(
   pipeline_info.pColorBlendState = &color_blending;
   pipeline_info.pDepthStencilState = &depth_stencil;
   pipeline_info.pDynamicState = &dynamic_state_create_info;
-  pipeline_info.layout = shader.pipeline_layout;
+  pipeline_info.layout = (*it)->pipeline_layout;
   pipeline_info.renderPass = context_.GetRenderPass();
   pipeline_info.subpass = 0;
   pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
 
   if (vkCreateGraphicsPipelines(device_, VK_NULL_HANDLE, 1, &pipeline_info,
-                                nullptr, &shader.pipeline) != VK_SUCCESS)
+                                nullptr, &(*it)->pipeline) != VK_SUCCESS)
     DLOG(0) << "failed to create graphics pipeline.";
 
   vkDestroyShaderModule(device_, frag_shader_module, nullptr);
   vkDestroyShaderModule(device_, vert_shader_module, nullptr);
-  return last_resource_id_;
+  return *it;
 }
 
-void RendererVulkan::DestroyShader(uint64_t resource_id) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
+void RendererVulkan::DestroyShader(std::shared_ptr<void> resource) {
+  auto shader = std::static_pointer_cast<ShaderVulkan>(resource);
   frames_[current_frame_].pipelines_to_destroy.push_back(
-      std::make_tuple(it->second.pipeline, it->second.pipeline_layout));
-  shaders_.erase(it);
+      std::make_tuple(shader->pipeline, shader->pipeline_layout));
+  shaders_.erase(shader->it);
 }
 
-void RendererVulkan::ActivateShader(uint64_t resource_id) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  if (active_shader_id_ != resource_id) {
-    active_shader_id_ = resource_id;
+void RendererVulkan::ActivateShader(std::shared_ptr<void> resource) {
+  auto shader = std::static_pointer_cast<ShaderVulkan>(resource);
+  if (active_shader_ != resource) {
+    active_shader_ = std::static_pointer_cast<ShaderVulkan>(resource);
     vkCmdBindPipeline(frames_[current_frame_].draw_command_buffer,
-                      VK_PIPELINE_BIND_POINT_GRAPHICS, it->second.pipeline);
+                      VK_PIPELINE_BIND_POINT_GRAPHICS, shader->pipeline);
 
-    for (size_t i = 0; i < it->second.desc_set_count; ++i) {
+    for (size_t i = 0; i < shader->desc_set_count; ++i) {
       if (active_descriptor_sets_[i] != VK_NULL_HANDLE) {
         vkCmdBindDescriptorSets(frames_[current_frame_].draw_command_buffer,
                                 VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                it->second.pipeline_layout, i, 1,
+                                shader->pipeline_layout, i, 1,
                                 &active_descriptor_sets_[i], 0, nullptr);
       }
     }
   }
 }
 
-void RendererVulkan::SetUniform(uint64_t resource_id,
+void RendererVulkan::SetUniform(std::shared_ptr<void> resource,
                                 const std::string& name,
                                 const base::Vector2f& val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  SetUniformInternal(it->second, name, val);
+  auto shader = std::static_pointer_cast<ShaderVulkan>(resource);
+  SetUniformInternal(*shader, name, val);
 }
 
-void RendererVulkan::SetUniform(uint64_t resource_id,
+void RendererVulkan::SetUniform(std::shared_ptr<void> resource,
                                 const std::string& name,
                                 const base::Vector3f& val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  SetUniformInternal(it->second, name, val);
+  auto shader = std::static_pointer_cast<ShaderVulkan>(resource);
+  SetUniformInternal(*shader, name, val);
 }
 
-void RendererVulkan::SetUniform(uint64_t resource_id,
+void RendererVulkan::SetUniform(std::shared_ptr<void> resource,
                                 const std::string& name,
                                 const base::Vector4f& val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  SetUniformInternal(it->second, name, val);
+  auto shader = std::static_pointer_cast<ShaderVulkan>(resource);
+  SetUniformInternal(*shader, name, val);
 }
 
-void RendererVulkan::SetUniform(uint64_t resource_id,
+void RendererVulkan::SetUniform(std::shared_ptr<void> resource,
                                 const std::string& name,
                                 const base::Matrix4f& val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  SetUniformInternal(it->second, name, val);
+  auto shader = std::static_pointer_cast<ShaderVulkan>(resource);
+  SetUniformInternal(*shader, name, val);
 }
 
-void RendererVulkan::SetUniform(uint64_t resource_id,
+void RendererVulkan::SetUniform(std::shared_ptr<void> resource,
                                 const std::string& name,
                                 float val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  SetUniformInternal(it->second, name, val);
+  auto shader = std::static_pointer_cast<ShaderVulkan>(resource);
+  SetUniformInternal(*shader, name, val);
 }
 
-void RendererVulkan::SetUniform(uint64_t resource_id,
+void RendererVulkan::SetUniform(std::shared_ptr<void> resource,
                                 const std::string& name,
                                 int val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  for (auto& sampler_name : it->second.sampler_uniform_names) {
+  auto shader = std::static_pointer_cast<ShaderVulkan>(resource);
+  for (auto& sampler_name : shader->sampler_uniform_names) {
     if (name == sampler_name)
       return;
   }
-  SetUniformInternal(it->second, name, val);
+  SetUniformInternal(*shader, name, val);
 }
 
-void RendererVulkan::UploadUniforms(uint64_t resource_id) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
+void RendererVulkan::UploadUniforms(std::shared_ptr<void> resource) {
+  auto shader = std::static_pointer_cast<ShaderVulkan>(resource);
   vkCmdPushConstants(
-      frames_[current_frame_].draw_command_buffer, it->second.pipeline_layout,
+      frames_[current_frame_].draw_command_buffer, shader->pipeline_layout,
       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-      it->second.push_constants_size, it->second.push_constants.get());
+      shader->push_constants_size, shader->push_constants.get());
 }
 
 void RendererVulkan::PrepareForDrawing() {
@@ -2112,7 +2068,7 @@ void RendererVulkan::SwapBuffers() {
   context_.SwapBuffers();
   current_frame_ = (current_frame_ + 1) % frames_.size();
 
-  active_shader_id_ = kInvalidId;
+  active_shader_ = nullptr;
   for (auto& ds : active_descriptor_sets_)
     ds = VK_NULL_HANDLE;
 

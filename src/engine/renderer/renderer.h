@@ -45,59 +45,61 @@ class Renderer {
   virtual void SetScissor(int x, int y, int width, int height) = 0;
   virtual void ResetScissor() = 0;
 
-  virtual uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) = 0;
-  virtual uint64_t CreateGeometry(
+  virtual std::shared_ptr<void> CreateGeometry(std::unique_ptr<Mesh> mesh) = 0;
+  virtual std::shared_ptr<void> CreateGeometry(
       Primitive primitive,
       VertexDescription vertex_description,
       DataType index_description = kDataType_Invalid) = 0;
-  virtual void UpdateGeometry(uint64_t resource_id,
+  virtual void UpdateGeometry(std::shared_ptr<void> resource,
                               size_t num_vertices,
                               const void* vertices,
                               size_t num_indices,
                               const void* indices) = 0;
-  virtual void DestroyGeometry(uint64_t resource_id) = 0;
-  virtual void Draw(uint64_t resource_id,
+  virtual void DestroyGeometry(std::shared_ptr<void> resource) = 0;
+  virtual void Draw(std::shared_ptr<void> resource,
                     size_t num_indices = 0,
                     size_t start_offset = 0) = 0;
 
-  virtual uint64_t CreateTexture() = 0;
-  virtual void UpdateTexture(uint64_t resource_id,
+  virtual std::shared_ptr<void> CreateTexture() = 0;
+  virtual void UpdateTexture(std::shared_ptr<void> resource,
                              std::unique_ptr<Image> image) = 0;
-  virtual void UpdateTexture(uint64_t resource_id,
+  virtual void UpdateTexture(std::shared_ptr<void> resource,
                              int width,
                              int height,
                              ImageFormat format,
                              size_t data_size,
                              uint8_t* image_data) = 0;
-  virtual void DestroyTexture(uint64_t resource_id) = 0;
-  virtual void ActivateTexture(uint64_t resource_id, size_t texture_unit) = 0;
+  virtual void DestroyTexture(std::shared_ptr<void> resource) = 0;
+  virtual void ActivateTexture(std::shared_ptr<void> resource,
+                               size_t texture_unit) = 0;
 
-  virtual uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
-                                const VertexDescription& vertex_description,
-                                Primitive primitive,
-                                bool enable_depth_test) = 0;
-  virtual void DestroyShader(uint64_t resource_id) = 0;
-  virtual void ActivateShader(uint64_t resource_id) = 0;
+  virtual std::shared_ptr<void> CreateShader(
+      std::unique_ptr<ShaderSource> source,
+      const VertexDescription& vertex_description,
+      Primitive primitive,
+      bool enable_depth_test) = 0;
+  virtual void DestroyShader(std::shared_ptr<void> resource) = 0;
+  virtual void ActivateShader(std::shared_ptr<void> resource) = 0;
 
-  virtual void SetUniform(uint64_t resource_id,
+  virtual void SetUniform(std::shared_ptr<void> resource,
                           const std::string& name,
                           const base::Vector2f& val) = 0;
-  virtual void SetUniform(uint64_t resource_id,
+  virtual void SetUniform(std::shared_ptr<void> resource,
                           const std::string& name,
                           const base::Vector3f& val) = 0;
-  virtual void SetUniform(uint64_t resource_id,
+  virtual void SetUniform(std::shared_ptr<void> resource,
                           const std::string& name,
                           const base::Vector4f& val) = 0;
-  virtual void SetUniform(uint64_t resource_id,
+  virtual void SetUniform(std::shared_ptr<void> resource,
                           const std::string& name,
                           const base::Matrix4f& val) = 0;
-  virtual void SetUniform(uint64_t resource_id,
+  virtual void SetUniform(std::shared_ptr<void> resource,
                           const std::string& name,
                           float val) = 0;
-  virtual void SetUniform(uint64_t resource_id,
+  virtual void SetUniform(std::shared_ptr<void> resource,
                           const std::string& name,
                           int val) = 0;
-  virtual void UploadUniforms(uint64_t resource_id) = 0;
+  virtual void UploadUniforms(std::shared_ptr<void> resource) = 0;
 
   virtual void PrepareForDrawing() = 0;
   virtual void Present() = 0;

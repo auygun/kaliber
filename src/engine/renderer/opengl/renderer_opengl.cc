@@ -71,23 +71,25 @@ void RendererOpenGL::ResetScissor() {
   glDisable(GL_SCISSOR_TEST);
 }
 
-uint64_t RendererOpenGL::CreateGeometry(std::unique_ptr<Mesh> mesh) {
+std::shared_ptr<void> RendererOpenGL::CreateGeometry(
+    std::unique_ptr<Mesh> mesh) {
   auto id = CreateGeometry(mesh->primitive(), mesh->vertex_description(),
                            mesh->index_description());
-  if (id != kInvalidId)
+  if (id)
     UpdateGeometry(id, mesh->num_vertices(), mesh->GetVertices(),
                    mesh->num_indices(), mesh->GetIndices());
   return id;
 }
 
-uint64_t RendererOpenGL::CreateGeometry(Primitive primitive,
-                                        VertexDescription vertex_description,
-                                        DataType index_description) {
+std::shared_ptr<void> RendererOpenGL::CreateGeometry(
+    Primitive primitive,
+    VertexDescription vertex_description,
+    DataType index_description) {
   // Verify that we have a valid layout and get the total byte size per vertex.
   GLuint vertex_size = GetVertexSize(vertex_description);
   if (!vertex_size) {
     LOG(0) << "Invalid vertex layout";
-    return kInvalidId;
+    return nullptr;
   }
 
   GLuint vertex_array_id = 0;
@@ -107,7 +109,7 @@ uint64_t RendererOpenGL::CreateGeometry(Primitive primitive,
   if (!SetupVertexLayout(vertex_description, vertex_size, vertex_array_objects_,
                          vertex_layout)) {
     LOG(0) << "Invalid vertex layout";
-    return kInvalidId;
+    return nullptr;
   }
 
   // Create the index buffer.
@@ -126,106 +128,102 @@ uint64_t RendererOpenGL::CreateGeometry(Primitive primitive,
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
   }
 
-  uint64_t resource_id = ++last_resource_id_;
-  geometries_[resource_id] = {0,
-                              0,
-                              kGlPrimitive[primitive],
-                              kGlDataType[index_description],
-                              vertex_layout,
-                              vertex_size,
-                              vertex_array_id,
-                              vertex_buffer_id,
-                              (GLuint)GetIndexSize(index_description),
-                              index_buffer_id};
-  return resource_id;
+  auto it =
+      geometries_.insert(geometries_.end(), std::make_shared<GeometryOpenGL>());
+  **it = {it,
+          0,
+          0,
+          kGlPrimitive[primitive],
+          kGlDataType[index_description],
+          vertex_layout,
+          vertex_size,
+          vertex_array_id,
+          vertex_buffer_id,
+          (GLuint)GetIndexSize(index_description),
+          index_buffer_id};
+  return *it;
 }
 
-void RendererOpenGL::UpdateGeometry(uint64_t resource_id,
+void RendererOpenGL::UpdateGeometry(std::shared_ptr<void> resource,
                                     size_t num_vertices,
                                     const void* vertices,
                                     size_t num_indices,
                                     const void* indices) {
-  auto it = geometries_.find(resource_id);
-  if (it == geometries_.end())
-    return;
+  auto geometry = std::static_pointer_cast<GeometryOpenGL>(resource);
 
   // Go with GL_STATIC_DRAW for the first update.
-  GLenum usage = it->second.num_vertices > 0 ? GL_STREAM_DRAW : GL_STATIC_DRAW;
+  GLenum usage = geometry->num_vertices > 0 ? GL_STREAM_DRAW : GL_STATIC_DRAW;
 
   // Upload the vertex data.
-  glBindBuffer(GL_ARRAY_BUFFER, it->second.vertex_buffer_id);
-  glBufferData(GL_ARRAY_BUFFER, num_vertices * it->second.vertex_size, vertices,
+  glBindBuffer(GL_ARRAY_BUFFER, geometry->vertex_buffer_id);
+  glBufferData(GL_ARRAY_BUFFER, num_vertices * geometry->vertex_size, vertices,
                usage);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
-  it->second.num_vertices = (GLsizei)num_vertices;
+  geometry->num_vertices = (GLsizei)num_vertices;
 
   // Upload the index data.
-  if (it->second.index_buffer_id) {
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, it->second.index_buffer_id);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices * it->second.index_size,
+  if (geometry->index_buffer_id) {
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geometry->index_buffer_id);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices * geometry->index_size,
                  indices, usage);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    it->second.num_indices = (GLsizei)num_indices;
+    geometry->num_indices = (GLsizei)num_indices;
   }
 }
 
-void RendererOpenGL::DestroyGeometry(uint64_t resource_id) {
-  auto it = geometries_.find(resource_id);
-  if (it == geometries_.end())
-    return;
+void RendererOpenGL::DestroyGeometry(std::shared_ptr<void> resource) {
+  auto geometry = std::static_pointer_cast<GeometryOpenGL>(resource);
 
-  if (it->second.index_buffer_id)
-    glDeleteBuffers(1, &(it->second.index_buffer_id));
-  if (it->second.vertex_buffer_id)
-    glDeleteBuffers(1, &(it->second.vertex_buffer_id));
-  if (it->second.vertex_array_id)
-    glDeleteVertexArrays(1, &(it->second.vertex_array_id));
+  if (geometry->index_buffer_id)
+    glDeleteBuffers(1, &(geometry->index_buffer_id));
+  if (geometry->vertex_buffer_id)
+    glDeleteBuffers(1, &(geometry->vertex_buffer_id));
+  if (geometry->vertex_array_id)
+    glDeleteVertexArrays(1, &(geometry->vertex_array_id));
 
-  geometries_.erase(it);
+  geometries_.erase(geometry->it);
 }
 
-void RendererOpenGL::Draw(uint64_t resource_id,
+void RendererOpenGL::Draw(std::shared_ptr<void> resource,
                           size_t num_indices,
                           size_t start_offset) {
-  auto it = geometries_.find(resource_id);
-  if (it == geometries_.end())
-    return;
+  auto geometry = std::static_pointer_cast<GeometryOpenGL>(resource);
 
   if (num_indices == 0)
-    num_indices = it->second.num_indices;
+    num_indices = geometry->num_indices;
 
   // Set up the vertex data.
-  if (it->second.vertex_array_id) {
-    glBindVertexArray(it->second.vertex_array_id);
+  if (geometry->vertex_array_id) {
+    glBindVertexArray(geometry->vertex_array_id);
   } else {
-    glBindBuffer(GL_ARRAY_BUFFER, it->second.vertex_buffer_id);
+    glBindBuffer(GL_ARRAY_BUFFER, geometry->vertex_buffer_id);
     for (GLuint attribute_index = 0;
-         attribute_index < (GLuint)it->second.vertex_layout.size();
+         attribute_index < (GLuint)geometry->vertex_layout.size();
          ++attribute_index) {
-      GeometryOpenGL::Element& e = it->second.vertex_layout[attribute_index];
+      GeometryOpenGL::Element& e = geometry->vertex_layout[attribute_index];
       glEnableVertexAttribArray(attribute_index);
       glVertexAttribPointer(attribute_index, e.num_elements, e.type, GL_TRUE,
-                            it->second.vertex_size,
+                            geometry->vertex_size,
                             (const GLvoid*)e.vertex_offset);
     }
 
     if (num_indices > 0)
-      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, it->second.index_buffer_id);
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, geometry->index_buffer_id);
   }
 
   // Draw the primitive.
   if (num_indices > 0)
-    glDrawElements(it->second.primitive, num_indices, it->second.index_type,
+    glDrawElements(geometry->primitive, num_indices, geometry->index_type,
                    (void*)(intptr_t)(start_offset * sizeof(unsigned short)));
   else
-    glDrawArrays(it->second.primitive, 0, it->second.num_vertices);
+    glDrawArrays(geometry->primitive, 0, geometry->num_vertices);
 
   // Clean up states.
-  if (it->second.vertex_array_id)
+  if (geometry->vertex_array_id)
     glBindVertexArray(0);
   else {
     for (GLuint attribute_index = 0;
-         attribute_index < (GLuint)it->second.vertex_layout.size();
+         attribute_index < (GLuint)geometry->vertex_layout.size();
          ++attribute_index)
       glDisableVertexAttribArray(attribute_index);
 
@@ -234,7 +232,7 @@ void RendererOpenGL::Draw(uint64_t resource_id,
   }
 }
 
-uint64_t RendererOpenGL::CreateTexture() {
+std::shared_ptr<void> RendererOpenGL::CreateTexture() {
   GLuint gl_id = 0;
   glGenTextures(1, &gl_id);
   glBindTexture(GL_TEXTURE_2D, gl_id);
@@ -244,28 +242,27 @@ uint64_t RendererOpenGL::CreateTexture() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-  uint64_t resource_id = ++last_resource_id_;
-  textures_[resource_id] = gl_id;
-  return resource_id;
+  auto it =
+      textures_.insert(textures_.end(), std::make_shared<TextureOpenGL>());
+  **it = {it, gl_id};
+  return *it;
 }
 
-void RendererOpenGL::UpdateTexture(uint64_t resource_id,
+void RendererOpenGL::UpdateTexture(std::shared_ptr<void> resource,
                                    std::unique_ptr<Image> image) {
-  UpdateTexture(resource_id, image->GetWidth(), image->GetHeight(),
+  UpdateTexture(resource, image->GetWidth(), image->GetHeight(),
                 image->GetFormat(), image->GetSize(), image->GetBuffer());
 }
 
-void RendererOpenGL::UpdateTexture(uint64_t resource_id,
+void RendererOpenGL::UpdateTexture(std::shared_ptr<void> resource,
                                    int width,
                                    int height,
                                    ImageFormat format,
                                    size_t data_size,
                                    uint8_t* image_data) {
-  auto it = textures_.find(resource_id);
-  if (it == textures_.end())
-    return;
+  auto texture = std::static_pointer_cast<TextureOpenGL>(resource);
 
-  glBindTexture(GL_TEXTURE_2D, it->second);
+  glBindTexture(GL_TEXTURE_2D, texture->id);
   if (IsCompressedFormat(format)) {
     GLenum gl_format = 0;
     switch (format) {
@@ -311,35 +308,28 @@ void RendererOpenGL::UpdateTexture(uint64_t resource_id,
   }
 }
 
-void RendererOpenGL::DestroyTexture(uint64_t resource_id) {
-  auto it = textures_.find(resource_id);
-  if (it == textures_.end())
-    return;
-
-  glDeleteTextures(1, &(it->second));
-  textures_.erase(it);
+void RendererOpenGL::DestroyTexture(std::shared_ptr<void> resource) {
+  auto texture = std::static_pointer_cast<TextureOpenGL>(resource);
+  glDeleteTextures(1, &(texture->id));
+  textures_.erase(texture->it);
 }
 
-void RendererOpenGL::ActivateTexture(uint64_t resource_id,
+void RendererOpenGL::ActivateTexture(std::shared_ptr<void> resource,
                                      size_t texture_unit) {
   if (texture_unit >= kMaxTextureUnits) {
     DLOG(0) << "Invalid texture unit " << texture_unit;
     return;
   }
 
-  auto it = textures_.find(resource_id);
-  if (it == textures_.end()) {
-    return;
-  }
-
-  if (it->second != active_texture_id_[texture_unit]) {
+  auto texture = std::static_pointer_cast<TextureOpenGL>(resource);
+  if (texture->id != active_texture_id_[texture_unit]) {
     glActiveTexture(GL_TEXTURE0 + texture_unit);
-    glBindTexture(GL_TEXTURE_2D, it->second);
-    active_texture_id_[texture_unit] = it->second;
+    glBindTexture(GL_TEXTURE_2D, texture->id);
+    active_texture_id_[texture_unit] = texture->id;
   }
 }
 
-uint64_t RendererOpenGL::CreateShader(
+std::shared_ptr<void> RendererOpenGL::CreateShader(
     std::unique_ptr<ShaderSource> source,
     const VertexDescription& vertex_description,
     Primitive primitive,
@@ -382,103 +372,79 @@ uint64_t RendererOpenGL::CreateShader(
     }
   }
 
-  uint64_t resource_id = ++last_resource_id_;
-  shaders_[resource_id] = {id, {}, enable_depth_test};
-  return resource_id;
+  auto it = shaders_.insert(shaders_.end(), std::make_shared<ShaderOpenGL>());
+  **it = {it, id, {}, enable_depth_test};
+  return *it;
 }
 
-void RendererOpenGL::DestroyShader(uint64_t resource_id) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  glDeleteProgram(it->second.id);
-  shaders_.erase(it);
+void RendererOpenGL::DestroyShader(std::shared_ptr<void> resource) {
+  auto shader = std::static_pointer_cast<ShaderOpenGL>(resource);
+  glDeleteProgram(shader->id);
+  shaders_.erase(shader->it);
 }
 
-void RendererOpenGL::ActivateShader(uint64_t resource_id) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  if (it->second.id != active_shader_id_) {
-    glUseProgram(it->second.id);
-    active_shader_id_ = it->second.id;
-    if (it->second.enable_depth_test)
+void RendererOpenGL::ActivateShader(std::shared_ptr<void> resource) {
+  auto shader = std::static_pointer_cast<ShaderOpenGL>(resource);
+  if (shader->id != active_shader_id_) {
+    glUseProgram(shader->id);
+    active_shader_id_ = shader->id;
+    if (shader->enable_depth_test)
       glEnable(GL_DEPTH_TEST);
     else
       glDisable(GL_DEPTH_TEST);
   }
 }
 
-void RendererOpenGL::SetUniform(uint64_t resource_id,
+void RendererOpenGL::SetUniform(std::shared_ptr<void> resource,
                                 const std::string& name,
                                 const base::Vector2f& val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  GLint index = GetUniformLocation(it->second.id, name, it->second.uniforms);
+  auto shader = std::static_pointer_cast<ShaderOpenGL>(resource);
+  GLint index = GetUniformLocation(shader->id, name, shader->uniforms);
   if (index >= 0)
     glUniform2fv(index, 1, val.GetData());
 }
 
-void RendererOpenGL::SetUniform(uint64_t resource_id,
+void RendererOpenGL::SetUniform(std::shared_ptr<void> resource,
                                 const std::string& name,
                                 const base::Vector3f& val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  GLint index = GetUniformLocation(it->second.id, name, it->second.uniforms);
+  auto shader = std::static_pointer_cast<ShaderOpenGL>(resource);
+  GLint index = GetUniformLocation(shader->id, name, shader->uniforms);
   if (index >= 0)
     glUniform3fv(index, 1, val.GetData());
 }
 
-void RendererOpenGL::SetUniform(uint64_t resource_id,
+void RendererOpenGL::SetUniform(std::shared_ptr<void> resource,
                                 const std::string& name,
                                 const base::Vector4f& val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  GLint index = GetUniformLocation(it->second.id, name, it->second.uniforms);
+  auto shader = std::static_pointer_cast<ShaderOpenGL>(resource);
+  GLint index = GetUniformLocation(shader->id, name, shader->uniforms);
   if (index >= 0)
     glUniform4fv(index, 1, val.GetData());
 }
 
-void RendererOpenGL::SetUniform(uint64_t resource_id,
+void RendererOpenGL::SetUniform(std::shared_ptr<void> resource,
                                 const std::string& name,
                                 const base::Matrix4f& val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  GLint index = GetUniformLocation(it->second.id, name, it->second.uniforms);
+  auto shader = std::static_pointer_cast<ShaderOpenGL>(resource);
+  GLint index = GetUniformLocation(shader->id, name, shader->uniforms);
   if (index >= 0)
     glUniformMatrix4fv(index, 1, GL_FALSE, val.GetData());
 }
 
-void RendererOpenGL::SetUniform(uint64_t resource_id,
+void RendererOpenGL::SetUniform(std::shared_ptr<void> resource,
                                 const std::string& name,
                                 float val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  GLint index = GetUniformLocation(it->second.id, name, it->second.uniforms);
+  auto shader = std::static_pointer_cast<ShaderOpenGL>(resource);
+  GLint index = GetUniformLocation(shader->id, name, shader->uniforms);
   if (index >= 0)
     glUniform1f(index, val);
 }
 
-void RendererOpenGL::SetUniform(uint64_t resource_id,
+void RendererOpenGL::SetUniform(std::shared_ptr<void> resource,
                                 const std::string& name,
                                 int val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  GLint index = GetUniformLocation(it->second.id, name, it->second.uniforms);
+  auto shader = std::static_pointer_cast<ShaderOpenGL>(resource);
+  GLint index = GetUniformLocation(shader->id, name, shader->uniforms);
   if (index >= 0)
     glUniform1i(index, val);
 }
