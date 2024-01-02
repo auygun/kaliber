@@ -48,7 +48,7 @@ void SkyQuad::Draw(float frame_frac) {
                         {nebula_color_.x, nebula_color_.y, nebula_color_.z});
   shader_->UploadUniforms();
 
-  Engine::Get().GetQuad()->Draw();
+  Engine::Get().GetQuad().Draw();
 }
 
 void SkyQuad::SwitchColor(const Vector4f& color) {

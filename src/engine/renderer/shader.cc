@@ -7,6 +7,8 @@ using namespace base;
 
 namespace eng {
 
+Shader::Shader() : RenderResource(nullptr) {}
+
 Shader::Shader(Renderer* renderer) : RenderResource(renderer) {}
 
 Shader::~Shader() {

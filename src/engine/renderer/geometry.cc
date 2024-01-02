@@ -5,6 +5,8 @@
 
 namespace eng {
 
+Geometry::Geometry() : RenderResource(nullptr) {}
+
 Geometry::Geometry(Renderer* renderer) : RenderResource(renderer) {}
 
 Geometry::~Geometry() {

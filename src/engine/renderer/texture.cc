@@ -6,6 +6,8 @@
 
 namespace eng {
 
+Texture::Texture() : RenderResource(nullptr) {}
+
 Texture::Texture(Renderer* renderer) : RenderResource(renderer) {}
 
 Texture::~Texture() {

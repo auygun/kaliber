@@ -14,7 +14,7 @@ void SolidQuad::Draw(float frame_frac) {
 
   Shader* shader = GetCustomShader();
   if (!shader)
-    shader = Engine::Get().GetSolidShader();
+    shader = &Engine::Get().GetSolidShader();
 
   shader->Activate();
   shader->SetUniform("offset", position_);
@@ -25,7 +25,7 @@ void SolidQuad::Draw(float frame_frac) {
   DoSetCustomUniforms();
   shader->UploadUniforms();
 
-  Engine::Get().GetQuad()->Draw();
+  Engine::Get().GetQuad().Draw();
 }
 
 }  // namespace eng

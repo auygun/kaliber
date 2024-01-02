@@ -14,7 +14,8 @@ class Mesh;
 
 class Geometry : public RenderResource {
  public:
-  Geometry(Renderer* renderer);
+  Geometry();
+  explicit Geometry(Renderer* renderer);
   ~Geometry();
 
   void Create(std::unique_ptr<Mesh> mesh);

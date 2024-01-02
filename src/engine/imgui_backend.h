@@ -1,18 +1,17 @@
 #ifndef ENGINE_IMGUI_BACKEND_H
 #define ENGINE_IMGUI_BACKEND_H
 
-#include <memory>
 #include <vector>
 
+#include "engine/renderer/geometry.h"
 #include "engine/renderer/renderer_types.h"
+#include "engine/renderer/shader.h"
+#include "engine/renderer/texture.h"
 
 namespace eng {
 
 class InputEvent;
 class Renderer;
-class Geometry;
-class Shader;
-class Texture;
 
 class ImguiBackend {
  public:
@@ -32,9 +31,9 @@ class ImguiBackend {
 
  private:
   VertexDescription vertex_description_;
-  std::vector<std::unique_ptr<Geometry>> geometries_;
-  std::unique_ptr<Shader> shader_;
-  std::unique_ptr<Texture> font_atlas_;
+  std::vector<Geometry> geometries_;
+  Shader shader_;
+  Texture font_atlas_;
   Renderer* renderer_ = nullptr;
 };
 

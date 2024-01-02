@@ -25,9 +25,6 @@ class RenderResource {
   Renderer* renderer_ = nullptr;
 
   ~RenderResource() = default;
-
-  RenderResource(const RenderResource&) = delete;
-  RenderResource& operator=(const RenderResource&) = delete;
 };
 
 }  // namespace eng

@@ -15,10 +15,7 @@
 #include "engine/game_factory.h"
 #include "engine/input_event.h"
 #include "engine/platform/platform.h"
-#include "engine/renderer/geometry.h"
 #include "engine/renderer/renderer.h"
-#include "engine/renderer/shader.h"
-#include "engine/renderer/texture.h"
 #include "third_party/imgui/imgui.h"
 #include "third_party/texture_compressor/texture_compressor.h"
 
@@ -34,11 +31,7 @@ extern void KaliberMain(Platform* platform) {
 Engine* Engine::singleton = nullptr;
 
 Engine::Engine(Platform* platform)
-    : platform_(platform),
-      audio_mixer_{std::make_unique<AudioMixer>()},
-      quad_{std::make_unique<Geometry>(nullptr)},
-      pass_through_shader_{std::make_unique<Shader>(nullptr)},
-      solid_shader_{std::make_unique<Shader>(nullptr)} {
+    : platform_(platform), audio_mixer_{std::make_unique<AudioMixer>()} {
   DCHECK(!singleton);
   singleton = this;
 
@@ -55,9 +48,9 @@ Engine::~Engine() noexcept {
   game_.reset();
   textures_.clear();
   shaders_.clear();
-  quad_.reset();
-  pass_through_shader_.reset();
-  solid_shader_.reset();
+  quad_.Destroy();
+  pass_through_shader_.Destroy();
+  solid_shader_.Destroy();
   renderer_.reset();
   singleton = nullptr;
 }
@@ -309,8 +302,8 @@ Shader* Engine::GetShader(const std::string& asset_name) {
   if (!it->second.shader->IsValid()) {
     auto source = std::make_unique<ShaderSource>();
     if (source->Load(it->second.file_name))
-      it->second.shader->Create(std::move(source), quad_->vertex_description(),
-                                quad_->primitive(), false);
+      it->second.shader->Create(std::move(source), quad_.vertex_description(),
+                                quad_.primitive(), false);
   }
 
   return it->second.shader.get();
@@ -605,9 +598,9 @@ void Engine::ContextLost() {
 }
 
 void Engine::CreateRenderResources() {
-  quad_->SetRenderer(renderer_.get());
-  pass_through_shader_->SetRenderer(renderer_.get());
-  solid_shader_->SetRenderer(renderer_.get());
+  quad_.SetRenderer(renderer_.get());
+  pass_through_shader_.SetRenderer(renderer_.get());
+  solid_shader_.SetRenderer(renderer_.get());
 
   // This creates a normalized unit sized quad.
   static const char vertex_description[] = "p2f;t2f";
@@ -619,13 +612,13 @@ void Engine::CreateRenderResources() {
   // Create the quad geometry we can reuse for all sprites.
   auto quad_mesh = std::make_unique<Mesh>();
   quad_mesh->Create(kPrimitive_TriangleStrip, vertex_description, 4, vertices);
-  quad_->Create(std::move(quad_mesh));
+  quad_.Create(std::move(quad_mesh));
 
   // Create the shader we can reuse for texture rendering.
   auto source = std::make_unique<ShaderSource>();
   if (source->Load("engine/pass_through.glsl")) {
-    pass_through_shader_->Create(std::move(source), quad_->vertex_description(),
-                                 quad_->primitive(), false);
+    pass_through_shader_.Create(std::move(source), quad_.vertex_description(),
+                                quad_.primitive(), false);
   } else {
     LOG(0) << "Could not create pass through shader.";
   }
@@ -633,8 +626,8 @@ void Engine::CreateRenderResources() {
   // Create the shader we can reuse for solid rendering.
   source = std::make_unique<ShaderSource>();
   if (source->Load("engine/solid.glsl")) {
-    solid_shader_->Create(std::move(source), quad_->vertex_description(),
-                          quad_->primitive(), false);
+    solid_shader_.Create(std::move(source), quad_.vertex_description(),
+                         quad_.primitive(), false);
   } else {
     LOG(0) << "Could not create solid shader.";
   }
@@ -671,8 +664,8 @@ void Engine::CreateRenderResources() {
             std::unique_ptr<ShaderSource> source) -> void {
           --async_work_count_;
           if (source)
-            ptr->Create(std::move(source), quad_->vertex_description(),
-                        quad_->primitive(), false);
+            ptr->Create(std::move(source), quad_.vertex_description(),
+                        quad_.primitive(), false);
         });
   }
 }

@@ -63,7 +63,7 @@ void ImageQuad::Draw(float frame_frac) {
 
   Shader* shader = GetCustomShader();
   if (!shader)
-    shader = Engine::Get().GetPassThroughShader();
+    shader = &Engine::Get().GetPassThroughShader();
 
   shader->Activate();
   shader->SetUniform("offset", position_);
@@ -77,7 +77,7 @@ void ImageQuad::Draw(float frame_frac) {
   DoSetCustomUniforms();
   shader->UploadUniforms();
 
-  Engine::Get().GetQuad()->Draw();
+  Engine::Get().GetQuad().Draw();
 }
 
 float ImageQuad::GetFrameWidth() const {

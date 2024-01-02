@@ -15,7 +15,8 @@ class ShaderSource;
 
 class Shader : public RenderResource {
  public:
-  Shader(Renderer* renderer);
+  Shader();
+  explicit Shader(Renderer* renderer);
   ~Shader();
 
   void Create(std::unique_ptr<ShaderSource> source,

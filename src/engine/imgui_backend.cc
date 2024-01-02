@@ -4,10 +4,7 @@
 #include "engine/asset/shader_source.h"
 #include "engine/input_event.h"
 #include "engine/platform/asset_file.h"
-#include "engine/renderer/geometry.h"
 #include "engine/renderer/renderer.h"
-#include "engine/renderer/shader.h"
-#include "engine/renderer/texture.h"
 #include "third_party/imgui/imgui.h"
 
 using namespace base;
@@ -18,9 +15,7 @@ namespace {
 const char vertex_description[] = "p2f;t2f;c4b";
 }  // namespace
 
-ImguiBackend::ImguiBackend()
-    : shader_{std::make_unique<Shader>(nullptr)},
-      font_atlas_{std::make_unique<Texture>(nullptr)} {}
+ImguiBackend::ImguiBackend() = default;
 
 ImguiBackend::~ImguiBackend() = default;
 
@@ -55,16 +50,16 @@ void ImguiBackend::Initialize(bool is_mobile, std::string root_path) {
 void ImguiBackend::Shutdown() {
   ImGui::DestroyContext();
   geometries_.clear();
-  font_atlas_->Destroy();
-  shader_->Destroy();
+  font_atlas_.Destroy();
+  shader_.Destroy();
 }
 
 void ImguiBackend::CreateRenderResources(Renderer* renderer) {
   renderer_ = renderer;
-  shader_->SetRenderer(renderer);
-  font_atlas_->SetRenderer(renderer);
+  shader_.SetRenderer(renderer);
+  font_atlas_.SetRenderer(renderer);
   for (auto& g : geometries_)
-    g->SetRenderer(nullptr);
+    g.SetRenderer(nullptr);
   geometries_.clear();
 
   // Avoid flickering by using the geometries form the last frame if available.
@@ -74,8 +69,8 @@ void ImguiBackend::CreateRenderResources(Renderer* renderer) {
   // Create the shader.
   auto source = std::make_unique<ShaderSource>();
   if (source->Load("engine/imgui.glsl")) {
-    shader_->Create(std::move(source), vertex_description_,
-                    kPrimitive_Triangles, false);
+    shader_.Create(std::move(source), vertex_description_, kPrimitive_Triangles,
+                   false);
   } else {
     LOG(0) << "Could not create imgui shader.";
   }
@@ -85,9 +80,9 @@ void ImguiBackend::CreateRenderResources(Renderer* renderer) {
   int width, height;
   ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
   LOG(0) << "Font atlas size: " << width << ", " << height;
-  font_atlas_->Update(width, height, ImageFormat::kRGBA32, width * height * 4,
-                      pixels);
-  ImGui::GetIO().Fonts->SetTexID((ImTextureID)(intptr_t)font_atlas_.get());
+  font_atlas_.Update(width, height, ImageFormat::kRGBA32, width * height * 4,
+                     pixels);
+  ImGui::GetIO().Fonts->SetTexID((ImTextureID)(intptr_t)&font_atlas_);
 }
 
 std::unique_ptr<InputEvent> ImguiBackend::OnInputEvent(
@@ -128,16 +123,14 @@ void ImguiBackend::Render() {
   // Create a geometry for each draw list and upload the vertex data.
   ImDrawData* draw_data = ImGui::GetDrawData();
   if ((int)geometries_.size() < draw_data->CmdListsCount)
-    geometries_.resize(draw_data->CmdListsCount);
+    geometries_.resize(draw_data->CmdListsCount, Geometry(renderer_));
   for (int n = 0; n < draw_data->CmdListsCount; n++) {
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
-    if (!geometries_[n]) {
-      geometries_[n] = std::make_unique<Geometry>(renderer_);
-      geometries_[n]->Create(kPrimitive_Triangles, vertex_description_,
-                             kDataType_UShort);
-    }
-    geometries_[n]->Update(cmd_list->VtxBuffer.Size, cmd_list->VtxBuffer.Data,
-                           cmd_list->IdxBuffer.Size, cmd_list->IdxBuffer.Data);
+    if (!geometries_[n].IsValid())
+      geometries_[n].Create(kPrimitive_Triangles, vertex_description_,
+                            kDataType_UShort);
+    geometries_[n].Update(cmd_list->VtxBuffer.Size, cmd_list->VtxBuffer.Data,
+                          cmd_list->IdxBuffer.Size, cmd_list->IdxBuffer.Data);
   }
 }
 
@@ -154,9 +147,9 @@ void ImguiBackend::Draw() {
                              draw_data->DisplayPos.x + draw_data->DisplaySize.x,
                              draw_data->DisplayPos.y + draw_data->DisplaySize.y,
                              draw_data->DisplayPos.y);
-  shader_->Activate();
-  shader_->SetUniform("projection", proj);
-  shader_->UploadUniforms();
+  shader_.Activate();
+  shader_.SetUniform("projection", proj);
+  shader_.UploadUniforms();
 
   for (int n = 0; n < draw_data->CmdListsCount; n++) {
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
@@ -169,7 +162,7 @@ void ImguiBackend::Draw() {
       renderer_->SetScissor(int(pcmd->ClipRect.x), int(pcmd->ClipRect.y),
                             int(pcmd->ClipRect.z - pcmd->ClipRect.x),
                             int(pcmd->ClipRect.w - pcmd->ClipRect.y));
-      geometries_[n]->Draw(pcmd->ElemCount, pcmd->IdxOffset);
+      geometries_[n].Draw(pcmd->ElemCount, pcmd->IdxOffset);
     }
   }
   renderer_->ResetScissor();

@@ -14,7 +14,8 @@ class Renderer;
 
 class Texture : public RenderResource {
  public:
-  Texture(Renderer* renderer);
+  Texture();
+  explicit Texture(Renderer* renderer);
   ~Texture();
 
   void Update(std::unique_ptr<Image> image);

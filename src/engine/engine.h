@@ -13,6 +13,9 @@
 #include "engine/imgui_backend.h"
 #include "engine/persistent_data.h"
 #include "engine/platform/platform_observer.h"
+#include "engine/renderer/geometry.h"
+#include "engine/renderer/shader.h"
+#include "engine/renderer/texture.h"
 
 class TextureCompressor;
 
@@ -24,13 +27,10 @@ class AudioMixer;
 class Drawable;
 class Font;
 class Game;
-class Geometry;
 class Image;
 class InputEvent;
 class Platform;
 class Renderer;
-class Shader;
-class Texture;
 enum class RendererType;
 
 class Engine : public PlatformObserver {
@@ -105,9 +105,9 @@ class Engine : public PlatformObserver {
   AudioMixer* GetAudioMixer() { return audio_mixer_.get(); }
 
   // Access to the render resources.
-  Geometry* GetQuad() { return quad_.get(); }
-  Shader* GetPassThroughShader() { return pass_through_shader_.get(); }
-  Shader* GetSolidShader() { return solid_shader_.get(); }
+  Geometry& GetQuad() { return quad_; }
+  Shader& GetPassThroughShader() { return pass_through_shader_; }
+  Shader& GetSolidShader() { return solid_shader_; }
 
   const Font* GetSystemFont() { return system_font_.get(); }
 
@@ -171,9 +171,9 @@ class Engine : public PlatformObserver {
   std::unique_ptr<AudioMixer> audio_mixer_;
   std::unique_ptr<Game> game_;
 
-  std::unique_ptr<Geometry> quad_;
-  std::unique_ptr<Shader> pass_through_shader_;
-  std::unique_ptr<Shader> solid_shader_;
+  Geometry quad_;
+  Shader pass_through_shader_;
+  Shader solid_shader_;
 
   base::Vector2f screen_size_ = {0, 0};
   base::Matrix4f projection_;
