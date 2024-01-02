@@ -152,7 +152,7 @@ bool Image::Load(const std::string& file_name) {
     return false;
   }
 
-  LOG(0) << "Loaded " << file_name << ". number of color components: " << c;
+  DLOG(0) << "Loaded " << file_name << ". number of color components: " << c;
 
   uint8_t* converted_buffer = NULL;
   switch (c) {
@@ -227,8 +227,8 @@ void Image::ConvertToPow2() {
   int new_width = RoundUpToPow2(width_);
   int new_height = RoundUpToPow2(height_);
   if ((new_width != width_) || (new_height != height_)) {
-    LOG(0) << "Converting image from (" << width_ << ", " << height_ << ") to ("
-           << new_width << ", " << new_height << ")";
+    DLOG(0) << "Converting image from (" << width_ << ", " << height_
+            << ") to (" << new_width << ", " << new_height << ")";
 
     int bigger_size = new_width * new_height * 4 * sizeof(uint8_t);
     uint8_t* bigger_buffer = (uint8_t*)AlignedAlloc(bigger_size, 16);
@@ -285,7 +285,7 @@ bool Image::Compress() {
       return false;
   }
 
-  LOG(0) << "Compressing image. Format: " << ImageFormatToString(format_);
+  DLOG(0) << "Compressing image. Format: " << ImageFormatToString(format_);
 
   unsigned compressedSize = GetSize();
   uint8_t* compressedBuffer =
