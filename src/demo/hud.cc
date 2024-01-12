@@ -60,12 +60,12 @@ bool Hud::Initialize() {
     text_[i].SetZOrder(30);
     text_[i].SetColor(kTextColor * Vector4f(1, 1, 1, 0));
 
-    Vector2f pos = (engine.GetScreenSize() / 2 - text_[i].GetSize() / 2);
+    Vector2f pos = (engine.GetViewportSize() / 2 - text_[i].GetSize() / 2);
     pos -=
-        engine.GetScreenSize() * Vector2f(kHorizontalMargin, kVerticalMargin);
+        engine.GetViewportSize() * Vector2f(kHorizontalMargin, kVerticalMargin);
 
-    Vector2f scale = engine.GetScreenSize() * Vector2f(1, 0);
-    scale -= engine.GetScreenSize() * Vector2f(kHorizontalMargin * 4, 0);
+    Vector2f scale = engine.GetViewportSize() * Vector2f(1, 0);
+    scale -= engine.GetViewportSize() * Vector2f(kHorizontalMargin * 4, 0);
     scale += text_[0].GetSize() * Vector2f(0, 0.3f);
 
     progress_bar_[i].SetZOrder(30);
@@ -103,7 +103,7 @@ bool Hud::Initialize() {
   bonus_.SetZOrder(30);
 
   SetupFadeOutAnim(bonus_animator_, 1.0f);
-  bonus_animator_.SetMovement({0, Engine::Get().GetScreenSize().y / 2}, 2.0f);
+  bonus_animator_.SetMovement({0, Engine::Get().GetViewportSize().y / 2}, 2.0f);
   bonus_animator_.Attach(&bonus_);
 
   return true;

@@ -153,11 +153,11 @@ bool Menu::Initialize() {
 
   logo_[0].Create("logo_tex0", {3, 8});
   logo_[0].SetZOrder(41);
-  logo_[0].SetPosition(Engine::Get().GetScreenSize() * Vector2f(0, 0.35f));
+  logo_[0].SetPosition(Engine::Get().GetViewportSize() * Vector2f(0, 0.35f));
 
   logo_[1].Create("logo_tex1", {3, 7});
   logo_[1].SetZOrder(41);
-  logo_[1].SetPosition(Engine::Get().GetScreenSize() * Vector2f(0, 0.35f));
+  logo_[1].SetPosition(Engine::Get().GetViewportSize() * Vector2f(0, 0.35f));
 
   logo_animator_[0].Attach(&logo_[0]);
   logo_animator_[0].SetFrames(24, 20);
@@ -205,7 +205,7 @@ bool Menu::Initialize() {
       },
       true, game->saved_data().root().get("audio", Json::Value(true)).asBool(),
       kColorFadeOut, kColorSwitch);
-  toggle_audio_.image().SetPosition(Engine::Get().GetScreenSize() *
+  toggle_audio_.image().SetPosition(Engine::Get().GetViewportSize() *
                                     Vector2f(0, -0.25f));
   toggle_audio_.image().Scale(0.7f);
 
@@ -218,7 +218,7 @@ bool Menu::Initialize() {
       },
       true, game->saved_data().root().get("music", Json::Value(true)).asBool(),
       kColorFadeOut, kColorSwitch);
-  toggle_music_.image().SetPosition(Engine::Get().GetScreenSize() *
+  toggle_music_.image().SetPosition(Engine::Get().GetViewportSize() *
                                     Vector2f(0, -0.25f));
   toggle_music_.image().Scale(0.7f);
 
@@ -234,7 +234,7 @@ bool Menu::Initialize() {
       true,
       game->saved_data().root().get("vibration", Json::Value(true)).asBool(),
       kColorFadeOut, kColorSwitch);
-  toggle_vibration_.image().SetPosition(Engine::Get().GetScreenSize() *
+  toggle_vibration_.image().SetPosition(Engine::Get().GetViewportSize() *
                                         Vector2f(0, -0.25f));
   toggle_vibration_.image().Scale(0.7f);
 
@@ -262,7 +262,8 @@ bool Menu::Initialize() {
   high_score_.Create("high_score_tex");
   high_score_.SetZOrder(41);
   high_score_.Scale(0.8f);
-  high_score_.SetPosition(Engine::Get().GetScreenSize() * Vector2f(0, 0.225f));
+  high_score_.SetPosition(Engine::Get().GetViewportSize() *
+                          Vector2f(0, 0.225f));
   high_score_.SetColor(kHighScoreColor * Vector4f(1, 1, 1, 0));
   high_score_.SetVisible(false);
 
@@ -271,7 +272,7 @@ bool Menu::Initialize() {
   version_.Create("version_tex");
   version_.SetZOrder(41);
   version_.Scale(0.6f);
-  version_.SetPosition(Engine::Get().GetScreenSize() * Vector2f(0, -0.5f) +
+  version_.SetPosition(Engine::Get().GetViewportSize() * Vector2f(0, -0.5f) +
                        version_.GetSize() * Vector2f(0, 2));
   version_.SetColor(kHighScoreColor * Vector4f(1, 1, 1, 0));
   version_.SetVisible(false);

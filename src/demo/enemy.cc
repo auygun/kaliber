@@ -65,7 +65,7 @@ void SetupFadeOutAnim(Animator& animator, float delay) {
 }
 
 float SnapSpawnPosX(int col) {
-  Vector2f s = eng::Engine::Get().GetScreenSize();
+  Vector2f s = eng::Engine::Get().GetViewportSize();
   float offset = base::Lerp(s.x * -0.02f, s.x * 0.02f,
                             eng::Engine::Get().GetRandomGenerator().Rand());
   return (s.x / 4) / 2 + (s.x / 4) * col - s.x / 2 + offset;
@@ -447,7 +447,7 @@ void Enemy::KillAllEnemyUnits(bool randomize_order) {
     if (!e.marked_for_removal && e.hit_points > 0 &&
         e.enemy_type <= kEnemyType_Unit_Last) {
       if (randomize_order) {
-        e.kill_timer = Lerp(0.0f, engine.GetScreenSize().y * 0.5f * 0.15f,
+        e.kill_timer = Lerp(0.0f, engine.GetViewportSize().y * 0.5f * 0.15f,
                             engine.GetRandomGenerator().Rand());
       } else {
         float dist = e.sprite.GetPosition().y -
@@ -692,7 +692,7 @@ void Enemy::SpawnUnit(EnemyType enemy_type,
   e.health_animator.Attach(&e.health_bar);
 
   SetupFadeOutAnim(e.score_animator, 0.5f);
-  e.score_animator.SetMovement({0, engine.GetScreenSize().y / 2}, 2.0f);
+  e.score_animator.SetMovement({0, engine.GetViewportSize().y / 2}, 2.0f);
   e.score_animator.SetEndCallback(
       Animator::kMovement, [&]() -> void { e.marked_for_removal = true; });
   e.score_animator.Attach(&e.score);
@@ -769,7 +769,7 @@ void Enemy::SpawnBoss() {
     boss_id = 3;
   boss_.Create("boss_tex"s + std::to_string(boss_id), {4, 3});
   boss_.SetVisible(true);
-  boss_.SetPosition(Engine::Get().GetScreenSize() * Vector2f(0, 0.5f) +
+  boss_.SetPosition(Engine::Get().GetViewportSize() * Vector2f(0, 0.5f) +
                     boss_.GetSize() * Vector2f(0, 2.0f));
   boss_animator_.SetMovement(
       {0, boss_.GetSize().y * -2.4f}, 5,
@@ -824,7 +824,7 @@ void Enemy::SpawnBoss() {
     e.target_animator.Attach(&e.target);
 
     SetupFadeOutAnim(e.score_animator, 0.5f);
-    e.score_animator.SetMovement({0, Engine::Get().GetScreenSize().y / 2},
+    e.score_animator.SetMovement({0, Engine::Get().GetViewportSize().y / 2},
                                  2.0f);
     e.score_animator.SetEndCallback(
         Animator::kMovement, [&]() -> void { e.marked_for_removal = true; });
@@ -1055,7 +1055,7 @@ void Enemy::UpdateWave(float delta_time) {
       col = (col + 1) % 4;
     last_spawn_col_ = col;
 
-    Vector2f s = engine.GetScreenSize();
+    Vector2f s = engine.GetViewportSize();
     float x = SnapSpawnPosX(col);
     Vector2f pos = {x, s.y / 2};
 
@@ -1075,7 +1075,7 @@ void Enemy::UpdateWave(float delta_time) {
   if (seconds_since_last_power_up_ >= seconds_to_next_power_up_) {
     if (seconds_to_next_power_up_ > 0 &&
         static_cast<Demo*>(engine.GetGame())->GetPlayer().nuke_count() < 3) {
-      Vector2f s = engine.GetScreenSize();
+      Vector2f s = engine.GetViewportSize();
       Vector2f pos = {0, s.y / 2};
       SpawnUnit(kEnemyType_PowerUp, kDamageType_Any, pos, 6);
     }

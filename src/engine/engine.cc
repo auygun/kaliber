@@ -206,13 +206,13 @@ void Engine::Exit() {
   platform_->Exit();
 }
 
-Vector2f Engine::ToScale(const Vector2f& vec) {
-  return GetScreenSize() * vec /
+Vector2f Engine::ToViewportScale(const Vector2f& vec) {
+  return GetViewportSize() * vec /
          Vector2f((float)GetScreenWidth(), (float)GetScreenHeight());
 }
 
-Vector2f Engine::ToPosition(const Vector2f& vec) {
-  return ToScale(vec) - GetScreenSize() / 2.0f;
+Vector2f Engine::ToViewportPosition(const Vector2f& vec) {
+  return ToViewportScale(vec) - GetViewportSize() / 2.0f;
 }
 
 void Engine::SetImageSource(const std::string& asset_name,
@@ -532,11 +532,11 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
   if (replaying_)
     return;
 
-  event->SetVector(ToPosition(event->GetVector()) * Vector2f(1, -1));
+  event->SetVector(ToViewportPosition(event->GetVector()) * Vector2f(1, -1));
 
   switch (event->GetType()) {
     case InputEvent::kDragEnd:
-      if (((GetScreenSize() / 2) * 0.9f - event->GetVector()).Length() <=
+      if (((GetViewportSize() / 2) * 0.9f - event->GetVector()).Length() <=
           0.25f) {
         stats_visible_ = !stats_visible_;
         // TODO: Enqueue DragCancel so we can consume this event.

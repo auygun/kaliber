@@ -56,10 +56,10 @@ class Engine : public PlatformObserver {
   void Exit();
 
   // Convert size from pixels to viewport scale.
-  base::Vector2f ToScale(const base::Vector2f& vec);
+  base::Vector2f ToViewportScale(const base::Vector2f& vec);
 
   // Convert position form pixels to viewport coordinates.
-  base::Vector2f ToPosition(const base::Vector2f& vec);
+  base::Vector2f ToViewportPosition(const base::Vector2f& vec);
 
   void SetImageSource(const std::string& asset_name,
                       const std::string& file_name,
@@ -123,7 +123,7 @@ class Engine : public PlatformObserver {
   int GetScreenHeight() const;
 
   // Return screen size in viewport scale.
-  base::Vector2f GetScreenSize() const { return screen_size_; }
+  base::Vector2f GetViewportSize() const { return screen_size_; }
 
   const base::Matrix4f& GetProjectionMatrix() const { return projection_; }
 

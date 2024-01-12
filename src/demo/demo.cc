@@ -121,7 +121,7 @@ bool Demo::Initialize() {
     Engine::Get().SetEnableVibration(false);
   }
 
-  dimmer_.SetSize(Engine::Get().GetScreenSize());
+  dimmer_.SetSize(Engine::Get().GetViewportSize());
   dimmer_.SetZOrder(40);
   dimmer_.SetColor(kBgColor);
   dimmer_.SetVisible(true);
@@ -157,7 +157,7 @@ void Demo::Update(float delta_time) {
   while (std::unique_ptr<InputEvent> event = engine.GetNextInputEvent()) {
 #if 0
     if (event->GetType() == InputEvent::kDragEnd &&
-        ((engine.GetScreenSize() / 2) * 0.9f -
+        ((engine.GetViewportSize() / 2) * 0.9f -
          event->GetVector() * Vector2f(-1, 1))
                 .Length() <= 0.25f)
       Win();

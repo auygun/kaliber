@@ -28,7 +28,7 @@ ImageQuad& ImageQuad::Create(const std::string& asset_name,
 
   DCHECK((frame_width_ > 0 && frame_height_ > 0) || texture_->IsValid())
       << asset_name;
-  SetSize(Engine::Get().ToScale({GetFrameWidth(), GetFrameHeight()}) *
+  SetSize(Engine::Get().ToViewportScale({GetFrameWidth(), GetFrameHeight()}) *
           Engine::Get().GetImageScaleFactor());
   return *this;
 }

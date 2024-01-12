@@ -46,7 +46,7 @@ bool Player::PreInitialize() {
 bool Player::Initialize() {
   SetupWeapons();
 
-  Vector2f hb_pos = Engine::Get().GetScreenSize() / Vector2f(2, -2) +
+  Vector2f hb_pos = Engine::Get().GetViewportSize() / Vector2f(2, -2) +
                     Vector2f(0, weapon_[0].GetSize().y * 0.3f);
 
   for (int i = 0; i < 3; ++i) {
@@ -67,7 +67,7 @@ bool Player::Initialize() {
   nuke_symbol_.SetVisible(true);
 
   nuke_.SetZOrder(20);
-  nuke_.SetSize(Engine::Get().GetScreenSize());
+  nuke_.SetSize(Engine::Get().GetViewportSize());
   nuke_.SetColor(kNukeColor[0]);
 
   nuke_animator_.Attach(&nuke_);
@@ -168,7 +168,7 @@ void Player::Reset() {
 }
 
 Vector2f Player::GetWeaponPos(DamageType type) const {
-  return Engine::Get().GetScreenSize() /
+  return Engine::Get().GetViewportSize() /
              Vector2f(type == kDamageType_Green ? 3.5f : -3.5f, -2) +
          Vector2f(0, weapon_[type].GetSize().y * 0.95f);
 }
@@ -208,13 +208,13 @@ void Player::Fire(DamageType type, Vector2f dir) {
   Engine& engine = Engine::Get();
   Enemy& enemy = static_cast<Demo*>(engine.GetGame())->GetEnemy();
 
-  float max_beam_length = engine.GetScreenSize().y * 1.3f * 0.85f;
+  float max_beam_length = engine.GetViewportSize().y * 1.3f * 0.85f;
   constexpr float max_beam_duration = 0.259198f;
 
   if (enemy.HasTarget(type))
     dir = weapon_[type].GetPosition() - enemy.GetTargetPos(type);
   else
-    dir *= engine.GetScreenSize().y * 1.3f;
+    dir *= engine.GetViewportSize().y * 1.3f;
 
   float len = dir.Length();
   beam_[type].SetSize({len, beam_[type].GetSize().y});
