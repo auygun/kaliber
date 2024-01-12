@@ -104,14 +104,14 @@ bool Enemy::PreInitialize() {
   Engine::Get().SetShaderSource("chromatic_aberration",
                                 "demo/chromatic_aberration.glsl");
 
-  Engine::Get().AsyncLoadSound("boss_intro", "demo/boss_intro.mp3");
-  Engine::Get().AsyncLoadSound("boss_explosion", "demo/boss_explosion.mp3");
-  Engine::Get().AsyncLoadSound("explosion", "demo/explosion.mp3");
-  Engine::Get().AsyncLoadSound("stealth", "demo/stealth.mp3");
-  Engine::Get().AsyncLoadSound("shield", "demo/shield.mp3");
-  Engine::Get().AsyncLoadSound("hit", "demo/hit.mp3");
-  Engine::Get().AsyncLoadSound("powerup-spawn", "demo/powerup-spawn.mp3");
-  Engine::Get().AsyncLoadSound("powerup-pick", "demo/powerup-pick.mp3");
+  Engine::Get().SetAudioSource("boss_intro", "demo/boss_intro.mp3");
+  Engine::Get().SetAudioSource("boss_explosion", "demo/boss_explosion.mp3");
+  Engine::Get().SetAudioSource("explosion", "demo/explosion.mp3");
+  Engine::Get().SetAudioSource("stealth", "demo/stealth.mp3");
+  Engine::Get().SetAudioSource("shield", "demo/shield.mp3");
+  Engine::Get().SetAudioSource("hit", "demo/hit.mp3");
+  Engine::Get().SetAudioSource("powerup-spawn", "demo/powerup-spawn.mp3");
+  Engine::Get().SetAudioSource("powerup-pick", "demo/powerup-pick.mp3");
 
   return true;
 }

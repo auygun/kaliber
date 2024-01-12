@@ -75,7 +75,7 @@ class Engine : public PlatformObserver {
                        const std::string& file_name);
   std::shared_ptr<Shader> GetShader(const std::string& asset_name);
 
-  void AsyncLoadSound(const std::string& asset_name,
+  void SetAudioSource(const std::string& asset_name,
                       const std::string& file_name,
                       bool stream = false);
   std::shared_ptr<AudioBus> GetAudioBus(const std::string& asset_name);
@@ -146,6 +146,13 @@ class Engine : public PlatformObserver {
   int fps() const { return fps_; }
 
  private:
+  enum class State {
+    kUninitialized,
+    kPreInitializing,
+    kInitializing,
+    kInitialized
+  };
+
   // Class holding information about texture resources managed by engine.
   // Texture is created from the image returned by create_image callback.
   struct TextureResource {
@@ -188,6 +195,8 @@ class Engine : public PlatformObserver {
   std::unordered_map<std::string, TextureResource> textures_;
   std::unordered_map<std::string, ShaderResource> shaders_;
   std::unordered_map<std::string, std::shared_ptr<AudioBus>> audio_buses_;
+
+  State engine_state_ = State::kUninitialized;
 
   size_t async_work_count_ = 0;
 

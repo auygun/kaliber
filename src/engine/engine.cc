@@ -106,6 +106,7 @@ void Engine::Initialize() {
   system_font_ = std::make_unique<Font>();
   system_font_->Load("engine/RobotoMono-Regular.ttf");
 
+  engine_state_ = State::kPreInitializing;
   game_ = GameFactoryBase::CreateGame("");
   CHECK(game_) << "No game found to run.";
   CHECK(game_->PreInitialize()) << "Failed to pre-initialize the game.";
@@ -114,7 +115,9 @@ void Engine::Initialize() {
   CreateRenderResources();
   WaitForAsyncWork();
 
+  engine_state_ = State::kInitializing;
   CHECK(game_->Initialize()) << "Failed to initialize the game.";
+  engine_state_ = State::kInitialized;
 }
 
 void Engine::Update(float delta_time) {
@@ -242,6 +245,8 @@ void Engine::SetImageSource(const std::string& asset_name,
 }
 
 void Engine::RefreshImage(const std::string& asset_name) {
+  DCHECK(engine_state_ != State::kPreInitializing);
+
   auto it = textures_.find(asset_name);
   if (it == textures_.end()) {
     DLOG(0) << "Texture not found: " << asset_name;
@@ -257,6 +262,8 @@ void Engine::RefreshImage(const std::string& asset_name) {
 }
 
 std::shared_ptr<Texture> Engine::AcquireTexture(const std::string& asset_name) {
+  DCHECK(engine_state_ != State::kPreInitializing);
+
   auto it = textures_.find(asset_name);
   if (it == textures_.end()) {
     DLOG(0) << "Texture not found: " << asset_name;
@@ -289,6 +296,8 @@ void Engine::SetShaderSource(const std::string& asset_name,
 }
 
 std::shared_ptr<Shader> Engine::GetShader(const std::string& asset_name) {
+  DCHECK(engine_state_ != State::kPreInitializing);
+
   auto it = shaders_.find(asset_name);
   if (it == shaders_.end()) {
     DLOG(0) << "Shader not found: " << asset_name;
@@ -311,7 +320,7 @@ std::shared_ptr<Shader> Engine::GetShader(const std::string& asset_name) {
   return shader;
 }
 
-void Engine::AsyncLoadSound(const std::string& asset_name,
+void Engine::SetAudioSource(const std::string& asset_name,
                             const std::string& file_name,
                             bool stream) {
   if (audio_buses_.contains(asset_name)) {
@@ -322,13 +331,19 @@ void Engine::AsyncLoadSound(const std::string& asset_name,
   auto sound = std::make_shared<Sound>();
   audio_buses_[asset_name] = sound;
 
-  ++async_work_count_;
-  thread_pool_.PostTaskAndReply(
-      HERE, std::bind(&Sound::Load, sound, file_name, stream),
-      [&]() -> void { --async_work_count_; });
+  if (engine_state_ == State::kPreInitializing) {
+    ++async_work_count_;
+    thread_pool_.PostTaskAndReply(
+        HERE, std::bind(&Sound::Load, sound, file_name, stream),
+        [&]() -> void { --async_work_count_; });
+  } else {
+    sound->Load(file_name, stream);
+  }
 }
 
 std::shared_ptr<AudioBus> Engine::GetAudioBus(const std::string& asset_name) {
+  DCHECK(engine_state_ != State::kPreInitializing);
+
   auto it = audio_buses_.find(asset_name);
   if (it == audio_buses_.end()) {
     DLOG(0) << "AudioBus not found: " << asset_name;

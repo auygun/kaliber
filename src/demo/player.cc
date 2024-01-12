@@ -36,9 +36,9 @@ bool Player::PreInitialize() {
   Engine::Get().SetImageSource("nuke_symbol_tex", "demo/nuke_frames.png", true);
   Engine::Get().SetImageSource("health_bead", "demo/bead.png", true);
 
-  Engine::Get().AsyncLoadSound("laser", "demo/laser.mp3");
-  Engine::Get().AsyncLoadSound("nuke", "demo/nuke.mp3");
-  Engine::Get().AsyncLoadSound("no_nuke", "demo/no_nuke.mp3");
+  Engine::Get().SetAudioSource("laser", "demo/laser.mp3");
+  Engine::Get().SetAudioSource("nuke", "demo/nuke.mp3");
+  Engine::Get().SetAudioSource("no_nuke", "demo/no_nuke.mp3");
 
   return true;
 }
