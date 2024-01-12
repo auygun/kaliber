@@ -2,6 +2,7 @@
 #define ENGINE_IMAGE_QUAD_H
 
 #include <array>
+#include <memory>
 #include <string>
 
 #include "base/vecmath.h"
@@ -34,7 +35,7 @@ class ImageQuad final : public Animatable {
   void Draw(float frame_frac) final;
 
  private:
-  Texture* texture_ = nullptr;
+  std::shared_ptr<Texture> texture_;
 
   size_t current_frame_ = 0;
   std::array<int, 2> num_frames_ = {1, 1};  // horizontal, vertical

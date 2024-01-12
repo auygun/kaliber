@@ -34,10 +34,7 @@ ImageQuad& ImageQuad::Create(const std::string& asset_name,
 }
 
 void ImageQuad::Destroy() {
-  if (texture_) {
-    Engine::Get().ReleaseTexture(asset_name_);
-    texture_ = nullptr;
-  }
+  texture_.reset();
 }
 
 void ImageQuad::SetFrame(size_t frame) {
@@ -61,7 +58,7 @@ void ImageQuad::Draw(float frame_frac) {
   Vector2f tex_scale = {GetFrameWidth() / texture_->GetWidth(),
                         GetFrameHeight() / texture_->GetHeight()};
 
-  Shader* shader = GetCustomShader();
+  Shader* shader = GetCustomShader().get();
   if (!shader)
     shader = &Engine::Get().GetPassThroughShader();
 

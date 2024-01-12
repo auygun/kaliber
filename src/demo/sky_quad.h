@@ -1,6 +1,8 @@
 #ifndef DEMO_SKY_QUAD_H
 #define DEMO_SKY_QUAD_H
 
+#include <memory>
+
 #include "base/vecmath.h"
 #include "engine/animatable.h"
 #include "engine/animator.h"
@@ -38,7 +40,7 @@ class SkyQuad : public eng::Animatable {
   const base::Vector4f& nebula_color() { return nebula_color_; }
 
  private:
-  eng::Shader* shader_;
+  std::shared_ptr<eng::Shader> shader_;
 
   base::Vector2f sky_offset_ = {0, 0};
   base::Vector2f last_sky_offset_ = {0, 0};

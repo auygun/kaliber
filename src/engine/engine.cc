@@ -230,13 +230,15 @@ void Engine::SetImageSource(const std::string& asset_name,
 void Engine::SetImageSource(const std::string& asset_name,
                             CreateImageCB create_image,
                             bool persistent) {
-  if (textures_.contains(asset_name) && textures_[asset_name].use_count > 0) {
-    DLOG(0) << "Texture in use: " << asset_name;
+  if (textures_.contains(asset_name)) {
+    DLOG(0) << "Texture already exists: " << asset_name;
     return;
   }
 
-  textures_[asset_name] = {std::make_unique<Texture>(renderer_.get()),
-                           create_image, persistent, 0};
+  std::shared_ptr<Texture> texture;
+  if (persistent)
+    texture = std::make_shared<Texture>(renderer_.get());
+  textures_[asset_name] = {texture, texture, create_image};
 }
 
 void Engine::RefreshImage(const std::string& asset_name) {
@@ -246,40 +248,34 @@ void Engine::RefreshImage(const std::string& asset_name) {
     return;
   }
 
-  if (it->second.persistent || it->second.use_count > 0) {
+  std::shared_ptr<Texture> texture = it->second.texture.lock();
+  if (texture) {
     auto image = it->second.create_image();
     if (image)
-      it->second.texture->Update(std::move(image));
+      texture->Update(std::move(image));
   }
 }
 
-Texture* Engine::AcquireTexture(const std::string& asset_name) {
+std::shared_ptr<Texture> Engine::AcquireTexture(const std::string& asset_name) {
   auto it = textures_.find(asset_name);
   if (it == textures_.end()) {
     DLOG(0) << "Texture not found: " << asset_name;
     return nullptr;
   }
 
-  it->second.use_count++;
-  if (!it->second.texture->IsValid()) {
+  std::shared_ptr<Texture> texture = it->second.texture.lock();
+  if (!texture) {
+    DCHECK(!it->second.persistent_ptr);
+    texture = std::make_shared<Texture>(renderer_.get());
+    it->second.texture = texture;
+  }
+
+  if (!texture->IsValid()) {
     auto image = it->second.create_image();
     if (image)
-      it->second.texture->Update(std::move(image));
+      texture->Update(std::move(image));
   }
-  return it->second.texture.get();
-}
-
-void Engine::ReleaseTexture(const std::string& asset_name) {
-  auto it = textures_.find(asset_name);
-  if (it == textures_.end()) {
-    DLOG(0) << "Texture not found: " << asset_name;
-    return;
-  }
-
-  DCHECK(it->second.use_count > 0);
-  it->second.use_count--;
-  if (!it->second.persistent && it->second.use_count == 0)
-    it->second.texture->Destroy();
+  return texture;
 }
 
 void Engine::SetShaderSource(const std::string& asset_name,
@@ -289,24 +285,30 @@ void Engine::SetShaderSource(const std::string& asset_name,
     return;
   }
 
-  shaders_[asset_name] = {std::make_unique<Shader>(renderer_.get()), file_name};
+  shaders_[asset_name] = {{}, file_name};
 }
 
-Shader* Engine::GetShader(const std::string& asset_name) {
+std::shared_ptr<Shader> Engine::GetShader(const std::string& asset_name) {
   auto it = shaders_.find(asset_name);
   if (it == shaders_.end()) {
     DLOG(0) << "Shader not found: " << asset_name;
     return nullptr;
   }
 
-  if (!it->second.shader->IsValid()) {
-    auto source = std::make_unique<ShaderSource>();
-    if (source->Load(it->second.file_name))
-      it->second.shader->Create(std::move(source), quad_.vertex_description(),
-                                quad_.primitive(), false);
+  std::shared_ptr<Shader> shader = it->second.shader.lock();
+  if (!shader) {
+    shader = std::make_shared<Shader>(renderer_.get());
+    it->second.shader = shader;
   }
 
-  return it->second.shader.get();
+  if (!shader->IsValid()) {
+    auto source = std::make_unique<ShaderSource>();
+    if (source->Load(it->second.file_name))
+      shader->Create(std::move(source), quad_.vertex_description(),
+                     quad_.primitive(), false);
+  }
+
+  return shader;
 }
 
 void Engine::AsyncLoadSound(const std::string& asset_name,
@@ -635,13 +637,13 @@ void Engine::CreateRenderResources() {
   imgui_backend_.CreateRenderResources(renderer_.get());
 
   for (auto& t : textures_) {
-    t.second.texture->SetRenderer(renderer_.get());
-    if (t.second.persistent || t.second.use_count > 0) {
+    std::shared_ptr<Texture> texture = t.second.texture.lock();
+    if (texture) {
+      texture->SetRenderer(renderer_.get());
       ++async_work_count_;
       thread_pool_.PostTaskAndReplyWithResult<std::unique_ptr<Image>>(
           HERE, t.second.create_image,
-          [&,
-           ptr = t.second.texture.get()](std::unique_ptr<Image> image) -> void {
+          [&, ptr = texture](std::unique_ptr<Image> image) -> void {
             --async_work_count_;
             if (image)
               ptr->Update(std::move(image));
@@ -650,23 +652,25 @@ void Engine::CreateRenderResources() {
   }
 
   for (auto& s : shaders_) {
-    s.second.shader->SetRenderer(renderer_.get());
-    ++async_work_count_;
-    thread_pool_.PostTaskAndReplyWithResult<std::unique_ptr<ShaderSource>>(
-        HERE,
-        [file_name = s.second.file_name]() -> std::unique_ptr<ShaderSource> {
-          auto source = std::make_unique<ShaderSource>();
-          if (!source->Load(file_name))
-            return nullptr;
-          return source;
-        },
-        [&, ptr = s.second.shader.get()](
-            std::unique_ptr<ShaderSource> source) -> void {
-          --async_work_count_;
-          if (source)
-            ptr->Create(std::move(source), quad_.vertex_description(),
-                        quad_.primitive(), false);
-        });
+    std::shared_ptr<Shader> shader = s.second.shader.lock();
+    if (shader) {
+      shader->SetRenderer(renderer_.get());
+      ++async_work_count_;
+      thread_pool_.PostTaskAndReplyWithResult<std::unique_ptr<ShaderSource>>(
+          HERE,
+          [file_name = s.second.file_name]() -> std::unique_ptr<ShaderSource> {
+            auto source = std::make_unique<ShaderSource>();
+            if (!source->Load(file_name))
+              return nullptr;
+            return source;
+          },
+          [&, ptr = shader](std::unique_ptr<ShaderSource> source) -> void {
+            --async_work_count_;
+            if (source)
+              ptr->Create(std::move(source), quad_.vertex_description(),
+                          quad_.primitive(), false);
+          });
+    }
   }
 }
 

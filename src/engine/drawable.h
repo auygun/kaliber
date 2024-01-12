@@ -1,6 +1,7 @@
 #ifndef ENGINE_DRAWABLE_H
 #define ENGINE_DRAWABLE_H
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <variant>
@@ -35,7 +36,7 @@ class Drawable {
   }
 
  protected:
-  Shader* GetCustomShader() { return custom_shader_; }
+  std::shared_ptr<Shader> GetCustomShader() { return custom_shader_; }
   void DoSetCustomUniforms();
 
  private:
@@ -49,7 +50,7 @@ class Drawable {
   bool visible_ = false;
   int z_order_ = 0;
 
-  Shader* custom_shader_ = nullptr;
+  std::shared_ptr<Shader> custom_shader_;
   std::unordered_map<std::string, UniformValue> custom_uniforms_;
 };
 

@@ -69,13 +69,11 @@ class Engine : public PlatformObserver {
                       bool persistent = false);
 
   void RefreshImage(const std::string& asset_name);
-
-  Texture* AcquireTexture(const std::string& asset_name);
-  void ReleaseTexture(const std::string& asset_name);
+  std::shared_ptr<Texture> AcquireTexture(const std::string& asset_name);
 
   void SetShaderSource(const std::string& asset_name,
                        const std::string& file_name);
-  Shader* GetShader(const std::string& asset_name);
+  std::shared_ptr<Shader> GetShader(const std::string& asset_name);
 
   void AsyncLoadSound(const std::string& asset_name,
                       const std::string& file_name,
@@ -151,15 +149,14 @@ class Engine : public PlatformObserver {
   // Class holding information about texture resources managed by engine.
   // Texture is created from the image returned by create_image callback.
   struct TextureResource {
-    std::unique_ptr<Texture> texture;
+    std::shared_ptr<Texture> persistent_ptr;
+    std::weak_ptr<Texture> texture;
     CreateImageCB create_image;
-    bool persistent = false;
-    size_t use_count = 0;
   };
 
   // Class holding information about shader resources managed by engine.
   struct ShaderResource {
-    std::unique_ptr<Shader> shader;
+    std::weak_ptr<Shader> shader;
     std::string file_name;
   };
 

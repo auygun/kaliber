@@ -12,7 +12,7 @@ namespace eng {
 void SolidQuad::Draw(float frame_frac) {
   DCHECK(IsVisible());
 
-  Shader* shader = GetCustomShader();
+  Shader* shader = GetCustomShader().get();
   if (!shader)
     shader = &Engine::Get().GetSolidShader();
 
