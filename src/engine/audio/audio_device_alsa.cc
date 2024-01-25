@@ -81,7 +81,7 @@ bool AudioDeviceAlsa::Initialize() {
       break;
     }
 
-    // Set period time to 4 ms. The latency will be 12 ms for 3 perods.
+    // Set period time to 4 ms. The latency will be 12 ms for 3 periods.
     unsigned period_time = 4000;
     if ((err = snd_pcm_hw_params_set_period_time_near(device_, hw_params,
                                                       &period_time, 0)) < 0) {
@@ -179,11 +179,17 @@ void AudioDeviceAlsa::TerminateAudioThread() {
 void AudioDeviceAlsa::AudioThreadMain() {
   DCHECK(delegate_);
 
+  int err;
+  bool running = true;
   size_t num_frames = period_size_ / (num_channels_ * sizeof(float));
   auto buffer = std::make_unique<float[]>(num_frames * 2);
 
   for (;;) {
     while (suspend_audio_thread_.load(std::memory_order_relaxed)) {
+      if (running) {
+        running = false;
+        snd_pcm_drain(device_);
+      }
       if (terminate_audio_thread_.load(std::memory_order_relaxed))
         return;
       // Avoid busy-looping.
@@ -192,9 +198,10 @@ void AudioDeviceAlsa::AudioThreadMain() {
 
     delegate_->RenderAudio(buffer.get(), num_frames);
 
-    while (snd_pcm_writei(device_, buffer.get(), num_frames) < 0) {
+    while ((err = snd_pcm_writei(device_, buffer.get(), num_frames)) < 0) {
+      DLOG(0) << "snd_pcm_writei: " << snd_strerror(err);
+      running = true;
       snd_pcm_prepare(device_);
-      DLOG(0) << "Alsa buffer underrun!";
     }
   }
 }
