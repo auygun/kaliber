@@ -5,6 +5,7 @@
 #include <alsa/asoundlib.h>
 
 #include "base/log.h"
+#include "base/mem.h"
 #include "base/timer.h"
 
 using namespace base;
@@ -23,6 +24,10 @@ AudioDeviceAlsa::~AudioDeviceAlsa() {
 }
 
 bool AudioDeviceAlsa::Initialize() {
+  DeviceNames device_names = GetAlsaAudioDevices(kStreamPlayback);
+  for (auto& dn : device_names)
+    DLOG(0) << dn.device_name << " : " << dn.unique_id;
+
   LOG(0) << "Initializing audio.";
 
   int err;
@@ -32,6 +37,11 @@ bool AudioDeviceAlsa::Initialize() {
 
   // TODO: "default" is usualy PulseAudio. Select a device with "plughw" for
   // direct hardware device with software format conversion.
+
+  // "default" is a virtual device mapped to real device exclusively opened by
+  // PulseAudio, so we must open the device via the "default" moniker. If
+  // PulseAudio is not available, a device id must be picked from the device
+  // list above.
   if ((err = snd_pcm_open(&device_, "default", SND_PCM_STREAM_PLAYBACK, 0)) <
       0) {
     LOG(0) << "Cannot open audio device. Error: " << snd_strerror(err);
@@ -199,6 +209,79 @@ void AudioDeviceAlsa::AudioThreadMain() {
     while ((err = snd_pcm_writei(device_, buffer.get(), num_frames)) < 0) {
       DLOG(0) << "snd_pcm_writei: " << snd_strerror(err);
       snd_pcm_prepare(device_);
+    }
+  }
+}
+
+AudioDeviceAlsa::DeviceNames AudioDeviceAlsa::GetAlsaAudioDevices(
+    StreamType type) {
+  // Constants specified by the ALSA API for device hints.
+  static const char kPcmInterfaceName[] = "pcm";
+  int card = -1;
+  DeviceNames device_names;
+
+  // Loop through the sound cards to get ALSA device hints.
+  while (!snd_card_next(&card) && card >= 0) {
+    void** hints = NULL;
+    int error = snd_device_name_hint(card, kPcmInterfaceName, &hints);
+    if (!error) {
+      GetAlsaDevicesInfo(type, hints, &device_names);
+
+      // Destroy the hints now that we're done with it.
+      snd_device_name_free_hint(hints);
+    } else {
+      DLOG(0) << "GetAlsaAudioDevices: unable to get device hints: "
+              << snd_strerror(error);
+    }
+  }
+
+  return device_names;
+}
+
+void AudioDeviceAlsa::GetAlsaDevicesInfo(AudioDeviceAlsa::StreamType type,
+                                         void** hints,
+                                         DeviceNames* device_names) {
+  static const char kIoHintName[] = "IOID";
+  static const char kNameHintName[] = "NAME";
+  static const char kDescriptionHintName[] = "DESC";
+
+  const char* unwanted_device_type =
+      (type == kStreamPlayback ? "Input" : "Output");
+
+  for (void** hint_iter = hints; *hint_iter != NULL; hint_iter++) {
+    // Only examine devices of the right type.  Valid values are
+    // "Input", "Output", and NULL which means both input and output.
+    MallocAllocatedMemPtr<char> io(
+        snd_device_name_get_hint(*hint_iter, kIoHintName));
+    if (io != NULL && strcmp(unwanted_device_type, io.get()) == 0)
+      continue;
+
+    // Get the unique device name for the device.
+    MallocAllocatedMemPtr<char> unique_device_name(
+        snd_device_name_get_hint(*hint_iter, kNameHintName));
+
+    if (unique_device_name) {
+      // Get the description for the device.
+      MallocAllocatedMemPtr<char> desc(
+          snd_device_name_get_hint(*hint_iter, kDescriptionHintName));
+
+      DeviceName name;
+      name.unique_id = unique_device_name.get();
+      if (desc) {
+        // Use the more user friendly description as name.
+        // Replace '\n' with '-'.
+        char* pret = strchr(desc.get(), '\n');
+        if (pret)
+          *pret = '-';
+        name.device_name = desc.get();
+      } else {
+        // Virtual devices don't necessarily have descriptions.
+        // Use their names instead.
+        name.device_name = unique_device_name.get();
+      }
+
+      // Store the device information.
+      device_names->push_back(name);
     }
   }
 }

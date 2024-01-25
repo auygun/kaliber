@@ -1,6 +1,9 @@
 #ifndef ENGINE_AUDIO_AUDIO_DEVICE_H
 #define ENGINE_AUDIO_AUDIO_DEVICE_H
 
+#include <list>
+#include <string>
+
 namespace eng {
 
 // Models an audio device sending mixed audio to the audio driver. Audio data
@@ -16,6 +19,13 @@ class AudioDevice {
 
     virtual void RenderAudio(float* output_buffer, size_t num_frames) = 0;
   };
+
+  struct DeviceName {
+    std::string device_name;  // Friendly name of the device.
+    std::string unique_id;    // Unique identifier for the device.
+  };
+
+  typedef std::list<DeviceName> DeviceNames;
 
   AudioDevice() = default;
   virtual ~AudioDevice() = default;

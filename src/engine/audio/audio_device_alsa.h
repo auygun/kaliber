@@ -23,6 +23,11 @@ class AudioDeviceAlsa final : public AudioDevice {
   size_t GetHardwareSampleRate() final;
 
  private:
+  enum StreamType {
+    kStreamPlayback = 0,
+    kStreamCapture,
+  };
+
   // Handle for the PCM device.
   snd_pcm_t* device_;
 
@@ -40,6 +45,15 @@ class AudioDeviceAlsa final : public AudioDevice {
   void TerminateAudioThread();
 
   void AudioThreadMain();
+
+  // Gets a list of available ALSA devices.
+  DeviceNames GetAlsaAudioDevices(StreamType type);
+
+  // Gets the ALSA devices' names and ids that support streams of the
+  // given type.
+  void GetAlsaDevicesInfo(StreamType type,
+                          void** hint,
+                          DeviceNames* device_names);
 };
 
 }  // namespace eng

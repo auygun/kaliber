@@ -31,10 +31,20 @@ struct ScopedAlignedFree {
   inline void operator()(void* x) const { AlignedFree(x); }
 };
 
+// To be used to store malloc-allocated pointers in std::unique_ptr
+struct FreeDeleter {
+  inline void operator()(void* ptr) const {
+    free(ptr);
+  }
+};
+
 }  // namespace internal
 
 template <typename T>
 using AlignedMemPtr = std::unique_ptr<T, internal::ScopedAlignedFree>;
+
+template <typename T>
+using MallocAllocatedMemPtr = std::unique_ptr<T, internal::FreeDeleter>;
 
 void* AlignedAlloc(size_t size, size_t alignment);
 

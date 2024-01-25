@@ -28,8 +28,7 @@ AudioMixer::AudioMixer()
 #elif defined(_WIN32)
       audio_device_{std::make_unique<AudioDeviceWASAPI>(this)} {
 #endif
-  bool res = audio_device_->Initialize();
-  CHECK(res) << "Failed to initialize audio device.";
+  audio_device_->Initialize();
 }
 
 AudioMixer::~AudioMixer() {
