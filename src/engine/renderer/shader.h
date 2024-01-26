@@ -19,6 +19,9 @@ class Shader : public RenderResource {
   explicit Shader(Renderer* renderer);
   ~Shader();
 
+  Shader(Shader&& other);
+  Shader& operator=(Shader&& other);
+
   void Create(std::unique_ptr<ShaderSource> source,
               const VertexDescription& vd,
               Primitive primitive,

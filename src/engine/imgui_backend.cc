@@ -59,8 +59,7 @@ void ImguiBackend::CreateRenderResources(Renderer* renderer) {
   shader_.SetRenderer(renderer);
   font_atlas_.SetRenderer(renderer);
   for (auto& g : geometries_)
-    g.SetRenderer(nullptr);
-  geometries_.clear();
+    g.SetRenderer(renderer);
 
   // Avoid flickering by using the geometries form the last frame if available.
   if (ImGui::GetCurrentContext() && ImGui::GetDrawData())
@@ -122,10 +121,10 @@ void ImguiBackend::Render() {
   ImGui::Render();
   // Create a geometry for each draw list and upload the vertex data.
   ImDrawData* draw_data = ImGui::GetDrawData();
-  if ((int)geometries_.size() < draw_data->CmdListsCount)
-    geometries_.resize(draw_data->CmdListsCount, Geometry(renderer_));
   for (int n = 0; n < draw_data->CmdListsCount; n++) {
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
+    if ((int)geometries_.size() <= n)
+      geometries_.emplace_back(renderer_);
     if (!geometries_[n].IsValid())
       geometries_[n].Create(kPrimitive_Triangles, vertex_description_,
                             kDataType_UShort);

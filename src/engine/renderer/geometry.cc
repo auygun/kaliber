@@ -13,6 +13,16 @@ Geometry::~Geometry() {
   Destroy();
 }
 
+Geometry::Geometry(Geometry&& other) {
+  Move(other);
+}
+
+Geometry& Geometry::operator=(Geometry&& other) {
+  Destroy();
+  Move(other);
+  return *this;
+}
+
 void Geometry::Create(std::unique_ptr<Mesh> mesh) {
   Destroy();
   vertex_description_ = mesh->vertex_description();

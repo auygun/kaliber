@@ -18,6 +18,9 @@ class Geometry : public RenderResource {
   explicit Geometry(Renderer* renderer);
   ~Geometry();
 
+  Geometry(Geometry&& other);
+  Geometry& operator=(Geometry&& other);
+
   void Create(std::unique_ptr<Mesh> mesh);
   void Create(Primitive primitive,
               VertexDescription vertex_description,

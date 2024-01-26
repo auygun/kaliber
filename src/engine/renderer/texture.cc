@@ -14,6 +14,16 @@ Texture::~Texture() {
   Destroy();
 }
 
+Texture::Texture(Texture&& other) {
+  Move(other);
+}
+
+Texture& Texture::operator=(Texture&& other) {
+  Destroy();
+  Move(other);
+  return *this;
+}
+
 void Texture::Update(std::unique_ptr<Image> image) {
   if (!IsValid())
     resource_id_ = renderer_->CreateTexture();

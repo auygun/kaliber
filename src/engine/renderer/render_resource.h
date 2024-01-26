@@ -3,13 +3,16 @@
 
 #include <cstdint>
 
+#include "base/log.h"
+
 namespace eng {
 
 class Renderer;
 
 class RenderResource {
  public:
-  RenderResource(Renderer* renderer) : renderer_(renderer){};
+  RenderResource(const RenderResource&) = delete;
+  RenderResource& operator=(const RenderResource&) = delete;
 
   bool IsValid() const { return resource_id_ != 0; }
 
@@ -21,10 +24,18 @@ class RenderResource {
   }
 
  protected:
-  uint64_t resource_id_ = 0;
-  Renderer* renderer_ = nullptr;
+  uint64_t resource_id_;
+  Renderer* renderer_;
 
-  ~RenderResource() = default;
+  RenderResource() = default;
+  RenderResource(Renderer* renderer) : resource_id_(0), renderer_(renderer){};
+  ~RenderResource() { DCHECK(!IsValid()); }
+
+  void Move(RenderResource& other) {
+    resource_id_ = other.resource_id_;
+    renderer_ = other.renderer_;
+    other.SetRenderer(nullptr);
+  }
 };
 
 }  // namespace eng

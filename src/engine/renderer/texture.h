@@ -18,6 +18,9 @@ class Texture : public RenderResource {
   explicit Texture(Renderer* renderer);
   ~Texture();
 
+  Texture(Texture&& other);
+  Texture& operator=(Texture&& other);
+
   void Update(std::unique_ptr<Image> image);
   void Update(int width,
               int height,

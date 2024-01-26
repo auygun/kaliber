@@ -15,6 +15,16 @@ Shader::~Shader() {
   Destroy();
 }
 
+Shader::Shader(Shader&& other) {
+  Move(other);
+}
+
+Shader& Shader::operator=(Shader&& other) {
+  Destroy();
+  Move(other);
+  return *this;
+}
+
 void Shader::Create(std::unique_ptr<ShaderSource> source,
                     const VertexDescription& vd,
                     Primitive primitive,
