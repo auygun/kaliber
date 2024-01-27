@@ -97,8 +97,16 @@ bool AudioDeviceWASAPI::Initialize() {
         AUDCLNT_SHAREMODE_SHARED,
         AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST, 0, 0,
         format, NULL);
-    if (closest_match)
+    if (SUCCEEDED(hr)) {
+      LOG(0) << "WASAPI Audio:";
+      LOG(0) << "  channel count: " << format->nChannels;
+      LOG(0) << "  sample rate:   " << format->nSamplesPerSec;
+      LOG(0) << "  bits:          " << format->wBitsPerSample;
+    }
+    if (closest_match) {
       CoTaskMemFree(closest_match);
+      format = nullptr;
+    }
     if (FAILED(hr)) {
       LOG(0) << "Unable to initialize audio client: " << hr;
       break;
