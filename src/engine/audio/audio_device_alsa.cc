@@ -180,27 +180,24 @@ void AudioDeviceAlsa::AudioThreadMain() {
   DCHECK(delegate_);
 
   int err;
-  bool running = true;
   size_t num_frames = period_size_ / (num_channels_ * sizeof(float));
   auto buffer = std::make_unique<float[]>(num_frames * 2);
 
   for (;;) {
-    while (suspend_audio_thread_.load(std::memory_order_relaxed)) {
-      if (running) {
-        running = false;
-        snd_pcm_drain(device_);
+    if (suspend_audio_thread_.load(std::memory_order_relaxed)) {
+      snd_pcm_drain(device_);
+      while (suspend_audio_thread_.load(std::memory_order_relaxed)) {
+        if (terminate_audio_thread_.load(std::memory_order_relaxed))
+          return;
+        Sleep(1);  // Avoid busy-looping.
       }
-      if (terminate_audio_thread_.load(std::memory_order_relaxed))
-        return;
-      // Avoid busy-looping.
-      Sleep(1);
+      snd_pcm_prepare(device_);
     }
 
     delegate_->RenderAudio(buffer.get(), num_frames);
 
     while ((err = snd_pcm_writei(device_, buffer.get(), num_frames)) < 0) {
       DLOG(0) << "snd_pcm_writei: " << snd_strerror(err);
-      running = true;
       snd_pcm_prepare(device_);
     }
   }
