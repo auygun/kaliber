@@ -48,8 +48,6 @@ bool Demo::PreInitialize() {
   if (!font_.Load("demo/PixelCaps!.ttf"))
     return false;
 
-  Engine::Get().SetShaderSource("sky_without_nebula",
-                                "demo/sky_without_nebula.glsl");
   Engine::Get().SetShaderSource("sky", "demo/sky.glsl");
 
   Engine::Get().SetAudioSource("music", "demo/Game_2_Main.mp3", true);
@@ -76,7 +74,7 @@ bool Demo::PreInitialize() {
 bool Demo::Initialize() {
   saved_data_.Load(kSaveFileName);
 
-  if (!sky_.Create(false)) {
+  if (!sky_.Create()) {
     LOG(0) << "Could not create the sky.";
     return false;
   }
@@ -139,19 +137,6 @@ bool Demo::Initialize() {
 void Demo::Update(float delta_time) {
   Engine& engine = Engine::Get();
 
-  if (do_benchmark_) {
-    benchmark_time_ += delta_time;
-    if (benchmark_time_ > 3) {
-      avarage_fps_ += Engine::Get().fps();
-      ++num_benchmark_samples_;
-    }
-    if (benchmark_time_ > 5) {
-      avarage_fps_ /= num_benchmark_samples_;
-      do_benchmark_ = false;
-      BenchmarkResult(avarage_fps_);
-    }
-  }
-
   stage_time_ += delta_time;
 
   while (std::unique_ptr<InputEvent> event = engine.GetNextInputEvent()) {
@@ -175,15 +160,6 @@ void Demo::Update(float delta_time) {
     UpdateMenuState(delta_time);
   else if (state_ == kGame || state_ == kGameOver)
     UpdateGameState(delta_time);
-}
-
-void Demo::ContextLost() {
-  if (do_benchmark_) {
-    benchmark_time_ = 0;
-    num_benchmark_samples_ = 0;
-    avarage_fps_ = 0;
-  }
-  menu_.SetRendererType();
 }
 
 void Demo::LostFocus() {}
@@ -302,6 +278,8 @@ void Demo::EnterGameOverState() {
 }
 
 void Demo::UpdateMenuState(float delta_time) {
+  menu_.UpdateRendererType();
+
   switch (menu_.selected_option()) {
     case Menu::kOption_Invalid:
       break;
@@ -530,10 +508,4 @@ void Demo::SetDelayedWork(float seconds, base::Closure cb) {
   DCHECK(delayed_work_cb_ == nullptr);
   delayed_work_cb_ = std::move(cb);
   delayed_work_timer_ = seconds;
-}
-
-void Demo::BenchmarkResult(int avarage_fps) {
-  LOG(0) << __func__ << " avarage_fps: " << avarage_fps;
-  if (avarage_fps < 30)
-    sky_.Create(true);
 }

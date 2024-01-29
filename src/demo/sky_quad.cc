@@ -18,11 +18,9 @@ SkyQuad::SkyQuad()
 
 SkyQuad::~SkyQuad() = default;
 
-bool SkyQuad::Create(bool without_nebula) {
-  without_nebula_ = without_nebula;
+bool SkyQuad::Create() {
   scale_ = Engine::Get().GetViewportSize();
-  shader_ =
-      Engine::Get().GetShader(without_nebula ? "sky_without_nebula" : "sky");
+  shader_ = Engine::Get().GetShader("sky");
 
   color_animator_.Attach(this);
 
@@ -43,9 +41,8 @@ void SkyQuad::Draw(float frame_frac) {
   shader_->SetUniform("scale", scale_);
   shader_->SetUniform("projection", Engine::Get().GetProjectionMatrix());
   shader_->SetUniform("sky_offset", sky_offset);
-  if (!without_nebula_)
-    shader_->SetUniform("nebula_color",
-                        {nebula_color_.x, nebula_color_.y, nebula_color_.z});
+  shader_->SetUniform("nebula_color",
+                      {nebula_color_.x, nebula_color_.y, nebula_color_.z});
   shader_->UploadUniforms();
 
   Engine::Get().GetQuad().Draw();

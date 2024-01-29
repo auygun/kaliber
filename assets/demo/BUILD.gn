@@ -30,8 +30,6 @@ copy("demo") {
     "powerup-spawn.mp3",
     "renderer_logo.png",
     "shield.mp3",
-    "sky_without_nebula.glsl_fragment",
-    "sky_without_nebula.glsl_vertex",
     "sky.glsl_fragment",
     "sky.glsl_vertex",
     "stealth.mp3",

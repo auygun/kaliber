@@ -27,7 +27,6 @@ class Demo final : public eng::Game {
   bool PreInitialize() final;
   bool Initialize() final;
   void Update(float delta_time) final;
-  void ContextLost() final;
   void LostFocus() final;
   void GainedFocus(bool from_interstitial_ad) final;
 
@@ -104,11 +103,6 @@ class Demo final : public eng::Game {
 
   eng::PersistentData saved_data_;
 
-  bool do_benchmark_ = true;
-  float benchmark_time_ = 0;
-  int num_benchmark_samples_ = 0;
-  int avarage_fps_ = 0;
-
   void UpdateMenuState(float delta_time);
   void UpdateGameState(float delta_time);
 
@@ -122,8 +116,6 @@ class Demo final : public eng::Game {
   void Dimmer(bool enable);
 
   void SetDelayedWork(float seconds, base::Closure cb);
-
-  void BenchmarkResult(int avarage_fps);
 };
 
 #endif  // DEMO_DEMO_H

@@ -244,18 +244,18 @@ bool Menu::Initialize() {
   toggle_vibration_.image().Translate(
       {toggle_music_.image().GetSize().x / 2, 0});
 
-  renderer_type_.Create(
+  toggle_renderer_type_.Create(
       "renderer_logo", {2, 1}, 0, 1,
       [&] {
-        Engine::Get().CreateRenderer(renderer_type_.enabled()
+        Engine::Get().CreateRenderer(toggle_renderer_type_.enabled()
                                          ? RendererType::kVulkan
                                          : RendererType::kOpenGL);
       },
       true, Engine::Get().GetRendererType() == RendererType::kVulkan,
       kColorFadeOut, {Vector4f{1, 1, 1, 1}, Vector4f{1, 1, 1, 1}});
-  renderer_type_.image().PlaceToBottomOf(toggle_music_.image());
-  renderer_type_.image().Translate(toggle_music_.image().GetPosition() *
-                                   Vector2f(0, 1.1f));
+  toggle_renderer_type_.image().PlaceToBottomOf(toggle_music_.image());
+  toggle_renderer_type_.image().Translate(toggle_music_.image().GetPosition() *
+                                          Vector2f(0, 1.1f));
 
   high_score_value_ = game->GetHighScore();
 
@@ -306,7 +306,7 @@ void Menu::OnInputEvent(std::unique_ptr<InputEvent> event) {
   if (toggle_audio_.OnInputEvent(event.get()) ||
       toggle_music_.OnInputEvent(event.get()) ||
       toggle_vibration_.OnInputEvent(event.get()) ||
-      renderer_type_.OnInputEvent(event.get()) ||
+      toggle_renderer_type_.OnInputEvent(event.get()) ||
       (wave_up_.image().IsVisible() && wave_up_.OnInputEvent(event.get())))
     return;
 
@@ -370,8 +370,8 @@ void Menu::SetOptionEnabled(Option o, bool enable) {
   }
 }
 
-void Menu::SetRendererType() {
-  renderer_type_.SetEnabled(
+void Menu::UpdateRendererType() {
+  toggle_renderer_type_.SetEnabled(
       (Engine::Get().GetRendererType() == RendererType::kVulkan));
 }
 
@@ -426,7 +426,7 @@ void Menu::Show() {
   toggle_audio_.Show();
   toggle_music_.Show();
   toggle_vibration_.Show();
-  renderer_type_.Show();
+  toggle_renderer_type_.Show();
 
   Demo* game = static_cast<Demo*>(Engine::Get().GetGame());
 
@@ -487,7 +487,7 @@ void Menu::Hide(Closure cb) {
   toggle_audio_.Hide();
   toggle_music_.Hide();
   toggle_vibration_.Hide();
-  renderer_type_.Hide();
+  toggle_renderer_type_.Hide();
 
   if (starting_wave_.image().IsVisible()) {
     starting_wave_.Hide();
@@ -612,7 +612,7 @@ void Menu::Button::Hide() {
 }
 
 void Menu::Button::SetEnabled(bool enable) {
-  if (switch_control_) {
+  if (switch_control_ && enabled_ != enable) {
     enabled_ = enable;
     image_.SetFrame(enabled_ ? frame1_ : frame2_);
     image_.SetColor(enabled_ ? switch_color_[0] : switch_color_[1]);

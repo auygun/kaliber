@@ -36,7 +36,8 @@ class Menu {
   void OnInputEvent(std::unique_ptr<eng::InputEvent> event);
 
   void SetOptionEnabled(Option o, bool enable);
-  void SetRendererType();
+
+  void UpdateRendererType();
 
   void Show();
   void Hide(base::Closure cb = nullptr);
@@ -133,7 +134,7 @@ class Menu {
   Button toggle_audio_;
   Button toggle_music_;
   Button toggle_vibration_;
-  Button renderer_type_;
+  Button toggle_renderer_type_;
 
   size_t high_score_value_ = 0;
 
