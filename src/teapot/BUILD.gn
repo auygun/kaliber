@@ -1,0 +1,16 @@
+import("//build/rules.gni")
+
+game("teapot") {
+  sources = [
+    "camera.cc",
+    "camera.h",
+    "scene.cc",
+    "scene.h",
+    "teapot.cc",
+  ]
+  deps = [
+    "//assets/teapot",
+    "//src/base",
+    "//src/engine",
+  ]
+}

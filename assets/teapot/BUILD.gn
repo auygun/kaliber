@@ -1,0 +1,9 @@
+copy("teapot") {
+  sources = [
+    "pbr.glsl_fragment",
+    "pbr.glsl_vertex",
+    "teapot.mesh",
+  ]
+
+  outputs = [ "$root_out_dir/assets/teapot/{{source_file_part}}" ]
+}

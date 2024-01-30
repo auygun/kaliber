@@ -8,7 +8,7 @@ based on this engine. Full game code and assets are included in this repository.
 
 ## Pre-requisites:
 
-GN build system is required for all platforms:\
+GN build system is required for all platforms:  
 https://gn.googlesource.com/gn/
 
 ## Building from the command-line:
@@ -21,21 +21,18 @@ gn gen out/release
 gn gen --args='is_debug=true' out/debug
 ```
 #### Building and running:
-Build all games in release mode and run "hello_world".
+Build all games in release and debug modes and run "hello_world".
 ```text
 ninja -C out/release
+ninja -C out/debug
 ./out/release/hello_world
 ```
-Build "demo" in debug mode and run.
-```text
-ninja -C out/debug demo
-./out/debug/demo
-```
+You can also build a single target by passing the target name to ninja i.e. ```ninja -C out/debug demo```
 
 ### Android:
 Build "hello_world" in debug mode for all ABIs and install. GN will be run by
 Gradle so no setup is required. Location of gn and ninja executables can be
-specified via "gn" and "ninja" properties (-Pgn="path/gn").
+specified via "gn" and "ninja" properties (*-Pgn="path/gn" -Pninja="path/ninja"*).
 ```text
 cd build/android
 ./gradlew :app:installHelloWorldAllArchsDebug
@@ -51,6 +48,13 @@ Arm7, Arm8, X86, X86_64, AllArchs, ArmOnly, X86Only.
 gn.exe gen --args="is_debug=true" --ide=vs2022 out\vs
 devenv out\vs\all.sln
 ```
+
+### Build targets:
+***demo***: 2D demo game.  
+***hello_word***: Hello world example.  
+***teapot***: 3D rendering demo with PBR material shader.
+|![image info](./assets/ref2.jpg)|![image info](./assets/ref3.jpg)|![image info](./assets/ref1.jpg)|
+|-|-|-|
 
 ## Hello World example:
 

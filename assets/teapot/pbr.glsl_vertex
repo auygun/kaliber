@@ -1,0 +1,34 @@
+IN(0) vec3 in_position;
+IN(1) vec3 in_normal;
+IN(2) vec2 in_tex_coord;
+
+UNIFORM_BEGIN
+UNIFORM_V(mat4 model)
+UNIFORM_V(mat4 view_projection)
+UNIFORM_F(vec3 light_pos1)
+UNIFORM_F(vec3 light_pos2)
+UNIFORM_F(vec3 light_pos3)
+UNIFORM_F(vec3 light_pos4)
+UNIFORM_F(float light_power1)
+UNIFORM_F(float light_power2)
+UNIFORM_F(float light_power3)
+UNIFORM_F(float light_power4)
+UNIFORM_F(vec3 cam_pos)
+UNIFORM_F(vec3 albedo)
+UNIFORM_F(float metallic)
+UNIFORM_F(float roughness)
+UNIFORM_F(float ao)
+UNIFORM_END
+
+OUT(0) vec3 world_pos;
+OUT(1) vec3 normal;
+OUT(2) vec2 tex_coord;
+
+void main() {
+  world_pos = vec3(PARAM(model) * vec4(in_position, 1.0));
+  // Model matrix doesn't contain non-uniform scale.
+  normal = mat3(PARAM(model)) * in_normal;
+  tex_coord = in_tex_coord;
+
+  gl_Position = PARAM(view_projection) * vec4(world_pos, 1.0);
+}
