@@ -601,8 +601,8 @@ void Engine::CreateProjectionMatrix() {
   float aspect_ratio = (float)GetScreenHeight() / (float)GetScreenWidth();
   LOG(0) << "aspect_ratio: " << aspect_ratio;
   screen_size_ = {1.0f, aspect_ratio * 1.0f};
-  projection_.CreateOrthoProjection(-0.5f, 0.5f, -aspect_ratio * 0.5f,
-                                    aspect_ratio * 0.5f);
+  projection_.CreateOrthographicProjection(-0.5f, 0.5f, -aspect_ratio * 0.5f,
+                                           aspect_ratio * 0.5f);
 }
 
 void Engine::ContextLost() {

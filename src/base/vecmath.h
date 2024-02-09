@@ -1219,20 +1219,20 @@ class Matrix4 {
     k[1][3] = T(0);
     k[2][3] = T(0);
     k[3][3] = T(1);
-    GetRow(3) = translation;
+    Row(3) = translation;
   }
 
   void CreateLookAt(const Vector3<T>& from,
                     const Vector3<T>& to,
                     const Vector3<T>& up = {T(0), T(1), T(0)}) {
-    GetRow(2) = to - from;
-    GetRow(1) = up;
+    Row(2) = to - from;
+    Row(1) = up;
     RecreateMatrix<2, 1>();
     UnitNot3x3();
-    GetRow(3) = from;
+    Row(3) = from;
   }
 
-  void CreateOrthoProjection(T left, T right, T bottom, T top) {
+  void CreateOrthographicProjection(T left, T right, T bottom, T top) {
     T rml = right - left;
     T rpl = right + left;
     T tmb = top - bottom;
@@ -1243,13 +1243,12 @@ class Matrix4 {
     _M_SET_ROW(3, -rpl / rml, -tpb / tmb, 0, 1);
   }
 
-  void CreateFovProjection(T fov,
-                           T fov_aspect,
-                           T width,
-                           T height,
-                           T near_plane,
-                           T far_plane) {
-    // Calc x and y scale from FOV.
+  void CreatePerspectiveProjection(T fov,
+                                   T fov_aspect,
+                                   T width,
+                                   T height,
+                                   T near_plane,
+                                   T far_plane) {
     T scale =
         T(2.0) /
         std::sqrt(Sqr(T(1.0) / std::cos((T(PId) * fov) / T(360.0))) - T(1.0));
@@ -1269,7 +1268,7 @@ class Matrix4 {
   }
 
   // Create matrix from axis-angle.
-  void CreateAxisRotation(const Vector3<T>& rotation_axis, T angle) const {
+  void CreateAxisRotation(const Vector3<T>& rotation_axis, T angle) {
     // rotation_axis must be normalized.
     // angle = degrees / 360 (ie. 0..1)
     T x = rotation_axis[0];
@@ -1467,15 +1466,13 @@ class Matrix4 {
     int missing = 3 - (priority0 + priority1);
     constexpr int type = priority0 - priority1;
     if constexpr (type == -1 || type == 2) {
-      GetRow(priority0).Normalize();
-      GetRow(missing) =
-          -(GetRow(priority1).CrossProduct(GetRow(priority0))).Normalize();
-      GetRow(priority1) = GetRow(missing).CrossProduct(GetRow(priority0));
+      Row(priority0).Normalize();
+      Row(missing) = -(Row(priority1).CrossProduct(Row(priority0))).Normalize();
+      Row(priority1) = Row(missing).CrossProduct(Row(priority0));
     } else {
-      GetRow(priority0).Normalize();
-      GetRow(missing) =
-          (GetRow(priority1).CrossProduct(GetRow(priority0))).Normalize();
-      GetRow(priority1) = GetRow(priority0).CrossProduct(GetRow(missing));
+      Row(priority0).Normalize();
+      Row(missing) = (Row(priority1).CrossProduct(Row(priority0))).Normalize();
+      Row(priority1) = Row(priority0).CrossProduct(Row(missing));
     }
   }
 
@@ -1545,12 +1542,12 @@ class Matrix4 {
     q2.Create(other);
     q1.Lerp(q2, t, qr);
     qr.CreateMatrix(dst);
-    dst.GetRow(3) = base::Lerp(GetRow(3), other.GetRow(3), t);
+    dst.Row(3) = base::Lerp(Row(3), other.Row(3), t);
   }
 
-  Vector3<T>& GetRow(int row) { return *((Vector3<T>*)&k[row][0]); }
+  Vector3<T>& Row(int row) { return *((Vector3<T>*)&k[row][0]); }
 
-  const Vector3<T>& GetRow(int row) const {
+  const Vector3<T>& Row(int row) const {
     return *((const Vector3<T>*)&k[row][0]);
   }
 
