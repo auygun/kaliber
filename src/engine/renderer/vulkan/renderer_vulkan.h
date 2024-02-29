@@ -2,6 +2,9 @@
 #define ENGINE_RENDERER_VULKAN_RENDERER_VULKAN_H
 
 #include <atomic>
+#include <cstring>
+#include <list>
+#include <map>
 #include <memory>
 #include <semaphore>
 #include <string>
@@ -15,6 +18,8 @@
 #include "base/task_runner.h"
 #include "engine/renderer/renderer.h"
 #include "third_party/vma/vk_mem_alloc.h"
+
+struct SpvReflectShaderModule;
 
 namespace eng {
 
@@ -116,6 +121,44 @@ class RendererVulkan final : public Renderer {
   using PipelineDeathRow =
       std::vector<std::tuple<VkPipeline, VkPipelineLayout>>;
 
+  enum UniformType {
+    kUniformType_Uninitialized = -1,
+    kSamplerWithTexture,
+    kUniformBuffer,
+    kUniformType_Max
+  };
+
+  struct DescriptorPoolKey {
+    uint32_t uniform_count[kUniformType_Max] = {};
+
+    bool operator<(const DescriptorPoolKey& other) const {
+      return memcmp(uniform_count, other.uniform_count, sizeof(uniform_count)) <
+             0;
+    }
+  };
+
+  // Descriptor pools with usage counts.
+  using DescriptorPools = std::list<std::pair<VkDescriptorPool, uint32_t>>;
+
+  // VkDescriptorSet with the pool which it was allocated from.
+  using DescriptorSetInfo =
+      std::tuple<VkDescriptorSet, DescriptorPoolKey, DescriptorPools::iterator>;
+
+  struct UniformField {
+    size_t size = 0;
+    size_t offset = 0;
+  };
+
+  struct Uniform {
+    std::string name;  // TODO: remove if not needed.
+    VkDescriptorType descriptor_type = (VkDescriptorType)-1;
+    uint32_t binding = 0;
+    VkShaderStageFlags stage_flags = 0;
+    std::unordered_map<std::string, UniformField> fields;
+    Buffer<VkBuffer> uniform_buffer;
+    size_t buffer_size = 0;
+  };
+
   std::unordered_map<std::string, std::array<std::vector<uint8_t>, 2>>
       spirv_cache_;
 
@@ -138,10 +181,11 @@ class RendererVulkan final : public Renderer {
         variables;
     std::unique_ptr<char[]> push_constants;
     size_t push_constants_size = 0;
-    std::vector<std::string> sampler_uniform_names;
-    size_t desc_set_count = 0;
     VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
     VkPipeline pipeline = VK_NULL_HANDLE;
+
+    std::vector<std::vector<Uniform>> uniform_sets;
+    std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
   };
 
   struct TextureVulkan {
@@ -156,7 +200,7 @@ class RendererVulkan final : public Renderer {
   // One for creating resources (recorded outside a render pass) and another for
   // drawing (recorded inside a render pass). Also contains list of resources to
   // be destroyed when the frame is cycled. There are 2 or 3 frames (double or
-  // tripple buffering) that are cycled constantly.
+  // triple buffering) that are cycled constantly.
   struct Frame {
     VkCommandPool setup_command_pool = VK_NULL_HANDLE;
     VkCommandBuffer setup_command_buffer = VK_NULL_HANDLE;
@@ -202,7 +246,13 @@ class RendererVulkan final : public Renderer {
 
   std::vector<std::unique_ptr<DescPool>> desc_pools_;
   VkDescriptorSetLayout descriptor_set_layout_ = VK_NULL_HANDLE;
-  std::vector<VkDescriptorSet> active_descriptor_sets_;
+  // std::vector<VkDescriptorSet> active_descriptor_sets_;
+
+  std::map<DescriptorPoolKey, DescriptorPools> descriptor_pools_map_;
+
+  std::vector<uint64_t> texture_units_;
+  bool texture_units_dirty_ = false;
+  std::unordered_map<size_t, DescriptorSetInfo> descriptor_set_cache_;
 
   VkSampler sampler_ = VK_NULL_HANDLE;
 
@@ -276,6 +326,9 @@ class RendererVulkan final : public Renderer {
                           VkImageLayout old_layout,
                           VkImageLayout new_layout);
 
+  bool ParseDescriptorBindings(std::vector<std::vector<Uniform>>& uniform_sets,
+                               const SpvReflectShaderModule* module,
+                               int shader_stage);
   bool CreatePipelineLayout(ShaderVulkan& shader,
                             const std::vector<uint8_t>& spirv_vertex,
                             const std::vector<uint8_t>& spirv_fragment);
@@ -293,6 +346,15 @@ class RendererVulkan final : public Renderer {
   bool IsFormatSupported(VkFormat format);
 
   void DestroyAllResources();
+
+  DescriptorPools::iterator GetOrCreateDescriptorPool(DescriptorPoolKey key);
+  void UnreferenceDescriptorPool(DescriptorPoolKey key,
+                                 DescriptorPools::iterator pools_it);
+
+  DescriptorSetInfo GetOrCreateDescriptorSet(
+      uint64_t set_key,
+      const std::vector<Uniform>& uniform_set,
+      VkDescriptorSetLayout set_layout);
 };
 
 }  // namespace eng
