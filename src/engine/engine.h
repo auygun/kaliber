@@ -248,6 +248,8 @@ class Engine : public PlatformObserver {
 
   void WaitForAsyncWork();
 
+  std::shared_ptr<Texture> GetTexture(TextureResource& resource, bool create);
+
   void ShowStats();
 
   Engine(const Engine&) = delete;

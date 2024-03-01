@@ -255,7 +255,7 @@ void Engine::RefreshImage(const std::string& asset_name) {
     return;
   }
 
-  std::shared_ptr<Texture> texture = it->second.texture.lock();
+  std::shared_ptr<Texture> texture = GetTexture(it->second, false);
   if (texture) {
     auto image = it->second.create_image();
     if (image)
@@ -272,17 +272,24 @@ std::shared_ptr<Texture> Engine::AcquireTexture(const std::string& asset_name) {
     return nullptr;
   }
 
-  std::shared_ptr<Texture> texture = it->second.texture.lock();
-  if (!texture) {
-    DCHECK(!it->second.persistent_ptr);
-    texture = std::make_shared<Texture>(renderer_.get());
-    it->second.texture = texture;
-  }
-
+  std::shared_ptr<Texture> texture = GetTexture(it->second, true);
   if (!texture->IsValid()) {
     auto image = it->second.create_image();
     if (image)
       texture->Update(std::move(image));
+  }
+  return texture;
+}
+
+std::shared_ptr<Texture> Engine::GetTexture(TextureResource& resource,
+                                            bool create) {
+  std::shared_ptr<Texture> texture = resource.persistent_ptr;
+  if (!texture) {
+    texture = resource.texture.lock();
+    if (!texture && create) {
+      texture = std::make_shared<Texture>(renderer_.get());
+      resource.texture = texture;
+    }
   }
   return texture;
 }
