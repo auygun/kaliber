@@ -196,6 +196,9 @@ class Engine : public PlatformObserver {
   std::unordered_map<std::string, ShaderResource> shaders_;
   std::unordered_map<std::string, std::shared_ptr<AudioBus>> audio_buses_;
 
+  std::unordered_map<std::string, std::unique_ptr<Image>>
+      pending_texture_updates_;
+
   State engine_state_ = State::kUninitialized;
 
   size_t async_work_count_ = 0;

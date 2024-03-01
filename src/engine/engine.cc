@@ -146,6 +146,16 @@ void Engine::Update(float delta_time) {
 }
 
 void Engine::Draw(float frame_frac) {
+  for (auto& t : pending_texture_updates_) {
+    auto it = textures_.find(t.first);
+    if (it == textures_.end())
+      continue;
+    std::shared_ptr<Texture> texture = GetTexture(it->second, false);
+    if (texture)
+      texture->Update(std::move(t.second));
+  }
+  pending_texture_updates_.clear();
+
   for (auto d : animators_)
     d->Evaluate(time_step_ * frame_frac);
 
@@ -259,7 +269,7 @@ void Engine::RefreshImage(const std::string& asset_name) {
   if (texture) {
     auto image = it->second.create_image();
     if (image)
-      texture->Update(std::move(image));
+      pending_texture_updates_[asset_name] = std::move(image);
   }
 }
 
