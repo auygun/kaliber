@@ -26,7 +26,7 @@ class ImguiBackend {
   std::unique_ptr<InputEvent> OnInputEvent(std::unique_ptr<InputEvent> event);
 
   void NewFrame(float delta_time);
-  void Render();
+  void EndFrame();
   void Draw();
 
  private:
@@ -35,6 +35,9 @@ class ImguiBackend {
   Shader shader_;
   Texture font_atlas_;
   Renderer* renderer_ = nullptr;
+  bool needs_update_ = false;
+
+  void UpdateGeometries();
 };
 
 }  // namespace eng

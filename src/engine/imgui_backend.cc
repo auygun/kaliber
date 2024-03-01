@@ -61,10 +61,6 @@ void ImguiBackend::CreateRenderResources(Renderer* renderer) {
   for (auto& g : geometries_)
     g.SetRenderer(renderer);
 
-  // Avoid flickering by using the geometries form the last frame if available.
-  if (ImGui::GetCurrentContext() && ImGui::GetDrawData())
-    Render();
-
   // Create the shader.
   auto source = std::make_unique<ShaderSource>();
   if (source->Load("engine/imgui.glsl")) {
@@ -115,10 +111,14 @@ void ImguiBackend::NewFrame(float delta_time) {
                           (float)renderer_->GetScreenHeight());
   io.DeltaTime = delta_time;
   ImGui::NewFrame();
+  needs_update_ = true;
 }
 
-void ImguiBackend::Render() {
-  ImGui::Render();
+void ImguiBackend::EndFrame() {
+  ImGui::EndFrame();
+}
+
+void ImguiBackend::UpdateGeometries() {
   // Create a geometry for each draw list and upload the vertex data.
   ImDrawData* draw_data = ImGui::GetDrawData();
   for (int n = 0; n < draw_data->CmdListsCount; n++) {
@@ -134,9 +134,15 @@ void ImguiBackend::Render() {
 }
 
 void ImguiBackend::Draw() {
+  ImGui::Render();
   ImDrawData* draw_data = ImGui::GetDrawData();
   if (!draw_data || draw_data->CmdListsCount <= 0)
     return;
+
+  if (needs_update_) {
+    UpdateGeometries();
+    needs_update_ = false;
+  }
 
   renderer_->SetViewport(0, 0, draw_data->DisplaySize.x,
                          draw_data->DisplaySize.y);

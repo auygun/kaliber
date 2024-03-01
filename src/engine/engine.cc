@@ -118,6 +118,8 @@ void Engine::Initialize() {
   engine_state_ = State::kInitializing;
   CHECK(game_->Initialize()) << "Failed to initialize the game.";
   engine_state_ = State::kInitialized;
+
+  imgui_backend_.NewFrame(0);
 }
 
 void Engine::Update(float delta_time) {
@@ -140,7 +142,7 @@ void Engine::Update(float delta_time) {
   if (stats_visible_)
     ShowStats();
 
-  imgui_backend_.Render();
+  imgui_backend_.EndFrame();
 }
 
 void Engine::Draw(float frame_frac) {
