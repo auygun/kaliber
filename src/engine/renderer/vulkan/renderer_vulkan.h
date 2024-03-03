@@ -227,6 +227,7 @@ class RendererVulkan final : public Renderer {
 
   bool AllocateStagingBuffer(uint32_t amount,
                              uint32_t segment,
+                             uint32_t alignment,
                              uint32_t& alloc_offset,
                              uint32_t& alloc_size);
   bool InsertStagingBuffer();

@@ -1300,6 +1300,7 @@ void RendererVulkan::FullBarrier() {
 
 bool RendererVulkan::AllocateStagingBuffer(uint32_t amount,
                                            uint32_t segment,
+                                           uint32_t alignment,
                                            uint32_t& alloc_offset,
                                            uint32_t& alloc_size) {
   DCHECK(std::this_thread::get_id() == setup_thread_.get_id());
@@ -1314,6 +1315,9 @@ bool RendererVulkan::AllocateStagingBuffer(uint32_t amount,
       // We used this block this frame, let's see if there is still room.
       uint32_t write_from =
           staging_buffers_[current_staging_buffer_].fill_amount;
+      uint32_t align_remainder = write_from % alignment;
+      if (align_remainder != 0)
+        write_from += alignment - align_remainder;
       int32_t available_bytes =
           int32_t(staging_buffer_size_) - int32_t(write_from);
 
@@ -1556,7 +1560,7 @@ void RendererVulkan::UpdateBuffer(VkBuffer buffer,
     uint32_t write_amount;
 
     if (!AllocateStagingBuffer(
-            std::min((uint32_t)to_submit, staging_buffer_size_), 32,
+            std::min((uint32_t)to_submit, staging_buffer_size_), 32, 32,
             write_offset, write_amount))
       return;
     Buffer<VkBuffer> staging_buffer =
@@ -1746,6 +1750,9 @@ void RendererVulkan::UpdateImage(VkImage image,
   uint32_t segment = num_blocks_x * block_size;
   uint32_t max_size = staging_buffer_size_ - (staging_buffer_size_ % segment);
   uint32_t region_offset_y = 0;
+  uint32_t alignment =
+      std::max((VkDeviceSize)16,
+               context_.GetDeviceLimits().optimalBufferCopyOffsetAlignment);
 
   // A segment must fit in a single staging buffer.
   DCHECK(staging_buffer_size_ >= segment);
@@ -1754,7 +1761,7 @@ void RendererVulkan::UpdateImage(VkImage image,
     uint32_t write_offset;
     uint32_t write_amount;
     if (!AllocateStagingBuffer(std::min((uint32_t)to_submit, max_size), segment,
-                               write_offset, write_amount))
+                               alignment, write_offset, write_amount))
       return;
     Buffer<VkBuffer> staging_buffer =
         staging_buffers_[current_staging_buffer_].buffer;

@@ -534,7 +534,7 @@ bool VulkanContext::CreatePhysicalDevice() {
 
   LOG(0) << "Vulkan:";
   LOG(0) << "  Name: " << gpu_props_.deviceName;
-  LOG(0) << "  Tame: " << string_VkPhysicalDeviceType(gpu_props_.deviceType);
+  LOG(0) << "  Type: " << string_VkPhysicalDeviceType(gpu_props_.deviceType);
   LOG(0) << "  Vendor ID: " << gpu_props_.vendorID;
   LOG(0) << "  API version: " << VK_VERSION_MAJOR(gpu_props_.apiVersion) << "."
          << VK_VERSION_MINOR(gpu_props_.apiVersion) << "."
@@ -542,6 +542,10 @@ bool VulkanContext::CreatePhysicalDevice() {
   LOG(0) << "  Driver version: " << VK_VERSION_MAJOR(gpu_props_.driverVersion)
          << "." << VK_VERSION_MINOR(gpu_props_.driverVersion) << "."
          << VK_VERSION_PATCH(gpu_props_.driverVersion);
+  LOG(0) << "  maxPushConstantsSize: "
+         << gpu_props_.limits.maxPushConstantsSize;
+  LOG(0) << "  optimalBufferCopyOffsetAlignment: "
+         << gpu_props_.limits.optimalBufferCopyOffsetAlignment;
 
   // Call with NULL data to get count,
   vkGetPhysicalDeviceQueueFamilyProperties(gpu_, &queue_family_count_, nullptr);
