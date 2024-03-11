@@ -488,10 +488,10 @@ void RendererVulkan::UpdateGeometry(uint64_t resource_id,
     if (it->second.buffer_size > 0)
       FreeBuffer(std::move(it->second.buffer));
     AllocateBuffer(it->second.buffer, data_size,
-                   VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-                       VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-                       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                   VMA_MEMORY_USAGE_GPU_ONLY);
+                   VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                       VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+                       (indices ? VK_BUFFER_USAGE_INDEX_BUFFER_BIT : 0),
+                   VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
     it->second.buffer_size = data_size;
   }
 
@@ -589,7 +589,7 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
     AllocateImage(it->second.image, it->second.view, it->second.desc_set,
                   vk_format, width, height,
                   VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-                  VMA_MEMORY_USAGE_GPU_ONLY);
+                  VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
     old_layout = VK_IMAGE_LAYOUT_UNDEFINED;
     it->second.width = width;
     it->second.height = height;
@@ -1423,9 +1423,11 @@ bool RendererVulkan::InsertStagingBuffer() {
   buffer_info.pQueueFamilyIndices = nullptr;
 
   VmaAllocationCreateInfo alloc_info;
-  alloc_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;  // Stay mapped.
-  alloc_info.usage = VMA_MEMORY_USAGE_CPU_ONLY;         // CPU and coherent.
-  alloc_info.requiredFlags = 0;
+  alloc_info.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+                     VMA_ALLOCATION_CREATE_MAPPED_BIT;  // Stay mapped.
+  alloc_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_HOST;
+  alloc_info.requiredFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
+                             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
   alloc_info.preferredFlags = 0;
   alloc_info.memoryTypeBits = 0;
   alloc_info.pool = nullptr;
