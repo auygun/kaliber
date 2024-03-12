@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <memory>
+#include <span>
 
 #if defined(_WIN32)
 #include <malloc.h>
@@ -46,6 +47,12 @@ inline bool IsAligned(const void* val, size_t alignment) {
   DCHECK(IsPow2(alignment)) << alignment << " is not a power of 2";
   return (reinterpret_cast<uintptr_t>(val) & (alignment - 1)) == 0;
 }
+
+// Utilities for stack allocation.
+#define ALLOCA(size) (size != 0 ? alloca(size) : nullptr)
+#define ALLOCA_ARRAY(type, count) ((type*)ALLOCA(sizeof(type) * count))
+#define ALLOCA_SINGLE(type) ALLOCA_ARRAY(type, 1)
+#define ALLOCA_SPAN(type, count) std::span(ALLOCA_ARRAY(type, count), count)
 
 }  // namespace base
 
