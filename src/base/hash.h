@@ -21,6 +21,28 @@ inline size_t KR2Hash(const std::string& str) {
   return hash_value;
 }
 
+inline uint32_t HashVec32(const std::vector<uint32_t>& vec) {
+  uint32_t seed = vec.size();
+  for (auto x : vec) {
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = (x >> 16) ^ x;
+    seed ^= x + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  }
+  return seed;
+}
+
+inline uint64_t HashVec64(const std::vector<uint64_t>& vec) {
+  uint64_t seed = vec.size();
+  for (auto x : vec) {
+    x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
+    x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
+    x = x ^ (x >> 31);
+    seed ^= x + UINT64_C(0x9e3779b97f4a7c15) + (seed << 12) + (seed >> 4);
+  }
+  return seed;
+}
+
 }  // namespace base
 
 #endif  // BASE_HASH_H
