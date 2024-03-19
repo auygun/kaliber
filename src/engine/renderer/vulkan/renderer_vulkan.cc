@@ -1990,6 +1990,10 @@ bool RendererVulkan::CreatePipelineLayout(
         break;
       }
 
+      CHECK(pconstants_vertex[0]->size <=
+            context_.GetDeviceLimits().maxPushConstantsSize)
+          << "Required push constants size is bigger than the maximum "
+             "supported size by device.";
       shader.push_constants_size = pconstants_vertex[0]->size;
       shader.push_constants =
           std::make_unique<char[]>(shader.push_constants_size);
