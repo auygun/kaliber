@@ -99,7 +99,7 @@ void Engine::Initialize() {
 
   platform_->CreateMainWindow();
 
-  CreateRendererInternal(RendererType::kVulkan);
+  CreateRendererInternal(RendererType::kOpenGL);
 
   CreateProjectionMatrix();
 
