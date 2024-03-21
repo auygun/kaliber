@@ -26,7 +26,7 @@ bool Mesh::Create(Primitive primitive,
     return false;
   }
 
-  int vertex_buffer_size = GetVertexSize() * num_vertices_;
+  size_t vertex_buffer_size = GetVertexSize() * num_vertices_;
   if (vertex_buffer_size > 0) {
     vertices_ = std::make_unique<char[]>(vertex_buffer_size);
     memcpy(vertices_.get(), vertices, vertex_buffer_size);
@@ -35,7 +35,7 @@ bool Mesh::Create(Primitive primitive,
   if (!indices)
     return true;
 
-  int index_buffer_size = GetIndexSize() * num_indices_;
+  size_t index_buffer_size = GetIndexSize() * num_indices_;
   if (index_buffer_size > 0) {
     indices_ = std::make_unique<char[]>(index_buffer_size);
     memcpy(indices_.get(), indices, index_buffer_size);
@@ -75,6 +75,10 @@ bool Mesh::Load(const std::string& file_name) {
   }
 
   num_vertices_ = root["num_vertices"].asUInt();
+  if (num_vertices_ == 0) {
+    LOG(0) << "Failed to load mesh. Vertex count is zero.";
+    return false;
+  }
 
   if (!ParseVertexDescription(root["vertex_description"].asString(),
                               vertex_description_)) {
@@ -95,19 +99,10 @@ bool Mesh::Load(const std::string& file_name) {
     return false;
   }
 
-  int vertex_buffer_size = GetVertexSize() * num_vertices_;
-  if (vertex_buffer_size <= 0) {
-    LOG(0) << "Failed to load mesh. Invalid vertex size.";
-    return false;
-  }
-
-  LOG(0) << "Loaded " << file_name
-         << ". Vertex array size: " << vertices.size();
-
-  vertices_ = std::make_unique<char[]>(vertex_buffer_size);
+  vertices_ = std::make_unique<char[]>(GetVertexSize() * num_vertices_);
 
   char* dst = vertices_.get();
-  unsigned int i = 0;
+  unsigned i = 0;
   while (i < vertices.size()) {
     for (auto& attr : vertex_description_) {
       auto [attrib_type, data_type, num_elements, type_size] = attr;
@@ -139,7 +134,52 @@ bool Mesh::Load(const std::string& file_name) {
       }
     }
   }
-  // TODO: Load indices
+
+  if (primitive_ != kPrimitive_Triangles) {
+    LOG(0) << "Loaded " << file_name << ", vertex count: " << vertices.size();
+    return true;
+  }
+
+  num_indices_ = root["num_indices"].asUInt();
+  if (num_indices_ == 0) {
+    LOG(0) << "Failed to load mesh. Index count is zero.";
+    return false;
+  }
+
+  size_t index_size = root["index_size"].asUInt();
+  if (index_size == 16) {
+    index_description_ = kDataType_UShort;
+  } else if (index_size == 32) {
+    index_description_ = kDataType_UInt;
+  } else {
+    LOG(0) << "Invalid index size: " << index_size;
+    return false;
+  }
+
+  const Json::Value indices = root["indices"];
+  if (indices.size() != num_indices_) {
+    LOG(0) << "Failed to load mesh. Index array size: " << indices.size()
+           << ", expected " << num_indices_;
+    return false;
+  }
+
+  indices_ = std::make_unique<char[]>(index_size * num_indices_);
+
+  dst = indices_.get();
+  if (index_description_ == kDataType_UShort) {
+    for (i = 0; i < indices.size(); ++i) {
+      *((unsigned short*)dst) = (unsigned short)indices[i].asUInt();
+      dst += sizeof(unsigned short);
+    }
+  } else {
+    for (i = 0; i < indices.size(); ++i) {
+      *((unsigned int*)dst) = indices[i].asUInt();
+      dst += sizeof(unsigned int);
+    }
+  }
+
+  LOG(0) << "Loaded " << file_name << ", vertices: " << num_vertices_
+         << ", indices: " << num_indices_;
   return true;
 }
 
