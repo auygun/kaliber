@@ -219,17 +219,10 @@ class Vector2 {
     k[1] = y;
   }
 
-  Vector2(const Vector2& other) {
-    k[0] = other.k[0];
-    k[1] = other.k[1];
+  Vector2& operator=(T s) {
+    k[0] = k[1] = s;
+    return *this;
   }
-
-  void operator=(const Vector2& other) {
-    k[0] = other.k[0];
-    k[1] = other.k[1];
-  }
-
-  void operator=(T s) { k[0] = k[1] = s; }
 
   T& operator[](int i) { return k[i]; }
   const T& operator[](int i) const { return k[i]; }
@@ -403,19 +396,10 @@ class Vector3 {
     k[2] = z;
   }
 
-  Vector3(const Vector3& other) {
-    k[0] = other.k[0];
-    k[1] = other.k[1];
-    k[2] = other.k[2];
+  Vector3& operator=(T s) {
+    k[0] = k[1] = k[2] = s;
+    return *this;
   }
-
-  void operator=(const Vector3& other) {
-    k[0] = other.k[0];
-    k[1] = other.k[1];
-    k[2] = other.k[2];
-  }
-
-  void operator=(T s) { k[0] = k[1] = k[2] = s; }
 
   T& operator[](int i) { return k[i]; }
   const T& operator[](int i) const { return k[i]; }
@@ -637,21 +621,10 @@ class Vector4 {
     k[3] = w;
   }
 
-  Vector4(const Vector4& other) {
-    k[0] = other.k[0];
-    k[1] = other.k[1];
-    k[2] = other.k[2];
-    k[3] = other.k[3];
+  Vector4& operator=(T s) {
+    k[0] = k[1] = k[2] = k[3] = s;
+    return *this;
   }
-
-  void operator=(const Vector4& other) {
-    k[0] = other.k[0];
-    k[1] = other.k[1];
-    k[2] = other.k[2];
-    k[3] = other.k[3];
-  }
-
-  void operator=(T s) { k[0] = k[1] = k[2] = k[3] = s; }
 
   T& operator[](int i) { return k[i]; }
   const T& operator[](int i) const { return k[i]; }
@@ -886,26 +859,12 @@ class Matrix4 {
             {v30, v31, v32, v33},
         } {}
 
-  Matrix4(const Matrix4& other)
-      : k{
-            {other.k[0][0], other.k[0][1], other.k[0][2], other.k[0][3]},
-            {other.k[1][0], other.k[1][1], other.k[1][2], other.k[1][3]},
-            {other.k[2][0], other.k[2][1], other.k[2][2], other.k[2][3]},
-            {other.k[3][0], other.k[3][1], other.k[3][2], other.k[3][3]},
-        } {}
-
-  void operator=(const Matrix4& other) {
-    _M_SET_ROW(0, other.k[0][0], other.k[0][1], other.k[0][2], other.k[0][3]);
-    _M_SET_ROW(1, other.k[1][0], other.k[1][1], other.k[1][2], other.k[1][3]);
-    _M_SET_ROW(2, other.k[2][0], other.k[2][1], other.k[2][2], other.k[2][3]);
-    _M_SET_ROW(3, other.k[3][0], other.k[3][1], other.k[3][2], other.k[3][3]);
-  }
-
-  void operator=(T s) {
+  Matrix4& operator=(T s) {
     _M_SET_ROW(0, s, 0, 0, 0);
     _M_SET_ROW(1, 0, s, 0, 0);
     _M_SET_ROW(2, 0, 0, s, 0);
     _M_SET_ROW(3, 0, 0, 0, s);
+    return *this;
   }
 
   // Load identity.
@@ -1412,15 +1371,6 @@ class Matrix4 {
     RotateElements(k[2][1], k[2][2], cs, sn);
   }
 
-  void RotX_x_M(T v) {
-    T v2pi = v * T(PI2d);
-    T sn = (T)std::sin(v2pi);
-    T cs = (T)std::cos(v2pi);
-    RotateElements(k[1][0], k[2][0], cs, sn);
-    RotateElements(k[1][1], k[2][1], cs, sn);
-    RotateElements(k[1][2], k[2][2], cs, sn);
-  }
-
   void M_x_RotY(T v) {
     T v2pi = v * T(PI2d);
     T sn = (T)-std::sin(v2pi);
@@ -1430,15 +1380,6 @@ class Matrix4 {
     RotateElements(k[2][0], k[2][2], cs, sn);
   }
 
-  void RotY_x_M(T v) {
-    T v2pi = v * T(PI2d);
-    T sn = (T)-std::sin(v2pi);
-    T cs = (T)std::cos(v2pi);
-    RotateElements(k[0][0], k[2][0], cs, sn);
-    RotateElements(k[0][1], k[2][1], cs, sn);
-    RotateElements(k[0][2], k[2][2], cs, sn);
-  }
-
   void M_x_RotZ(T v) {
     T v2pi = v * T(PI2d);
     T sn = (T)std::sin(v2pi);
@@ -1446,6 +1387,26 @@ class Matrix4 {
     RotateElements(k[0][0], k[0][1], cs, sn);
     RotateElements(k[1][0], k[1][1], cs, sn);
     RotateElements(k[2][0], k[2][1], cs, sn);
+  }
+
+  // Backwards multiply by euler rotations (v %= 1).
+
+  void RotX_x_M(T v) {
+    T v2pi = v * T(PI2d);
+    T sn = (T)std::sin(v2pi);
+    T cs = (T)std::cos(v2pi);
+    RotateElements(k[1][0], k[2][0], cs, sn);
+    RotateElements(k[1][1], k[2][1], cs, sn);
+    RotateElements(k[1][2], k[2][2], cs, sn);
+  }
+
+  void RotY_x_M(T v) {
+    T v2pi = v * T(PI2d);
+    T sn = (T)-std::sin(v2pi);
+    T cs = (T)std::cos(v2pi);
+    RotateElements(k[0][0], k[2][0], cs, sn);
+    RotateElements(k[0][1], k[2][1], cs, sn);
+    RotateElements(k[0][2], k[2][2], cs, sn);
   }
 
   void RotZ_x_M(T v) {
@@ -1585,8 +1546,6 @@ class Quaternion {
     k[2] = z;
     k[3] = w;
   }
-
-  void operator=(const Quaternion& q) { k = q.k; }
 
   // Create from axis-angle
   void Create(const Vector3<T>& v, T angle) {
