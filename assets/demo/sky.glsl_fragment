@@ -5,15 +5,15 @@ precision highp float;
 IN(0) vec2 tex_coord_0;
 
 UNIFORM_BEGIN
-  UNIFORM_V(vec2 scale)
-  UNIFORM_V(mat4 projection)
-  UNIFORM_F(vec2 sky_offset)
-  UNIFORM_F(vec3 nebula_color)
+UNIFORM_V(vec2 scale)
+UNIFORM_V(mat4 projection)
+UNIFORM_F(vec2 sky_offset)
+UNIFORM_F(vec3 nebula_color)
 UNIFORM_END
 
 FRAG_COLOR_OUT(frag_color)
 
-const float PHI = 1.61803398874989484820459; // Golden Ratio
+const float PHI = 1.61803398874989484820459;  // Golden Ratio
 
 float random(vec2 p) {
   float sd = sin(dot(p, vec2(54.90898, 18.233)));
@@ -35,9 +35,7 @@ float nebula(in vec2 p) {
 
   vec2 u = smoothstep(0.0, 1.0, f);
 
-  return mix(a, b, u.x) +
-      (c - a)* u.y * (1.0 - u.x) +
-      (d - b) * u.x * u.y;
+  return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
 }
 
 float stars(in vec2 p, float num_cells, float size) {
@@ -53,7 +51,7 @@ float stars(in vec2 p, float num_cells, float size) {
 
 void main() {
   vec2 layer1_coord = tex_coord_0 + PARAM(sky_offset);
-  vec2 layer2_coord = tex_coord_0 + PARAM(sky_offset)  * 0.7;
+  vec2 layer2_coord = tex_coord_0 + PARAM(sky_offset) * 0.7;
   vec3 result = vec3(0.);
 
   float c = nebula(layer2_coord * 3.0) * 0.35 - 0.05;

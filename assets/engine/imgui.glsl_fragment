@@ -6,7 +6,7 @@ IN(0) vec2 tex_coord_0;
 IN(1) vec4 color;
 
 UNIFORM_BEGIN
-  UNIFORM_V(mat4 projection)
+UNIFORM_V(mat4 projection)
 UNIFORM_END
 
 SAMPLER(0, sampler2D texture_0)

@@ -3,11 +3,11 @@ precision mediump float;
 #endif
 
 UNIFORM_BEGIN
-  UNIFORM_V(vec2 scale)
-  UNIFORM_V(vec2 offset)
-  UNIFORM_V(vec2 rotation)
-  UNIFORM_V(mat4 projection)
-  UNIFORM_F(vec4 color)
+UNIFORM_V(vec2 scale)
+UNIFORM_V(vec2 offset)
+UNIFORM_V(vec2 rotation)
+UNIFORM_V(mat4 projection)
+UNIFORM_F(vec4 color)
 UNIFORM_END
 
 FRAG_COLOR_OUT(frag_color)
