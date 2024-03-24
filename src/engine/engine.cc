@@ -526,6 +526,7 @@ void Engine::OnWindowResized(int width, int height) {
                     height != renderer_->GetScreenHeight())) {
     renderer_->OnWindowResized(width, height);
     CreateProjectionMatrix();
+    game_->OnWindowResized(width, height);
   }
 }
 
@@ -721,7 +722,8 @@ void Engine::ShowStats() {
   ImGuiWindowFlags window_flags =
       ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar |
       ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse |
-      ImGuiWindowFlags_NoNav | ImGuiWindowFlags_AlwaysAutoResize;
+      ImGuiWindowFlags_NoNav | ImGuiWindowFlags_AlwaysAutoResize |
+      ImGuiWindowFlags_NoSavedSettings;
   ImGui::Begin("Stats", nullptr, window_flags);
   ImGui::Text("%s", renderer_->GetDebugName());
   ImGui::Text("%d fps", fps_);

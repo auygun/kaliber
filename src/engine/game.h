@@ -18,6 +18,8 @@ class Game {
 
   virtual void ContextLost() {}
 
+  virtual void OnWindowResized(int width, int height) {}
+
   virtual void LostFocus() {}
 
   virtual void GainedFocus(bool from_interstitial_ad) {}
