@@ -16,13 +16,13 @@ namespace {
 
 void CreateSphere(std::vector<float>& vertices,
                   std::vector<unsigned short>& indices,
-                  unsigned int rings,
-                  unsigned int sectors) {
+                  size_t rings,
+                  size_t sectors) {
   float const R = 1. / (float)(rings - 1);
   float const S = 1. / (float)(sectors - 1);
 
-  for (int r = 0; r < rings; ++r) {
-    for (int s = 0; s < sectors; ++s) {
+  for (size_t r = 0; r < rings; ++r) {
+    for (size_t s = 0; s < sectors; ++s) {
       float y = sin(-PIHALFf + PIf * r * R);
       float x = cos(2 * PIf * s * S) * sin(PIf * r * R);
       float z = sin(2 * PIf * s * S) * sin(PIf * r * R);
@@ -44,17 +44,17 @@ void CreateSphere(std::vector<float>& vertices,
       vertices.push_back(v);
 
       if (r < rings - 1) {
-        int curRow = r * sectors;
-        int nextRow = (r + 1) * sectors;
-        int nextS = (s + 1) % sectors;
+        size_t curRow = r * sectors;
+        size_t nextRow = (r + 1) * sectors;
+        size_t nextS = (s + 1) % sectors;
 
-        indices.push_back(curRow + s);
-        indices.push_back(nextRow + s);
-        indices.push_back(nextRow + nextS);
+        indices.push_back((unsigned short)(curRow + s));
+        indices.push_back((unsigned short)(nextRow + s));
+        indices.push_back((unsigned short)(nextRow + nextS));
 
-        indices.push_back(curRow + s);
-        indices.push_back(nextRow + nextS);
-        indices.push_back(curRow + nextS);
+        indices.push_back((unsigned short)(curRow + s));
+        indices.push_back((unsigned short)(nextRow + nextS));
+        indices.push_back((unsigned short)(curRow + nextS));
       }
     }
   }
