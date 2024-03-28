@@ -40,8 +40,6 @@ class Scene : public eng::Drawable {
   float light2_power_ = 400.0f;
   float light3_power_ = 400.0f;
   float light4_power_ = 400.0f;
-
-  int renderer_type_;
 };
 
 #endif  // TEAPOT_SCENE_H

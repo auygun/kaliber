@@ -67,8 +67,6 @@ Scene::Scene() {
   teapot_model_.CreateXRotation(0.5f);
   sphere_model_.Unit();
   sphere_model_.Multiply3x3(0.05f);
-
-  renderer_type_ = static_cast<int>(Engine::Get().GetRendererType());
 }
 
 Scene::~Scene() = default;
@@ -161,6 +159,8 @@ void Scene::Draw(float frame_frac) {
 void Scene::Update(const Vector2f& angles, float zoom) {
   camera_.Orbit(-angles.y, angles.x, zoom);
 
+  int renderer_type = static_cast<int>(Engine::Get().GetRendererType());
+
   float label_width = ImGui::CalcTextSize("roughness").x;
   ImGui::SetNextWindowSize(ImVec2(label_width * 3.0f, -1.0f), ImGuiCond_Once);
   if (ImGui::Begin("Teapot", nullptr,
@@ -168,9 +168,9 @@ void Scene::Update(const Vector2f& angles, float zoom) {
                        ImGuiWindowFlags_NoSavedSettings |
                        ImGuiWindowFlags_NoResize)) {
     ImGui::PushItemWidth(-label_width);
-    ImGui::RadioButton("Vulkan", &renderer_type_, 1);
+    ImGui::RadioButton("Vulkan", &renderer_type, 1);
     ImGui::SameLine();
-    ImGui::RadioButton("OpenGL", &renderer_type_, 2);
+    ImGui::RadioButton("OpenGL", &renderer_type, 2);
     ImGui::ColorEdit4("albedo", albedo_.k, ImGuiColorEditFlags_NoAlpha);
     ImGui::SliderFloat("metallic", &metallic_, 0.0f, 1.0f, "%.2f");
     ImGui::SliderFloat("roughness", &roughness_, 0.0f, 1.0f, "%.2f");
@@ -182,7 +182,7 @@ void Scene::Update(const Vector2f& angles, float zoom) {
   }
   ImGui::End();
 
-  RendererType selected_type = static_cast<RendererType>(renderer_type_);
+  RendererType selected_type = static_cast<RendererType>(renderer_type);
   if (selected_type != Engine::Get().GetRendererType())
     Engine::Get().CreateRenderer(selected_type);
 }
