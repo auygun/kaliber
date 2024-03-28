@@ -1113,49 +1113,48 @@ bool RendererVulkan::InitializeInternal() {
 }
 
 void RendererVulkan::Shutdown() {
-  if (device_ == VK_NULL_HANDLE)
-    return;
-
   LOG(0) << "Shutting down renderer.";
-  task_runner_.CancelTasks();
-  quit_.store(true, std::memory_order_relaxed);
-  semaphore_.release();
-  setup_thread_.join();
+  if (device_ != VK_NULL_HANDLE) {
+    task_runner_.CancelTasks();
+    quit_.store(true, std::memory_order_relaxed);
+    semaphore_.release();
+    setup_thread_.join();
 
-  for (size_t i = 0; i < staging_buffers_.size(); i++) {
-    auto [buffer, allocation] = staging_buffers_[i].buffer;
-    vmaDestroyBuffer(allocator_, buffer, allocation);
+    for (size_t i = 0; i < staging_buffers_.size(); i++) {
+      auto [buffer, allocation] = staging_buffers_[i].buffer;
+      vmaDestroyBuffer(allocator_, buffer, allocation);
+    }
+
+    DestroyAllResources();
+    context_lost_ = true;
+
+    vkDeviceWaitIdle(device_);
+
+    for (size_t i = 0; i < frames_.size(); ++i) {
+      FreePendingResources(i);
+      vkDestroyCommandPool(device_, frames_[i].setup_command_pool, nullptr);
+      vkDestroyCommandPool(device_, frames_[i].draw_command_pool, nullptr);
+    }
+
+    vmaDestroyAllocator(allocator_);
+
+    vkDestroyDescriptorSetLayout(device_, descriptor_set_layout_, nullptr);
+    vkDestroySampler(device_, sampler_, nullptr);
+
+    device_ = VK_NULL_HANDLE;
+    frames_drawn_ = 0;
+    frames_.clear();
+    current_frame_ = 0;
+
+    staging_buffers_.clear();
+    current_staging_buffer_ = 0;
+    staging_buffer_used_ = false;
+
+    glslang::FinalizeProcess();
   }
-
-  DestroyAllResources();
-  context_lost_ = true;
-
-  vkDeviceWaitIdle(device_);
-
-  for (size_t i = 0; i < frames_.size(); ++i) {
-    FreePendingResources(i);
-    vkDestroyCommandPool(device_, frames_[i].setup_command_pool, nullptr);
-    vkDestroyCommandPool(device_, frames_[i].draw_command_pool, nullptr);
-  }
-
-  vmaDestroyAllocator(allocator_);
-
-  vkDestroyDescriptorSetLayout(device_, descriptor_set_layout_, nullptr);
-  vkDestroySampler(device_, sampler_, nullptr);
-
-  device_ = VK_NULL_HANDLE;
-  frames_drawn_ = 0;
-  frames_.clear();
-  current_frame_ = 0;
-
-  staging_buffers_.clear();
-  current_staging_buffer_ = 0;
-  staging_buffer_used_ = false;
 
   context_.DestroySurface();
   context_.Shutdown();
-
-  glslang::FinalizeProcess();
 }
 
 void RendererVulkan::BeginFrame() {

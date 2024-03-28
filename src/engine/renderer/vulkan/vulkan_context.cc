@@ -26,6 +26,8 @@ VulkanContext::VulkanContext() {
 }
 
 VulkanContext::~VulkanContext() {
+  DCHECK(device_ == VK_NULL_HANDLE);
+
   if (instance_ != VK_NULL_HANDLE) {
     if (use_validation_layers_)
       DestroyDebugUtilsMessengerEXT(instance_, dbg_messenger_, nullptr);
@@ -48,6 +50,9 @@ bool VulkanContext::Initialize() {
 }
 
 void VulkanContext::Shutdown() {
+  DCHECK(window_.swapchain == VK_NULL_HANDLE);
+  DCHECK(window_.surface == VK_NULL_HANDLE);
+
   if (device_ != VK_NULL_HANDLE) {
     for (int i = 0; i < kFrameLag; i++) {
       vkDestroyFence(device_, fences_[i], nullptr);
@@ -809,7 +814,10 @@ void VulkanContext::ResizeSurface(int width, int height) {
 
 void VulkanContext::DestroySurface() {
   CleanUpSwapChain(&window_);
-  vkDestroySurfaceKHR(instance_, window_.surface, nullptr);
+  if (window_.surface) {
+    vkDestroySurfaceKHR(instance_, window_.surface, nullptr);
+    window_.surface = VK_NULL_HANDLE;
+  }
 }
 
 VkFramebuffer VulkanContext::GetFramebuffer() {
