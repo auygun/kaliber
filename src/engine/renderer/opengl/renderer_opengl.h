@@ -87,7 +87,6 @@ class RendererOpenGL final : public Renderer {
                   const std::string& name,
                   float val) final;
   void SetUniform(uint64_t resource_id, const std::string& name, int val) final;
-  void UploadUniforms(uint64_t resource_id) final {}
 
   void PrepareForDrawing() final;
   void Present() final;

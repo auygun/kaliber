@@ -23,8 +23,6 @@ void SolidQuad::Draw(float frame_frac) {
   shader->SetUniform("projection", Engine::Get().GetProjectionMatrix());
   shader->SetUniform("color", color_);
   DoSetCustomUniforms();
-  shader->UploadUniforms();
-
   Engine::Get().GetQuad().Draw();
 }
 

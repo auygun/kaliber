@@ -76,9 +76,4 @@ void Shader::SetUniform(const std::string& name, int i) {
     renderer_->SetUniform(resource_id_, name, i);
 }
 
-void Shader::UploadUniforms() {
-  if (IsValid())
-    renderer_->UploadUniforms(resource_id_);
-}
-
 }  // namespace eng

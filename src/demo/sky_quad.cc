@@ -43,8 +43,6 @@ void SkyQuad::Draw(float frame_frac) {
   shader_->SetUniform("sky_offset", sky_offset);
   shader_->SetUniform("nebula_color",
                       {nebula_color_.x, nebula_color_.y, nebula_color_.z});
-  shader_->UploadUniforms();
-
   Engine::Get().GetQuad().Draw();
 }
 

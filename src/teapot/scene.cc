@@ -127,7 +127,6 @@ void Scene::Draw(float frame_frac) {
   shader_.SetUniform("metallic", metallic_);
   shader_.SetUniform("roughness", roughness_);
   shader_.SetUniform("ao", ao_);
-  shader_.UploadUniforms();
   teapot_geometry_.Draw();
 
   shader_.SetUniform("albedo", Vector3f(1, 1, 1));
@@ -137,22 +136,18 @@ void Scene::Draw(float frame_frac) {
 
   sphere_model_.Row(3) = Vector3f(-15, -4, -15);
   shader_.SetUniform("model", sphere_model_);
-  shader_.UploadUniforms();
   sphere_geometry_.Draw();
 
   sphere_model_.Row(3) = Vector3f(15, -4, -15);
   shader_.SetUniform("model", sphere_model_);
-  shader_.UploadUniforms();
   sphere_geometry_.Draw();
 
   sphere_model_.Row(3) = Vector3f(-15, -4, 15);
   shader_.SetUniform("model", sphere_model_);
-  shader_.UploadUniforms();
   sphere_geometry_.Draw();
 
   sphere_model_.Row(3) = Vector3f(15, -4, 15);
   shader_.SetUniform("model", sphere_model_);
-  shader_.UploadUniforms();
   sphere_geometry_.Draw();
 }
 

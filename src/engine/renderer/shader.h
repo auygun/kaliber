@@ -37,8 +37,6 @@ class Shader : public RenderResource {
   void SetUniform(const std::string& name, const base::Matrix4f& m);
   void SetUniform(const std::string& name, float f);
   void SetUniform(const std::string& name, int i);
-
-  void UploadUniforms();
 };
 
 }  // namespace eng

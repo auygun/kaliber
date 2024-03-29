@@ -531,6 +531,21 @@ void RendererVulkan::Draw(uint64_t resource_id,
   if (it == geometries_.end())
     return;
 
+  // Update the values of push constants for the active shader if dirty.
+  if (active_shader_id_ != kInvalidId) {
+    auto active_shader = shaders_.find(active_shader_id_);
+    if (active_shader != shaders_.end() &&
+        active_shader->second.push_constants_dirty) {
+      active_shader->second.push_constants_dirty = false;
+      vkCmdPushConstants(
+          frames_[current_frame_].draw_command_buffer,
+          active_shader->second.pipeline_layout,
+          VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+          active_shader->second.push_constants_size,
+          active_shader->second.push_constants.get());
+    }
+  }
+
   uint64_t data_offset = start_offset * it->second.index_type_size;
   if (num_indices == 0)
     num_indices = it->second.num_indices;
@@ -934,17 +949,6 @@ void RendererVulkan::SetUniform(uint64_t resource_id,
       return;
   }
   SetUniformInternal(it->second, name, val);
-}
-
-void RendererVulkan::UploadUniforms(uint64_t resource_id) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  vkCmdPushConstants(
-      frames_[current_frame_].draw_command_buffer, it->second.pipeline_layout,
-      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-      it->second.push_constants_size, it->second.push_constants.get());
 }
 
 void RendererVulkan::PrepareForDrawing() {
@@ -2161,6 +2165,7 @@ bool RendererVulkan::SetUniformInternal(ShaderVulkan& shader,
   auto* dst =
       reinterpret_cast<T*>(shader.push_constants.get() + std::get<2>(*it));
   *dst = val;
+  shader.push_constants_dirty = true;
   return true;
 }
 

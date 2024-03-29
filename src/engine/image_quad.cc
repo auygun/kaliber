@@ -72,8 +72,6 @@ void ImageQuad::Draw(float frame_frac) {
   shader->SetUniform("color", color_);
   shader->SetUniform("texture_0", 0);
   DoSetCustomUniforms();
-  shader->UploadUniforms();
-
   Engine::Get().GetQuad().Draw();
 }
 

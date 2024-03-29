@@ -87,7 +87,6 @@ class RendererVulkan final : public Renderer {
                   const std::string& name,
                   float val) final;
   void SetUniform(uint64_t resource_id, const std::string& name, int val) final;
-  void UploadUniforms(uint64_t resource_id) final;
 
   void PrepareForDrawing() final;
   void Present() final;
@@ -136,6 +135,7 @@ class RendererVulkan final : public Renderer {
                            size_t   // Push constant offset
                            >>
         variables;
+    bool push_constants_dirty = false;
     std::unique_ptr<char[]> push_constants;
     size_t push_constants_size = 0;
     std::vector<std::string> sampler_uniform_names;

@@ -97,7 +97,6 @@ class Renderer {
   virtual void SetUniform(uint64_t resource_id,
                           const std::string& name,
                           int val) = 0;
-  virtual void UploadUniforms(uint64_t resource_id) = 0;
 
   virtual void PrepareForDrawing() = 0;
   virtual void Present() = 0;
