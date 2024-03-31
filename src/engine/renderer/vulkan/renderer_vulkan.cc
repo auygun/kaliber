@@ -585,6 +585,17 @@ RendererVulkan::DescriptorSetInfo RendererVulkan::GetOrCreateDescriptorSet(
         };
         set_writes[i].pBufferInfo = buffer_info;
       } break;
+      case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
+        pool_key.uniform_count[kStorageBuffer]++;
+
+        auto* buffer_info = ALLOCA_SINGLE(VkDescriptorBufferInfo);
+        *buffer_info = {
+            .buffer = std::get<0>(uniform.uniform_buffer),
+            .offset = 0,
+            .range = uniform.buffer_size,
+        };
+        set_writes[i].pBufferInfo = buffer_info;
+      } break;
       default: {
         NOTREACHED() << "Unsupported descriptor type: "
                      << uniform.descriptor_type;
@@ -662,6 +673,17 @@ void RendererVulkan::Draw(uint64_t resource_id,
                 AllocateBuffer(uniform.uniform_buffer, 1000 /*TODO*/,
                                VK_BUFFER_USAGE_TRANSFER_DST_BIT |
                                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                               VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+                uniform.buffer_size = 1000;  // TODO
+              }
+              vk_objects.push_back(
+                  (uintptr_t)std::get<0>(uniform.uniform_buffer));
+            } break;
+            case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
+              if (std::get<0>(uniform.uniform_buffer) == VK_NULL_HANDLE) {
+                AllocateBuffer(uniform.uniform_buffer, 1000 /*TODO*/,
+                               VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                                VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
                 uniform.buffer_size = 1000;  // TODO
               }
@@ -1703,6 +1725,13 @@ RendererVulkan::GetOrCreateDescriptorPool(DescriptorPoolKey key) {
             key.uniform_count[kUniformBuffer] * kMaxDescriptorsPerPool,
     });
   }
+  if (key.uniform_count[kStorageBuffer] > 0) {
+    sizes.push_back({
+        .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+        .descriptorCount =
+            key.uniform_count[kStorageBuffer] * kMaxDescriptorsPerPool,
+    });
+  }
   DCHECK(sizes.size() <= kUniformType_Max);
 
   VkDescriptorPoolCreateInfo descriptor_pool_create_info = {
@@ -2114,6 +2143,9 @@ bool RendererVulkan::ParseDescriptorBindings(
         } break;
         case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER: {
           uniform.descriptor_type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        } break;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
+          uniform.descriptor_type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         } break;
         default: {
           DLOG(0) << "Unsupported descriptor type: " << binding.descriptor_type;

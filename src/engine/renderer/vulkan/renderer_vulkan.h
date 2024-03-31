@@ -125,6 +125,7 @@ class RendererVulkan final : public Renderer {
     kUniformType_Uninitialized = -1,
     kSamplerWithTexture,
     kUniformBuffer,
+    kStorageBuffer,
     kUniformType_Max
   };
 
