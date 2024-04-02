@@ -6,6 +6,9 @@
 #include "engine/renderer/shader.h"
 #include "engine/renderer/texture.h"
 
+#include "engine/platform/platform.h"
+#include "engine/renderer/vulkan/renderer_vulkan.h"
+
 using namespace base;
 
 namespace eng {
@@ -25,6 +28,15 @@ ImageQuad& ImageQuad::Create(const std::string& asset_name,
   frame_width_ = frame_width;
   frame_height_ = frame_height;
   asset_name_ = asset_name;
+
+  RendererVulkan* rv =
+      static_cast<RendererVulkan*>(Engine::Get().GetRenderer());
+  desc_set0_ = rv->CreateDescriptorSet(
+      Engine::Get().GetPassThroughShader().resource_id(), 2,
+      {{texture_->resource_id()}}, {});
+  desc_set2_ = rv->CreateDescriptorSet(
+      Engine::Get().GetPassThroughShader().resource_id(), 0,
+      {}, {{Engine::Get().quad_ssbo_}});
 
   DCHECK((frame_width_ > 0 && frame_height_ > 0) || texture_->IsValid())
       << asset_name;
@@ -73,6 +85,11 @@ void ImageQuad::Draw(float frame_frac) {
   shader->SetUniform("texture_0", 0);
   DoSetCustomUniforms();
   shader->UploadUniforms();
+
+  RendererVulkan* rv =
+      static_cast<RendererVulkan*>(Engine::Get().GetRenderer());
+  rv->ActivateDescriptorSet(desc_set0_);
+  rv->ActivateDescriptorSet(desc_set2_);
 
   Engine::Get().GetQuad().Draw();
 }

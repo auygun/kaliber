@@ -53,6 +53,8 @@ class Engine : public PlatformObserver {
   void CreateRenderer(RendererType type);
   RendererType GetRendererType();
 
+  Renderer* GetRenderer() { return renderer_.get(); }
+
   void Exit();
 
   // Convert size from pixels to viewport scale.
@@ -106,6 +108,8 @@ class Engine : public PlatformObserver {
   Geometry& GetQuad() { return quad_; }
   Shader& GetPassThroughShader() { return pass_through_shader_; }
   Shader& GetSolidShader() { return solid_shader_; }
+
+  uint64_t quad_ssbo_ = 0;
 
   const Font* GetSystemFont() { return system_font_.get(); }
 

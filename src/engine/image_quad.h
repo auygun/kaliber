@@ -46,6 +46,10 @@ class ImageQuad final : public Animatable {
 
   std::string asset_name_;
 
+  uint32_t desc_set0_ = 0;
+  uint32_t desc_set2_ = 0;
+ 
+
   float GetFrameWidth() const;
   float GetFrameHeight() const;
 

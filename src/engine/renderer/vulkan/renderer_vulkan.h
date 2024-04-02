@@ -94,6 +94,19 @@ class RendererVulkan final : public Renderer {
   void SetUniform(uint64_t resource_id, const std::string& name, int val) final;
   void UploadUniforms(uint64_t resource_id) final;
 
+  uint64_t CreateBuffer(uint64_t shader_id,
+                        size_t set,
+                        size_t binding,
+                        uint32_t buffer_size);
+  void UpdateBuffer2(uint64_t resource_id, const void* data, size_t size);
+
+  uint64_t CreateDescriptorSet(
+      uint64_t shader_id,
+      size_t set,
+      const std::vector<std::vector<uint64_t>>& textures,
+      const std::vector<uint64_t>& buffers);
+  void ActivateDescriptorSet(uint64_t resource_id);
+
   void PrepareForDrawing() final;
   void Present() final;
 
@@ -155,9 +168,9 @@ class RendererVulkan final : public Renderer {
     VkDescriptorType descriptor_type = (VkDescriptorType)-1;
     uint32_t binding = 0;
     VkShaderStageFlags stage_flags = 0;
+    size_t length = 0;  // Size of arrays (in total elements), or ubos (in
+                        // bytes * total elements).
     std::unordered_map<std::string, UniformField> fields;
-    Buffer<VkBuffer> uniform_buffer;
-    size_t buffer_size = 0;
   };
 
   std::unordered_map<std::string, std::array<std::vector<uint8_t>, 2>>
@@ -197,6 +210,19 @@ class RendererVulkan final : public Renderer {
     int height = 0;
   };
 
+  struct BufferVulkan {
+    Buffer<VkBuffer> buffer;
+    size_t buffer_size = 0;
+    VkDescriptorType descriptor_type = (VkDescriptorType)-1;
+  };
+
+  struct DescriptorSetVulkan {
+    uint32_t set = 0;
+    VkDescriptorSet descriptor_set = VK_NULL_HANDLE;
+    DescriptorPoolKey pool_key;
+    DescriptorPools::iterator pools_it;
+  };
+
   // Each frame contains 2 command buffers with separate synchronization scopes.
   // One for creating resources (recorded outside a render pass) and another for
   // drawing (recorded inside a render pass). Also contains list of resources to
@@ -224,6 +250,8 @@ class RendererVulkan final : public Renderer {
   std::unordered_map<uint64_t, GeometryVulkan> geometries_;
   std::unordered_map<uint64_t, ShaderVulkan> shaders_;
   std::unordered_map<uint64_t, TextureVulkan> textures_;
+  std::unordered_map<uint64_t, BufferVulkan> buffers_;
+  std::unordered_map<uint64_t, DescriptorSetVulkan> descriptor_sets_;
   uint64_t last_resource_id_ = 0;
 
   bool context_lost_ = false;
@@ -351,11 +379,6 @@ class RendererVulkan final : public Renderer {
   DescriptorPools::iterator GetOrCreateDescriptorPool(DescriptorPoolKey key);
   void UnreferenceDescriptorPool(DescriptorPoolKey key,
                                  DescriptorPools::iterator pools_it);
-
-  DescriptorSetInfo GetOrCreateDescriptorSet(
-      uint64_t set_key,
-      const std::vector<Uniform>& uniform_set,
-      VkDescriptorSetLayout set_layout);
 };
 
 }  // namespace eng

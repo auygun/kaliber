@@ -16,6 +16,7 @@
 #include "engine/input_event.h"
 #include "engine/platform/platform.h"
 #include "engine/renderer/renderer.h"
+#include "engine/renderer/vulkan/renderer_vulkan.h"
 #include "third_party/imgui/imgui.h"
 #include "third_party/texture_compressor/texture_compressor.h"
 
@@ -667,6 +668,12 @@ void Engine::CreateRenderResources() {
   } else {
     LOG(0) << "Could not create solid shader.";
   }
+
+  RendererVulkan* rv = static_cast<RendererVulkan*>(renderer_.get());
+  uint32_t buffer_size = GetVertexSize(quad_.vertex_description()) * 4;
+  quad_ssbo_ =
+      rv->CreateBuffer(pass_through_shader_.resource_id(), 0, 0, buffer_size);
+  rv->UpdateBuffer2(quad_ssbo_, vertices, buffer_size);
 
   imgui_backend_.CreateRenderResources(renderer_.get());
 
