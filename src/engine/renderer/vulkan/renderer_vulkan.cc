@@ -160,7 +160,7 @@ const char* SHADER_STAGE_NAMES[kShaderStage_Max] = {
 };
 
 constexpr int kShaderStageFlagBits[kShaderStage_Max] = {
-    VK_SHADER_STAGE_VERTEX_BIT,
+    VK_SHADER_STAGE_MESH_BIT_EXT,
     VK_SHADER_STAGE_FRAGMENT_BIT,
 };
 
@@ -220,7 +220,7 @@ std::vector<uint8_t> CompileGlsl(EShLanguage stage,
 
   glslang::EShTargetClientVersion vulkan_client_version =
       glslang::EShTargetVulkan_1_0;
-  glslang::EShTargetLanguageVersion target_version = glslang::EShTargetSpv_1_0;
+  glslang::EShTargetLanguageVersion target_version = glslang::EShTargetSpv_1_4;
   glslang::TShader::ForbidIncluder includer;
 
   glslang::TShader shader(stage);
@@ -293,32 +293,33 @@ std::vector<uint8_t> CompileGlsl(EShLanguage stage,
   return ret;
 }
 
-VertexInputDescription GetVertexInputDescription(const VertexDescription& vd) {
-  unsigned vertex_offset = 0;
-  unsigned location = 0;
+// VertexInputDescription GetVertexInputDescription(const VertexDescription& vd)
+// {
+//   unsigned vertex_offset = 0;
+//   unsigned location = 0;
 
-  std::vector<VkVertexInputAttributeDescription> attributes;
+//   std::vector<VkVertexInputAttributeDescription> attributes;
 
-  for (auto& attr : vd) {
-    auto [attrib_type, data_type, num_elements, type_size] = attr;
+//   for (auto& attr : vd) {
+//     auto [attrib_type, data_type, num_elements, type_size] = attr;
 
-    VkVertexInputAttributeDescription attribute;
-    attribute.location = location++;
-    attribute.binding = 0;
-    attribute.format = kVkDataType[data_type][num_elements - 1];
-    attribute.offset = vertex_offset;
-    attributes.push_back(attribute);
+//     VkVertexInputAttributeDescription attribute;
+//     attribute.location = location++;
+//     attribute.binding = 0;
+//     attribute.format = kVkDataType[data_type][num_elements - 1];
+//     attribute.offset = vertex_offset;
+//     attributes.push_back(attribute);
 
-    vertex_offset += num_elements * type_size;
-  }
+//     vertex_offset += num_elements * type_size;
+//   }
 
-  std::vector<VkVertexInputBindingDescription> bindings(1);
-  bindings[0].binding = 0;
-  bindings[0].stride = vertex_offset;
-  bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+//   std::vector<VkVertexInputBindingDescription> bindings(1);
+//   bindings[0].binding = 0;
+//   bindings[0].stride = vertex_offset;
+//   bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-  return std::make_pair(std::move(bindings), std::move(attributes));
-}
+//   return std::make_pair(std::move(bindings), std::move(attributes));
+// }
 
 VkIndexType GetIndexType(DataType data_type) {
   switch (data_type) {
@@ -629,9 +630,8 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
       HERE,
       std::bind(&RendererVulkan::ImageMemoryBarrier, this,
                 std::get<0>(it->second.image), VK_ACCESS_TRANSFER_WRITE_BIT,
-                VK_PIPELINE_STAGE_VERTEX_SHADER_BIT |
-                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
-                    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                VK_PIPELINE_STAGE_MESH_SHADER_BIT_EXT |
+                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                 0, VK_ACCESS_SHADER_READ_BIT,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
@@ -687,7 +687,7 @@ uint64_t RendererVulkan::CreateShader(
   if (it == spirv_cache_.end()) {
     std::array<std::vector<uint8_t>, 2> spirv;
     std::string error;
-    spirv[0] = CompileGlsl(EShLangVertex, source->GetVertexSource(), &error);
+    spirv[0] = CompileGlsl(EShLangMesh, source->GetVertexSource(), &error);
     if (!error.empty())
       DLOG(0) << source->name() << " vertex shader compile error: " << error;
     spirv[1] =
@@ -735,12 +735,18 @@ uint64_t RendererVulkan::CreateShader(
   if (!CreatePipelineLayout(shader, spirv_vertex, spirv_fragment))
     DLOG(0) << "Failed to create pipeline layout!";
 
+  // VkPipelineShaderStageRequiredSubgroupSizeCreateInfoEXT rss_info = {};
+  // rss_info.sType =
+  // VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO_EXT;
+  // rss_info.requiredSubgroupSize = context_.GetSubgroupSize();
+
   VkPipelineShaderStageCreateInfo vert_shader_stage_info{};
   vert_shader_stage_info.sType =
       VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  vert_shader_stage_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
+  vert_shader_stage_info.stage = VK_SHADER_STAGE_MESH_BIT_EXT;
   vert_shader_stage_info.module = vert_shader_module;
   vert_shader_stage_info.pName = "main";
+  // vert_shader_stage_info.pNext = &rss_info;
 
   VkPipelineShaderStageCreateInfo frag_shader_stage_info{};
   frag_shader_stage_info.sType =
@@ -752,26 +758,26 @@ uint64_t RendererVulkan::CreateShader(
   VkPipelineShaderStageCreateInfo shaderStages[] = {vert_shader_stage_info,
                                                     frag_shader_stage_info};
 
-  VertexInputDescription vertex_input =
-      GetVertexInputDescription(vertex_description);
+  // VertexInputDescription vertex_input =
+  //     GetVertexInputDescription(vertex_description);
 
-  VkPipelineVertexInputStateCreateInfo vertex_input_info{};
-  vertex_input_info.sType =
-      VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertex_input_info.vertexBindingDescriptionCount =
-      std::get<0>(vertex_input).size();
-  vertex_input_info.vertexAttributeDescriptionCount =
-      std::get<1>(vertex_input).size();
-  vertex_input_info.pVertexBindingDescriptions =
-      std::get<0>(vertex_input).data();
-  vertex_input_info.pVertexAttributeDescriptions =
-      std::get<1>(vertex_input).data();
+  // VkPipelineVertexInputStateCreateInfo vertex_input_info{};
+  // vertex_input_info.sType =
+  //     VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+  // vertex_input_info.vertexBindingDescriptionCount =
+  //     std::get<0>(vertex_input).size();
+  // vertex_input_info.vertexAttributeDescriptionCount =
+  //     std::get<1>(vertex_input).size();
+  // vertex_input_info.pVertexBindingDescriptions =
+  //     std::get<0>(vertex_input).data();
+  // vertex_input_info.pVertexAttributeDescriptions =
+  //     std::get<1>(vertex_input).data();
 
-  VkPipelineInputAssemblyStateCreateInfo input_assembly{};
-  input_assembly.sType =
-      VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-  input_assembly.topology = kVkPrimitiveType[primitive];
-  input_assembly.primitiveRestartEnable = VK_FALSE;
+  // VkPipelineInputAssemblyStateCreateInfo input_assembly{};
+  // input_assembly.sType =
+  //     VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+  // input_assembly.topology = kVkPrimitiveType[primitive];
+  // input_assembly.primitiveRestartEnable = VK_FALSE;
 
   VkPipelineViewportStateCreateInfo viewport_state{};
   viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -842,18 +848,24 @@ uint64_t RendererVulkan::CreateShader(
   dynamic_state_create_info.dynamicStateCount = dynamic_states.size();
   dynamic_state_create_info.pDynamicStates = dynamic_states.data();
 
+  // VkPipelineTessellationStateCreateInfo tessStateInfo = {};
+  // tessStateInfo.sType =
+  //     VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+  // tessStateInfo.patchControlPoints = 0;
+
   VkGraphicsPipelineCreateInfo pipeline_info{};
   pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
   pipeline_info.stageCount = 2;
   pipeline_info.pStages = shaderStages;
-  pipeline_info.pVertexInputState = &vertex_input_info;
-  pipeline_info.pInputAssemblyState = &input_assembly;
+  pipeline_info.pVertexInputState = nullptr;
+  pipeline_info.pInputAssemblyState = nullptr;
   pipeline_info.pViewportState = &viewport_state;
   pipeline_info.pRasterizationState = &rasterizer;
   pipeline_info.pMultisampleState = &multisampling;
   pipeline_info.pColorBlendState = &color_blending;
   pipeline_info.pDepthStencilState = &depth_stencil;
   pipeline_info.pDynamicState = &dynamic_state_create_info;
+  // pipeline_info.pTessellationState = &tessStateInfo;
   pipeline_info.layout = shader.pipeline_layout;
   pipeline_info.renderPass = context_.GetRenderPass();
   pipeline_info.subpass = 0;
@@ -974,7 +986,7 @@ void RendererVulkan::UploadUniforms(uint64_t resource_id) {
 
   vkCmdPushConstants(
       frames_[current_frame_].draw_command_buffer, it->second.pipeline_layout,
-      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+      VK_SHADER_STAGE_MESH_BIT_EXT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
       it->second.push_constants_size, it->second.push_constants.get());
 }
 
@@ -1045,7 +1057,7 @@ void RendererVulkan::UpdateBuffer2(uint64_t resource_id,
                         std::bind(&RendererVulkan::BufferMemoryBarrier, this,
                                   std::get<0>(it->second.buffer), 0, size,
                                   VK_PIPELINE_STAGE_TRANSFER_BIT,
-                                  VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+                                  VK_PIPELINE_STAGE_MESH_SHADER_BIT_EXT,
                                   VK_ACCESS_TRANSFER_WRITE_BIT, dst_access));
   semaphore_.release();
 }
@@ -1191,6 +1203,10 @@ void RendererVulkan::ActivateDescriptorSet(uint64_t resource_id) {
       VK_PIPELINE_BIND_POINT_GRAPHICS, active_shader->second.pipeline_layout,
       descriptor_set_it->second.set, 1,
       &descriptor_set_it->second.descriptor_set, 0, nullptr);
+}
+
+void RendererVulkan::DrawMeshTask() {
+  vkCmdDrawMeshTasksEXT(frames_[current_frame_].draw_command_buffer, 1, 1, 1);
 }
 
 void RendererVulkan::PrepareForDrawing() {
@@ -2445,7 +2461,7 @@ bool RendererVulkan::CreatePipelineLayout(
     VkPushConstantRange push_constant_range;
     if (shader.push_constants_size) {
       push_constant_range.stageFlags =
-          VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+          VK_SHADER_STAGE_MESH_BIT_EXT | VK_SHADER_STAGE_FRAGMENT_BIT;
       push_constant_range.offset = 0;
       push_constant_range.size = shader.push_constants_size;
 

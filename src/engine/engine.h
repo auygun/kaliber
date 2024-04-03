@@ -110,6 +110,7 @@ class Engine : public PlatformObserver {
   Shader& GetSolidShader() { return solid_shader_; }
 
   uint64_t quad_ssbo_ = 0;
+  uint64_t quad_indices_ = 0;
 
   const Font* GetSystemFont() { return system_font_.get(); }
 

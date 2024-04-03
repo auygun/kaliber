@@ -45,7 +45,7 @@ Engine::~Engine() noexcept {
   thread_pool_.CancelTasks();
   thread_pool_.Shutdown();
 
-  imgui_backend_.Shutdown();
+  // imgui_backend_.Shutdown();
   game_.reset();
   textures_.clear();
   shaders_.clear();
@@ -96,7 +96,7 @@ void Engine::Initialize() {
 
   thread_pool_.Initialize();
 
-  imgui_backend_.Initialize(IsMobile(), GetRootPath());
+  // imgui_backend_.Initialize(IsMobile(), GetRootPath());
 
   platform_->CreateMainWindow();
 
@@ -120,14 +120,14 @@ void Engine::Initialize() {
   CHECK(game_->Initialize()) << "Failed to initialize the game.";
   engine_state_ = State::kInitialized;
 
-  imgui_backend_.NewFrame(0);
+  // imgui_backend_.NewFrame(0);
 }
 
 void Engine::Update(float delta_time) {
   seconds_accumulated_ += delta_time;
   ++tick_;
 
-  imgui_backend_.NewFrame(delta_time);
+  // imgui_backend_.NewFrame(delta_time);
 
   for (auto d : animators_)
     d->Update(delta_time);
@@ -143,7 +143,7 @@ void Engine::Update(float delta_time) {
   if (stats_visible_)
     ShowStats();
 
-  imgui_backend_.EndFrame();
+  // imgui_backend_.EndFrame();
 }
 
 void Engine::Draw(float frame_frac) {
@@ -168,7 +168,7 @@ void Engine::Draw(float frame_frac) {
     if (d->IsVisible())
       d->Draw(frame_frac);
   }
-  imgui_backend_.Draw();
+  // imgui_backend_.Draw();
   renderer_->Present();
 }
 
@@ -545,9 +545,9 @@ void Engine::GainedFocus(bool from_interstitial_ad) {
 }
 
 void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
-  event = imgui_backend_.OnInputEvent(std::move(event));
-  if (!event)
-    return;
+  // event = imgui_backend_.OnInputEvent(std::move(event));
+  // if (!event)
+  //   return;
 
   if (replaying_)
     return;
@@ -661,21 +661,31 @@ void Engine::CreateRenderResources() {
   }
 
   // Create the shader we can reuse for solid rendering.
-  source = std::make_unique<ShaderSource>();
-  if (source->Load("engine/solid.glsl")) {
-    solid_shader_.Create(std::move(source), quad_.vertex_description(),
-                         quad_.primitive(), false);
-  } else {
-    LOG(0) << "Could not create solid shader.";
+  // source = std::make_unique<ShaderSource>();
+  // if (source->Load("engine/solid.glsl")) {
+  //   solid_shader_.Create(std::move(source), quad_.vertex_description(),
+  //                        quad_.primitive(), false);
+  // } else {
+  //   LOG(0) << "Could not create solid shader.";
+  // }
+
+  {
+    RendererVulkan* rv = static_cast<RendererVulkan*>(renderer_.get());
+    uint32_t buffer_size = GetVertexSize(quad_.vertex_description()) * 4;
+    quad_ssbo_ =
+        rv->CreateBuffer(pass_through_shader_.resource_id(), 0, 0, buffer_size);
+    rv->UpdateBuffer2(quad_ssbo_, vertices, buffer_size);
+  }
+  static unsigned int indices[] = {0, 1, 2, 1, 2, 3};
+  {
+    RendererVulkan* rv = static_cast<RendererVulkan*>(renderer_.get());
+    uint32_t buffer_size = GetIndexSize(kDataType_UInt) * 6;
+    quad_indices_ =
+        rv->CreateBuffer(pass_through_shader_.resource_id(), 0, 1, buffer_size);
+    rv->UpdateBuffer2(quad_indices_, indices, buffer_size);
   }
 
-  RendererVulkan* rv = static_cast<RendererVulkan*>(renderer_.get());
-  uint32_t buffer_size = GetVertexSize(quad_.vertex_description()) * 4;
-  quad_ssbo_ =
-      rv->CreateBuffer(pass_through_shader_.resource_id(), 0, 0, buffer_size);
-  rv->UpdateBuffer2(quad_ssbo_, vertices, buffer_size);
-
-  imgui_backend_.CreateRenderResources(renderer_.get());
+  // imgui_backend_.CreateRenderResources(renderer_.get());
 
   for (auto& t : textures_) {
     std::shared_ptr<Texture> texture = t.second.texture.lock();

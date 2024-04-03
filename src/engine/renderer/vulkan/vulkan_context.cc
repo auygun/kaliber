@@ -364,7 +364,7 @@ bool VulkanContext::CreatePhysicalDevice() {
       /*applicationVersion*/ 0,
       /*pEngineName*/ "kaliber",
       /*engineVersion*/ 0,
-      /*apiVersion*/ VK_API_VERSION_1_0,
+      /*apiVersion*/ VK_API_VERSION_1_1,
   };
   VkInstanceCreateInfo inst_info = {
       /*sType*/ VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
@@ -495,6 +495,20 @@ bool VulkanContext::CreatePhysicalDevice() {
         return false;
       }
     }
+
+    // Enable VK_EXT_mesh_shader
+    for (uint32_t i = 0; i < device_extension_count; i++) {
+      if (!strcmp(VK_EXT_MESH_SHADER_EXTENSION_NAME,
+                  device_extensions[i].extensionName)) {
+        LOG(0) << "Enabling VK_EXT_mesh_shader";
+        extension_names_[enabled_extension_count_++] =
+            VK_EXT_MESH_SHADER_EXTENSION_NAME;
+      }
+      if (enabled_extension_count_ >= kMaxExtensions) {
+        LOG(0) << "VK_EXT_mesh_shader not found!";
+        return false;
+      }
+    }
   }
 
   if (!swapchain_ext_found) {
@@ -530,7 +544,19 @@ bool VulkanContext::CreatePhysicalDevice() {
         break;
     }
   }
-  vkGetPhysicalDeviceProperties(gpu_, &gpu_props_);
+
+  mesh_props_ext_ = {};
+  mesh_props_ext_.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_EXT;
+  mesh_props_ext_.pNext = &subgroup_props_;
+  subgroup_props_ = {};
+  subgroup_props_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
+  VkPhysicalDeviceProperties2 props2 = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+      .pNext = &mesh_props_ext_,
+      .properties = {}};
+  vkGetPhysicalDeviceProperties2(gpu_, &props2);
+  gpu_props_ = props2.properties;
 
   LOG(0) << "Vulkan:";
   LOG(0) << "  Name: " << gpu_props_.deviceName;
@@ -546,6 +572,15 @@ bool VulkanContext::CreatePhysicalDevice() {
          << gpu_props_.limits.maxPushConstantsSize;
   LOG(0) << "  optimalBufferCopyOffsetAlignment: "
          << gpu_props_.limits.optimalBufferCopyOffsetAlignment;
+  LOG(0) << "  maxPreferredMeshWorkGroupInvocations: "
+         << mesh_props_ext_.maxPreferredMeshWorkGroupInvocations;
+
+  LOG(0) << "  maxPreferredMeshWorkGroupInvocations: "
+         << mesh_props_ext_.maxTaskWorkGroupCount[0] << ", "
+         << mesh_props_ext_.maxTaskWorkGroupCount[1] << ", "
+         << mesh_props_ext_.maxTaskWorkGroupCount[2];
+
+  LOG(0) << "  subgroupSize: " << subgroup_props_.subgroupSize;
 
   // Call with NULL data to get count,
   vkGetPhysicalDeviceQueueFamilyProperties(gpu_, &queue_family_count_, nullptr);

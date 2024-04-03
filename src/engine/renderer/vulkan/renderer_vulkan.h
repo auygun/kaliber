@@ -107,6 +107,8 @@ class RendererVulkan final : public Renderer {
       const std::vector<uint64_t>& buffers);
   void ActivateDescriptorSet(uint64_t resource_id);
 
+  void DrawMeshTask();
+
   void PrepareForDrawing() final;
   void Present() final;
 

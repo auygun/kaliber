@@ -59,6 +59,7 @@ class VulkanContext {
   VkFormat GetScreenFormat() const { return format_; }
 
   VkPhysicalDeviceLimits GetDeviceLimits() const { return gpu_props_.limits; }
+  uint32_t GetSubgroupSize() const { return subgroup_props_.subgroupSize; }
 
   int GetWindowWidth() const { return window_.width; }
   int GetWindowHeight() const { return window_.height; }
@@ -95,6 +96,8 @@ class VulkanContext {
   VkDevice device_ = VK_NULL_HANDLE;
 
   VkPhysicalDeviceProperties gpu_props_;
+  VkPhysicalDeviceSubgroupProperties subgroup_props_;
+  VkPhysicalDeviceMeshShaderPropertiesEXT mesh_props_ext_;
   uint32_t queue_family_count_ = 0;
   std::unique_ptr<VkQueueFamilyProperties[]> queue_props_ = nullptr;
 

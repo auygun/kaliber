@@ -1,5 +1,10 @@
-IN(0) vec2 in_position;
-IN(1) vec2 in_tex_coord_0;
+#extension GL_EXT_mesh_shader : require
+
+// IN(0) vec2 in_position;
+// IN(1) vec2 in_tex_coord_0;
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout(triangles, max_vertices = 4, max_primitives = 2) out;
 
 // Arrays of scalars are tightly packed with the layout std430 qualifier
 struct VertexData {
@@ -7,9 +12,13 @@ struct VertexData {
   float uv[2];
 };
 
-layout(set = 0, binding = 0, std430) restrict readonly buffer Ssbo1 {
+layout(set = 0, binding = 0, std430) buffer Ssbo1 {
   VertexData data[];
 } ssbo1;
+
+layout(set = 0, binding = 1, std430) buffer Ssbo2 {
+  uint data[];
+} indices;
 
 UNIFORM_BEGIN
   UNIFORM_V(vec2 scale)
@@ -21,25 +30,51 @@ UNIFORM_BEGIN
   UNIFORM_F(vec4 color)
 UNIFORM_END
 
-OUT(0) vec2 tex_coord_0;
+OUT(0) vec2 tex_coord_0[];
 
-vec2 GetPosition(int index) {
-  return vec2(ssbo1.data[index].position[0], ssbo1.data[index].position[1]);
+VertexData vertices[] = VertexData[](
+  VertexData(float[2](-0.5, -0.5), float[2](0.0f, 1.0)),
+  VertexData(float[2]( 0.5, -0.5), float[2](1.0f, 1.0)),
+  VertexData(float[2](-0.5,  0.5), float[2](0.0f, 0.0)),
+  VertexData(float[2]( 0.5,  0.5), float[2](1.0f, 0.0)));
+
+uint ind[] = uint[](0, 1, 2, 1, 2, 3);
+
+vec2 GetPosition(uint index) {
+  float pos[2] = ssbo1.data[index].position; //vertices[index].position;
+  return vec2(pos[0], pos[1]);
 }
 
-vec2 GetUV(int index) {
-  return vec2(ssbo1.data[index].uv[0], ssbo1.data[index].uv[1]);
+vec2 GetUV(uint index) {
+  float uv[2] = ssbo1.data[index].uv; //vertices[index].uv;
+  return vec2(uv[0], uv[1]);
 }
 
 void main() {
-  // Simple 2d transform.
-  vec2 position = GetPosition(gl_VertexIndex);
-  position *= PARAM(scale);
-  position = vec2(position.x * PARAM(rotation).y + position.y * PARAM(rotation).x,
-                  position.y * PARAM(rotation).y - position.x * PARAM(rotation).x);
-  position += PARAM(offset);
+  SetMeshOutputsEXT(4, 2);
 
-  tex_coord_0 = (GetUV(gl_VertexIndex) + PARAM(tex_offset)) * PARAM(tex_scale);
+  for(uint i = gl_LocalInvocationIndex; i < 4; i += 1) {
+    // Simple 2d transform.
+    vec2 position = GetPosition(i);
+    position *= PARAM(scale);
+    position = vec2(position.x * PARAM(rotation).y + position.y * PARAM(rotation).x,
+                    position.y * PARAM(rotation).y - position.x * PARAM(rotation).x);
+    position += PARAM(offset);
 
-  gl_Position = PARAM(projection) * vec4(position, 0.0, 1.0);
+    // gl_Position = PARAM(projection) * vec4(position, 0.0, 1.0);
+    gl_MeshVerticesEXT[i].gl_Position = PARAM(projection) * vec4(position, 0.0, 1.0);
+
+    tex_coord_0[i] = (GetUV(i) + PARAM(tex_offset)) * PARAM(tex_scale);
+  }
+
+  for(uint i = gl_LocalInvocationIndex; i < 2; i += 1) {
+    // fetch indices
+    uint index = i * 3u;
+    uint index_0 = ind[index + 0u];
+    uint index_1 = ind[index + 1u];
+    uint index_2 = ind[index + 2u];
+
+    // triangle indices
+    gl_PrimitiveTriangleIndicesEXT[i] = uvec3(index_0, index_1, index_2);
+  }
 }

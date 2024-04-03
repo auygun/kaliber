@@ -36,7 +36,7 @@ ImageQuad& ImageQuad::Create(const std::string& asset_name,
       {{texture_->resource_id()}}, {});
   desc_set2_ = rv->CreateDescriptorSet(
       Engine::Get().GetPassThroughShader().resource_id(), 0,
-      {}, {{Engine::Get().quad_ssbo_}});
+      {}, {Engine::Get().quad_ssbo_, Engine::Get().quad_indices_});
 
   DCHECK((frame_width_ > 0 && frame_height_ > 0) || texture_->IsValid())
       << asset_name;
@@ -91,7 +91,8 @@ void ImageQuad::Draw(float frame_frac) {
   rv->ActivateDescriptorSet(desc_set0_);
   rv->ActivateDescriptorSet(desc_set2_);
 
-  Engine::Get().GetQuad().Draw();
+  // Engine::Get().GetQuad().Draw();
+  rv->DrawMeshTask();
 }
 
 float ImageQuad::GetFrameWidth() const {
