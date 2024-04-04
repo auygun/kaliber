@@ -1,6 +1,7 @@
 #ifndef ENGINE_RENDERER_VULKAN_RENDERER_VULKAN_H
 #define ENGINE_RENDERER_VULKAN_RENDERER_VULKAN_H
 
+#include <array>
 #include <atomic>
 #include <memory>
 #include <semaphore>
