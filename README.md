@@ -30,17 +30,14 @@ ninja -C out/debug
 You can also build a single target by passing the target name to ninja i.e. ```ninja -C out/debug demo```
 
 ### Android:
-Build "hello_world" in debug mode for all ABIs and install. GN will be run by
-Gradle so no setup is required. Location of gn and ninja executables can be
-specified via "gn" and "ninja" properties (*-Pgn="path/gn" -Pninja="path/ninja"*).
+Build games in debug mode for all ABIs and install. GN will be run by Gradle so
+no setup is required. Valid ABI targets are Arm7, Arm8, X86, X86_64, AllArchs,
+ArmOnly, X86Only.
 ```text
 cd build/android
 ./gradlew :app:installHelloWorldAllArchsDebug
-```
-Build "demo" in debug mode for x86_64 ABI and install. Valid ABI targets are
-Arm7, Arm8, X86, X86_64, AllArchs, ArmOnly, X86Only.
-```text
-./gradlew :app:installDemoX86_64Debug
+./gradlew :app:installDemoAllArchsDebug
+./gradlew :app:installTeapotAllArchsDebug
 ```
 
 ### Generate Visual Studio solution:
