@@ -1,5 +1,13 @@
 config("glslang_public") {
   include_dirs = [ "." ]
+
+  cflags = []
+
+  if (target_os == "win") {
+    cflags += [
+      "/wd4464",  # relative include path contains '..'
+    ]
+  }
 }
 
 source_set("glslang") {
@@ -7,12 +15,12 @@ source_set("glslang") {
   public_configs = [ ":glslang_public" ]
 
   sources = [
-    "OGLCompilersDLL/InitializeDll.cpp",
-    "OGLCompilersDLL/InitializeDll.h",
     "SPIRV/GLSL.ext.AMD.h",
+    "SPIRV/GLSL.ext.ARM.h",
     "SPIRV/GLSL.ext.EXT.h",
     "SPIRV/GLSL.ext.KHR.h",
     "SPIRV/GLSL.ext.NV.h",
+    "SPIRV/GLSL.ext.QCOM.h",
     "SPIRV/GLSL.std.450.h",
     "SPIRV/GlslangToSpv.cpp",
     "SPIRV/GlslangToSpv.h",
@@ -49,8 +57,6 @@ source_set("glslang") {
     "glslang/Include/SpirvIntrinsics.h",
     "glslang/Include/Types.h",
     "glslang/Include/arrays.h",
-    "glslang/Include/glslang_c_interface.h",
-    "glslang/Include/glslang_c_shader_types.h",
     "glslang/Include/intermediate.h",
     "glslang/MachineIndependent/Constant.cpp",
     "glslang/MachineIndependent/InfoSink.cpp",
@@ -100,7 +106,9 @@ source_set("glslang") {
     "glslang/MachineIndependent/reflection.cpp",
     "glslang/MachineIndependent/reflection.h",
     "glslang/OSDependent/osinclude.h",
+    "glslang/Public/ResourceLimits.h",
     "glslang/Public/ShaderLang.h",
+    "glslang/ResourceLimits/ResourceLimits.cpp",
     "glslang/build_info.h",
   ]
 

@@ -42,9 +42,11 @@ source_set("renderer") {
     "//src/base",
     "//src/third_party/glslang",
     "//src/third_party/spirv-reflect",
+  ]
+
+  public_deps = [
     "//src/third_party/vma",
     "//src/third_party/volk",
-    "//src/third_party/vulkan",
   ]
 
   if (target_os == "android") {
