@@ -120,7 +120,9 @@ class VulkanContext {
   VkFence fences_[kFrameLag];
 
   VkPhysicalDeviceMemoryProperties memory_properties_;
-  VkPhysicalDeviceFeatures physical_device_features_;
+
+  VkPhysicalDeviceMeshShaderFeaturesEXT mesh_shader_features_;
+  VkPhysicalDeviceFeatures2 physical_device_features2_;
 
   uint32_t swapchain_image_count_ = 0;
 

@@ -219,7 +219,7 @@ std::vector<uint8_t> CompileGlsl(EShLanguage stage,
   std::vector<uint8_t> ret;
 
   glslang::EShTargetClientVersion vulkan_client_version =
-      glslang::EShTargetVulkan_1_0;
+      glslang::EShTargetVulkan_1_1;
   glslang::EShTargetLanguageVersion target_version = glslang::EShTargetSpv_1_4;
   glslang::TShader::ForbidIncluder includer;
 

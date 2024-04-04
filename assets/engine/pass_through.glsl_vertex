@@ -12,11 +12,11 @@ struct VertexData {
   float uv[2];
 };
 
-layout(set = 0, binding = 0, std430) buffer Ssbo1 {
+layout(set = 0, binding = 0, std430) restrict readonly buffer Ssbo1 {
   VertexData data[];
 } ssbo1;
 
-layout(set = 0, binding = 1, std430) buffer Ssbo2 {
+layout(set = 0, binding = 1, std430) restrict readonly buffer Ssbo2 {
   uint data[];
 } indices;
 
@@ -32,21 +32,13 @@ UNIFORM_END
 
 OUT(0) vec2 tex_coord_0[];
 
-VertexData vertices[] = VertexData[](
-  VertexData(float[2](-0.5, -0.5), float[2](0.0f, 1.0)),
-  VertexData(float[2]( 0.5, -0.5), float[2](1.0f, 1.0)),
-  VertexData(float[2](-0.5,  0.5), float[2](0.0f, 0.0)),
-  VertexData(float[2]( 0.5,  0.5), float[2](1.0f, 0.0)));
-
-uint ind[] = uint[](0, 1, 2, 1, 2, 3);
-
 vec2 GetPosition(uint index) {
-  float pos[2] = ssbo1.data[index].position; //vertices[index].position;
+  float pos[2] = ssbo1.data[index].position;
   return vec2(pos[0], pos[1]);
 }
 
 vec2 GetUV(uint index) {
-  float uv[2] = ssbo1.data[index].uv; //vertices[index].uv;
+  float uv[2] = ssbo1.data[index].uv;
   return vec2(uv[0], uv[1]);
 }
 
@@ -70,9 +62,9 @@ void main() {
   for(uint i = gl_LocalInvocationIndex; i < 2; i += 1) {
     // fetch indices
     uint index = i * 3u;
-    uint index_0 = ind[index + 0u];
-    uint index_1 = ind[index + 1u];
-    uint index_2 = ind[index + 2u];
+    uint index_0 = indices.data[index + 0u];
+    uint index_1 = indices.data[index + 1u];
+    uint index_2 = indices.data[index + 2u];
 
     // triangle indices
     gl_PrimitiveTriangleIndicesEXT[i] = uvec3(index_0, index_1, index_2);

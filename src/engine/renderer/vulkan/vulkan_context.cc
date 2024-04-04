@@ -509,6 +509,32 @@ bool VulkanContext::CreatePhysicalDevice() {
         return false;
       }
     }
+
+    for (uint32_t i = 0; i < device_extension_count; i++) {
+      if (!strcmp(VK_KHR_SPIRV_1_4_EXTENSION_NAME,
+                  device_extensions[i].extensionName)) {
+        LOG(0) << "Enabling VK_KHR_spirv_1_4";
+        extension_names_[enabled_extension_count_++] =
+            VK_KHR_SPIRV_1_4_EXTENSION_NAME;
+      }
+      if (enabled_extension_count_ >= kMaxExtensions) {
+        LOG(0) << "VK_KHR_spirv_1_4 not found!";
+        return false;
+      }
+    }
+
+    for (uint32_t i = 0; i < device_extension_count; i++) {
+      if (!strcmp(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME,
+                  device_extensions[i].extensionName)) {
+        LOG(0) << "Enabling VK_KHR_shader_float_controls";
+        extension_names_[enabled_extension_count_++] =
+            VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME;
+      }
+      if (enabled_extension_count_ >= kMaxExtensions) {
+        LOG(0) << "VK_KHR_shader_float_controls not found!";
+        return false;
+      }
+    }
   }
 
   if (!swapchain_ext_found) {
@@ -597,7 +623,16 @@ bool VulkanContext::CreatePhysicalDevice() {
   // Query fine-grained feature support for this device.
   // If app has specific feature requirements it should check supported features
   // based on this query.
-  vkGetPhysicalDeviceFeatures(gpu_, &physical_device_features_);
+  mesh_shader_features_ = {};
+  mesh_shader_features_.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
+  physical_device_features2_ = {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+      .pNext = &mesh_shader_features_,
+      .features = {},
+  };
+  vkGetPhysicalDeviceFeatures2(gpu_, &physical_device_features2_);
+  mesh_shader_features_.meshShader = VK_TRUE;
 
   GET_PROC_ADDR(vkGetInstanceProcAddr, instance_,
                 GetPhysicalDeviceSurfaceSupportKHR);
@@ -625,7 +660,7 @@ bool VulkanContext::CreateDevice() {
 
   VkDeviceCreateInfo sdevice = {
       /*sType*/ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-      /*pNext*/ nullptr,
+      /*pNext*/ &physical_device_features2_,
       /*flags*/ 0,
       /*queueCreateInfoCount*/ 1,
       /*pQueueCreateInfos*/ queues,
@@ -633,9 +668,8 @@ bool VulkanContext::CreateDevice() {
       /*ppEnabledLayerNames*/ nullptr,
       /*enabledExtensionCount*/ enabled_extension_count_,
       /*ppEnabledExtensionNames*/ (const char* const*)extension_names_,
-      /*pEnabledFeatures*/ &physical_device_features_,  // If specific features
-                                                        // are required, pass
-                                                        // them in here
+      /*pEnabledFeatures*/ nullptr,  // Vulkan >= 1.1 uses pNext to enable
+                                     // features
 
   };
   if (separate_present_queue_) {
