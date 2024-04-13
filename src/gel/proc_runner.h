@@ -7,7 +7,6 @@
 #include <semaphore>
 #include <string>
 #include <thread>
-#include <utility>
 
 #include "base/task_runner.h"
 #include "gel/exec.h"
@@ -28,11 +27,11 @@ class ProcRunner {
   void Shutdown();
 
   int Run(std::vector<std::string> args);
-  void Abort(int pid);
+  void Kill(int pid);
 
  private:
   // first: Exec ptr, second: true for running / false for aborting.
-  using Proc = std::pair<std::unique_ptr<base::Exec>, bool>;
+  using Proc = std::unique_ptr<base::Exec>;
 
   std::thread worker_;
   std::counting_semaphore<> semaphore_{0};
@@ -41,13 +40,14 @@ class ProcRunner {
 
   OutputCB output_cb_;
   FinishedCB finished_cb_;
+
   std::shared_ptr<base::TaskRunner> main_thread_task_runner_;
 
   std::list<Proc> procs_;
 
   void WorkerMain();
 
-  bool Poll(base::Exec* proc, const OutputCB& output_cb);
+  bool Poll(base::Exec* proc);
 
   std::list<Proc>::iterator FindProc(int pid);
 };

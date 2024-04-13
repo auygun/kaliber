@@ -119,7 +119,7 @@ bool Exec::Poll() {
         status_ = Status::EXITED;
         result_ = WEXITSTATUS(proc_status);
       } else if (WIFSIGNALED(proc_status) && WTERMSIG(proc_status) == SIGINT) {
-        status_ = Status::ABORTED;
+        status_ = Status::KILLED;
       } else {
         LOG(0) << "exec_status: " << proc_status;
         status_ = Status::SYSTEM_ERROR;
@@ -131,7 +131,7 @@ bool Exec::Poll() {
   return out_pipe_ || err_pipe_ || status_ == Status::RUNNING;
 }
 
-bool Exec::Abort() {
+bool Exec::Kill() {
   DCHECK(status_ == Status::RUNNING);
   if (kill(pid_, SIGINT)) {
     LOG(0) << "kill failed";

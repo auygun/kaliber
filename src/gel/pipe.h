@@ -10,6 +10,9 @@ class Pipe {
   Pipe();
   ~Pipe();
 
+  Pipe(Pipe&& other);
+  Pipe& operator=(Pipe&& other);
+
   bool Create();
 
   int operator[](int which) const { return fd_[which]; }

@@ -11,6 +11,20 @@ Pipe::~Pipe() {
   CloseAll();
 }
 
+Pipe::Pipe(Pipe&& other) {
+  fd_[0] = other.fd_[0];
+  fd_[1] = other.fd_[1];
+  other.fd_[0] = other.fd_[1] = -1;
+}
+
+Pipe& Pipe::operator=(Pipe&& other) {
+  CloseAll();
+  fd_[0] = other.fd_[0];
+  fd_[1] = other.fd_[1];
+  other.fd_[0] = other.fd_[1] = -1;
+  return *this;
+}
+
 bool Pipe::Create() {
   if (pipe(fd_))
     return false;

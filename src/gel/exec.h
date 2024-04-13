@@ -11,16 +11,19 @@ namespace base {
 
 class Exec {
  public:
-  enum class Status { UNINITIALIZED, RUNNING, EXITED, ABORTED, SYSTEM_ERROR };
+  enum class Status { UNINITIALIZED, RUNNING, EXITED, KILLED, SYSTEM_ERROR };
 
   Exec() = default;
   ~Exec() = default;
+
+  Exec(Exec&& other) = default;
+  Exec& operator=(Exec&& other) = default;
 
   bool Start(const std::vector<std::string>& args);
 
   bool Poll();
 
-  bool Abort();
+  bool Kill();
 
   Status GetStatus() const { return status_; }
 

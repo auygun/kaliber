@@ -30,24 +30,23 @@ int ProcRunner::Run(std::vector<std::string> args) {
 
   task_runner_.PostTask(HERE, [&, proc]() -> void {
     DCHECK(FindProc(proc->pid()) == procs_.end());
-    procs_.emplace_back(std::unique_ptr<Exec>(proc), true);
+    procs_.emplace_back(proc);
   });
   semaphore_.release();
 
   return pid;
 }
 
-void ProcRunner::Abort(int pid) {
+void ProcRunner::Kill(int pid) {
   task_runner_.PostTask(HERE, [&, pid]() -> void {
     auto it = FindProc(pid);
-    if (it != procs_.end() && it->second) {
-      DLOG(0) << "Abort - pid: " << it->first->pid()
-              << " status: " << static_cast<int>(it->first->GetStatus());
+    if (it == procs_.end())
+      return;
 
-      if (it->first->GetStatus() == Exec::Status::RUNNING)
-        it->first->Abort();
-      it->second = false;
-    }
+    DLOG(0) << "Kill - pid: " << (*it)->pid()
+            << " status: " << static_cast<int>((*it)->GetStatus());
+    if ((*it)->GetStatus() == Exec::Status::RUNNING)
+      (*it)->Kill();
   });
   semaphore_.release();
 }
@@ -63,16 +62,10 @@ void ProcRunner::WorkerMain() {
       task_runner_.RunTasks();
 
       for (auto it = procs_.begin(); it != procs_.end();) {
-        if (!Poll(it->first.get(), it->second ? output_cb_ : OutputCB())) {
-          if (it->second)
-            main_thread_task_runner_->PostTask(
-                HERE, std::bind(finished_cb_, it->first->pid(),
-                                it->first->GetStatus(), it->first->GetResult(),
-                                it->first->GetErrStream().str()));
-          else
-            main_thread_task_runner_->PostTask(
-                HERE, std::bind(finished_cb_, it->first->pid(),
-                                Exec::Status::ABORTED, 0, ""));
+        if (!Poll((*it).get())) {
+          main_thread_task_runner_->PostTask(
+              HERE, std::bind(finished_cb_, (*it)->pid(), (*it)->GetStatus(),
+                              (*it)->GetResult(), (*it)->GetErrStream().str()));
           it = procs_.erase(it);
         } else {
           ++it;
@@ -82,7 +75,7 @@ void ProcRunner::WorkerMain() {
   }
 }
 
-bool ProcRunner::Poll(Exec* proc, const OutputCB& output_cb) {
+bool ProcRunner::Poll(Exec* proc) {
   DCHECK(std::this_thread::get_id() == worker_.get_id());
 
   bool more = proc->Poll();
@@ -97,9 +90,9 @@ bool ProcRunner::Poll(Exec* proc, const OutputCB& output_cb) {
         // Incomplete line. Rewind and wait for more data.
         proc->GetOutStream().seekg(last_pos);
         proc->GetOutStream().setstate(std::ios_base::eofbit);
-      } else if (output_cb) {
+      } else {
         main_thread_task_runner_->PostTask(
-            HERE, std::bind(output_cb, proc->pid(), std::move(line)));
+            HERE, std::bind(output_cb_, proc->pid(), std::move(line)));
       }
     }
   }
@@ -111,5 +104,5 @@ std::list<ProcRunner::Proc>::iterator ProcRunner::FindProc(int pid) {
   DCHECK(std::this_thread::get_id() == worker_.get_id());
 
   return std::find_if(procs_.begin(), procs_.end(),
-                      [&pid](auto& a) { return a.first->pid() == pid; });
+                      [&pid](auto& a) { return a->pid() == pid; });
 }
