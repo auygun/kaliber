@@ -12,9 +12,7 @@ GAME_FACTORIES{GAME_CLASS(Gel)};
 
 Gel::Gel() = default;
 
-Gel::~Gel() {
-  proc_runner_.Shutdown();
-}
+Gel::~Gel() = default;
 
 bool Gel::Initialize() {
   proc_runner_.Initialize(

@@ -2,14 +2,20 @@
 #define GEL_PROCRUNNER_H
 
 #include <atomic>
+#include <functional>
 #include <list>
 #include <memory>
+#include <mutex>
 #include <semaphore>
 #include <string>
 #include <thread>
+#include <vector>
 
-#include "base/task_runner.h"
 #include "gel/exec.h"
+
+namespace base {
+class TaskRunner;
+}
 
 class ProcRunner {
  public:
@@ -24,32 +30,31 @@ class ProcRunner {
   ProcRunner& operator=(ProcRunner const&) = delete;
 
   void Initialize(OutputCB output_cb, FinishedCB finished_cb);
-  void Shutdown();
 
   int Run(std::vector<std::string> args);
   void Kill(int pid);
 
  private:
-  // first: Exec ptr, second: true for running / false for aborting.
-  using Proc = std::unique_ptr<base::Exec>;
-
   std::thread worker_;
   std::counting_semaphore<> semaphore_{0};
   std::atomic<bool> quit_{false};
-  base::TaskRunner task_runner_;
+
+  std::list<base::Exec> procs_[2];
+  std::mutex procs_lock_;
+
+  std::vector<int> kills_;
+  std::mutex kills_lock_;
 
   OutputCB output_cb_;
   FinishedCB finished_cb_;
 
   std::shared_ptr<base::TaskRunner> main_thread_task_runner_;
 
-  std::list<Proc> procs_;
-
   void WorkerMain();
 
-  bool Poll(base::Exec* proc);
+  bool Poll(base::Exec& proc);
 
-  std::list<Proc>::iterator FindProc(int pid);
+  std::list<base::Exec>::iterator FindProc(int pid);
 };
 
 #endif  // GEL_PROCRUNNER_H
