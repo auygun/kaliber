@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <list>
+#include <memory>
 #include <semaphore>
 #include <string>
 #include <thread>
@@ -40,6 +41,7 @@ class ProcRunner {
 
   OutputCB output_cb_;
   FinishedCB finished_cb_;
+  std::shared_ptr<base::TaskRunner> main_thread_task_runner_;
 
   std::list<Proc> procs_;
 

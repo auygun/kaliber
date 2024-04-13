@@ -11,6 +11,8 @@ void ProcRunner::Initialize(OutputCB output_cb, FinishedCB finished_cb) {
   worker_ = std::thread(&ProcRunner::WorkerMain, this);
   output_cb_ = std::move(output_cb);
   finished_cb_ = std::move(finished_cb);
+  main_thread_task_runner_ = TaskRunner::GetThreadLocalTaskRunner();
+  DCHECK(main_thread_task_runner_);
 }
 
 void ProcRunner::Shutdown() {
@@ -63,11 +65,14 @@ void ProcRunner::WorkerMain() {
       for (auto it = procs_.begin(); it != procs_.end();) {
         if (!Poll(it->first.get(), it->second ? output_cb_ : OutputCB())) {
           if (it->second)
-            finished_cb_(it->first->pid(), it->first->GetStatus(),
-                         it->first->GetResult(),
-                         it->first->GetErrStream().str());
+            main_thread_task_runner_->PostTask(
+                HERE, std::bind(finished_cb_, it->first->pid(),
+                                it->first->GetStatus(), it->first->GetResult(),
+                                it->first->GetErrStream().str()));
           else
-            finished_cb_(it->first->pid(), Exec::Status::ABORTED, 0, "");
+            main_thread_task_runner_->PostTask(
+                HERE, std::bind(finished_cb_, it->first->pid(),
+                                Exec::Status::ABORTED, 0, ""));
           it = procs_.erase(it);
         } else {
           ++it;
@@ -93,7 +98,8 @@ bool ProcRunner::Poll(Exec* proc, const OutputCB& output_cb) {
         proc->GetOutStream().seekg(last_pos);
         proc->GetOutStream().setstate(std::ios_base::eofbit);
       } else if (output_cb) {
-        output_cb(proc->pid(), std::move(line));
+        main_thread_task_runner_->PostTask(
+            HERE, std::bind(output_cb, proc->pid(), std::move(line)));
       }
     }
   }
