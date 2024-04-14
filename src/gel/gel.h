@@ -2,6 +2,7 @@
 #define GEL_GEL_H
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -27,10 +28,11 @@ class Gel : public eng::Game {
   void Update(float delta_time) override;
 
  private:
-  ProcRunner proc_runner_;
-
   CommitInfo current_commit_;
   std::vector<CommitInfo> commit_history_;
+  std::mutex commit_history_lock_;
+
+  ProcRunner proc_runner_;
 
   void OnGitOutput(int pid, std::string line);
   void OnGitFinished(int pid,

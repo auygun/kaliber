@@ -1,7 +1,6 @@
 #include "gel/proc_runner.h"
 
 #include "base/log.h"
-#include "base/task_runner.h"
 
 using namespace base;
 
@@ -19,8 +18,6 @@ void ProcRunner::Initialize(OutputCB output_cb, FinishedCB finished_cb) {
   worker_ = std::thread(&ProcRunner::WorkerMain, this);
   output_cb_ = std::move(output_cb);
   finished_cb_ = std::move(finished_cb);
-  main_thread_task_runner_ = TaskRunner::GetThreadLocalTaskRunner();
-  DCHECK(main_thread_task_runner_);
 }
 
 int ProcRunner::Run(std::vector<std::string> args) {
@@ -49,9 +46,10 @@ void ProcRunner::WorkerMain() {
   for (;;) {
     semaphore_.acquire();
 
-    bool quit = quit_.load(std::memory_order_relaxed);
-
     do {
+      if (quit_.load(std::memory_order_relaxed))
+        return;
+
       {
         std::lock_guard<std::mutex> scoped_lock(procs_lock_);
         procs_[1].splice(procs_[1].end(), procs_[0]);
@@ -75,18 +73,14 @@ void ProcRunner::WorkerMain() {
 
       for (auto it = procs_[1].begin(); it != procs_[1].end();) {
         if (!Poll(*it)) {
-          main_thread_task_runner_->PostTask(
-              HERE, std::bind(finished_cb_, it->pid(), it->GetStatus(),
-                              it->GetResult(), it->GetErrStream().str()));
+          finished_cb_(it->pid(), it->GetStatus(), it->GetResult(),
+                       it->GetErrStream().str());
           it = procs_[1].erase(it);
         } else {
           ++it;
         }
       }
     } while (!procs_[1].empty());
-
-    if (quit)
-      break;
   }
 }
 
@@ -106,8 +100,7 @@ bool ProcRunner::Poll(Exec& proc) {
         proc.GetOutStream().seekg(last_pos);
         proc.GetOutStream().setstate(std::ios_base::eofbit);
       } else {
-        main_thread_task_runner_->PostTask(
-            HERE, std::bind(output_cb_, proc.pid(), std::move(line)));
+        output_cb_(proc.pid(), std::move(line));
       }
     }
   }

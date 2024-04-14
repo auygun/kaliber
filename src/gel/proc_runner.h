@@ -13,10 +13,6 @@
 
 #include "gel/exec.h"
 
-namespace base {
-class TaskRunner;
-}
-
 class ProcRunner {
  public:
   using OutputCB = std::function<void(int pid, std::string line)>;
@@ -47,8 +43,6 @@ class ProcRunner {
 
   OutputCB output_cb_;
   FinishedCB finished_cb_;
-
-  std::shared_ptr<base::TaskRunner> main_thread_task_runner_;
 
   void WorkerMain();
 

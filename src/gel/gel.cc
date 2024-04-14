@@ -62,8 +62,6 @@ bool Gel::Initialize() {
 void Gel::Update(float delta_time) {
   // ImGui::ShowDemoWindow();
 
-  LOG(0) << "commit_history_.size(): " << commit_history_.size();
-
   // We demonstrate using the full viewport area or the work area (without
   // menu-bars, task-bars etc.) Based on your use case you may want one or the
   // other.
@@ -97,13 +95,18 @@ void Gel::Update(float delta_time) {
       clipper.Begin(commit_history_.size());
       while (clipper.Step()) {
         for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++) {
+          CommitInfo commit;
+          {
+            std::lock_guard<std::mutex> scoped_lock(commit_history_lock_);
+            commit = commit_history_[row];
+          }
           ImGui::TableNextRow();
           ImGui::TableSetColumnIndex(0);
-          ImGui::Text(commit_history_[row].commit.c_str(), 0, row);
+          ImGui::Text(commit.commit.c_str(), 0, row);
           ImGui::TableSetColumnIndex(1);
-          ImGui::Text(commit_history_[row].author.c_str(), 1, row);
+          ImGui::Text(commit.author.c_str(), 1, row);
           ImGui::TableSetColumnIndex(2);
-          ImGui::Text(commit_history_[row].author_date.c_str(), 2, row);
+          ImGui::Text(commit.author_date.c_str(), 2, row);
         }
       }
       ImGui::EndTable();
@@ -114,7 +117,10 @@ void Gel::Update(float delta_time) {
 
 void Gel::OnGitOutput(int pid, std::string line) {
   if (!line.empty() && line.data()[0] == 0) {
-    commit_history_.push_back(current_commit_);
+    {
+      std::lock_guard<std::mutex> scoped_lock(commit_history_lock_);
+      commit_history_.push_back(current_commit_);
+    }
     current_commit_ = {};
     line = line.substr(1);
     LOG(0) << "end of commit!!!!!!!!";
@@ -167,6 +173,9 @@ void Gel::OnGitFinished(int pid,
                         std::string err) {
   LOG(0) << "Finished pid: " << pid << " status: " << static_cast<int>(status)
          << " result: " << result << " err: " << err;
-  commit_history_.push_back(current_commit_);
+  {
+    std::lock_guard<std::mutex> scoped_lock(commit_history_lock_);
+    commit_history_.push_back(current_commit_);
+  }
   current_commit_ = {};
 }
