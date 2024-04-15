@@ -4,7 +4,10 @@
 
 using namespace base;
 
-ProcRunner::ProcRunner() = default;
+ProcRunner::ProcRunner(OutputCB output_cb, FinishedCB finished_cb)
+    : output_cb_{output_cb},
+      finished_cb_{finished_cb},
+      worker_{std::thread(&ProcRunner::WorkerMain, this)} {}
 
 ProcRunner::~ProcRunner() {
   if (worker_.joinable()) {
@@ -12,12 +15,6 @@ ProcRunner::~ProcRunner() {
     semaphore_.release();
     worker_.join();
   }
-}
-
-void ProcRunner::Initialize(OutputCB output_cb, FinishedCB finished_cb) {
-  worker_ = std::thread(&ProcRunner::WorkerMain, this);
-  output_cb_ = std::move(output_cb);
-  finished_cb_ = std::move(finished_cb);
 }
 
 int ProcRunner::Run(std::vector<std::string> args) {

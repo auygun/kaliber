@@ -6,6 +6,8 @@ game("gel") {
     "exec.h",
     "gel.cc",
     "gel.h",
+    "git.cc",
+    "git.h",
     "pipe.cc",
     "pipe.h",
     "proc_runner.cc",
