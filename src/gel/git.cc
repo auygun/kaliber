@@ -1,7 +1,7 @@
 #include "gel/git.h"
 
 #include <functional>
-#include <regex>
+#include <iostream>
 
 #include "base/log.h"
 
@@ -55,7 +55,11 @@ std::vector<Git::CommitInfo> Git::GetCommitRange(size_t start_index,
 }
 
 void Git::OnGitOutput(int pid, std::string line) {
-  if (!line.empty() && line.data()[0] == 0) {
+  if (line.empty())
+    return;
+
+  // Commits are separated with nulls.
+  if (line.data()[0] == 0) {
     // Push the current commit to the buffer and start parsing a new one.
     commit_buffer_.push_back(current_commit_);
     current_commit_ = {};
@@ -63,34 +67,18 @@ void Git::OnGitOutput(int pid, std::string line) {
     TryPushBufferToCommitHistory();
   }
 
-  std::regex pattern("^commit\\s(\\w+)(?:\\s(\\w+))*");
-  std::smatch match;
+  std::istringstream iss(line);
+  std::string field, value;
+  std::getline(iss, field, ' ');
+  std::getline(iss, value);
 
-  if (std::regex_search(line, match, pattern)) {
-    for (size_t i = 1; i < match.size(); ++i) {
-      if (match[i].matched) {
-        if (i == 1)
-          current_commit_.commit = match[i];
-        else
-          current_commit_.parents.push_back(match[i]);
-      }
-    }
-  } else {
-    std::regex pattern("^Author:\\s*(.*)$");
-    std::smatch match;
-
-    if (std::regex_search(line, match, pattern)) {
-      current_commit_.author = match[1];
-    } else {
-      std::regex pattern("^AuthorDate:\\s*(.*)$");
-      std::smatch match;
-
-      if (std::regex_search(line, match, pattern)) {
-        current_commit_.author_date = match[1];
-      } else {
-      }
-    }
-  }
+  using namespace std::string_literals;
+  if ("commit"s == field)
+    current_commit_.commit = value;
+  else if ("Author:"s == field)
+    current_commit_.author = value;
+  else if ("AuthorDate:"s == field)
+    current_commit_.author_date = value;
 }
 
 void Git::OnGitFinished(int pid,

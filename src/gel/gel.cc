@@ -26,6 +26,8 @@ void Gel::Update(float delta_time) {
   if (ImGui::Begin("Gel", nullptr,
                    ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
                        ImGuiWindowFlags_NoSavedSettings)) {
+    ImGui::Text("%d", (int)git_.GetCommitHistorySize());
+
     static ImGuiTableFlags flags =
         ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg |
         ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV |
