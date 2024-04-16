@@ -46,15 +46,17 @@ void Gel::Update(float delta_time) {
       ImGuiListClipper clipper;
       clipper.Begin(git_.GetCommitHistorySize());
       while (clipper.Step()) {
-        for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++) {
-          Git::CommitInfo commit = git_.GetCommit(row);
+        std::vector<Git::CommitInfo> commits =
+            git_.GetCommitRange(clipper.DisplayStart, clipper.DisplayEnd);
+        for (int row = clipper.DisplayStart, i = 0; row < clipper.DisplayEnd;
+             ++row, ++i) {
           ImGui::TableNextRow();
           ImGui::TableSetColumnIndex(0);
-          ImGui::Text(commit.commit.c_str(), 0, row);
+          ImGui::Text(commits[i].commit.c_str(), 0, row);
           ImGui::TableSetColumnIndex(1);
-          ImGui::Text(commit.author.c_str(), 1, row);
+          ImGui::Text(commits[i].author.c_str(), 1, row);
           ImGui::TableSetColumnIndex(2);
-          ImGui::Text(commit.author_date.c_str(), 2, row);
+          ImGui::Text(commits[i].author_date.c_str(), 2, row);
         }
       }
       ImGui::EndTable();

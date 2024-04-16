@@ -27,12 +27,8 @@ void Git::RefreshCommitHistory() {
 }
 
 size_t Git::GetCommitHistorySize() const {
-  size_t size;
-  {
-    std::lock_guard<std::mutex> scoped_lock(commit_history_lock_);
-    size = commit_history_.size();
-  }
-  return size;
+  // Lock free
+  return commit_history_size_.load(std::memory_order_relaxed);
 }
 
 Git::CommitInfo Git::GetCommit(size_t index) const {
@@ -45,14 +41,26 @@ Git::CommitInfo Git::GetCommit(size_t index) const {
   return commit;
 }
 
+std::vector<Git::CommitInfo> Git::GetCommitRange(size_t start_index,
+                                                 size_t end_index) const {
+  std::vector<Git::CommitInfo> commits;
+  {
+    std::lock_guard<std::mutex> scoped_lock(commit_history_lock_);
+    DCHECK(start_index < commit_history_.size());
+    DCHECK(end_index - 1 < commit_history_.size());
+    commits.assign(commit_history_.begin() + start_index,
+                   commit_history_.begin() + end_index);
+  }
+  return commits;
+}
+
 void Git::OnGitOutput(int pid, std::string line) {
   if (!line.empty() && line.data()[0] == 0) {
-    {
-      std::lock_guard<std::mutex> scoped_lock(commit_history_lock_);
-      commit_history_.push_back(current_commit_);
-    }
+    // Push the current commit to the buffer and start parsing a new one.
+    commit_buffer_.push_back(current_commit_);
     current_commit_ = {};
-    line = line.substr(1);
+    line = line.substr(1);  // Skip the null character.
+    TryPushBufferToCommitHistory();
   }
 
   std::regex pattern("^commit\\s(\\w+)(?:\\s(\\w+))*");
@@ -91,9 +99,22 @@ void Git::OnGitFinished(int pid,
                         std::string err) {
   LOG(0) << "Finished pid: " << pid << " status: " << static_cast<int>(status)
          << " result: " << result << " err: " << err;
+  if (!commit_buffer_.empty())
+    TryPushBufferToCommitHistory();
+}
+
+void Git::TryPushBufferToCommitHistory() {
+  // Push buffered commits to commit_history_ if lock succeeds. Keep buffering
+  // and try again later otherwise.
   {
-    std::lock_guard<std::mutex> scoped_lock(commit_history_lock_);
-    commit_history_.push_back(current_commit_);
+    std::unique_lock<std::mutex> scoped_lock(commit_history_lock_,
+                                             std::try_to_lock);
+    if (!scoped_lock)
+      return;
+    commit_history_.insert(commit_history_.end(), commit_buffer_.begin(),
+                           commit_buffer_.end());
   }
-  current_commit_ = {};
+  commit_history_size_.fetch_add(commit_buffer_.size(),
+                                 std::memory_order_relaxed);
+  commit_buffer_.clear();
 }
