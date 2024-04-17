@@ -57,15 +57,14 @@ void Gel::Update(float delta_time) {
       clipper.Begin(git_log_.GetCommitHistory().size());
       while (clipper.Step()) {
         auto& commit_history = git_log_.GetCommitHistory();
-        for (int row = clipper.DisplayStart, i = 0; row < clipper.DisplayEnd;
-             ++row, ++i) {
+        for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row) {
           ImGui::TableNextRow();
           ImGui::TableSetColumnIndex(0);
-          ImGui::Text(commit_history[i].commit.c_str(), 0, row);
+          ImGui::Text(commit_history[row].commit.c_str(), 0, row);
           ImGui::TableSetColumnIndex(1);
-          ImGui::Text(commit_history[i].author.c_str(), 1, row);
+          ImGui::Text(commit_history[row].author.c_str(), 1, row);
           ImGui::TableSetColumnIndex(2);
-          ImGui::Text(commit_history[i].author_date.c_str(), 2, row);
+          ImGui::Text(commit_history[row].author_date.c_str(), 2, row);
         }
       }
       ImGui::EndTable();
