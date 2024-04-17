@@ -1,55 +1,51 @@
 #ifndef GEL_GIT_H
 #define GEL_GIT_H
 
+#include <atomic>
+#include <list>
 #include <mutex>
+#include <semaphore>
 #include <string>
+#include <thread>
 #include <vector>
 
-#include "gel/proc_runner.h"
+#include "gel/exec.h"
 
-// Backend that runs git commands and parses the output. Collects the result and
-// passes to frontend on demand.
 class Git {
  public:
-  struct CommitInfo {
-    std::string commit;
-    std::vector<std::string> parents;
-    std::string author;
-    std::string author_date;
-    std::string committer;
-    std::string committer_date;
-  };
-
-  Git();
-  ~Git();
+  Git(std::vector<std::string> args);
+  virtual ~Git();
 
   Git(Git const&) = delete;
   Git& operator=(Git const&) = delete;
 
-  void Update();
-
-  void RefreshCommitHistory();
-
-  const std::vector<CommitInfo>& GetCommitHistory() const {
-    return commit_history_[0];
-  }
+  bool Run(std::vector<std::string> extra_args);
+  void Kill();
 
  private:
-  CommitInfo current_commit_;
-  // [0] is the commit history accessed by the UI thread. [1] is the temporary
-  // buffer to accumulate commits in the worker thread which is merged into [0].
-  std::vector<CommitInfo> commit_history_[2];
-  mutable std::mutex commit_history_lock_;
+  std::vector<std::string> args_;
 
-  ProcRunner git_cmd_log_;
+  std::atomic<int> current_pid_{0};
+  // [0] contains the running processes polled by the worker thread. [1] is the
+  // temporary buffer that keeps the new processes started in the main thread
+  // which is merged into [0]. [1] is accessed by both threads simultaneously.
+  std::list<base::Exec> procs_[2];
+  // Accessed by both threads simultaneously.
+  std::vector<int> procs_to_be_killed_;
+  std::mutex lock_;
 
-  void OnGitOutput(int pid, std::string line);
-  void OnGitFinished(int pid,
-                     base::Exec::Status status,
-                     int result,
-                     std::string err);
+  std::counting_semaphore<> semaphore_{0};
+  std::atomic<bool> quit_{false};
+  std::thread worker_;
 
-  void PushCurrentCommitToBuffer();
+  void WorkerMain();
+
+  bool Poll(base::Exec& proc);
+
+  std::list<base::Exec>::iterator FindProc(int pid);
+
+  virtual void OnOutput(std::string line) = 0;
+  virtual void OnFinished(base::Exec::Status, int result, std::string err) = 0;
 };
 
 #endif  // GEL_GIT_H

@@ -2,7 +2,7 @@
 #define GEL_GEL_H
 
 #include "engine/game.h"
-#include "gel/git.h"
+#include "gel/git_log.h"
 
 class Gel : public eng::Game {
  public:
@@ -14,7 +14,7 @@ class Gel : public eng::Game {
   void Update(float delta_time) override;
 
  private:
-  Git git_;
+  GitLog git_log_;
 };
 
 #endif  // GEL_GEL_H

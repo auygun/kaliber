@@ -14,12 +14,12 @@ Gel::Gel() = default;
 Gel::~Gel() = default;
 
 bool Gel::Initialize() {
-  git_.RefreshCommitHistory();
+  git_log_.Run({});
   return true;
 }
 
 void Gel::Update(float delta_time) {
-  git_.Update();
+  git_log_.Update();
 
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
   ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -28,7 +28,7 @@ void Gel::Update(float delta_time) {
   if (ImGui::Begin("Gel", nullptr,
                    ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
                        ImGuiWindowFlags_NoSavedSettings)) {
-    ImGui::Text("%d", (int)git_.GetCommitHistory().size());
+    ImGui::Text("%d", (int)git_log_.GetCommitHistory().size());
 
     static ImGuiTableFlags flags =
         ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg |
@@ -48,9 +48,9 @@ void Gel::Update(float delta_time) {
       // Commit history is a large vertical list. Use clipper to only submit
       // items that are in view.
       ImGuiListClipper clipper;
-      clipper.Begin(git_.GetCommitHistory().size());
+      clipper.Begin(git_log_.GetCommitHistory().size());
       while (clipper.Step()) {
-        auto& commit_history = git_.GetCommitHistory();
+        auto& commit_history = git_log_.GetCommitHistory();
         for (int row = clipper.DisplayStart, i = 0; row < clipper.DisplayEnd;
              ++row, ++i) {
           ImGui::TableNextRow();

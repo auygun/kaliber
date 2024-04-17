@@ -8,10 +8,10 @@ game("gel") {
     "gel.h",
     "git.cc",
     "git.h",
+    "git_log.cc",
+    "git_log.h",
     "pipe.cc",
     "pipe.h",
-    "proc_runner.cc",
-    "proc_runner.h",
   ]
   deps = [
     "//src/base",
