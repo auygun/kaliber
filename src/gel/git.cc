@@ -21,37 +21,22 @@ Git::Git()
 
 Git::~Git() = default;
 
+void Git::Update() {
+  // Merge buffered commits into commit_history_[0] if lock succeeds. Otherwise,
+  // we will keep buffering and try again later.
+  std::unique_lock<std::mutex> scoped_lock(commit_history_lock_,
+                                           std::try_to_lock);
+  if (scoped_lock && commit_history_[1].size() > 0) {
+    commit_history_[0].insert(commit_history_[0].end(),
+                              commit_history_[1].begin(),
+                              commit_history_[1].end());
+    commit_history_[1].clear();
+  }
+}
+
 void Git::RefreshCommitHistory() {
   git_cmd_log_.Run(
       {"git", "log", "--color=never", "--parents", "--pretty=fuller", "-z"});
-}
-
-size_t Git::GetCommitHistorySize() const {
-  // Lock free
-  return commit_history_size_.load(std::memory_order_relaxed);
-}
-
-Git::CommitInfo Git::GetCommit(size_t index) const {
-  CommitInfo commit;
-  {
-    std::lock_guard<std::mutex> scoped_lock(commit_history_lock_);
-    DCHECK(index < commit_history_.size());
-    commit = commit_history_[index];
-  }
-  return commit;
-}
-
-std::vector<Git::CommitInfo> Git::GetCommitRange(size_t start_index,
-                                                 size_t end_index) const {
-  std::vector<Git::CommitInfo> commits;
-  {
-    std::lock_guard<std::mutex> scoped_lock(commit_history_lock_);
-    DCHECK(start_index < commit_history_.size());
-    DCHECK(end_index - 1 < commit_history_.size());
-    commits.assign(commit_history_.begin() + start_index,
-                   commit_history_.begin() + end_index);
-  }
-  return commits;
 }
 
 void Git::OnGitOutput(int pid, std::string line) {
@@ -61,10 +46,12 @@ void Git::OnGitOutput(int pid, std::string line) {
   // Commits are separated with nulls.
   if (line.data()[0] == 0) {
     // Push the current commit to the buffer and start parsing a new one.
-    commit_buffer_.push_back(current_commit_);
+    {
+      std::lock_guard<std::mutex> scoped_lock(commit_history_lock_);
+      commit_history_[1].push_back(current_commit_);
+    }
     current_commit_ = {};
     line = line.substr(1);  // Skip the null character.
-    TryPushBufferToCommitHistory();
   }
 
   std::istringstream iss(line);
@@ -87,22 +74,10 @@ void Git::OnGitFinished(int pid,
                         std::string err) {
   LOG(0) << "Finished pid: " << pid << " status: " << static_cast<int>(status)
          << " result: " << result << " err: " << err;
-  if (!commit_buffer_.empty())
-    TryPushBufferToCommitHistory();
-}
-
-void Git::TryPushBufferToCommitHistory() {
-  // Push buffered commits to commit_history_ if lock succeeds. Keep buffering
-  // and try again later otherwise.
+  // Push the last commit to the buffer.
   {
-    std::unique_lock<std::mutex> scoped_lock(commit_history_lock_,
-                                             std::try_to_lock);
-    if (!scoped_lock)
-      return;
-    commit_history_.insert(commit_history_.end(), commit_buffer_.begin(),
-                           commit_buffer_.end());
+    std::lock_guard<std::mutex> scoped_lock(commit_history_lock_);
+    commit_history_[1].push_back(current_commit_);
   }
-  commit_history_size_.fetch_add(commit_buffer_.size(),
-                                 std::memory_order_relaxed);
-  commit_buffer_.clear();
+  current_commit_ = {};
 }

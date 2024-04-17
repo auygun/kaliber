@@ -27,20 +27,19 @@ class Git {
   Git(Git const&) = delete;
   Git& operator=(Git const&) = delete;
 
+  void Update();
+
   void RefreshCommitHistory();
 
-  // Access to the commit history
-  size_t GetCommitHistorySize() const;
-  CommitInfo GetCommit(size_t index) const;
-  std::vector<Git::CommitInfo> GetCommitRange(size_t start_index,
-                                              size_t end_index) const;
+  const std::vector<CommitInfo>& GetCommitHistory() const {
+    return commit_history_[0];
+  }
 
  private:
   CommitInfo current_commit_;
-  // Data sent from worker thread will be accumulated in commit_buffer_, before
-  // getting copied to commit_history_
-  std::vector<CommitInfo> commit_buffer_;
-  std::vector<CommitInfo> commit_history_;
+  // [0] is the commit history accessed by the UI thread. [1] is the temporary
+  // buffer to accumulate commits in the worker thread which is merged into [0].
+  std::vector<CommitInfo> commit_history_[2];
   mutable std::mutex commit_history_lock_;
   std::atomic<size_t> commit_history_size_{0};
 
@@ -51,8 +50,6 @@ class Git {
                      base::Exec::Status status,
                      int result,
                      std::string err);
-
-  void TryPushBufferToCommitHistory();
 };
 
 #endif  // GEL_GIT_H

@@ -19,6 +19,8 @@ bool Gel::Initialize() {
 }
 
 void Gel::Update(float delta_time) {
+  git_.Update();
+
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
   ImGui::SetNextWindowPos(viewport->WorkPos);
   ImGui::SetNextWindowSize(viewport->WorkSize);
@@ -26,7 +28,7 @@ void Gel::Update(float delta_time) {
   if (ImGui::Begin("Gel", nullptr,
                    ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
                        ImGuiWindowFlags_NoSavedSettings)) {
-    ImGui::Text("%d", (int)git_.GetCommitHistorySize());
+    ImGui::Text("%d", (int)git_.GetCommitHistory().size());
 
     static ImGuiTableFlags flags =
         ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg |
@@ -46,19 +48,18 @@ void Gel::Update(float delta_time) {
       // Commit history is a large vertical list. Use clipper to only submit
       // items that are in view.
       ImGuiListClipper clipper;
-      clipper.Begin(git_.GetCommitHistorySize());
+      clipper.Begin(git_.GetCommitHistory().size());
       while (clipper.Step()) {
-        std::vector<Git::CommitInfo> commits =
-            git_.GetCommitRange(clipper.DisplayStart, clipper.DisplayEnd);
+        auto& commit_history = git_.GetCommitHistory();
         for (int row = clipper.DisplayStart, i = 0; row < clipper.DisplayEnd;
              ++row, ++i) {
           ImGui::TableNextRow();
           ImGui::TableSetColumnIndex(0);
-          ImGui::Text(commits[i].commit.c_str(), 0, row);
+          ImGui::Text(commit_history[i].commit.c_str(), 0, row);
           ImGui::TableSetColumnIndex(1);
-          ImGui::Text(commits[i].author.c_str(), 1, row);
+          ImGui::Text(commit_history[i].author.c_str(), 1, row);
           ImGui::TableSetColumnIndex(2);
-          ImGui::Text(commits[i].author_date.c_str(), 2, row);
+          ImGui::Text(commit_history[i].author_date.c_str(), 2, row);
         }
       }
       ImGui::EndTable();
