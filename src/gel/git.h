@@ -1,7 +1,6 @@
 #ifndef GEL_GIT_H
 #define GEL_GIT_H
 
-#include <atomic>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -41,7 +40,6 @@ class Git {
   // buffer to accumulate commits in the worker thread which is merged into [0].
   std::vector<CommitInfo> commit_history_[2];
   mutable std::mutex commit_history_lock_;
-  std::atomic<size_t> commit_history_size_{0};
 
   ProcRunner git_cmd_log_;
 
