@@ -50,6 +50,8 @@ class Git {
                      base::Exec::Status status,
                      int result,
                      std::string err);
+
+  void PushCurrentCommitToBuffer();
 };
 
 #endif  // GEL_GIT_H

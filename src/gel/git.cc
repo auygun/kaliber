@@ -45,12 +45,7 @@ void Git::OnGitOutput(int pid, std::string line) {
 
   // Commits are separated with nulls.
   if (line.data()[0] == 0) {
-    // Push the current commit to the buffer and start parsing a new one.
-    {
-      std::lock_guard<std::mutex> scoped_lock(commit_history_lock_);
-      commit_history_[1].push_back(current_commit_);
-    }
-    current_commit_ = {};
+    PushCurrentCommitToBuffer();
     line = line.substr(1);  // Skip the null character.
   }
 
@@ -74,7 +69,10 @@ void Git::OnGitFinished(int pid,
                         std::string err) {
   LOG(0) << "Finished pid: " << pid << " status: " << static_cast<int>(status)
          << " result: " << result << " err: " << err;
-  // Push the last commit to the buffer.
+  PushCurrentCommitToBuffer();
+}
+
+void Git::PushCurrentCommitToBuffer() {
   {
     std::lock_guard<std::mutex> scoped_lock(commit_history_lock_);
     commit_history_[1].push_back(current_commit_);
