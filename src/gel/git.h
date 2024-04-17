@@ -22,17 +22,19 @@ class Git {
   bool Run(std::vector<std::string> extra_args);
   void Kill();
 
+ protected:
+  void TerminateWorkerThread();
+
  private:
   std::vector<std::string> args_;
 
-  std::atomic<int> current_pid_{0};
-  // [0] contains the running processes polled by the worker thread. [1] is the
-  // temporary buffer that keeps the new processes started in the main thread
-  // which is merged into [0]. [1] is accessed by both threads simultaneously.
+  // Double buffer for data exchange between the main thread and the worker
+  // thread. [1] is accessed by both threads simultaneously.
   std::list<base::Exec> procs_[2];
-  // Accessed by both threads simultaneously.
-  std::vector<int> procs_to_be_killed_;
   std::mutex lock_;
+
+  base::Exec curent_proc_;
+  std::list<base::Exec> death_row_;
 
   std::counting_semaphore<> semaphore_{0};
   std::atomic<bool> quit_{false};
@@ -41,8 +43,6 @@ class Git {
   void WorkerMain();
 
   bool Poll(base::Exec& proc);
-
-  std::list<base::Exec>::iterator FindProc(int pid);
 
   virtual void OnOutput(std::string line) = 0;
   virtual void OnFinished(base::Exec::Status, int result, std::string err) = 0;

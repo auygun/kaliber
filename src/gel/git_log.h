@@ -26,7 +26,7 @@ class GitLog final : public Git {
   GitLog(GitLog const&) = delete;
   GitLog& operator=(GitLog const&) = delete;
 
-  // Updates commits history from worker thread. Call once every frame before
+  // Updates commit history from worker thread. Call once every frame before
   // updating UI.
   void Update();
 

@@ -10,6 +10,12 @@ Git::Git(std::vector<std::string> args)
     : args_{args}, worker_{std::thread(&Git::WorkerMain, this)} {}
 
 Git::~Git() {
+  DCHECK(!worker_.joinable())
+      << "Did you forget to call TerminateWorkerThread() from derived class's "
+         "destructor?";
+}
+
+void Git::TerminateWorkerThread() {
   if (worker_.joinable()) {
     quit_.store(true, std::memory_order_relaxed);
     semaphore_.release();
@@ -17,35 +23,27 @@ Git::~Git() {
   }
 }
 
+// Run a new git process. Any process that was already running will be killed.
 bool Git::Run(std::vector<std::string> extra_args) {
-  // Kill the last process and start a new one.
-  if (current_pid_.load(std::memory_order_relaxed))
-    Kill();
-
   std::vector<std::string> args = args_;
   args.insert(args.end(), extra_args.begin(), extra_args.end());
   Exec proc;
   if (!proc.Start(args))
     return false;
-  current_pid_.store(proc.pid(), std::memory_order_relaxed);
   DLOG(0) << "Run - pid: " << proc.pid()
           << ", status: " << static_cast<int>(proc.GetStatus());
   {
     std::lock_guard<std::mutex> scoped_lock(lock_);
-    procs_[1].push_back(std::move(proc));
+    procs_[1].push_front(std::move(proc));
   }
   semaphore_.release();
   return true;
 }
 
 void Git::Kill() {
-  int pid = current_pid_.load(std::memory_order_relaxed);
-  if (!pid)
-    return;
-  current_pid_.store(0, std::memory_order_relaxed);
   {
     std::lock_guard<std::mutex> scoped_lock(lock_);
-    procs_to_be_killed_.push_back(pid);
+    procs_[1].push_front({});
   }
   semaphore_.release();
 }
@@ -58,45 +56,42 @@ void Git::WorkerMain() {
       if (quit_.load(std::memory_order_relaxed))
         return;
 
-      // Receive new processes and kill requests from main thread.
-      std::vector<int> kills;
+      // Merge new processes from main thread.
       {
         std::unique_lock<std::mutex> scoped_lock(lock_, std::try_to_lock);
-        if (scoped_lock) {
-          if (!procs_[1].empty())
-            procs_[0].splice(procs_[0].end(), procs_[1]);
-          if (!procs_to_be_killed_.empty()) {
-            kills = std::move(procs_to_be_killed_);
-            procs_to_be_killed_.clear();
-          }
-        }
+        if (scoped_lock)
+          procs_[0].splice(procs_[0].begin(), procs_[1]);
       }
 
-      // Process kill requests.
-      for (auto pid : kills) {
-        auto it = FindProc(pid);
-        if (it != procs_[0].end()) {
-          DLOG(0) << "Kill - pid: " << it->pid()
-                  << ", status: " << static_cast<int>(it->GetStatus());
-          if (it->GetStatus() == Exec::Status::RUNNING)
-            it->Kill();
+      // The latest processes we receive from the main thread is the current
+      // process. Keep it running and kill the rest.
+      if (!procs_[0].empty()) {
+        if (curent_proc_.GetStatus() == Exec::Status::RUNNING) {
+          curent_proc_.Kill();
+          DLOG(0) << "Kill - pid: " << curent_proc_.pid();
+          death_row_.push_back(std::move(curent_proc_));
         }
+        curent_proc_ = std::move(*procs_[0].begin());
+        procs_[0].pop_front();
+        for (auto it = procs_[0].begin(); it != procs_[0].end(); ++it)
+          it->Kill();
+        death_row_.splice(death_row_.end(), procs_[0]);
       }
 
-      // Poll all running processes.
-      for (auto it = procs_[0].begin(); it != procs_[0].end();) {
-        if (!Poll(*it)) {
-          if (it->pid() == current_pid_.load(std::memory_order_relaxed)) {
-            current_pid_.store(0, std::memory_order_relaxed);
-            OnFinished(it->GetStatus(), it->GetResult(),
-                       it->GetErrStream().str());
-          }
-          it = procs_[0].erase(it);
-        } else {
+      // Poll the current process.
+      if (curent_proc_.GetStatus() == Exec::Status::RUNNING)
+        Poll(curent_proc_);
+
+      // Keep polling processes in death_row_ until they die.
+      for (auto it = death_row_.begin(); it != death_row_.end();) {
+        if (Poll(*it)) {
           ++it;
+        } else {
+          it = death_row_.erase(it);
         }
       }
-    } while (!procs_[0].empty());
+    } while (curent_proc_.GetStatus() == Exec::Status::RUNNING ||
+             !death_row_.empty());
   }
 }
 
@@ -115,18 +110,14 @@ bool Git::Poll(Exec& proc) {
         // Incomplete line. Rewind and wait for more data.
         proc.GetOutStream().seekg(last_pos);
         proc.GetOutStream().setstate(std::ios_base::eofbit);
-      } else if (proc.pid() == current_pid_.load(std::memory_order_relaxed)) {
+      } else if (proc.pid() == curent_proc_.pid()) {
         OnOutput(std::move(line));
       }
     }
   }
 
+  if (!more && proc.pid() == curent_proc_.pid())
+    OnFinished(proc.GetStatus(), proc.GetResult(), proc.GetErrStream().str());
+
   return more;
-}
-
-std::list<Exec>::iterator Git::FindProc(int pid) {
-  DCHECK(std::this_thread::get_id() == worker_.get_id());
-
-  return std::find_if(procs_[0].begin(), procs_[0].end(),
-                      [&pid](auto& a) { return a.pid() == pid; });
 }

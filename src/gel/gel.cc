@@ -31,6 +31,9 @@ void Gel::Update(float delta_time) {
     if (ImGui::Button("Refresh"))
       git_log_.Run({});
     ImGui::SameLine();
+    if (ImGui::Button("Kill"))
+      git_log_.Kill();
+    ImGui::SameLine();
     ImGui::Text("%d", (int)git_log_.GetCommitHistory().size());
 
     static ImGuiTableFlags flags =

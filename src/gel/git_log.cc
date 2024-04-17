@@ -8,7 +8,9 @@ GitLog::GitLog()
     : Git{{"git", "log", "--color=never", "--parents", "--pretty=fuller",
            "-z"}} {}
 
-GitLog::~GitLog() = default;
+GitLog::~GitLog() {
+  TerminateWorkerThread();
+}
 
 void GitLog::Update() {
   // Merge buffered commits into commit_history_[0] if lock succeeds. Otherwise,
