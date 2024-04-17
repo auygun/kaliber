@@ -76,6 +76,7 @@ void Git::WorkerMain() {
         for (auto it = procs_[0].begin(); it != procs_[0].end(); ++it)
           it->Kill();
         death_row_.splice(death_row_.end(), procs_[0]);
+        OnStart();
       }
 
       // Poll the current process.

@@ -17,11 +17,24 @@ void GitLog::Update() {
   // we will keep buffering and try again later.
   std::unique_lock<std::mutex> scoped_lock(lock_, std::try_to_lock);
   if (scoped_lock && commit_history_[1].size() > 0) {
+    if (clear_history_in_main_thread_) {
+      clear_history_in_main_thread_ = false;
+      commit_history_[0].clear();
+    }
     commit_history_[0].insert(commit_history_[0].end(),
                               commit_history_[1].begin(),
                               commit_history_[1].end());
     commit_history_[1].clear();
   }
+}
+
+void GitLog::OnStart() {
+  {
+    std::lock_guard<std::mutex> scoped_lock(lock_);
+    commit_history_[1].clear();
+    clear_history_in_main_thread_ = true;
+  }
+  current_commit_ = {};
 }
 
 void GitLog::OnOutput(std::string line) {
