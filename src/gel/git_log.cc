@@ -13,8 +13,7 @@ GitLog::~GitLog() = default;
 void GitLog::Update() {
   // Merge buffered commits into commit_history_[0] if lock succeeds. Otherwise,
   // we will keep buffering and try again later.
-  std::unique_lock<std::mutex> scoped_lock(commit_history_lock_,
-                                           std::try_to_lock);
+  std::unique_lock<std::mutex> scoped_lock(lock_, std::try_to_lock);
   if (scoped_lock && commit_history_[1].size() > 0) {
     commit_history_[0].insert(commit_history_[0].end(),
                               commit_history_[1].begin(),
@@ -55,7 +54,7 @@ void GitLog::OnFinished(Exec::Status status, int result, std::string err) {
 
 void GitLog::PushCurrentCommitToBuffer() {
   {
-    std::lock_guard<std::mutex> scoped_lock(commit_history_lock_);
+    std::lock_guard<std::mutex> scoped_lock(lock_);
     commit_history_[1].push_back(current_commit_);
   }
   current_commit_ = {};

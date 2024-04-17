@@ -22,9 +22,7 @@ bool Git::Run(std::vector<std::string> extra_args) {
   if (current_pid_.load(std::memory_order_relaxed))
     Kill();
 
-  std::vector<std::string> args;
-  args.reserve(args_.size() + extra_args.size());
-  args.insert(args.end(), args_.begin(), args_.end());
+  std::vector<std::string> args = args_;
   args.insert(args.end(), extra_args.begin(), extra_args.end());
   Exec proc;
   if (!proc.Start(args))

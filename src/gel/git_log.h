@@ -39,7 +39,7 @@ class GitLog final : public Git {
   // [0] is the commit history accessed by the UI thread. [1] is the temporary
   // buffer to accumulate commits in the worker thread which is merged into [0].
   std::vector<CommitInfo> commit_history_[2];
-  mutable std::mutex commit_history_lock_;
+  mutable std::mutex lock_;
 
   void OnOutput(std::string line) final;
   void OnFinished(base::Exec::Status, int result, std::string err) final;
