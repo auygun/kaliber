@@ -16,15 +16,17 @@ void GitLog::Update() {
   // Merge buffered commits into commit_history_[0] if lock succeeds. Otherwise,
   // we will keep buffering and try again later.
   std::unique_lock<std::mutex> scoped_lock(lock_, std::try_to_lock);
-  if (scoped_lock && commit_history_[1].size() > 0) {
+  if (scoped_lock) {
     if (clear_history_in_main_thread_) {
       clear_history_in_main_thread_ = false;
       commit_history_[0].clear();
     }
-    commit_history_[0].insert(commit_history_[0].end(),
-                              commit_history_[1].begin(),
-                              commit_history_[1].end());
-    commit_history_[1].clear();
+    if (commit_history_[1].size() > 0) {
+      commit_history_[0].insert(commit_history_[0].end(),
+                                commit_history_[1].begin(),
+                                commit_history_[1].end());
+      commit_history_[1].clear();
+    }
   }
 }
 
