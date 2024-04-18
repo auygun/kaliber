@@ -3,6 +3,7 @@
 #include "base/log.h"
 #include "engine/game_factory.h"
 #include "third_party/imgui/imgui.h"
+#include "third_party/imgui/imgui_internal.h"
 
 using namespace base;
 using namespace eng;
@@ -28,8 +29,12 @@ void Gel::Update(float delta_time) {
   if (ImGui::Begin("Gel", nullptr,
                    ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
                        ImGuiWindowFlags_NoSavedSettings)) {
-    if (ImGui::Button("Refresh"))
+    if (ImGui::Button("Refresh")) {
       git_log_.Run({});
+      // Reset the table.
+      ImGuiTable* table = ImGui::TableFindByID(ImGui::GetID("table_scrolly"));
+      *table = {};
+    }
     ImGui::SameLine();
     if (ImGui::Button("Kill"))
       git_log_.Kill();
