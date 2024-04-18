@@ -83,8 +83,8 @@ void Git::WorkerMain() {
       }
 
       // Poll the current process.
-      if (curent_proc_.GetStatus() == Exec::Status::RUNNING)
-        Poll(curent_proc_);
+      if (!Poll(curent_proc_))
+        curent_proc_ = {};
 
       // Keep polling the old processes until they die.
       for (auto it = death_row_.begin(); it != death_row_.end();) {
@@ -94,7 +94,7 @@ void Git::WorkerMain() {
           it = death_row_.erase(it);
         }
       }
-    } while (curent_proc_.GetStatus() == Exec::Status::RUNNING ||
+    } while (curent_proc_.GetStatus() != Exec::Status::UNINITIALIZED ||
              !death_row_.empty());
   }
 }
