@@ -22,7 +22,7 @@ bool Gel::Initialize() {
 void Gel::Update(float delta_time) {
   git_log_.Update();
 
-#if 0
+#if 1
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
   ImGui::SetNextWindowPos(viewport->WorkPos);
   ImGui::SetNextWindowSize(viewport->WorkSize);
