@@ -47,36 +47,75 @@ void Gel::Update(float delta_time) {
         ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable |
         ImGuiTableFlags_Hideable;
 
-    const float TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
-    ImVec2 outer_size = ImVec2(0.0f, TEXT_BASE_HEIGHT * 8);
-    if (ImGui::BeginTable("table_scrolly", 3, flags, outer_size)) {
-      ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
-      ImGui::TableSetupColumn("One", ImGuiTableColumnFlags_None);
-      ImGui::TableSetupColumn("Two", ImGuiTableColumnFlags_None);
-      ImGui::TableSetupColumn("Three", ImGuiTableColumnFlags_None);
-      ImGui::TableHeadersRow();
+    if (ImGui::BeginChild("child1", ImVec2(0, 300),
+                          ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY)) {
+      // const float TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
+      ImVec2 outer_size = ImVec2(0.0f, 0.0f);
+      if (ImGui::BeginTable("table_scrolly", 3, flags, outer_size)) {
+        ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
+        ImGui::TableSetupColumn("One", ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Two", ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Three", ImGuiTableColumnFlags_None);
+        ImGui::TableHeadersRow();
 
-      if (refresh_button)
-        ImGui::SetScrollY(0);
+        if (refresh_button)
+          ImGui::SetScrollY(0);
 
-      // Commit history is a large vertical list. Use clipper to only submit
-      // items that are in view.
-      auto& commit_history = git_log_.GetCommitHistory();
-      ImGuiListClipper clipper;
-      clipper.Begin(commit_history.size());
-      while (clipper.Step()) {
-        for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row) {
-          ImGui::TableNextRow();
-          ImGui::TableSetColumnIndex(0);
-          ImGui::Text(commit_history[row].commit.c_str(), 0, row);
-          ImGui::TableSetColumnIndex(1);
-          ImGui::Text(commit_history[row].author.c_str(), 1, row);
-          ImGui::TableSetColumnIndex(2);
-          ImGui::Text(commit_history[row].author_date.c_str(), 2, row);
+        // Commit history is a large vertical list. Use clipper to only submit
+        // items that are in view.
+        auto& commit_history = git_log_.GetCommitHistory();
+        ImGuiListClipper clipper;
+        clipper.Begin(commit_history.size());
+        while (clipper.Step()) {
+          for (int row = clipper.DisplayStart; row < clipper.DisplayEnd;
+               ++row) {
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(commit_history[row].commit.c_str(), 0, row);
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(commit_history[row].author.c_str(), 1, row);
+            ImGui::TableSetColumnIndex(2);
+            ImGui::Text(commit_history[row].author_date.c_str(), 2, row);
+          }
         }
+        ImGui::EndTable();
       }
-      ImGui::EndTable();
     }
+    ImGui::EndChild();
+
+    ImVec2 outer_size = ImVec2(0.0f, 0.0f);
+    if (ImGui::BeginChild("child2", ImVec2(0, 0), ImGuiChildFlags_None)) {
+      if (ImGui::BeginTable("table_scrolly", 3, flags, outer_size)) {
+        ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
+        ImGui::TableSetupColumn("One", ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Two", ImGuiTableColumnFlags_None);
+        ImGui::TableSetupColumn("Three", ImGuiTableColumnFlags_None);
+        ImGui::TableHeadersRow();
+
+        if (refresh_button)
+          ImGui::SetScrollY(0);
+
+        // Commit history is a large vertical list. Use clipper to only submit
+        // items that are in view.
+        auto& commit_history = git_log_.GetCommitHistory();
+        ImGuiListClipper clipper;
+        clipper.Begin(commit_history.size());
+        while (clipper.Step()) {
+          for (int row = clipper.DisplayStart; row < clipper.DisplayEnd;
+               ++row) {
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text(commit_history[row].commit.c_str(), 0, row);
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(commit_history[row].author.c_str(), 1, row);
+            ImGui::TableSetColumnIndex(2);
+            ImGui::Text(commit_history[row].author_date.c_str(), 2, row);
+          }
+        }
+        ImGui::EndTable();
+      }
+    }
+    ImGui::EndChild();
   }
   ImGui::End();
 #else
