@@ -11,6 +11,8 @@
 
 #include "gel/exec.h"
 
+// Backend to run git commands. Provides virtual interface to be implemented by
+// derived classes to parses the output.
 class Git {
  public:
   Git(std::vector<std::string> args);
@@ -19,7 +21,7 @@ class Git {
   Git(Git const&) = delete;
   Git& operator=(Git const&) = delete;
 
-  bool Run(std::vector<std::string> extra_args);
+  bool Run(std::vector<std::string> extra_args = {});
   void Kill();
 
  protected:

@@ -36,8 +36,9 @@ class GitLog final : public Git {
 
  private:
   CommitInfo current_commit_;
-  // [0] is the commit history accessed by the UI thread. [1] is the temporary
-  // buffer to accumulate commits in the worker thread which is merged into [0].
+  // Double buffer for data exchange between the main thread and the worker
+  // thread. [1] is accessed by both threads simultaneously. It's merged into
+  // [0] in the UI thread.
   std::vector<CommitInfo> commit_history_[2];
   bool clear_history_in_main_thread_ = false;
   mutable std::mutex lock_;

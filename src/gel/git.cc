@@ -11,8 +11,7 @@ Git::Git(std::vector<std::string> args)
 
 Git::~Git() {
   DCHECK(!worker_.joinable())
-      << "Did you forget to call TerminateWorkerThread() from derived class's "
-         "destructor?";
+      << "Did you forget to call TerminateWorkerThread() from derived class?";
 }
 
 void Git::TerminateWorkerThread() {
@@ -23,8 +22,9 @@ void Git::TerminateWorkerThread() {
   }
 }
 
-// Run a new git process. Any process that was already running will be killed.
 bool Git::Run(std::vector<std::string> extra_args) {
+  // Start a new git process and pass it to the worker thread. The currently
+  // running process will killed and replaced by the new one.
   std::vector<std::string> args = args_;
   args.insert(args.end(), extra_args.begin(), extra_args.end());
   Exec proc;
@@ -41,6 +41,8 @@ bool Git::Run(std::vector<std::string> extra_args) {
 }
 
 void Git::Kill() {
+  // Pass an uninitialized Exec the the worker thread. This will cause the
+  // currently running process to be killed.
   {
     std::lock_guard<std::mutex> scoped_lock(lock_);
     procs_[1].push_front({});
@@ -59,12 +61,12 @@ void Git::WorkerMain() {
       // Merge new processes from main thread.
       {
         std::unique_lock<std::mutex> scoped_lock(lock_, std::try_to_lock);
-        if (scoped_lock)
+        if (scoped_lock && !procs_[1].empty())
           procs_[0].splice(procs_[0].begin(), procs_[1]);
       }
 
-      // The latest processes we receive from the main thread is the current
-      // process. Keep it running and kill the rest.
+      // Replace the current process with the latest processes we received from
+      // the main thread. Keep it running and kill the rest.
       if (!procs_[0].empty()) {
         if (curent_proc_.GetStatus() == Exec::Status::RUNNING) {
           curent_proc_.Kill();
@@ -76,14 +78,15 @@ void Git::WorkerMain() {
         for (auto it = procs_[0].begin(); it != procs_[0].end(); ++it)
           it->Kill();
         death_row_.splice(death_row_.end(), procs_[0]);
-        OnStart();
+        if (curent_proc_.GetStatus() == Exec::Status::RUNNING)
+          OnStart();
       }
 
       // Poll the current process.
       if (curent_proc_.GetStatus() == Exec::Status::RUNNING)
         Poll(curent_proc_);
 
-      // Keep polling processes in death_row_ until they die.
+      // Keep polling the old processes until they die.
       for (auto it = death_row_.begin(); it != death_row_.end();) {
         if (Poll(*it)) {
           ++it;
