@@ -7,8 +7,6 @@
 
 #include "gel/git.h"
 
-// Backend that runs git commands and parses the output. Collects the result and
-// passes to frontend on demand.
 class GitLog final : public Git {
  public:
   struct CommitInfo {
@@ -26,8 +24,6 @@ class GitLog final : public Git {
   GitLog(GitLog const&) = delete;
   GitLog& operator=(GitLog const&) = delete;
 
-  // Updates commit history from worker thread. Call once every frame before
-  // updating UI.
   void Update();
 
   const std::vector<CommitInfo>& GetCommitHistory() const {
@@ -40,7 +36,7 @@ class GitLog final : public Git {
   // thread. [1] is accessed by both threads simultaneously. It's merged into
   // [0] in the UI thread.
   std::vector<CommitInfo> commit_history_[2];
-  bool clear_history_in_main_thread_ = false;
+  bool clear_in_main_thread_ = false;
   mutable std::mutex lock_;
 
   void OnStart() final;

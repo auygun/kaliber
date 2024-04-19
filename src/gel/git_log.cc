@@ -13,12 +13,12 @@ GitLog::~GitLog() {
 }
 
 void GitLog::Update() {
-  // Merge buffered commits into commit_history_[0] if lock succeeds. Otherwise,
-  // we will keep buffering and try again later.
+  // Merge buffered data if lock succeeds. Otherwise, we will keep buffering and
+  // try again later.
   std::unique_lock<std::mutex> scoped_lock(lock_, std::try_to_lock);
   if (scoped_lock) {
-    if (clear_history_in_main_thread_) {
-      clear_history_in_main_thread_ = false;
+    if (clear_in_main_thread_) {
+      clear_in_main_thread_ = false;
       commit_history_[0].clear();
     }
     if (commit_history_[1].size() > 0) {
@@ -34,7 +34,7 @@ void GitLog::OnStart() {
   {
     std::lock_guard<std::mutex> scoped_lock(lock_);
     commit_history_[1].clear();
-    clear_history_in_main_thread_ = true;
+    clear_in_main_thread_ = true;
   }
   current_commit_ = {};
 }

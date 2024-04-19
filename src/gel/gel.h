@@ -3,6 +3,7 @@
 
 #include "engine/game.h"
 #include "gel/git_log.h"
+#include "gel/git_diff.h"
 
 class Gel : public eng::Game {
  public:
@@ -15,6 +16,7 @@ class Gel : public eng::Game {
 
  private:
   GitLog git_log_;
+  GitDiff git_diff_;
 };
 
 #endif  // GEL_GEL_H

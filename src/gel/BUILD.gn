@@ -8,6 +8,8 @@ game("gel") {
     "gel.h",
     "git.cc",
     "git.h",
+    "git_diff.cc",
+    "git_diff.h",
     "git_log.cc",
     "git_log.h",
     "pipe.cc",

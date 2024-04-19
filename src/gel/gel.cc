@@ -48,12 +48,14 @@ Gel::~Gel() = default;
 
 bool Gel::Initialize() {
   git_log_.Run();
+  git_diff_.Run();
   MyStyle();
   return true;
 }
 
 void Gel::Update(float delta_time) {
   git_log_.Update();
+  git_diff_.Update();
 
 #if 1
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -126,7 +128,7 @@ void Gel::Update(float delta_time) {
         for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
           using namespace std::string_literals;
           static int selected_file = -1;
-          if (ImGui::Selectable(("file "s + std::to_string(i)).c_str(),
+          if (ImGui::Selectable(git_diff_.GetFiles()[i].c_str(),
                                 selected_file == i))
             selected_file = i;
         }
