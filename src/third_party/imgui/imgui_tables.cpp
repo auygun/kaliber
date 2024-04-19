@@ -424,9 +424,6 @@ bool    ImGui::BeginTableEx(const char* name, ImGuiID id, int columns_count, ImG
             table->HasScrollbarYCurr = false;
         }
         table->HasScrollbarYCurr |= table->InnerWindow->ScrollbarY;
-
-        // We need to get the scrollbar id now and save it as GetWindowScrollbarID returns a wrong id after the PushOverrideID call below.
-        table->VerticalScrollbarID = ImGui::GetWindowScrollbarID(table->InnerWindow, ImGuiAxis_Y);
     }
     else
     {

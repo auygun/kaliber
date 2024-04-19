@@ -1519,9 +1519,7 @@ struct ImGuiListClipperData
     float                           LossynessOffset;
     int                             StepNo;
     int                             ItemsFrozen;
-    int                             fixedItemsCount;    // Use a fixed value to prevent scrolling when more items are added to the table while the vertical scrollbar is being held.
     ImVector<ImGuiListClipperRange> Ranges;
-
 
     ImGuiListClipperData()          { memset(this, 0, sizeof(*this)); }
     void                            Reset(ImGuiListClipper* clipper) { ListClipper = clipper; StepNo = ItemsFrozen = 0; Ranges.resize(0); }
@@ -2799,7 +2797,6 @@ struct ImGuiTableInstanceData
 struct IMGUI_API ImGuiTable
 {
     ImGuiID                     ID;
-    ImGuiID                     VerticalScrollbarID;
     ImGuiTableFlags             Flags;
     void*                       RawData;                    // Single allocation to hold Columns[], DisplayOrderToIndex[] and RowCellData[]
     ImGuiTableTempData*         TempData;                   // Transient data while table is active. Point within g.CurrentTableStack[]

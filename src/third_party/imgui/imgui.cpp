@@ -2825,15 +2825,9 @@ void ImGuiListClipper::Begin(int items_count, float items_height)
     ImGuiWindow* window = g.CurrentWindow;
     IMGUI_DEBUG_LOG_CLIPPER("Clipper: Begin(%d,%.2f) in '%s'\n", items_count, items_height, window->Name);
 
-    bool scrollbar_active = false;
-
-    if (ImGuiTable* table = g.CurrentTable) {
+    if (ImGuiTable* table = g.CurrentTable)
         if (table->IsInsideRow)
             ImGui::TableEndRow(table);
-
-        ImGuiID active_id = ImGui::GetActiveID();
-        scrollbar_active = active_id && active_id == table->VerticalScrollbarID;
-    }
 
     StartPosY = window->DC.CursorPos.y;
     ItemsHeight = items_height;
@@ -2847,11 +2841,6 @@ void ImGuiListClipper::Begin(int items_count, float items_height)
     ImGuiListClipperData* data = &g.ClipperTempData[g.ClipperTempDataStacked - 1];
     data->Reset(this);
     data->LossynessOffset = window->DC.CursorStartPosLossyness.y;
-    if (!scrollbar_active) {
-        data->fixedItemsCount = 0;
-    } else if (data->fixedItemsCount == 0 || data->fixedItemsCount > items_count) {
-        data->fixedItemsCount = items_count;
-    }
     TempData = data;
 }
 
@@ -2863,7 +2852,7 @@ void ImGuiListClipper::End()
         ImGuiContext& g = *Ctx;
         IMGUI_DEBUG_LOG_CLIPPER("Clipper: End() in '%s'\n", g.CurrentWindow->Name);
         if (ItemsCount >= 0 && ItemsCount < INT_MAX && DisplayStart >= 0)
-            ImGuiListClipper_SeekCursorForItem(this, data->fixedItemsCount > 0 ? data->fixedItemsCount : ItemsCount);
+            ImGuiListClipper_SeekCursorForItem(this, ItemsCount);
 
         // Restore temporary buffer and fix back pointers which may be invalidated when nesting
         IM_ASSERT(data->ListClipper == this);
