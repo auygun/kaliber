@@ -48,7 +48,7 @@ Gel::~Gel() = default;
 
 bool Gel::Initialize() {
   git_log_.Run();
-  git_diff_.Run();
+  git_diff_.Run({"HEAD"});
   MyStyle();
   return true;
 }
@@ -104,10 +104,13 @@ void Gel::Update(float delta_time) {
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
             static int selected_row = -1;
-            if (ImGui::Selectable(commit_history[row].commit.c_str(),
+            if (ImGui::Selectable(commit_history[row].message.c_str(),
                                   selected_row == row,
-                                  ImGuiSelectableFlags_SpanAllColumns))
+                                  ImGuiSelectableFlags_SpanAllColumns) &&
+                selected_row != row) {
               selected_row = row;
+              git_diff_.Run({commit_history[row].commit});
+            }
             ImGui::TableSetColumnIndex(1);
             ImGui::TextUnformatted(commit_history[row].author.c_str());
             ImGui::TableSetColumnIndex(2);
@@ -123,7 +126,7 @@ void Gel::Update(float delta_time) {
     if (ImGui::BeginChild("child2", ImVec2(0, 0), ImGuiChildFlags_Border)) {
       ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
       ImGuiListClipper clipper;
-      clipper.Begin(50);
+      clipper.Begin(git_diff_.GetFiles().size());
       while (clipper.Step()) {
         for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
           using namespace std::string_literals;

@@ -6,7 +6,7 @@ using namespace base;
 
 GitDiff::GitDiff()
     : Git{{"git", "diff-tree", "-r", "-p", "--textconv", "--submodule", +"-C",
-           "--cc", "--no-commit-id", "-U3", "--root", "HEAD"}} {}
+           "--cc", "--no-commit-id", "-U3", "--root"}} {}
 
 GitDiff::~GitDiff() {
   TerminateWorkerThread();

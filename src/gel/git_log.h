@@ -16,6 +16,7 @@ class GitLog final : public Git {
     std::string author_date;
     std::string committer;
     std::string committer_date;
+    std::string message;
   };
 
   GitLog();

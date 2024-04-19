@@ -5,7 +5,7 @@
 using namespace base;
 
 GitLog::GitLog()
-    : Git{{"git", "log", "--color=never", "--parents", "--pretty=fuller",
+    : Git{{"git", "log", "--color=never", /*"--parents",*/ "--pretty=fuller",
            "-z"}} {}
 
 GitLog::~GitLog() {
@@ -58,9 +58,12 @@ void GitLog::OnOutput(std::string line) {
   if ("commit"s == field)
     current_commit_.commit = value;
   else if ("Author:"s == field)
-    current_commit_.author = value;
+    current_commit_.author = value.substr(4);
   else if ("AuthorDate:"s == field)
     current_commit_.author_date = value;
+  else if (line.size() > 4 && "    "s == line.substr(0, 4) &&
+           current_commit_.message.empty())
+    current_commit_.message = line.substr(4);
 }
 
 void GitLog::OnFinished(Exec::Status status, int result, std::string err) {
