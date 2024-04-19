@@ -83,7 +83,8 @@ void Git::WorkerMain() {
       }
 
       // Poll the current process.
-      if (!Poll(curent_proc_))
+      if (curent_proc_.GetStatus() != Exec::Status::UNINITIALIZED &&
+          !Poll(curent_proc_))
         curent_proc_ = {};
 
       // Keep polling the old processes until they die.
@@ -101,6 +102,7 @@ void Git::WorkerMain() {
 
 bool Git::Poll(Exec& proc) {
   DCHECK(std::this_thread::get_id() == worker_.get_id());
+  DCHECK(curent_proc_.GetStatus() != Exec::Status::UNINITIALIZED);
 
   bool more = proc.Poll();
 

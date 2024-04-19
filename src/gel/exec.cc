@@ -55,9 +55,6 @@ bool Exec::Start(const std::vector<std::string>& args) {
 }
 
 bool Exec::Poll() {
-  DCHECK(status_ != Status::UNINITIALIZED);
-  DCHECK(status_ != Status::SYSTEM_ERROR);
-
   struct pollfd fd[2];
   size_t fds = 0;
   char buffer[32768];
