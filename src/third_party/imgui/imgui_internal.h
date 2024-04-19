@@ -2797,6 +2797,7 @@ struct ImGuiTableInstanceData
 struct IMGUI_API ImGuiTable
 {
     ImGuiID                     ID;
+    ImGuiID                     VerticalScrollbarID;
     ImGuiTableFlags             Flags;
     void*                       RawData;                    // Single allocation to hold Columns[], DisplayOrderToIndex[] and RowCellData[]
     ImGuiTableTempData*         TempData;                   // Transient data while table is active. Point within g.CurrentTableStack[]

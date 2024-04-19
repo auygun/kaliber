@@ -307,6 +307,14 @@ bool    ImGui::BeginTable(const char* str_id, int columns_count, ImGuiTableFlags
     return BeginTableEx(str_id, id, columns_count, flags, outer_size, inner_width);
 }
 
+ImGuiID  ImGui::TableGetVerticalScrollbarID() {
+    ImGuiContext& g = *GImGui;
+    ImGuiTable* table = g.CurrentTable;
+    if (!table)
+        return 0;
+    return table->VerticalScrollbarID;
+}
+
 bool    ImGui::BeginTableEx(const char* name, ImGuiID id, int columns_count, ImGuiTableFlags flags, const ImVec2& outer_size, float inner_width)
 {
     ImGuiContext& g = *GImGui;
@@ -424,6 +432,9 @@ bool    ImGui::BeginTableEx(const char* name, ImGuiID id, int columns_count, ImG
             table->HasScrollbarYCurr = false;
         }
         table->HasScrollbarYCurr |= table->InnerWindow->ScrollbarY;
+
+        // We need to get the scrollbar id now and save it as GetWindowScrollbarID returns a wrong id after the PushOverrideID call below.
+        table->VerticalScrollbarID = ImGui::GetWindowScrollbarID(table->InnerWindow, ImGuiAxis_Y);
     }
     else
     {
