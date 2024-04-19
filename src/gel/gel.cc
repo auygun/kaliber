@@ -81,9 +81,10 @@ void Gel::Update(float delta_time) {
                           ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY)) {
       ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
       ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0, 0));
-      if (ImGui::BeginTable(
-              "table_scrolly", 3,
-              ImGuiTableFlags_Resizable | ImGuiTableFlags_NoSavedSettings)) {
+      if (ImGui::BeginTable("table_scrolly", 3,
+                            ImGuiTableFlags_Resizable |
+                                ImGuiTableFlags_ScrollY |
+                                ImGuiTableFlags_NoSavedSettings)) {
         ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
         ImGui::TableSetupColumn("One", ImGuiTableColumnFlags_None);
         ImGui::TableSetupColumn("Two", ImGuiTableColumnFlags_None);
@@ -93,11 +94,19 @@ void Gel::Update(float delta_time) {
         if (refresh_button)
           ImGui::SetScrollY(0);
 
+        auto& commit_history = git_log_.GetCommitHistory();
+
+        // Update item_counts_ only when not scrolling.
+        ImGuiID active_id = ImGui::GetActiveID();
+        ImGuiID scrollbar_id = ImGui::TableGetVerticalScrollbarID();
+        bool scrollbar_active = active_id && active_id == scrollbar_id;
+        if (!scrollbar_active)
+          item_counts_ = commit_history.size();
+
         // Commit history is a large vertical list. Use clipper to only submit
         // items that are in view.
-        auto& commit_history = git_log_.GetCommitHistory();
         ImGuiListClipper clipper;
-        clipper.Begin(commit_history.size());
+        clipper.Begin(item_counts_);
         while (clipper.Step()) {
           for (int row = clipper.DisplayStart; row < clipper.DisplayEnd;
                ++row) {

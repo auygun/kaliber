@@ -17,6 +17,8 @@ class Gel : public eng::Game {
  private:
   GitLog git_log_;
   GitDiff git_diff_;
+
+  int item_counts_ = 0;
 };
 
 #endif  // GEL_GEL_H
