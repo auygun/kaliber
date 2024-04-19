@@ -77,7 +77,8 @@ void Gel::Update(float delta_time) {
 
     if (ImGui::BeginChild("child1", ImVec2(0, 300),
                           ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY)) {
-      // const float TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
+      ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+      ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0, 0));
       if (ImGui::BeginTable(
               "table_scrolly", 3,
               ImGuiTableFlags_Resizable | ImGuiTableFlags_NoSavedSettings)) {
@@ -98,14 +99,13 @@ void Gel::Update(float delta_time) {
         while (clipper.Step()) {
           for (int row = clipper.DisplayStart; row < clipper.DisplayEnd;
                ++row) {
-            static int selected_row = -1;
-            bool selected = (row == selected_row);
             ImGui::TableNextRow();
             ImGui::TableSetColumnIndex(0);
-            ImGui::Selectable(commit_history[row].commit.c_str(), &selected, ImGuiSelectableFlags_SpanAllColumns);
-            if (selected)
+            static int selected_row = -1;
+            if (ImGui::Selectable(commit_history[row].commit.c_str(),
+                                  selected_row == row,
+                                  ImGuiSelectableFlags_SpanAllColumns))
               selected_row = row;
-            // ImGui::Text(commit_history[row].commit.c_str());
             ImGui::TableSetColumnIndex(1);
             ImGui::TextUnformatted(commit_history[row].author.c_str());
             ImGui::TableSetColumnIndex(2);
@@ -114,41 +114,24 @@ void Gel::Update(float delta_time) {
         }
         ImGui::EndTable();
       }
+      ImGui::PopStyleVar(2);
     }
     ImGui::EndChild();
 
     if (ImGui::BeginChild("child2", ImVec2(0, 0), ImGuiChildFlags_Border)) {
-      if (ImGui::BeginTable(
-              "table_scrolly2", 3,
-              ImGuiTableFlags_Resizable | ImGuiTableFlags_NoSavedSettings)) {
-        ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
-        ImGui::TableSetupColumn("One", ImGuiTableColumnFlags_None);
-        ImGui::TableSetupColumn("Two", ImGuiTableColumnFlags_None);
-        ImGui::TableSetupColumn("Three", ImGuiTableColumnFlags_None);
-        ImGui::TableHeadersRow();
-
-        if (refresh_button)
-          ImGui::SetScrollY(0);
-
-        // Commit history is a large vertical list. Use clipper to only submit
-        // items that are in view.
-        auto& commit_history = git_log_.GetCommitHistory();
-        ImGuiListClipper clipper;
-        clipper.Begin(commit_history.size());
-        while (clipper.Step()) {
-          for (int row = clipper.DisplayStart; row < clipper.DisplayEnd;
-               ++row) {
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::TextUnformatted(commit_history[row].commit.c_str());
-            ImGui::TableSetColumnIndex(1);
-            ImGui::TextUnformatted(commit_history[row].author.c_str());
-            ImGui::TableSetColumnIndex(2);
-            ImGui::TextUnformatted(commit_history[row].author_date.c_str());
-          }
+      ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+      ImGuiListClipper clipper;
+      clipper.Begin(50);
+      while (clipper.Step()) {
+        for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
+          using namespace std::string_literals;
+          static int selected_file = -1;
+          if (ImGui::Selectable(("file "s + std::to_string(i)).c_str(),
+                                selected_file == i))
+            selected_file = i;
         }
-        ImGui::EndTable();
       }
+      ImGui::PopStyleVar();
     }
     ImGui::EndChild();
   }
