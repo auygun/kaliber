@@ -43,6 +43,7 @@ class GitLog final : public Git {
   void OnStart() final;
   void OnOutput(std::string line) final;
   void OnFinished(base::Exec::Status, int result, std::string err) final;
+  void OnKilled() final;
 
   void PushCurrentCommitToBuffer();
 };

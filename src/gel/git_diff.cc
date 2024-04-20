@@ -44,7 +44,6 @@ void GitDiff::OnOutput(std::string line) {
   }
 }
 
-void GitDiff::OnFinished(Exec::Status status, int result, std::string err) {
-  LOG(0) << "Finished status: " << static_cast<int>(status)
-         << " result: " << result << " err: " << err;
-}
+void GitDiff::OnKilled() {}
+
+void GitDiff::OnFinished(Exec::Status status, int result, std::string err) {}

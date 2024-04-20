@@ -55,6 +55,8 @@ bool Exec::Start(const std::vector<std::string>& args) {
 }
 
 bool Exec::Poll() {
+  DCHECK(status_ != Status::UNINITIALIZED);
+
   struct pollfd fd[2];
   size_t fds = 0;
   char buffer[32768];
@@ -129,7 +131,8 @@ bool Exec::Poll() {
 }
 
 bool Exec::Kill() {
-  DCHECK(status_ == Status::RUNNING);
+  DCHECK(status_ != Status::UNINITIALIZED);
+
   if (kill(pid_, SIGINT)) {
     LOG(0) << "kill failed";
     status_ = Status::SYSTEM_ERROR;

@@ -67,10 +67,10 @@ void GitLog::OnOutput(std::string line) {
 }
 
 void GitLog::OnFinished(Exec::Status status, int result, std::string err) {
-  LOG(0) << "Finished status: " << static_cast<int>(status)
-         << " result: " << result << " err: " << err;
   PushCurrentCommitToBuffer();
 }
+
+void GitLog::OnKilled() {}
 
 void GitLog::PushCurrentCommitToBuffer() {
   {

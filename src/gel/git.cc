@@ -24,7 +24,7 @@ void Git::TerminateWorkerThread() {
 
 bool Git::Run(std::vector<std::string> extra_args) {
   // Start a new git process and pass it to the worker thread. The currently
-  // running process will killed and replaced by the new one.
+  // running process will be killed and replaced by the new one.
   std::vector<std::string> args = args_;
   args.insert(args.end(), extra_args.begin(), extra_args.end());
   Exec proc;
@@ -69,26 +69,31 @@ void Git::WorkerMain() {
       // the main thread. Keep it running and kill the rest.
       if (!procs_[0].empty()) {
         if (curent_proc_.GetStatus() == Exec::Status::RUNNING) {
-          curent_proc_.Kill();
           DLOG(0) << "Kill - pid: " << curent_proc_.pid();
+          curent_proc_.Kill();
           death_row_.push_back(std::move(curent_proc_));
+          OnKilled();
         }
         curent_proc_ = std::move(*procs_[0].begin());
         procs_[0].pop_front();
-        for (auto it = procs_[0].begin(); it != procs_[0].end(); ++it)
-          it->Kill();
+        for (auto it = procs_[0].begin(); it != procs_[0].end(); ++it) {
+          if (it->GetStatus() == Exec::Status::RUNNING)
+            it->Kill();
+        }
         death_row_.splice(death_row_.end(), procs_[0]);
         if (curent_proc_.GetStatus() == Exec::Status::RUNNING)
           OnStart();
       }
 
       // Poll the current process.
-      if (!Poll(curent_proc_))
+      if (curent_proc_.GetStatus() != Exec::Status::UNINITIALIZED &&
+          !Poll(curent_proc_))
         curent_proc_ = {};
 
       // Keep polling the old processes until they die.
       for (auto it = death_row_.begin(); it != death_row_.end();) {
-        if (Poll(*it)) {
+        if (curent_proc_.GetStatus() != Exec::Status::UNINITIALIZED &&
+            Poll(*it)) {
           ++it;
         } else {
           it = death_row_.erase(it);
@@ -101,9 +106,6 @@ void Git::WorkerMain() {
 
 bool Git::Poll(Exec& proc) {
   DCHECK(std::this_thread::get_id() == worker_.get_id());
-
-  if (curent_proc_.GetStatus() == Exec::Status::UNINITIALIZED)
-    return false;
 
   bool more = proc.Poll();
 
@@ -123,8 +125,13 @@ bool Git::Poll(Exec& proc) {
     }
   }
 
-  if (!more && proc.pid() == curent_proc_.pid())
+  if (!more && proc.pid() == curent_proc_.pid()) {
+    DLOG(0) << "Finished -  pid: " << curent_proc_.pid()
+            << ", status: " << static_cast<int>(curent_proc_.GetStatus())
+            << ", result: " << curent_proc_.GetResult()
+            << ", err: " << curent_proc_.GetErrStream().str();
     OnFinished(proc.GetStatus(), proc.GetResult(), proc.GetErrStream().str());
+  }
 
   return more;
 }

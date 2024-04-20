@@ -11,8 +11,8 @@
 
 #include "gel/exec.h"
 
-// Backend to run git commands. Provides virtual interface to be implemented by
-// derived classes to parses the output.
+// Base class to run git commands in a background thread. Provides virtual
+// interface to be implemented by derived classes to parses the output.
 class Git {
  public:
   Git(std::vector<std::string> args);
@@ -21,7 +21,10 @@ class Git {
   Git(Git const&) = delete;
   Git& operator=(Git const&) = delete;
 
+  // Kills the currently running process and starts a new one.
   bool Run(std::vector<std::string> extra_args = {});
+
+  // Kills the currently running process.
   void Kill();
 
  protected:
@@ -49,6 +52,7 @@ class Git {
   virtual void OnStart() = 0;
   virtual void OnOutput(std::string line) = 0;
   virtual void OnFinished(base::Exec::Status, int result, std::string err) = 0;
+  virtual void OnKilled() = 0;
 };
 
 #endif  // GEL_GIT_H

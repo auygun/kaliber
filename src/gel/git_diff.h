@@ -32,6 +32,7 @@ class GitDiff final : public Git {
   void OnStart() final;
   void OnOutput(std::string line) final;
   void OnFinished(base::Exec::Status, int result, std::string err) final;
+  void OnKilled() final;
 };
 
 #endif  // GEL_GIT_DIFF_H
