@@ -28,7 +28,7 @@ void GitDiff::Update() {
   }
 }
 
-void GitDiff::OnStart() {
+void GitDiff::OnStarted() {
   std::lock_guard<std::mutex> scoped_lock(lock_);
   files_[1].clear();
   clear_in_main_thread_ = true;

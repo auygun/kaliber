@@ -49,7 +49,7 @@ class Git {
 
   bool Poll(base::Exec& proc);
 
-  virtual void OnStart() = 0;
+  virtual void OnStarted() = 0;
   virtual void OnOutput(std::string line) = 0;
   virtual void OnFinished(base::Exec::Status, int result, std::string err) = 0;
   virtual void OnKilled() = 0;

@@ -29,7 +29,7 @@ class GitDiff final : public Git {
   bool clear_in_main_thread_ = false;
   mutable std::mutex lock_;
 
-  void OnStart() final;
+  void OnStarted() final;
   void OnOutput(std::string line) final;
   void OnFinished(base::Exec::Status, int result, std::string err) final;
   void OnKilled() final;

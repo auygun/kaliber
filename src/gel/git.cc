@@ -82,7 +82,7 @@ void Git::WorkerMain() {
         }
         death_row_.splice(death_row_.end(), procs_[0]);
         if (curent_proc_.GetStatus() == Exec::Status::RUNNING)
-          OnStart();
+          OnStarted();
       }
 
       // Poll the current process.

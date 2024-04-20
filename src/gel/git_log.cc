@@ -30,7 +30,7 @@ void GitLog::Update() {
   }
 }
 
-void GitLog::OnStart() {
+void GitLog::OnStarted() {
   {
     std::lock_guard<std::mutex> scoped_lock(lock_);
     commit_history_[1].clear();
