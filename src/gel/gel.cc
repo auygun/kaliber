@@ -57,7 +57,6 @@ void Gel::Update(float delta_time) {
   git_log_.Update();
   git_diff_.Update();
 
-#if 1
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
   ImGui::SetNextWindowPos(viewport->WorkPos);
   ImGui::SetNextWindowSize(viewport->WorkSize);
@@ -77,80 +76,81 @@ void Gel::Update(float delta_time) {
     if (kill_button)
       git_log_.Kill();
 
-    if (ImGui::BeginChild("child1", ImVec2(0, 300),
-                          ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY)) {
-      ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-      ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0, 0));
-      if (ImGui::BeginTable("table_scrolly", 3,
-                            ImGuiTableFlags_Resizable |
-                                ImGuiTableFlags_ScrollY |
-                                ImGuiTableFlags_NoSavedSettings)) {
-        ImGui::TableSetupScrollFreeze(0, 1);  // Make top row always visible
-        ImGui::TableSetupColumn("One", ImGuiTableColumnFlags_None);
-        ImGui::TableSetupColumn("Two", ImGuiTableColumnFlags_None);
-        ImGui::TableSetupColumn("Three", ImGuiTableColumnFlags_None);
-        ImGui::TableHeadersRow();
-
-        if (refresh_button)
-          ImGui::SetScrollY(0);
-
-        auto& commit_history = git_log_.GetCommitHistory();
-
-        // Update item_counts_ only when not scrolling.
-        ImGuiID active_id = ImGui::GetActiveID();
-        ImGuiID scrollbar_id = ImGui::TableGetVerticalScrollbarID();
-        bool scrollbar_active = active_id && active_id == scrollbar_id;
-        if (!scrollbar_active)
-          item_counts_ = commit_history.size();
-
-        // Commit history is a large vertical list. Use clipper to only submit
-        // items that are in view.
-        ImGuiListClipper clipper;
-        clipper.Begin(item_counts_);
-        while (clipper.Step()) {
-          for (int row = clipper.DisplayStart; row < clipper.DisplayEnd;
-               ++row) {
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            static int selected_row = -1;
-            if (ImGui::Selectable(commit_history[row].message.c_str(),
-                                  selected_row == row,
-                                  ImGuiSelectableFlags_SpanAllColumns) &&
-                selected_row != row) {
-              selected_row = row;
-              git_diff_.Run({commit_history[row].commit});
-            }
-            ImGui::TableSetColumnIndex(1);
-            ImGui::TextUnformatted(commit_history[row].author.c_str());
-            ImGui::TableSetColumnIndex(2);
-            ImGui::TextUnformatted(commit_history[row].author_date.c_str());
-          }
-        }
-        ImGui::EndTable();
-      }
-      ImGui::PopStyleVar(2);
-    }
-    ImGui::EndChild();
-
-    if (ImGui::BeginChild("child2", ImVec2(0, 0), ImGuiChildFlags_Border)) {
-      ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-      ImGuiListClipper clipper;
-      clipper.Begin(git_diff_.GetFiles().size());
-      while (clipper.Step()) {
-        for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
-          using namespace std::string_literals;
-          static int selected_file = -1;
-          if (ImGui::Selectable(git_diff_.GetFiles()[i].c_str(),
-                                selected_file == i))
-            selected_file = i;
-        }
-      }
-      ImGui::PopStyleVar();
-    }
-    ImGui::EndChild();
+    LayoutCommitHistory(refresh_button);
+    LayoutCommitDiff();
   }
   ImGui::End();
-#else
+
+#if 0
   ImGui::ShowDemoWindow();
 #endif
+}
+
+void Gel::LayoutCommitHistory(bool reset_scroll_pos) {
+  if (ImGui::BeginChild("upper_part", ImVec2(0, 300),
+                        ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY)) {
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+    ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0, 0));
+    if (ImGui::BeginTable("table_scrolly", 3,
+                          ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY |
+                              ImGuiTableFlags_NoSavedSettings)) {
+      if (reset_scroll_pos)
+        ImGui::SetScrollY(0);
+
+      auto& commit_history = git_log_.GetCommitHistory();
+
+      // Do not update commit_count_ if the scrollbar is held. Adding more
+      // items to the table while the scrollbar is held doesn't work well.
+      ImGuiID active_id = ImGui::GetActiveID();
+      ImGuiID scrollbar_id = ImGui::TableGetVerticalScrollbarID();
+      bool scrollbar_active = active_id && active_id == scrollbar_id;
+      if (!scrollbar_active)
+        commit_count_ = commit_history.size();
+
+      // Commit history is a large vertical list. Use clipper to only submit
+      // items that are in view.
+      ImGuiListClipper clipper;
+      clipper.Begin(commit_count_);
+      while (clipper.Step()) {
+        for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row) {
+          ImGui::TableNextRow();
+          ImGui::TableSetColumnIndex(0);
+          static int selected_row = -1;
+          if (ImGui::Selectable(commit_history[row].message.c_str(),
+                                selected_row == row,
+                                ImGuiSelectableFlags_SpanAllColumns) &&
+              selected_row != row) {
+            selected_row = row;
+            git_diff_.Run({commit_history[row].commit});
+          }
+          ImGui::TableSetColumnIndex(1);
+          ImGui::TextUnformatted(commit_history[row].author.c_str());
+          ImGui::TableSetColumnIndex(2);
+          ImGui::TextUnformatted(commit_history[row].author_date.c_str());
+        }
+      }
+      ImGui::EndTable();
+    }
+    ImGui::PopStyleVar(2);
+  }
+  ImGui::EndChild();
+}
+
+void Gel::LayoutCommitDiff() {
+  if (ImGui::BeginChild("lower_part", ImVec2(0, 0), ImGuiChildFlags_Border)) {
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+    ImGuiListClipper clipper;
+    clipper.Begin(git_diff_.GetFiles().size());
+    while (clipper.Step()) {
+      for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
+        using namespace std::string_literals;
+        static int selected_file = -1;
+        if (ImGui::Selectable(git_diff_.GetFiles()[i].c_str(),
+                              selected_file == i))
+          selected_file = i;
+      }
+    }
+    ImGui::PopStyleVar();
+  }
+  ImGui::EndChild();
 }

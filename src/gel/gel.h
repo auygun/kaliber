@@ -2,8 +2,8 @@
 #define GEL_GEL_H
 
 #include "engine/game.h"
-#include "gel/git_log.h"
 #include "gel/git_diff.h"
+#include "gel/git_log.h"
 
 class Gel : public eng::Game {
  public:
@@ -18,7 +18,10 @@ class Gel : public eng::Game {
   GitLog git_log_;
   GitDiff git_diff_;
 
-  int item_counts_ = 0;
+  int commit_count_ = 0;
+
+  void LayoutCommitHistory(bool reset_scroll_pos);
+  void LayoutCommitDiff();
 };
 
 #endif  // GEL_GEL_H
