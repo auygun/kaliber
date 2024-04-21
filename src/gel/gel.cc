@@ -8,6 +8,8 @@
 using namespace base;
 using namespace eng;
 
+namespace {
+
 void MyStyle() {
   ImVec4* colors = ImGui::GetStyle().Colors;
   colors[ImGuiCol_ChildBg] = ImVec4(0.13f, 0.13f, 0.13f, 1.00f);
@@ -39,6 +41,8 @@ void MyStyle() {
   style.LogSliderDeadzone = 4;
   style.TabRounding = 4;
 }
+
+}  // namespace
 
 GAME_FACTORIES{GAME_CLASS(Gel)};
 
@@ -87,7 +91,7 @@ void Gel::Update(float delta_time) {
 }
 
 void Gel::LayoutCommitHistory(bool reset_scroll_pos) {
-  if (ImGui::BeginChild("upper_part", ImVec2(0, 300),
+  if (ImGui::BeginChild("upper_part", ImVec2(-FLT_MIN, 300),
                         ImGuiChildFlags_Border | ImGuiChildFlags_ResizeY)) {
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
     ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0, 0));
@@ -116,12 +120,13 @@ void Gel::LayoutCommitHistory(bool reset_scroll_pos) {
           ImGui::TableNextRow();
           ImGui::TableSetColumnIndex(0);
           static int selected_row = -1;
-          if (ImGui::Selectable(commit_history[row].message.c_str(),
+          if (ImGui::Selectable(commit_history[row].message[0].c_str(),
                                 selected_row == row,
                                 ImGuiSelectableFlags_SpanAllColumns) &&
               selected_row != row) {
             selected_row = row;
             git_diff_.Run({commit_history[row].commit});
+            diff_content_width_ = 0.0f;
           }
           ImGui::TableSetColumnIndex(1);
           ImGui::TextUnformatted(commit_history[row].author.c_str());
@@ -137,17 +142,21 @@ void Gel::LayoutCommitHistory(bool reset_scroll_pos) {
 }
 
 void Gel::LayoutCommitDiff() {
-  if (ImGui::BeginChild("lower_part", ImVec2(0, 0), ImGuiChildFlags_Border)) {
+  ImGui::SetNextWindowContentSize(ImVec2(diff_content_width_, 0.0f));
+  if (ImGui::BeginChild("lower_part", ImVec2(-FLT_MIN, -FLT_MIN),
+                        ImGuiChildFlags_Border,
+                        ImGuiWindowFlags_HorizontalScrollbar)) {
+    ImGuiWindow* window = ImGui::GetCurrentWindowRead();
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
     ImGuiListClipper clipper;
-    clipper.Begin(git_diff_.GetFiles().size());
+    clipper.Begin(git_diff_.GetDiffContent().size());
     while (clipper.Step()) {
       for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
-        using namespace std::string_literals;
-        static int selected_file = -1;
-        if (ImGui::Selectable(git_diff_.GetFiles()[i].c_str(),
-                              selected_file == i))
-          selected_file = i;
+        ImGui::TextUnformatted(git_diff_.GetDiffContent()[i].c_str());
+        float text_width =
+            IM_TRUNC(window->DC.CursorMaxPos.x - window->DC.CursorStartPos.x);
+        if (text_width > diff_content_width_)
+          diff_content_width_ = text_width;
       }
     }
     ImGui::PopStyleVar();

@@ -1,8 +1,24 @@
 #include "gel/git_log.h"
 
+#include <optional>
+
 #include "base/log.h"
 
 using namespace base;
+
+namespace {
+
+std::optional<std::string> GetStringAfterLabel(const std::string& str,
+                                               const std::string& label) {
+  if (str.substr(0, label.length()) != label)
+    return std::nullopt;
+  size_t start = label.length();
+  while (start < str.length() && std::isspace(str[start]))
+    start++;
+  return std::optional<std::string>{str.substr(start)};
+}
+
+}  // namespace
 
 GitLog::GitLog()
     : Git{{"git", "log", "--color=never", /*"--parents",*/ "--pretty=fuller",
@@ -49,21 +65,21 @@ void GitLog::OnOutput(std::string line) {
     line = line.substr(1);  // Skip the null character.
   }
 
-  std::istringstream iss(line);
-  std::string field, value;
-  std::getline(iss, field, ' ');
-  std::getline(iss, value);
+  // LOG(0) << line;
 
-  using namespace std::string_literals;
-  if ("commit"s == field)
-    current_commit_.commit = value;
-  else if ("Author:"s == field)
-    current_commit_.author = value.substr(4);
-  else if ("AuthorDate:"s == field)
-    current_commit_.author_date = value;
-  else if (line.size() > 4 && "    "s == line.substr(0, 4) &&
-           current_commit_.message.empty())
-    current_commit_.message = line.substr(4);
+  if (auto val = GetStringAfterLabel(line, "    ")) {
+    current_commit_.message.push_back(*val);
+  } else if (auto val = GetStringAfterLabel(line, "commit")) {
+    current_commit_.commit = *val;
+  } else if (auto val = GetStringAfterLabel(line, "Author:")) {
+    current_commit_.author = *val;
+  } else if (auto val = GetStringAfterLabel(line, "AuthorDate:")) {
+    current_commit_.author_date = *val;
+  } else if (auto val = GetStringAfterLabel(line, "Commit:")) {
+    current_commit_.committer = *val;
+  } else if (auto val = GetStringAfterLabel(line, "CommitDate:")) {
+    current_commit_.committer_date = *val;
+  }
 }
 
 void GitLog::OnFinished(Exec::Status status, int result, std::string err) {
@@ -73,6 +89,8 @@ void GitLog::OnFinished(Exec::Status status, int result, std::string err) {
 void GitLog::OnKilled() {}
 
 void GitLog::PushCurrentCommitToBuffer() {
+  if (current_commit_.message.empty())
+    current_commit_.message.push_back("");
   {
     std::lock_guard<std::mutex> scoped_lock(lock_);
     commit_history_[1].push_back(current_commit_);

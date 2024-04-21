@@ -17,15 +17,15 @@ class GitDiff final : public Git {
 
   void Update();
 
-  const std::vector<std::string>& GetFiles() const {
-    return files_[0];
+  const std::vector<std::string>& GetDiffContent() const {
+    return diff_content_[0];
   }
 
  private:
   // Double buffer for data exchange between the main thread and the worker
   // thread. [1] is accessed by both threads simultaneously. It's merged into
   // [0] in the UI thread.
-  std::vector<std::string> files_[2];
+  std::vector<std::string> diff_content_[2];
   bool clear_in_main_thread_ = false;
   mutable std::mutex lock_;
 

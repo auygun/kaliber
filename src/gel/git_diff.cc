@@ -19,18 +19,19 @@ void GitDiff::Update() {
   if (scoped_lock) {
     if (clear_in_main_thread_) {
       clear_in_main_thread_ = false;
-      files_[0].clear();
+      diff_content_[0].clear();
     }
-    if (files_[1].size() > 0) {
-      files_[0].insert(files_[0].end(), files_[1].begin(), files_[1].end());
-      files_[1].clear();
+    if (diff_content_[1].size() > 0) {
+      diff_content_[0].insert(diff_content_[0].end(), diff_content_[1].begin(),
+                              diff_content_[1].end());
+      diff_content_[1].clear();
     }
   }
 }
 
 void GitDiff::OnStarted() {
   std::lock_guard<std::mutex> scoped_lock(lock_);
-  files_[1].clear();
+  diff_content_[1].clear();
   clear_in_main_thread_ = true;
 }
 
@@ -40,7 +41,7 @@ void GitDiff::OnOutput(std::string line) {
 
   {
     std::lock_guard<std::mutex> scoped_lock(lock_);
-    files_[1].push_back(line);
+    diff_content_[1].push_back(line);
   }
 }
 
