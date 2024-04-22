@@ -19,6 +19,7 @@ class Gel : public eng::Game {
   GitDiff git_diff_;
 
   int commit_count_ = 0;
+  int diff_lines_count_ = 0;
   float diff_content_width_ = 0.0f;
 
   void LayoutCommitHistory(bool reset_scroll_pos);

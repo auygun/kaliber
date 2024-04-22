@@ -12,13 +12,15 @@ GitDiff::~GitDiff() {
   TerminateWorkerThread();
 }
 
-void GitDiff::Update() {
+bool GitDiff::Update() {
   // Merge buffered data if lock succeeds. Otherwise, we will keep buffering and
   // try again later.
+  bool did_clear = false;
   std::unique_lock<std::mutex> scoped_lock(lock_, std::try_to_lock);
   if (scoped_lock) {
     if (clear_in_main_thread_) {
       clear_in_main_thread_ = false;
+      did_clear = true;
       diff_content_[0].clear();
     }
     if (diff_content_[1].size() > 0) {
@@ -27,6 +29,7 @@ void GitDiff::Update() {
       diff_content_[1].clear();
     }
   }
+  return did_clear;
 }
 
 void GitDiff::OnStarted() {

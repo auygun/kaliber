@@ -15,7 +15,7 @@ class GitDiff final : public Git {
   GitDiff(GitDiff const&) = delete;
   GitDiff& operator=(GitDiff const&) = delete;
 
-  void Update();
+  bool Update();
 
   const std::vector<std::string>& GetDiffContent() const {
     return diff_content_[0];

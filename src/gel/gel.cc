@@ -59,7 +59,8 @@ bool Gel::Initialize() {
 
 void Gel::Update(float delta_time) {
   git_log_.Update();
-  git_diff_.Update();
+  if (git_diff_.Update())
+    diff_content_width_ = 0.0f;
 
   const ImGuiViewport* viewport = ImGui::GetMainViewport();
   ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -126,7 +127,6 @@ void Gel::LayoutCommitHistory(bool reset_scroll_pos) {
               selected_row != row) {
             selected_row = row;
             git_diff_.Run({commit_history[row].commit});
-            diff_content_width_ = 0.0f;
           }
           ImGui::TableSetColumnIndex(1);
           ImGui::TextUnformatted(commit_history[row].author.c_str());
@@ -142,17 +142,30 @@ void Gel::LayoutCommitHistory(bool reset_scroll_pos) {
 }
 
 void Gel::LayoutCommitDiff() {
+  // Set the horizontal content size to keep it stable while scrolling
+  // vertically (as we only submit the visible part of the content).
   ImGui::SetNextWindowContentSize(ImVec2(diff_content_width_, 0.0f));
   if (ImGui::BeginChild("lower_part", ImVec2(-FLT_MIN, -FLT_MIN),
                         ImGuiChildFlags_Border,
                         ImGuiWindowFlags_HorizontalScrollbar)) {
+    // Do not update diff_lines_count_ if the scrollbar is held. Adding more
+    // text to the window while the scrollbar is held doesn't work well.
     ImGuiWindow* window = ImGui::GetCurrentWindowRead();
+    ImGuiID active_id = ImGui::GetActiveID();
+    ImGuiID scrollbar_id = ImGui::GetWindowScrollbarID(window, ImGuiAxis_Y);
+    bool scrollbar_active = active_id && active_id == scrollbar_id;
+    if (!scrollbar_active)
+      diff_lines_count_ = git_diff_.GetDiffContent().size();
+
+    // Diff content is a large vertical list. Use clipper to only submit items
+    // that are in view.
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
     ImGuiListClipper clipper;
-    clipper.Begin(git_diff_.GetDiffContent().size());
+    clipper.Begin(diff_lines_count_);
     while (clipper.Step()) {
       for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
         ImGui::TextUnformatted(git_diff_.GetDiffContent()[i].c_str());
+        // Calculate the maximum horizontal content size.
         float text_width =
             IM_TRUNC(window->DC.CursorMaxPos.x - window->DC.CursorStartPos.x);
         if (text_width > diff_content_width_)
