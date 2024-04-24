@@ -383,8 +383,10 @@ void Platform::Update() {
   int events;
   android_poll_source* source;
 
-  while ((id = ALooper_pollAll(has_focus_ ? 0 : -1, NULL, &events,
-                               (void**)&source)) >= 0) {
+  do {
+    id = ALooper_pollOnce(has_focus_ ? 0 : -1, NULL, &events, (void**)&source);
+    if (id == ALOOPER_POLL_CALLBACK)
+      continue;
     if (source != NULL)
       source->process(app_, source);
     if (app_->destroyRequested != 0) {
@@ -394,7 +396,7 @@ void Platform::Update() {
     }
     if (has_focus_)
       break;
-  }
+  } while (id >= 0);
 }
 
 void Platform::Exit() {

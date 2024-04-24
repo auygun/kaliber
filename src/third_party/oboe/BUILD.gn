@@ -8,6 +8,8 @@ source_set("oboe") {
   configs -= [ "//build:warnings" ]
   public_configs = [ ":oboe_public" ]
 
+  cflags = [ "-Wno-format" ]
+
   sources = [
     "include/oboe/AudioStream.h",
     "include/oboe/AudioStreamBase.h",

@@ -1,4 +1,6 @@
 build/android/.gradle
+build/android/.idea
+build/android/local.properties
 build/android/*.apk
 build/android/*.idsig
 build/android/app/.cxx

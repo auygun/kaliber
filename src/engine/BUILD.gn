@@ -1,4 +1,8 @@
 source_set("engine") {
+  if (target_os != "win") {
+    cflags = [ "-Wno-deprecated-declarations" ]
+  }
+
   sources = [
     "animatable.cc",
     "animatable.h",
