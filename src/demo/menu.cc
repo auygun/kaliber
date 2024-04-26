@@ -135,7 +135,7 @@ bool Menu::Initialize() {
     items_[i].select_item_cb_ = [&, i]() -> void {
       items_[i].text_animator.SetEndCallback(Animator::kBlending, nullptr);
       // Wait until click sound ends before exiting.
-      if (i == kExit)
+      if (i == kExit && click_.IsPlaying())
         click_.SetEndCallback(
             [&, i]() -> void { selected_option_ = (Option)i; });
       else

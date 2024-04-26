@@ -24,9 +24,11 @@ AudioDeviceAlsa::~AudioDeviceAlsa() {
 }
 
 bool AudioDeviceAlsa::Initialize() {
+#if 0
   DeviceNames device_names = GetAlsaAudioDevices(kStreamPlayback);
   for (auto& dn : device_names)
     DLOG(0) << dn.device_name << " : " << dn.unique_id;
+#endif
 
   LOG(0) << "Initializing audio.";
 
@@ -35,13 +37,9 @@ bool AudioDeviceAlsa::Initialize() {
   // Contains information about the hardware.
   snd_pcm_hw_params_t* hw_params;
 
-  // TODO: "default" is usualy PulseAudio. Select a device with "plughw" for
-  // direct hardware device with software format conversion.
-
   // "default" is a virtual device mapped to real device exclusively opened by
-  // PulseAudio, so we must open the device via the "default" moniker. If
-  // PulseAudio is not available, a device id must be picked from the device
-  // list above.
+  // the sound server (Pulse, PipeWire), so we open the device via the "default"
+  // moniker.
   if ((err = snd_pcm_open(&device_, "default", SND_PCM_STREAM_PLAYBACK, 0)) <
       0) {
     LOG(0) << "Cannot open audio device. Error: " << snd_strerror(err);

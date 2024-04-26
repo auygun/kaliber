@@ -66,6 +66,10 @@ void SoundPlayer::Stop(float fade_out_duration) {
     input_->Stop();
 }
 
+bool SoundPlayer::IsPlaying() const {
+  return input_->IsPlaying();
+}
+
 void SoundPlayer::SetVariate(bool variate) {
   variate_ = variate;
 }

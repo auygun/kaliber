@@ -30,11 +30,8 @@ void MixerInput::SetAudioBus(std::shared_ptr<AudioBus> audio_bus) {
 }
 
 void MixerInput::Play(AudioMixer* mixer, bool restart) {
-  if (!mixer->IsAudioEnabled()) {
-    if (!playing_ && end_cb_)
-      end_cb_();
+  if (!mixer->IsAudioEnabled())
     return;
-  }
 
   // If already playing check if stream position needs to be reset.
   if (playing_) {

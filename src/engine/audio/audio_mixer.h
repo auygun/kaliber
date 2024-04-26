@@ -30,13 +30,13 @@ class AudioMixer : public AudioDevice::Delegate {
 
   void AddInput(std::shared_ptr<MixerInput> mixer_input);
 
-  void SetEnableAudio(bool enable) { audio_enabled_ = enable; }
+  void SetEnableAudio(bool enable);
   bool IsAudioEnabled() const { return audio_enabled_; }
 
   void Suspend();
   void Resume();
 
-  size_t GetHardwareSampleRate();
+  size_t GetHardwareSampleRate() const;
 
  private:
   static constexpr int kChannelCount = 2;

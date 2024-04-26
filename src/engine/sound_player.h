@@ -25,6 +25,8 @@ class SoundPlayer {
 
   void Stop(float fade_out_duration = 0);
 
+  bool IsPlaying() const;
+
   // Picks a random variation of the sound or the original sound if "variate" is
   // false. Variations are obtained by slightly up or down sampling.
   void SetVariate(bool variate);

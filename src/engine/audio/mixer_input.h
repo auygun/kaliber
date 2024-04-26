@@ -34,6 +34,8 @@ class MixerInput : public std::enable_shared_from_this<MixerInput> {
   // Stops playback. Does not reset stream position.
   void Stop();
 
+  bool IsPlaying() const { return playing_; }
+
   // Set whether the playback should loop or not.
   void SetLoop(bool loop);
 
@@ -64,13 +66,13 @@ class MixerInput : public std::enable_shared_from_this<MixerInput> {
   float GetMaxAmplitude() const {
     return max_amplitude_.load(std::memory_order_relaxed);
   }
-  size_t GetSrcIndex() const { return src_index_; }
-  size_t GetAccumulator() const { return accumulator_; }
 
   bool IsStreamingInProgress() const;
 
   // Called by the mixer to save the last sample position.
   void SetPosition(size_t index, int accumulator);
+  size_t GetSrcIndex() const { return src_index_; }
+  size_t GetAccumulator() const { return accumulator_; }
 
   // Called by the mixer when more data is needed.
   bool OnMoreData(bool loop);

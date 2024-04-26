@@ -28,7 +28,10 @@ AudioMixer::AudioMixer()
 #elif defined(_WIN32)
       audio_device_{std::make_unique<AudioDeviceWASAPI>(this)} {
 #endif
-  audio_device_->Initialize();
+  if (!audio_device_->Initialize()) {
+    audio_device_.reset();
+    audio_enabled_ = false;
+  }
 }
 
 AudioMixer::~AudioMixer() {
@@ -42,16 +45,22 @@ void AudioMixer::AddInput(std::shared_ptr<MixerInput> mixer_input) {
   inputs_[0].push_back(mixer_input);
 }
 
+void AudioMixer::SetEnableAudio(bool enable) {
+  audio_enabled_ = audio_device_ && enable;
+}
+
 void AudioMixer::Suspend() {
-  audio_device_->Suspend();
+  if (audio_device_)
+    audio_device_->Suspend();
 }
 
 void AudioMixer::Resume() {
-  audio_device_->Resume();
+  if (audio_device_)
+    audio_device_->Resume();
 }
 
-size_t AudioMixer::GetHardwareSampleRate() {
-  return audio_device_->GetHardwareSampleRate();
+size_t AudioMixer::GetHardwareSampleRate() const {
+  return audio_device_ ? audio_device_->GetHardwareSampleRate() : 0;
 }
 
 void AudioMixer::RenderAudio(float* output_buffer, size_t num_frames) {
