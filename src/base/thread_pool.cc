@@ -63,7 +63,7 @@ void ThreadPool::WorkerMain() {
     if (quit_.load(std::memory_order_relaxed))
       return;
 
-    task_runner_.RunTasks();
+    task_runner_.RunTasks<Consumer::Multi>();
   }
 }
 

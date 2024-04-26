@@ -2022,7 +2022,7 @@ void RendererVulkan::SetupThreadMain() {
     if (quit_.load(std::memory_order_relaxed))
       break;
 
-    task_runner_.RunTasks();
+    task_runner_.RunTasks<Consumer::Single>();
   }
 }
 

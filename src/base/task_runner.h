@@ -31,6 +31,15 @@ void ReplyAdapter(std::function<void(ReturnType)> callback,
 
 }  // namespace internal
 
+enum class Consumer {
+  // Tasks are consumed by multiple threads.
+  Multi,
+  // Tasks are consumed by a single thread.
+  Single,
+  // Consume tasks if ownership of the mutex can be acquire without blocking.
+  NoBlocking
+};
+
 // Runs queued tasks (in the form of Closure objects). All methods are
 // thread-safe and can be called on any thread.
 // Tasks run in FIFO order when consumed by a single thread. When consumed
@@ -77,6 +86,7 @@ class TaskRunner {
 
   void WaitForCompletion();
 
+  template <Consumer T>
   void RunTasks();
 
  private:

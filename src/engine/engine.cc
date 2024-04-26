@@ -82,7 +82,7 @@ void Engine::Run() {
       accumulator -= time_step_;
     };
 
-    TaskRunner::GetThreadLocalTaskRunner()->RunTasks();
+    TaskRunner::GetThreadLocalTaskRunner()->RunTasks<Consumer::Single>();
 
     // Calculate frame fraction from remainder of the frame time.
     float frame_frac = accumulator / time_step_;
@@ -711,7 +711,7 @@ void Engine::CreateRenderResources() {
 
 void Engine::WaitForAsyncWork() {
   while (async_work_count_ > 0) {
-    TaskRunner::GetThreadLocalTaskRunner()->RunTasks();
+    TaskRunner::GetThreadLocalTaskRunner()->RunTasks<Consumer::Single>();
     platform_->Update();
   }
 }

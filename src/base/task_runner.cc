@@ -72,7 +72,8 @@ void TaskRunner::WaitForCompletion() {
     std::this_thread::yield();
 }
 
-void TaskRunner::RunTasks() {
+template <>
+void TaskRunner::RunTasks<Consumer::Multi>() {
   for (;;) {
     Task task;
     {
@@ -87,6 +88,54 @@ void TaskRunner::RunTasks() {
 
 #if 0
     LOG(0) << __func__ << " from: " << LOCATION(from);
+#endif
+
+    task_cb();
+    task_count_.fetch_sub(1, std::memory_order_release);
+  }
+}
+
+template <>
+void TaskRunner::RunTasks<Consumer::Single>() {
+  std::deque<Task> queue;
+  {
+    std::lock_guard<std::mutex> scoped_lock(lock_);
+    if (queue_.empty())
+      return;
+    queue.swap(queue_);
+  }
+
+  while (!queue.empty()) {
+    auto [from, task_cb] = queue.front();
+    queue.pop_front();
+
+#if 0
+    LOG << __func__ << " from: " << LOCATION(from);
+#endif
+
+    task_cb();
+    task_count_.fetch_sub(1, std::memory_order_release);
+  }
+}
+
+template <>
+void TaskRunner::RunTasks<Consumer::NoBlocking>() {
+  std::deque<Task> queue;
+  {
+    std::unique_lock<std::mutex> scoped_lock(lock_, std::try_to_lock);
+    if (scoped_lock) {
+      if (queue_.empty())
+        return;
+      queue.swap(queue_);
+    }
+  }
+
+  while (!queue.empty()) {
+    auto [from, task_cb] = queue.front();
+    queue.pop_front();
+
+#if 0
+    LOG << __func__ << " from: " << LOCATION(from);
 #endif
 
     task_cb();
