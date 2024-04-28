@@ -1,0 +1,44 @@
+config("glfw_public") {
+  include_dirs = [ "include" ]
+}
+
+source_set("glfw") {
+  configs -= [ "//build:warnings" ]
+  public_configs = [ ":glfw_public" ]
+
+  sources = [
+    "src/context.c",
+    "src/egl_context.c",
+    "src/glx_context.c",
+    "src/init.c",
+    "src/input.c",
+    "src/linux_joystick.c",
+    "src/monitor.c",
+    "src/null_init.c",
+    "src/null_joystick.c",
+    "src/null_monitor.c",
+    "src/null_window.c",
+    "src/osmesa_context.c",
+    "src/platform.c",
+    "src/posix_module.c",
+    "src/posix_poll.c",
+    "src/posix_thread.c",
+    "src/posix_time.c",
+    "src/vulkan.c",
+    "src/window.c",
+    "src/wl_init.c",
+    "src/wl_monitor.c",
+    "src/wl_window.c",
+    "src/x11_init.c",
+    "src/x11_monitor.c",
+    "src/x11_window.c",
+    "src/xkb_unicode.c",
+  ]
+
+  defines = [
+    "_GLFW_X11=1",
+    "_GLFW_WAYLAND=1",
+  ]
+
+  deps = []
+}
