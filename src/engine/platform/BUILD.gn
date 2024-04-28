@@ -1,4 +1,10 @@
+config("platform_public") {
+  defines = [ "USE_GLFW" ]
+}
+
 source_set("platform") {
+  public_configs = [ ":platform_public" ]
+
   sources = [
     "asset_file.cc",
     "asset_file.h",
@@ -8,17 +14,20 @@ source_set("platform") {
 
   libs = []
   deps = [ "//src/base" ]
+  public_deps = []
 
   if (target_os == "linux" || target_os == "win") {
     sources += [ "asset_file_generic.cc" ]
   }
 
   if (target_os == "linux") {
-    sources += [ "platform_linux.cc" ]
+    # sources += [ "platform_linux.cc" ]
+    sources += [ "platform_glfw.cc" ]
     libs += [
       "X11",
       "GL",
     ]
+    public_deps += [ "//src/third_party/glfw" ]
   } else if (target_os == "win") {
     sources += [ "platform_win.cc" ]
     libs = [

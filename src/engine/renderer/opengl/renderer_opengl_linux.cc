@@ -8,8 +8,8 @@ namespace eng {
 bool RendererOpenGL::Initialize(Platform* platform) {
   LOG(0) << "Initializing renderer.";
 
-  display_ = platform->GetDisplay();
-  window_ = platform->GetWindow();
+  // display_ = platform->GetDisplay();
+  // window_ = platform->GetWindow();
 
   GLint glx_attributes[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER,
                             None};

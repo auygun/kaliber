@@ -21,8 +21,10 @@ source_set("renderer") {
   if (target_os == "linux") {
     sources += [
       "opengl/renderer_opengl_linux.cc",
-      "vulkan/renderer_vulkan_linux.cc",
-      "vulkan/vulkan_context_linux.cc",
+      # "vulkan/renderer_vulkan_linux.cc",
+      # "vulkan/vulkan_context_linux.cc",
+      "vulkan/renderer_vulkan_glfw.cc",
+      "vulkan/vulkan_context_glfw.cc",
     ]
   } else if (target_os == "win") {
     sources += [
@@ -45,6 +47,7 @@ source_set("renderer") {
   ]
 
   public_deps = [
+    "//src/engine/platform",
     "//src/third_party/vma",
     "//src/third_party/volk",
   ]

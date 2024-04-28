@@ -3,7 +3,12 @@
 
 #include <string>
 
-#if defined(__ANDROID__)
+#if defined(USE_GLFW)
+#if defined(__ANDROID__) || (!defined(__linux__) && !defined(_WIN32))
+#error "Unsupported platform."
+#endif
+#include <GLFW/glfw3.h>
+#elif defined(__ANDROID__)
 #include "../../base/vecmath.h"
 struct android_app;
 struct AInputEvent;
@@ -21,7 +26,9 @@ class PlatformObserver;
 
 class Platform {
  public:
-#if defined(__ANDROID__)
+#if defined(USE_GLFW)
+  Platform();
+#elif defined(__ANDROID__)
   Platform(android_app* app);
 #elif defined(__linux__)
   Platform();
@@ -58,7 +65,9 @@ class Platform {
 
   bool should_exit() const { return should_exit_; }
 
-#if defined(__ANDROID__)
+#if defined(USE_GLFW)
+  GLFWwindow* GetWindow();
+#elif defined(__ANDROID__)
   ANativeWindow* GetWindow();
 #elif defined(__linux__)
   Display* GetDisplay();
@@ -80,7 +89,13 @@ class Platform {
 
   PlatformObserver* observer_ = nullptr;
 
-#if defined(__ANDROID__)
+#if defined(USE_GLFW)
+
+  GLFWwindow* window_ = nullptr;
+
+  void DestroyWindow();
+
+#elif defined(__ANDROID__)
 
   android_app* app_ = nullptr;
 

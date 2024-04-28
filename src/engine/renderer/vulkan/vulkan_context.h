@@ -7,9 +7,11 @@
 
 #include "third_party/volk/volk.h"
 
-#if defined(__ANDROID__)
-struct ANativeWindow;
-#endif
+#include "engine/platform/platform.h"
+
+// #if defined(__ANDROID__)
+// struct ANativeWindow;
+// #endif
 
 namespace eng {
 
@@ -23,7 +25,9 @@ class VulkanContext {
   bool Initialize();
   void Shutdown();
 
-#if defined(__ANDROID__)
+#if defined(USE_GLFW)
+  bool CreateSurface(GLFWwindow* window, int width, int height);
+#elif defined(__ANDROID__)
   bool CreateSurface(ANativeWindow* window, int width, int height);
 #elif defined(__linux__)
   bool CreateSurface(Display* display, ::Window window, int width, int height);
