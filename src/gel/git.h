@@ -33,9 +33,7 @@ class Git {
  private:
   std::vector<std::string> args_;
 
-  // Double buffer for data exchange between the main thread and the worker
-  // thread. [1] is accessed by both threads simultaneously.
-  std::list<base::Exec> procs_[2];
+  std::list<base::Exec> new_procs_;
   std::mutex lock_;
 
   base::Exec curent_proc_;

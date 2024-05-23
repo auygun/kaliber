@@ -30,11 +30,9 @@ bool Git::Run(std::vector<std::string> extra_args) {
   Exec proc;
   if (!proc.Start(args))
     return false;
-  DLOG(0) << "Run - pid: " << proc.pid()
-          << ", status: " << static_cast<int>(proc.GetStatus());
   {
     std::lock_guard<std::mutex> scoped_lock(lock_);
-    procs_[1].push_front(std::move(proc));
+    new_procs_.push_front(std::move(proc));
   }
   semaphore_.release();
   return true;
@@ -45,7 +43,7 @@ void Git::Kill() {
   // currently running process to be killed.
   {
     std::lock_guard<std::mutex> scoped_lock(lock_);
-    procs_[1].push_front({});
+    new_procs_.push_front({});
   }
   semaphore_.release();
 }
@@ -58,44 +56,59 @@ void Git::WorkerMain() {
       if (quit_.load(std::memory_order_relaxed))
         return;
 
-      // Merge new processes from main thread.
+      // Get new processes from main thread.
+      std::list<base::Exec> procs;
       {
-        std::unique_lock<std::mutex> scoped_lock(lock_, std::try_to_lock);
-        if (scoped_lock && !procs_[1].empty())
-          procs_[0].splice(procs_[0].begin(), procs_[1]);
+        std::lock_guard<std::mutex> scoped_lock(lock_);
+        procs.swap(new_procs_);
       }
 
-      // Replace the current process with the latest processes we received from
-      // the main thread. Keep it running and kill the rest.
-      if (!procs_[0].empty()) {
+      if (!procs.empty()) {
+        // Kill the old process and keep it in death_row_.
         if (curent_proc_.GetStatus() == Exec::Status::RUNNING) {
-          DLOG(0) << "Kill - pid: " << curent_proc_.pid();
           curent_proc_.Kill();
-          death_row_.push_back(std::move(curent_proc_));
           OnKilled();
+          DLOG(0) << "Killed - pid: " << curent_proc_.pid();
+          death_row_.push_back(std::move(curent_proc_));
         }
-        curent_proc_ = std::move(*procs_[0].begin());
-        procs_[0].pop_front();
-        for (auto it = procs_[0].begin(); it != procs_[0].end(); ++it) {
-          if (it->GetStatus() == Exec::Status::RUNNING)
-            it->Kill();
-        }
-        death_row_.splice(death_row_.end(), procs_[0]);
-        if (curent_proc_.GetStatus() == Exec::Status::RUNNING)
+
+        // Replace the current process with the latest processes we received
+        // from the main thread.
+        curent_proc_ = std::move(*procs.begin());
+        procs.pop_front();
+        if (curent_proc_.GetStatus() == Exec::Status::RUNNING) {
           OnStarted();
+          DLOG(0) << "Started - pid: " << curent_proc_.pid();
+        }
+
+        // Kill any remaining process that was started before the last one and
+        // keep then in death_row_.
+        if (!procs.empty()) {
+          for (auto& proc : procs) {
+            if (proc.GetStatus() == Exec::Status::RUNNING) {
+              proc.Kill();
+              OnKilled();
+              DLOG(0) << "Killed - pid: " << proc.pid();
+            }
+          }
+          death_row_.splice(death_row_.end(), procs);
+        }
       }
 
       // Poll the current process.
       if (curent_proc_.GetStatus() != Exec::Status::UNINITIALIZED &&
-          !Poll(curent_proc_))
+          !Poll(curent_proc_)) {
+        DLOG(0) << "Terminated - pid: " << curent_proc_.pid();
         curent_proc_ = {};
+      }
 
-      // Keep polling the old processes until they die.
+      // Keep polling all killed processes until they are terminated.
       for (auto it = death_row_.begin(); it != death_row_.end();) {
         if (curent_proc_.GetStatus() != Exec::Status::UNINITIALIZED &&
             Poll(*it)) {
           ++it;
         } else {
+          DLOG(0) << "Terminated (was killed) - pid: " << it->pid();
           it = death_row_.erase(it);
         }
       }
