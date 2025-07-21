@@ -92,6 +92,9 @@ class RendererVulkan final : public Renderer {
   void PrepareForDrawing() final;
   void Present() final;
 
+  void BeginRenderToTexture(uint64_t texture_id) final;
+  void EndRenderToTexture(uint64_t texture_id) final;
+
   size_t GetAndResetFPS() final;
 
   const char* GetDebugName() final { return "Vulkan"; }
@@ -111,7 +114,8 @@ class RendererVulkan final : public Renderer {
 
   // Containers to keep information of resources to be destroyed.
   using BufferDeathRow = std::vector<Buffer<VkBuffer>>;
-  using ImageDeathRow = std::vector<std::tuple<Buffer<VkImage>, VkImageView>>;
+  using ImageDeathRow =
+      std::vector<std::tuple<Buffer<VkImage>, VkImageView, VkFramebuffer>>;
   using DescSetDeathRow = std::vector<DescSet>;
   using PipelineDeathRow =
       std::vector<std::tuple<VkPipeline, VkPipelineLayout>>;
@@ -151,6 +155,7 @@ class RendererVulkan final : public Renderer {
     DescSet desc_set = {};
     int width = 0;
     int height = 0;
+    VkFramebuffer frame_buffer_ = VK_NULL_HANDLE;
   };
 
   // Each frame contains 2 command buffers with separate synchronization scopes.
@@ -206,6 +211,8 @@ class RendererVulkan final : public Renderer {
   std::vector<VkDescriptorSet> active_descriptor_sets_;
 
   VkSampler sampler_ = VK_NULL_HANDLE;
+
+  VkRenderPass offscreen_render_pass_ = VK_NULL_HANDLE;
 
   std::thread setup_thread_;
   base::TaskRunner task_runner_;
@@ -263,7 +270,8 @@ class RendererVulkan final : public Renderer {
                      VmaMemoryUsage mapping);
   void FreeImage(Buffer<VkImage> image,
                  VkImageView image_view,
-                 DescSet desc_set);
+                 DescSet desc_set,
+                 VkFramebuffer frame_buffer);
   void UpdateImage(VkImage image,
                    VkFormat format,
                    const uint8_t* data,

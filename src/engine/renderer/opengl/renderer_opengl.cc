@@ -245,7 +245,7 @@ uint64_t RendererOpenGL::CreateTexture() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
   uint64_t resource_id = ++last_resource_id_;
-  textures_[resource_id] = gl_id;
+  textures_[resource_id] = {gl_id, 0, 0, 0};
   return resource_id;
 }
 
@@ -265,7 +265,7 @@ void RendererOpenGL::UpdateTexture(uint64_t resource_id,
   if (it == textures_.end())
     return;
 
-  glBindTexture(GL_TEXTURE_2D, it->second);
+  glBindTexture(GL_TEXTURE_2D, it->second.id);
   if (IsCompressedFormat(format)) {
     GLenum gl_format = 0;
     switch (format) {
@@ -309,6 +309,9 @@ void RendererOpenGL::UpdateTexture(uint64_t resource_id,
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
                  GL_UNSIGNED_BYTE, image_data);
   }
+
+  it->second.width = width;
+  it->second.height = height;
 }
 
 void RendererOpenGL::DestroyTexture(uint64_t resource_id) {
@@ -316,7 +319,8 @@ void RendererOpenGL::DestroyTexture(uint64_t resource_id) {
   if (it == textures_.end())
     return;
 
-  glDeleteTextures(1, &(it->second));
+  glDeleteTextures(1, &it->second.id);
+  glDeleteFramebuffers(1, &it->second.frame_buffer);
   textures_.erase(it);
 }
 
@@ -332,10 +336,10 @@ void RendererOpenGL::ActivateTexture(uint64_t resource_id,
     return;
   }
 
-  if (it->second != active_texture_id_[texture_unit]) {
+  if (it->second.id != active_texture_id_[texture_unit]) {
     glActiveTexture(GL_TEXTURE0 + texture_unit);
-    glBindTexture(GL_TEXTURE_2D, it->second);
-    active_texture_id_[texture_unit] = it->second;
+    glBindTexture(GL_TEXTURE_2D, it->second.id);
+    active_texture_id_[texture_unit] = it->second.id;
   }
 }
 
@@ -486,6 +490,35 @@ void RendererOpenGL::SetUniform(uint64_t resource_id,
 void RendererOpenGL::PrepareForDrawing() {
   glViewport(0, 0, screen_width_, screen_height_);
   glDisable(GL_SCISSOR_TEST);
+}
+
+void RendererOpenGL::BeginRenderToTexture(uint64_t texture_id) {
+  auto it = textures_.find(texture_id);
+  if (it == textures_.end()) {
+    return;
+  }
+
+  if (!it->second.frame_buffer) {
+    glGenFramebuffers(1, &it->second.frame_buffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, it->second.frame_buffer);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                           it->second.id, 0);
+  } else {
+    glBindFramebuffer(GL_FRAMEBUFFER, it->second.frame_buffer);
+  }
+
+  GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  if (status != GL_FRAMEBUFFER_COMPLETE) {
+    LOG(0) << "Framebuffer is not complete! " << status;
+    return;
+  }
+
+  glViewport(0, 0, it->second.width, it->second.height);
+}
+
+void RendererOpenGL::EndRenderToTexture(uint64_t texture_id) {
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glViewport(0, 0, screen_width_, screen_height_);
 }
 
 void RendererOpenGL::ContextLost() {

@@ -91,6 +91,9 @@ class RendererOpenGL final : public Renderer {
   void PrepareForDrawing() final;
   void Present() final;
 
+  void BeginRenderToTexture(uint64_t texture_id) final;
+  void EndRenderToTexture(uint64_t texture_id) final;
+
   size_t GetAndResetFPS() final;
 
   const char* GetDebugName() final { return "OpenGL"; }
@@ -126,9 +129,16 @@ class RendererOpenGL final : public Renderer {
     bool enable_depth_test = false;
   };
 
+  struct TextureOpenGL {
+    GLuint id = 0;
+    GLuint frame_buffer = 0;
+    int width = 0;
+    int height = 0;
+  };
+
   std::unordered_map<uint64_t, GeometryOpenGL> geometries_;
   std::unordered_map<uint64_t, ShaderOpenGL> shaders_;
-  std::unordered_map<uint64_t, GLuint> textures_;
+  std::unordered_map<uint64_t, TextureOpenGL> textures_;
   uint64_t last_resource_id_ = 0;
 
   GLuint active_shader_id_ = 0;

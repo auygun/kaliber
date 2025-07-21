@@ -58,4 +58,14 @@ void Texture::Activate(uint64_t texture_unit) {
     renderer_->ActivateTexture(resource_id_, texture_unit);
 }
 
+void Texture::SetAsRenderTarget() {
+  if (IsValid())
+    renderer_->BeginRenderToTexture(resource_id_);
+}
+
+void Texture::EndRenderTarget() {
+  if (IsValid())
+    renderer_->EndRenderToTexture(resource_id_);
+}
+
 }  // namespace eng

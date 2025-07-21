@@ -32,6 +32,9 @@ class Texture : public RenderResource {
 
   void Activate(uint64_t texture_unit);
 
+  void SetAsRenderTarget();
+  void EndRenderTarget();
+
   int GetWidth() const { return width_; }
   int GetHeight() const { return height_; }
 
