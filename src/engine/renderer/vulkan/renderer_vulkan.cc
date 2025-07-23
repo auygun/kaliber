@@ -484,7 +484,8 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
   if (it->second.view == VK_NULL_HANDLE) {
     AllocateImage(it->second.image, it->second.view, it->second.desc_set,
                   vk_format, width, height,
-                  VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                  VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+                      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
                   VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
     old_layout = VK_IMAGE_LAYOUT_UNDEFINED;
     it->second.width = width;
@@ -504,11 +505,9 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
   task_runner_.PostTask(
       HERE,
       std::bind(&RendererVulkan::ImageMemoryBarrier, this,
-                std::get<0>(it->second.image), VK_ACCESS_TRANSFER_WRITE_BIT,
-                VK_PIPELINE_STAGE_VERTEX_SHADER_BIT |
-                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
-                    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                0, VK_ACCESS_SHADER_READ_BIT,
+                std::get<0>(it->second.image), VK_PIPELINE_STAGE_TRANSFER_BIT,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
   semaphore_.release();
