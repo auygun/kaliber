@@ -9,6 +9,7 @@
 
 namespace eng {
 class Shader;
+class Texture;
 }  // namespace eng
 
 class SkyQuad : public eng::Animatable {
@@ -41,6 +42,7 @@ class SkyQuad : public eng::Animatable {
 
  private:
   std::shared_ptr<eng::Shader> shader_;
+  std::shared_ptr<eng::Texture> texture_;
 
   base::Vector2f sky_offset_ = {0, 0};
   base::Vector2f last_sky_offset_ = {0, 0};
