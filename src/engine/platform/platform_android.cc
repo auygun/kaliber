@@ -291,7 +291,6 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
     case APP_CMD_INIT_WINDOW:
       DLOG(0) << "APP_CMD_INIT_WINDOW";
       if (app->window != NULL) {
-        platform->SetFrameRate(60);
         platform->observer_->OnWindowCreated();
       }
       break;
@@ -315,6 +314,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
 
     case APP_CMD_GAINED_FOCUS:
       DLOG(0) << "APP_CMD_GAINED_FOCUS";
+      platform->SetFrameRate(60);
       // platform->timer_.Reset();
       platform->has_focus_ = true;
       platform->observer_->GainedFocus(g_showing_interstitial_ad);
