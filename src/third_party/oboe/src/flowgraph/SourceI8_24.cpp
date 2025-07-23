@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Android Open Source Project
+ * Copyright 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 #include <unistd.h>
 
 #include "FlowGraphNode.h"
-#include "SourceI16.h"
+#include "SourceI8_24.h"
 
 #if FLOWGRAPH_ANDROID_INTERNAL
 #include <audio_utils/primitives.h>
@@ -26,26 +26,26 @@
 
 using namespace FLOWGRAPH_OUTER_NAMESPACE::flowgraph;
 
-SourceI16::SourceI16(int32_t channelCount)
+SourceI8_24::SourceI8_24(int32_t channelCount)
         : FlowGraphSourceBuffered(channelCount) {
 }
 
-int32_t SourceI16::onProcess(int32_t numFrames) {
+int32_t SourceI8_24::onProcess(int32_t numFrames) {
     float *floatData = output.getBuffer();
-    int32_t channelCount = output.getSamplesPerFrame();
+    const int32_t channelCount = output.getSamplesPerFrame();
 
-    int32_t framesLeft = mSizeInFrames - mFrameIndex;
-    int32_t framesToProcess = std::min(numFrames, framesLeft);
-    int32_t numSamples = framesToProcess * channelCount;
+    const int32_t framesLeft = mSizeInFrames - mFrameIndex;
+    const int32_t framesToProcess = std::min(numFrames, framesLeft);
+    const int32_t numSamples = framesToProcess * channelCount;
 
-    const int16_t *shortBase = static_cast<const int16_t *>(mData);
-    const int16_t *shortData = &shortBase[mFrameIndex * channelCount];
+    const int32_t *intBase = static_cast<const int32_t *>(mData);
+    const int32_t *intData = &intBase[mFrameIndex * channelCount];
 
 #if FLOWGRAPH_ANDROID_INTERNAL
-    memcpy_to_float_from_i16(floatData, shortData, numSamples);
+    memcpy_to_float_from_q8_23(floatData, intData, numSamples);
 #else
     for (int i = 0; i < numSamples; i++) {
-        *floatData++ = *shortData++ * (1.0f / 32768);
+        *floatData++ = *intData++ * kScale;
     }
 #endif
 
