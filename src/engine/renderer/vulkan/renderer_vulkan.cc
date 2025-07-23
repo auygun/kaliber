@@ -953,6 +953,10 @@ bool RendererVulkan::InitializeInternal() {
   allocator_info.physicalDevice = context_.GetPhysicalDevice();
   allocator_info.device = device_;
   allocator_info.instance = context_.GetInstance();
+  const bool use_1_3_features =
+      context_.GetDeviceProperties().apiVersion >= VK_API_VERSION_1_3;
+  if (use_1_3_features)
+    allocator_info.flags |= VMA_ALLOCATOR_CREATE_KHR_MAINTENANCE5_BIT;
   vmaCreateAllocator(&allocator_info, &allocator_);
 
   for (size_t i = 0; i < frames_.size(); i++) {
@@ -1802,9 +1806,9 @@ void RendererVulkan::UpdateImage(VkImage image,
   uint32_t segment = num_blocks_x * block_size;
   uint32_t max_size = staging_buffer_size_ - (staging_buffer_size_ % segment);
   uint32_t region_offset_y = 0;
-  uint32_t alignment =
-      std::max((VkDeviceSize)16,
-               context_.GetDeviceLimits().optimalBufferCopyOffsetAlignment);
+  uint32_t alignment = std::max(
+      (VkDeviceSize)16,
+      context_.GetDeviceProperties().limits.optimalBufferCopyOffsetAlignment);
 
   // A segment must fit in a single staging buffer.
   DCHECK(staging_buffer_size_ >= segment);
@@ -2041,7 +2045,7 @@ bool RendererVulkan::CreatePipelineLayout(
       }
 
       CHECK(pconstants_vertex[0]->size <=
-            context_.GetDeviceLimits().maxPushConstantsSize)
+            context_.GetDeviceProperties().limits.maxPushConstantsSize)
           << "Required push constants size is bigger than the maximum "
              "supported size by device.";
       shader.push_constants_size = pconstants_vertex[0]->size;

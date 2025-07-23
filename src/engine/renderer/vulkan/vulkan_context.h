@@ -60,7 +60,7 @@ class VulkanContext {
 
   VkFormat GetScreenFormat() const { return format_; }
 
-  VkPhysicalDeviceLimits GetDeviceLimits() const { return gpu_props_.limits; }
+  VkPhysicalDeviceProperties GetDeviceProperties() const { return gpu_props_; }
 
   int GetWindowWidth() const { return window_.width; }
   int GetWindowHeight() const { return window_.height; }
