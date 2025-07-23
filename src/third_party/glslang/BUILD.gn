@@ -7,6 +7,10 @@ config("glslang_public") {
     cflags += [
       "/wd4464",  # relative include path contains '..'
     ]
+  } else {
+    cflags += [
+      "-fno-finite-math-only",
+    ]
   }
 }
 

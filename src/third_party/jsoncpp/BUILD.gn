@@ -1,5 +1,18 @@
+config("jsoncpp_public") {
+  include_dirs = [ "." ]
+
+  cflags = []
+
+  if (target_os != "win") {
+    cflags += [
+      "-fno-finite-math-only",
+    ]
+  }
+}
+
 source_set("jsoncpp") {
   configs -= [ "//build:warnings" ]
+  public_configs = [ ":jsoncpp_public" ]
 
   sources = [
     "json-forwards.h",

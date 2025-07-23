@@ -1,7 +1,7 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     ext {
-        agp_version = '8.4.0'
+        agp_version = '8.11.0'
     }
     repositories {
        google()
@@ -24,10 +24,10 @@ task clean(type: Delete) {
 }
 
 ext {
-    ndkVersion = '27.0.11718014'
-    minSdk = 24
-    compileSdk = 34
-    targetSdk = 34
+    ndkVersion = '28.2.13676358'
+    minSdk = 26
+    compileSdk = 36
+    targetSdk = 36
 
     if (!project.hasProperty('gn')) {
         gn = "gn"
