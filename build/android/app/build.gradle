@@ -248,6 +248,19 @@ tasks.configureEach { task ->
         }
         return
     }
+    match = task.name =~ /^generate/ + variantPattern + /LintVitalReportModel$/
+    if (match) {
+        utils.project.android.productFlavors.find { arch ->
+            if (arch.dimension == 'arch' && arch.name.capitalize() == match.group(2)) {
+                // Depends on each arch type for multi-arch build flavors.
+                arch.ndk.abiFilters.each { abi ->
+                    task.dependsOn "copyAssetsFor${match.group(1)}${utils.ARCH_CODES[abi]}${match.group(3)}"
+                }
+                return true
+            }
+        }
+        return
+    }
 }
 
 //
