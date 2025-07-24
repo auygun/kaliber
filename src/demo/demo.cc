@@ -457,7 +457,7 @@ void Demo::StartNextStage(bool boss) {
           }
         }
 
-        total_enemies_ = 23.0897f * log((float)wave_ + 1.0f) - 10.0f;
+        total_enemies_ = 23.0897f * log((float)wave_ + 2.0f) - 19.0f;
         last_num_enemies_killed_ = 0;
         boss_fight_ = false;
         DLOG(0) << "wave: " << wave_ << " total_enemies_: " << total_enemies_;

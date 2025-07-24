@@ -353,8 +353,8 @@ void Enemy::HitTarget(DamageType damage_type) {
 
   if (target->damage_type != kDamageType_Any &&
       target->damage_type != damage_type) {
-    // No shield until wave 8.
-    if (wave_ <= 8)
+    // No shield until wave 12.
+    if (wave_ <= 12)
       return;
 
     if (!target->shield_active) {
@@ -785,7 +785,7 @@ void Enemy::SpawnBoss() {
     auto& e = enemies_.emplace_front();
     e.enemy_type = kEnemyType_Boss;
     e.damage_type = kDamageType_Any;
-    e.total_health = e.hit_points = 41.1283f * log((float)game->wave()) - 20.0f;
+    e.total_health = e.hit_points = 23.0897f * log((float)game->wave() + 0.2f) - 11.0f;
     DLOG(0) << " Boss health: " << e.total_health;
 
     Vector2f hit_box_pos =
@@ -1037,12 +1037,12 @@ void Enemy::UpdateWave(float delta_time) {
   if (enemy_type != kEnemyType_Invalid) {
     // Spawn only light enemies during the first 4 waves. Then gradually
     // introduce harder enemy types.
-    if (enemy_type != kEnemyType_LightSkull && wave_ <= 3)
-      enemy_type = wave_ == 1 ? kEnemyType_Invalid : kEnemyType_LightSkull;
-    else if (enemy_type > kEnemyType_DarkSkull && wave_ == 4)
-      enemy_type = kEnemyType_LightSkull;
-    else if (enemy_type == kEnemyType_Tank && wave_ <= 6)
-      enemy_type = kEnemyType_LightSkull;
+    if (wave_ <= 3 && enemy_type != kEnemyType_LightSkull)
+      enemy_type = kEnemyType_Invalid;
+    else if (wave_ <= 6 && enemy_type > kEnemyType_DarkSkull)
+      enemy_type = kEnemyType_Invalid;
+    else if (wave_ <= 9 && enemy_type == kEnemyType_Tank)
+      enemy_type = kEnemyType_Invalid;
   }
 
   if (enemy_type != kEnemyType_Invalid) {
@@ -1080,7 +1080,7 @@ void Enemy::UpdateWave(float delta_time) {
       SpawnUnit(kEnemyType_PowerUp, kDamageType_Any, pos, 6);
     }
     seconds_since_last_power_up_ = 0;
-    seconds_to_next_power_up_ = Lerp(60.0f, 80.0f, rnd.Rand());
+    seconds_to_next_power_up_ = Lerp(50.0f, 70.0f, rnd.Rand());
   }
 }
 
@@ -1120,13 +1120,14 @@ void Enemy::UpdateBoss(float delta_time) {
     }
   }
 
-  if (enemy_type != kEnemyType_Invalid && boss_spawn_factor > 0.11f) {
+  if (enemy_type != kEnemyType_Invalid) {
     // Spawn only light enemies during the first boss fight. Then gradually
     // introduce harder enemy types.
-    if (enemy_type != kEnemyType_LightSkull && wave_ == 3)
-      enemy_type = enemy_type == kEnemyType_DarkSkull ? kEnemyType_LightSkull
-                                                      : kEnemyType_Invalid;
-    else if (enemy_type == kEnemyType_Tank && wave_ == 6)
+    if (wave_ <= 3 && enemy_type != kEnemyType_LightSkull)
+      enemy_type = kEnemyType_Invalid;
+    else if (wave_ <= 6 && enemy_type > kEnemyType_DarkSkull)
+      enemy_type = kEnemyType_Invalid;
+    else if (wave_ <= 9 && enemy_type == kEnemyType_Tank)
       enemy_type = kEnemyType_Invalid;
   }
 
