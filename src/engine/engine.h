@@ -9,6 +9,7 @@
 
 #include "base/random.h"
 #include "base/thread_pool.h"
+#include "base/timer.h"
 #include "base/vecmath.h"
 #include "engine/imgui_backend.h"
 #include "engine/persistent_data.h"
@@ -212,6 +213,7 @@ class Engine : public PlatformObserver {
   float fps_seconds_ = 0;
   int fps_ = 0;
 
+  base::DeltaTimer timer_;
   float seconds_accumulated_ = 0.0f;
   float time_step_ = 1.0f / 60.0f;
   size_t tick_ = 0;

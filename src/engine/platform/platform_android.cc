@@ -315,7 +315,6 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
     case APP_CMD_GAINED_FOCUS:
       DLOG(0) << "APP_CMD_GAINED_FOCUS";
       platform->SetFrameRate(60);
-      // platform->timer_.Reset();
       platform->has_focus_ = true;
       platform->observer_->GainedFocus(g_showing_interstitial_ad);
       g_showing_interstitial_ad = false;
