@@ -1,2 +1,3 @@
-~/Android/Sdk/build-tools/36.0.0/zipalign -p -f 4 ./app/build/outputs/apk/demoAllArchs/release/app-demo-allArchs-release-unsigned.apk ./app-release-aligned.apk
-~/Android/Sdk/build-tools/36.0.0/apksigner sign -ks ~/key_store/apk_key_store.jks --ks-key-alias upload --ks-pass stdin ./app-release-aligned.apk
+~/Android/Sdk/build-tools/36.0.0/zipalign -c -P 16 -v 4 ./app/build/outputs/apk/$1AllArchs/release/app-$1-allArchs-release-unsigned.apk
+~/Android/Sdk/build-tools/36.0.0/apksigner sign -ks ~/key_store/apk_key_store.jks --ks-key-alias upload --ks-pass stdin ./app/build/outputs/apk/$1AllArchs/release/app-$1-allArchs-release-unsigned.apk
+echo "./app/build/outputs/apk/$1AllArchs/release/app-$1-allArchs-release-unsigned.apk"

@@ -250,7 +250,14 @@ config("executable") {
 
 config("shared_library") {
   if (is_android) {
+    if (android_64bit_current_cpu) {
+      _max_page_size = 16384
+    } else {
+      _max_page_size = 4096
+    }
+
     ldflags = [
+      "-Wl,-z,max-page-size=$_max_page_size",
       "-Wl,--build-id=sha1",
       "-Wl,--no-rosegment",
       "-Wl,--fatal-warnings",
