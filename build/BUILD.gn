@@ -84,9 +84,7 @@ config("default") {
   }
 
   # Avoid relative paths everywhere.
-  include_dirs = [
-    "//src",
-  ]
+  include_dirs = [ "//src" ]
 }
 
 config("debug") {
@@ -148,6 +146,10 @@ config("release") {
       "-fno-math-errno",  # Do not check or set errno for invalid input to sqrt
                           # and other math functions.
     ]
+
+    if (is_android) {
+      cflags += [ "-g" ]
+    }
 
     if (is_apple) {
       ldflags = [ "-dead-strip" ]

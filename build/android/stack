@@ -3,4 +3,8 @@ BUILD="$1"
 if [[ -z "$1" ]]; then
     BUILD="debug"
 fi
-adb logcat | ndk-stack -sym ./app/build/intermediates/merged_native_libs/"$BUILD"/out/lib/arm64-v8a
+ARCH="$2"
+if [[ -z "$2" ]]; then
+    ARCH="Arm8"
+fi
+adb logcat | ~/Android/Sdk/ndk/28.2.13676358/ndk-stack -sym ./app/build/gn_out/"$BUILD"/"$ARCH"
