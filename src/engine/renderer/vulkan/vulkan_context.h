@@ -1,8 +1,6 @@
 #ifndef ENGINE_RENDERER_VULKAN_VULKAN_CONTEXT_H
 #define ENGINE_RENDERER_VULKAN_VULKAN_CONTEXT_H
 
-#include <memory>
-#include <unordered_map>
 #include <vector>
 
 #include "third_party/volk/volk.h"
@@ -80,7 +78,7 @@ class VulkanContext {
   struct Window {
     VkSurfaceKHR surface = VK_NULL_HANDLE;
     VkSwapchainKHR swapchain = VK_NULL_HANDLE;
-    std::unique_ptr<SwapchainImageResources[]> swapchain_image_resources;
+    std::vector<SwapchainImageResources> swapchain_image_resources;
     VkImage depth_image = VK_NULL_HANDLE;
     VkDeviceMemory depth_image_memory = VK_NULL_HANDLE;
     VkImageView depth_view = VK_NULL_HANDLE;
@@ -98,7 +96,7 @@ class VulkanContext {
 
   VkPhysicalDeviceProperties gpu_props_;
   uint32_t queue_family_count_ = 0;
-  std::unique_ptr<VkQueueFamilyProperties[]> queue_props_ = nullptr;
+  std::vector<VkQueueFamilyProperties> queue_props_;
 
   bool queues_initialized_ = false;
   bool separate_present_queue_ = false;
@@ -145,8 +143,7 @@ class VulkanContext {
 
   VkBool32 CheckLayers(uint32_t check_count,
                        const char** check_names,
-                       uint32_t layer_count,
-                       VkLayerProperties* layers);
+                       const std::vector<VkLayerProperties>& instance_layers);
 
   static VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessengerCallback(
       VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,

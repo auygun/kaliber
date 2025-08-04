@@ -11,10 +11,8 @@ const char* VulkanContext::GetPlatformSurfaceExtension() const {
 bool VulkanContext::CreateSurface(ANativeWindow* window,
                                   int width,
                                   int height) {
-  VkAndroidSurfaceCreateInfoKHR surface_info;
+  VkAndroidSurfaceCreateInfoKHR surface_info{};
   surface_info.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
-  surface_info.pNext = nullptr;
-  surface_info.flags = 0;
   surface_info.window = window;
 
   VkSurfaceKHR surface;

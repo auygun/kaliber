@@ -12,10 +12,8 @@ bool VulkanContext::CreateSurface(Display* display,
                                   ::Window window,
                                   int width,
                                   int height) {
-  VkXlibSurfaceCreateInfoKHR surface_info;
+  VkXlibSurfaceCreateInfoKHR surface_info{};
   surface_info.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
-  surface_info.pNext = nullptr;
-  surface_info.flags = 0;
   surface_info.dpy = display;
   surface_info.window = window;
 

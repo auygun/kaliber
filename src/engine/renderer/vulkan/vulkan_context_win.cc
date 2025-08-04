@@ -12,10 +12,8 @@ bool VulkanContext::CreateSurface(HINSTANCE hInstance,
                                   HWND hWnd,
                                   int width,
                                   int height) {
-  VkWin32SurfaceCreateInfoKHR create_info;
+  VkWin32SurfaceCreateInfoKHR create_info{};
   create_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-  create_info.pNext = nullptr;
-  create_info.flags = 0;
   create_info.hinstance = hInstance;
   create_info.hwnd = hWnd;
 
