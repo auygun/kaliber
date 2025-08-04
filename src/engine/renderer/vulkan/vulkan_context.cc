@@ -353,6 +353,12 @@ bool VulkanContext::CreatePhysicalDevice() {
   if (!InitializeExtensions())
     return false;
 
+  // Set application version to the Vulkan version we're developing against
+  // except when we're on Vulkan 1.0.
+  uint32_t application_api_version =
+      volkGetInstanceVersion() == VK_API_VERSION_1_0 ? VK_API_VERSION_1_0
+                                                     : VK_API_VERSION_1_2;
+
   const VkApplicationInfo app = {
       /*sType*/ VK_STRUCTURE_TYPE_APPLICATION_INFO,
       /*pNext*/ nullptr,
@@ -360,7 +366,7 @@ bool VulkanContext::CreatePhysicalDevice() {
       /*applicationVersion*/ 0,
       /*pEngineName*/ "kaliber",
       /*engineVersion*/ 0,
-      /*apiVersion*/ VK_API_VERSION_1_0,
+      /*apiVersion*/ application_api_version,
   };
   VkInstanceCreateInfo inst_info = {
       /*sType*/ VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
