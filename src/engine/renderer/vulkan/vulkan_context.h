@@ -138,21 +138,6 @@ class VulkanContext {
 
   bool use_validation_layers_ = false;
 
-  PFN_vkCreateDebugUtilsMessengerEXT CreateDebugUtilsMessengerEXT;
-  PFN_vkDestroyDebugUtilsMessengerEXT DestroyDebugUtilsMessengerEXT;
-
-  PFN_vkGetPhysicalDeviceSurfaceSupportKHR GetPhysicalDeviceSurfaceSupportKHR;
-  PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR
-      GetPhysicalDeviceSurfaceCapabilitiesKHR;
-  PFN_vkGetPhysicalDeviceSurfaceFormatsKHR GetPhysicalDeviceSurfaceFormatsKHR;
-  PFN_vkGetPhysicalDeviceSurfacePresentModesKHR
-      GetPhysicalDeviceSurfacePresentModesKHR;
-  PFN_vkCreateSwapchainKHR CreateSwapchainKHR;
-  PFN_vkDestroySwapchainKHR DestroySwapchainKHR;
-  PFN_vkGetSwapchainImagesKHR GetSwapchainImagesKHR;
-  PFN_vkAcquireNextImageKHR AcquireNextImageKHR;
-  PFN_vkQueuePresentKHR QueuePresentKHR;
-
   VkDebugUtilsMessengerEXT dbg_messenger_ = VK_NULL_HANDLE;
 
   bool CreateValidationLayers();

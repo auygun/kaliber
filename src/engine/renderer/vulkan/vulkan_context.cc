@@ -8,15 +8,6 @@
 #include "base/log.h"
 #include "third_party/vulkan/vk_enum_string_helper.h"
 
-#define GET_PROC_ADDR(func, obj, entrypoint)                      \
-  {                                                               \
-    entrypoint = (PFN_vk##entrypoint)func(obj, "vk" #entrypoint); \
-    if (entrypoint == nullptr) {                                  \
-      DLOG(0) << #func << " failed to find vk";                   \
-      return false;                                               \
-    }                                                             \
-  }
-
 namespace eng {
 
 VulkanContext::VulkanContext() {
@@ -30,7 +21,7 @@ VulkanContext::~VulkanContext() {
 
   if (instance_ != VK_NULL_HANDLE) {
     if (use_validation_layers_)
-      DestroyDebugUtilsMessengerEXT(instance_, dbg_messenger_, nullptr);
+      vkDestroyDebugUtilsMessengerEXT(instance_, dbg_messenger_, nullptr);
     vkDestroyInstance(instance_, nullptr);
     instance_ = VK_NULL_HANDLE;
   }
@@ -424,7 +415,7 @@ bool VulkanContext::CreatePhysicalDevice() {
     }
   }
 
-  volkLoadInstance(instance_);
+  volkLoadInstanceOnly(instance_);
 
   // Make initial call to query gpu_count.
   VkResult err = vkEnumeratePhysicalDevices(instance_, &gpu_count, nullptr);
@@ -509,28 +500,16 @@ bool VulkanContext::CreatePhysicalDevice() {
   }
 
   if (use_validation_layers_) {
-    CreateDebugUtilsMessengerEXT =
-        (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
-            instance_, "vkCreateDebugUtilsMessengerEXT");
-    DestroyDebugUtilsMessengerEXT =
-        (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
-            instance_, "vkDestroyDebugUtilsMessengerEXT");
-    if (nullptr == CreateDebugUtilsMessengerEXT ||
-        nullptr == DestroyDebugUtilsMessengerEXT) {
-      DLOG(0) << "GetProcAddr: Failed to init VK_EXT_debug_utils";
-      return false;
-    }
-
-    err = CreateDebugUtilsMessengerEXT(instance_, &dbg_messenger_info, nullptr,
-                                       &dbg_messenger_);
+    err = vkCreateDebugUtilsMessengerEXT(instance_, &dbg_messenger_info,
+                                         nullptr, &dbg_messenger_);
     switch (err) {
       case VK_SUCCESS:
         break;
       case VK_ERROR_OUT_OF_HOST_MEMORY:
-        DLOG(0) << "CreateDebugUtilsMessengerEXT: out of host memory";
+        DLOG(0) << "vkCreateDebugUtilsMessengerEXT: out of host memory";
         return false;
       default:
-        DLOG(0) << "CreateDebugUtilsMessengerEXT: unknown failure";
+        DLOG(0) << "vkCreateDebugUtilsMessengerEXT: unknown failure";
         return false;
         break;
     }
@@ -568,16 +547,6 @@ bool VulkanContext::CreatePhysicalDevice() {
   // If app has specific feature requirements it should check supported features
   // based on this query.
   vkGetPhysicalDeviceFeatures(gpu_, &physical_device_features_);
-
-  GET_PROC_ADDR(vkGetInstanceProcAddr, instance_,
-                GetPhysicalDeviceSurfaceSupportKHR);
-  GET_PROC_ADDR(vkGetInstanceProcAddr, instance_,
-                GetPhysicalDeviceSurfaceCapabilitiesKHR);
-  GET_PROC_ADDR(vkGetInstanceProcAddr, instance_,
-                GetPhysicalDeviceSurfaceFormatsKHR);
-  GET_PROC_ADDR(vkGetInstanceProcAddr, instance_,
-                GetPhysicalDeviceSurfacePresentModesKHR);
-  GET_PROC_ADDR(vkGetInstanceProcAddr, instance_, GetSwapchainImagesKHR);
 
   return true;
 }
@@ -622,6 +591,9 @@ bool VulkanContext::CreateDevice() {
     DLOG(0) << "vkCreateDevice failed. Error: " << string_VkResult(err);
     return false;
   }
+
+  volkLoadDevice(device_);
+
   return true;
 }
 
@@ -629,7 +601,8 @@ bool VulkanContext::InitializeQueues(VkSurfaceKHR surface) {
   // Iterate over each queue to learn whether it supports presenting:
   auto supports_present = std::make_unique<VkBool32[]>(queue_family_count_);
   for (uint32_t i = 0; i < queue_family_count_; i++) {
-    GetPhysicalDeviceSurfaceSupportKHR(gpu_, i, surface, &supports_present[i]);
+    vkGetPhysicalDeviceSurfaceSupportKHR(gpu_, i, surface,
+                                         &supports_present[i]);
   }
 
   // Search for a graphics and a present queue in the array of queue families,
@@ -675,15 +648,6 @@ bool VulkanContext::InitializeQueues(VkSurfaceKHR surface) {
 
   CreateDevice();
 
-  PFN_vkGetDeviceProcAddr GetDeviceProcAddr = nullptr;
-  GET_PROC_ADDR(vkGetInstanceProcAddr, instance_, GetDeviceProcAddr);
-
-  GET_PROC_ADDR(GetDeviceProcAddr, device_, CreateSwapchainKHR);
-  GET_PROC_ADDR(GetDeviceProcAddr, device_, DestroySwapchainKHR);
-  GET_PROC_ADDR(GetDeviceProcAddr, device_, GetSwapchainImagesKHR);
-  GET_PROC_ADDR(GetDeviceProcAddr, device_, AcquireNextImageKHR);
-  GET_PROC_ADDR(GetDeviceProcAddr, device_, QueuePresentKHR);
-
   vkGetDeviceQueue(device_, graphics_queue_family_index_, 0, &graphics_queue_);
 
   if (!separate_present_queue_) {
@@ -694,18 +658,18 @@ bool VulkanContext::InitializeQueues(VkSurfaceKHR surface) {
 
   // Get the list of VkFormat's that are supported.
   uint32_t format_count;
-  VkResult err =
-      GetPhysicalDeviceSurfaceFormatsKHR(gpu_, surface, &format_count, nullptr);
+  VkResult err = vkGetPhysicalDeviceSurfaceFormatsKHR(gpu_, surface,
+                                                      &format_count, nullptr);
   if (err) {
-    DLOG(0) << "GetPhysicalDeviceSurfaceFormatsKHR failed. Error: "
+    DLOG(0) << "vkGetPhysicalDeviceSurfaceFormatsKHR failed. Error: "
             << string_VkResult(err);
     return false;
   }
   auto surf_formats = std::make_unique<VkSurfaceFormatKHR[]>(format_count);
-  err = GetPhysicalDeviceSurfaceFormatsKHR(gpu_, surface, &format_count,
-                                           surf_formats.get());
+  err = vkGetPhysicalDeviceSurfaceFormatsKHR(gpu_, surface, &format_count,
+                                             surf_formats.get());
   if (err) {
-    DLOG(0) << "GetPhysicalDeviceSurfaceFormatsKHR failed. Error: "
+    DLOG(0) << "vkGetPhysicalDeviceSurfaceFormatsKHR failed. Error: "
             << string_VkResult(err);
     return false;
   }
@@ -841,7 +805,7 @@ bool VulkanContext::CleanUpSwapChain(Window* window) {
   window->depth_image = VK_NULL_HANDLE;
   window->depth_image_memory = VK_NULL_HANDLE;
 
-  DestroySwapchainKHR(device_, window->swapchain, nullptr);
+  vkDestroySwapchainKHR(device_, window->swapchain, nullptr);
   window->swapchain = VK_NULL_HANDLE;
   vkDestroyRenderPass(device_, window->render_pass, nullptr);
   if (window->swapchain_image_resources) {
@@ -869,29 +833,29 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
 
   // Check the surface capabilities and formats.
   VkSurfaceCapabilitiesKHR surf_capabilities;
-  err = GetPhysicalDeviceSurfaceCapabilitiesKHR(gpu_, window->surface,
-                                                &surf_capabilities);
+  err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(gpu_, window->surface,
+                                                  &surf_capabilities);
   if (err) {
-    DLOG(0) << "GetPhysicalDeviceSurfaceCapabilitiesKHR failed. Error: "
+    DLOG(0) << "vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed. Error: "
             << string_VkResult(err);
     return false;
   }
 
   uint32_t present_mode_count;
-  err = GetPhysicalDeviceSurfacePresentModesKHR(gpu_, window->surface,
-                                                &present_mode_count, nullptr);
+  err = vkGetPhysicalDeviceSurfacePresentModesKHR(gpu_, window->surface,
+                                                  &present_mode_count, nullptr);
   if (err) {
-    DLOG(0) << "GetPhysicalDeviceSurfacePresentModesKHR failed. Error: "
+    DLOG(0) << "vkGetPhysicalDeviceSurfacePresentModesKHR failed. Error: "
             << string_VkResult(err);
     return false;
   }
 
   auto present_modes = std::make_unique<VkPresentModeKHR[]>(present_mode_count);
 
-  err = GetPhysicalDeviceSurfacePresentModesKHR(
+  err = vkGetPhysicalDeviceSurfacePresentModesKHR(
       gpu_, window->surface, &present_mode_count, present_modes.get());
   if (err) {
-    DLOG(0) << "GetPhysicalDeviceSurfacePresentModesKHR failed. Error: "
+    DLOG(0) << "vkGetPhysicalDeviceSurfacePresentModesKHR failed. Error: "
             << string_VkResult(err);
     return false;
   }
@@ -1037,17 +1001,19 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
       /*oldSwapchain*/ VK_NULL_HANDLE,
   };
 
-  err = CreateSwapchainKHR(device_, &swapchain_ci, nullptr, &window->swapchain);
+  err =
+      vkCreateSwapchainKHR(device_, &swapchain_ci, nullptr, &window->swapchain);
   if (err) {
-    DLOG(0) << "CreateSwapchainKHR failed. Error: " << string_VkResult(err);
+    DLOG(0) << "vkCreateSwapchainKHR failed. Error: " << string_VkResult(err);
     return false;
   }
 
   uint32_t sp_image_count;
-  err = GetSwapchainImagesKHR(device_, window->swapchain, &sp_image_count,
-                              nullptr);
+  err = vkGetSwapchainImagesKHR(device_, window->swapchain, &sp_image_count,
+                                nullptr);
   if (err) {
-    DLOG(0) << "GetSwapchainImagesKHR failed. Error: " << string_VkResult(err);
+    DLOG(0) << "vkGetSwapchainImagesKHR failed. Error: "
+            << string_VkResult(err);
     return false;
   }
 
@@ -1061,10 +1027,12 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
 
   auto swapchain_images = std::make_unique<VkImage[]>(swapchain_image_count_);
 
-  err = GetSwapchainImagesKHR(device_, window->swapchain,
+  err =
+      vkGetSwapchainImagesKHR(device_, window->swapchain,
                               &swapchain_image_count_, swapchain_images.get());
   if (err) {
-    DLOG(0) << "GetSwapchainImagesKHR failed. Error: " << string_VkResult(err);
+    DLOG(0) << "vkGetSwapchainImagesKHR failed. Error: "
+            << string_VkResult(err);
     return false;
   }
 
@@ -1453,10 +1421,10 @@ bool VulkanContext::PrepareBuffers() {
 
   do {
     // Get the index of the next available swapchain image:
-    err = AcquireNextImageKHR(device_, window_.swapchain,
-                              std::numeric_limits<uint64_t>::max(),
-                              image_acquired_semaphores_[frame_index_],
-                              VK_NULL_HANDLE, &window_.current_buffer);
+    err = vkAcquireNextImageKHR(device_, window_.swapchain,
+                                std::numeric_limits<uint64_t>::max(),
+                                image_acquired_semaphores_[frame_index_],
+                                VK_NULL_HANDLE, &window_.current_buffer);
 
     if (err == VK_ERROR_OUT_OF_DATE_KHR) {
       // swapchain is out of date (e.g. the window was resized) and must be
@@ -1470,7 +1438,8 @@ bool VulkanContext::PrepareBuffers() {
       UpdateSwapChain(&window_);
       break;
     } else if (err != VK_SUCCESS) {
-      DLOG(0) << "AcquireNextImageKHR failed. Error: " << string_VkResult(err);
+      DLOG(0) << "vkAcquireNextImageKHR failed. Error: "
+              << string_VkResult(err);
       return false;
     }
   } while (err != VK_SUCCESS);
@@ -1559,7 +1528,7 @@ bool VulkanContext::SwapBuffers() {
   };
   DCHECK(window_.swapchain != VK_NULL_HANDLE);
 
-  err = QueuePresentKHR(present_queue_, &present);
+  err = vkQueuePresentKHR(present_queue_, &present);
 
   frame_index_ += 1;
   frame_index_ %= kFrameLag;
@@ -1574,7 +1543,7 @@ bool VulkanContext::SwapBuffers() {
     // presentation engine will still present the image correctly.
     DLOG(0) << "Swapchain is Suboptimal.";
   } else if (err) {
-    DLOG(0) << "QueuePresentKHR failed. Error: " << string_VkResult(err);
+    DLOG(0) << "vkQueuePresentKHR failed. Error: " << string_VkResult(err);
     return false;
   }
 
