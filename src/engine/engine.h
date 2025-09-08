@@ -110,6 +110,8 @@ class Engine : public PlatformObserver {
   Shader& GetPassThroughShader() { return pass_through_shader_; }
   Shader& GetSolidShader() { return solid_shader_; }
 
+  uint64_t quad_ssbo_ = 0;
+
   const Font* GetSystemFont() { return system_font_.get(); }
 
   std::unique_ptr<Image> Print(const std::string& text,

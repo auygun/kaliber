@@ -2,11 +2,13 @@
 
 #include <algorithm>
 #include <cstring>
+#include <span>
 #include <sstream>
 #include <utility>
 
 #include "base/hash.h"
 #include "base/log.h"
+#include "base/mem.h"
 #include "base/vecmath.h"
 #include "engine/asset/image.h"
 #include "engine/asset/mesh.h"
@@ -76,7 +78,7 @@ constexpr VkFormat kVkDataType[kDataType_Max][4] = {
     },
 };
 
-constexpr size_t kMaxDescriptorsPerPool = 64;
+constexpr uint32_t kMaxDescriptorsPerPool = 64;
 
 std::vector<uint8_t> CompileGlsl(EShLanguage stage,
                                  const char* source_code,
@@ -477,13 +479,12 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
       (it->second.width != width || it->second.height != height)) {
     // Size mismatch. Recreate the texture.
     FreeImage(std::move(it->second.image), it->second.view,
-              std::move(it->second.desc_set), it->second.frame_buffer_);
+              it->second.frame_buffer_);
     it->second = {};
   }
 
   if (it->second.view == VK_NULL_HANDLE) {
-    AllocateImage(it->second.image, it->second.view, it->second.desc_set,
-                  vk_format, width, height,
+    AllocateImage(it->second.image, it->second.view, vk_format, width, height,
                   VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
                       VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
                   VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
@@ -519,32 +520,12 @@ void RendererVulkan::DestroyTexture(uint64_t resource_id) {
     return;
 
   FreeImage(std::move(it->second.image), it->second.view,
-            std::move(it->second.desc_set), it->second.frame_buffer_);
+            it->second.frame_buffer_);
   textures_.erase(it);
 }
 
 void RendererVulkan::ActivateTexture(uint64_t resource_id,
-                                     size_t texture_unit) {
-  auto it = textures_.find(resource_id);
-  if (it == textures_.end())
-    return;
-
-  if (active_descriptor_sets_[texture_unit] !=
-      std::get<0>(it->second.desc_set)) {
-    active_descriptor_sets_[texture_unit] = std::get<0>(it->second.desc_set);
-    if (active_shader_id_ != kInvalidId) {
-      auto active_shader = shaders_.find(active_shader_id_);
-      if (active_shader != shaders_.end() &&
-          active_shader->second.desc_set_count > texture_unit) {
-        vkCmdBindDescriptorSets(
-            frames_[current_frame_].draw_command_buffer,
-            VK_PIPELINE_BIND_POINT_GRAPHICS,
-            active_shader->second.pipeline_layout, texture_unit, 1,
-            &active_descriptor_sets_[texture_unit], 0, nullptr);
-      }
-    }
-  }
-}
+                                     size_t texture_unit) {}
 
 uint64_t RendererVulkan::CreateShader(
     std::unique_ptr<ShaderSource> source,
@@ -753,15 +734,6 @@ void RendererVulkan::ActivateShader(uint64_t resource_id) {
     active_shader_id_ = resource_id;
     vkCmdBindPipeline(frames_[current_frame_].draw_command_buffer,
                       VK_PIPELINE_BIND_POINT_GRAPHICS, it->second.pipeline);
-
-    for (size_t i = 0; i < it->second.desc_set_count; ++i) {
-      if (active_descriptor_sets_[i] != VK_NULL_HANDLE) {
-        vkCmdBindDescriptorSets(frames_[current_frame_].draw_command_buffer,
-                                VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                it->second.pipeline_layout, i, 1,
-                                &active_descriptor_sets_[i], 0, nullptr);
-      }
-    }
   }
 }
 
@@ -822,11 +794,297 @@ void RendererVulkan::SetUniform(uint64_t resource_id,
   if (it == shaders_.end())
     return;
 
-  for (auto& sampler_name : it->second.sampler_uniform_names) {
-    if (name == sampler_name)
-      return;
+  for (auto& set_bindings : it->second.bindings_per_set) {
+    for (auto& binding_info : set_bindings) {
+      if (binding_info.descriptor_type ==
+              VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER &&
+          binding_info.name == name)
+        return;
+    }
   }
   SetUniformInternal(it->second, name, val);
+}
+
+uint64_t RendererVulkan::CreateBuffer(uint64_t shader_id,
+                                      size_t set,
+                                      size_t binding,
+                                      uint32_t buffer_size) {
+  auto shader_it = shaders_.find(shader_id);
+  if (shader_it == shaders_.end())
+    return 0;
+
+  DCHECK(set < shader_it->second.bindings_per_set.size());
+  DCHECK(binding < shader_it->second.bindings_per_set[set].size());
+  auto& binding_info = shader_it->second.bindings_per_set[set][binding];
+
+  auto& buffer = buffers_[++last_resource_id_];
+  switch (binding_info.descriptor_type) {
+    case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER: {
+      DCHECK(buffer_size >= binding_info.length);
+      AllocateBuffer(
+          buffer.buffer, buffer_size,
+          VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+          VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+    } break;
+    case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
+      AllocateBuffer(
+          buffer.buffer, buffer_size,
+          VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+          VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+    } break;
+    default: {
+      NOTREACHED() << "Unsupported descriptor type: "
+                   << binding_info.descriptor_type;
+    } break;
+  }
+  buffer.buffer_size = buffer_size;
+  buffer.descriptor_type = binding_info.descriptor_type;
+  return last_resource_id_;
+}
+
+void RendererVulkan::UpdateBuffer2(uint64_t resource_id,
+                                   const void* data,
+                                   size_t size) {
+  auto it = buffers_.find(resource_id);
+  if (it == buffers_.end())
+    return;
+
+  DCHECK(size <= it->second.buffer_size);
+
+  VkAccessFlags dst_access;
+  switch (it->second.descriptor_type) {
+    case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER: {
+      dst_access = VK_ACCESS_UNIFORM_READ_BIT;
+    } break;
+    case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
+      dst_access = VK_ACCESS_SHADER_READ_BIT;
+    } break;
+    default: {
+      NOTREACHED() << "Unsupported descriptor type: "
+                   << it->second.descriptor_type;
+    } break;
+  }
+
+  task_runner_.PostTask(
+      HERE, std::bind(&RendererVulkan::UpdateBuffer, this,
+                      std::get<0>(it->second.buffer), 0, data, size));
+  task_runner_.PostTask(HERE,
+                        std::bind(&RendererVulkan::BufferMemoryBarrier, this,
+                                  std::get<0>(it->second.buffer), 0, size,
+                                  VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                  VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+                                  VK_ACCESS_TRANSFER_WRITE_BIT, dst_access));
+  semaphore_.release();
+}
+
+void RendererVulkan::DestroyBuffer(uint64_t resource_id) {
+  auto it = buffers_.find(resource_id);
+  if (it == buffers_.end())
+    return;
+
+  FreeBuffer(std::move(it->second.buffer));
+  buffers_.erase(it);
+}
+
+uint64_t RendererVulkan::CreateDescriptorSet(
+    uint64_t shader_id,
+    size_t set,
+    const std::vector<std::vector<uint64_t>>& textures,
+    const std::vector<uint64_t>& buffers) {
+  auto shader_it = shaders_.find(shader_id);
+  if (shader_it == shaders_.end())
+    return kInvalidId;
+
+  DCHECK(set < shader_it->second.bindings_per_set.size());
+  auto& set_bindings = shader_it->second.bindings_per_set[set];
+
+  DCHECK(!set_bindings.empty());
+  auto set_writes = ALLOCA_SPAN(VkWriteDescriptorSet, set_bindings.size());
+  size_t num_set_writes = 0;
+  DescriptorPoolKey pool_key;
+
+  for (size_t i = 0; i < set_bindings.size(); ++i) {
+    auto& binding_info = set_bindings[i];
+    if (binding_info.stage_flags == 0)
+      continue;
+
+    set_writes[num_set_writes] = {};
+
+    switch (binding_info.descriptor_type) {
+      case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: {
+        DCHECK(i < textures.size() || binding_info.length == textures[i].size())
+            << "SamplerTexture (set: " << set << ", binding: " << i
+            << ") is an array of "
+            << binding_info.length + " elements. Textures provided: "
+            << (i >= textures.size() ? 0 : textures[i].size());
+
+        pool_key.descriptor_count[kSamplerWithTexture] += binding_info.length;
+
+        auto image_infos =
+            ALLOCA_SPAN(VkDescriptorImageInfo, binding_info.length);
+        for (size_t j = 0; j < binding_info.length; j++) {
+          image_infos[j] = {};
+
+          auto texture_it = textures_.find(textures[i][j]);
+          if (texture_it == textures_.end()) {
+            DLOG(0) << "Texture (id: " << textures[i][j] << ") not found";
+            return kInvalidId;
+          }
+
+          image_infos[j].sampler = sampler_;
+          image_infos[j].imageView = texture_it->second.view;
+          image_infos[j].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        }
+        set_writes[num_set_writes].pImageInfo = image_infos.data();
+        set_writes[num_set_writes].descriptorCount = binding_info.length;
+      } break;
+      case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER: {
+        DCHECK(i < buffers.size())
+            << "No buffer provided for UniformBuffer (set: " << set
+            << ", binding: " << i << ").";
+
+        pool_key.descriptor_count[kUniformBuffer]++;
+
+        auto buffer_it = buffers_.find(buffers[i]);
+        if (buffer_it == buffers_.end()) {
+          DLOG(0) << "Buffer (id: " << buffers[i] << ") not found";
+          return kInvalidId;
+        }
+
+        DCHECK(buffer_it->second.buffer_size >= binding_info.length)
+            << "Buffer (id: " << buffers[i]
+            << ", size: " << buffer_it->second.buffer_size << ") "
+            << "is smaller than size of the descriptor: (set: " << set
+            << ", binding: " << i << ", size: " << binding_info.length << ").";
+
+        DCHECK(buffer_it->second.descriptor_type ==
+               VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+            << "Buffer (id: " << buffers[i]
+            << ") was not created with uniform buffer flag";
+
+        auto* buffer_info = ALLOCA_SINGLE(VkDescriptorBufferInfo);
+        *buffer_info = {
+            .buffer = std::get<0>(buffer_it->second.buffer),
+            .offset = 0,
+            .range = buffer_it->second.buffer_size,
+        };
+        set_writes[num_set_writes].pBufferInfo = buffer_info;
+        set_writes[num_set_writes].descriptorCount = 1;
+      } break;
+      case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
+        DCHECK(i < buffers.size())
+            << "No buffer provided for StorageBuffer (set: " << set
+            << ", binding: " << i << ").";
+
+        pool_key.descriptor_count[kStorageBuffer]++;
+
+        auto buffer_it = buffers_.find(buffers[i]);
+        if (buffer_it == buffers_.end()) {
+          DLOG(0) << "Buffer (id: " << buffers[i] << ") not found";
+          return kInvalidId;
+        }
+
+        // If 0, it's sized on link time.
+        DCHECK(binding_info.length == 0 ||
+               buffer_it->second.buffer_size >= binding_info.length)
+            << "Buffer (id: " << buffers[i]
+            << ", size: " << buffer_it->second.buffer_size << ") "
+            << "is smaller than size of the descriptor: (set: " << set
+            << ", binding: " << i << ", size: " << binding_info.length << ").";
+
+        DCHECK(buffer_it->second.descriptor_type ==
+               VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
+            << "Buffer (id: " << buffers[i]
+            << ") was not created with storage buffer flag";
+
+        auto* buffer_info = ALLOCA_SINGLE(VkDescriptorBufferInfo);
+        *buffer_info = {
+            .buffer = std::get<0>(buffer_it->second.buffer),
+            .offset = 0,
+            .range = buffer_it->second.buffer_size,
+        };
+        set_writes[num_set_writes].pBufferInfo = buffer_info;
+        set_writes[num_set_writes].descriptorCount = 1;
+      } break;
+      default: {
+        NOTREACHED() << "Unsupported descriptor type: "
+                     << string_VkDescriptorType(binding_info.descriptor_type);
+      } break;
+    }
+
+    set_writes[num_set_writes].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    set_writes[num_set_writes].dstBinding = i;
+    set_writes[num_set_writes].descriptorType = binding_info.descriptor_type;
+    ++num_set_writes;
+  }
+
+  RendererVulkan::DescriptorPools::iterator pools_it;
+  if (!GetOrCreateDescriptorPool(pool_key, pools_it)) {
+    LOG(0) << "GetOrCreateDescriptorPool failed. Cannot create descriptor set";
+    return kInvalidId;
+  }
+  pools_it->second++;
+
+  VkDescriptorSetAllocateInfo descriptor_set_allocate_info = {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+      .pNext = nullptr,
+      .descriptorPool = pools_it->first,
+      .descriptorSetCount = 1,
+      .pSetLayouts = &shader_it->second.descriptor_set_layouts[set],
+  };
+
+  VkDescriptorSet vk_descriptor_set;
+  VkResult res = vkAllocateDescriptorSets(
+      device_, &descriptor_set_allocate_info, &vk_descriptor_set);
+  if (res != VK_SUCCESS) {
+    UnreferenceDescriptorPool(pool_key, pools_it);
+    LOG(0) << "vkAllocateDescriptorSets failed with error "
+           << string_VkResult(res);
+    return kInvalidId;
+  }
+
+  for (size_t i = 0; i < num_set_writes; ++i)
+    set_writes[i].dstSet = vk_descriptor_set;
+
+  vkUpdateDescriptorSets(device_, num_set_writes, set_writes.data(), 0,
+                         nullptr);
+
+  descriptor_sets_[++last_resource_id_] = {
+      .set = (uint32_t)set,
+      .descriptor_set = vk_descriptor_set,
+      .pool_key = pool_key,
+      .pools_it = pools_it,
+  };
+  return last_resource_id_;
+}
+
+void RendererVulkan::ActivateDescriptorSet(uint64_t resource_id) {
+  auto descriptor_set_it = descriptor_sets_.find(resource_id);
+  if (descriptor_set_it == descriptor_sets_.end())
+    return;
+
+  if (active_shader_id_ == kInvalidId)
+    return;
+  auto active_shader = shaders_.find(active_shader_id_);
+  if (active_shader == shaders_.end())
+    return;
+
+  vkCmdBindDescriptorSets(
+      frames_[current_frame_].draw_command_buffer,
+      VK_PIPELINE_BIND_POINT_GRAPHICS, active_shader->second.pipeline_layout,
+      descriptor_set_it->second.set, 1,
+      &descriptor_set_it->second.descriptor_set, 0, nullptr);
+}
+
+void RendererVulkan::DestroyDescriptorSet(uint64_t resource_id) {
+  auto descriptor_set_it = descriptor_sets_.find(resource_id);
+  if (descriptor_set_it == descriptor_sets_.end())
+    return;
+
+  frames_[current_frame_].descriptor_sets_to_destroy.push_back(std::make_tuple(
+      descriptor_set_it->second.descriptor_set,
+      descriptor_set_it->second.pool_key, descriptor_set_it->second.pools_it));
+  descriptor_sets_.erase(descriptor_set_it);
 }
 
 void RendererVulkan::PrepareForDrawing() {
@@ -1000,28 +1258,6 @@ bool RendererVulkan::InitializeInternal() {
     }
   }
 
-  // In this simple engine we use only one descriptor set layout that is for
-  // textures. We use push constants for everything else.
-  VkDescriptorSetLayoutBinding ds_layout_binding{};
-  ds_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  ds_layout_binding.descriptorCount = 1;
-  ds_layout_binding.binding = 0;
-  ds_layout_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-  ds_layout_binding.pImmutableSamplers = nullptr;
-
-  VkDescriptorSetLayoutCreateInfo ds_layout_info{};
-  ds_layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  ds_layout_info.bindingCount = 1;
-  ds_layout_info.pBindings = &ds_layout_binding;
-
-  VkResult err = vkCreateDescriptorSetLayout(device_, &ds_layout_info, nullptr,
-                                             &descriptor_set_layout_);
-  if (err) {
-    DLOG(0) << "Error (" << string_VkResult(err)
-            << ") creating descriptor set layout for set";
-    return false;
-  }
-
   // Create sampler.
   VkSamplerCreateInfo sampler_info{};
   sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -1041,7 +1277,7 @@ bool RendererVulkan::InitializeInternal() {
   sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
   sampler_info.unnormalizedCoordinates = VK_FALSE;
 
-  err = vkCreateSampler(device_, &sampler_info, nullptr, &sampler_);
+  VkResult err = vkCreateSampler(device_, &sampler_info, nullptr, &sampler_);
   if (err) {
     DLOG(0) << "vkCreateSampler failed with error " << string_VkResult(err);
     return false;
@@ -1177,7 +1413,6 @@ void RendererVulkan::Shutdown() {
 
     vmaDestroyAllocator(allocator_);
 
-    vkDestroyDescriptorSetLayout(device_, descriptor_set_layout_, nullptr);
     vkDestroySampler(device_, sampler_, nullptr);
 
     device_ = VK_NULL_HANDLE;
@@ -1285,24 +1520,24 @@ void RendererVulkan::FreePendingResources(int frame) {
     frames_[frame].buffers_to_destroy.clear();
   }
 
-  if (!frames_[frame].desc_sets_to_destroy.empty()) {
-    for (auto& desc_set : frames_[frame].desc_sets_to_destroy) {
-      auto [set, pool] = desc_set;
-      vkFreeDescriptorSets(device_, std::get<0>(*pool), 1, &set);
-      FreeDescriptorPool(pool);
+  if (!frames_[frame].descriptor_sets_to_destroy.empty()) {
+    for (auto& set : frames_[frame].descriptor_sets_to_destroy) {
+      auto [descriptor_set, pool_key, pools_it] = set;
+      vkFreeDescriptorSets(device_, pools_it->first, 1, &descriptor_set);
+      UnreferenceDescriptorPool(pool_key, pools_it);
     }
-    frames_[frame].desc_sets_to_destroy.clear();
+    frames_[frame].descriptor_sets_to_destroy.clear();
   }
 }
 
 void RendererVulkan::MemoryBarrier(VkPipelineStageFlags src_stage_mask,
                                    VkPipelineStageFlags dst_stage_mask,
                                    VkAccessFlags src_access,
-                                   VkAccessFlags dst_sccess) {
+                                   VkAccessFlags dst_access) {
   VkMemoryBarrier mem_barrier{};
   mem_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
   mem_barrier.srcAccessMask = src_access;
-  mem_barrier.dstAccessMask = dst_sccess;
+  mem_barrier.dstAccessMask = dst_access;
 
   vkCmdPipelineBarrier(frames_[current_frame_].draw_command_buffer,
                        src_stage_mask, dst_stage_mask, 0, 1, &mem_barrier, 0,
@@ -1478,58 +1713,78 @@ bool RendererVulkan::InsertStagingBuffer() {
   return true;
 }
 
-RendererVulkan::DescPool* RendererVulkan::AllocateDescriptorPool() {
-  DescPool* selected_pool = nullptr;
+bool RendererVulkan::GetOrCreateDescriptorPool(
+    DescriptorPoolKey key,
+    DescriptorPools::iterator& pools_it) {
+  auto pools_map_it = descriptor_pools_map_.find(key);
 
-  for (auto& dp : desc_pools_) {
-    if (std::get<1>(*dp) < kMaxDescriptorsPerPool) {
-      selected_pool = dp.get();
-      break;
+  if (pools_map_it != descriptor_pools_map_.end()) {
+    for (pools_it = pools_map_it->second.begin();
+         pools_it != pools_map_it->second.end(); ++pools_it) {
+      if (pools_it->second < kMaxDescriptorsPerPool)
+        return true;
     }
   }
 
-  if (!selected_pool) {
-    VkDescriptorPoolSize sizes{};
-    sizes.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    sizes.descriptorCount = kMaxDescriptorsPerPool;
+  // Create a new one.
+  std::vector<VkDescriptorPoolSize> sizes;
+  if (key.descriptor_count[kSamplerWithTexture] > 0) {
+    sizes.push_back({
+        .type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .descriptorCount =
+            key.descriptor_count[kSamplerWithTexture] * kMaxDescriptorsPerPool,
+    });
+  }
+  if (key.descriptor_count[kUniformBuffer] > 0) {
+    sizes.push_back({
+        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .descriptorCount =
+            key.descriptor_count[kUniformBuffer] * kMaxDescriptorsPerPool,
+    });
+  }
+  if (key.descriptor_count[kStorageBuffer] > 0) {
+    sizes.push_back({
+        .type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+        .descriptorCount =
+            key.descriptor_count[kStorageBuffer] * kMaxDescriptorsPerPool,
+    });
+  }
+  DCHECK(sizes.size() <= kDescriptorType_Max);
 
-    VkDescriptorPoolCreateInfo descriptor_pool_create_info{};
-    descriptor_pool_create_info.sType =
-        VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    descriptor_pool_create_info.flags =
-        VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-    descriptor_pool_create_info.maxSets = kMaxDescriptorsPerPool;
-    descriptor_pool_create_info.poolSizeCount = 1;
-    descriptor_pool_create_info.pPoolSizes = &sizes;
+  VkDescriptorPoolCreateInfo descriptor_pool_create_info = {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+      .pNext = nullptr,
+      .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+      .maxSets = kMaxDescriptorsPerPool,
+      .poolSizeCount = (uint32_t)sizes.size(),
+      .pPoolSizes = sizes.data(),
+  };
 
-    VkDescriptorPool desc_pool;
-    VkResult err = vkCreateDescriptorPool(device_, &descriptor_pool_create_info,
-                                          nullptr, &desc_pool);
-    if (err) {
-      DLOG(0) << "vkCreateDescriptorPool failed with error "
-              << string_VkResult(err);
-      return VK_NULL_HANDLE;
-    }
-
-    auto pool = std::make_unique<DescPool>(std::make_tuple(desc_pool, 0));
-    selected_pool = pool.get();
-    desc_pools_.push_back(std::move(pool));
+  VkDescriptorPool vk_pool = VK_NULL_HANDLE;
+  VkResult res = vkCreateDescriptorPool(device_, &descriptor_pool_create_info,
+                                        nullptr, &vk_pool);
+  if (res != VK_SUCCESS) {
+    LOG(0) << "vkCreateDescriptorPool failed with error "
+           << string_VkResult(res);
+    return false;
   }
 
-  ++std::get<1>(*selected_pool);
-  return selected_pool;
+  if (pools_map_it == descriptor_pools_map_.end())
+    pools_map_it = descriptor_pools_map_.insert({key, {}}).first;
+  pools_map_it->second.push_front({vk_pool, 0});
+  pools_it = pools_map_it->second.begin();
+  return true;
 }
 
-void RendererVulkan::FreeDescriptorPool(DescPool* desc_pool) {
-  if (--std::get<1>(*desc_pool) == 0) {
-    for (auto it = desc_pools_.begin(); it != desc_pools_.end(); ++it) {
-      if (std::get<0>(**it) == std::get<0>(*desc_pool)) {
-        vkDestroyDescriptorPool(device_, std::get<0>(*desc_pool), nullptr);
-        desc_pools_.erase(it);
-        return;
-      }
-    }
-    NOTREACHED();
+void RendererVulkan::UnreferenceDescriptorPool(
+    DescriptorPoolKey key,
+    DescriptorPools::iterator pools_it) {
+  pools_it->second--;
+  if (pools_it->second == 0) {
+    vkDestroyDescriptorPool(device_, pools_it->first, nullptr);
+    auto pools_map_it = descriptor_pools_map_.find(key);
+    DCHECK(pools_map_it != descriptor_pools_map_.end());
+    pools_map_it->second.erase(pools_it);
   }
 }
 
@@ -1610,13 +1865,13 @@ void RendererVulkan::BufferMemoryBarrier(VkBuffer buffer,
                                          VkPipelineStageFlags src_stage_mask,
                                          VkPipelineStageFlags dst_stage_mask,
                                          VkAccessFlags src_access,
-                                         VkAccessFlags dst_sccess) {
+                                         VkAccessFlags dst_access) {
   VkBufferMemoryBarrier buffer_mem_barrier{};
   buffer_mem_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
   buffer_mem_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   buffer_mem_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   buffer_mem_barrier.srcAccessMask = src_access;
-  buffer_mem_barrier.dstAccessMask = dst_sccess;
+  buffer_mem_barrier.dstAccessMask = dst_access;
   buffer_mem_barrier.buffer = buffer;
   buffer_mem_barrier.offset = from;
   buffer_mem_barrier.size = size;
@@ -1628,7 +1883,6 @@ void RendererVulkan::BufferMemoryBarrier(VkBuffer buffer,
 
 bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
                                    VkImageView& view,
-                                   DescSet& desc_set,
                                    VkFormat format,
                                    int width,
                                    int height,
@@ -1687,54 +1941,14 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
   }
 
   image = {vk_image, allocation};
-
-  DescPool* desc_pool = AllocateDescriptorPool();
-
-  VkDescriptorSetAllocateInfo descriptor_set_allocate_info{};
-  descriptor_set_allocate_info.sType =
-      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  descriptor_set_allocate_info.descriptorPool = std::get<0>(*desc_pool);
-  descriptor_set_allocate_info.descriptorSetCount = 1;
-  descriptor_set_allocate_info.pSetLayouts = &descriptor_set_layout_;
-
-  VkDescriptorSet descriptor_set;
-  err = vkAllocateDescriptorSets(device_, &descriptor_set_allocate_info,
-                                 &descriptor_set);
-  if (err) {
-    --std::get<1>(*desc_pool);
-    DLOG(0) << "Cannot allocate descriptor sets, error "
-            << string_VkResult(err);
-    return false;
-  }
-
-  desc_set = {descriptor_set, desc_pool};
-
-  VkDescriptorImageInfo image_info{};
-  image_info.sampler = sampler_;
-  image_info.imageView = view;
-  image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-  VkWriteDescriptorSet write{};
-  write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  write.dstSet = descriptor_set;
-  write.dstBinding = 0;
-  write.dstArrayElement = 0;
-  write.descriptorCount = 1;
-  write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  write.pImageInfo = &image_info;
-
-  vkUpdateDescriptorSets(device_, 1, &write, 0, nullptr);
-
   return true;
 }
 
 void RendererVulkan::FreeImage(Buffer<VkImage> image,
                                VkImageView image_view,
-                               DescSet desc_set,
                                VkFramebuffer frame_buffer) {
   frames_[current_frame_].images_to_destroy.push_back(
       std::make_tuple(std::move(image), image_view, frame_buffer));
-  frames_[current_frame_].desc_sets_to_destroy.push_back(std::move(desc_set));
 }
 
 void RendererVulkan::UpdateImage(VkImage image,
@@ -1807,13 +2021,13 @@ void RendererVulkan::ImageMemoryBarrier(VkImage image,
                                         VkPipelineStageFlags src_stage_mask,
                                         VkPipelineStageFlags dst_stage_mask,
                                         VkAccessFlags src_access,
-                                        VkAccessFlags dst_sccess,
+                                        VkAccessFlags dst_access,
                                         VkImageLayout old_layout,
                                         VkImageLayout new_layout) {
   VkImageMemoryBarrier image_mem_barrier{};
   image_mem_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   image_mem_barrier.srcAccessMask = src_access;
-  image_mem_barrier.dstAccessMask = dst_sccess;
+  image_mem_barrier.dstAccessMask = dst_access;
   image_mem_barrier.oldLayout = old_layout;
   image_mem_barrier.newLayout = new_layout;
   image_mem_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -1828,6 +2042,125 @@ void RendererVulkan::ImageMemoryBarrier(VkImage image,
   vkCmdPipelineBarrier(frames_[current_frame_].setup_command_buffer,
                        src_stage_mask, dst_stage_mask, 0, 0, nullptr, 0,
                        nullptr, 1, &image_mem_barrier);
+}
+
+// Parse descriptor bindings.
+bool RendererVulkan::ParseDescriptorBindings(
+    std::vector<std::vector<DescriptorBindingInfo>>& bindings_per_set,
+    const SpvReflectShaderModule* module,
+    VkShaderStageFlagBits shader_stage_flag) {
+  uint32_t spv_binding_count = 0;
+
+  SpvReflectResult result = spvReflectEnumerateDescriptorBindings(
+      module, &spv_binding_count, nullptr);
+  if (result != SPV_REFLECT_RESULT_SUCCESS) {
+    DLOG(0) << "SPIR-V reflection failed to enumerate descriptor bindings.";
+    return false;
+  }
+
+  DLOG(0) << " binding_count: " << spv_binding_count;
+  if (spv_binding_count > 0) {
+    std::vector<SpvReflectDescriptorBinding*> spv_bindings;
+    spv_bindings.resize(spv_binding_count);
+    result = spvReflectEnumerateDescriptorBindings(module, &spv_binding_count,
+                                                   spv_bindings.data());
+
+    if (result != SPV_REFLECT_RESULT_SUCCESS) {
+      DLOG(0) << "SPIR-V reflection failed to get descriptor bindings.";
+      return false;
+    }
+
+    // Count number of sets and number of bindings for each set, then resize
+    // arrays accordingly.
+    {
+      uint32_t set_count = 0;
+      for (size_t i = 0; i < spv_binding_count; ++i)
+        set_count = std::max(set_count, spv_bindings[i]->set + 1);
+      auto bindings_count = ALLOCA_SPAN(uint32_t, set_count);
+      memset(bindings_count.data(), 0, bindings_count.size_bytes());
+      for (size_t i = 0; i < spv_binding_count; ++i)
+        bindings_count[spv_bindings[i]->set] = std::max(
+            bindings_count[spv_bindings[i]->set], spv_bindings[i]->binding + 1);
+
+      if (bindings_count.size() > bindings_per_set.size())
+        bindings_per_set.resize(bindings_count.size());
+      for (size_t i = 0; i < bindings_count.size(); ++i) {
+        if (bindings_count[i] > bindings_per_set[i].size())
+          bindings_per_set[i].resize(bindings_count[i]);
+      }
+    }
+
+    for (size_t i = 0; i < spv_binding_count; ++i) {
+      const SpvReflectDescriptorBinding& spv_binding = *spv_bindings[i];
+
+      DLOG(0) << "  name: " << spv_binding.name
+              << ", type: " << spv_binding.descriptor_type
+              << ", set: " << spv_binding.set
+              << ", binding: " << spv_binding.binding
+              << ", size: " << spv_binding.block.size
+              << ", padded_size: " << spv_binding.block.padded_size;
+
+      DescriptorBindingInfo binding_info;
+      binding_info.name = spv_binding.name;
+      binding_info.stage_flags = shader_stage_flag;
+
+      switch (spv_binding.descriptor_type) {
+        case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: {
+          binding_info.descriptor_type =
+              VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+          binding_info.length = 1;
+          for (uint32_t k = 1; k < spv_binding.array.dims_count; k++)
+            binding_info.length *= spv_binding.array.dims[k];
+        } break;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER: {
+          binding_info.descriptor_type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+          binding_info.length = spv_binding.block.size;
+        } break;
+        case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
+          binding_info.descriptor_type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+          binding_info.length = spv_binding.block.size;
+        } break;
+        default: {
+          DLOG(0) << "Unsupported descriptor type: "
+                  << spv_binding.descriptor_type;
+          return false;
+        } break;
+      }
+
+      // Check if this descriptor binding already exists.
+      if (bindings_per_set[spv_binding.set][spv_binding.binding].stage_flags !=
+          0) {
+        // Verify that it's the same type.
+        DCHECK(bindings_per_set[spv_binding.set][spv_binding.binding]
+                   .descriptor_type == binding_info.descriptor_type)
+            << "On shader stage "
+            << string_VkShaderStageFlagBits(shader_stage_flag)
+            << "', descriptor '" << spv_binding.name
+            << "' trying to reuse location for set=" << spv_binding.set
+            << ", binding=" << spv_binding.binding
+            << " with different descriptor type.";
+
+        // Also, verify that it's the same size.
+        DCHECK(bindings_per_set[spv_binding.set][spv_binding.binding].length !=
+               binding_info.length)
+            << "On shader stage "
+            << string_VkShaderStageFlagBits(shader_stage_flag)
+            << ", descriptor '" << spv_binding.name
+            << "' trying to reuse location for set=" << spv_binding.set
+            << ", binding=" << spv_binding.binding
+            << " with different descriptor size.";
+
+        // Append the stage mask.
+        bindings_per_set[spv_binding.set][spv_binding.binding].stage_flags |=
+            shader_stage_flag;
+        continue;
+      }
+
+      // New binding.
+      bindings_per_set[spv_binding.set][spv_binding.binding] = binding_info;
+    }
+  }
+  return true;
 }
 
 bool RendererVulkan::CreatePipelineLayout(
@@ -1855,77 +2188,46 @@ bool RendererVulkan::CreatePipelineLayout(
 
   // Parse descriptor bindings.
   do {
-    uint32_t binding_count = 0;
-
-    // Validate that the vertex shader has no descriptor binding.
-    result = spvReflectEnumerateDescriptorBindings(&module_vertex,
-                                                   &binding_count, nullptr);
-    if (result != SPV_REFLECT_RESULT_SUCCESS) {
-      DLOG(0) << "SPIR-V reflection failed to enumerate fragment shader "
-                 "descriptor bindings.";
+    DLOG(0) << "Enumerating vertex shader descriptor bindings.";
+    if (!ParseDescriptorBindings(shader.bindings_per_set, &module_vertex,
+                                 VK_SHADER_STAGE_VERTEX_BIT))
       break;
-    }
-    if (binding_count > 0) {
-      DLOG(0) << "SPIR-V reflection found " << binding_count
-              << " descriptor bindings in vertex shader.";
+
+    DLOG(0) << "Enumerating fragment shader descriptor bindings.";
+    if (!ParseDescriptorBindings(shader.bindings_per_set, &module_fragment,
+                                 VK_SHADER_STAGE_FRAGMENT_BIT))
       break;
-    }
 
-    // Validate that the fragment shader has max 1 desriptor binding.
-    result = spvReflectEnumerateDescriptorBindings(&module_fragment,
-                                                   &binding_count, nullptr);
-    if (result != SPV_REFLECT_RESULT_SUCCESS) {
-      DLOG(0) << "SPIR-V reflection failed to enumerate fragment shader "
-                 "descriptor bindings.";
-      break;
-    }
+    VkResult err = VK_SUCCESS;
+    for (auto& set_bindings : shader.bindings_per_set) {
+      std::vector<VkDescriptorSetLayoutBinding> vk_set_bindings;
+      for (size_t i = 0; i < set_bindings.size(); ++i) {
+        VkDescriptorSetLayoutBinding layout_binding = {};
+        layout_binding.binding = i;
+        layout_binding.descriptorCount = 1;
+        layout_binding.stageFlags = set_bindings[i].stage_flags;
+        layout_binding.descriptorType = set_bindings[i].descriptor_type;
+        vk_set_bindings.push_back(layout_binding);
+      }
 
-    DLOG(0) << __func__ << " binding_count: " << binding_count;
+      VkDescriptorSetLayoutCreateInfo vk_set_layout_create_info = {};
+      vk_set_layout_create_info.sType =
+          VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+      vk_set_layout_create_info.bindingCount = vk_set_bindings.size();
+      vk_set_layout_create_info.pBindings = vk_set_bindings.data();
 
-    if (binding_count > 0) {
-      // Collect binding names and validate that only COMBINED_IMAGE_SAMPLER
-      // desriptor type is used.
-      std::vector<SpvReflectDescriptorBinding*> bindings;
-      bindings.resize(binding_count);
-      result = spvReflectEnumerateDescriptorBindings(
-          &module_fragment, &binding_count, bindings.data());
-
-      if (result != SPV_REFLECT_RESULT_SUCCESS) {
-        DLOG(0) << "SPIR-V reflection failed to get descriptor bindings for "
-                   "fragment shader.";
+      VkDescriptorSetLayout vk_set_layout = VK_NULL_HANDLE;
+      err = vkCreateDescriptorSetLayout(device_, &vk_set_layout_create_info,
+                                        nullptr, &vk_set_layout);
+      if (err) {
+        DLOG(0) << "vkCreateDescriptorSetLayout failed with error "
+                << string_VkResult(err);
         break;
       }
-
-      for (size_t i = 0; i < binding_count; ++i) {
-        const SpvReflectDescriptorBinding& binding = *bindings[i];
-
-        DLOG(0) << __func__ << " name: " << binding.name
-                << " descriptor_type: " << binding.descriptor_type
-                << " set: " << binding.set << " binding: " << binding.binding;
-
-        if (binding.binding > 0) {
-          DLOG(0) << "SPIR-V reflection found " << binding_count
-                  << " bindings in vertex shader. Only one binding per set is "
-                     "supported";
-          break;
-        }
-
-        if (binding.descriptor_type !=
-            SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER) {
-          DLOG(0) << "SPIR-V reflection found descriptor type "
-                  << binding.descriptor_type
-                  << " in fragment shader. Only COMBINED_IMAGE_SAMPLER type is "
-                     "supported.";
-          break;
-        }
-
-        shader.sampler_uniform_names.push_back(binding.name);
-        shader.desc_set_count++;
-      }
+      shader.descriptor_set_layouts.push_back(vk_set_layout);
     }
-
-    if (active_descriptor_sets_.size() < shader.desc_set_count)
-      active_descriptor_sets_.resize(shader.desc_set_count);
+    if (err)
+      break;
 
     // Parse push constants.
     auto enumerate_pc = [&](SpvReflectShaderModule& module, uint32_t& pc_count,
@@ -1979,8 +2281,7 @@ bool RendererVulkan::CreatePipelineLayout(
     }
 
     if (pc_count_vertex) {
-      DLOG(0) << __func__
-              << " PushConstants size: " << pconstants_vertex[0]->size
+      DLOG(0) << " PushConstants size: " << pconstants_vertex[0]->size
               << " count: " << pconstants_vertex[0]->member_count;
 
       if (pconstants_vertex[0]->size != pconstants_fragment[0]->size) {
@@ -2007,8 +2308,8 @@ bool RendererVulkan::CreatePipelineLayout(
                shader.variables.end())
             << "Hash collision";
 
-        DLOG(0) << __func__
-                << " name: " << pconstants_vertex[0]->members[j].name
+        DLOG(0) << " name: " << pconstants_vertex[0]->members[j].name
+                << " offset: " << pconstants_vertex[0]->members[j].offset
                 << " size: " << pconstants_vertex[0]->members[j].size
                 << " padded_size: "
                 << pconstants_vertex[0]->members[j].padded_size;
@@ -2020,20 +2321,14 @@ bool RendererVulkan::CreatePipelineLayout(
       }
     }
 
-    // Use the same layout for all descriptor sets.
-    std::vector<VkDescriptorSetLayout> desc_set_layouts;
-    for (size_t i = 0; i < binding_count; ++i)
-      desc_set_layouts.push_back(descriptor_set_layout_);
-
     VkPipelineLayoutCreateInfo pipeline_layout_create_info{};
     pipeline_layout_create_info.sType =
         VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    if (binding_count > 0) {
-      pipeline_layout_create_info.setLayoutCount = binding_count;
-      pipeline_layout_create_info.pSetLayouts = desc_set_layouts.data();
-    } else {
-      pipeline_layout_create_info.setLayoutCount = 0;
-      pipeline_layout_create_info.pSetLayouts = nullptr;
+    if (shader.descriptor_set_layouts.size() > 0) {
+      pipeline_layout_create_info.setLayoutCount =
+          shader.descriptor_set_layouts.size();
+      pipeline_layout_create_info.pSetLayouts =
+          shader.descriptor_set_layouts.data();
     }
 
     VkPushConstantRange push_constant_range{};
@@ -2120,8 +2415,6 @@ void RendererVulkan::SwapBuffers() {
   current_frame_ = (current_frame_ + 1) % frames_.size();
 
   active_shader_id_ = kInvalidId;
-  for (auto& ds : active_descriptor_sets_)
-    ds = VK_NULL_HANDLE;
 
   BeginFrame();
 }
@@ -2185,10 +2478,22 @@ void RendererVulkan::DestroyAllResources() {
     DestroyShader(r);
 
   resource_ids.clear();
+  for (auto& r : descriptor_sets_)
+    resource_ids.push_back(r.first);
+  for (auto& r : resource_ids)
+    DestroyDescriptorSet(r);
+
+  resource_ids.clear();
   for (auto& r : textures_)
     resource_ids.push_back(r.first);
   for (auto& r : resource_ids)
     DestroyTexture(r);
+
+  resource_ids.clear();
+  for (auto& r : buffers_)
+    resource_ids.push_back(r.first);
+  for (auto& r : resource_ids)
+    DestroyBuffer(r);
 
   DCHECK(geometries_.size() == 0);
   DCHECK(shaders_.size() == 0);

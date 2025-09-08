@@ -14,7 +14,7 @@ UNIFORM_V(mat4 projection)
 UNIFORM_F(vec4 color)
 UNIFORM_END
 
-SAMPLER(0, sampler2D texture_0)
+layout(set = 2, binding = 0) uniform sampler2D texture_0;
 
 FRAG_COLOR_OUT(frag_color)
 

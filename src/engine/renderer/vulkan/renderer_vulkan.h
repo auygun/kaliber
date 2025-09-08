@@ -3,6 +3,9 @@
 
 #include <array>
 #include <atomic>
+#include <cstring>
+#include <list>
+#include <map>
 #include <memory>
 #include <semaphore>
 #include <string>
@@ -16,6 +19,8 @@
 #include "base/task_runner.h"
 #include "engine/renderer/renderer.h"
 #include "third_party/vma/vk_mem_alloc.h"
+
+struct SpvReflectShaderModule;
 
 namespace eng {
 
@@ -89,6 +94,21 @@ class RendererVulkan final : public Renderer {
                   float val) final;
   void SetUniform(uint64_t resource_id, const std::string& name, int val) final;
 
+  uint64_t CreateBuffer(uint64_t shader_id,
+                        size_t set,
+                        size_t binding,
+                        uint32_t buffer_size);
+  void UpdateBuffer2(uint64_t resource_id, const void* data, size_t size);
+  void DestroyBuffer(uint64_t resource_id);
+
+  uint64_t CreateDescriptorSet(
+      uint64_t shader_id,
+      size_t set,
+      const std::vector<std::vector<uint64_t>>& textures,
+      const std::vector<uint64_t>& buffers);
+  void ActivateDescriptorSet(uint64_t resource_id);
+  void DestroyDescriptorSet(uint64_t resource_id);
+
   void PrepareForDrawing() final;
   void Present() final;
 
@@ -106,19 +126,44 @@ class RendererVulkan final : public Renderer {
   template <typename T>
   using Buffer = std::tuple<T, VmaAllocation>;
 
-  // VkDescriptorPool with usage count.
-  using DescPool = std::tuple<VkDescriptorPool, size_t>;
+  enum DescriptorType {
+    kDescriptorType_Uninitialized = -1,
+    kSamplerWithTexture,
+    kUniformBuffer,
+    kStorageBuffer,
+    kDescriptorType_Max
+  };
 
-  // VkDescriptorSet with the pool which it was allocated from.
-  using DescSet = std::tuple<VkDescriptorSet, DescPool*>;
+  struct DescriptorPoolKey {
+    uint32_t descriptor_count[kDescriptorType_Max] = {};
+
+    bool operator<(const DescriptorPoolKey& other) const {
+      return memcmp(descriptor_count, other.descriptor_count,
+                    sizeof(descriptor_count)) < 0;
+    }
+  };
+
+  // Descriptor pools with usage counts.
+  using DescriptorPools = std::list<std::pair<VkDescriptorPool, uint32_t>>;
 
   // Containers to keep information of resources to be destroyed.
   using BufferDeathRow = std::vector<Buffer<VkBuffer>>;
   using ImageDeathRow =
       std::vector<std::tuple<Buffer<VkImage>, VkImageView, VkFramebuffer>>;
-  using DescSetDeathRow = std::vector<DescSet>;
+  using DescriptorSetDeathRow =
+      std::vector<std::tuple<VkDescriptorSet,
+                             DescriptorPoolKey,
+                             DescriptorPools::iterator>>;
   using PipelineDeathRow =
       std::vector<std::tuple<VkPipeline, VkPipelineLayout>>;
+
+  struct DescriptorBindingInfo {
+    std::string name;  // TODO: remove if not needed.
+    VkDescriptorType descriptor_type = (VkDescriptorType)-1;
+    VkShaderStageFlags stage_flags = 0;
+    size_t length = 0;  // Size of arrays (in total elements), or UBOs (in
+                        // bytes * total elements).
+  };
 
   std::unordered_map<std::string, std::array<std::vector<uint8_t>, 2>>
       spirv_cache_;
@@ -143,26 +188,39 @@ class RendererVulkan final : public Renderer {
     bool push_constants_dirty = false;
     std::unique_ptr<char[]> push_constants;
     size_t push_constants_size = 0;
-    std::vector<std::string> sampler_uniform_names;
-    size_t desc_set_count = 0;
     VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
     VkPipeline pipeline = VK_NULL_HANDLE;
+
+    std::vector<std::vector<DescriptorBindingInfo>> bindings_per_set;
+    std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
   };
 
   struct TextureVulkan {
     Buffer<VkImage> image;
     VkImageView view = VK_NULL_HANDLE;
-    DescSet desc_set = {};
     int width = 0;
     int height = 0;
     VkFramebuffer frame_buffer_ = VK_NULL_HANDLE;
+  };
+
+  struct BufferVulkan {
+    Buffer<VkBuffer> buffer;
+    size_t buffer_size = 0;
+    VkDescriptorType descriptor_type = (VkDescriptorType)-1;
+  };
+
+  struct DescriptorSetVulkan {
+    uint32_t set = 0;
+    VkDescriptorSet descriptor_set = VK_NULL_HANDLE;
+    DescriptorPoolKey pool_key;
+    DescriptorPools::iterator pools_it;
   };
 
   // Each frame contains 2 command buffers with separate synchronization scopes.
   // One for creating resources (recorded outside a render pass) and another for
   // drawing (recorded inside a render pass). Also contains list of resources to
   // be destroyed when the frame is cycled. There are 2 or 3 frames (double or
-  // tripple buffering) that are cycled constantly.
+  // triple buffering) that are cycled constantly.
   struct Frame {
     VkCommandPool setup_command_pool = VK_NULL_HANDLE;
     VkCommandBuffer setup_command_buffer = VK_NULL_HANDLE;
@@ -171,7 +229,7 @@ class RendererVulkan final : public Renderer {
 
     BufferDeathRow buffers_to_destroy;
     ImageDeathRow images_to_destroy;
-    DescSetDeathRow desc_sets_to_destroy;
+    DescriptorSetDeathRow descriptor_sets_to_destroy;
     PipelineDeathRow pipelines_to_destroy;
   };
 
@@ -185,6 +243,8 @@ class RendererVulkan final : public Renderer {
   std::unordered_map<uint64_t, GeometryVulkan> geometries_;
   std::unordered_map<uint64_t, ShaderVulkan> shaders_;
   std::unordered_map<uint64_t, TextureVulkan> textures_;
+  std::unordered_map<uint64_t, BufferVulkan> buffers_;
+  std::unordered_map<uint64_t, DescriptorSetVulkan> descriptor_sets_;
   uint64_t last_resource_id_ = 0;
 
   bool context_lost_ = false;
@@ -206,9 +266,7 @@ class RendererVulkan final : public Renderer {
 
   uint64_t active_shader_id_ = 0;
 
-  std::vector<std::unique_ptr<DescPool>> desc_pools_;
-  VkDescriptorSetLayout descriptor_set_layout_ = VK_NULL_HANDLE;
-  std::vector<VkDescriptorSet> active_descriptor_sets_;
+  std::map<DescriptorPoolKey, DescriptorPools> descriptor_pools_map_;
 
   VkSampler sampler_ = VK_NULL_HANDLE;
 
@@ -230,7 +288,7 @@ class RendererVulkan final : public Renderer {
   void MemoryBarrier(VkPipelineStageFlags src_stage_mask,
                      VkPipelineStageFlags dst_stage_mask,
                      VkAccessFlags src_access,
-                     VkAccessFlags dst_sccess);
+                     VkAccessFlags dst_access);
   void FullBarrier();
 
   bool AllocateStagingBuffer(uint32_t amount,
@@ -239,9 +297,6 @@ class RendererVulkan final : public Renderer {
                              uint32_t& alloc_offset,
                              uint32_t& alloc_size);
   bool InsertStagingBuffer();
-
-  DescPool* AllocateDescriptorPool();
-  void FreeDescriptorPool(DescPool* desc_pool);
 
   bool AllocateBuffer(Buffer<VkBuffer>& buffer,
                       uint32_t size,
@@ -258,11 +313,10 @@ class RendererVulkan final : public Renderer {
                            VkPipelineStageFlags src_stage_mask,
                            VkPipelineStageFlags dst_stage_mask,
                            VkAccessFlags src_access,
-                           VkAccessFlags dst_sccess);
+                           VkAccessFlags dst_access);
 
   bool AllocateImage(Buffer<VkImage>& image,
                      VkImageView& view,
-                     DescSet& desc_set,
                      VkFormat format,
                      int width,
                      int height,
@@ -270,7 +324,6 @@ class RendererVulkan final : public Renderer {
                      VmaMemoryUsage mapping);
   void FreeImage(Buffer<VkImage> image,
                  VkImageView image_view,
-                 DescSet desc_set,
                  VkFramebuffer frame_buffer);
   void UpdateImage(VkImage image,
                    VkFormat format,
@@ -281,10 +334,14 @@ class RendererVulkan final : public Renderer {
                           VkPipelineStageFlags src_stage_mask,
                           VkPipelineStageFlags dst_stage_mask,
                           VkAccessFlags src_access,
-                          VkAccessFlags dst_sccess,
+                          VkAccessFlags dst_access,
                           VkImageLayout old_layout,
                           VkImageLayout new_layout);
 
+  bool ParseDescriptorBindings(
+      std::vector<std::vector<DescriptorBindingInfo>>& bindings_per_set,
+      const SpvReflectShaderModule* module,
+      VkShaderStageFlagBits shader_stage_flag);
   bool CreatePipelineLayout(ShaderVulkan& shader,
                             const std::vector<uint8_t>& spirv_vertex,
                             const std::vector<uint8_t>& spirv_fragment);
@@ -302,6 +359,11 @@ class RendererVulkan final : public Renderer {
   bool IsFormatSupported(VkFormat format);
 
   void DestroyAllResources();
+
+  bool GetOrCreateDescriptorPool(DescriptorPoolKey key,
+                                 DescriptorPools::iterator& pools_it);
+  void UnreferenceDescriptorPool(DescriptorPoolKey key,
+                                 DescriptorPools::iterator pools_it);
 };
 
 }  // namespace eng
