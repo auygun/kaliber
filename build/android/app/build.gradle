@@ -36,26 +36,6 @@ android {
                 gnTarget = "hello_world"
             }
         }
-        demo {
-            dimension 'game'
-            applicationId 'com.kaliber.woom'
-            resValue "string", "app_name", "Kaliber Demo"
-            manifestPlaceholders = [appIcon: "@mipmap/ic_launcher"]
-            ext {
-                gnTarget = "demo"
-            }
-        }
-        woom {
-            dimension 'game'
-            applicationId 'com.woom.game'
-            resValue "string", "app_name", "woom"
-            resValue "string", "interstitial_ad_unit_id", "ca-app-pub-1321063817979967/8373182022"
-            resValue "string", "admob_application_id", "ca-app-pub-1321063817979967~1100949243"
-            manifestPlaceholders = [appIcon: "@mipmap/ic_launcher"]
-            ext {
-                gnTarget = "demo"
-            }
-        }
         teapot {
             dimension 'game'
             applicationId 'com.kaliber.teapot'

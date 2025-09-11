@@ -1,6 +1,5 @@
 group("all") {
   deps = [
-    "//src/demo",
     "//src/hello_world",
     "//src/teapot",
   ]
