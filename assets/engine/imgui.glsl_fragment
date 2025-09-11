@@ -1,18 +1,14 @@
-#ifdef GL_ES
-precision mediump float;
-#endif
+layout(location = 0) in vec2 tex_coord_0;
+layout(location = 1) in vec4 color;
 
-IN(0) vec2 tex_coord_0;
-IN(1) vec4 color;
+layout(push_constant) uniform Params {
+  mat4 projection;
+} params;
 
-UNIFORM_BEGIN
-UNIFORM_V(mat4 projection)
-UNIFORM_END
+layout(set = 0, binding = 0) uniform sampler2D texture_0;
 
-SAMPLER(0, sampler2D texture_0)
-
-FRAG_COLOR_OUT(frag_color)
+layout(location = 0) out vec4 frag_color;
 
 void main() {
-  FRAG_COLOR(frag_color) = TEXTURE(texture_0, tex_coord_0) * color;
+  frag_color = texture(texture_0, tex_coord_0) * color;
 }

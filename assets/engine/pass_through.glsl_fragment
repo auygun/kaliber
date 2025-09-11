@@ -1,23 +1,19 @@
-#ifdef GL_ES
-precision mediump float;
-#endif
+layout(location = 0) in vec2 tex_coord_0;
 
-IN(0) vec2 tex_coord_0;
-
-UNIFORM_BEGIN
-UNIFORM_V(vec2 scale)
-UNIFORM_V(vec2 offset)
-UNIFORM_V(vec2 rotation)
-UNIFORM_V(vec2 tex_offset)
-UNIFORM_V(vec2 tex_scale)
-UNIFORM_V(mat4 projection)
-UNIFORM_F(vec4 color)
-UNIFORM_END
+layout(push_constant) uniform Params {
+  vec2 scale;
+  vec2 offset;
+  vec2 rotation;
+  vec2 tex_offset;
+  vec2 tex_scale;
+  mat4 projection;
+  vec4 color;
+} params;
 
 layout(set = 2, binding = 0) uniform sampler2D texture_0;
 
-FRAG_COLOR_OUT(frag_color)
+layout(location = 0) out vec4 frag_color;
 
 void main() {
-  FRAG_COLOR(frag_color) = TEXTURE(texture_0, tex_coord_0) * PARAM(color);
+  frag_color = texture(texture_0, tex_coord_0) * params.color;
 }

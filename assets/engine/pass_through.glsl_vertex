@@ -1,5 +1,5 @@
-IN(0) vec2 in_position;
-IN(1) vec2 in_tex_coord_0;
+layout(location = 0) in vec2 in_position;
+layout(location = 1) in vec2 in_tex_coord_0;
 
 // Arrays of scalars are tightly packed with the layout std430 qualifier
 struct VertexData {
@@ -11,17 +11,17 @@ layout(set = 0, binding = 0, std430) restrict readonly buffer Ssbo1 {
   VertexData data[];
 } ssbo1;
 
-UNIFORM_BEGIN
-UNIFORM_V(vec2 scale)
-UNIFORM_V(vec2 offset)
-UNIFORM_V(vec2 rotation)
-UNIFORM_V(vec2 tex_offset)
-UNIFORM_V(vec2 tex_scale)
-UNIFORM_V(mat4 projection)
-UNIFORM_F(vec4 color)
-UNIFORM_END
+layout(push_constant) uniform Params {
+  vec2 scale;
+  vec2 offset;
+  vec2 rotation;
+  vec2 tex_offset;
+  vec2 tex_scale;
+  mat4 projection;
+  vec4 color;
+} params;
 
-OUT(0) vec2 tex_coord_0;
+layout(location = 0) out vec2 tex_coord_0;
 
 vec2 GetPosition(int index) {
   return vec2(ssbo1.data[index].position[0], ssbo1.data[index].position[1]);
@@ -34,13 +34,13 @@ vec2 GetUV(int index) {
 void main() {
   // Simple 2d transform.
   vec2 position = GetPosition(gl_VertexIndex);
-  position *= PARAM(scale);
+  position *= params.scale;
   position =
-      vec2(position.x * PARAM(rotation).y + position.y * PARAM(rotation).x,
-           position.y * PARAM(rotation).y - position.x * PARAM(rotation).x);
-  position += PARAM(offset);
+      vec2(position.x * params.rotation.y + position.y * params.rotation.x,
+           position.y * params.rotation.y - position.x * params.rotation.x);
+  position += params.offset;
 
-  tex_coord_0 = (GetUV(gl_VertexIndex) + PARAM(tex_offset)) * PARAM(tex_scale);
+  tex_coord_0 = (GetUV(gl_VertexIndex) + params.tex_offset) * params.tex_scale;
 
-  gl_Position = PARAM(projection) * vec4(position, 0.0, 1.0);
+  gl_Position = params.projection * vec4(position, 0.0, 1.0);
 }

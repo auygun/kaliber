@@ -8,7 +8,7 @@
       "name": "Debug demo - Linux",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/out/debug/demo",
+      "program": "${workspaceFolder}/out/debug/hello_world",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}/out/debug",

@@ -1,22 +1,22 @@
-IN(0) vec2 in_position;
-IN(1) vec2 in_tex_coord_0;
+layout(location = 0) in vec2 in_position;
+layout(location = 1) in vec2 in_tex_coord_0;
 
-UNIFORM_BEGIN
-UNIFORM_V(vec2 scale)
-UNIFORM_V(vec2 offset)
-UNIFORM_V(vec2 rotation)
-UNIFORM_V(mat4 projection)
-UNIFORM_F(vec4 color)
-UNIFORM_END
+layout(push_constant) uniform Params {
+  vec2 scale;
+  vec2 offset;
+  vec2 rotation;
+  mat4 projection;
+  vec4 color;
+} params;
 
 void main() {
   // Simple 2d transform.
   vec2 position = in_position;
-  position *= PARAM(scale);
+  position *= params.scale;
   position =
-      vec2(position.x * PARAM(rotation).y + position.y * PARAM(rotation).x,
-           position.y * PARAM(rotation).y - position.x * PARAM(rotation).x);
-  position += PARAM(offset);
+      vec2(position.x * params.rotation.y + position.y * params.rotation.x,
+           position.y * params.rotation.y - position.x * params.rotation.x);
+  position += params.offset;
 
-  gl_Position = PARAM(projection) * vec4(position, 0.0, 1.0);
+  gl_Position = params.projection * vec4(position, 0.0, 1.0);
 }
