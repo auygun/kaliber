@@ -674,7 +674,7 @@ void Engine::CreateRenderResources() {
   uint32_t buffer_size = GetVertexSize(quad_.vertex_description()) * 4;
   quad_ssbo_ =
       rv->CreateBuffer(pass_through_shader_.resource_id(), 0, 0, buffer_size);
-  rv->UpdateBuffer2(quad_ssbo_, vertices, buffer_size);
+  rv->UpdateBuffer(quad_ssbo_, vertices, buffer_size);
 
   imgui_backend_.CreateRenderResources(renderer_.get());
 

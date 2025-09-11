@@ -98,7 +98,7 @@ class RendererVulkan final : public Renderer {
                         size_t set,
                         size_t binding,
                         uint32_t buffer_size);
-  void UpdateBuffer2(uint64_t resource_id, const void* data, size_t size);
+  void UpdateBuffer(uint64_t resource_id, const void* data, size_t size);
   void DestroyBuffer(uint64_t resource_id);
 
   uint64_t CreateDescriptorSet(
@@ -303,10 +303,10 @@ class RendererVulkan final : public Renderer {
                       uint32_t usage,
                       VmaMemoryUsage mapping);
   void FreeBuffer(Buffer<VkBuffer> buffer);
-  void UpdateBuffer(VkBuffer buffer,
-                    size_t offset,
-                    const void* data,
-                    size_t data_size);
+  void CopyBuffer(VkBuffer buffer,
+                  size_t offset,
+                  const void* data,
+                  size_t data_size);
   void BufferMemoryBarrier(VkBuffer buffer,
                            uint64_t from,
                            uint64_t size,
@@ -325,11 +325,11 @@ class RendererVulkan final : public Renderer {
   void FreeImage(Buffer<VkImage> image,
                  VkImageView image_view,
                  VkFramebuffer frame_buffer);
-  void UpdateImage(VkImage image,
-                   VkFormat format,
-                   const uint8_t* data,
-                   int width,
-                   int height);
+  void CopyImage(VkImage image,
+                 VkFormat format,
+                 const uint8_t* data,
+                 int width,
+                 int height);
   void ImageMemoryBarrier(VkImage image,
                           VkPipelineStageFlags src_stage_mask,
                           VkPipelineStageFlags dst_stage_mask,

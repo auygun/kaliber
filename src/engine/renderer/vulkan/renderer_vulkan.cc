@@ -378,12 +378,12 @@ void RendererVulkan::UpdateGeometry(uint64_t resource_id,
     it->second.buffer_size = data_size;
   }
 
-  task_runner_.PostTask(HERE, std::bind(&RendererVulkan::UpdateBuffer, this,
+  task_runner_.PostTask(HERE, std::bind(&RendererVulkan::CopyBuffer, this,
                                         std::get<0>(it->second.buffer), 0,
                                         vertices, vertex_data_size));
   if (it->second.num_indices > 0) {
     it->second.index_data_offset = vertex_data_size;
-    task_runner_.PostTask(HERE, std::bind(&RendererVulkan::UpdateBuffer, this,
+    task_runner_.PostTask(HERE, std::bind(&RendererVulkan::CopyBuffer, this,
                                           std::get<0>(it->second.buffer),
                                           it->second.index_data_offset, indices,
                                           index_data_size));
@@ -500,7 +500,7 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
                 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                 VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
                 old_layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL));
-  task_runner_.PostTask(HERE, std::bind(&RendererVulkan::UpdateImage, this,
+  task_runner_.PostTask(HERE, std::bind(&RendererVulkan::CopyImage, this,
                                         std::get<0>(it->second.image),
                                         vk_format, image_data, width, height));
   task_runner_.PostTask(
@@ -842,7 +842,7 @@ uint64_t RendererVulkan::CreateBuffer(uint64_t shader_id,
   return last_resource_id_;
 }
 
-void RendererVulkan::UpdateBuffer2(uint64_t resource_id,
+void RendererVulkan::UpdateBuffer(uint64_t resource_id,
                                    const void* data,
                                    size_t size) {
   auto it = buffers_.find(resource_id);
@@ -866,7 +866,7 @@ void RendererVulkan::UpdateBuffer2(uint64_t resource_id,
   }
 
   task_runner_.PostTask(
-      HERE, std::bind(&RendererVulkan::UpdateBuffer, this,
+      HERE, std::bind(&RendererVulkan::CopyBuffer, this,
                       std::get<0>(it->second.buffer), 0, data, size));
   task_runner_.PostTask(HERE,
                         std::bind(&RendererVulkan::BufferMemoryBarrier, this,
@@ -1821,10 +1821,10 @@ void RendererVulkan::FreeBuffer(Buffer<VkBuffer> buffer) {
   frames_[current_frame_].buffers_to_destroy.push_back(std::move(buffer));
 }
 
-void RendererVulkan::UpdateBuffer(VkBuffer buffer,
-                                  size_t offset,
-                                  const void* data,
-                                  size_t data_size) {
+void RendererVulkan::CopyBuffer(VkBuffer buffer,
+                                size_t offset,
+                                const void* data,
+                                size_t data_size) {
   size_t to_submit = data_size;
   size_t submit_from = 0;
 
@@ -1951,11 +1951,11 @@ void RendererVulkan::FreeImage(Buffer<VkImage> image,
       std::make_tuple(std::move(image), image_view, frame_buffer));
 }
 
-void RendererVulkan::UpdateImage(VkImage image,
-                                 VkFormat format,
-                                 const uint8_t* data,
-                                 int width,
-                                 int height) {
+void RendererVulkan::CopyImage(VkImage image,
+                               VkFormat format,
+                               const uint8_t* data,
+                               int width,
+                               int height) {
   auto [num_blocks_x, num_blocks_y] =
       GetNumBlocksForImageFormat(format, width, height);
 
