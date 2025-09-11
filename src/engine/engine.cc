@@ -583,13 +583,6 @@ void Engine::CreateRendererInternal(RendererType type) {
 
   renderer_ = Renderer::Create(type, std::bind(&Engine::ContextLost, this));
   bool result = renderer_->Initialize(platform_);
-  if (!result && type == RendererType::kVulkan) {
-    LOG(0) << "Failed to initialize " << renderer_->GetDebugName()
-           << " renderer.";
-    LOG(0) << "Fallback to OpenGL renderer.";
-    CreateRendererInternal(RendererType::kOpenGL);
-    return;
-  }
   CHECK(result) << "Failed to initialize " << renderer_->GetDebugName()
                 << " renderer.";
 

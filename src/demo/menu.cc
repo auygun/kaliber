@@ -249,7 +249,7 @@ bool Menu::Initialize() {
       [&] {
         Engine::Get().CreateRenderer(toggle_renderer_type_.enabled()
                                          ? RendererType::kVulkan
-                                         : RendererType::kOpenGL);
+                                         : RendererType::kVulkan);
       },
       true, Engine::Get().GetRendererType() == RendererType::kVulkan,
       kColorFadeOut, {Vector4f{1, 1, 1, 1}, Vector4f{1, 1, 1, 1}});

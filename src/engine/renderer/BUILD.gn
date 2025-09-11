@@ -2,9 +2,6 @@ source_set("renderer") {
   sources = [
     "geometry.cc",
     "geometry.h",
-    "opengl/opengl.h",
-    "opengl/renderer_opengl.cc",
-    "opengl/renderer_opengl.h",
     "render_resource.h",
     "renderer.cc",
     "renderer.h",
@@ -20,19 +17,16 @@ source_set("renderer") {
 
   if (target_os == "linux") {
     sources += [
-      "opengl/renderer_opengl_linux.cc",
       "vulkan/renderer_vulkan_linux.cc",
       "vulkan/vulkan_context_linux.cc",
     ]
   } else if (target_os == "win") {
     sources += [
-      "opengl/renderer_opengl_win.cc",
       "vulkan/renderer_vulkan_win.cc",
       "vulkan/vulkan_context_win.cc",
     ]
   } else if (target_os == "android") {
     sources += [
-      "opengl/renderer_opengl_android.cc",
       "vulkan/renderer_vulkan_android.cc",
       "vulkan/vulkan_context_android.cc",
     ]
@@ -51,7 +45,5 @@ source_set("renderer") {
 
   if (target_os == "android") {
     deps += [ "//src/third_party/android" ]
-  } else {
-    deps += [ "//src/third_party/glew" ]
   }
 }

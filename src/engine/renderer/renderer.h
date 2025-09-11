@@ -15,7 +15,7 @@ class ShaderSource;
 class Mesh;
 class Platform;
 
-enum class RendererType { kUnknown, kVulkan, kOpenGL };
+enum class RendererType { kUnknown, kVulkan };
 
 class Renderer {
  public:
