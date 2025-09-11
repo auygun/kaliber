@@ -34,6 +34,7 @@ class ImguiBackend {
   std::vector<Geometry> geometries_;
   Shader shader_;
   Texture font_atlas_;
+  uint32_t desc_set0_ = 0;
   Renderer* renderer_ = nullptr;
   bool needs_update_ = false;
 

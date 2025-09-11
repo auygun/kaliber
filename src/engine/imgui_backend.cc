@@ -7,6 +7,9 @@
 #include "engine/renderer/renderer.h"
 #include "third_party/imgui/imgui.h"
 
+#include "engine/engine.h"
+#include "engine/renderer/vulkan/renderer_vulkan.h"
+
 using namespace base;
 
 namespace eng {
@@ -77,7 +80,13 @@ void ImguiBackend::CreateRenderResources(Renderer* renderer) {
   LOG(0) << "Font atlas size: " << width << ", " << height;
   font_atlas_.Update(width, height, ImageFormat::kRGBA32, width * height * 4,
                      pixels);
-  ImGui::GetIO().Fonts->SetTexID((ImTextureID)(intptr_t)&font_atlas_);
+
+  RendererVulkan* rv =
+      static_cast<RendererVulkan*>(Engine::Get().GetRenderer());
+  desc_set0_ = rv->CreateDescriptorSet(
+      shader_.resource_id(), 0,
+      {{font_atlas_.resource_id()}}, {});
+  ImGui::GetIO().Fonts->SetTexID((ImTextureID)(intptr_t)desc_set0_);
 }
 
 std::unique_ptr<InputEvent> ImguiBackend::OnInputEvent(
@@ -157,6 +166,9 @@ void ImguiBackend::Draw() {
   shader_.SetUniform("projection", proj);
   shader_.SetUniform("texture_0", 0);
 
+  RendererVulkan* rv =
+      static_cast<RendererVulkan*>(Engine::Get().GetRenderer());
+
   for (int n = 0; n < draw_data->CmdListsCount; n++) {
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
     for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
@@ -164,7 +176,8 @@ void ImguiBackend::Draw() {
       if (pcmd->ClipRect.z <= pcmd->ClipRect.x ||
           pcmd->ClipRect.w <= pcmd->ClipRect.y)
         continue;
-      reinterpret_cast<Texture*>(pcmd->GetTexID())->Activate(0);
+      // reinterpret_cast<Texture*>(pcmd->GetTexID())->Activate(0);
+      rv->ActivateDescriptorSet((uint32_t)(intptr_t)pcmd->GetTexID());
       renderer_->SetScissor(int(pcmd->ClipRect.x), int(pcmd->ClipRect.y),
                             int(pcmd->ClipRect.z - pcmd->ClipRect.x),
                             int(pcmd->ClipRect.w - pcmd->ClipRect.y));
