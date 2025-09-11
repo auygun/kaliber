@@ -36,7 +36,7 @@ ImageQuad& ImageQuad::Create(const std::string& asset_name,
       {{texture_->resource_id()}}, {});
   desc_set2_ = rv->CreateDescriptorSet(
       Engine::Get().GetPassThroughShader().resource_id(), 0,
-      {}, {{Engine::Get().quad_ssbo_}});
+      {}, {Engine::Get().quad_ssbo_});
 
   DCHECK((frame_width_ > 0 && frame_height_ > 0) || texture_->IsValid())
       << asset_name;

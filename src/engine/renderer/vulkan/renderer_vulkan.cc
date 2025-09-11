@@ -915,7 +915,7 @@ uint64_t RendererVulkan::CreateDescriptorSet(
         DCHECK(i < textures.size() || binding_info.length == textures[i].size())
             << "SamplerTexture (set: " << set << ", binding: " << i
             << ") is an array of "
-            << binding_info.length + " elements. Textures provided: "
+            << binding_info.length << " elements. Textures provided: "
             << (i >= textures.size() ? 0 : textures[i].size());
 
         pool_key.descriptor_count[kSamplerWithTexture] += binding_info.length;
