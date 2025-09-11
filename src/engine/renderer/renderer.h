@@ -70,7 +70,6 @@ class Renderer {
                              size_t data_size,
                              uint8_t* image_data) = 0;
   virtual void DestroyTexture(uint64_t resource_id) = 0;
-  virtual void ActivateTexture(uint64_t resource_id, size_t texture_unit) = 0;
 
   virtual uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
                                 const VertexDescription& vertex_description,
@@ -97,6 +96,23 @@ class Renderer {
   virtual void SetUniform(uint64_t resource_id,
                           const std::string& name,
                           int val) = 0;
+
+  virtual uint64_t CreateBuffer(uint64_t shader_id,
+                                size_t set,
+                                size_t binding,
+                                uint32_t buffer_size) = 0;
+  virtual void UpdateBuffer(uint64_t resource_id,
+                            const void* data,
+                            size_t size) = 0;
+  virtual void DestroyBuffer(uint64_t resource_id) = 0;
+
+  virtual uint64_t CreateDescriptorSet(
+      uint64_t shader_id,
+      size_t set,
+      const std::vector<std::vector<uint64_t>>& textures,
+      const std::vector<uint64_t>& buffers) = 0;
+  virtual void ActivateDescriptorSet(uint64_t resource_id) = 0;
+  virtual void DestroyDescriptorSet(uint64_t resource_id) = 0;
 
   virtual void PrepareForDrawing() = 0;
   virtual void Present() = 0;

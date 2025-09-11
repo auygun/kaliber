@@ -524,9 +524,6 @@ void RendererVulkan::DestroyTexture(uint64_t resource_id) {
   textures_.erase(it);
 }
 
-void RendererVulkan::ActivateTexture(uint64_t resource_id,
-                                     size_t texture_unit) {}
-
 uint64_t RendererVulkan::CreateShader(
     std::unique_ptr<ShaderSource> source,
     const VertexDescription& vertex_description,
@@ -843,8 +840,8 @@ uint64_t RendererVulkan::CreateBuffer(uint64_t shader_id,
 }
 
 void RendererVulkan::UpdateBuffer(uint64_t resource_id,
-                                   const void* data,
-                                   size_t size) {
+                                  const void* data,
+                                  size_t size) {
   auto it = buffers_.find(resource_id);
   if (it == buffers_.end())
     return;
@@ -914,8 +911,8 @@ uint64_t RendererVulkan::CreateDescriptorSet(
       case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: {
         DCHECK(i < textures.size() || binding_info.length == textures[i].size())
             << "SamplerTexture (set: " << set << ", binding: " << i
-            << ") is an array of "
-            << binding_info.length << " elements. Textures provided: "
+            << ") is an array of " << binding_info.length
+            << " elements. Textures provided: "
             << (i >= textures.size() ? 0 : textures[i].size());
 
         pool_key.descriptor_count[kSamplerWithTexture] += binding_info.length;

@@ -53,11 +53,6 @@ void Texture::Destroy() {
   }
 }
 
-void Texture::Activate(uint64_t texture_unit) {
-  if (IsValid())
-    renderer_->ActivateTexture(resource_id_, texture_unit);
-}
-
 void Texture::SetAsRenderTarget() {
   if (IsValid())
     renderer_->BeginRenderToTexture(resource_id_);

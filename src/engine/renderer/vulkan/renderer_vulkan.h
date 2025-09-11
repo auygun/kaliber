@@ -68,7 +68,6 @@ class RendererVulkan final : public Renderer {
                      size_t data_size,
                      uint8_t* image_data) final;
   void DestroyTexture(uint64_t resource_id) final;
-  void ActivateTexture(uint64_t resource_id, size_t texture_unit) final;
 
   uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
                         const VertexDescription& vertex_description,
@@ -97,17 +96,17 @@ class RendererVulkan final : public Renderer {
   uint64_t CreateBuffer(uint64_t shader_id,
                         size_t set,
                         size_t binding,
-                        uint32_t buffer_size);
-  void UpdateBuffer(uint64_t resource_id, const void* data, size_t size);
-  void DestroyBuffer(uint64_t resource_id);
+                        uint32_t buffer_size) final;
+  void UpdateBuffer(uint64_t resource_id, const void* data, size_t size) final;
+  void DestroyBuffer(uint64_t resource_id) final;
 
   uint64_t CreateDescriptorSet(
       uint64_t shader_id,
       size_t set,
       const std::vector<std::vector<uint64_t>>& textures,
-      const std::vector<uint64_t>& buffers);
-  void ActivateDescriptorSet(uint64_t resource_id);
-  void DestroyDescriptorSet(uint64_t resource_id);
+      const std::vector<uint64_t>& buffers) final;
+  void ActivateDescriptorSet(uint64_t resource_id) final;
+  void DestroyDescriptorSet(uint64_t resource_id) final;
 
   void PrepareForDrawing() final;
   void Present() final;

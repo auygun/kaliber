@@ -30,8 +30,6 @@ class Texture : public RenderResource {
 
   void Destroy();
 
-  void Activate(uint64_t texture_unit);
-
   void SetAsRenderTarget();
   void EndRenderTarget();
 
