@@ -1,0 +1,10 @@
+source_set("tiny_obj_loader") {
+  configs -= [ "//build:warnings" ]
+
+  sources = [
+    "tiny_obj_loader.cc",
+    "tiny_obj_loader.h",
+  ]
+
+  deps = []
+}
