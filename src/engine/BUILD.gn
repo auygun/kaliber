@@ -29,6 +29,8 @@ source_set("engine") {
     "imgui_backend.cc",
     "imgui_backend.h",
     "input_event.h",
+    "model.cc",
+    "model.h",
     "persistent_data.cc",
     "persistent_data.h",
     "solid_quad.cc",
