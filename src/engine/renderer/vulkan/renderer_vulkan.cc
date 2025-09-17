@@ -848,7 +848,7 @@ void RendererVulkan::UpdateBuffer(uint64_t resource_id,
 
   DCHECK(size <= it->second.buffer_size);
 
-  VkAccessFlags dst_access;
+  VkAccessFlags dst_access{};
   switch (it->second.descriptor_type) {
     case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER: {
       dst_access = VK_ACCESS_UNIFORM_READ_BIT;

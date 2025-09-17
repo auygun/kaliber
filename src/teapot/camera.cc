@@ -11,7 +11,7 @@ void Camera::Create(const Vector3f& center,
   center_ = center;
   polar_ = std::clamp(polar, -0.25f, 0.25f);
   azimuthal_ = fmod(azimuthal, 1.0);
-  radius_ = std::clamp(radius, 5.0f, 50.0f);
+  radius_ = std::clamp(radius, 0.5f, 300.0f);
   MakeMatrix();
 }
 
@@ -26,7 +26,7 @@ void Camera::Orbit(float polar, float azimuthal, float radius) {
 
   polar_ = std::clamp(polar_ + polar, -0.25f, 0.25f);
   azimuthal_ = fmod(azimuthal_ + azimuthal, 1.0);
-  radius_ = std::clamp(radius_ + radius, 5.0f, 100.0f);
+  radius_ = std::clamp(radius_ + radius, 0.5f, 300.0f);
   MakeMatrix();
 }
 

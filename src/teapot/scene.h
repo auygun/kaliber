@@ -3,6 +3,7 @@
 
 #include "base/vecmath.h"
 #include "engine/drawable.h"
+#include "engine/model.h"
 #include "engine/renderer/geometry.h"
 #include "engine/renderer/shader.h"
 #include "teapot/camera.h"
@@ -28,6 +29,8 @@ class Scene : public eng::Drawable {
 
   eng::Geometry sphere_geometry_;
   base::Matrix4f sphere_model_;
+
+  eng::Model model_;
 
   Camera camera_;
   base::Matrix4f projection_;

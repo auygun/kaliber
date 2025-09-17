@@ -63,7 +63,7 @@ void CreateSphere(std::vector<float>& vertices,
 }  // namespace
 
 Scene::Scene() {
-  camera_.Create({0, 0, 0}, -0.06f, 0.1f, 25);
+  camera_.Create({0, 0, 0}, -0.06f, 0.1f, 3);
   teapot_model_.CreateXRotation(0.5f);
   sphere_model_.Unit();
   sphere_model_.Multiply3x3(0.05f);
@@ -94,6 +94,9 @@ void Scene::Create() {
   teapot->Load("teapot/teapot.mesh");
   teapot_geometry_.SetRenderer(Engine::Get().GetRenderer());
   teapot_geometry_.Create(std::move(teapot));
+
+  // model_.LoadObj(Engine::Get().GetRenderer(), "teapot/viking_room.obj");
+  model_.LoadObj(Engine::Get().GetRenderer(), "teapot/buddha.obj");
 
   shader_.SetRenderer(Engine::Get().GetRenderer());
   auto source = std::make_unique<ShaderSource>();
@@ -127,28 +130,29 @@ void Scene::Draw(float frame_frac) {
   shader_.SetUniform("metallic", metallic_);
   shader_.SetUniform("roughness", roughness_);
   shader_.SetUniform("ao", ao_);
-  teapot_geometry_.Draw();
+  // teapot_geometry_.Draw();
+  model_.Draw();
 
-  shader_.SetUniform("albedo", Vector3f(1, 1, 1));
-  shader_.SetUniform("metallic", 0.0f);
-  shader_.SetUniform("roughness", 1.0f);
-  shader_.SetUniform("ao", 1.0f);
+  // shader_.SetUniform("albedo", Vector3f(1, 1, 1));
+  // shader_.SetUniform("metallic", 0.0f);
+  // shader_.SetUniform("roughness", 1.0f);
+  // shader_.SetUniform("ao", 1.0f);
 
-  sphere_model_.Row(3) = Vector3f(-15, -4, -15);
-  shader_.SetUniform("model", sphere_model_);
-  sphere_geometry_.Draw();
+  // sphere_model_.Row(3) = Vector3f(-15, -4, -15);
+  // shader_.SetUniform("model", sphere_model_);
+  // sphere_geometry_.Draw();
 
-  sphere_model_.Row(3) = Vector3f(15, -4, -15);
-  shader_.SetUniform("model", sphere_model_);
-  sphere_geometry_.Draw();
+  // sphere_model_.Row(3) = Vector3f(15, -4, -15);
+  // shader_.SetUniform("model", sphere_model_);
+  // sphere_geometry_.Draw();
 
-  sphere_model_.Row(3) = Vector3f(-15, -4, 15);
-  shader_.SetUniform("model", sphere_model_);
-  sphere_geometry_.Draw();
+  // sphere_model_.Row(3) = Vector3f(-15, -4, 15);
+  // shader_.SetUniform("model", sphere_model_);
+  // sphere_geometry_.Draw();
 
-  sphere_model_.Row(3) = Vector3f(15, -4, 15);
-  shader_.SetUniform("model", sphere_model_);
-  sphere_geometry_.Draw();
+  // sphere_model_.Row(3) = Vector3f(15, -4, 15);
+  // shader_.SetUniform("model", sphere_model_);
+  // sphere_geometry_.Draw();
 }
 
 void Scene::Update(const Vector2f& angles, float zoom) {
@@ -185,5 +189,5 @@ void Scene::Update(const Vector2f& angles, float zoom) {
 void Scene::CreateProjectionMatrix() {
   projection_.CreatePerspectiveProjection(
       45, 4.0f / 3.0f, (float)Engine::Get().GetScreenWidth(),
-      (float)Engine::Get().GetScreenHeight(), 4, 2048);
+      (float)Engine::Get().GetScreenHeight(), 1, 2048);
 }

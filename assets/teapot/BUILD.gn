@@ -3,6 +3,9 @@ copy("teapot") {
     "pbr.glsl_fragment",
     "pbr.glsl_vertex",
     "teapot.mesh",
+    "viking_room.obj",
+    "viking_room.png",
+    "buddha.obj",
   ]
 
   outputs = [ "$root_out_dir/assets/teapot/{{source_file_part}}" ]

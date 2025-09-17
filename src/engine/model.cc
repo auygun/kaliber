@@ -115,7 +115,7 @@ bool Model::LoadObj(Renderer* renderer, const std::string& file_name) {
 
     geometries_.emplace_back(renderer_);
     geometries_.back().Create(kPrimitive_Triangles, vertex_description_,
-                              kDataType_UShort);
+                              kDataType_UInt);
     geometries_.back().Update(vertices.size(), vertices.data(), indices.size(),
                               indices.data());
   }
@@ -123,6 +123,9 @@ bool Model::LoadObj(Renderer* renderer, const std::string& file_name) {
   return true;
 }
 
-void Model::Draw() {}
+void Model::Draw() {
+  for (auto &g : geometries_)
+    g.Draw();
+}
 
 }  // namespace eng
