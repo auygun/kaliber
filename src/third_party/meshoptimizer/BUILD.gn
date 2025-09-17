@@ -1,0 +1,25 @@
+source_set("meshoptimizer") {
+  configs -= [ "//build:warnings" ]
+
+  sources = [
+    "allocator.cpp",
+    "clusterizer.cpp",
+    "indexanalyzer.cpp",
+    "indexcodec.cpp",
+    "indexgenerator.cpp",
+    "meshoptimizer.h",
+    "overdrawoptimizer.cpp",
+    "partition.cpp",
+    "quantization.cpp",
+    "rasterizer.cpp",
+    "simplifier.cpp",
+    "spatialorder.cpp",
+    "stripifier.cpp",
+    "vcacheoptimizer.cpp",
+    "vertexcodec.cpp",
+    "vertexfilter.cpp",
+    "vfetchoptimizer.cpp",
+  ]
+
+  deps = []
+}

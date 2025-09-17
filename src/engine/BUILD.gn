@@ -47,6 +47,7 @@ source_set("engine") {
     "//src/engine/renderer",
     "//src/third_party/imgui",
     "//src/third_party/jsoncpp",
+    "//src/third_party/meshoptimizer",
     "//src/third_party/minimp3",
     "//src/third_party/stb",
     "//src/third_party/texture_compressor",
