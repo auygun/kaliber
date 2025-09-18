@@ -20,11 +20,13 @@ layout(push_constant) uniform Params {
   float light_power3;
   float light_power4;
   vec3 cam_pos;
-  vec3 albedo;
+  // vec3 albedo;
   float metallic;
   float roughness;
   float ao;
 } params;
+
+layout(set = 0, binding = 0) uniform sampler2D albedo_map;
 
 layout(location = 0) out vec4 frag_color;
 
@@ -81,11 +83,14 @@ void main() {
   vec3 N = normalize(normal);
   vec3 V = normalize(params.cam_pos - world_pos);
 
+  // vec3 albedo = pow(texture(albedo_map, tex_coord).rgb, 2.2);
+  vec3 albedo = texture(albedo_map, tex_coord).rgb;
+
   // calculate reflectance at normal incidence; if dia-electric (like plastic)
   // use F0 of 0.04 and if it's a metal, use the albedo color as F0 (metallic
   // workflow)
   vec3 F0 = vec3(0.04);
-  F0 = mix(F0, params.albedo, params.metallic);
+  F0 = mix(F0, albedo, params.metallic);
 
   // reflectance equation
   vec3 Lo = vec3(0.0);
@@ -122,13 +127,13 @@ void main() {
     float NdotL = max(dot(N, L), 0.0);
 
     // add to outgoing radiance Lo
-    Lo += (kD * params.albedo / PI + brdf) * radiance *
+    Lo += (kD * albedo / PI + brdf) * radiance *
           NdotL;  // note that we already multiplied the BRDF by the Fresnel
                   // (kS) so we won't multiply by kS again
   }
 
   // ambient lighting
-  vec3 ambient = vec3(0.03) * params.albedo * params.ao;
+  vec3 ambient = vec3(0.03) * albedo * params.ao;
   vec3 color = ambient + Lo;
 
   // HDR tonemapping

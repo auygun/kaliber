@@ -4,7 +4,7 @@
 #include <sstream>
 
 #include "base/log.h"
-#include "engine/asset/shader_source.h"
+#include "engine/asset/image.h"
 #include "engine/engine.h"
 #include "engine/platform/asset_file.h"
 #include "engine/renderer/renderer.h"
@@ -25,7 +25,10 @@ const char vertex_description[] = "p3f;n3f;t2f";
 
 }  // namespace
 
-bool Model::LoadObj(Renderer* renderer, const std::string& file_name) {
+bool Model::LoadObj(Renderer* renderer,
+                    const std::string& file_name,
+                    const std::string& tex_file_name,
+                    uint64_t shader_id) {
   renderer_ = renderer;
 
   if (!ParseVertexDescription(vertex_description, vertex_description_)) {
@@ -81,7 +84,7 @@ bool Model::LoadObj(Renderer* renderer, const std::string& file_name) {
 
         if (idx.texcoord_index >= 0) {
           vert.uv[0] = attrib.texcoords[2 * idx.texcoord_index + 0];
-          vert.uv[1] = attrib.texcoords[2 * idx.texcoord_index + 1];
+          vert.uv[1] = 1.0f - attrib.texcoords[2 * idx.texcoord_index + 1];
         }
 
         // Deduplicate vertices
@@ -144,10 +147,20 @@ bool Model::LoadObj(Renderer* renderer, const std::string& file_name) {
                               new_indices.size(), new_indices.data());
   }
 
+  auto image = std::make_unique<Image>();
+  if (!image->Load(tex_file_name))
+    return false;
+  texture_.SetRenderer(renderer);
+  texture_.Update(std::move(image));
+
+  desc_set0_ = renderer->CreateDescriptorSet(shader_id, 0,
+                                             {{texture_.resource_id()}}, {});
+
   return true;
 }
 
 void Model::Draw() {
+  renderer_->ActivateDescriptorSet(desc_set0_);
   for (auto& g : geometries_)
     g.Draw();
 }

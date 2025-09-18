@@ -95,14 +95,15 @@ void Scene::Create() {
   teapot_geometry_.SetRenderer(Engine::Get().GetRenderer());
   teapot_geometry_.Create(std::move(teapot));
 
-  // model_.LoadObj(Engine::Get().GetRenderer(), "teapot/viking_room.obj");
-  model_.LoadObj(Engine::Get().GetRenderer(), "teapot/buddha.obj");
-
   shader_.SetRenderer(Engine::Get().GetRenderer());
   auto source = std::make_unique<ShaderSource>();
   CHECK(source->Load("teapot/pbr.glsl")) << "Could not create ShaderSource";
   shader_.Create(std::move(source), teapot_geometry_.vertex_description(),
                  kPrimitive_Triangles, true);
+
+  model_.LoadObj(Engine::Get().GetRenderer(), "teapot/viking_room.obj",
+                 "teapot/viking_room.png", shader_.resource_id());
+  // model_.LoadObj(Engine::Get().GetRenderer(), "teapot/buddha.obj");
 
   CreateProjectionMatrix();
 }
@@ -126,7 +127,7 @@ void Scene::Draw(float frame_frac) {
   shader_.SetUniform("light_power3", light3_power_);
   shader_.SetUniform("light_power4", light4_power_);
   shader_.SetUniform("cam_pos", camera_.GetMatrix().Row(3));
-  shader_.SetUniform("albedo", albedo_);
+  // shader_.SetUniform("albedo", albedo_);
   shader_.SetUniform("metallic", metallic_);
   shader_.SetUniform("roughness", roughness_);
   shader_.SetUniform("ao", ao_);
