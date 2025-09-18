@@ -29,6 +29,8 @@ bool Model::LoadObj(Renderer* renderer,
                     const std::string& file_name,
                     const std::string& tex_file_name,
                     uint64_t shader_id) {
+  LOG(0) << "Loading " << file_name;
+
   renderer_ = renderer;
 
   if (!ParseVertexDescription(vertex_description, vertex_description_)) {
@@ -57,7 +59,6 @@ bool Model::LoadObj(Renderer* renderer,
   }
 
   std::vector<Vertex> vertices;
-  std::unordered_map<size_t, uint32_t> unique_vertices;
 
   // Indices grouped by material
   std::unordered_map<int, std::vector<uint32_t>> material_indices;
@@ -87,51 +88,57 @@ bool Model::LoadObj(Renderer* renderer,
           vert.uv[1] = 1.0f - attrib.texcoords[2 * idx.texcoord_index + 1];
         }
 
-        // Deduplicate vertices
-        size_t hash = std::hash<float>{}(vert.position[0]) ^
-                      std::hash<float>{}(vert.position[1]) ^
-                      std::hash<float>{}(vert.position[2]) ^
-                      std::hash<float>{}(vert.normal[0]) ^
-                      std::hash<float>{}(vert.normal[1]) ^
-                      std::hash<float>{}(vert.normal[2]) ^
-                      std::hash<float>{}(vert.uv[0]) ^
-                      std::hash<float>{}(vert.uv[1]);
-
-        uint32_t new_index;
-        auto it = unique_vertices.find(hash);
-        if (it != unique_vertices.end()) {
-          new_index = it->second;
-        } else {
-          new_index = (uint32_t)vertices.size();
-          vertices.push_back(vert);
-          unique_vertices[hash] = new_index;
-        }
-
+        uint32_t new_index = vertices.size();
+        vertices.push_back(vert);
         material_indices[material_id].push_back(new_index);
       }
       index_offset += fv;
     }
   }
 
+  LOG(0) << "- Total vertices: " << vertices.size();
+
+  // Deduplicate vertices.
+  std::vector<uint32_t> remap(vertices.size());
+  size_t total_vertices = meshopt_generateVertexRemap(
+      remap.data(), nullptr, vertices.size(), vertices.data(), vertices.size(),
+      sizeof(Vertex));
+
+  std::vector<Vertex> unique_vertices(total_vertices);
+  meshopt_remapVertexBuffer(unique_vertices.data(), vertices.data(),
+                            vertices.size(), sizeof(Vertex), remap.data());
+
+  LOG(0) << "- Unique vertices: " << unique_vertices.size();
+
   for (auto& mi : material_indices) {
     // int material_id = mi.first;
     auto& indices = mi.second;
 
-    // Optimize
-    meshopt_optimizeVertexCache(indices.data(), indices.data(), indices.size(),
-                                vertices.size());
-    meshopt_optimizeOverdraw(indices.data(), indices.data(), indices.size(),
-                             &vertices[0].position[0], vertices.size(),
-                             sizeof(Vertex), 1.05f);
-    meshopt_optimizeVertexFetch(vertices.data(), indices.data(), indices.size(),
-                                vertices.data(), vertices.size(),
-                                sizeof(Vertex));
+    LOG(0) << "- Indices: " << indices.size();
 
+    // Remap indices to unique vertices.
+    std::vector<uint32_t> remapped_indices(indices.size());
+    meshopt_remapIndexBuffer(remapped_indices.data(), indices.data(),
+                             indices.size(), remap.data());
+
+    // Optimize
+    meshopt_optimizeVertexCache(
+        remapped_indices.data(), remapped_indices.data(),
+        remapped_indices.size(), unique_vertices.size());
+    meshopt_optimizeOverdraw(remapped_indices.data(), remapped_indices.data(),
+                             remapped_indices.size(),
+                             &unique_vertices[0].position[0],
+                             unique_vertices.size(), sizeof(Vertex), 1.05f);
+    meshopt_optimizeVertexFetch(unique_vertices.data(), remapped_indices.data(),
+                                remapped_indices.size(), unique_vertices.data(),
+                                unique_vertices.size(), sizeof(Vertex));
+
+    // Create geometry
     geometries_.emplace_back(renderer_);
     geometries_.back().Create(kPrimitive_Triangles, vertex_description_,
                               kDataType_UInt);
-    geometries_.back().Update(vertices.size(), vertices.data(), indices.size(),
-                              indices.data());
+    geometries_.back().Update(unique_vertices.size(), unique_vertices.data(),
+                              remapped_indices.size(), remapped_indices.data());
   }
 
   auto image = std::make_unique<Image>();
