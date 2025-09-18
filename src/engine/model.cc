@@ -123,6 +123,9 @@ bool Model::LoadObj(Renderer* renderer,
     meshopt_optimizeOverdraw(indices.data(), indices.data(), indices.size(),
                              &vertices[0].position[0], vertices.size(),
                              sizeof(Vertex), 1.05f);
+    meshopt_optimizeVertexFetch(vertices.data(), indices.data(), indices.size(),
+                                vertices.data(), vertices.size(),
+                                sizeof(Vertex));
 
     geometries_.emplace_back(renderer_);
     geometries_.back().Create(kPrimitive_Triangles, vertex_description_,
