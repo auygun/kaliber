@@ -124,27 +124,11 @@ bool Model::LoadObj(Renderer* renderer,
                              &vertices[0].position[0], vertices.size(),
                              sizeof(Vertex), 1.05f);
 
-    std::vector<uint32_t> remap(indices.size());
-    size_t num_vertices = meshopt_generateVertexRemap(
-        remap.data(), indices.data(), indices.size(), vertices.data(),
-        vertices.size(), sizeof(Vertex));
-
-    std::vector<Vertex> new_vertices(num_vertices);
-    std::vector<uint32_t> new_indices(indices.size());
-
-    meshopt_remapVertexBuffer(new_vertices.data(), vertices.data(),
-                              vertices.size(), sizeof(Vertex), remap.data());
-    meshopt_remapIndexBuffer(new_indices.data(), indices.data(), indices.size(),
-                             remap.data());
-
-    // TODO: Update global vertex list once (first material)
-    vertices.swap(new_vertices);
-
     geometries_.emplace_back(renderer_);
     geometries_.back().Create(kPrimitive_Triangles, vertex_description_,
                               kDataType_UInt);
-    geometries_.back().Update(vertices.size(), vertices.data(),
-                              new_indices.size(), new_indices.data());
+    geometries_.back().Update(vertices.size(), vertices.data(), indices.size(),
+                              indices.data());
   }
 
   auto image = std::make_unique<Image>();
