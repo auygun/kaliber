@@ -83,6 +83,32 @@ void Platform::Update() {
           auto input_event =
               std::make_unique<InputEvent>(InputEvent::kDragStart, 0, v);
           observer_->AddInputEvent(std::move(input_event));
+        } else if (e.xbutton.button == 4) {
+          observer_->AddInputEvent(std::make_unique<InputEvent>(
+              InputEvent::kDragStart, 0, Vector2f{0, 0}));
+          observer_->AddInputEvent(std::make_unique<InputEvent>(
+              InputEvent::kDragStart, 1, Vector2f{0, 0}));
+          observer_->AddInputEvent(std::make_unique<InputEvent>(
+              InputEvent::kDrag, 0, Vector2f{0, 1}));
+          observer_->AddInputEvent(std::make_unique<InputEvent>(
+              InputEvent::kDrag, 1, Vector2f{0, -1}));
+          observer_->AddInputEvent(std::make_unique<InputEvent>(
+              InputEvent::kDragEnd, 0, Vector2f{0, 1}));
+          observer_->AddInputEvent(std::make_unique<InputEvent>(
+              InputEvent::kDragEnd, 1, Vector2f{0, -1}));
+        } else if (e.xbutton.button == 5) {
+          observer_->AddInputEvent(std::make_unique<InputEvent>(
+              InputEvent::kDragStart, 0, Vector2f{0, 1}));
+          observer_->AddInputEvent(std::make_unique<InputEvent>(
+              InputEvent::kDragStart, 1, Vector2f{0, -1}));
+          observer_->AddInputEvent(std::make_unique<InputEvent>(
+              InputEvent::kDrag, 0, Vector2f{0, 0}));
+          observer_->AddInputEvent(std::make_unique<InputEvent>(
+              InputEvent::kDrag, 1, Vector2f{0, 0}));
+          observer_->AddInputEvent(std::make_unique<InputEvent>(
+              InputEvent::kDragEnd, 0, Vector2f{0, 0}));
+          observer_->AddInputEvent(std::make_unique<InputEvent>(
+              InputEvent::kDragEnd, 1, Vector2f{0, 0}));
         }
         break;
       }
