@@ -43,6 +43,29 @@ inline uint64_t HashVec64(const std::vector<uint64_t>& vec) {
   return seed;
 }
 
+inline unsigned int MurmurHash2(unsigned int h,
+                                const unsigned char* key,
+                                size_t len) {
+  const unsigned int m = 0x5bd1e995;
+  const int r = 24;
+
+  while (len >= 4) {
+    unsigned int k = *reinterpret_cast<const unsigned int*>(key);
+
+    k *= m;
+    k ^= k >> r;
+    k *= m;
+
+    h *= m;
+    h ^= k;
+
+    key += 4;
+    len -= 4;
+  }
+
+  return h;
+}
+
 }  // namespace base
 
 #endif  // BASE_HASH_H
