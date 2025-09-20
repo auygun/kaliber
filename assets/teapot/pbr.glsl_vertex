@@ -14,7 +14,7 @@ layout(push_constant) uniform Params {
   float light_power3;
   float light_power4;
   vec3 cam_pos;
-  // vec3 albedo;
+  vec3 albedo;
   float metallic;
   float roughness;
   float ao;

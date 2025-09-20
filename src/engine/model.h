@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "base/vecmath.h"
 #include "engine/renderer/geometry.h"
 #include "engine/renderer/renderer_types.h"
 #include "engine/renderer/texture.h"
@@ -11,6 +12,7 @@
 namespace eng {
 
 class Renderer;
+class Shader;
 
 class Model {
  public:
@@ -19,14 +21,22 @@ class Model {
 
   bool LoadObj(Renderer* renderer,
                const std::string& file_name,
+               const std::string& mtl_file_name,
                const std::string& tex_file_name,
                uint64_t shader_id);
 
-  void Draw();
+  void Draw(Shader& shader);
 
  private:
+  struct Mesh {
+    size_t num_indices = 0;
+    size_t index_offset = 0;
+    base::Vector3f color{};
+  };
+
+  std::vector<Mesh> meshes_;
   VertexDescription vertex_description_;
-  std::vector<Geometry> geometries_;
+  Geometry geometry_;
   Texture texture_;
   uint32_t desc_set0_ = 0;
   Renderer* renderer_ = nullptr;

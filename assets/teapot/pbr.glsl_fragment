@@ -20,13 +20,13 @@ layout(push_constant) uniform Params {
   float light_power3;
   float light_power4;
   vec3 cam_pos;
-  // vec3 albedo;
+  vec3 albedo;
   float metallic;
   float roughness;
   float ao;
 } params;
 
-layout(set = 0, binding = 0) uniform sampler2D albedo_map;
+// layout(set = 0, binding = 0) uniform sampler2D albedo_map;
 
 layout(location = 0) out vec4 frag_color;
 
@@ -84,7 +84,8 @@ void main() {
   vec3 V = normalize(params.cam_pos - world_pos);
 
   // vec3 albedo = pow(texture(albedo_map, tex_coord).rgb, 2.2);
-  vec3 albedo = texture(albedo_map, tex_coord).rgb;
+  // vec3 albedo = texture(albedo_map, tex_coord).rgb;
+  vec3 albedo = params.albedo;
 
   // calculate reflectance at normal incidence; if dia-electric (like plastic)
   // use F0 of 0.04 and if it's a metal, use the albedo color as F0 (metallic

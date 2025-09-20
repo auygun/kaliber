@@ -6,6 +6,8 @@ copy("teapot") {
     "viking_room.obj",
     "viking_room.png",
     "buddha.obj",
+    "sportsCar.obj",
+    "sportsCar.mtl",
   ]
 
   outputs = [ "$root_out_dir/assets/teapot/{{source_file_part}}" ]

@@ -101,9 +101,11 @@ void Scene::Create() {
   shader_.Create(std::move(source), teapot_geometry_.vertex_description(),
                  kPrimitive_Triangles, true);
 
-  model_.LoadObj(Engine::Get().GetRenderer(), "teapot/viking_room.obj",
-                 "teapot/viking_room.png", shader_.resource_id());
+  // model_.LoadObj(Engine::Get().GetRenderer(), "teapot/viking_room.obj",
+  //                "teapot/viking_room.png", shader_.resource_id());
   // model_.LoadObj(Engine::Get().GetRenderer(), "teapot/buddha.obj");
+  model_.LoadObj(Engine::Get().GetRenderer(), "teapot/sportsCar.obj",
+                 "teapot/sportsCar.mtl", "", shader_.resource_id());
 
   CreateProjectionMatrix();
 }
@@ -132,7 +134,7 @@ void Scene::Draw(float frame_frac) {
   shader_.SetUniform("roughness", roughness_);
   shader_.SetUniform("ao", ao_);
   // teapot_geometry_.Draw();
-  model_.Draw();
+  model_.Draw(shader_);
 
   // shader_.SetUniform("albedo", Vector3f(1, 1, 1));
   // shader_.SetUniform("metallic", 0.0f);
