@@ -54,7 +54,7 @@ bool Model::LoadObj(Renderer* renderer,
                                       Engine::Get().GetRootPath().c_str(),
                                       &buffer_size, true);
   if (!mtl) {
-    LOG(0) << "Failed to read obj file: " << file_name;
+    LOG(0) << "Failed to read mtl file: " << file_name;
     return false;
   }
   std::istringstream mtl_stream(std::istringstream(mtl.get()));
@@ -67,7 +67,7 @@ bool Model::LoadObj(Renderer* renderer,
 
   if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &err, &obj_stream,
                         &mtl_reader)) {
-    LOG(0) << "Failed to read file: " << file_name;
+    LOG(0) << "tinyobj::LoadObj failed";
     return false;
   }
 
@@ -111,7 +111,7 @@ bool Model::LoadObj(Renderer* renderer,
     total_index_count += index_offset;
   }
 
-  LOG(0) << "- Total vertices: " << vertices.size();
+  DLOG(0) << "- Total vertices: " << vertices.size();
 
   // Deduplicate vertices.
   std::vector<uint32_t> remap(vertices.size());
@@ -123,15 +123,13 @@ bool Model::LoadObj(Renderer* renderer,
   meshopt_remapVertexBuffer(unique_vertices.data(), vertices.data(),
                             vertices.size(), sizeof(Vertex), remap.data());
 
-  LOG(0) << "- Unique vertices: " << unique_vertices.size();
+  DLOG(0) << "- Unique vertices: " << unique_vertices.size();
 
   std::vector<uint32_t> aggregated_indices(total_index_count);
 
   for (auto& mi : material_indices) {
     int material_id = mi.first;
     auto& indices = mi.second;
-
-    LOG(0) << "- Indices: " << indices.size();
 
     // Remap indices to unique vertices.
     std::vector<uint32_t> remapped_indices(indices.size());
@@ -157,10 +155,32 @@ bool Model::LoadObj(Renderer* renderer,
                               remapped_indices.begin(), remapped_indices.end());
   }
 
+  DLOG(0) << "- Meshes: " << meshes_.size();
+
   // Optimize vertices
   meshopt_optimizeVertexFetch(unique_vertices.data(), aggregated_indices.data(),
                               aggregated_indices.size(), unique_vertices.data(),
                               unique_vertices.size(), sizeof(Vertex));
+
+#if 0
+  for (auto& mesh : meshes_) {
+    meshopt_VertexCacheStatistics vcs = meshopt_analyzeVertexCache(
+        &aggregated_indices[mesh.index_offset], mesh.num_indices,
+        unique_vertices.size(), 16, 0, 0);
+    DLOG(0) << "meshopt_analyzeVertexCache:";
+    DLOG(0) << "- vertices_transformed: " << vcs.vertices_transformed;
+    DLOG(0) << "- warps_executed      : " << vcs.warps_executed;
+    DLOG(0) << "- acmr (0.5 - 3.0)    : " << vcs.acmr;
+    DLOG(0) << "- atvr (1.0 - 6.0)    : " << vcs.atvr;
+
+    meshopt_VertexFetchStatistics vfs = meshopt_analyzeVertexFetch(
+        &aggregated_indices[mesh.index_offset], mesh.num_indices,
+        unique_vertices.size(), sizeof(Vertex));
+    DLOG(0) << "meshopt_analyzeVertexFetch:";
+    DLOG(0) << "- bytes_fetched: " << vfs.bytes_fetched;
+    DLOG(0) << "- overfetch    : " << vfs.overfetch;
+  }
+#endif
 
   // Create geometry
   geometry_.SetRenderer(renderer);
