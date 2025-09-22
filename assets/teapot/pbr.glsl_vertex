@@ -5,14 +5,6 @@ layout(location = 2) in vec2 in_tex_coord;
 layout(push_constant) uniform Params {
   mat4 model;
   mat4 view_projection;
-  vec3 light_pos1;
-  vec3 light_pos2;
-  vec3 light_pos3;
-  vec3 light_pos4;
-  float light_power1;
-  float light_power2;
-  float light_power3;
-  float light_power4;
   vec3 cam_pos;
   vec3 albedo;
   float metallic;

@@ -6,6 +6,7 @@
 #include "engine/asset/mesh.h"
 #include "engine/asset/shader_source.h"
 #include "engine/engine.h"
+#include "engine/renderer/renderer.h"
 #include "engine/renderer/renderer_types.h"
 #include "third_party/imgui/imgui.h"
 
@@ -101,6 +102,12 @@ void Scene::Create() {
   shader_.Create(std::move(source), teapot_geometry_.vertex_description(),
                  kPrimitive_Triangles, true);
 
+  ubo1_ = Engine::Get().GetRenderer()->CreateBuffer(shader_.resource_id(), 1, 0,
+                                                    sizeof(lights_));
+
+  desc_set1_ = Engine::Get().GetRenderer()->CreateDescriptorSet(
+      shader_.resource_id(), 1, {}, {ubo1_});
+
   // model_.LoadObj(Engine::Get().GetRenderer(), "teapot/viking_room.obj",
   //                "teapot/viking_room.png", shader_.resource_id());
   // model_.LoadObj(Engine::Get().GetRenderer(), "teapot/buddha.obj");
@@ -108,6 +115,15 @@ void Scene::Create() {
                  "teapot/sportsCar.mtl", "", shader_.resource_id());
 
   CreateProjectionMatrix();
+
+  lights_[0].pos = {-15, -4, -15};
+  lights_[1].pos = {15, -4, -15};
+  lights_[2].pos = {-15, -4, 15};
+  lights_[3].pos = {15, -4, 15};
+  lights_[0].power = 400.0f;
+  lights_[1].power = 400.0f;
+  lights_[2].power = 400.0f;
+  lights_[3].power = 400.0f;
 }
 
 void Scene::Draw(float frame_frac) {
@@ -120,20 +136,13 @@ void Scene::Draw(float frame_frac) {
   shader_.Activate();
   shader_.SetUniform("model", teapot_model_);
   shader_.SetUniform("view_projection", view_projection);
-  shader_.SetUniform("light_pos1", Vector3f(-15, -4, -15));
-  shader_.SetUniform("light_pos2", Vector3f(15, -4, -15));
-  shader_.SetUniform("light_pos3", Vector3f(-15, -4, 15));
-  shader_.SetUniform("light_pos4", Vector3f(15, -4, 15));
-  shader_.SetUniform("light_power1", light1_power_);
-  shader_.SetUniform("light_power2", light2_power_);
-  shader_.SetUniform("light_power3", light3_power_);
-  shader_.SetUniform("light_power4", light4_power_);
   shader_.SetUniform("cam_pos", camera_.GetMatrix().Row(3));
   // shader_.SetUniform("albedo", albedo_);
   shader_.SetUniform("metallic", metallic_);
   shader_.SetUniform("roughness", roughness_);
   shader_.SetUniform("ao", ao_);
   // teapot_geometry_.Draw();
+  Engine::Get().GetRenderer()->ActivateDescriptorSet(desc_set1_);
   model_.Draw(shader_);
 
   // shader_.SetUniform("albedo", Vector3f(1, 1, 1));
@@ -177,16 +186,19 @@ void Scene::Update(const Vector2f& angles, float zoom) {
     ImGui::SliderFloat("metallic", &metallic_, 0.0f, 1.0f, "%.2f");
     ImGui::SliderFloat("roughness", &roughness_, 0.0f, 1.0f, "%.2f");
     ImGui::SliderFloat("ambient", &ao_, 0.0f, 1.0f, "%.2f");
-    ImGui::SliderFloat("light 1", &light1_power_, 0.0f, 500.0f, "%.f");
-    ImGui::SliderFloat("light 2", &light2_power_, 0.0f, 500.0f, "%.f");
-    ImGui::SliderFloat("light 3", &light3_power_, 0.0f, 500.0f, "%.f");
-    ImGui::SliderFloat("light 4", &light4_power_, 0.0f, 500.0f, "%.f");
+    ImGui::SliderFloat("light 1", &lights_[0].power, 0.0f, 500.0f, "%.f");
+    ImGui::SliderFloat("light 2", &lights_[1].power, 0.0f, 500.0f, "%.f");
+    ImGui::SliderFloat("light 3", &lights_[2].power, 0.0f, 500.0f, "%.f");
+    ImGui::SliderFloat("light 4", &lights_[3].power, 0.0f, 500.0f, "%.f");
   }
   ImGui::End();
 
   RendererType selected_type = static_cast<RendererType>(renderer_type);
   if (selected_type != Engine::Get().GetRendererType())
     Engine::Get().CreateRenderer(selected_type);
+
+  Engine::Get().GetRenderer()->UpdateBuffer(ubo1_, &lights_[0],
+                                            sizeof(lights_));
 }
 
 void Scene::CreateProjectionMatrix() {

@@ -11,20 +11,21 @@ layout(location = 2) in vec2 tex_coord;
 layout(push_constant) uniform Params {
   mat4 model;
   mat4 view_projection;
-  vec3 light_pos1;
-  vec3 light_pos2;
-  vec3 light_pos3;
-  vec3 light_pos4;
-  float light_power1;
-  float light_power2;
-  float light_power3;
-  float light_power4;
   vec3 cam_pos;
   vec3 albedo;
   float metallic;
   float roughness;
   float ao;
 } params;
+
+struct LightData {
+  vec3 pos;
+  float power;
+};
+
+layout(set = 1, binding = 0) uniform Ubo1 {
+  LightData light[4];
+} ubo1;
 
 // layout(set = 0, binding = 0) uniform sampler2D albedo_map;
 
@@ -69,17 +70,6 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0) {
 }
 
 void main() {
-  vec3 light_pos[4];
-  light_pos[0] = params.light_pos1;
-  light_pos[1] = params.light_pos2;
-  light_pos[2] = params.light_pos3;
-  light_pos[3] = params.light_pos4;
-  float light_power[4];
-  light_power[0] = params.light_power1;
-  light_power[1] = params.light_power2;
-  light_power[2] = params.light_power3;
-  light_power[3] = params.light_power4;
-
   vec3 N = normalize(normal);
   vec3 V = normalize(params.cam_pos - world_pos);
 
@@ -97,11 +87,11 @@ void main() {
   vec3 Lo = vec3(0.0);
   for (int i = 0; i < 4; ++i) {
     // calculate per-light radiance
-    vec3 L = normalize(light_pos[i] - world_pos);
+    vec3 L = normalize(ubo1.light[i].pos - world_pos);
     vec3 H = normalize(V + L);
-    float distance = length(light_pos[i] - world_pos);
+    float distance = length(ubo1.light[i].pos - world_pos);
     float attenuation = 1.0 / (distance * distance);
-    vec3 radiance = vec3(light_power[i]) * attenuation;
+    vec3 radiance = vec3(ubo1.light[i].power) * attenuation;
 
     // Cook-Torrance BRDF
     float NDF = DistributionGGX(N, H, params.roughness);

@@ -22,6 +22,11 @@ class Scene : public eng::Drawable {
   void CreateProjectionMatrix();
 
  private:
+  struct LightData {
+    base::Vector3f pos{};
+    float power = 0;
+  };
+
   eng::Shader shader_;
 
   eng::Geometry teapot_geometry_;
@@ -39,10 +44,10 @@ class Scene : public eng::Drawable {
   float metallic_ = 1.0f;
   float roughness_ = 0.3f;
   float ao_ = 0.5f;
-  float light1_power_ = 400.0f;
-  float light2_power_ = 400.0f;
-  float light3_power_ = 400.0f;
-  float light4_power_ = 400.0f;
+  LightData lights_[4];
+
+  uint64_t ubo1_ = 0;
+  uint32_t desc_set1_ = 0;
 };
 
 #endif  // TEAPOT_SCENE_H
