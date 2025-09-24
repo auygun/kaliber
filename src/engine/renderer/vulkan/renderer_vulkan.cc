@@ -414,21 +414,6 @@ void RendererVulkan::Draw(uint64_t resource_id,
   if (it == geometries_.end())
     return;
 
-  // Update the values of push constants for the active shader if dirty.
-  if (active_shader_id_ != kInvalidId) {
-    auto active_shader = shaders_.find(active_shader_id_);
-    if (active_shader != shaders_.end() &&
-        active_shader->second.push_constants_dirty) {
-      active_shader->second.push_constants_dirty = false;
-      vkCmdPushConstants(
-          frames_[current_frame_].draw_command_buffer,
-          active_shader->second.pipeline_layout,
-          VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-          active_shader->second.push_constants_size,
-          active_shader->second.push_constants.get());
-    }
-  }
-
   uint64_t data_offset = start_offset * it->second.index_type_size;
   if (num_indices == 0)
     num_indices = it->second.num_indices;
@@ -734,72 +719,19 @@ void RendererVulkan::ActivateShader(uint64_t resource_id) {
   }
 }
 
-void RendererVulkan::SetUniform(uint64_t resource_id,
-                                const std::string& name,
-                                const base::Vector2f& val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  SetUniformInternal(it->second, name, val);
-}
-
-void RendererVulkan::SetUniform(uint64_t resource_id,
-                                const std::string& name,
-                                const base::Vector3f& val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  SetUniformInternal(it->second, name, val);
-}
-
-void RendererVulkan::SetUniform(uint64_t resource_id,
-                                const std::string& name,
-                                const base::Vector4f& val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  SetUniformInternal(it->second, name, val);
-}
-
-void RendererVulkan::SetUniform(uint64_t resource_id,
-                                const std::string& name,
-                                const base::Matrix4f& val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  SetUniformInternal(it->second, name, val);
-}
-
-void RendererVulkan::SetUniform(uint64_t resource_id,
-                                const std::string& name,
-                                float val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  SetUniformInternal(it->second, name, val);
-}
-
-void RendererVulkan::SetUniform(uint64_t resource_id,
-                                const std::string& name,
-                                int val) {
-  auto it = shaders_.find(resource_id);
-  if (it == shaders_.end())
-    return;
-
-  for (auto& set_bindings : it->second.bindings_per_set) {
-    for (auto& binding_info : set_bindings) {
-      if (binding_info.descriptor_type ==
-              VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER &&
-          binding_info.name == name)
-        return;
+void RendererVulkan::PushConstants() {
+  // Update the values of push constants for the active shader if dirty.
+  if (active_shader_id_ != kInvalidId) {
+    auto active_shader = shaders_.find(active_shader_id_);
+    if (active_shader != shaders_.end()) {
+      vkCmdPushConstants(
+          frames_[current_frame_].draw_command_buffer,
+          active_shader->second.pipeline_layout,
+          VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
+          active_shader->second.push_constants_size,
+          active_shader->second.push_constants.get());
     }
   }
-  SetUniformInternal(it->second, name, val);
 }
 
 uint64_t RendererVulkan::CreateBuffer(uint64_t shader_id,
@@ -2281,40 +2213,16 @@ bool RendererVulkan::CreatePipelineLayout(
       DLOG(0) << " PushConstants size: " << pconstants_vertex[0]->size
               << " count: " << pconstants_vertex[0]->member_count;
 
-      if (pconstants_vertex[0]->size != pconstants_fragment[0]->size) {
-        DLOG(0) << "SPIR-V reflection found different push constant blocks "
-                   "across shader stages.";
-        break;
-      }
-
       CHECK(pconstants_vertex[0]->size <=
             context_.GetDeviceProperties().limits.maxPushConstantsSize)
           << "Required push constants size is bigger than the maximum "
              "supported size by device.";
-      shader.push_constants_size = pconstants_vertex[0]->size;
-      shader.push_constants =
-          std::make_unique<char[]>(shader.push_constants_size);
-      memset(shader.push_constants.get(), 0, shader.push_constants_size);
-
-      size_t offset = 0;
       for (uint32_t j = 0; j < pconstants_vertex[0]->member_count; j++) {
-        DCHECK(std::find_if(
-                   shader.variables.begin(), shader.variables.end(),
-                   [hash = KR2Hash(pconstants_vertex[0]->members[j].name)](
-                       auto& r) { return hash == std::get<0>(r); }) ==
-               shader.variables.end())
-            << "Hash collision";
-
         DLOG(0) << " name: " << pconstants_vertex[0]->members[j].name
                 << " offset: " << pconstants_vertex[0]->members[j].offset
                 << " size: " << pconstants_vertex[0]->members[j].size
                 << " padded_size: "
                 << pconstants_vertex[0]->members[j].padded_size;
-
-        shader.variables.emplace_back(
-            std::make_tuple(KR2Hash(pconstants_vertex[0]->members[j].name),
-                            pconstants_vertex[0]->members[j].size, offset));
-        offset += pconstants_vertex[0]->members[j].padded_size;
       }
     }
 
@@ -2328,12 +2236,13 @@ bool RendererVulkan::CreatePipelineLayout(
           shader.descriptor_set_layouts.data();
     }
 
+    // TODO: push constants for different shader stages.
     VkPushConstantRange push_constant_range{};
-    if (shader.push_constants_size) {
+    if (pconstants_vertex[0]->size) {
       push_constant_range.stageFlags =
           VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
       push_constant_range.offset = 0;
-      push_constant_range.size = shader.push_constants_size;
+      push_constant_range.size = pconstants_vertex[0]->size;
 
       pipeline_layout_create_info.pushConstantRangeCount = 1;
       pipeline_layout_create_info.pPushConstantRanges = &push_constant_range;
@@ -2424,30 +2333,6 @@ void RendererVulkan::SetupThreadMain() {
 
     task_runner_.RunTasks<Consumer::Single>();
   }
-}
-
-template <typename T>
-bool RendererVulkan::SetUniformInternal(ShaderVulkan& shader,
-                                        const std::string& name,
-                                        T val) {
-  auto hash = KR2Hash(name);
-  auto it = std::find_if(shader.variables.begin(), shader.variables.end(),
-                         [&](auto& r) { return hash == std::get<0>(r); });
-  if (it == shader.variables.end()) {
-    DLOG(0) << "No variable found with name " << name;
-    return false;
-  }
-
-  if (std::get<1>(*it) != sizeof(val)) {
-    DLOG(0) << "Size mismatch for variable " << name;
-    return false;
-  }
-
-  auto* dst =
-      reinterpret_cast<T*>(shader.push_constants.get() + std::get<2>(*it));
-  *dst = val;
-  shader.push_constants_dirty = true;
-  return true;
 }
 
 bool RendererVulkan::IsFormatSupported(VkFormat format) {

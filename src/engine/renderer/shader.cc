@@ -46,34 +46,4 @@ void Shader::Activate() {
     renderer_->ActivateShader(resource_id_);
 }
 
-void Shader::SetUniform(const std::string& name, const Vector2f& v) {
-  if (IsValid())
-    renderer_->SetUniform(resource_id_, name, v);
-}
-
-void Shader::SetUniform(const std::string& name, const Vector3f& v) {
-  if (IsValid())
-    renderer_->SetUniform(resource_id_, name, v);
-}
-
-void Shader::SetUniform(const std::string& name, const Vector4f& v) {
-  if (IsValid())
-    renderer_->SetUniform(resource_id_, name, v);
-}
-
-void Shader::SetUniform(const std::string& name, const Matrix4f& m) {
-  if (IsValid())
-    renderer_->SetUniform(resource_id_, name, m);
-}
-
-void Shader::SetUniform(const std::string& name, float f) {
-  if (IsValid())
-    renderer_->SetUniform(resource_id_, name, f);
-}
-
-void Shader::SetUniform(const std::string& name, int i) {
-  if (IsValid())
-    renderer_->SetUniform(resource_id_, name, i);
-}
-
 }  // namespace eng

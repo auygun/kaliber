@@ -207,8 +207,8 @@ void Model::Draw(Shader& shader) {
     renderer_->ActivateDescriptorSet(desc_set0_);
 
   for (auto& mesh : meshes_) {
-    if (!desc_set0_)
-      shader.SetUniform("albedo", mesh.color);
+    // if (!desc_set0_)
+    //   shader.SetUniform("albedo", mesh.color);
     geometry_.Draw(mesh.num_indices, mesh.index_offset);
   }
 }

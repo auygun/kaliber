@@ -30,13 +30,6 @@ class Shader : public RenderResource {
   void Destroy();
 
   void Activate();
-
-  void SetUniform(const std::string& name, const base::Vector2f& v);
-  void SetUniform(const std::string& name, const base::Vector3f& v);
-  void SetUniform(const std::string& name, const base::Vector4f& v);
-  void SetUniform(const std::string& name, const base::Matrix4f& m);
-  void SetUniform(const std::string& name, float f);
-  void SetUniform(const std::string& name, int i);
 };
 
 }  // namespace eng

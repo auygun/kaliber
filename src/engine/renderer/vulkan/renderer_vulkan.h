@@ -76,23 +76,8 @@ class RendererVulkan final : public Renderer {
   void DestroyShader(uint64_t resource_id) final;
   void ActivateShader(uint64_t resource_id) final;
 
-  void SetUniform(uint64_t resource_id,
-                  const std::string& name,
-                  const base::Vector2f& val) final;
-  void SetUniform(uint64_t resource_id,
-                  const std::string& name,
-                  const base::Vector3f& val) final;
-  void SetUniform(uint64_t resource_id,
-                  const std::string& name,
-                  const base::Vector4f& val) final;
-  void SetUniform(uint64_t resource_id,
-                  const std::string& name,
-                  const base::Matrix4f& val) final;
-  void SetUniform(uint64_t resource_id,
-                  const std::string& name,
-                  float val) final;
-  void SetUniform(uint64_t resource_id, const std::string& name, int val) final;
-
+  void PushConstants();
+  
   uint64_t CreateBuffer(uint64_t shader_id,
                         size_t set,
                         size_t binding,
@@ -179,17 +164,8 @@ class RendererVulkan final : public Renderer {
   };
 
   struct ShaderVulkan {
-    std::vector<std::tuple<size_t,  // Variable name hash
-                           size_t,  // Variable size
-                           size_t   // Push constant offset
-                           >>
-        variables;
-    bool push_constants_dirty = false;
-    std::unique_ptr<char[]> push_constants;
-    size_t push_constants_size = 0;
     VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
     VkPipeline pipeline = VK_NULL_HANDLE;
-
     std::vector<std::vector<DescriptorBindingInfo>> bindings_per_set;
     std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
   };
@@ -351,9 +327,6 @@ class RendererVulkan final : public Renderer {
   void SwapBuffers();
 
   void SetupThreadMain();
-
-  template <typename T>
-  bool SetUniformInternal(ShaderVulkan& shader, const std::string& name, T val);
 
   bool IsFormatSupported(VkFormat format);
 

@@ -15,15 +15,6 @@ Drawable::~Drawable() {
 
 void Drawable::SetCustomShader(const std::string& asset_name) {
   custom_shader_ = Engine::Get().GetShader(asset_name);
-  custom_uniforms_.clear();
-}
-
-void Drawable::DoSetCustomUniforms() {
-  if (custom_shader_) {
-    for (auto& cu : custom_uniforms_)
-      std::visit([&](auto&& arg) { custom_shader_->SetUniform(cu.first, arg); },
-                 cu.second);
-  }
 }
 
 }  // namespace eng

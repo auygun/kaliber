@@ -17,12 +17,12 @@ void SolidQuad::Draw(float frame_frac) {
     shader = &Engine::Get().GetSolidShader();
 
   shader->Activate();
-  shader->SetUniform("offset", position_);
-  shader->SetUniform("scale", GetSize());
-  shader->SetUniform("rotation", rotation_);
-  shader->SetUniform("projection", Engine::Get().GetProjectionMatrix());
-  shader->SetUniform("color", color_);
-  DoSetCustomUniforms();
+  // shader->SetUniform("offset", position_);
+  // shader->SetUniform("scale", GetSize());
+  // shader->SetUniform("rotation", rotation_);
+  // shader->SetUniform("projection", Engine::Get().GetProjectionMatrix());
+  // shader->SetUniform("color", color_);
+  // DoSetCustomUniforms();
   Engine::Get().GetQuad().Draw();
 }
 

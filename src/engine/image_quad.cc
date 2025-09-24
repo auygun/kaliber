@@ -61,23 +61,23 @@ void ImageQuad::Draw(float frame_frac) {
   if (!texture_ || !texture_->IsValid())
     return;
 
-  Vector2f tex_scale = {GetFrameWidth() / texture_->GetWidth(),
-                        GetFrameHeight() / texture_->GetHeight()};
+  // Vector2f tex_scale = {GetFrameWidth() / texture_->GetWidth(),
+  //                       GetFrameHeight() / texture_->GetHeight()};
 
   Shader* shader = GetCustomShader().get();
   if (!shader)
     shader = &Engine::Get().GetPassThroughShader();
 
   shader->Activate();
-  shader->SetUniform("offset", position_);
-  shader->SetUniform("scale", GetSize());
-  shader->SetUniform("rotation", rotation_);
-  shader->SetUniform("tex_offset", GetUVOffset(current_frame_));
-  shader->SetUniform("tex_scale", tex_scale);
-  shader->SetUniform("projection", Engine::Get().GetProjectionMatrix());
-  shader->SetUniform("color", color_);
-  shader->SetUniform("texture_0", 0);
-  DoSetCustomUniforms();
+  // shader->SetUniform("offset", position_);
+  // shader->SetUniform("scale", GetSize());
+  // shader->SetUniform("rotation", rotation_);
+  // shader->SetUniform("tex_offset", GetUVOffset(current_frame_));
+  // shader->SetUniform("tex_scale", tex_scale);
+  // shader->SetUniform("projection", Engine::Get().GetProjectionMatrix());
+  // shader->SetUniform("color", color_);
+  // shader->SetUniform("texture_0", 0);
+  // DoSetCustomUniforms();
 
   Engine::Get().GetRenderer()->ActivateDescriptorSet(desc_set0_);
   Engine::Get().GetRenderer()->ActivateDescriptorSet(desc_set2_);

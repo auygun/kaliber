@@ -78,25 +78,10 @@ class Renderer {
   virtual void DestroyShader(uint64_t resource_id) = 0;
   virtual void ActivateShader(uint64_t resource_id) = 0;
 
-  virtual void SetUniform(uint64_t resource_id,
-                          const std::string& name,
-                          const base::Vector2f& val) = 0;
-  virtual void SetUniform(uint64_t resource_id,
-                          const std::string& name,
-                          const base::Vector3f& val) = 0;
-  virtual void SetUniform(uint64_t resource_id,
-                          const std::string& name,
-                          const base::Vector4f& val) = 0;
-  virtual void SetUniform(uint64_t resource_id,
-                          const std::string& name,
-                          const base::Matrix4f& val) = 0;
-  virtual void SetUniform(uint64_t resource_id,
-                          const std::string& name,
-                          float val) = 0;
-  virtual void SetUniform(uint64_t resource_id,
-                          const std::string& name,
-                          int val) = 0;
 
+
+
+  
   virtual uint64_t CreateBuffer(uint64_t shader_id,
                                 size_t set,
                                 size_t binding,

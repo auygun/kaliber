@@ -134,13 +134,13 @@ void Scene::Draw(float frame_frac) {
   view.Multiply(projection_, view_projection);
 
   shader_.Activate();
-  shader_.SetUniform("model", teapot_model_);
-  shader_.SetUniform("view_projection", view_projection);
-  shader_.SetUniform("cam_pos", camera_.GetMatrix().Row(3));
-  // shader_.SetUniform("albedo", albedo_);
-  shader_.SetUniform("metallic", metallic_);
-  shader_.SetUniform("roughness", roughness_);
-  shader_.SetUniform("ao", ao_);
+  // shader_.SetUniform("model", teapot_model_);
+  // shader_.SetUniform("view_projection", view_projection);
+  // shader_.SetUniform("cam_pos", camera_.GetMatrix().Row(3));
+  // // shader_.SetUniform("albedo", albedo_);
+  // shader_.SetUniform("metallic", metallic_);
+  // shader_.SetUniform("roughness", roughness_);
+  // shader_.SetUniform("ao", ao_);
   // teapot_geometry_.Draw();
   Engine::Get().GetRenderer()->ActivateDescriptorSet(desc_set1_);
   model_.Draw(shader_);

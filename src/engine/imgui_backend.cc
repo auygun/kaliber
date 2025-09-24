@@ -158,8 +158,8 @@ void ImguiBackend::Draw() {
       draw_data->DisplayPos.y + draw_data->DisplaySize.y,
       draw_data->DisplayPos.y);
   shader_.Activate();
-  shader_.SetUniform("projection", proj);
-  shader_.SetUniform("texture_0", 0);
+  // shader_.SetUniform("projection", proj);
+  // shader_.SetUniform("texture_0", 0);
 
   for (int n = 0; n < draw_data->CmdListsCount; n++) {
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
