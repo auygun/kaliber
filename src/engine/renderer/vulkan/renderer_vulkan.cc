@@ -719,17 +719,15 @@ void RendererVulkan::ActivateShader(uint64_t resource_id) {
   }
 }
 
-void RendererVulkan::PushConstants() {
-  // Update the values of push constants for the active shader if dirty.
+void RendererVulkan::UpdatePushConstants(size_t size, const void* data) {
   if (active_shader_id_ != kInvalidId) {
     auto active_shader = shaders_.find(active_shader_id_);
     if (active_shader != shaders_.end()) {
       vkCmdPushConstants(
           frames_[current_frame_].draw_command_buffer,
           active_shader->second.pipeline_layout,
-          VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-          active_shader->second.push_constants_size,
-          active_shader->second.push_constants.get());
+          VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, size,
+          data);
     }
   }
 }

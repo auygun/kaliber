@@ -143,7 +143,8 @@ void Scene::Draw(float frame_frac) {
   // shader_.SetUniform("ao", ao_);
   // teapot_geometry_.Draw();
   Engine::Get().GetRenderer()->ActivateDescriptorSet(desc_set1_);
-  model_.Draw(shader_);
+  model_.Draw(teapot_model_, view_projection, camera_.GetMatrix().Row(3),
+              metallic_, roughness_, ao_);
 
   // shader_.SetUniform("albedo", Vector3f(1, 1, 1));
   // shader_.SetUniform("metallic", 0.0f);

@@ -78,9 +78,7 @@ class Renderer {
   virtual void DestroyShader(uint64_t resource_id) = 0;
   virtual void ActivateShader(uint64_t resource_id) = 0;
 
-
-
-
+  virtual void UpdatePushConstants(size_t size, const void* data) = 0;
   
   virtual uint64_t CreateBuffer(uint64_t shader_id,
                                 size_t set,

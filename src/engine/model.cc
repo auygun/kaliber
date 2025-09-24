@@ -8,9 +8,10 @@
 #include "engine/engine.h"
 #include "engine/platform/asset_file.h"
 #include "engine/renderer/renderer.h"
-#include "engine/renderer/shader.h"
 #include "third_party/meshoptimizer/meshoptimizer.h"
 #include "third_party/tiny_obj_loader/tiny_obj_loader.h"
+
+using namespace base;
 
 namespace eng {
 
@@ -20,6 +21,19 @@ struct Vertex {
   float position[3];
   float normal[3];
   float uv[2];
+};
+
+struct PushConstants {
+  Matrix4f model;            // 64 bytes
+  Matrix4f view_projection;  // 64 bytes
+  Vector3f cam_pos;          // 12 bytes
+  float _pad0;               //  4 bytes padding
+  Vector3f albedo;           // 12 bytes
+  float metallic;            //  4 bytes
+  float roughness;           //  4 bytes
+  float ao;                  //  4 bytes
+  float _pad2;               //  4 bytes padding
+  float _pad3;               //  4 bytes padding
 };
 
 const char vertex_description[] = "p3f;n3f;t2f";
@@ -202,13 +216,25 @@ bool Model::LoadObj(Renderer* renderer,
   return true;
 }
 
-void Model::Draw(Shader& shader) {
+void Model::Draw(const base::Matrix4f& model,
+                 const base::Matrix4f& view_projection,
+                 const base::Vector3f& cam_pos,
+                 float metallic,
+                 float roughness,
+                 float ao) {
   if (desc_set0_)
     renderer_->ActivateDescriptorSet(desc_set0_);
 
   for (auto& mesh : meshes_) {
-    // if (!desc_set0_)
-    //   shader.SetUniform("albedo", mesh.color);
+    PushConstants pc{};
+    pc.model = model;
+    pc.view_projection = view_projection;
+    pc.cam_pos = cam_pos;
+    pc.albedo = mesh.color;
+    pc.metallic = metallic;
+    pc.roughness = roughness;
+    pc.ao = ao;
+    renderer_->UpdatePushConstants(sizeof(pc), &pc);
     geometry_.Draw(mesh.num_indices, mesh.index_offset);
   }
 }

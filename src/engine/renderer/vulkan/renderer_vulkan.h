@@ -76,7 +76,7 @@ class RendererVulkan final : public Renderer {
   void DestroyShader(uint64_t resource_id) final;
   void ActivateShader(uint64_t resource_id) final;
 
-  void PushConstants();
+  void UpdatePushConstants(size_t size, const void* data) final;
   
   uint64_t CreateBuffer(uint64_t shader_id,
                         size_t set,

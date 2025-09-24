@@ -12,7 +12,6 @@
 namespace eng {
 
 class Renderer;
-class Shader;
 
 class Model {
  public:
@@ -25,7 +24,12 @@ class Model {
                const std::string& tex_file_name,
                uint64_t shader_id);
 
-  void Draw(Shader& shader);
+  void Draw(const base::Matrix4f& model,
+            const base::Matrix4f& view_projection,
+            const base::Vector3f& cam_pos,
+            float metallic,
+            float roughness,
+            float ao);
 
  private:
   struct Mesh {
