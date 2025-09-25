@@ -2,10 +2,12 @@ layout(location = 0) in vec3 in_position;
 layout(location = 1) in vec3 in_normal;
 layout(location = 2) in vec2 in_tex_coord;
 
+layout(set = 1, binding = 0) uniform Ubo0 {
+  mat4 view_projection;
+} ubo0;
+
 layout(push_constant) uniform Params {
   mat4 model;
-  mat4 view_projection;
-  vec3 cam_pos;
   vec3 albedo;
   float metallic;
   float roughness;
@@ -22,5 +24,5 @@ void main() {
   normal = mat3(params.model) * in_normal;
   tex_coord = in_tex_coord;
 
-  gl_Position = params.view_projection * vec4(world_pos, 1.0);
+  gl_Position = ubo0.view_projection * vec4(world_pos, 1.0);
 }

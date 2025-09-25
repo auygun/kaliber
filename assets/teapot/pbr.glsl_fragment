@@ -10,8 +10,6 @@ layout(location = 2) in vec2 tex_coord;
 
 layout(push_constant) uniform Params {
   mat4 model;
-  mat4 view_projection;
-  vec3 cam_pos;
   vec3 albedo;
   float metallic;
   float roughness;
@@ -23,8 +21,9 @@ struct LightData {
   float power;
 };
 
-layout(set = 1, binding = 0) uniform Ubo1 {
+layout(set = 1, binding = 1) uniform Ubo1 {
   LightData light[4];
+  vec3 cam_pos;
 } ubo1;
 
 // layout(set = 0, binding = 0) uniform sampler2D albedo_map;
@@ -71,7 +70,7 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0) {
 
 void main() {
   vec3 N = normalize(normal);
-  vec3 V = normalize(params.cam_pos - world_pos);
+  vec3 V = normalize(ubo1.cam_pos - world_pos);
 
   // vec3 albedo = pow(texture(albedo_map, tex_coord).rgb, 2.2);
   // vec3 albedo = texture(albedo_map, tex_coord).rgb;

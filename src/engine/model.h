@@ -25,8 +25,6 @@ class Model {
                uint64_t shader_id);
 
   void Draw(const base::Matrix4f& model,
-            const base::Matrix4f& view_projection,
-            const base::Vector3f& cam_pos,
             float metallic,
             float roughness,
             float ao);

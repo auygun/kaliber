@@ -27,6 +27,12 @@ class Scene : public eng::Drawable {
     float power = 0;
   };
 
+  struct Ubo1Data {
+    LightData lights[4];
+    base::Vector3f cam_pos;
+    float _pad0;
+  };
+
   eng::Shader shader_;
 
   eng::Geometry teapot_geometry_;
@@ -39,13 +45,15 @@ class Scene : public eng::Drawable {
 
   Camera camera_;
   base::Matrix4f projection_;
+  base::Matrix4f view_projection_;
 
   base::Vector3f albedo_{0.8f, 0.4f, 0.2f};
   float metallic_ = 1.0f;
   float roughness_ = 0.3f;
   float ao_ = 0.5f;
-  LightData lights_[4];
+  Ubo1Data ubo1_data_;
 
+  uint64_t ubo0_ = 0;
   uint64_t ubo1_ = 0;
   uint32_t desc_set1_ = 0;
 };

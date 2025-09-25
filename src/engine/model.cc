@@ -25,9 +25,6 @@ struct Vertex {
 
 struct PushConstants {
   Matrix4f model;            // 64 bytes
-  Matrix4f view_projection;  // 64 bytes
-  Vector3f cam_pos;          // 12 bytes
-  float _pad0;               //  4 bytes padding
   Vector3f albedo;           // 12 bytes
   float metallic;            //  4 bytes
   float roughness;           //  4 bytes
@@ -217,8 +214,6 @@ bool Model::LoadObj(Renderer* renderer,
 }
 
 void Model::Draw(const base::Matrix4f& model,
-                 const base::Matrix4f& view_projection,
-                 const base::Vector3f& cam_pos,
                  float metallic,
                  float roughness,
                  float ao) {
@@ -228,8 +223,6 @@ void Model::Draw(const base::Matrix4f& model,
   for (auto& mesh : meshes_) {
     PushConstants pc{};
     pc.model = model;
-    pc.view_projection = view_projection;
-    pc.cam_pos = cam_pos;
     pc.albedo = mesh.color;
     pc.metallic = metallic;
     pc.roughness = roughness;

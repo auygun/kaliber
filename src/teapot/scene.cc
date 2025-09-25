@@ -102,11 +102,13 @@ void Scene::Create() {
   shader_.Create(std::move(source), teapot_geometry_.vertex_description(),
                  kPrimitive_Triangles, true);
 
-  ubo1_ = Engine::Get().GetRenderer()->CreateBuffer(shader_.resource_id(), 1, 0,
-                                                    sizeof(lights_));
+  ubo0_ = Engine::Get().GetRenderer()->CreateBuffer(shader_.resource_id(), 1, 0,
+                                                    sizeof(Matrix4f));
+  ubo1_ = Engine::Get().GetRenderer()->CreateBuffer(shader_.resource_id(), 1, 1,
+                                                    sizeof(ubo1_data_));
 
   desc_set1_ = Engine::Get().GetRenderer()->CreateDescriptorSet(
-      shader_.resource_id(), 1, {}, {ubo1_});
+      shader_.resource_id(), 1, {}, {ubo0_, ubo1_});
 
   // model_.LoadObj(Engine::Get().GetRenderer(), "teapot/viking_room.obj",
   //                "teapot/viking_room.png", shader_.resource_id());
@@ -116,23 +118,17 @@ void Scene::Create() {
 
   CreateProjectionMatrix();
 
-  lights_[0].pos = {-15, -4, -15};
-  lights_[1].pos = {15, -4, -15};
-  lights_[2].pos = {-15, -4, 15};
-  lights_[3].pos = {15, -4, 15};
-  lights_[0].power = 400.0f;
-  lights_[1].power = 400.0f;
-  lights_[2].power = 400.0f;
-  lights_[3].power = 400.0f;
+  ubo1_data_.lights[0].pos = {-15, -4, -15};
+  ubo1_data_.lights[1].pos = {15, -4, -15};
+  ubo1_data_.lights[2].pos = {-15, -4, 15};
+  ubo1_data_.lights[3].pos = {15, -4, 15};
+  ubo1_data_.lights[0].power = 400.0f;
+  ubo1_data_.lights[1].power = 400.0f;
+  ubo1_data_.lights[2].power = 400.0f;
+  ubo1_data_.lights[3].power = 400.0f;
 }
 
 void Scene::Draw(float frame_frac) {
-  Matrix4f view;
-  camera_.GetMatrix().InverseOrthogonal(view);
-
-  Matrix4f view_projection;
-  view.Multiply(projection_, view_projection);
-
   shader_.Activate();
   // shader_.SetUniform("model", teapot_model_);
   // shader_.SetUniform("view_projection", view_projection);
@@ -143,8 +139,7 @@ void Scene::Draw(float frame_frac) {
   // shader_.SetUniform("ao", ao_);
   // teapot_geometry_.Draw();
   Engine::Get().GetRenderer()->ActivateDescriptorSet(desc_set1_);
-  model_.Draw(teapot_model_, view_projection, camera_.GetMatrix().Row(3),
-              metallic_, roughness_, ao_);
+  model_.Draw(teapot_model_, metallic_, roughness_, ao_);
 
   // shader_.SetUniform("albedo", Vector3f(1, 1, 1));
   // shader_.SetUniform("metallic", 0.0f);
@@ -187,10 +182,14 @@ void Scene::Update(const Vector2f& angles, float zoom) {
     ImGui::SliderFloat("metallic", &metallic_, 0.0f, 1.0f, "%.2f");
     ImGui::SliderFloat("roughness", &roughness_, 0.0f, 1.0f, "%.2f");
     ImGui::SliderFloat("ambient", &ao_, 0.0f, 1.0f, "%.2f");
-    ImGui::SliderFloat("light 1", &lights_[0].power, 0.0f, 500.0f, "%.f");
-    ImGui::SliderFloat("light 2", &lights_[1].power, 0.0f, 500.0f, "%.f");
-    ImGui::SliderFloat("light 3", &lights_[2].power, 0.0f, 500.0f, "%.f");
-    ImGui::SliderFloat("light 4", &lights_[3].power, 0.0f, 500.0f, "%.f");
+    ImGui::SliderFloat("light 1", &ubo1_data_.lights[0].power, 0.0f, 500.0f,
+                       "%.f");
+    ImGui::SliderFloat("light 2", &ubo1_data_.lights[1].power, 0.0f, 500.0f,
+                       "%.f");
+    ImGui::SliderFloat("light 3", &ubo1_data_.lights[2].power, 0.0f, 500.0f,
+                       "%.f");
+    ImGui::SliderFloat("light 4", &ubo1_data_.lights[3].power, 0.0f, 500.0f,
+                       "%.f");
   }
   ImGui::End();
 
@@ -198,8 +197,15 @@ void Scene::Update(const Vector2f& angles, float zoom) {
   if (selected_type != Engine::Get().GetRendererType())
     Engine::Get().CreateRenderer(selected_type);
 
-  Engine::Get().GetRenderer()->UpdateBuffer(ubo1_, &lights_[0],
-                                            sizeof(lights_));
+  Matrix4f view;
+  camera_.GetMatrix().InverseOrthogonal(view);
+  view.Multiply(projection_, view_projection_);
+  Engine::Get().GetRenderer()->UpdateBuffer(ubo0_, &view_projection_,
+                                        sizeof(view_projection_));
+
+  ubo1_data_.cam_pos = camera_.GetMatrix().Row(3);
+  Engine::Get().GetRenderer()->UpdateBuffer(ubo1_, &ubo1_data_,
+                                            sizeof(ubo1_data_));
 }
 
 void Scene::CreateProjectionMatrix() {

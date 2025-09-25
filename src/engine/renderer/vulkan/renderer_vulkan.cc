@@ -2234,7 +2234,6 @@ bool RendererVulkan::CreatePipelineLayout(
           shader.descriptor_set_layouts.data();
     }
 
-    // TODO: push constants for different shader stages.
     VkPushConstantRange push_constant_range{};
     if (pconstants_vertex[0]->size) {
       push_constant_range.stageFlags =
