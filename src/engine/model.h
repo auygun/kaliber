@@ -24,10 +24,9 @@ class Model {
                const std::string& tex_file_name,
                uint64_t shader_id);
 
-  void Draw(const base::Matrix4f& model,
-            float metallic,
-            float roughness,
-            float ao);
+  void Update(float metallic, float roughness, float ao);
+
+  void Draw();
 
  private:
   struct Mesh {
@@ -36,12 +35,29 @@ class Model {
     base::Vector3f color{};
   };
 
+  struct InstanceData {
+    base::Matrix4f model;
+    base::Vector3f albedo;
+    float metallic;
+    float roughness;
+    float ao;
+    float _pad0;
+    float _pad1;
+  };
+
+  base::Matrix4f model_;
+
   std::vector<Mesh> meshes_;
   VertexDescription vertex_description_;
   Geometry geometry_;
   Texture texture_;
-  uint32_t desc_set0_ = 0;
   Renderer* renderer_ = nullptr;
+
+  std::vector<InstanceData> instances_;
+
+  uint64_t instances_ubo_ = 0;
+  uint64_t instances_dset_ = 0;
+  uint64_t albedo_tex_dset_ = 0;
 };
 
 }  // namespace eng

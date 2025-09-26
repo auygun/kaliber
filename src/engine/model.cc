@@ -23,16 +23,6 @@ struct Vertex {
   float uv[2];
 };
 
-struct PushConstants {
-  Matrix4f model;            // 64 bytes
-  Vector3f albedo;           // 12 bytes
-  float metallic;            //  4 bytes
-  float roughness;           //  4 bytes
-  float ao;                  //  4 bytes
-  float _pad2;               //  4 bytes padding
-  float _pad3;               //  4 bytes padding
-};
-
 const char vertex_description[] = "p3f;n3f;t2f";
 
 }  // namespace
@@ -199,6 +189,8 @@ bool Model::LoadObj(Renderer* renderer,
   geometry_.Update(unique_vertices.size(), unique_vertices.data(),
                    aggregated_indices.size(), aggregated_indices.data());
 
+  model_.CreateXRotation(0.5f);
+
   if (!tex_file_name.empty()) {
     auto image = std::make_unique<Image>();
     if (!image->Load(tex_file_name))
@@ -206,29 +198,41 @@ bool Model::LoadObj(Renderer* renderer,
     texture_.SetRenderer(renderer);
     texture_.Update(std::move(image));
 
-    desc_set0_ = renderer->CreateDescriptorSet(shader_id, 0,
-                                               {{texture_.resource_id()}}, {});
+    albedo_tex_dset_ = renderer->CreateDescriptorSet(
+        shader_id, 0, {{texture_.resource_id()}}, {});
   }
+
+  instances_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
+      shader_id, 2, 0, sizeof(InstanceData) * meshes_.size());
+  instances_dset_ =
+      renderer->CreateDescriptorSet(shader_id, 2, {}, {instances_ubo_});
+  instances_.resize(meshes_.size());
 
   return true;
 }
 
-void Model::Draw(const base::Matrix4f& model,
-                 float metallic,
-                 float roughness,
-                 float ao) {
-  if (desc_set0_)
-    renderer_->ActivateDescriptorSet(desc_set0_);
+void Model::Update(float metallic, float roughness, float ao) {
+  for (int i = 0; i < meshes_.size(); ++i) {
+    instances_[i].model = model_;
+    instances_[i].albedo = meshes_[i].color;
+    instances_[i].metallic = metallic;
+    instances_[i].roughness = roughness;
+    instances_[i].ao = ao;
+  }
+  renderer_->UpdateBuffer(instances_ubo_, instances_.data(),
+                          sizeof(InstanceData) * instances_.size());
+}
 
+void Model::Draw() {
+  if (albedo_tex_dset_)
+    renderer_->ActivateDescriptorSet(albedo_tex_dset_);
+  renderer_->ActivateDescriptorSet(instances_dset_);
+
+  unsigned int instance_index = 0;
   for (auto& mesh : meshes_) {
-    PushConstants pc{};
-    pc.model = model;
-    pc.albedo = mesh.color;
-    pc.metallic = metallic;
-    pc.roughness = roughness;
-    pc.ao = ao;
-    renderer_->UpdatePushConstants(sizeof(pc), &pc);
+    renderer_->UpdatePushConstants(sizeof(instance_index), &instance_index);
     geometry_.Draw(mesh.num_indices, mesh.index_offset);
+    ++instance_index;
   }
 }
 

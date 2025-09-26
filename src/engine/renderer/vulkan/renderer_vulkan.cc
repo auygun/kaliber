@@ -2068,7 +2068,7 @@ bool RendererVulkan::ParseDescriptorBindings(
             << " with different descriptor type.";
 
         // Also, verify that it's the same size.
-        DCHECK(bindings_per_set[spv_binding.set][spv_binding.binding].length !=
+        DCHECK(bindings_per_set[spv_binding.set][spv_binding.binding].length ==
                binding_info.length)
             << "On shader stage "
             << string_VkShaderStageFlagBits(shader_stage_flag)

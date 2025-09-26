@@ -1,28 +1,39 @@
-layout(location = 0) in vec3 in_position;
-layout(location = 1) in vec3 in_normal;
-layout(location = 2) in vec2 in_tex_coord;
+layout(push_constant, std430) uniform DrawCall {
+  uint instance_index;
+} draw_call;
 
-layout(set = 1, binding = 0) uniform Ubo0 {
+layout(set = 1, binding = 0, std140) uniform SceneData {
   mat4 view_projection;
-} ubo0;
+  vec3 cam_pos;
+} scene_data;
 
-layout(push_constant) uniform Params {
+struct InstanceData {
   mat4 model;
   vec3 albedo;
   float metallic;
   float roughness;
   float ao;
-} params;
+};
+
+layout(set = 2, binding = 0, std430) buffer restrict readonly Instances {
+  InstanceData data[];
+} instances;
+
+layout(location = 0) in vec3 in_position;
+layout(location = 1) in vec3 in_normal;
+layout(location = 2) in vec2 in_tex_coord;
 
 layout(location = 0) out vec3 world_pos;
 layout(location = 1) out vec3 normal;
 layout(location = 2) out vec2 tex_coord;
 
 void main() {
-  world_pos = vec3(params.model * vec4(in_position, 1.0));
+	const InstanceData instance_data = instances.data[draw_call.instance_index];
+
+  world_pos = vec3(instance_data.model * vec4(in_position, 1.0));
   // Model matrix doesn't contain non-uniform scale.
-  normal = mat3(params.model) * in_normal;
+  normal = mat3(instance_data.model) * in_normal;
   tex_coord = in_tex_coord;
 
-  gl_Position = ubo0.view_projection * vec4(world_pos, 1.0);
+  gl_Position = scene_data.view_projection * vec4(world_pos, 1.0);
 }
