@@ -1,5 +1,6 @@
 layout(push_constant, std430) uniform DrawCall {
   uint instance_index;
+  uint material_index;
 } draw_call;
 
 layout(set = 1, binding = 0, std140) uniform SceneData {
@@ -9,13 +10,9 @@ layout(set = 1, binding = 0, std140) uniform SceneData {
 
 struct InstanceData {
   mat4 model;
-  vec3 albedo;
-  float metallic;
-  float roughness;
-  float ao;
 };
 
-layout(set = 2, binding = 0, std430) buffer restrict readonly Instances {
+layout(set = 1, binding = 2, std430) buffer restrict readonly Instances {
   InstanceData data[];
 } instances;
 

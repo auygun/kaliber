@@ -17,6 +17,13 @@ namespace eng {
 
 namespace {
 
+struct PushConstant {
+  unsigned int instance_index;
+  unsigned int material_index;
+  unsigned int _pad0;
+  unsigned int _pad1;
+};
+
 struct Vertex {
   float position[3];
   float normal[3];
@@ -202,37 +209,39 @@ bool Model::LoadObj(Renderer* renderer,
         shader_id, 0, {{texture_.resource_id()}}, {});
   }
 
-  instances_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
-      shader_id, 2, 0, sizeof(InstanceData) * meshes_.size());
-  instances_dset_ =
-      renderer->CreateDescriptorSet(shader_id, 2, {}, {instances_ubo_});
-  instances_.resize(meshes_.size());
+  materials_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
+      shader_id, 2, 0, sizeof(MaterialData) * meshes_.size());
+  materials_dset_ =
+      renderer->CreateDescriptorSet(shader_id, 2, {}, {materials_ubo_});
+  materials_.resize(meshes_.size());
 
   return true;
 }
 
 void Model::Update(float metallic, float roughness, float ao) {
   for (int i = 0; i < meshes_.size(); ++i) {
-    instances_[i].model = model_;
-    instances_[i].albedo = meshes_[i].color;
-    instances_[i].metallic = metallic;
-    instances_[i].roughness = roughness;
-    instances_[i].ao = ao;
+    materials_[i].albedo = meshes_[i].color;
+    materials_[i].metallic = metallic;
+    materials_[i].roughness = roughness;
+    materials_[i].ao = ao;
   }
-  renderer_->UpdateBuffer(instances_ubo_, instances_.data(),
-                          sizeof(InstanceData) * instances_.size());
+  renderer_->UpdateBuffer(materials_ubo_, materials_.data(),
+                          sizeof(MaterialData) * materials_.size());
 }
 
-void Model::Draw() {
+void Model::Draw(unsigned int instance_index) {
   if (albedo_tex_dset_)
     renderer_->ActivateDescriptorSet(albedo_tex_dset_);
-  renderer_->ActivateDescriptorSet(instances_dset_);
+  renderer_->ActivateDescriptorSet(materials_dset_);
 
-  unsigned int instance_index = 0;
+  unsigned int material_index = 0;
   for (auto& mesh : meshes_) {
-    renderer_->UpdatePushConstants(sizeof(instance_index), &instance_index);
+    PushConstant pc{};
+    pc.instance_index = instance_index;
+    pc.material_index = material_index;
+    renderer_->UpdatePushConstants(sizeof(pc), &pc);
     geometry_.Draw(mesh.num_indices, mesh.index_offset);
-    ++instance_index;
+    ++material_index;
   }
 }
 

@@ -26,7 +26,9 @@ class Model {
 
   void Update(float metallic, float roughness, float ao);
 
-  void Draw();
+  void Draw(unsigned int instance_index);
+
+  const base::Matrix4f& GetModelMatrix() const { return model_; }
 
  private:
   struct Mesh {
@@ -35,8 +37,7 @@ class Model {
     base::Vector3f color{};
   };
 
-  struct InstanceData {
-    base::Matrix4f model;
+  struct MaterialData {
     base::Vector3f albedo;
     float metallic;
     float roughness;
@@ -53,10 +54,10 @@ class Model {
   Texture texture_;
   Renderer* renderer_ = nullptr;
 
-  std::vector<InstanceData> instances_;
+  std::vector<MaterialData> materials_;
 
-  uint64_t instances_ubo_ = 0;
-  uint64_t instances_dset_ = 0;
+  uint64_t materials_ubo_ = 0;
+  uint64_t materials_dset_ = 0;
   uint64_t albedo_tex_dset_ = 0;
 };
 

@@ -6,6 +6,7 @@ precision highp float;
 
 layout(push_constant, std430) uniform DrawCall {
   uint instance_index;
+  uint material_index;
 } draw_call;
 
 layout(set = 1, binding = 0, std140) uniform SceneData {
@@ -22,17 +23,16 @@ layout(set = 1, binding = 1, std140) uniform Lights {
   LightData data[4];
 } lights;
 
-struct InstanceData {
-  mat4 model;
+struct MaterialData {
   vec3 albedo;
   float metallic;
   float roughness;
   float ao;
 };
 
-layout(set = 2, binding = 0, std430) buffer restrict readonly Instances {
-  InstanceData data[];
-} instances;
+layout(set = 2, binding = 0, std430) buffer restrict readonly Materials {
+  MaterialData data[];
+} materials;
 
 // layout(set = 0, binding = 0) uniform sampler2D albedo_map;
 
@@ -81,20 +81,20 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0) {
 }
 
 void main() {
-	const InstanceData instance_data = instances.data[draw_call.instance_index];
+	const MaterialData material_data = materials.data[draw_call.material_index];
 
   vec3 N = normalize(normal);
   vec3 V = normalize(scene_data.cam_pos - world_pos);
 
   // vec3 albedo = pow(texture(albedo_map, tex_coord).rgb, 2.2);
   // vec3 albedo = texture(albedo_map, tex_coord).rgb;
-  vec3 albedo = instance_data.albedo;
+  vec3 albedo = material_data.albedo;
 
   // calculate reflectance at normal incidence; if dia-electric (like plastic)
   // use F0 of 0.04 and if it's a metal, use the albedo color as F0 (metallic
   // workflow)
   vec3 F0 = vec3(0.04);
-  F0 = mix(F0, albedo, instance_data.metallic);
+  F0 = mix(F0, albedo, material_data.metallic);
 
   // reflectance equation
   vec3 Lo = vec3(0.0);
@@ -107,8 +107,8 @@ void main() {
     vec3 radiance = vec3(lights.data[i].power) * attenuation;
 
     // Cook-Torrance BRDF
-    float NDF = DistributionGGX(N, H, instance_data.roughness);
-    float G = GeometrySmith(N, V, L, instance_data.roughness);
+    float NDF = DistributionGGX(N, H, material_data.roughness);
+    float G = GeometrySmith(N, V, L, material_data.roughness);
     vec3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
 
     vec3 numerator = NDF * G * F;
@@ -125,7 +125,7 @@ void main() {
     // multiply kD by the inverse metalness such that only non-metals
     // have diffuse lighting, or a linear blend if partly metal (pure metals
     // have no diffuse light).
-    kD *= 1.0 - instance_data.metallic;
+    kD *= 1.0 - material_data.metallic;
 
     // scale light by NdotL
     float NdotL = max(dot(N, L), 0.0);
@@ -137,7 +137,7 @@ void main() {
   }
 
   // ambient lighting
-  vec3 ambient = vec3(0.03) * albedo * instance_data.ao;
+  vec3 ambient = vec3(0.03) * albedo * material_data.ao;
   vec3 color = ambient + Lo;
 
   // HDR tonemapping

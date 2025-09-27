@@ -33,6 +33,10 @@ class Scene : public eng::Drawable {
     float power = 0;
   };
 
+  struct InstanceData {
+    base::Matrix4f model;
+  };
+
   eng::Shader shader_;
 
   eng::Geometry teapot_geometry_;
@@ -53,9 +57,11 @@ class Scene : public eng::Drawable {
 
   SceneData scene_data_;
   LightData lights_[4];
+  std::vector<InstanceData> instances_;
 
   uint64_t scene_data_ubo_ = 0;
   uint64_t lights_ubo_ = 0;
+  uint64_t instances_ubo_ = 0;
   uint64_t scene_dset_ = 0;
 };
 

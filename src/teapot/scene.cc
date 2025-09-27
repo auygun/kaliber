@@ -106,8 +106,14 @@ void Scene::Create() {
       shader_.resource_id(), 1, 0, sizeof(SceneData));
   lights_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
       shader_.resource_id(), 1, 1, sizeof(lights_));
+  instances_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
+      shader_.resource_id(), 1, 2, sizeof(Matrix4f));
   scene_dset_ = Engine::Get().GetRenderer()->CreateDescriptorSet(
-      shader_.resource_id(), 1, {}, {scene_data_ubo_, lights_ubo_});
+      shader_.resource_id(), 1, {},
+      {scene_data_ubo_, lights_ubo_, instances_ubo_});
+
+  // One model for now.
+  instances_.resize(1);
 
   // model_.LoadObj(Engine::Get().GetRenderer(), "teapot/viking_room.obj",
   //                "teapot/viking_room.png", shader_.resource_id());
@@ -138,7 +144,7 @@ void Scene::Draw(float frame_frac) {
   // shader_.SetUniform("ao", ao_);
   // teapot_geometry_.Draw();
   Engine::Get().GetRenderer()->ActivateDescriptorSet(scene_dset_);
-  model_.Draw();
+  model_.Draw(0);
 
   // shader_.SetUniform("albedo", Vector3f(1, 1, 1));
   // shader_.SetUniform("metallic", 0.0f);
@@ -201,6 +207,11 @@ void Scene::Update(const Vector2f& angles, float zoom) {
 
   Engine::Get().GetRenderer()->UpdateBuffer(lights_ubo_, &lights_,
                                             sizeof(lights_));
+
+  instances_[0].model = model_.GetModelMatrix();
+  Engine::Get().GetRenderer()->UpdateBuffer(
+      instances_ubo_, instances_.data(),
+      sizeof(InstanceData) * instances_.size());
 
   model_.Update(metallic_, roughness_, ao_);
 }
