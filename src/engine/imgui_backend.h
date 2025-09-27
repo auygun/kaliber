@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include "base/vecmath.h"
 #include "engine/renderer/geometry.h"
 #include "engine/renderer/renderer_types.h"
 #include "engine/renderer/shader.h"
@@ -30,13 +31,21 @@ class ImguiBackend {
   void Draw();
 
  private:
+  struct SceneData {
+    base::Matrix4f projection;
+  };
+
   VertexDescription vertex_description_;
   std::vector<Geometry> geometries_;
   Shader shader_;
   Texture font_atlas_;
-  uint32_t desc_set0_ = 0;
+  uint32_t texture_dset_ = 0;
   Renderer* renderer_ = nullptr;
   bool needs_update_ = false;
+
+  SceneData scene_data_;
+  uint64_t scene_data_ubo_ = 0;
+  uint64_t scene_dset_ = 0;
 
   void UpdateGeometries();
 };

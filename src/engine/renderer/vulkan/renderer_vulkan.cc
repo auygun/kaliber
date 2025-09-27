@@ -2235,7 +2235,7 @@ bool RendererVulkan::CreatePipelineLayout(
     }
 
     VkPushConstantRange push_constant_range{};
-    if (pconstants_vertex[0]->size) {
+    if (pc_count_vertex) {
       push_constant_range.stageFlags =
           VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
       push_constant_range.offset = 0;

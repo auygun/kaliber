@@ -2,9 +2,9 @@ layout(location = 0) in vec2 in_position;
 layout(location = 1) in vec2 in_tex_coord_0;
 layout(location = 2) in vec4 in_color;
 
-layout(push_constant) uniform Params {
+layout(set = 1, binding = 0, std140) uniform SceneData {
   mat4 projection;
-} params;
+} scene_data;
 
 layout(location = 0) out vec2 tex_coord_0;
 layout(location = 1) out vec4 color;
@@ -13,5 +13,5 @@ void main() {
   tex_coord_0 = in_tex_coord_0;
   color = in_color;
 
-  gl_Position = params.projection * vec4(in_position, 0.0, 1.0);
+  gl_Position = scene_data.projection * vec4(in_position, 0.0, 1.0);
 }

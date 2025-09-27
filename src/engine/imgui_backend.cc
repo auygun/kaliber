@@ -79,9 +79,14 @@ void ImguiBackend::CreateRenderResources(Renderer* renderer) {
   font_atlas_.Update(width, height, ImageFormat::kRGBA32, width * height * 4,
                      pixels);
 
-  desc_set0_ = Engine::Get().GetRenderer()->CreateDescriptorSet(
-      shader_.resource_id(), 0, {{font_atlas_.resource_id()}}, {});
-  ImGui::GetIO().Fonts->SetTexID((ImTextureID)(intptr_t)desc_set0_);
+  texture_dset_ = Engine::Get().GetRenderer()->CreateDescriptorSet(
+      shader_.resource_id(), 2, {{font_atlas_.resource_id()}}, {});
+  ImGui::GetIO().Fonts->SetTexID((ImTextureID)(intptr_t)texture_dset_);
+
+  scene_data_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
+      shader_.resource_id(), 1, 0, sizeof(SceneData));
+  scene_dset_ = Engine::Get().GetRenderer()->CreateDescriptorSet(
+      shader_.resource_id(), 1, {}, {scene_data_ubo_});
 }
 
 std::unique_ptr<InputEvent> ImguiBackend::OnInputEvent(
@@ -148,18 +153,18 @@ void ImguiBackend::Draw() {
     needs_update_ = false;
   }
 
-  renderer_->SetViewport(0, 0, draw_data->DisplaySize.x,
-                         draw_data->DisplaySize.y);
-
-  base::Matrix4f proj;
-  proj.CreateOrthographicProjection(
+  scene_data_.projection.CreateOrthographicProjection(
       draw_data->DisplayPos.x,
       draw_data->DisplayPos.x + draw_data->DisplaySize.x,
       draw_data->DisplayPos.y + draw_data->DisplaySize.y,
       draw_data->DisplayPos.y);
+  Engine::Get().GetRenderer()->UpdateBuffer(scene_data_ubo_, &scene_data_,
+                                            sizeof(scene_data_));
+
+  renderer_->SetViewport(0, 0, draw_data->DisplaySize.x,
+                         draw_data->DisplaySize.y);
   shader_.Activate();
-  // shader_.SetUniform("projection", proj);
-  // shader_.SetUniform("texture_0", 0);
+  Engine::Get().GetRenderer()->ActivateDescriptorSet(scene_dset_);
 
   for (int n = 0; n < draw_data->CmdListsCount; n++) {
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
