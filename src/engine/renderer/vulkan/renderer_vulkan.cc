@@ -2032,7 +2032,12 @@ bool RendererVulkan::ParseDescriptorBindings(
               << ", set: " << spv_binding.set
               << ", binding: " << spv_binding.binding
               << ", size: " << spv_binding.block.size
-              << ", padded_size: " << spv_binding.block.padded_size;
+              << ", padded_size: " << spv_binding.block.padded_size
+              << ", array.dims_count: " << spv_binding.array.dims_count;
+      for (uint32_t k = 0; k < spv_binding.array.dims_count; k++) {
+        DLOG(0) << "  spv_binding.array.dims[" << k
+                << "]: " << spv_binding.array.dims[k];
+      }
 
       DescriptorBindingInfo binding_info;
       binding_info.name = spv_binding.name;
@@ -2043,7 +2048,7 @@ bool RendererVulkan::ParseDescriptorBindings(
           binding_info.descriptor_type =
               VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
           binding_info.length = 1;
-          for (uint32_t k = 1; k < spv_binding.array.dims_count; k++)
+          for (uint32_t k = 0; k < spv_binding.array.dims_count; k++)
             binding_info.length *= spv_binding.array.dims[k];
         } break;
         case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER: {
@@ -2216,7 +2221,7 @@ bool RendererVulkan::CreatePipelineLayout(
     }
 
     if (pc_count_vertex) {
-      DLOG(0) << " PushConstants size: " << pconstants_vertex[0]->size
+      DLOG(0) << " PushConstants size (vertex): " << pconstants_vertex[0]->size
               << " count: " << pconstants_vertex[0]->member_count;
 
       CHECK(pconstants_vertex[0]->size <=
@@ -2229,6 +2234,24 @@ bool RendererVulkan::CreatePipelineLayout(
                 << " size: " << pconstants_vertex[0]->members[j].size
                 << " padded_size: "
                 << pconstants_vertex[0]->members[j].padded_size;
+      }
+    }
+
+    if (pc_count_fragment) {
+      DLOG(0) << " PushConstants size (fragment): "
+              << pconstants_fragment[0]->size
+              << " count: " << pconstants_fragment[0]->member_count;
+
+      CHECK(pconstants_fragment[0]->size <=
+            context_.GetDeviceProperties().limits.maxPushConstantsSize)
+          << "Required push constants size is bigger than the maximum "
+             "supported size by device.";
+      for (uint32_t j = 0; j < pconstants_fragment[0]->member_count; j++) {
+        DLOG(0) << " name: " << pconstants_fragment[0]->members[j].name
+                << " offset: " << pconstants_fragment[0]->members[j].offset
+                << " size: " << pconstants_fragment[0]->members[j].size
+                << " padded_size: "
+                << pconstants_fragment[0]->members[j].padded_size;
       }
     }
 
