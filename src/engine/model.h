@@ -28,8 +28,6 @@ class Model {
 
   void Draw(unsigned int instance_index);
 
-  const base::Matrix4f& GetModelMatrix() const { return model_; }
-
  private:
   struct Mesh {
     size_t num_indices = 0;
@@ -45,8 +43,6 @@ class Model {
     float _pad0;
     float _pad1;
   };
-
-  base::Matrix4f model_;
 
   std::vector<Mesh> meshes_;
   VertexDescription vertex_description_;

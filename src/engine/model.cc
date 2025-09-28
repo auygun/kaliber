@@ -196,8 +196,6 @@ bool Model::LoadObj(Renderer* renderer,
   geometry_.Update(unique_vertices.size(), unique_vertices.data(),
                    aggregated_indices.size(), aggregated_indices.data());
 
-  model_.CreateXRotation(0.5f);
-
   if (!tex_file_name.empty()) {
     auto image = std::make_unique<Image>();
     if (!image->Load(tex_file_name))
