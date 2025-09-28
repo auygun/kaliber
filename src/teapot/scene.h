@@ -4,7 +4,7 @@
 #include "base/vecmath.h"
 #include "engine/drawable.h"
 #include "engine/model.h"
-#include "engine/renderer/geometry.h"
+#include "engine/renderer/renderer_types.h"
 #include "engine/renderer/shader.h"
 #include "teapot/camera.h"
 
@@ -37,14 +37,8 @@ class Scene : public eng::Drawable {
     base::Matrix4f model;
   };
 
+  eng::VertexDescription vertex_description_;
   eng::Shader shader_;
-
-  eng::Geometry teapot_geometry_;
-  base::Matrix4f teapot_model_;
-
-  eng::Geometry sphere_geometry_;
-  base::Matrix4f sphere_model_;
-
   eng::Model model_;
 
   Camera camera_;

@@ -3,11 +3,9 @@
 #include <memory>
 #include <vector>
 
-#include "engine/asset/mesh.h"
 #include "engine/asset/shader_source.h"
 #include "engine/engine.h"
 #include "engine/renderer/renderer.h"
-#include "engine/renderer/renderer_types.h"
 #include "third_party/imgui/imgui.h"
 
 using namespace base;
@@ -15,10 +13,12 @@ using namespace eng;
 
 namespace {
 
-void CreateSphere(std::vector<float>& vertices,
-                  std::vector<unsigned short>& indices,
-                  size_t rings,
-                  size_t sectors) {
+const char vertex_description[] = "p3f;n3f;t2f";
+
+[[maybe_unused]] void CreateSphere(std::vector<float>& vertices,
+                                   std::vector<unsigned short>& indices,
+                                   size_t rings,
+                                   size_t sectors) {
   float const R = 1. / (float)(rings - 1);
   float const S = 1. / (float)(sectors - 1);
 
@@ -65,9 +65,6 @@ void CreateSphere(std::vector<float>& vertices,
 
 Scene::Scene() {
   camera_.Create({0, 0, 0}, -0.06f, 0.1f, 3);
-  teapot_model_.CreateXRotation(0.5f);
-  sphere_model_.Unit();
-  sphere_model_.Multiply3x3(0.05f);
 }
 
 Scene::~Scene() = default;
@@ -75,32 +72,16 @@ Scene::~Scene() = default;
 void Scene::Create() {
   SetVisible(true);
 
-  // Create a sphere to draw at each light position
-  {
-    static const char vertex_description[] = "p3f;n3f;t2f";
-    std::vector<float> vertices;
-    std::vector<unsigned short> indices;
-    CreateSphere(vertices, indices, 32, 32);
-
-    auto sphere_mesh = std::make_unique<Mesh>();
-    sphere_mesh->Create(kPrimitive_Triangles, vertex_description,
-                        vertices.size() / 8, vertices.data(), kDataType_UShort,
-                        indices.size(), indices.data());
-
-    sphere_geometry_.SetRenderer(Engine::Get().GetRenderer());
-    sphere_geometry_.Create(std::move(sphere_mesh));
+  if (!ParseVertexDescription(vertex_description, vertex_description_)) {
+    LOG(0) << "Failed to parse vertex description.";
+    return;
   }
-
-  auto teapot = std::make_unique<Mesh>();
-  teapot->Load("teapot/teapot.mesh");
-  teapot_geometry_.SetRenderer(Engine::Get().GetRenderer());
-  teapot_geometry_.Create(std::move(teapot));
 
   shader_.SetRenderer(Engine::Get().GetRenderer());
   auto source = std::make_unique<ShaderSource>();
   CHECK(source->Load("teapot/pbr.glsl")) << "Could not create ShaderSource";
-  shader_.Create(std::move(source), teapot_geometry_.vertex_description(),
-                 kPrimitive_Triangles, true);
+  shader_.Create(std::move(source), vertex_description_, kPrimitive_Triangles,
+                 true);
 
   for (size_t i = 0; i < 10; ++i) {
     instances_.emplace_back().model.CreateXRotation(0.5f);
@@ -141,37 +122,8 @@ void Scene::Create() {
 
 void Scene::Draw(float frame_frac) {
   shader_.Activate();
-  // shader_.SetUniform("model", teapot_model_);
-  // shader_.SetUniform("view_projection", view_projection);
-  // shader_.SetUniform("cam_pos", camera_.GetMatrix().Row(3));
-  // // shader_.SetUniform("albedo", albedo_);
-  // shader_.SetUniform("metallic", metallic_);
-  // shader_.SetUniform("roughness", roughness_);
-  // shader_.SetUniform("ao", ao_);
-  // teapot_geometry_.Draw();
   Engine::Get().GetRenderer()->ActivateDescriptorSet(scene_dset_);
   model_.Draw(instances_.size());
-
-  // shader_.SetUniform("albedo", Vector3f(1, 1, 1));
-  // shader_.SetUniform("metallic", 0.0f);
-  // shader_.SetUniform("roughness", 1.0f);
-  // shader_.SetUniform("ao", 1.0f);
-
-  // sphere_model_.Row(3) = Vector3f(-15, -4, -15);
-  // shader_.SetUniform("model", sphere_model_);
-  // sphere_geometry_.Draw();
-
-  // sphere_model_.Row(3) = Vector3f(15, -4, -15);
-  // shader_.SetUniform("model", sphere_model_);
-  // sphere_geometry_.Draw();
-
-  // sphere_model_.Row(3) = Vector3f(-15, -4, 15);
-  // shader_.SetUniform("model", sphere_model_);
-  // sphere_geometry_.Draw();
-
-  // sphere_model_.Row(3) = Vector3f(15, -4, 15);
-  // shader_.SetUniform("model", sphere_model_);
-  // sphere_geometry_.Draw();
 }
 
 void Scene::Update(const Vector2f& angles, float zoom) {
