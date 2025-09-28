@@ -55,8 +55,8 @@ class RendererVulkan final : public Renderer {
                       size_t num_indices,
                       const void* indices) final;
   void DestroyGeometry(uint64_t resource_id) final;
-  void Draw(uint64_t resource_id,
-            size_t num_indices = 0,
+  void ActivateGeometry(uint64_t resource_id) final;
+  void Draw(size_t num_indices = 0,
             size_t first_index = 0,
             size_t instance_count = 1,
             size_t first_instance = 0) final;
@@ -79,7 +79,7 @@ class RendererVulkan final : public Renderer {
   void ActivateShader(uint64_t resource_id) final;
 
   void UpdatePushConstants(size_t size, const void* data) final;
-  
+
   uint64_t CreateBuffer(uint64_t shader_id,
                         size_t set,
                         size_t binding,
@@ -242,6 +242,9 @@ class RendererVulkan final : public Renderer {
   bool staging_buffer_used_ = false;
 
   uint64_t active_shader_id_ = 0;
+
+  uint32_t active_geometry_vertex_count_ = 0;
+  uint32_t active_geometry_index_count_ = 0;
 
   std::map<DescriptorPoolKey, DescriptorPools> descriptor_pools_map_;
 

@@ -231,6 +231,7 @@ void Model::Draw(unsigned int instance_count) {
   if (albedo_tex_dset_)
     renderer_->ActivateDescriptorSet(albedo_tex_dset_);
   renderer_->ActivateDescriptorSet(materials_dset_);
+  renderer_->ActivateGeometry(geometry_.resource_id());
 
   unsigned int material_index = 0;
   for (auto& mesh : meshes_) {

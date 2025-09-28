@@ -167,6 +167,8 @@ void ImguiBackend::Draw() {
   Engine::Get().GetRenderer()->ActivateDescriptorSet(scene_dset_);
 
   for (int n = 0; n < draw_data->CmdListsCount; n++) {
+    renderer_->ActivateGeometry(geometries_[n].resource_id());
+
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
     for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
       const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];

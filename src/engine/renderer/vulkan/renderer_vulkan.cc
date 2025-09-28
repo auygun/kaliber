@@ -407,32 +407,37 @@ void RendererVulkan::DestroyGeometry(uint64_t resource_id) {
   geometries_.erase(it);
 }
 
-void RendererVulkan::Draw(uint64_t resource_id,
-                          size_t num_indices,
-                          size_t first_index,
-                          size_t instance_count,
-                          size_t first_instance) {
+void RendererVulkan::ActivateGeometry(uint64_t resource_id) {
   auto it = geometries_.find(resource_id);
   if (it == geometries_.end())
     return;
 
-  if (num_indices == 0)
-    num_indices = it->second.num_indices;
-
   VkDeviceSize offset = 0;
   vkCmdBindVertexBuffers(frames_[current_frame_].draw_command_buffer, 0, 1,
                          &std::get<0>(it->second.buffer), &offset);
-  if (num_indices > 0) {
-    uint64_t data_offset = first_index * it->second.index_type_size;
+  if (it->second.num_indices > 0) {
     vkCmdBindIndexBuffer(frames_[current_frame_].draw_command_buffer,
                          std::get<0>(it->second.buffer),
-                         it->second.index_data_offset + data_offset,
-                         it->second.index_type);
+                         it->second.index_data_offset, it->second.index_type);
+  }
+
+  active_geometry_vertex_count_ = it->second.num_vertices;
+  active_geometry_index_count_ = it->second.num_indices;
+}
+
+void RendererVulkan::Draw(size_t num_indices,
+                          size_t first_index,
+                          size_t instance_count,
+                          size_t first_instance) {
+  if (num_indices == 0)
+    num_indices = active_geometry_index_count_;
+
+  if (num_indices > 0) {
     vkCmdDrawIndexed(frames_[current_frame_].draw_command_buffer, num_indices,
-                     instance_count, 0, 0, first_instance);
+                     instance_count, first_index, 0, first_instance);
   } else {
     vkCmdDraw(frames_[current_frame_].draw_command_buffer,
-              it->second.num_vertices, instance_count, 0, first_instance);
+              active_geometry_vertex_count_, instance_count, 0, first_instance);
   }
 }
 

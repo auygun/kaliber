@@ -56,8 +56,8 @@ class Renderer {
                               size_t num_indices,
                               const void* indices) = 0;
   virtual void DestroyGeometry(uint64_t resource_id) = 0;
-  virtual void Draw(uint64_t resource_id,
-                    size_t num_indices = 0,
+  virtual void ActivateGeometry(uint64_t resource_id) = 0;
+  virtual void Draw(size_t num_indices = 0,
                     size_t start_offset = 0,
                     size_t instance_count = 1,
                     size_t first_instance = 0) = 0;
