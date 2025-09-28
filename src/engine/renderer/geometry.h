@@ -35,6 +35,10 @@ class Geometry : public RenderResource {
 
   void Draw();
   void Draw(uint64_t num_indices, uint64_t start_offset);
+  void Draw(uint64_t num_indices,
+            uint64_t start_offset,
+            size_t instance_count,
+            size_t first_instance);
 
   const VertexDescription& vertex_description() const {
     return vertex_description_;

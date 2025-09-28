@@ -58,7 +58,9 @@ class Renderer {
   virtual void DestroyGeometry(uint64_t resource_id) = 0;
   virtual void Draw(uint64_t resource_id,
                     size_t num_indices = 0,
-                    size_t start_offset = 0) = 0;
+                    size_t start_offset = 0,
+                    size_t instance_count = 1,
+                    size_t first_instance = 0) = 0;
 
   virtual uint64_t CreateTexture() = 0;
   virtual void UpdateTexture(uint64_t resource_id,
@@ -79,7 +81,7 @@ class Renderer {
   virtual void ActivateShader(uint64_t resource_id) = 0;
 
   virtual void UpdatePushConstants(size_t size, const void* data) = 0;
-  
+
   virtual uint64_t CreateBuffer(uint64_t shader_id,
                                 size_t set,
                                 size_t binding,

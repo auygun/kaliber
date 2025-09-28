@@ -5,7 +5,6 @@ precision highp float;
 #endif
 
 layout(push_constant, std430) uniform DrawCall {
-  uint instance_index;
   uint material_index;
 } draw_call;
 

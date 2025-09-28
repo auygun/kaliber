@@ -409,12 +409,13 @@ void RendererVulkan::DestroyGeometry(uint64_t resource_id) {
 
 void RendererVulkan::Draw(uint64_t resource_id,
                           size_t num_indices,
-                          size_t start_offset) {
+                          size_t first_index,
+                          size_t instance_count,
+                          size_t first_instance) {
   auto it = geometries_.find(resource_id);
   if (it == geometries_.end())
     return;
 
-  uint64_t data_offset = start_offset * it->second.index_type_size;
   if (num_indices == 0)
     num_indices = it->second.num_indices;
 
@@ -422,15 +423,16 @@ void RendererVulkan::Draw(uint64_t resource_id,
   vkCmdBindVertexBuffers(frames_[current_frame_].draw_command_buffer, 0, 1,
                          &std::get<0>(it->second.buffer), &offset);
   if (num_indices > 0) {
+    uint64_t data_offset = first_index * it->second.index_type_size;
     vkCmdBindIndexBuffer(frames_[current_frame_].draw_command_buffer,
                          std::get<0>(it->second.buffer),
                          it->second.index_data_offset + data_offset,
                          it->second.index_type);
     vkCmdDrawIndexed(frames_[current_frame_].draw_command_buffer, num_indices,
-                     1, 0, 0, 0);
+                     instance_count, 0, 0, first_instance);
   } else {
     vkCmdDraw(frames_[current_frame_].draw_command_buffer,
-              it->second.num_vertices, 1, 0, 0);
+              it->second.num_vertices, instance_count, 0, first_instance);
   }
 }
 
@@ -2201,7 +2203,8 @@ bool RendererVulkan::CreatePipelineLayout(
                       EShLangVertex))
       break;
 
-    if (pc_count_vertex != pc_count_fragment) {
+    if (pc_count_vertex != pc_count_fragment && pc_count_vertex > 0 &&
+        pc_count_fragment > 0) {
       DLOG(0) << "SPIR-V reflection found different push constant blocks "
                  "across shader stages.";
       break;

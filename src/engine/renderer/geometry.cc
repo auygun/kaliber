@@ -66,4 +66,13 @@ void Geometry::Draw(uint64_t num_indices, uint64_t start_offset) {
     renderer_->Draw(resource_id_, num_indices, start_offset);
 }
 
+void Geometry::Draw(uint64_t num_indices,
+                    uint64_t start_offset,
+                    size_t instance_count,
+                    size_t first_instance) {
+  if (IsValid())
+    renderer_->Draw(resource_id_, num_indices, start_offset, instance_count,
+                    first_instance);
+}
+
 }  // namespace eng

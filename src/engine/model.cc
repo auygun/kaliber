@@ -18,10 +18,10 @@ namespace eng {
 namespace {
 
 struct PushConstant {
-  unsigned int instance_index;
   unsigned int material_index;
   unsigned int _pad0;
   unsigned int _pad1;
+  unsigned int _pad2;
 };
 
 struct Vertex {
@@ -227,7 +227,7 @@ void Model::Update(float metallic, float roughness, float ao) {
                           sizeof(MaterialData) * materials_.size());
 }
 
-void Model::Draw(unsigned int instance_index) {
+void Model::Draw(unsigned int instance_count) {
   if (albedo_tex_dset_)
     renderer_->ActivateDescriptorSet(albedo_tex_dset_);
   renderer_->ActivateDescriptorSet(materials_dset_);
@@ -235,10 +235,9 @@ void Model::Draw(unsigned int instance_index) {
   unsigned int material_index = 0;
   for (auto& mesh : meshes_) {
     PushConstant pc{};
-    pc.instance_index = instance_index;
     pc.material_index = material_index;
     renderer_->UpdatePushConstants(sizeof(pc), &pc);
-    geometry_.Draw(mesh.num_indices, mesh.index_offset);
+    geometry_.Draw(mesh.num_indices, mesh.index_offset, instance_count, 0);
     ++material_index;
   }
 }
