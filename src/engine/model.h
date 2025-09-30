@@ -19,10 +19,18 @@ class Model {
   ~Model() = default;
 
   bool LoadObj(Renderer* renderer,
+               uint64_t shader_id,
+               VertexDescription vertex_description,
                const std::string& file_name,
                const std::string& mtl_file_name,
-               const std::string& tex_file_name,
-               uint64_t shader_id);
+               const std::string& tex_file_name);
+
+  void CreateMesh(Renderer* renderer,
+                  uint64_t shader_id,
+                  VertexDescription vertex_description,
+                  std::vector<float> vertices,
+                  std::vector<uint32_t> indices,
+                  const std::vector<std::string>& texture_file_names);
 
   void Update(float metallic, float roughness, float ao);
 
@@ -45,16 +53,14 @@ class Model {
   };
 
   std::vector<Mesh> meshes_;
-  VertexDescription vertex_description_;
   Geometry geometry_;
-  Texture texture_;
+  Texture texture_[4];
   Renderer* renderer_ = nullptr;
 
   std::vector<MaterialData> materials_;
 
   uint64_t materials_ubo_ = 0;
   uint64_t materials_dset_ = 0;
-  uint64_t albedo_tex_dset_ = 0;
 };
 
 }  // namespace eng

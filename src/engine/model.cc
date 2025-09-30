@@ -30,23 +30,17 @@ struct Vertex {
   float uv[2];
 };
 
-const char vertex_description[] = "p3f;n3f;t2f";
-
 }  // namespace
 
 bool Model::LoadObj(Renderer* renderer,
+                    uint64_t shader_id,
+                    VertexDescription vertex_description,
                     const std::string& file_name,
                     const std::string& mtl_file_name,
-                    const std::string& tex_file_name,
-                    uint64_t shader_id) {
+                    const std::string& tex_file_name) {
   LOG(0) << "Loading " << file_name;
 
   renderer_ = renderer;
-
-  if (!ParseVertexDescription(vertex_description, vertex_description_)) {
-    LOG(0) << "Failed to parse vertex description.";
-    return false;
-  }
 
   size_t buffer_size = 0;
   auto obj = AssetFile::ReadWholeFile(file_name.c_str(),
@@ -192,28 +186,60 @@ bool Model::LoadObj(Renderer* renderer,
 
   // Create geometry
   geometry_.SetRenderer(renderer);
-  geometry_.Create(kPrimitive_Triangles, vertex_description_, kDataType_UInt);
+  geometry_.Create(kPrimitive_Triangles, vertex_description, kDataType_UInt);
   geometry_.Update(unique_vertices.size(), unique_vertices.data(),
                    aggregated_indices.size(), aggregated_indices.data());
 
-  if (!tex_file_name.empty()) {
-    auto image = std::make_unique<Image>();
-    if (!image->Load(tex_file_name))
-      return false;
-    texture_.SetRenderer(renderer);
-    texture_.Update(std::move(image));
+  materials_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
+      shader_id, 2, 0, sizeof(MaterialData) * meshes_.size());
+  materials_dset_ = renderer->CreateDescriptorSet(shader_id, 2,
+                                                  {{},
+                                                   {},   // albedo
+                                                   {},   // normal
+                                                   {},   // metallic
+                                                   {}},  // roughness
+                                                  {materials_ubo_});
+  materials_.resize(meshes_.size());
 
-    albedo_tex_dset_ = renderer->CreateDescriptorSet(
-        shader_id, 0, {{texture_.resource_id()}}, {});
+  return true;
+}
+
+void Model::CreateMesh(Renderer* renderer,
+                       uint64_t shader_id,
+                       VertexDescription vertex_description,
+                       std::vector<float> vertices,
+                       std::vector<uint32_t> indices,
+                       const std::vector<std::string>& texture_file_names) {
+  renderer_ = renderer;
+
+  meshes_.push_back({indices.size(), 0, {1, 1, 1}});
+
+  geometry_.SetRenderer(renderer);
+  geometry_.Create(kPrimitive_Triangles, vertex_description, kDataType_UInt);
+  geometry_.Update(vertices.size(), vertices.data(), indices.size(),
+                   indices.data());
+
+  size_t texture_index = 0;
+  for (auto& file_name : texture_file_names) {
+    auto image = std::make_unique<Image>();
+    if (!image->Load(file_name))
+      return;
+    texture_[texture_index].SetRenderer(renderer);
+    texture_[texture_index].Update(std::move(image));
+    ++texture_index;
   }
 
   materials_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
       shader_id, 2, 0, sizeof(MaterialData) * meshes_.size());
   materials_dset_ =
-      renderer->CreateDescriptorSet(shader_id, 2, {}, {materials_ubo_});
+      renderer->CreateDescriptorSet(shader_id, 2,
+                                    {{},
+                                     {texture_[0].resource_id()},   // albedo
+                                     {texture_[1].resource_id()},   // normal
+                                     {texture_[2].resource_id()},   // metallic
+                                     {texture_[3].resource_id()}},  // roughness
+                                    {materials_ubo_});
   materials_.resize(meshes_.size());
-
-  return true;
 }
 
 void Model::Update(float metallic, float roughness, float ao) {
@@ -228,8 +254,6 @@ void Model::Update(float metallic, float roughness, float ao) {
 }
 
 void Model::Draw(unsigned int instance_count) {
-  if (albedo_tex_dset_)
-    renderer_->ActivateDescriptorSet(albedo_tex_dset_);
   renderer_->ActivateDescriptorSet(materials_dset_);
   renderer_->ActivateGeometry(geometry_.resource_id());
 

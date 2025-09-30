@@ -846,7 +846,8 @@ uint64_t RendererVulkan::CreateDescriptorSet(
 
     switch (binding_info.descriptor_type) {
       case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER: {
-        DCHECK(i < textures.size() || binding_info.length == textures[i].size())
+        DLOG_IF(
+            0, i >= textures.size() || textures[i].size() < binding_info.length)
             << "SamplerTexture (set: " << set << ", binding: " << i
             << ") is an array of " << binding_info.length
             << " elements. Textures provided: "
@@ -855,8 +856,8 @@ uint64_t RendererVulkan::CreateDescriptorSet(
         pool_key.descriptor_count[kSamplerWithTexture] += binding_info.length;
 
         auto image_infos =
-            ALLOCA_SPAN(VkDescriptorImageInfo, binding_info.length);
-        for (size_t j = 0; j < binding_info.length; j++) {
+            ALLOCA_SPAN(VkDescriptorImageInfo, textures[i].size());
+        for (size_t j = 0; j < textures[i].size(); j++) {
           image_infos[j] = {};
 
           auto texture_it = textures_.find(textures[i][j]);
@@ -870,7 +871,7 @@ uint64_t RendererVulkan::CreateDescriptorSet(
           image_infos[j].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         }
         set_writes[num_set_writes].pImageInfo = image_infos.data();
-        set_writes[num_set_writes].descriptorCount = binding_info.length;
+        set_writes[num_set_writes].descriptorCount = image_infos.size();
       } break;
       case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER: {
         DCHECK(i < buffers.size())

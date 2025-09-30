@@ -1,13 +1,25 @@
 copy("teapot") {
   sources = [
+    "buddha.obj",
+    "greasy-pan-2-albedo.png",
+    "greasy-pan-2-metal.png",
+    "greasy-pan-2-normal.png",
+    "greasy-pan-2-roughness.png",
+    "grimy-metal-albedo.png",
+    "grimy-metal-metalness.png",
+    "grimy-metal-normal-dx.png",
+    "grimy-metal-roughness.png",
+    "iron-rusted4-basecolor.png",
+    "iron-rusted4-metalness.png",
+    "iron-rusted4-normal.png",
+    "iron-rusted4-roughness.png",
     "pbr.glsl_fragment",
     "pbr.glsl_vertex",
+    "sportsCar.mtl",
+    "sportsCar.obj",
     "teapot.mesh",
     "viking_room.obj",
     "viking_room.png",
-    "buddha.obj",
-    "sportsCar.obj",
-    "sportsCar.mtl",
   ]
 
   outputs = [ "$root_out_dir/assets/teapot/{{source_file_part}}" ]

@@ -16,7 +16,7 @@ namespace {
 const char vertex_description[] = "p3f;n3f;t2f";
 
 [[maybe_unused]] void CreateSphere(std::vector<float>& vertices,
-                                   std::vector<unsigned short>& indices,
+                                   std::vector<uint32_t>& indices,
                                    size_t rings,
                                    size_t sectors) {
   float const R = 1. / (float)(rings - 1);
@@ -49,13 +49,13 @@ const char vertex_description[] = "p3f;n3f;t2f";
         size_t nextRow = (r + 1) * sectors;
         size_t nextS = (s + 1) % sectors;
 
-        indices.push_back((unsigned short)(curRow + s));
-        indices.push_back((unsigned short)(nextRow + s));
-        indices.push_back((unsigned short)(nextRow + nextS));
+        indices.push_back((uint32_t)(curRow + s));
+        indices.push_back((uint32_t)(nextRow + s));
+        indices.push_back((uint32_t)(nextRow + nextS));
 
-        indices.push_back((unsigned short)(curRow + s));
-        indices.push_back((unsigned short)(nextRow + nextS));
-        indices.push_back((unsigned short)(curRow + nextS));
+        indices.push_back((uint32_t)(curRow + s));
+        indices.push_back((uint32_t)(nextRow + nextS));
+        indices.push_back((uint32_t)(curRow + nextS));
       }
     }
   }
@@ -105,8 +105,21 @@ void Scene::Create() {
   // model_.LoadObj(Engine::Get().GetRenderer(), "teapot/viking_room.obj",
   //                "teapot/viking_room.png", shader_.resource_id());
   // model_.LoadObj(Engine::Get().GetRenderer(), "teapot/buddha.obj");
-  model_.LoadObj(Engine::Get().GetRenderer(), "teapot/sportsCar.obj",
-                 "teapot/sportsCar.mtl", "", shader_.resource_id());
+  // model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+  //                vertex_description_, "teapot/sportsCar.obj",
+  //                "teapot/sportsCar.mtl", "");
+
+  std::vector<float> vertices;
+  std::vector<uint32_t> indices;
+  CreateSphere(vertices, indices, 32, 32);
+  model_.CreateMesh(
+      Engine::Get().GetRenderer(), shader_.resource_id(), vertex_description_,
+      vertices, indices,
+      // {"teapot/iron-rusted4-basecolor.png", "teapot/iron-rusted4-normal.png",
+      //  "teapot/iron-rusted4-metalness.png",
+      //  "teapot/iron-rusted4-roughness.png"});
+      {"teapot/greasy-pan-2-albedo.png", "teapot/greasy-pan-2-normal.png",
+       "teapot/greasy-pan-2-metal.png", "teapot/greasy-pan-2-roughness.png"});
 
   CreateProjectionMatrix();
 
