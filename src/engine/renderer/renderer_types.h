@@ -20,6 +20,7 @@ enum AttribType {
   kAttribType_Invalid = -1,
   kAttribType_Color,
   kAttribType_Normal,
+  kAttribType_Tangent,
   kAttribType_Position,
   kAttribType_TexCoord,
   kAttribType_Max

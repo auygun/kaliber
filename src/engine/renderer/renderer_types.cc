@@ -112,6 +112,9 @@ bool ParseVertexDescription(const std::string& vd_str, VertexDescription& out) {
       case 'n':
         attrib_type = kAttribType_Normal;
         break;
+      case 'g':
+        attrib_type = kAttribType_Tangent;
+        break;
       case 'p':
         attrib_type = kAttribType_Position;
         break;

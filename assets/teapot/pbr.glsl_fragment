@@ -40,7 +40,8 @@ layout(set = 2, binding = 4) uniform sampler2D roughness_map[32];
 
 layout(location = 0) in vec3 world_pos;
 layout(location = 1) in vec3 normal;
-layout(location = 2) in vec2 tex_coord;
+layout(location = 2) in vec3 tangent;
+layout(location = 3) in vec2 tex_coord;
 
 layout(location = 0) out vec4 frag_color;
 
@@ -103,14 +104,24 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0) {
 }
 
 void main() {
-	MaterialData material_data = materials.data[draw_call.material_index];
+  uint mat_idx = draw_call.material_index;
+	MaterialData material_data = materials.data[mat_idx];
 
-  material_data.albedo = pow(texture(albedo_map[draw_call.material_index], tex_coord).rgb, vec3(2.2));
-  material_data.metallic = texture(metallic_map[draw_call.material_index], tex_coord).r;
-  material_data.roughness = texture(roughness_map[draw_call.material_index], tex_coord).r;
+  // Build TBN
+  vec3 N = normalize(normal);
+  vec3 T = normalize(tangent);
+  vec3 B = normalize(cross(N, T));
+  mat3 TBN = mat3(T, B, N);
 
-  vec3 N = getNormalFromMap(); // normalize(normal);
+  material_data.albedo = pow(texture(albedo_map[mat_idx], tex_coord).rgb, vec3(2.2));
+  material_data.metallic = texture(metallic_map[mat_idx], tex_coord).r;
+  material_data.roughness = texture(roughness_map[mat_idx], tex_coord).r;
+
+  //N = getNormalFromMap();
   vec3 V = normalize(scene_data.cam_pos - world_pos);
+
+  vec3 tangent_normal = texture(normal_map[mat_idx], tex_coord).xyz * 2.0 - 1.0;
+  N = normalize(TBN * tangent_normal);
 
   // vec3 albedo = pow(texture(albedo_map, tex_coord).rgb, 2.2);
   // vec3 albedo = texture(albedo_map, tex_coord).rgb;

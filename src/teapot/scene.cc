@@ -13,7 +13,7 @@ using namespace eng;
 
 namespace {
 
-const char vertex_description[] = "p3f;n3f;t2f";
+const char vertex_description[] = "p3f;n3f;g3f;t2f";
 
 [[maybe_unused]] void CreateSphere(std::vector<float>& vertices,
                                    std::vector<uint32_t>& indices,
