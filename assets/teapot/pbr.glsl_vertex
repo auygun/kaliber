@@ -13,18 +13,21 @@ layout(set = 1, binding = 2, std430) buffer restrict readonly Instances {
 
 layout(location = 0) in vec3 in_position;
 layout(location = 1) in vec3 in_normal;
-layout(location = 2) in vec2 in_tex_coord;
+layout(location = 2) in vec3 in_tangent;
+layout(location = 3) in vec2 in_tex_coord;
 
 layout(location = 0) out vec3 world_pos;
 layout(location = 1) out vec3 normal;
-layout(location = 2) out vec2 tex_coord;
+layout(location = 2) out vec3 tangent;
+layout(location = 3) out vec2 tex_coord;
 
 void main() {
-	const InstanceData instance_data = instances.data[gl_InstanceIndex];
+  const InstanceData instance_data = instances.data[gl_InstanceIndex];
 
   world_pos = vec3(instance_data.model * vec4(in_position, 1.0));
   // Model matrix doesn't contain non-uniform scale.
   normal = mat3(instance_data.model) * in_normal;
+  tangent = mat3(instance_data.model) * in_tangent;
   tex_coord = in_tex_coord;
 
   gl_Position = scene_data.view_projection * vec4(world_pos, 1.0);

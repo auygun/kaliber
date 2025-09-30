@@ -1,6 +1,7 @@
 #include "engine/model.h"
 
 #include <iostream>
+#include <span>
 #include <sstream>
 
 #include "base/log.h"
@@ -25,10 +26,55 @@ struct PushConstant {
 };
 
 struct Vertex {
-  float position[3];
-  float normal[3];
+  Vector3f position;
+  Vector3f normal;
+  Vector3f tangent;
   float uv[2];
 };
+
+void GenerateTangents(std::vector<uint32_t> indices,
+                      std::span<Vertex>& vertices) {
+  // Iterate over triangles. We sum the face tangents for shared vertices, then
+  // normalize and orthogonalize later.
+  for (size_t i = 0; i < indices.size(); i += 3) {
+    // Get the three vertices of the current triangle
+    Vertex& v1 = vertices[indices[i + 0]];
+    Vertex& v2 = vertices[indices[i + 1]];
+    Vertex& v3 = vertices[indices[i + 2]];
+
+    // Position and UV differences
+    Vector3f edge1 = v2.position - v1.position;
+    Vector3f edge2 = v3.position - v1.position;
+
+    float du1 = v2.uv[0] - v1.uv[0];
+    float dv1 = v2.uv[1] - v1.uv[1];
+    float du2 = v3.uv[0] - v1.uv[0];
+    float dv2 = v3.uv[1] - v1.uv[1];
+
+    // Calculate the determinant of the 2x2 UV matrix
+    float det = du1 * dv2 - du2 * dv1;
+
+    // Handle degenerate UV coordinates (where det is zero or near zero)
+    if (std::abs(det) < 1e-6f)
+      continue;
+
+    float r = 1.0f / det;
+
+    // Solve the linear system for the face tangent
+    Vector3f face_tangent = (edge1 * dv2 - edge2 * dv1) * r;
+
+    // Accumulate face tangents for all three vertices
+    v1.tangent += face_tangent;
+    v2.tangent += face_tangent;
+    v3.tangent += face_tangent;
+  }
+
+  // Normalize and orthogonalize tangent vectors
+  for (Vertex& v : vertices) {
+    v.tangent = v.tangent - v.normal * v.tangent.DotProduct(v.normal);
+    v.tangent.Normalize();
+  }
+}
 
 }  // namespace
 
@@ -211,6 +257,10 @@ void Model::CreateMesh(Renderer* renderer,
                        std::vector<uint32_t> indices,
                        const std::vector<std::string>& texture_file_names) {
   renderer_ = renderer;
+
+  std::span vertex_view(reinterpret_cast<Vertex*>(vertices.data()),
+                        (sizeof(float) * vertices.size()) / sizeof(Vertex));
+  GenerateTangents(indices, vertex_view);
 
   meshes_.push_back({indices.size(), 0, {1, 1, 1}});
 
