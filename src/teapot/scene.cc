@@ -38,6 +38,11 @@ const char vertex_description[] = "p3f;n3f;g3f;t2f";
       vertices.push_back(y);
       vertices.push_back(z);
 
+      // Tangent
+      vertices.push_back(0);
+      vertices.push_back(0);
+      vertices.push_back(0);
+
       // Texture coordinates
       float u = s * S;
       float v = r * R;
