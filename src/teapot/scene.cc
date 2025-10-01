@@ -127,9 +127,9 @@ void Scene::Create() {
       //  "teapot/greasy-pan-2-metal.png", "teapot/greasy-pan-2-roughness.png"});
       // {"teapot/grimy-metal-albedo.png", "teapot/grimy-metal-normal-dx.png",
       //  "teapot/grimy-metal-metalness.png", "teapot/grimy-metal-roughness.png"});
-      {"teapot/steelplate1_albedo.png", "teapot/steelplate1_normal.png",
-       "teapot/steelplate1_metallic.png", "teapot/steelplate1_roughness.png",
-       "teapot/steelplate1_height.png"});
+      {"teapot/alley-brick-wall_albedo.png", "teapot/alley-brick-wall_normal-dx.png",
+       "teapot/alley-brick-wall_metallic.png", "teapot/alley-brick-wall_roughness.png",
+       "teapot/alley-brick-wall_height.png"});
 
   CreateProjectionMatrix();
 

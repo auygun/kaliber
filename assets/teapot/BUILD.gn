@@ -1,5 +1,11 @@
 copy("teapot") {
   sources = [
+    "alley-brick-wall_albedo.png",
+    "alley-brick-wall_height.png",
+    "alley-brick-wall_metallic.png",
+    "alley-brick-wall_normal-dx.png",
+    "alley-brick-wall_roughness.png",
+    "alley-brick-wall_ao.png",
     "buddha.obj",
     "greasy-pan-2-albedo.png",
     "greasy-pan-2-metal.png",
