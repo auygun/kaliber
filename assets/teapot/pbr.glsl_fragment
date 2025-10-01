@@ -99,7 +99,7 @@ vec2 ParallaxOcclusionMapping(vec2 texCoords, vec3 viewDirTS, uint matIdx) {
 
   // The amount to shift the texture coordinates per layer (this is the parallax
   // effect).
-  float u_heightScale = 0.03;
+  float u_heightScale = 0.02;
   vec2 P = viewDirTS.xy * u_heightScale;
   vec2 deltaTexCoords = P / numLayers;
 
@@ -182,14 +182,6 @@ void main() {
 
   // Parallax mapping to get displaced UVs
   vec2 texCoords = ParallaxOcclusionMapping(tex_coord, viewDirTS, mat_ind);
-
-  // To prevent texture wrapping artifacts at the edges of the object,
-  // you can discard fragments where the parallax coordinates go outside the [0,
-  // 1] range.
-  if (texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 ||
-      texCoords.y < 0.0) {
-    discard;
-  }
 
   MaterialData material;
 
