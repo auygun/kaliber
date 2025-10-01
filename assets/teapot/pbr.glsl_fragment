@@ -52,84 +52,42 @@ layout(location = 0) out vec4 frag_color;
 
 const float PI = 3.14159265359;
 
-vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir, uint matIdx) {
-  float heightScale = 0.02;  // tweak this for stronger/weaker displacement
-  float height = texture(height_map[matIdx], texCoords).r;
-  return texCoords - viewDir.xy * (height * heightScale);
-}
-
-vec2 SteepParallaxMapping(vec2 texCoords, vec3 viewDirTS, uint matIdx) {
+vec2 ParallaxOcclusionMapping(vec2 tex_coords, vec3 view_dir, uint mat_idx) {
   // Number of depth layers (quality/performance trade-off)
-  const float minLayers = 8.0;
-  const float maxLayers = 32.0;
-
-  // More layers for shallow view angles (better quality at grazing angles)
-  float numLayers = mix(maxLayers, minLayers, abs(viewDirTS.z));
-
-  // Calculate the size of each depth layer
-  float layerDepth = 1.0 / numLayers;
-
-  // Amount to shift texture coordinates per layer
-  float heightScale = 0.05;  // tweak for stronger/weaker displacement
-  vec2 P = viewDirTS.xy * heightScale;
-  vec2 deltaTexCoords = P / numLayers;
-
-  // Current depth and texcoord
-  float currentLayerDepth = 0.0;
-  vec2 currentTexCoords = texCoords;
-
-  // Depth from height map at current texcoords
-  float currentDepthMapValue = texture(height_map[matIdx], currentTexCoords).r;
-
-  // Step through layers until we pass the depth
-  while (currentLayerDepth < currentDepthMapValue) {
-    currentTexCoords -= deltaTexCoords;
-    currentLayerDepth += layerDepth;
-    currentDepthMapValue = texture(height_map[matIdx], currentTexCoords).r;
-  }
-
-  return currentTexCoords;
-}
-
-vec2 ParallaxOcclusionMapping(vec2 texCoords, vec3 viewDirTS, uint matIdx) {
-  // Define the number of layers to step through. More layers = better quality,
-  // but worse performance.
-  const float numLayers = 32.0;
-  float layerDepth = 1.0 / numLayers;
+  const float num_layers = 32.0;
+  float layer_depth = 1.0 / num_layers;
 
   // The amount to shift the texture coordinates per layer (this is the parallax
   // effect).
-  float u_heightScale = 0.02;
-  vec2 P = viewDirTS.xy * u_heightScale;
-  vec2 deltaTexCoords = P / numLayers;
+  float height_scale = 0.02;
+  vec2 P = view_dir.xy * height_scale;
+  vec2 delta_tex_coords = P / num_layers;
 
   // Start at the surface of the texture.
-  vec2 currentTexCoords = texCoords;
-  float currentLayerDepth = 0.0;
+  vec2 current_tex_coords = tex_coords;
+  float current_layer_depth = 0.0;
 
-  // Step through the layers to find where the view ray intersects the
-  // heightmap.
-  float currentHeight = texture(height_map[matIdx], currentTexCoords).r;
-  while (currentLayerDepth < currentHeight) {
+  // Step through layers until we pass the depth
+  float current_height = texture(height_map[mat_idx], current_tex_coords).r;
+  while (current_layer_depth < current_height) {
     // Move to the next layer.
-    currentTexCoords -= deltaTexCoords;
-    currentHeight = texture(height_map[matIdx], currentTexCoords).r;
-    currentLayerDepth += layerDepth;
+    current_tex_coords -= delta_tex_coords;
+    current_height = texture(height_map[mat_idx], current_tex_coords).r;
+    current_layer_depth += layer_depth;
   }
 
   // -- Refinement Step --
   // After finding the intersection, we can refine it for better accuracy.
   // This performs a linear interpolation between the last two sample points.
-  vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
-  float afterHeight = currentHeight - currentLayerDepth;
-  float beforeHeight = texture(height_map[matIdx], prevTexCoords).r -
-                       currentLayerDepth + layerDepth;
+  vec2 prev_tex_coords = current_tex_coords + delta_tex_coords;
+  float after_height = current_height - current_layer_depth;
+  float before_height = texture(height_map[mat_idx], prev_tex_coords).r -
+                        current_layer_depth + layer_depth;
 
-  float weight = afterHeight / (afterHeight - beforeHeight);
-  vec2 finalTexCoords =
-      prevTexCoords * weight + currentTexCoords * (1.0 - weight);
-
-  return finalTexCoords;
+  float weight = after_height / (after_height - before_height);
+  vec2 final_tex_coords =
+      prev_tex_coords * weight + current_tex_coords * (1.0 - weight);
+  return final_tex_coords;
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness) {
@@ -178,19 +136,22 @@ void main() {
   mat3 TBN = mat3(T, B, N);
 
   vec3 V = normalize(scene_data.cam_pos - world_pos);
-  vec3 viewDirTS = normalize(TBN * V);
+  vec3 view_dir = normalize(TBN * V);
 
   // Parallax mapping to get displaced UVs
-  vec2 texCoords = ParallaxOcclusionMapping(tex_coord, viewDirTS, mat_ind);
+  vec2 parallax_tex_coords =
+      ParallaxOcclusionMapping(tex_coord, view_dir, mat_ind);
 
   MaterialData material;
 
-  material.albedo = pow(texture(albedo_map[mat_ind], texCoords).rgb, vec3(2.2));
-  material.metallic = texture(metallic_map[mat_ind], texCoords).r;
-  material.roughness = texture(roughness_map[mat_ind], texCoords).r;
+  material.albedo =
+      pow(texture(albedo_map[mat_ind], parallax_tex_coords).rgb, vec3(2.2));
+  material.metallic = texture(metallic_map[mat_ind], parallax_tex_coords).r;
+  material.roughness = texture(roughness_map[mat_ind], parallax_tex_coords).r;
   material.ao = materials.data[mat_ind].ao;
 
-  vec3 tangent_normal = texture(normal_map[mat_ind], texCoords).xyz * 2.0 - 1.0;
+  vec3 tangent_normal =
+      texture(normal_map[mat_ind], parallax_tex_coords).xyz * 2.0 - 1.0;
   N = normalize(TBN * tangent_normal);
 
   // calculate reflectance at normal incidence; if dia-electric (like plastic)
