@@ -18,6 +18,8 @@ copy("teapot") {
     "sportsCar.mtl",
     "sportsCar.obj",
     "steelplate1_albedo.png",
+    "steelplate1_ao.png",
+    "steelplate1_height.png",
     "steelplate1_metallic.png",
     "steelplate1_normal.png",
     "steelplate1_roughness.png",

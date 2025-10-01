@@ -54,7 +54,7 @@ class Model {
 
   std::vector<Mesh> meshes_;
   Geometry geometry_;
-  Texture texture_[4];
+  Texture texture_[5];
   Renderer* renderer_ = nullptr;
 
   std::vector<MaterialData> materials_;

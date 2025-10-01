@@ -287,7 +287,8 @@ void Model::CreateMesh(Renderer* renderer,
                                      {texture_[0].resource_id()},   // albedo
                                      {texture_[1].resource_id()},   // normal
                                      {texture_[2].resource_id()},   // metallic
-                                     {texture_[3].resource_id()}},  // roughness
+                                     {texture_[3].resource_id()},   // roughness
+                                     {texture_[4].resource_id()}},  // height
                                     {materials_ubo_});
   materials_.resize(meshes_.size());
 }
