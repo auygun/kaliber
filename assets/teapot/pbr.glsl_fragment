@@ -92,49 +92,44 @@ vec2 SteepParallaxMapping(vec2 texCoords, vec3 viewDirTS, uint matIdx) {
 }
 
 vec2 ParallaxOcclusionMapping(vec2 texCoords, vec3 viewDirTS, uint matIdx) {
-  // Number of depth layers (quality/performance trade-off)
-  const float minLayers = 8.0;
-  const float maxLayers = 32.0;
-
-  // More layers for shallow view angles (better quality at grazing angles)
-  float numLayers = mix(maxLayers, minLayers, abs(viewDirTS.z));
-
-  // Size of each depth layer
+  // Define the number of layers to step through. More layers = better quality,
+  // but worse performance.
+  const float numLayers = 32.0;
   float layerDepth = 1.0 / numLayers;
 
-  // Shift in texture coordinates per layer
-  float heightScale = 0.05;  // tweak for stronger/weaker displacement
-  vec2 P = viewDirTS.xy * heightScale;
+  // The amount to shift the texture coordinates per layer (this is the parallax
+  // effect).
+  float u_heightScale = 0.03;
+  vec2 P = viewDirTS.xy * u_heightScale;
   vec2 deltaTexCoords = P / numLayers;
 
-  // Current depth and texcoord
-  float currentLayerDepth = 0.0;
+  // Start at the surface of the texture.
   vec2 currentTexCoords = texCoords;
+  float currentLayerDepth = 0.0;
 
-  // Depth from height map at current texcoords
-  float currentDepthMapValue = texture(height_map[matIdx], currentTexCoords).r;
-
-  // Previous values for interpolation
-  float prevLayerDepth = 0.0;
-  vec2 prevTexCoords = texCoords;
-
-  // Step through layers
-  while (currentLayerDepth < currentDepthMapValue) {
-    prevTexCoords = currentTexCoords;
-    prevLayerDepth = currentLayerDepth;
-
+  // Step through the layers to find where the view ray intersects the
+  // heightmap.
+  float currentHeight = texture(height_map[matIdx], currentTexCoords).r;
+  while (currentLayerDepth < currentHeight) {
+    // Move to the next layer.
     currentTexCoords -= deltaTexCoords;
+    currentHeight = texture(height_map[matIdx], currentTexCoords).r;
     currentLayerDepth += layerDepth;
-    currentDepthMapValue = texture(height_map[matIdx], currentTexCoords).r;
   }
 
-  // --- Parallax Occlusion Mapping interpolation ---
-  float afterDepth = currentDepthMapValue - currentLayerDepth;
-  float beforeDepth =
-      texture(height_map[matIdx], prevTexCoords).r - prevLayerDepth;
-  float weight = beforeDepth / (beforeDepth - afterDepth);
+  // -- Refinement Step --
+  // After finding the intersection, we can refine it for better accuracy.
+  // This performs a linear interpolation between the last two sample points.
+  vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
+  float afterHeight = currentHeight - currentLayerDepth;
+  float beforeHeight = texture(height_map[matIdx], prevTexCoords).r -
+                       currentLayerDepth + layerDepth;
 
-  return mix(currentTexCoords, prevTexCoords, clamp(weight, 0.0, 1.0));
+  float weight = afterHeight / (afterHeight - beforeHeight);
+  vec2 finalTexCoords =
+      prevTexCoords * weight + currentTexCoords * (1.0 - weight);
+
+  return finalTexCoords;
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness) {
@@ -187,6 +182,14 @@ void main() {
 
   // Parallax mapping to get displaced UVs
   vec2 texCoords = ParallaxOcclusionMapping(tex_coord, viewDirTS, mat_ind);
+
+  // To prevent texture wrapping artifacts at the edges of the object,
+  // you can discard fragments where the parallax coordinates go outside the [0,
+  // 1] range.
+  if (texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 ||
+      texCoords.y < 0.0) {
+    discard;
+  }
 
   MaterialData material;
 
