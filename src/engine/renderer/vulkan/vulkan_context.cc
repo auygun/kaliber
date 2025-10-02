@@ -591,6 +591,8 @@ bool VulkanContext::CreateDevice() {
   requested_device_features.sparseResidencyAliased = 0;
   requested_device_features.inheritedQueries = 0;
 
+  DCHECK(requested_device_features.samplerAnisotropy);
+
   VkDeviceCreateInfo sdevice{};
   sdevice.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
   sdevice.pNext = nullptr;
