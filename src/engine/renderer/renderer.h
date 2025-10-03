@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "base/closure.h"
 #include "base/vecmath.h"
@@ -66,8 +67,12 @@ class Renderer {
   virtual void UpdateTexture(uint64_t resource_id,
                              std::unique_ptr<Image> image) = 0;
   virtual void UpdateTexture(uint64_t resource_id,
+                             std::vector<std::unique_ptr<Image>> images) = 0;
+  virtual void UpdateTexture(uint64_t resource_id,
                              int width,
                              int height,
+                             int num_mip_levels,
+                             int mip_level,
                              ImageFormat format,
                              size_t data_size,
                              uint8_t* image_data) = 0;

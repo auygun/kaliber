@@ -448,15 +448,29 @@ uint64_t RendererVulkan::CreateTexture() {
 
 void RendererVulkan::UpdateTexture(uint64_t resource_id,
                                    std::unique_ptr<Image> image) {
-  UpdateTexture(resource_id, image->GetWidth(), image->GetHeight(),
+  UpdateTexture(resource_id, image->GetWidth(), image->GetHeight(), 1, 0,
                 image->GetFormat(), image->GetSize(), image->GetBuffer());
   task_runner_.Delete(HERE, std::move(image));
   semaphore_.release();
 }
 
 void RendererVulkan::UpdateTexture(uint64_t resource_id,
+                                   std::vector<std::unique_ptr<Image>> images) {
+  int mip_level = 0;
+  for (auto& image : images) {
+    UpdateTexture(resource_id, image->GetWidth(), image->GetHeight(),
+                  images.size(), mip_level++, image->GetFormat(),
+                  image->GetSize(), image->GetBuffer());
+    task_runner_.Delete(HERE, std::move(image));
+    semaphore_.release();
+  }
+}
+
+void RendererVulkan::UpdateTexture(uint64_t resource_id,
                                    int width,
                                    int height,
+                                   int num_mip_levels,
+                                   int mip_level,
                                    ImageFormat format,
                                    size_t data_size,
                                    uint8_t* image_data) {
@@ -467,8 +481,9 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
   VkImageLayout old_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   VkFormat vk_format = GetImageFormat(format);
 
-  if (it->second.view != VK_NULL_HANDLE &&
-      (it->second.width != width || it->second.height != height)) {
+  if (it->second.view != VK_NULL_HANDLE && mip_level == 0 &&
+      (it->second.width != width || it->second.height != height ||
+       it->second.num_mip_levels != num_mip_levels)) {
     // Size mismatch. Recreate the texture.
     FreeImage(std::move(it->second.image), it->second.view,
               it->second.frame_buffer_);
@@ -476,13 +491,16 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
   }
 
   if (it->second.view == VK_NULL_HANDLE) {
-    AllocateImage(it->second.image, it->second.view, vk_format, width, height,
-                  VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
-                      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                  VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+    AllocateImage(
+        it->second.image, it->second.view, vk_format, width, height,
+        num_mip_levels,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+            (num_mip_levels == 1 ? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT : 0),
+        VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
     old_layout = VK_IMAGE_LAYOUT_UNDEFINED;
     it->second.width = width;
     it->second.height = height;
+    it->second.num_mip_levels = num_mip_levels;
   }
 
   task_runner_.PostTask(
@@ -492,9 +510,10 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
                 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                 VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
                 old_layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL));
-  task_runner_.PostTask(HERE, std::bind(&RendererVulkan::CopyImage, this,
-                                        std::get<0>(it->second.image),
-                                        vk_format, image_data, width, height));
+  task_runner_.PostTask(
+      HERE,
+      std::bind(&RendererVulkan::CopyImage, this, std::get<0>(it->second.image),
+                vk_format, image_data, width, height, mip_level));
   task_runner_.PostTask(
       HERE,
       std::bind(&RendererVulkan::ImageMemoryBarrier, this,
@@ -1208,7 +1227,7 @@ bool RendererVulkan::InitializeInternal() {
   sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
   sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
   sampler_info.minLod = 0;
-  sampler_info.maxLod = 0; // static_cast<float>(mipLevels);
+  sampler_info.maxLod = VK_LOD_CLAMP_NONE;
   sampler_info.mipLodBias = 0;
   sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
   sampler_info.unnormalizedCoordinates = VK_FALSE;
@@ -1822,6 +1841,7 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
                                    VkFormat format,
                                    int width,
                                    int height,
+                                   int mip_levels,
                                    VkImageUsageFlags usage,
                                    VmaMemoryUsage mapping) {
   VkImageCreateInfo image_create_info{};
@@ -1830,7 +1850,7 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
   image_create_info.extent.width = width;
   image_create_info.extent.height = height;
   image_create_info.extent.depth = 1;
-  image_create_info.mipLevels = 1; // uint32_t mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
+  image_create_info.mipLevels = mip_levels;
   image_create_info.arrayLayers = 1;
   image_create_info.format = format;
   image_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
@@ -1862,7 +1882,7 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
   image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
   image_view_create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
   image_view_create_info.subresourceRange.baseMipLevel = 0;
-  image_view_create_info.subresourceRange.levelCount = 1;
+  image_view_create_info.subresourceRange.levelCount = mip_levels;
   image_view_create_info.subresourceRange.baseArrayLayer = 0;
   image_view_create_info.subresourceRange.layerCount = 1;
   image_view_create_info.subresourceRange.aspectMask =
@@ -1891,7 +1911,8 @@ void RendererVulkan::CopyImage(VkImage image,
                                VkFormat format,
                                const uint8_t* data,
                                int width,
-                               int height) {
+                               int height,
+                               int mip_level) {
   auto [num_blocks_x, num_blocks_y] =
       GetNumBlocksForImageFormat(format, width, height);
 
@@ -1932,7 +1953,7 @@ void RendererVulkan::CopyImage(VkImage image,
     buffer_image_copy.bufferRowLength = 0;
     buffer_image_copy.bufferImageHeight = 0;
     buffer_image_copy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    buffer_image_copy.imageSubresource.mipLevel = 0;
+    buffer_image_copy.imageSubresource.mipLevel = mip_level;
     buffer_image_copy.imageSubresource.baseArrayLayer = 0;
     buffer_image_copy.imageSubresource.layerCount = 1;
     buffer_image_copy.imageOffset.x = 0;

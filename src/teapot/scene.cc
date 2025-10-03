@@ -123,12 +123,18 @@ void Scene::Create() {
       // {"teapot/iron-rusted4-basecolor.png", "teapot/iron-rusted4-normal.png",
       //  "teapot/iron-rusted4-metalness.png",
       //  "teapot/iron-rusted4-roughness.png"});
-      {"teapot/greasy-pan-2-albedo.png", "teapot/greasy-pan-2-normal.png",
-       "teapot/greasy-pan-2-metal.png", "teapot/greasy-pan-2-roughness.png"});
+      // {"teapot/greasy-pan-2-albedo.png", "teapot/greasy-pan-2-normal.png",
+      //  "teapot/greasy-pan-2-metal.png",
+      //  "teapot/greasy-pan-2-roughness.png"});
       // {"teapot/grimy-metal-albedo.png", "teapot/grimy-metal-normal-dx.png",
-      //  "teapot/grimy-metal-metalness.png", "teapot/grimy-metal-roughness.png"});
+      //  "teapot/grimy-metal-metalness.png",
+      //  "teapot/grimy-metal-roughness.png"});
       // {"teapot/steelplate1_albedo.png", "teapot/steelplate1_normal.png",
-      //  "teapot/steelplate1_metallic.png", "teapot/steelplate1_roughness.png"});
+      //  "teapot/steelplate1_metallic.png",
+      //  "teapot/steelplate1_roughness.png"});
+      {"teapot/alien-slime1-albedo.png", "teapot/alien-slime1-normal-dx.png",
+       "teapot/alien-slime1-metallic.png",
+       "teapot/alien-slime1-roughness.png"});
 
   CreateProjectionMatrix();
 

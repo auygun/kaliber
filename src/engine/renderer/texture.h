@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "engine/renderer/render_resource.h"
 #include "engine/renderer/renderer_types.h"
@@ -22,6 +23,7 @@ class Texture : public RenderResource {
   Texture& operator=(Texture&& other);
 
   void Update(std::unique_ptr<Image> image);
+  void Update(std::vector<std::unique_ptr<Image>> images);
   void Update(int width,
               int height,
               ImageFormat format,

@@ -32,6 +32,14 @@ void Texture::Update(std::unique_ptr<Image> image) {
   renderer_->UpdateTexture(resource_id_, std::move(image));
 }
 
+void Texture::Update(std::vector<std::unique_ptr<Image>> images) {
+  if (!IsValid())
+    resource_id_ = renderer_->CreateTexture();
+  width_ = images[0]->GetWidth();
+  height_ = images[0]->GetHeight();
+  renderer_->UpdateTexture(resource_id_, std::move(images));
+}
+
 void Texture::Update(int width,
                      int height,
                      ImageFormat format,
@@ -41,7 +49,7 @@ void Texture::Update(int width,
     resource_id_ = renderer_->CreateTexture();
   width_ = width;
   height_ = height;
-  renderer_->UpdateTexture(resource_id_, width, height, format, data_size,
+  renderer_->UpdateTexture(resource_id_, width, height, 1, 0, format, data_size,
                            image_data);
 }
 

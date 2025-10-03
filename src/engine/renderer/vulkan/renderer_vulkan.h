@@ -64,8 +64,12 @@ class RendererVulkan final : public Renderer {
   uint64_t CreateTexture() final;
   void UpdateTexture(uint64_t resource_id, std::unique_ptr<Image> image) final;
   void UpdateTexture(uint64_t resource_id,
+                     std::vector<std::unique_ptr<Image>> images) final;
+  void UpdateTexture(uint64_t resource_id,
                      int width,
                      int height,
+                     int num_mip_levels,
+                     int mip_level,
                      ImageFormat format,
                      size_t data_size,
                      uint8_t* image_data) final;
@@ -177,6 +181,7 @@ class RendererVulkan final : public Renderer {
     VkImageView view = VK_NULL_HANDLE;
     int width = 0;
     int height = 0;
+    int num_mip_levels = 0;
     VkFramebuffer frame_buffer_ = VK_NULL_HANDLE;
   };
 
@@ -300,6 +305,7 @@ class RendererVulkan final : public Renderer {
                      VkFormat format,
                      int width,
                      int height,
+                     int mip_levels,
                      VkImageUsageFlags usage,
                      VmaMemoryUsage mapping);
   void FreeImage(Buffer<VkImage> image,
@@ -309,7 +315,8 @@ class RendererVulkan final : public Renderer {
                  VkFormat format,
                  const uint8_t* data,
                  int width,
-                 int height);
+                 int height,
+                 int mip_level);
   void ImageMemoryBarrier(VkImage image,
                           VkPipelineStageFlags src_stage_mask,
                           VkPipelineStageFlags dst_stage_mask,

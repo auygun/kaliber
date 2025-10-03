@@ -1,5 +1,9 @@
 copy("teapot") {
   sources = [
+    "alien-slime1-albedo.png",
+    "alien-slime1-metallic.png",
+    "alien-slime1-normal-dx.png",
+    "alien-slime1-roughness.png",
     "buddha.obj",
     "greasy-pan-2-albedo.png",
     "greasy-pan-2-metal.png",

@@ -274,8 +274,16 @@ void Model::CreateMesh(Renderer* renderer,
     auto image = std::make_unique<Image>();
     if (!image->Load(file_name))
       return;
+
+    std::vector<std::unique_ptr<Image>> images;
+    do {
+      images.push_back(std::move(image));
+      image = std::make_unique<Image>();
+    } while (image->CreateMip(*images.back()));
+    DLOG(0) << file_name << " mip levels: " << images.size();
+
     texture_[texture_index].SetRenderer(renderer);
-    texture_[texture_index].Update(std::move(image));
+    texture_[texture_index].Update(std::move(images));
     ++texture_index;
   }
 
