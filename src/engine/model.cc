@@ -309,8 +309,6 @@ void Model::LoadTexture(const std::string& file_name,
 
   std::vector<std::unique_ptr<Image>> images;
   do {
-    if (is_srgb && !images.empty())
-      images.back()->Linear2SRGB();
     images.push_back(std::move(image));
     image = std::make_unique<Image>();
   } while (image->CreateMip(*images.back(), normalize));

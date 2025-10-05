@@ -31,8 +31,7 @@ struct MaterialData {
 
 layout(set = 2, binding = 0, std430) buffer restrict readonly Materials {
   MaterialData data[];
-}
-materials;
+} materials;
 
 layout(set = 2, binding = 1) uniform sampler2D albedo_map[32];
 layout(set = 2, binding = 2) uniform sampler2D normal_map[32];
@@ -94,7 +93,7 @@ void main() {
   uint mat_ind = draw_call.material_index;
   MaterialData material;
 
-  material.albedo = pow(texture(albedo_map[mat_ind], tex_coord).rgb, vec3(2.2));
+  material.albedo = texture(albedo_map[mat_ind], tex_coord).rgb;
   material.metallic = texture(metallic_map[mat_ind], tex_coord).r;
   material.roughness = texture(roughness_map[mat_ind], tex_coord).r;
   material.ao = materials.data[mat_ind].ao;
