@@ -20,7 +20,7 @@ class Image {
 
   bool Create(int width, int height);
   void Copy(const Image& other);
-  bool CreateMip(const Image& other);
+  bool CreateMip(const Image& other, bool normalize);
   bool Load(const std::string& file_name);
 
   bool Compress();
@@ -45,6 +45,9 @@ class Image {
   void GradientV(const base::Vector4f& c1,
                  const base::Vector4f& c2,
                  int height);
+
+  void SRGB2Linear();
+  void Linear2SRGB();
 
  private:
   base::AlignedMemPtr<uint8_t[]> buffer_;

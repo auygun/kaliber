@@ -18,6 +18,13 @@ namespace eng {
 
 namespace {
 
+enum TextureUsage {
+  kAlbedoMap,
+  kNormalMap,
+  kMetalnessMap,
+  kRoughnessMap,
+};
+
 struct PushConstant {
   unsigned int material_index;
   unsigned int _pad0;
@@ -269,22 +276,12 @@ void Model::CreateMesh(Renderer* renderer,
   geometry_.Update(vertices.size(), vertices.data(), indices.size(),
                    indices.data());
 
-  size_t texture_index = 0;
+  size_t index = 0;
   for (auto& file_name : texture_file_names) {
-    auto image = std::make_unique<Image>();
-    if (!image->Load(file_name))
-      return;
-
-    std::vector<std::unique_ptr<Image>> images;
-    do {
-      images.push_back(std::move(image));
-      image = std::make_unique<Image>();
-    } while (image->CreateMip(*images.back()));
-    DLOG(0) << file_name << " mip levels: " << images.size();
-
-    texture_[texture_index].SetRenderer(renderer);
-    texture_[texture_index].Update(std::move(images));
-    ++texture_index;
+    bool is_srgb = index == kAlbedoMap;
+    bool normalize = index == kNormalMap;
+    LoadTexture(file_name, index, is_srgb, normalize);
+    ++index;
   }
 
   materials_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
@@ -298,6 +295,29 @@ void Model::CreateMesh(Renderer* renderer,
                                      {texture_[3].resource_id()}},  // roughness
                                     {materials_ubo_});
   materials_.resize(meshes_.size());
+}
+
+void Model::LoadTexture(const std::string& file_name,
+                        size_t index,
+                        bool is_srgb,
+                        bool normalize) {
+  auto image = std::make_unique<Image>();
+  if (!image->Load(file_name))
+    return;
+  if (is_srgb)
+    image->SRGB2Linear();
+
+  std::vector<std::unique_ptr<Image>> images;
+  do {
+    if (is_srgb && !images.empty())
+      images.back()->Linear2SRGB();
+    images.push_back(std::move(image));
+    image = std::make_unique<Image>();
+  } while (image->CreateMip(*images.back(), normalize));
+  DLOG(0) << file_name << " mip levels: " << images.size();
+
+  texture_[index].SetRenderer(renderer_);
+  texture_[index].Update(std::move(images));
 }
 
 void Model::Update(float metallic, float roughness, float ao) {

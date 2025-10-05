@@ -61,6 +61,11 @@ class Model {
 
   uint64_t materials_ubo_ = 0;
   uint64_t materials_dset_ = 0;
+
+  void LoadTexture(const std::string& file_name,
+                   size_t index,
+                   bool is_srgb,
+                   bool normalize);
 };
 
 }  // namespace eng
