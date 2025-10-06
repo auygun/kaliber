@@ -19,125 +19,53 @@ using namespace base;
 
 namespace {
 
-// Blend between two colors with equal weights.
-[[maybe_unused]] uint32_t Mix2(uint32_t p0, uint32_t p1) {
-  uint32_t r = (((p0 >> 0) & 0xff) + ((p1 >> 0) & 0xff)) / 2;
-  uint32_t g = (((p0 >> 8) & 0xff) + ((p1 >> 8) & 0xff)) / 2;
-  uint32_t b = (((p0 >> 16) & 0xff) + ((p1 >> 16) & 0xff)) / 2;
-  uint32_t a = (((p0 >> 24) & 0xff) + ((p1 >> 24) & 0xff)) / 2;
-
-  return (r << 0) | (g << 8) | (b << 16) | (a << 24);
+uint8_t Average4Uint8(uint8_t c0, uint8_t c1, uint8_t c2, uint8_t c3) {
+  return static_cast<uint8_t>((c0 + c1 + c2 + c3 + 2) >> 2);
 }
 
-// Blend between four colors with equal weights.
-[[maybe_unused]] uint32_t Mix4(uint32_t p0,
-                               uint32_t p1,
-                               uint32_t p2,
-                               uint32_t p3) {
-  uint32_t r = (((p0 >> 0) & 0xff) + ((p1 >> 0) & 0xff) + ((p2 >> 0) & 0xff) +
-                ((p3 >> 0) & 0xff)) /
-               4;
-  uint32_t g = (((p0 >> 8) & 0xff) + ((p1 >> 8) & 0xff) + ((p2 >> 8) & 0xff) +
-                ((p3 >> 8) & 0xff)) /
-               4;
-  uint32_t b = (((p0 >> 16) & 0xff) + ((p1 >> 16) & 0xff) +
-                ((p2 >> 16) & 0xff) + ((p3 >> 16) & 0xff)) /
-               4;
-  uint32_t a = (((p0 >> 24) & 0xff) + ((p1 >> 24) & 0xff) +
-                ((p2 >> 24) & 0xff) + ((p3 >> 24) & 0xff)) /
-               4;
-
-  return (r << 0) | (g << 8) | (b << 16) | (a << 24);
-}
-
-// Anisotropic blending of colors.
-[[maybe_unused]] void MipNonUniform(void* dst, const void* src, size_t length) {
-  const uint32_t* s = reinterpret_cast<const uint32_t*>(src);
-  uint32_t* d = reinterpret_cast<uint32_t*>(dst);
-  for (size_t y = 0; y < length; ++y) {
-    *d++ = Mix2(s[0], s[1]);
-    s += 2;
-  }
-}
-
-void average_4_uint8(uint8_t& p_out,
-                     const uint8_t& p_a,
-                     const uint8_t& p_b,
-                     const uint8_t& p_c,
-                     const uint8_t& p_d) {
-  p_out = static_cast<uint8_t>((p_a + p_b + p_c + p_d + 2) >> 2);
-}
-
-[[maybe_unused]] void average_4_float(float& p_out,
-                                      const float& p_a,
-                                      const float& p_b,
-                                      const float& p_c,
-                                      const float& p_d) {
-  p_out = (p_a + p_b + p_c + p_d) * 0.25f;
-}
-
-template <typename T, typename T2, typename T3>
-constexpr auto CLAMP(const T m_a, const T2 m_min, const T3 m_max) {
-  return m_a < m_min ? m_min : (m_a > m_max ? m_max : m_a);
-}
-
-void renormalize_uint8(uint8_t* p_rgb) {
-  Vector3f n(p_rgb[0] / 255.0, p_rgb[1] / 255.0, p_rgb[2] / 255.0);
+void NormalizeUint8(uint8_t* rgb) {
+  // Convert to float, scale and bias to [−1,1] before normalization.
+  Vector3f n(rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0);
   n *= 2.0;
   n -= Vector3f(1, 1, 1);
   n.Normalize();
+  // Revers scale and bias, convert to uint8.
   n += Vector3f(1, 1, 1);
   n *= 0.5;
   n *= 255;
-  p_rgb[0] = CLAMP(int(n.x), 0, 255);
-  p_rgb[1] = CLAMP(int(n.y), 0, 255);
-  p_rgb[2] = CLAMP(int(n.z), 0, 255);
+  rgb[0] = std::clamp(int(n.x), 0, 255);
+  rgb[1] = std::clamp(int(n.y), 0, 255);
+  rgb[2] = std::clamp(int(n.z), 0, 255);
 }
 
-[[maybe_unused]] void renormalize_float(float* p_rgb) {
-  Vector3f n(p_rgb[0], p_rgb[1], p_rgb[2]);
-  n.Normalize();
-  p_rgb[0] = n.x;
-  p_rgb[1] = n.y;
-  p_rgb[2] = n.z;
-}
-
-template <typename Component,
+template <typename CT,
           int CC,
-          bool renormalize,
-          void (*average_func)(Component&,
-                               const Component&,
-                               const Component&,
-                               const Component&,
-                               const Component&),
-          void (*renormalize_func)(Component*)>
-void _generate_po2_mipmap(const Component* p_src,
-                          Component* p_dst,
-                          uint32_t p_width,
-                          uint32_t p_height) {
-  // Fast power of 2 mipmap generation.
-  uint32_t dst_w = std::max(p_width >> 1, 1u);
-  uint32_t dst_h = std::max(p_height >> 1, 1u);
+          bool normalize,
+          CT (*average_func)(CT, CT, CT, CT),
+          void (*normalize_func)(CT*)>
+void GenerateMip(const CT* src,
+                 CT* dst,
+                 uint32_t src_width,
+                 uint32_t src_height,
+                 uint32_t dst_width,
+                 uint32_t dst_height) {
+  int right_step = (src_width == 1) ? 0 : CC;
+  int down_step = (src_height == 1) ? 0 : (src_width * CC);
 
-  int right_step = (p_width == 1) ? 0 : CC;
-  int down_step = (p_height == 1) ? 0 : (p_width * CC);
-
-  for (uint32_t i = 0; i < dst_h; i++) {
-    const Component* rup_ptr = &p_src[i * 2 * down_step];
-    const Component* rdown_ptr = rup_ptr + down_step;
-    Component* dst_ptr = &p_dst[i * dst_w * CC];
-    uint32_t count = dst_w;
+  for (uint32_t i = 0; i < dst_height; i++) {
+    const CT* rup_ptr = &src[i * 2 * down_step];
+    const CT* rdown_ptr = rup_ptr + down_step;
+    CT* dst_ptr = &dst[i * dst_width * CC];
+    uint32_t count = dst_width;
 
     while (count) {
       count--;
-      for (int j = 0; j < CC; j++) {
-        average_func(dst_ptr[j], rup_ptr[j], rup_ptr[j + right_step],
-                     rdown_ptr[j], rdown_ptr[j + right_step]);
-      }
+      for (int j = 0; j < CC; j++)
+        dst_ptr[j] = average_func(rup_ptr[j], rup_ptr[j + right_step],
+                                  rdown_ptr[j], rdown_ptr[j + right_step]);
 
-      if (renormalize) {
-        renormalize_func(dst_ptr);
-      }
+      if (normalize)
+        normalize_func(dst_ptr);
 
       dst_ptr += CC;
       rup_ptr += right_step * 2;
@@ -195,51 +123,16 @@ bool Image::CreateMip(const Image& other, bool normalize) {
   buffer_.reset((uint8_t*)AlignedAlloc(GetSize(), 16));
 
   if (normalize) {
-    _generate_po2_mipmap<uint8_t, 4, true, average_4_uint8, renormalize_uint8>(
-        other.buffer_.get(), buffer_.get(), other.width_, other.height_);
+    GenerateMip<uint8_t, 4, true, Average4Uint8, NormalizeUint8>(
+        other.buffer_.get(), buffer_.get(), other.width_, other.height_, width_,
+        height_);
   } else {
-    _generate_po2_mipmap<uint8_t, 4, false, average_4_uint8, renormalize_uint8>(
-        other.buffer_.get(), buffer_.get(), other.width_, other.height_);
+    GenerateMip<uint8_t, 4, false, Average4Uint8, NormalizeUint8>(
+        other.buffer_.get(), buffer_.get(), other.width_, other.height_, width_,
+        height_);
   }
 
   return true;
-
-#if 0
-  // Reduce the dimensions.
-  width_ = std::max(other.width_ >> 1, 1);
-  height_ = std::max(other.height_ >> 1, 1);
-  format_ = ImageFormat::kRGBA32;
-  buffer_.reset((uint8_t*)AlignedAlloc(GetSize(), 16));
-
-  // If the width isn't perfectly divisable with two, then we end up skewing
-  // the image because the source offset isn't updated properly.
-  bool unaligned_width = other.width_ & 1;
-
-  // Special case the non-uniform/anisotropic cases, eg 4:1 or 1:4 textures.
-  // This is only an issue once we reach the highest mip levels where one
-  // dimension is one pixel.
-  if (other.width_ == 1) {
-    // Interestingly the horizontal and vertical case becomes the same code,
-    // it's only about which value to use as the run length that differs.
-    MipNonUniform(buffer_.get(), other.buffer_.get(), height_);
-  } else if (other.height_ == 1) {
-    MipNonUniform(buffer_.get(), other.buffer_.get(), width_);
-  } else {
-    const uint32_t* s = reinterpret_cast<const uint32_t*>(other.buffer_.get());
-    uint32_t* d = reinterpret_cast<uint32_t*>(buffer_.get());
-    for (int y = 0; y < height_; ++y) {
-      for (int x = 0; x < width_; ++x) {
-        *d++ = Mix4(s[0], s[1], s[other.width_], s[other.width_ + 1]);
-        s += 2;
-      }
-      if (unaligned_width)
-        ++s;
-      s += other.width_;
-    }
-  }
-
-  return true;
-#endif
 }
 
 bool Image::Load(const std::string& file_name) {
