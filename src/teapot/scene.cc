@@ -177,6 +177,8 @@ void Scene::Update(const Vector2f& angles, float zoom) {
     ImGui::SliderFloat("light 2", &lights_[1].power, 0.0f, 2000.0f, "%.f");
     ImGui::SliderFloat("light 3", &lights_[2].power, 0.0f, 2000.0f, "%.f");
     ImGui::SliderFloat("light 4", &lights_[3].power, 0.0f, 2000.0f, "%.f");
+    ImGui::SliderFloat("white", &scene_data_.white, 0.0f, 30.0f, "%.1f");
+    ImGui::SliderFloat("exposure", &scene_data_.exposure, 0.0f, 20.0f, "%.1f");
   }
   ImGui::End();
 

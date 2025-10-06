@@ -1,7 +1,10 @@
 layout(set = 1, binding = 0, std140) uniform SceneData {
   mat4 view_projection;
   vec3 cam_pos;
-} scene_data;
+  float white;
+  float exposure;
+}
+scene_data;
 
 struct InstanceData {
   mat4 model;
@@ -9,7 +12,8 @@ struct InstanceData {
 
 layout(set = 1, binding = 2, std430) buffer restrict readonly Instances {
   InstanceData data[];
-} instances;
+}
+instances;
 
 layout(location = 0) in vec3 in_position;
 layout(location = 1) in vec3 in_normal;
