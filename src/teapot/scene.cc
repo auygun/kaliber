@@ -173,10 +173,10 @@ void Scene::Update(const Vector2f& angles, float zoom) {
     ImGui::SliderFloat("metallic", &metallic_, 0.0f, 1.0f, "%.2f");
     ImGui::SliderFloat("roughness", &roughness_, 0.0f, 1.0f, "%.2f");
     ImGui::SliderFloat("ambient", &ao_, 0.0f, 1.0f, "%.2f");
-    ImGui::SliderFloat("light 1", &lights_[0].power, 0.0f, 500.0f, "%.f");
-    ImGui::SliderFloat("light 2", &lights_[1].power, 0.0f, 500.0f, "%.f");
-    ImGui::SliderFloat("light 3", &lights_[2].power, 0.0f, 500.0f, "%.f");
-    ImGui::SliderFloat("light 4", &lights_[3].power, 0.0f, 500.0f, "%.f");
+    ImGui::SliderFloat("light 1", &lights_[0].power, 0.0f, 2000.0f, "%.f");
+    ImGui::SliderFloat("light 2", &lights_[1].power, 0.0f, 2000.0f, "%.f");
+    ImGui::SliderFloat("light 3", &lights_[2].power, 0.0f, 2000.0f, "%.f");
+    ImGui::SliderFloat("light 4", &lights_[3].power, 0.0f, 2000.0f, "%.f");
   }
   ImGui::End();
 

@@ -47,6 +47,33 @@ layout(location = 0) out vec4 frag_color;
 
 const float PI = 3.14159265359;
 
+vec3 ReinhardSimple(vec3 color) {
+  return color / (color + vec3(1.0));
+}
+
+// Based on Reinhard's extended formula, see equation 4 in
+// https://doi.org/cjbgrt
+vec3 ReinhardExtended(vec3 color, float white) {
+  float white_squared = white * white;
+  vec3 white_squared_color = white_squared * color;
+  // Equivalent to color * (1 + color / white_squared) / (1 + color)
+  return (white_squared_color + color * color) /
+         (white_squared_color + white_squared);
+}
+
+// This expects 0-1 range input.
+vec3 Linear2SRGB(vec3 color) {
+#if OFFICIAL_TRANSFORMATION || 1
+  return mix(vec3(1.055f) * pow(color.rgb, vec3(1.0f / 2.4f)) - vec3(0.055f),
+             12.92f * color.rgb, lessThan(color.rgb, vec3(0.0031308f)));
+#else
+  // Approximation from
+  // http://chilliant.blogspot.com/2012/08/srgb-approximations-for-hlsl.html
+  return max(vec3(1.055) * pow(color, vec3(0.416666667)) - vec3(0.055),
+             vec3(0.0));
+#endif
+}
+
 float DistributionGGX(vec3 N, vec3 H, float roughness) {
   float a = roughness * roughness;
   float a2 = a * a;
@@ -154,9 +181,7 @@ void main() {
   vec3 color = ambient + Lo;
 
   // HDR tonemapping
-  color = color / (color + vec3(1.0));
-  // gamma correct
-  color = pow(color, vec3(1.0 / 2.2));
+  color = ReinhardSimple(color);
 
-  frag_color = vec4(color, 1.0);
+  frag_color = vec4(Linear2SRGB(color), 1.0);
 }
