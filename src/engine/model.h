@@ -23,7 +23,7 @@ class Model {
                VertexDescription vertex_description,
                const std::string& file_name,
                const std::string& mtl_file_name,
-               const std::string& tex_file_name);
+               const std::vector<std::string>& texture_file_names);
 
   void CreateMesh(Renderer* renderer,
                   uint64_t shader_id,

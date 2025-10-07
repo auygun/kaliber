@@ -69,7 +69,7 @@ const char vertex_description[] = "p3f;n3f;a3f;t2f";
 }  // namespace
 
 Scene::Scene() {
-  camera_.Create({0, 0, 0}, -0.06f, 0.1f, 3);
+  camera_.Create({0, 0, 0}, -0.06f, 0.1f, 5);
 }
 
 Scene::~Scene() = default;
@@ -88,24 +88,7 @@ void Scene::Create() {
   shader_.Create(std::move(source), vertex_description_, kPrimitive_Triangles,
                  true);
 
-  for (size_t i = 0; i < 10; ++i) {
-    instances_.emplace_back().model.CreateXRotation(0.5f);
-    instances_.back().model.Row(3) = {2.2f * i, 0, 0};
-  }
-
-  scene_data_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
-      shader_.resource_id(), 1, 0, sizeof(SceneData));
-  lights_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
-      shader_.resource_id(), 1, 1, sizeof(lights_));
-  instances_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
-      shader_.resource_id(), 1, 2, sizeof(InstanceData) * instances_.size());
-  scene_dset_ = Engine::Get().GetRenderer()->CreateDescriptorSet(
-      shader_.resource_id(), 1, {},
-      {scene_data_ubo_, lights_ubo_, instances_ubo_});
-
-  Engine::Get().GetRenderer()->UpdateBuffer(
-      instances_ubo_, instances_.data(),
-      sizeof(InstanceData) * instances_.size());
+#if 0
 
   // model_.LoadObj(Engine::Get().GetRenderer(), "teapot/viking_room.obj",
   //                "teapot/viking_room.png", shader_.resource_id());
@@ -113,6 +96,18 @@ void Scene::Create() {
   // model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
   //                vertex_description_, "teapot/sportsCar.obj",
   //                "teapot/sportsCar.mtl", "");
+  model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+                 vertex_description_, "teapot/Cerberus_LP.obj",
+                 "teapot/Cerberus_LP.mtl",
+                 {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
+                  "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
+
+  for (size_t i = 0; i < 1; ++i) {
+    instances_.emplace_back().model.CreateXRotation(0.5f);
+    instances_.back().model.Row(3) = {2.2f * i, 0, 0};
+  }
+
+#else
 
   std::vector<float> vertices;
   std::vector<uint32_t> indices;
@@ -135,6 +130,27 @@ void Scene::Create() {
       {"teapot/alien-slime1-albedo.png", "teapot/alien-slime1-normal-dx.png",
        "teapot/alien-slime1-metallic.png",
        "teapot/alien-slime1-roughness.png"});
+
+  for (size_t i = 0; i < 10; ++i) {
+    instances_.emplace_back().model.CreateXRotation(0.5f);
+    instances_.back().model.Row(3) = {2.2f * i, 0, 0};
+  }
+
+#endif
+
+  scene_data_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
+      shader_.resource_id(), 1, 0, sizeof(SceneData));
+  lights_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
+      shader_.resource_id(), 1, 1, sizeof(lights_));
+  instances_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
+      shader_.resource_id(), 1, 2, sizeof(InstanceData) * instances_.size());
+  scene_dset_ = Engine::Get().GetRenderer()->CreateDescriptorSet(
+      shader_.resource_id(), 1, {},
+      {scene_data_ubo_, lights_ubo_, instances_ubo_});
+
+  Engine::Get().GetRenderer()->UpdateBuffer(
+      instances_ubo_, instances_.data(),
+      sizeof(InstanceData) * instances_.size());
 
   CreateProjectionMatrix();
 

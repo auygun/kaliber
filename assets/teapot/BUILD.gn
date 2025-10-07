@@ -1,5 +1,11 @@
 copy("teapot") {
   sources = [
+    "Cerberus_A.tga",
+    "Cerberus_LP.mtl",
+    "Cerberus_LP.obj",
+    "Cerberus_M.tga",
+    "Cerberus_N.tga",
+    "Cerberus_R.tga",
     "alien-slime1-albedo.png",
     "alien-slime1-metallic.png",
     "alien-slime1-normal-dx.png",

@@ -33,10 +33,10 @@ struct PushConstant {
 };
 
 struct Vertex {
-  Vector3f position;
-  Vector3f normal;
-  Vector3f tangent;
-  float uv[2];
+  Vector3f position{0};
+  Vector3f normal{0};
+  Vector3f tangent{0};
+  float uv[2]{0, 0};
 };
 
 void GenerateTangents(std::vector<uint32_t> indices,
@@ -90,7 +90,7 @@ bool Model::LoadObj(Renderer* renderer,
                     VertexDescription vertex_description,
                     const std::string& file_name,
                     const std::string& mtl_file_name,
-                    const std::string& tex_file_name) {
+                    const std::vector<std::string>& texture_file_names) {
   LOG(0) << "Loading " << file_name;
 
   renderer_ = renderer;
@@ -186,6 +186,11 @@ bool Model::LoadObj(Renderer* renderer,
     int material_id = mi.first;
     auto& indices = mi.second;
 
+    if (material_id < 0 || material_id >= materials.size()) {
+      LOG(0) << "Invalid material id: " << material_id;
+      return false;
+    }
+
     // Remap indices to unique vertices.
     std::vector<uint32_t> remapped_indices(indices.size());
     meshopt_remapIndexBuffer(remapped_indices.data(), indices.data(),
@@ -237,21 +242,33 @@ bool Model::LoadObj(Renderer* renderer,
   }
 #endif
 
+  std::span vertex_view(unique_vertices.data(), unique_vertices.size());
+  GenerateTangents(aggregated_indices, vertex_view);
+
   // Create geometry
   geometry_.SetRenderer(renderer);
   geometry_.Create(kPrimitive_Triangles, vertex_description, kDataType_UInt);
   geometry_.Update(unique_vertices.size(), unique_vertices.data(),
                    aggregated_indices.size(), aggregated_indices.data());
 
+  size_t index = 0;
+  for (auto& file_name : texture_file_names) {
+    bool is_srgb = index == kAlbedoMap;
+    bool normalize = index == kNormalMap;
+    LoadTexture(file_name, index, is_srgb, normalize);
+    ++index;
+  }
+
   materials_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
       shader_id, 2, 0, sizeof(MaterialData) * meshes_.size());
-  materials_dset_ = renderer->CreateDescriptorSet(shader_id, 2,
-                                                  {{},
-                                                   {},   // albedo
-                                                   {},   // normal
-                                                   {},   // metallic
-                                                   {}},  // roughness
-                                                  {materials_ubo_});
+  materials_dset_ =
+      renderer->CreateDescriptorSet(shader_id, 2,
+                                    {{},
+                                     {texture_[0].resource_id()},   // albedo
+                                     {texture_[1].resource_id()},   // normal
+                                     {texture_[2].resource_id()},   // metallic
+                                     {texture_[3].resource_id()}},  // roughness
+                                    {materials_ubo_});
   materials_.resize(meshes_.size());
 
   return true;
