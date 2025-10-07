@@ -39,7 +39,7 @@ struct Vertex {
   float uv[2]{0, 0};
 };
 
-void GenerateTangents(std::vector<uint32_t> indices,
+void GenerateTangents(const std::vector<uint32_t>& indices,
                       std::span<Vertex>& vertices) {
   // Iterate over triangles. We sum the face tangents for shared vertices, then
   // normalize and orthogonalize later.
@@ -277,21 +277,54 @@ bool Model::LoadObj(Renderer* renderer,
 void Model::CreateMesh(Renderer* renderer,
                        uint64_t shader_id,
                        VertexDescription vertex_description,
-                       std::vector<float> vertices,
-                       std::vector<uint32_t> indices,
+                       const std::vector<float>& vertices,
+                       const std::vector<uint32_t>& indices,
                        const std::vector<std::string>& texture_file_names) {
   renderer_ = renderer;
 
-  std::span vertex_view(reinterpret_cast<Vertex*>(vertices.data()),
-                        (sizeof(float) * vertices.size()) / sizeof(Vertex));
-  GenerateTangents(indices, vertex_view);
+  size_t vertex_count = (sizeof(float) * vertices.size()) / sizeof(Vertex);
+  DLOG(0) << "- Total vertices: " << vertex_count;
+  DLOG(0) << "- Total indices: " << indices.size();
 
-  meshes_.push_back({indices.size(), 0, {1, 1, 1}});
+  // Deduplicate vertices.
+  std::vector<uint32_t> remap(vertices.size());
+  size_t total_vertices = meshopt_generateVertexRemap(
+      remap.data(), indices.data(), indices.size(), vertices.data(),
+      vertex_count, sizeof(Vertex));
+
+  std::vector<Vertex> unique_vertices(total_vertices);
+  meshopt_remapVertexBuffer(unique_vertices.data(), vertices.data(),
+                            vertex_count, sizeof(Vertex), remap.data());
+
+  DLOG(0) << "- Unique vertices: " << unique_vertices.size();
+
+  // Remap indices to unique vertices.
+  std::vector<uint32_t> remapped_indices(indices.size());
+  meshopt_remapIndexBuffer(remapped_indices.data(), indices.data(),
+                           indices.size(), remap.data());
+
+  // Optimize indices
+  meshopt_optimizeVertexCache(remapped_indices.data(), remapped_indices.data(),
+                              remapped_indices.size(), unique_vertices.size());
+  meshopt_optimizeOverdraw(remapped_indices.data(), remapped_indices.data(),
+                           remapped_indices.size(),
+                           &unique_vertices[0].position[0],
+                           unique_vertices.size(), sizeof(Vertex), 1.05f);
+
+  // Optimize vertices
+  meshopt_optimizeVertexFetch(unique_vertices.data(), remapped_indices.data(),
+                              remapped_indices.size(), unique_vertices.data(),
+                              unique_vertices.size(), sizeof(Vertex));
+
+  std::span vertex_view(unique_vertices.data(), unique_vertices.size());
+  GenerateTangents(remapped_indices, vertex_view);
+
+  meshes_.push_back({remapped_indices.size(), 0, {1, 1, 1}});
 
   geometry_.SetRenderer(renderer);
   geometry_.Create(kPrimitive_Triangles, vertex_description, kDataType_UInt);
-  geometry_.Update(vertices.size(), vertices.data(), indices.size(),
-                   indices.data());
+  geometry_.Update(unique_vertices.size(), unique_vertices.data(),
+                   remapped_indices.size(), remapped_indices.data());
 
   size_t index = 0;
   for (auto& file_name : texture_file_names) {

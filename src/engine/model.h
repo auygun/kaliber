@@ -28,8 +28,8 @@ class Model {
   void CreateMesh(Renderer* renderer,
                   uint64_t shader_id,
                   VertexDescription vertex_description,
-                  std::vector<float> vertices,
-                  std::vector<uint32_t> indices,
+                  const std::vector<float>& vertices,
+                  const std::vector<uint32_t>& indices,
                   const std::vector<std::string>& texture_file_names);
 
   void Update(float metallic, float roughness, float ao);
