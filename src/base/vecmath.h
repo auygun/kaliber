@@ -1512,6 +1512,10 @@ class Matrix4 {
     return *((const Vector3<T>*)&k[row][0]);
   }
 
+  const Vector4<T>& Row4(int row) const {
+    return *((const Vector4<T>*)&k[row][0]);
+  }
+
   const T* GetData() const { return &k[0][0]; }
 
   std::string ToString() {

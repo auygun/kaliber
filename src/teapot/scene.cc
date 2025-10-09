@@ -6,6 +6,7 @@
 #include "engine/asset/shader_source.h"
 #include "engine/engine.h"
 #include "engine/renderer/renderer.h"
+#include "teapot/bvh.h"
 #include "third_party/imgui/imgui.h"
 
 using namespace base;
@@ -75,6 +76,8 @@ Scene::Scene() {
 Scene::~Scene() = default;
 
 void Scene::Create() {
+  TestBVH();
+
   SetVisible(true);
 
   if (!ParseVertexDescription(vertex_description, vertex_description_)) {
