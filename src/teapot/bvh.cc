@@ -138,7 +138,7 @@ std::unique_ptr<BVHNode> BVH::buildRecursive(
                                     extent.z * extent.z);
 
     // OBB from AABB (axis-aligned in this simple case)
-    node->obb.center = node->sphere.center;
+    node->obb.center = {0, 0, 0};
     node->obb.extents = {node->aabb.max.x - node->obb.center.x,
                          node->aabb.max.y - node->obb.center.y,
                          node->aabb.max.z - node->obb.center.z};
@@ -323,6 +323,7 @@ std::vector<MeshObject> CreateTestObjects(int count) {
 
     obj.initialAABB.min = {x - size, y - size, z - size};
     obj.initialAABB.max = {x + size, y + size, z + size};
+    obj.model.CreateTranslation({x, y, z});
     objects.push_back(obj);
   }
   return objects;
