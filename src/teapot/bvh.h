@@ -11,23 +11,25 @@
 
 // --- Core Geometric Primitives ---
 
-struct Vec3 {
-  float x = 0.0f, y = 0.0f, z = 0.0f;
-  // Basic vector operations can be added here (dot, cross, etc.)
-};
-
 struct BoundingSphere {
-  Vec3 center = {0, 0, 0};
+  base::Vector3f center = {0, 0, 0};
   float radius = 0.0f;
 };
 
+struct OBB {  // Oriented Bounding Box
+  base::Vector3f center{0, 0, 0};
+  base::Vector3f extents{0, 0, 0};  // Half-sizes along each axis
+  base::Vector3f axes[3]{{1, 0, 0},
+                         {0, 1, 0},
+                         {0, 0, 1}};  // Orientation (rotation matrix columns)
+};
+
 struct AABB {  // Axis-Aligned Bounding Box
-  Vec3 min = {std::numeric_limits<float>::max(),
-              std::numeric_limits<float>::max(),
-              std::numeric_limits<float>::max()};
-  Vec3 max = {-std::numeric_limits<float>::max(),
-              -std::numeric_limits<float>::max(),
-              -std::numeric_limits<float>::max()};
+  base::Vector3f min{std::numeric_limits<float>::max()};
+  base::Vector3f max{-std::numeric_limits<float>::lowest()};
+
+  // Computes the World-Space AABB that tightly encloses the given OBB.
+  static AABB CreateFromOBB(const OBB& obb);
 
   void expand(const AABB& other) {
     min.x = std::min(min.x, other.min.x);
@@ -37,40 +39,46 @@ struct AABB {  // Axis-Aligned Bounding Box
     max.y = std::max(max.y, other.max.y);
     max.z = std::max(max.z, other.max.z);
   }
-};
 
-struct OBB {  // Oriented Bounding Box
-  Vec3 center = {0, 0, 0};
-  Vec3 extents = {0, 0, 0};  // Half-sizes along each axis
-  Vec3 axes[3] = {{1, 0, 0},
-                  {0, 1, 0},
-                  {0, 0, 1}};  // Orientation (rotation matrix columns)
+  void expand(const base::Vector3f& p) {
+    min.x = std::min(min.x, p.x);
+    min.y = std::min(min.y, p.y);
+    min.z = std::min(min.z, p.z);
+    max.x = std::max(max.x, p.x);
+    max.y = std::max(max.y, p.y);
+    max.z = std::max(max.z, p.z);
+  }
 };
 
 // Represents a mesh object in the scene
 struct MeshObject {
   int id;
   AABB initialAABB;  // Used for calculating OBB and initial sphere
+  base::Matrix4f model{1};
   // In a real engine, this would point to the actual mesh data and transform
 };
 
 // --- Frustum for Culling ---
-// A frustum is defined by 6 planes
+// The plane equation is: normal · point - distance = 0
 struct Plane {
-  Vec3 normal = {0, 1, 0};
-  float distance = 0.0f;  // Distance from origin
+  base::Vector3f normal{0, 1, 0};
+  float distance = 0.0f;  // Signed distance from origin along the normal
+
+  void Translate(const base::Vector3f& v);
+
+  void Transform(const base::Matrix4f& mat);
 };
 
 class Frustum {
  public:
   Plane planes[6];
 
-  Frustum createFromMatrix(const base::Matrix4f& vp);
+  Frustum CreateFromMatrix(const base::Matrix4f& vp);
 
   // Intersection test methods
-  bool intersects(const BoundingSphere& sphere) const;
-  bool intersects(const AABB& aabb) const;
-  bool intersects(const OBB& obb) const;
+  bool Intersects(const BoundingSphere& sphere) const;
+  bool Intersects(const AABB& aabb) const;
+  bool Intersects(const OBB& oob, const base::Matrix4f& model) const;
 };
 
 // --- BVH Node Structure ---

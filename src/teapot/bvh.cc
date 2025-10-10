@@ -7,13 +7,11 @@ using namespace base;
 // --- Frustum Intersection Implementations ---
 
 // Test sphere vs. all 6 planes
-bool Frustum::intersects(const BoundingSphere& sphere) const {
+bool Frustum::Intersects(const BoundingSphere& sphere) const {
   for (int i = 0; i < 6; ++i) {
     // Calculate signed distance from sphere center to plane
-    float dist = planes[i].normal.x * sphere.center.x +
-                 planes[i].normal.y * sphere.center.y +
-                 planes[i].normal.z * sphere.center.z + planes[i].distance;
-    // If center is outside the plane by more than the radius, it's culled
+    float dist =
+        planes[i].normal.DotProduct(sphere.center) + planes[i].distance;
     if (dist < -sphere.radius) {
       return false;
     }
@@ -22,78 +20,81 @@ bool Frustum::intersects(const BoundingSphere& sphere) const {
 }
 
 // Test AABB vs. all 6 planes
-bool Frustum::intersects(const AABB& aabb) const {
+bool Frustum::Intersects(const AABB& aabb) const {
   for (int i = 0; i < 6; ++i) {
-    // Find the p-vertex (positive) and n-vertex (negative)
-    Vec3 p_vertex = aabb.min;
-
-    if (planes[i].normal.x >= 0) {
+    // Find the positive vertex (corner of AABB extending furthest in the
+    // direction of the plane's normal)
+    Vector3f p_vertex = aabb.min;
+    if (planes[i].normal.x >= 0)
       p_vertex.x = aabb.max.x;
-    }
-    if (planes[i].normal.y >= 0) {
+    if (planes[i].normal.y >= 0)
       p_vertex.y = aabb.max.y;
-    }
-    if (planes[i].normal.z >= 0) {
+    if (planes[i].normal.z >= 0)
       p_vertex.z = aabb.max.z;
-    }
 
-    // If p-vertex is outside, the whole box is outside
-    float dist = planes[i].normal.x * p_vertex.x +
-                 planes[i].normal.y * p_vertex.y +
-                 planes[i].normal.z * p_vertex.z + planes[i].distance;
-    if (dist < 0) {
+    // If p_vertex is outside, the whole box is outside
+    float dist = planes[i].normal.DotProduct(p_vertex) + planes[i].distance;
+    if (dist < 0)
       return false;
-    }
   }
   return true;
 }
 
-// Test OBB vs. all 6 planes
-bool Frustum::intersects(const OBB& obb) const {
-  // Note: A truly robust OBB-Frustum test uses the Separating Axis Theorem
-  // (SAT). This simplified version checks the 8 corners of the OBB against the
-  // frustum planes. It's mostly correct but can fail in some edge cases (e.g.,
-  // a long frustum edge poking through an OBB face).
-  Vec3 corners[8];
-  Vec3 v_x = {obb.axes[0].x * obb.extents.x, obb.axes[0].y * obb.extents.x,
-              obb.axes[0].z * obb.extents.x};
-  Vec3 v_y = {obb.axes[1].x * obb.extents.y, obb.axes[1].y * obb.extents.y,
-              obb.axes[1].z * obb.extents.y};
-  Vec3 v_z = {obb.axes[2].x * obb.extents.z, obb.axes[2].y * obb.extents.z,
-              obb.axes[2].z * obb.extents.z};
-
-  corners[0] = {obb.center.x - v_x.x - v_y.x - v_z.x,
-                obb.center.y - v_x.y - v_y.y - v_z.y,
-                obb.center.z - v_x.z - v_y.z - v_z.z};
-  // ... calculate other 7 corners similarly
-
-  // For this simplified example, we'll just check the center with an expanded
-  // radius as a proxy
-  float max_extent = std::max({obb.extents.x, obb.extents.y, obb.extents.z});
-  BoundingSphere proxySphere = {obb.center,
-                                max_extent * 1.74f};  // 1.74 is ~sqrt(3)
-  return this->intersects(proxySphere);
+// static
+AABB AABB::CreateFromOBB(const OBB& obb) {
+  AABB aabb;
+  for (int i = 0; i < 8; ++i) {
+    Vector3f p = obb.center;
+    p = p + obb.axes[0] * obb.extents.x * ((i & 1) ? 1.0f : -1.0f);
+    p = p + obb.axes[1] * obb.extents.y * ((i & 2) ? 1.0f : -1.0f);
+    p = p + obb.axes[2] * obb.extents.z * ((i & 4) ? 1.0f : -1.0f);
+    aabb.expand(p);
+  }
+  return aabb;
 }
 
-Frustum Frustum::createFromMatrix(const Matrix4f& vp) {
+void Plane::Translate(const base::Vector3f& v) {
+  distance -= normal.DotProduct(v);
+}
+
+void Plane::Transform(const base::Matrix4f& mat) {
+  normal.MultiplyMatrix3x3(mat);
+  Translate(mat.Row(3));
+}
+
+bool Frustum::Intersects(const OBB& obb, const Matrix4f& model) const {
+  Matrix4f inverse_model;
+  model.InverseOrthogonal(inverse_model);
+
+  // Create a new frustum in the model's local space.
+  Frustum local_frustum;
+  for (int i = 0; i < 6; i++) {
+    local_frustum.planes[i] = planes[i];
+    local_frustum.planes[i].Transform(inverse_model);
+  }
+
+  // obb is in the local space
+  AABB aabb = AABB::CreateFromOBB(obb);
+  return local_frustum.Intersects(aabb);
+}
+
+Frustum Frustum::CreateFromMatrix(const Matrix4f& vp) {
   Frustum frustum;
 
-  // Left Plane: row4 + row1
-  Vector4f n[6];
-  n[0] = vp.Row4(3) + vp.Row4(0);
-  n[1] = vp.Row4(3) - vp.Row4(0);
-  n[2] = vp.Row4(3) + vp.Row4(1);
-  n[3] = vp.Row4(3) - vp.Row4(1);
-  n[4] = vp.Row4(3) + vp.Row4(2);
-  n[5] = vp.Row4(3) - vp.Row4(2);
+  Vector4f raw_planes[6];
+  raw_planes[0] = vp.Row4(3) + vp.Row4(0);
+  raw_planes[1] = vp.Row4(3) - vp.Row4(0);
+  raw_planes[2] = vp.Row4(3) + vp.Row4(1);
+  raw_planes[3] = vp.Row4(3) - vp.Row4(1);
+  raw_planes[4] = vp.Row4(2);
+  raw_planes[5] = vp.Row4(3) - vp.Row4(2);
 
   for (int i = 0; i < 6; ++i) {
-    n[i].Normalize();
-
-    frustum.planes[i].normal.x = n[i].x;
-    frustum.planes[i].normal.y = n[i].y;
-    frustum.planes[i].normal.z = n[i].z;
-    frustum.planes[i].distance = n[i].w;
+    Vector3f n = raw_planes[i].GetVector3();
+    float d = raw_planes[i][3];
+    float magnitude = n.Length();
+    frustum.planes[i].normal = n / magnitude;
+    frustum.planes[i].distance = d / -magnitude;
   }
   return frustum;
 }
@@ -130,9 +131,9 @@ std::unique_ptr<BVHNode> BVH::buildRecursive(
     node->sphere.center = {(node->aabb.min.x + node->aabb.max.x) * 0.5f,
                            (node->aabb.min.y + node->aabb.max.y) * 0.5f,
                            (node->aabb.min.z + node->aabb.max.z) * 0.5f};
-    Vec3 extent = {node->aabb.max.x - node->sphere.center.x,
-                   node->aabb.max.y - node->sphere.center.y,
-                   node->aabb.max.z - node->sphere.center.z};
+    Vector3f extent = {node->aabb.max.x - node->sphere.center.x,
+                       node->aabb.max.y - node->sphere.center.y,
+                       node->aabb.max.z - node->sphere.center.z};
     node->sphere.radius = std::sqrt(extent.x * extent.x + extent.y * extent.y +
                                     extent.z * extent.z);
 
@@ -151,9 +152,9 @@ std::unique_ptr<BVHNode> BVH::buildRecursive(
   }
 
   // Find the longest axis of the combined AABB to split along
-  Vec3 extent = {node->aabb.max.x - node->aabb.min.x,
-                 node->aabb.max.y - node->aabb.min.y,
-                 node->aabb.max.z - node->aabb.min.z};
+  Vector3f extent = {node->aabb.max.x - node->aabb.min.x,
+                     node->aabb.max.y - node->aabb.min.y,
+                     node->aabb.max.z - node->aabb.min.z};
   int axis = 0;
   if (extent.y > extent.x)
     axis = 1;
@@ -194,7 +195,7 @@ std::unique_ptr<BVHNode> BVH::buildRecursive(
 
   // This internal node's AABB is already computed. Now compute its bounding
   // sphere. A simple sphere that contains the children's spheres.
-  Vec3 center_dist = {
+  Vector3f center_dist = {
       node->right->sphere.center.x - node->left->sphere.center.x,
       node->right->sphere.center.y - node->left->sphere.center.y,
       node->right->sphere.center.z - node->left->sphere.center.z};
@@ -203,7 +204,8 @@ std::unique_ptr<BVHNode> BVH::buildRecursive(
                 center_dist.z * center_dist.z);
   node->sphere.radius =
       (dist + node->left->sphere.radius + node->right->sphere.radius) * 0.5f;
-  Vec3 dir = {center_dist.x / dist, center_dist.y / dist, center_dist.z / dist};
+  Vector3f dir = {center_dist.x / dist, center_dist.y / dist,
+                  center_dist.z / dist};
   node->sphere.center = {
       node->left->sphere.center.x +
           dir.x * (node->sphere.radius - node->left->sphere.radius),
@@ -229,17 +231,17 @@ void BVH::frustumCullRecursive(const BVHNode* node,
                                std::vector<int>& visibleObjectIDs) const {
   // Hierarchical Culling:
   // 1. Coarse Sphere test
-  if (!frustum.intersects(node->sphere)) {
+  if (!frustum.Intersects(node->sphere)) {
     return;
   }
 
   // Finer AABB/OBB test
-  if (!frustum.intersects(node->aabb)) {
+  if (!frustum.Intersects(node->aabb)) {
     return;
   }
 
   if (node->isLeaf()) {
-    if (frustum.intersects(node->obb)) {
+    if (frustum.Intersects(node->obb, node->object->model)) {
       visibleObjectIDs.push_back(node->object->id);
     }
     return;
@@ -352,7 +354,7 @@ int TestBVH() {
   bvh.build(sceneObjects);
   DLOG(0) << "BVH built with initial objects.";
 
-//   bvh.dumpTree();
+  //   bvh.dumpTree();
 
   // 2. Define a viewing frustum for culling
   Frustum viewFrustum = CreateTestFrustum();
