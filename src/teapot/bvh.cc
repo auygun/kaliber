@@ -125,94 +125,60 @@ std::unique_ptr<BVHNode> BVH::buildRecursive(
     node->object = objects[0];
 
     // Create tight-fitting bounds for the single object
-    node->aabb = node->object->initialAABB;
+    node->aabb = AABB::CreateFromOBB(node->object->obb);
+    node->aabb.min *= node->object->model;
+    node->aabb.max *= node->object->model;
+  } else {
+    // --- 2. Internal Node Case ---
+    // Calculate the combined AABB for all objects in this node
+    for (const auto& obj : objects) {
+      AABB aabb = AABB::CreateFromOBB(obj->obb);
+      aabb.min *= obj->model;
+      aabb.max *= obj->model;
+      node->aabb.expand(aabb);
+    }
 
-    // Sphere from AABB
-    node->sphere.center = {(node->aabb.min.x + node->aabb.max.x) * 0.5f,
-                           (node->aabb.min.y + node->aabb.max.y) * 0.5f,
-                           (node->aabb.min.z + node->aabb.max.z) * 0.5f};
-    Vector3f extent = {node->aabb.max.x - node->sphere.center.x,
-                       node->aabb.max.y - node->sphere.center.y,
-                       node->aabb.max.z - node->sphere.center.z};
-    node->sphere.radius = std::sqrt(extent.x * extent.x + extent.y * extent.y +
-                                    extent.z * extent.z);
+    // Find the longest axis of the combined AABB to split along
+    Vector3f extent = node->aabb.max - node->aabb.min;
+    int axis = 0;
+    if (extent.y > extent.x)
+      axis = 1;
+    if (extent.z > extent.y)
+      axis = 2;
 
-    // OBB from AABB (axis-aligned in this simple case)
-    node->obb.center = {0, 0, 0};
-    node->obb.extents = {node->aabb.max.x - node->obb.center.x,
-                         node->aabb.max.y - node->obb.center.y,
-                         node->aabb.max.z - node->obb.center.z};
-    return node;
+    // Sort objects along the chosen axis based on their center point
+    std::sort(objects.begin(), objects.end(),
+              [axis](const MeshObject* a, const MeshObject* b) {
+                float ca, cb;
+                if (axis == 0) {
+                  ca = a->model.Row(3).x;
+                  cb = b->model.Row(3).x;
+                } else if (axis == 1) {
+                  ca = a->model.Row(3).y;
+                  cb = b->model.Row(3).y;
+                } else if (axis == 2) {
+                  ca = a->model.Row(3).z;
+                  cb = b->model.Row(3).z;
+                }
+                return ca < cb;
+              });
+
+    // Split the objects into two halves
+    size_t mid = objects.size() / 2;
+    std::vector<const MeshObject*> leftObjects(objects.begin(),
+                                               objects.begin() + mid);
+    std::vector<const MeshObject*> rightObjects(objects.begin() + mid,
+                                                objects.end());
+
+    // Recursively build child nodes
+    node->left = buildRecursive(leftObjects);
+    node->right = buildRecursive(rightObjects);
   }
 
-  // --- 2. Internal Node Case ---
-  // Calculate the combined AABB for all objects in this node
-  for (const auto& obj : objects) {
-    node->aabb.expand(obj->initialAABB);
-  }
-
-  // Find the longest axis of the combined AABB to split along
-  Vector3f extent = {node->aabb.max.x - node->aabb.min.x,
-                     node->aabb.max.y - node->aabb.min.y,
-                     node->aabb.max.z - node->aabb.min.z};
-  int axis = 0;
-  if (extent.y > extent.x)
-    axis = 1;
-  if (extent.z > extent.y)
-    axis = 2;
-
-  // Sort objects along the chosen axis based on their center point
-  std::sort(objects.begin(), objects.end(),
-            [axis](const MeshObject* a, const MeshObject* b) {
-              float centerA = 0, centerB = 0;
-              switch (axis) {
-                case 0:
-                  centerA = a->initialAABB.min.x + a->initialAABB.max.x;
-                  centerB = b->initialAABB.min.x + b->initialAABB.max.x;
-                  break;
-                case 1:
-                  centerA = a->initialAABB.min.y + a->initialAABB.max.y;
-                  centerB = b->initialAABB.min.y + b->initialAABB.max.y;
-                  break;
-                case 2:
-                  centerA = a->initialAABB.min.z + a->initialAABB.max.z;
-                  centerB = b->initialAABB.min.z + b->initialAABB.max.z;
-                  break;
-              }
-              return centerA < centerB;
-            });
-
-  // Split the objects into two halves
-  size_t mid = objects.size() / 2;
-  std::vector<const MeshObject*> leftObjects(objects.begin(),
-                                             objects.begin() + mid);
-  std::vector<const MeshObject*> rightObjects(objects.begin() + mid,
-                                              objects.end());
-
-  // Recursively build child nodes
-  node->left = buildRecursive(leftObjects);
-  node->right = buildRecursive(rightObjects);
-
-  // This internal node's AABB is already computed. Now compute its bounding
-  // sphere. A simple sphere that contains the children's spheres.
-  Vector3f center_dist = {
-      node->right->sphere.center.x - node->left->sphere.center.x,
-      node->right->sphere.center.y - node->left->sphere.center.y,
-      node->right->sphere.center.z - node->left->sphere.center.z};
-  float dist =
-      std::sqrt(center_dist.x * center_dist.x + center_dist.y * center_dist.y +
-                center_dist.z * center_dist.z);
-  node->sphere.radius =
-      (dist + node->left->sphere.radius + node->right->sphere.radius) * 0.5f;
-  Vector3f dir = {center_dist.x / dist, center_dist.y / dist,
-                  center_dist.z / dist};
-  node->sphere.center = {
-      node->left->sphere.center.x +
-          dir.x * (node->sphere.radius - node->left->sphere.radius),
-      node->left->sphere.center.y +
-          dir.y * (node->sphere.radius - node->left->sphere.radius),
-      node->left->sphere.center.z +
-          dir.z * (node->sphere.radius - node->left->sphere.radius)};
+  // Sphere from AABB
+  node->sphere.center = (node->aabb.min + node->aabb.max) * 0.5f;
+  Vector3f extent = node->aabb.max - node->sphere.center;
+  node->sphere.radius = extent.Length();
 
   return node;
 }
@@ -231,19 +197,14 @@ void BVH::frustumCullRecursive(const BVHNode* node,
                                std::vector<int>& visibleObjectIDs) const {
   // Hierarchical Culling:
   // 1. Coarse Sphere test
-  if (!frustum.Intersects(node->sphere)) {
+  if (!frustum.Intersects(node->sphere))
     return;
-  }
-
-  // Finer AABB/OBB test
-  if (!frustum.Intersects(node->aabb)) {
-    return;
-  }
 
   if (node->isLeaf()) {
-    if (frustum.Intersects(node->obb, node->object->model)) {
+    if (frustum.Intersects(node->object->obb, node->object->model))
       visibleObjectIDs.push_back(node->object->id);
-    }
+    return;
+  } else if (!frustum.Intersects(node->aabb)) {
     return;
   }
 
@@ -321,8 +282,8 @@ std::vector<MeshObject> CreateTestObjects(int count) {
     float z = static_cast<float>(rand() % 200 - 100);
     float size = static_cast<float>(rand() % 5 + 1);
 
-    obj.initialAABB.min = {x - size, y - size, z - size};
-    obj.initialAABB.max = {x + size, y + size, z + size};
+    obj.obb.center = {0, 0, 0};
+    obj.obb.extents = {size, size, size};
     obj.model.CreateTranslation({x, y, z});
     objects.push_back(obj);
   }
@@ -371,8 +332,9 @@ int TestBVH() {
   // Add a new object that should be visible
   MeshObject newObj;
   newObj.id = 1001;
-  newObj.initialAABB.min = {0, 0, 0};
-  newObj.initialAABB.max = {5, 5, 5};
+  newObj.obb.center = {0, 0, 0};
+  newObj.obb.extents = {5, 5, 5};
+  newObj.model.CreateTranslation({0, 0, 0});
   sceneObjects.push_back(newObj);
   DLOG(0) << "Added a new object (ID 1001) at the origin.";
 

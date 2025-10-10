@@ -26,7 +26,7 @@ struct OBB {  // Oriented Bounding Box
 
 struct AABB {  // Axis-Aligned Bounding Box
   base::Vector3f min{std::numeric_limits<float>::max()};
-  base::Vector3f max{-std::numeric_limits<float>::lowest()};
+  base::Vector3f max{std::numeric_limits<float>::lowest()};
 
   // Computes the World-Space AABB that tightly encloses the given OBB.
   static AABB CreateFromOBB(const OBB& obb);
@@ -53,7 +53,7 @@ struct AABB {  // Axis-Aligned Bounding Box
 // Represents a mesh object in the scene
 struct MeshObject {
   int id;
-  AABB initialAABB;  // Used for calculating OBB and initial sphere
+  OBB obb;
   base::Matrix4f model{1};
   // In a real engine, this would point to the actual mesh data and transform
 };
@@ -87,7 +87,6 @@ struct BVHNode {
   // Bounding volumes for the node
   BoundingSphere sphere;
   AABB aabb;
-  OBB obb;  // Only valid for leaf nodes
 
   // Tree structure
   std::unique_ptr<BVHNode> left = nullptr;
