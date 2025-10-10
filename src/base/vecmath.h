@@ -444,7 +444,7 @@ class Vector3 {
     return Vector3(k[0] * scalar, k[1] * scalar, k[2] * scalar);
   }
 
-  Vector3 operator*(const Matrix4<T>& mat) {
+  Vector3 operator*(const Matrix4<T>& mat) const {
     Vector3 r;
     for (int i = 0; i < 3; i++)
       r.k[i] = mat.k[0][i] * k[0] + mat.k[1][i] * k[1] + mat.k[2][i] * k[2] +
@@ -504,6 +504,20 @@ class Vector3 {
     k[0] /= v;
     k[1] /= v;
     k[2] /= v;
+  }
+
+  void MultiplyMatrix3x3(const Matrix4<T>& mat) {
+    Vector3 r;
+    for (int i = 0; i < 3; i++)
+      r.k[i] = mat.k[0][i] * k[0] + mat.k[1][i] * k[1] + mat.k[2][i] * k[2];
+    k[0] = r.k[0];
+    k[1] = r.k[1];
+    k[2] = r.k[2];
+  }
+
+  void MultiplyMatrix3x3(const Matrix4<T>& mat, Vector3& dst) const {
+    for (int i = 0; i < 3; i++)
+      dst.k[i] = mat.k[0][i] * k[0] + mat.k[1][i] * k[1] + mat.k[2][i] * k[2];
   }
 
   T DotProduct(const Vector3& other) const {
@@ -621,6 +635,13 @@ class Vector4 {
     k[3] = w;
   }
 
+  explicit Vector4(Vector3<T> v, T w) {
+    k[0] = v.k[0];
+    k[1] = v.k[1];
+    k[2] = v.k[2];
+    k[3] = w;
+  }
+
   Vector4& operator=(T s) {
     k[0] = k[1] = k[2] = k[3] = s;
     return *this;
@@ -680,7 +701,7 @@ class Vector4 {
     return Vector4(k[0] * scalar, k[1] * scalar, k[2] * scalar, k[3] * scalar);
   }
 
-  Vector4 operator*(const Matrix4<T>& mat) {
+  Vector4 operator*(const Matrix4<T>& mat) const {
     Vector4 r;
     for (int i = 0; i < 3; i++)
       r.k[i] = mat.k[0][i] * k[0] + mat.k[1][i] * k[1] + mat.k[2][i] * k[2] +
@@ -806,6 +827,10 @@ class Vector4 {
     if (LengthSqr() > Sqr(max_len))
       SetLength(max_len);
     return *this;
+  }
+
+  Vector3<T> GetVector3() const {
+    return Vector3<T>(x, y, z);
   }
 
   const T* GetData() const { return &k[0]; }
@@ -1120,12 +1145,6 @@ class Matrix4 {
     for (int row = 0; row < 3; row++)
       for (int col = 0; col < 3; col++)
         k[row][col] *= s;
-  }
-
-  void Multiply3x3(T s, Matrix4& dst) {
-    for (int row = 0; row < 3; row++)
-      for (int col = 0; col < 3; col++)
-        dst.k[row][col] *= s;
   }
 
   // Multiply 4x4
