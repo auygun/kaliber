@@ -11,11 +11,6 @@
 
 // --- Core Geometric Primitives ---
 
-struct BoundingSphere {
-  base::Vector3f center = {0, 0, 0};
-  float radius = 0.0f;
-};
-
 struct OBB {  // Oriented Bounding Box
   base::Vector3f center{0, 0, 0};
   base::Vector3f extents{0, 0, 0};  // Half-sizes along each axis
@@ -76,7 +71,6 @@ class Frustum {
   Frustum CreateFromMatrix(const base::Matrix4f& vp);
 
   // Intersection test methods
-  bool Intersects(const BoundingSphere& sphere) const;
   bool Intersects(const AABB& aabb) const;
   bool Intersects(const OBB& oob, const base::Matrix4f& model) const;
 };
@@ -84,8 +78,7 @@ class Frustum {
 // --- BVH Node Structure ---
 
 struct BVHNode {
-  // Bounding volumes for the node
-  BoundingSphere sphere;
+  // Bounding volume for the node
   AABB aabb;
 
   // Tree structure

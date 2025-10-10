@@ -6,19 +6,6 @@ using namespace base;
 
 // --- Frustum Intersection Implementations ---
 
-// Test sphere vs. all 6 planes
-bool Frustum::Intersects(const BoundingSphere& sphere) const {
-  for (int i = 0; i < 6; ++i) {
-    // Calculate signed distance from sphere center to plane
-    float dist =
-        planes[i].normal.DotProduct(sphere.center) + planes[i].distance;
-    if (dist < -sphere.radius) {
-      return false;
-    }
-  }
-  return true;
-}
-
 // Test AABB vs. all 6 planes
 bool Frustum::Intersects(const AABB& aabb) const {
   for (int i = 0; i < 6; ++i) {
@@ -175,11 +162,6 @@ std::unique_ptr<BVHNode> BVH::buildRecursive(
     node->right = buildRecursive(rightObjects);
   }
 
-  // Sphere from AABB
-  node->sphere.center = (node->aabb.min + node->aabb.max) * 0.5f;
-  Vector3f extent = node->aabb.max - node->sphere.center;
-  node->sphere.radius = extent.Length();
-
   return node;
 }
 
@@ -196,10 +178,6 @@ void BVH::frustumCullRecursive(const BVHNode* node,
                                const Frustum& frustum,
                                std::vector<int>& visibleObjectIDs) const {
   // Hierarchical Culling:
-  // 1. Coarse Sphere test
-  if (!frustum.Intersects(node->sphere))
-    return;
-
   if (node->isLeaf()) {
     if (frustum.Intersects(node->object->obb, node->object->model))
       visibleObjectIDs.push_back(node->object->id);
@@ -256,8 +234,10 @@ void BVH::dumpNodeRecursive(const BVHNode* node,
   }
 
   // Print bounding box info
-  out << "Center: (" << node->sphere.center.x << ", " << node->sphere.center.y
-      << ", " << node->sphere.center.z << ")";
+  Vector3f center = (node->aabb.min + node->aabb.max) * 0.5f;
+  float radius = (node->aabb.max - center).Length();
+  out << "Center: (" << center.x << ", " << center.y << ", " << center.z
+      << ") Radius: " << radius;
   DLOG(0) << out.str();
 
   // Prepare the prefix for the children
