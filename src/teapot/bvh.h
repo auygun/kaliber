@@ -62,6 +62,8 @@ struct Plane {
   void Translate(const base::Vector3f& v);
 
   void Transform(const base::Matrix4f& mat);
+
+  bool IsOutside(const AABB& aabb) const;
 };
 
 class Frustum {

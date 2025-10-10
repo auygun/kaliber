@@ -6,22 +6,26 @@ using namespace base;
 
 // --- Frustum Intersection Implementations ---
 
+bool Plane::IsOutside(const AABB& aabb) const {
+  // Find the positive vertex (corner of AABB extending furthest in the
+  // direction of the plane's normal)
+  Vector3f p_vertex = aabb.min;
+  if (normal.x >= 0)
+    p_vertex.x = aabb.max.x;
+  if (normal.y >= 0)
+    p_vertex.y = aabb.max.y;
+  if (normal.z >= 0)
+    p_vertex.z = aabb.max.z;
+
+  // If p_vertex is outside, the whole box is outside
+  float dist = normal.DotProduct(p_vertex) + distance;
+  return dist < 0;
+}
+
 // Test AABB vs. all 6 planes
 bool Frustum::Intersects(const AABB& aabb) const {
   for (int i = 0; i < 6; ++i) {
-    // Find the positive vertex (corner of AABB extending furthest in the
-    // direction of the plane's normal)
-    Vector3f p_vertex = aabb.min;
-    if (planes[i].normal.x >= 0)
-      p_vertex.x = aabb.max.x;
-    if (planes[i].normal.y >= 0)
-      p_vertex.y = aabb.max.y;
-    if (planes[i].normal.z >= 0)
-      p_vertex.z = aabb.max.z;
-
-    // If p_vertex is outside, the whole box is outside
-    float dist = planes[i].normal.DotProduct(p_vertex) + planes[i].distance;
-    if (dist < 0)
+    if (planes[i].IsOutside(aabb))
       return false;
   }
   return true;
@@ -50,19 +54,21 @@ void Plane::Transform(const base::Matrix4f& mat) {
 }
 
 bool Frustum::Intersects(const OBB& obb, const Matrix4f& model) const {
+  // obb is in the local space
+  AABB aabb = AABB::CreateFromOBB(obb);
+
   Matrix4f inverse_model;
   model.InverseOrthogonal(inverse_model);
 
-  // Create a new frustum in the model's local space.
-  Frustum local_frustum;
+  // Transform each plane to the model's local space and test
   for (int i = 0; i < 6; i++) {
-    local_frustum.planes[i] = planes[i];
-    local_frustum.planes[i].Transform(inverse_model);
-  }
+    Plane p = planes[i];
+    p.Transform(inverse_model);
 
-  // obb is in the local space
-  AABB aabb = AABB::CreateFromOBB(obb);
-  return local_frustum.Intersects(aabb);
+    if (p.IsOutside(aabb))
+      return false;
+  }
+  return true;
 }
 
 Frustum Frustum::CreateFromMatrix(const Matrix4f& vp) {
