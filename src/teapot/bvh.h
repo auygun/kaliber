@@ -114,10 +114,16 @@ class BVH {
   std::unique_ptr<BVHNode> buildRecursive(
       std::vector<const MeshObject*>& objects);
 
+  std::unique_ptr<BVHNode> buildIterative(
+      std::vector<const MeshObject*>& objects);
+
   // Recursive function for frustum culling
   void frustumCullRecursive(const BVHNode* node,
                             const Frustum& frustum,
                             std::vector<int>& visibleObjectIDs) const;
+
+  std::vector<int> frustumCullIterative(const BVHNode* root,
+                                        const Frustum& frustum) const;
 
   void dumpNodeRecursive(const BVHNode* node,
                          const std::string& prefix,

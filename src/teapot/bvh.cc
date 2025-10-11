@@ -1,5 +1,8 @@
 #include "teapot/bvh.h"
 
+#include <deque>
+#include <tuple>
+
 #include "base/log.h"
 
 using namespace base;
@@ -95,17 +98,18 @@ Frustum Frustum::CreateFromMatrix(const Matrix4f& vp) {
 // --- BVH Method Implementations ---
 
 void BVH::build(const std::vector<MeshObject>& objects) {
-  if (objects.empty()) {
-    root = nullptr;
-    return;
-  }
-  // Create a vector of pointers to the objects to be sorted recursively
+  // if (objects.empty()) {
+  //   root = nullptr;
+  //   return;
+  // }
+  // // Create a vector of pointers to the objects to be sorted recursively
   std::vector<const MeshObject*> objectPointers;
   objectPointers.reserve(objects.size());
   for (const auto& obj : objects) {
     objectPointers.push_back(&obj);
   }
-  root = buildRecursive(objectPointers);
+  // root = buildRecursive(objectPointers);
+  root = buildIterative(objectPointers);
 }
 
 std::unique_ptr<BVHNode> BVH::buildRecursive(
@@ -166,13 +170,88 @@ std::unique_ptr<BVHNode> BVH::buildRecursive(
   return node;
 }
 
-std::vector<int> BVH::frustumCull(const Frustum& frustum) const {
-  std::vector<int> visibleObjectIDs;
-  if (!root) {
-    return visibleObjectIDs;
+std::unique_ptr<BVHNode> BVH::buildIterative(
+    std::vector<const MeshObject*>& objects) {
+  if (objects.empty())
+    return nullptr;
+
+  auto root = std::make_unique<BVHNode>();
+
+  // Create stack for depth-first traversal and start the process with the root
+  // node using all objects.
+  std::deque<std::tuple<BVHNode*, std::vector<const MeshObject*>>> stack;
+  stack.push_back(std::make_tuple(root.get(), objects));
+
+  while (!stack.empty()) {
+    auto [node, node_objects] = stack.back();
+    stack.pop_back();
+
+    // If only one object remains, this is a leaf.
+    if (node_objects.size() == 1) {
+      node->object = node_objects[0];
+      continue;
+    }
+
+    // Calculate the combined AABB for all node_objects in this job.
+    for (const auto& obj : node_objects) {
+      AABB aabb = AABB::CreateFromOBB(obj->obb);
+      aabb.min *= obj->model;
+      aabb.max *= obj->model;
+      node->aabb.expand(aabb);
+    }
+
+    // Find the longest axis of the combined AABB to split along.
+    Vector3f extent = node->aabb.max - node->aabb.min;
+    int axis = 0;
+    if (extent.y > extent.x)
+      axis = 1;
+    if (extent.z > extent.y)
+      axis = 2;
+
+    // Sort node_objects along the chosen axis based on their center point.
+    std::sort(node_objects.begin(), node_objects.end(),
+              [axis](const MeshObject* a, const MeshObject* b) {
+                float ca, cb;
+                if (axis == 0) {
+                  ca = a->model.Row(3).x;
+                  cb = b->model.Row(3).x;
+                } else if (axis == 1) {
+                  ca = a->model.Row(3).y;
+                  cb = b->model.Row(3).y;
+                } else {  // axis == 2
+                  ca = a->model.Row(3).z;
+                  cb = b->model.Row(3).z;
+                }
+                return ca < cb;
+              });
+
+    // Split the objects into two halves
+    size_t mid = node_objects.size() / 2;
+    std::vector<const MeshObject*> leftObjects(node_objects.begin(),
+                                               node_objects.begin() + mid);
+    std::vector<const MeshObject*> rightObjects(node_objects.begin() + mid,
+                                                node_objects.end());
+
+    // Create the child nodes.
+    node->left = std::make_unique<BVHNode>();
+    node->right = std::make_unique<BVHNode>();
+
+    // Push the children onto the stack.
+    stack.push_back({node->right.get(), std::move(rightObjects)});
+    stack.push_back({node->left.get(), std::move(leftObjects)});
   }
-  frustumCullRecursive(root.get(), frustum, visibleObjectIDs);
-  return visibleObjectIDs;
+
+  return root;
+}
+
+std::vector<int> BVH::frustumCull(const Frustum& frustum) const {
+  // std::vector<int> visibleObjectIDs;
+  // if (!root) {
+  //   return visibleObjectIDs;
+  // }
+  // frustumCullRecursive(root.get(), frustum, visibleObjectIDs);
+  // return visibleObjectIDs;
+  return frustumCullIterative(root.get(), frustum);
 }
 
 void BVH::frustumCullRecursive(const BVHNode* node,
@@ -196,6 +275,40 @@ void BVH::frustumCullRecursive(const BVHNode* node,
   }
 }
 
+std::vector<int> BVH::frustumCullIterative(const BVHNode* root,
+                                           const Frustum& frustum) const {
+  std::vector<int> visible_object_ids;
+  if (!root)
+    return visible_object_ids;
+
+  // Create stack for depth-first traversal and start the process with the root
+  // of the BVH tree.
+  std::deque<const BVHNode*> stack;
+  stack.push_back(root);
+
+  while (!stack.empty()) {
+    const BVHNode* node = stack.back();
+    stack.pop_back();
+
+    // If the node is a leaf, it's representing a single object. Otherwise It's
+    // an internal node with children.
+    if (node->isLeaf()) {
+      if (frustum.Intersects(node->object->obb, node->object->model))
+        visible_object_ids.push_back(node->object->id);
+      continue;
+    } else if (!frustum.Intersects(node->aabb)) {
+      continue;
+    }
+
+    // The internal node passed tests, check its children
+    if (node->left)
+      stack.push_back(node->left.get());
+    if (node->right)
+      stack.push_back(node->right.get());
+  }
+
+  return visible_object_ids;
+}
 /**
  * @brief Dumps a visual representation of the entire BVH tree to the console.
  */
