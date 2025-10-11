@@ -46,10 +46,7 @@ Frustum CreateTestFrustum() {
 
 }  // namespace
 
-// static
-Frustum Frustum::CreateFromMatrix(const Matrix4f& vp) {
-  Frustum frustum;
-
+void Frustum::CreateFromMatrix(const Matrix4f& vp) {
   Vector4f raw_planes[6];
   raw_planes[0] = vp.Row4(3) + vp.Row4(0);
   raw_planes[1] = vp.Row4(3) - vp.Row4(0);
@@ -62,10 +59,9 @@ Frustum Frustum::CreateFromMatrix(const Matrix4f& vp) {
     Vector3f n = raw_planes[i].GetVector3();
     float d = raw_planes[i][3];
     float magnitude = n.Length();
-    frustum.planes[i].normal = n / magnitude;
-    frustum.planes[i].distance = d / -magnitude;
+    planes[i].normal = n / magnitude;
+    planes[i].distance = d / -magnitude;
   }
-  return frustum;
 }
 
 // Test AABB vs. all 6 planes
@@ -207,9 +203,9 @@ std::vector<int> FrustumCull(const BVHNode* root, const Frustum& frustum) {
  * @brief Recursively prints a node and its children with ASCII art connectors.
  * @param node The current node to print.
  * @param prefix The string prefix that creates the connecting lines.
- * @param isLast True if this is the last child of its parent (a right child).
+ * @param is_last True if this is the last child of its parent (a right child).
  */
-void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool isLast) {
+void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool is_last) {
   if (!node)
     return;
 
@@ -217,7 +213,7 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool isLast) {
 
   // Print the current node's line
   out << prefix;
-  out << (isLast ? "└──" : "├──");
+  out << (is_last ? "└──" : "├──");
 
   // Print node details
   if (node->object) {
@@ -234,7 +230,7 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool isLast) {
   DLOG(0) << out.str();
 
   // Prepare the prefix for the children
-  std::string child_prefix = prefix + (isLast ? "    " : "│   ");
+  std::string child_prefix = prefix + (is_last ? "    " : "│   ");
 
   // Recurse for children (if they exist)
   if (!node->object) {
