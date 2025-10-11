@@ -1,5 +1,6 @@
 #include "teapot/bvh.h"
 
+#include <algorithm>
 #include <deque>
 #include <tuple>
 
@@ -7,7 +8,83 @@
 
 using namespace base;
 
-// --- Frustum Intersection Implementations ---
+namespace {
+
+// Helper function to create some random mesh objects for testing
+std::vector<MeshObject> CreateTestObjects(int count) {
+  std::vector<MeshObject> objects;
+  for (int i = 0; i < count; ++i) {
+    MeshObject obj;
+    obj.id = i;
+    float x = static_cast<float>(rand() % 200 - 100);
+    float y = static_cast<float>(rand() % 200 - 100);
+    float z = static_cast<float>(rand() % 200 - 100);
+    float size = static_cast<float>(rand() % 5 + 1);
+
+    obj.obb.center = {0, 0, 0};
+    obj.obb.extents = {size, size, size};
+    obj.model.CreateTranslation({x, y, z});
+    objects.push_back(obj);
+  }
+  return objects;
+}
+
+// Helper to create a sample frustum for testing
+Frustum CreateTestFrustum() {
+  Frustum f;
+  // This is a simplified frustum. A real one would be derived from a projection
+  // matrix. For this example, we define 6 planes that form a box-like view
+  // volume.
+  f.planes[0] = {{1, 0, 0}, 50};   // Left
+  f.planes[1] = {{-1, 0, 0}, 50};  // Right
+  f.planes[2] = {{0, 1, 0}, 50};   // Bottom
+  f.planes[3] = {{0, -1, 0}, 50};  // Top
+  f.planes[4] = {{0, 0, 1}, 50};   // Near
+  f.planes[5] = {{0, 0, -1}, 50};  // Far
+  return f;
+}
+
+}  // namespace
+
+// static
+AABB AABB::CreateFromOBB(const OBB& obb) {
+  AABB aabb;
+  for (int i = 0; i < 8; ++i) {
+    Vector3f p = obb.center;
+    p = p + obb.axes[0] * obb.extents.x * ((i & 1) ? 1.0f : -1.0f);
+    p = p + obb.axes[1] * obb.extents.y * ((i & 2) ? 1.0f : -1.0f);
+    p = p + obb.axes[2] * obb.extents.z * ((i & 4) ? 1.0f : -1.0f);
+    aabb.Expand(p);
+  }
+  return aabb;
+}
+
+void AABB::Expand(const AABB& other) {
+  min.x = std::min(min.x, other.min.x);
+  min.y = std::min(min.y, other.min.y);
+  min.z = std::min(min.z, other.min.z);
+  max.x = std::max(max.x, other.max.x);
+  max.y = std::max(max.y, other.max.y);
+  max.z = std::max(max.z, other.max.z);
+}
+
+void AABB::Expand(const base::Vector3f& p) {
+  min.x = std::min(min.x, p.x);
+  min.y = std::min(min.y, p.y);
+  min.z = std::min(min.z, p.z);
+  max.x = std::max(max.x, p.x);
+  max.y = std::max(max.y, p.y);
+  max.z = std::max(max.z, p.z);
+}
+
+void Plane::Translate(const base::Vector3f& v) {
+  distance -= normal.DotProduct(v);
+}
+
+void Plane::Transform(const base::Matrix4f& mat) {
+  normal.MultiplyMatrix3x3(mat);
+  Translate(mat.Row(3));
+}
 
 bool Plane::IsOutside(const AABB& aabb) const {
   // Find the positive vertex (corner of AABB extending furthest in the
@@ -25,55 +102,7 @@ bool Plane::IsOutside(const AABB& aabb) const {
   return dist < 0;
 }
 
-// Test AABB vs. all 6 planes
-bool Frustum::Intersects(const AABB& aabb) const {
-  for (int i = 0; i < 6; ++i) {
-    if (planes[i].IsOutside(aabb))
-      return false;
-  }
-  return true;
-}
-
 // static
-AABB AABB::CreateFromOBB(const OBB& obb) {
-  AABB aabb;
-  for (int i = 0; i < 8; ++i) {
-    Vector3f p = obb.center;
-    p = p + obb.axes[0] * obb.extents.x * ((i & 1) ? 1.0f : -1.0f);
-    p = p + obb.axes[1] * obb.extents.y * ((i & 2) ? 1.0f : -1.0f);
-    p = p + obb.axes[2] * obb.extents.z * ((i & 4) ? 1.0f : -1.0f);
-    aabb.expand(p);
-  }
-  return aabb;
-}
-
-void Plane::Translate(const base::Vector3f& v) {
-  distance -= normal.DotProduct(v);
-}
-
-void Plane::Transform(const base::Matrix4f& mat) {
-  normal.MultiplyMatrix3x3(mat);
-  Translate(mat.Row(3));
-}
-
-bool Frustum::Intersects(const OBB& obb, const Matrix4f& model) const {
-  // obb is in the local space
-  AABB aabb = AABB::CreateFromOBB(obb);
-
-  Matrix4f inverse_model;
-  model.InverseOrthogonal(inverse_model);
-
-  // Transform each plane to the model's local space and test
-  for (int i = 0; i < 6; i++) {
-    Plane p = planes[i];
-    p.Transform(inverse_model);
-
-    if (p.IsOutside(aabb))
-      return false;
-  }
-  return true;
-}
-
 Frustum Frustum::CreateFromMatrix(const Matrix4f& vp) {
   Frustum frustum;
 
@@ -95,7 +124,32 @@ Frustum Frustum::CreateFromMatrix(const Matrix4f& vp) {
   return frustum;
 }
 
-// --- BVH Method Implementations ---
+// Test AABB vs. all 6 planes
+bool Frustum::Intersects(const AABB& aabb) const {
+  for (int i = 0; i < 6; ++i) {
+    if (planes[i].IsOutside(aabb))
+      return false;
+  }
+  return true;
+}
+
+bool Frustum::Intersects(const OBB& obb, const Matrix4f& model) const {
+  // obb is in the local space
+  AABB aabb = AABB::CreateFromOBB(obb);
+
+  Matrix4f inverse_model;
+  model.InverseOrthogonal(inverse_model);
+
+  // Transform each plane to the model's local space and test
+  for (int i = 0; i < 6; i++) {
+    Plane p = planes[i];
+    p.Transform(inverse_model);
+
+    if (p.IsOutside(aabb))
+      return false;
+  }
+  return true;
+}
 
 std::unique_ptr<BVHNode> BuildBVHTree(std::vector<const MeshObject*>& objects) {
   if (objects.empty())
@@ -123,7 +177,7 @@ std::unique_ptr<BVHNode> BuildBVHTree(std::vector<const MeshObject*>& objects) {
       AABB aabb = AABB::CreateFromOBB(obj->obb);
       aabb.min *= obj->model;
       aabb.max *= obj->model;
-      node->aabb.expand(aabb);
+      node->aabb.Expand(aabb);
     }
 
     // Find the longest axis of the combined AABB to split along.
@@ -153,18 +207,18 @@ std::unique_ptr<BVHNode> BuildBVHTree(std::vector<const MeshObject*>& objects) {
 
     // Split the objects into two halves
     size_t mid = node_objects.size() / 2;
-    std::vector<const MeshObject*> leftObjects(node_objects.begin(),
-                                               node_objects.begin() + mid);
-    std::vector<const MeshObject*> rightObjects(node_objects.begin() + mid,
-                                                node_objects.end());
+    std::vector<const MeshObject*> left_objects(node_objects.begin(),
+                                                node_objects.begin() + mid);
+    std::vector<const MeshObject*> right_objects(node_objects.begin() + mid,
+                                                 node_objects.end());
 
     // Create the child nodes.
     node->left = std::make_unique<BVHNode>();
     node->right = std::make_unique<BVHNode>();
 
     // Push the children onto the stack.
-    stack.push_back({node->right.get(), std::move(rightObjects)});
-    stack.push_back({node->left.get(), std::move(leftObjects)});
+    stack.push_back({node->right.get(), std::move(right_objects)});
+    stack.push_back({node->left.get(), std::move(left_objects)});
   }
 
   return root;
@@ -235,117 +289,83 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool isLast) {
   DLOG(0) << out.str();
 
   // Prepare the prefix for the children
-  std::string childPrefix = prefix + (isLast ? "    " : "│   ");
+  std::string child_prefix = prefix + (isLast ? "    " : "│   ");
 
   // Recurse for children (if they exist)
   if (!node->object) {
     // The right child is always the "last" one for its parent
-    DumpBVHTree(node->left.get(), childPrefix, false);
-    DumpBVHTree(node->right.get(), childPrefix, true);
+    DumpBVHTree(node->left.get(), child_prefix, false);
+    DumpBVHTree(node->right.get(), child_prefix, true);
   }
-}
-
-// Helper function to create some random mesh objects for testing
-std::vector<MeshObject> CreateTestObjects(int count) {
-  std::vector<MeshObject> objects;
-  for (int i = 0; i < count; ++i) {
-    MeshObject obj;
-    obj.id = i;
-    float x = static_cast<float>(rand() % 200 - 100);
-    float y = static_cast<float>(rand() % 200 - 100);
-    float z = static_cast<float>(rand() % 200 - 100);
-    float size = static_cast<float>(rand() % 5 + 1);
-
-    obj.obb.center = {0, 0, 0};
-    obj.obb.extents = {size, size, size};
-    obj.model.CreateTranslation({x, y, z});
-    objects.push_back(obj);
-  }
-  return objects;
-}
-
-// Helper to create a sample frustum for testing
-Frustum CreateTestFrustum() {
-  Frustum f;
-  // This is a simplified frustum. A real one would be derived from a projection
-  // matrix. For this example, we define 6 planes that form a box-like view
-  // volume.
-  f.planes[0] = {{1, 0, 0}, 50};   // Left
-  f.planes[1] = {{-1, 0, 0}, 50};  // Right
-  f.planes[2] = {{0, 1, 0}, 50};   // Bottom
-  f.planes[3] = {{0, -1, 0}, 50};  // Top
-  f.planes[4] = {{0, 0, 1}, 50};   // Near
-  f.planes[5] = {{0, 0, -1}, 50};  // Far
-  return f;
 }
 
 int TestBVH() {
   std::unique_ptr<BVHNode> root;
 
   // 1. Create a scene with some mesh objects
-  std::vector<MeshObject> sceneObjects = CreateTestObjects(1000);
-  DLOG(0) << "Created " << sceneObjects.size() << " objects in the scene.";
+  std::vector<MeshObject> scene_objects = CreateTestObjects(1000);
+  DLOG(0) << "Created " << scene_objects.size() << " objects in the scene.";
 
   // Build the BVH from the list of objects
-  std::vector<const MeshObject*> objectPointers;
-  objectPointers.reserve(sceneObjects.size());
-  for (const auto& obj : sceneObjects)
-    objectPointers.push_back(&obj);
-  root = BuildBVHTree(objectPointers);
+  std::vector<const MeshObject*> object_pointers;
+  object_pointers.reserve(scene_objects.size());
+  for (const auto& obj : scene_objects)
+    object_pointers.push_back(&obj);
+  root = BuildBVHTree(object_pointers);
   DLOG(0) << "BVH built with initial objects.";
 
   //   bvh.dumpTree();
 
   // 2. Define a viewing frustum for culling
-  Frustum viewFrustum = CreateTestFrustum();
+  Frustum view_frustum = CreateTestFrustum();
 
   // 3. Perform frustum culling
-  std::vector<int> visibleObjects = FrustumCull(root.get(), viewFrustum);
-  DLOG(0) << "Found " << visibleObjects.size() << " visible objects.";
-  DCHECK(visibleObjects.size() == 163);
+  std::vector<int> visible_objects = FrustumCull(root.get(), view_frustum);
+  DLOG(0) << "Found " << visible_objects.size() << " visible objects.";
+  DCHECK(visible_objects.size() == 163);
 
   // --- 4. Example of dynamic object management ---
   DLOG(0) << "\n--- Simulating dynamic updates ---";
 
   // Add a new object that should be visible
-  MeshObject newObj;
-  newObj.id = 1001;
-  newObj.obb.center = {0, 0, 0};
-  newObj.obb.extents = {5, 5, 5};
-  newObj.model.CreateTranslation({0, 0, 0});
-  sceneObjects.push_back(newObj);
+  MeshObject new_obj;
+  new_obj.id = 1001;
+  new_obj.obb.center = {0, 0, 0};
+  new_obj.obb.extents = {5, 5, 5};
+  new_obj.model.CreateTranslation({0, 0, 0});
+  scene_objects.push_back(new_obj);
   DLOG(0) << "Added a new object (ID 1001) at the origin.";
 
   // Remove an existing object (ID 5)
-  sceneObjects.erase(
-      std::remove_if(sceneObjects.begin(), sceneObjects.end(),
+  scene_objects.erase(
+      std::remove_if(scene_objects.begin(), scene_objects.end(),
                      [](const MeshObject& obj) { return obj.id == 5; }),
-      sceneObjects.end());
+      scene_objects.end());
   DLOG(0) << "Removed object with ID 5.";
 
   // Rebuild the BVH with the modified object list
-  objectPointers.clear();
-  objectPointers.reserve(sceneObjects.size());
-  for (const auto& obj : sceneObjects)
-    objectPointers.push_back(&obj);
-  root = BuildBVHTree(objectPointers);
+  object_pointers.clear();
+  object_pointers.reserve(scene_objects.size());
+  for (const auto& obj : scene_objects)
+    object_pointers.push_back(&obj);
+  root = BuildBVHTree(object_pointers);
   DLOG(0) << "BVH rebuilt after updates.";
 
   // Perform culling again with the updated BVH
-  visibleObjects = FrustumCull(root.get(), viewFrustum);
-  DLOG(0) << "Found " << visibleObjects.size()
+  visible_objects = FrustumCull(root.get(), view_frustum);
+  DLOG(0) << "Found " << visible_objects.size()
           << " visible objects after update.";
-  DCHECK(visibleObjects.size() == 164);
+  DCHECK(visible_objects.size() == 164);
 
   // Check if the new object is in the visible set
-  bool foundNew = false;
-  for (int id : visibleObjects) {
+  bool found_new = false;
+  for (int id : visible_objects) {
     if (id == 1001) {
-      foundNew = true;
+      found_new = true;
       break;
     }
   }
-  if (foundNew) {
+  if (found_new) {
     DLOG(0) << "The newly added object (ID 1001) is visible as expected.";
   } else {
     NOTREACHED()
