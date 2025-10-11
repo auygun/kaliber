@@ -116,58 +116,53 @@ std::unique_ptr<BVHNode> BVH::buildRecursive(
   // If only one object remains, create a leaf node.
   if (objects.size() == 1) {
     node->object = objects[0];
-
-    // Create tight-fitting bounds for the single object
-    node->aabb = AABB::CreateFromOBB(node->object->obb);
-    node->aabb.min *= node->object->model;
-    node->aabb.max *= node->object->model;
-  } else {
-    // --- 2. Internal Node Case ---
-    // Calculate the combined AABB for all objects in this node
-    for (const auto& obj : objects) {
-      AABB aabb = AABB::CreateFromOBB(obj->obb);
-      aabb.min *= obj->model;
-      aabb.max *= obj->model;
-      node->aabb.expand(aabb);
-    }
-
-    // Find the longest axis of the combined AABB to split along
-    Vector3f extent = node->aabb.max - node->aabb.min;
-    int axis = 0;
-    if (extent.y > extent.x)
-      axis = 1;
-    if (extent.z > extent.y)
-      axis = 2;
-
-    // Sort objects along the chosen axis based on their center point
-    std::sort(objects.begin(), objects.end(),
-              [axis](const MeshObject* a, const MeshObject* b) {
-                float ca, cb;
-                if (axis == 0) {
-                  ca = a->model.Row(3).x;
-                  cb = b->model.Row(3).x;
-                } else if (axis == 1) {
-                  ca = a->model.Row(3).y;
-                  cb = b->model.Row(3).y;
-                } else if (axis == 2) {
-                  ca = a->model.Row(3).z;
-                  cb = b->model.Row(3).z;
-                }
-                return ca < cb;
-              });
-
-    // Split the objects into two halves
-    size_t mid = objects.size() / 2;
-    std::vector<const MeshObject*> leftObjects(objects.begin(),
-                                               objects.begin() + mid);
-    std::vector<const MeshObject*> rightObjects(objects.begin() + mid,
-                                                objects.end());
-
-    // Recursively build child nodes
-    node->left = buildRecursive(leftObjects);
-    node->right = buildRecursive(rightObjects);
+    return node;
   }
 
+  // --- 2. Internal Node Case ---
+  // Calculate the combined AABB for all objects in this node
+  for (const auto& obj : objects) {
+    AABB aabb = AABB::CreateFromOBB(obj->obb);
+    aabb.min *= obj->model;
+    aabb.max *= obj->model;
+    node->aabb.expand(aabb);
+  }
+
+  // Find the longest axis of the combined AABB to split along
+  Vector3f extent = node->aabb.max - node->aabb.min;
+  int axis = 0;
+  if (extent.y > extent.x)
+    axis = 1;
+  if (extent.z > extent.y)
+    axis = 2;
+
+  // Sort objects along the chosen axis based on their center point
+  std::sort(objects.begin(), objects.end(),
+            [axis](const MeshObject* a, const MeshObject* b) {
+              float ca, cb;
+              if (axis == 0) {
+                ca = a->model.Row(3).x;
+                cb = b->model.Row(3).x;
+              } else if (axis == 1) {
+                ca = a->model.Row(3).y;
+                cb = b->model.Row(3).y;
+              } else if (axis == 2) {
+                ca = a->model.Row(3).z;
+                cb = b->model.Row(3).z;
+              }
+              return ca < cb;
+            });
+
+  // Split the objects into two halves
+  size_t mid = objects.size() / 2;
+  std::vector<const MeshObject*> leftObjects(objects.begin(),
+                                             objects.begin() + mid);
+  std::vector<const MeshObject*> rightObjects(objects.begin() + mid,
+                                              objects.end());
+
+  // Recursively build child nodes
+  node->left = buildRecursive(leftObjects);
+  node->right = buildRecursive(rightObjects);
   return node;
 }
 
