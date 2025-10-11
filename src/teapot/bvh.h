@@ -93,42 +93,13 @@ struct BVHNode {
   bool isLeaf() const { return object != nullptr; }
 };
 
-// --- The BVH Class ---
+std::unique_ptr<BVHNode> BuildBVHTree(std::vector<const MeshObject*>& objects);
 
-class BVH {
- public:
-  BVH() = default;
+std::vector<int> FrustumCull(const BVHNode* root, const Frustum& frustum);
 
-  // Rebuilds the BVH from the provided list of objects
-  void build(const std::vector<MeshObject>& objects);
-
-  // Performs frustum culling and returns a list of visible object IDs
-  std::vector<int> frustumCull(const Frustum& frustum) const;
-
-  void dumpTree() const;
-
- private:
-  std::unique_ptr<BVHNode> root = nullptr;
-
-  // Recursive function to build the tree
-  std::unique_ptr<BVHNode> buildRecursive(
-      std::vector<const MeshObject*>& objects);
-
-  std::unique_ptr<BVHNode> buildIterative(
-      std::vector<const MeshObject*>& objects);
-
-  // Recursive function for frustum culling
-  void frustumCullRecursive(const BVHNode* node,
-                            const Frustum& frustum,
-                            std::vector<int>& visibleObjectIDs) const;
-
-  std::vector<int> frustumCullIterative(const BVHNode* root,
-                                        const Frustum& frustum) const;
-
-  void dumpNodeRecursive(const BVHNode* node,
-                         const std::string& prefix,
-                         bool isLast) const;
-};
+void DumpBVHTree(const BVHNode* node,
+                 const std::string& prefix,
+                 bool isLast = true);
 
 int TestBVH();
 

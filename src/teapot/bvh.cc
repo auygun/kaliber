@@ -97,81 +97,7 @@ Frustum Frustum::CreateFromMatrix(const Matrix4f& vp) {
 
 // --- BVH Method Implementations ---
 
-void BVH::build(const std::vector<MeshObject>& objects) {
-  // if (objects.empty()) {
-  //   root = nullptr;
-  //   return;
-  // }
-  // // Create a vector of pointers to the objects to be sorted recursively
-  std::vector<const MeshObject*> objectPointers;
-  objectPointers.reserve(objects.size());
-  for (const auto& obj : objects) {
-    objectPointers.push_back(&obj);
-  }
-  // root = buildRecursive(objectPointers);
-  root = buildIterative(objectPointers);
-}
-
-std::unique_ptr<BVHNode> BVH::buildRecursive(
-    std::vector<const MeshObject*>& objects) {
-  auto node = std::make_unique<BVHNode>();
-
-  // --- 1. Leaf Node Case ---
-  // If only one object remains, create a leaf node.
-  if (objects.size() == 1) {
-    node->object = objects[0];
-    return node;
-  }
-
-  // --- 2. Internal Node Case ---
-  // Calculate the combined AABB for all objects in this node
-  for (const auto& obj : objects) {
-    AABB aabb = AABB::CreateFromOBB(obj->obb);
-    aabb.min *= obj->model;
-    aabb.max *= obj->model;
-    node->aabb.expand(aabb);
-  }
-
-  // Find the longest axis of the combined AABB to split along
-  Vector3f extent = node->aabb.max - node->aabb.min;
-  int axis = 0;
-  if (extent.y > extent.x)
-    axis = 1;
-  if (extent.z > extent.y)
-    axis = 2;
-
-  // Sort objects along the chosen axis based on their center point
-  std::sort(objects.begin(), objects.end(),
-            [axis](const MeshObject* a, const MeshObject* b) {
-              float ca, cb;
-              if (axis == 0) {
-                ca = a->model.Row(3).x;
-                cb = b->model.Row(3).x;
-              } else if (axis == 1) {
-                ca = a->model.Row(3).y;
-                cb = b->model.Row(3).y;
-              } else if (axis == 2) {
-                ca = a->model.Row(3).z;
-                cb = b->model.Row(3).z;
-              }
-              return ca < cb;
-            });
-
-  // Split the objects into two halves
-  size_t mid = objects.size() / 2;
-  std::vector<const MeshObject*> leftObjects(objects.begin(),
-                                             objects.begin() + mid);
-  std::vector<const MeshObject*> rightObjects(objects.begin() + mid,
-                                              objects.end());
-
-  // Recursively build child nodes
-  node->left = buildRecursive(leftObjects);
-  node->right = buildRecursive(rightObjects);
-  return node;
-}
-
-std::unique_ptr<BVHNode> BVH::buildIterative(
-    std::vector<const MeshObject*>& objects) {
+std::unique_ptr<BVHNode> BuildBVHTree(std::vector<const MeshObject*>& objects) {
   if (objects.empty())
     return nullptr;
 
@@ -244,39 +170,7 @@ std::unique_ptr<BVHNode> BVH::buildIterative(
   return root;
 }
 
-std::vector<int> BVH::frustumCull(const Frustum& frustum) const {
-  // std::vector<int> visibleObjectIDs;
-  // if (!root) {
-  //   return visibleObjectIDs;
-  // }
-  // frustumCullRecursive(root.get(), frustum, visibleObjectIDs);
-  // return visibleObjectIDs;
-  return frustumCullIterative(root.get(), frustum);
-}
-
-void BVH::frustumCullRecursive(const BVHNode* node,
-                               const Frustum& frustum,
-                               std::vector<int>& visibleObjectIDs) const {
-  // Hierarchical Culling:
-  if (node->isLeaf()) {
-    if (frustum.Intersects(node->object->obb, node->object->model))
-      visibleObjectIDs.push_back(node->object->id);
-    return;
-  } else if (!frustum.Intersects(node->aabb)) {
-    return;
-  }
-
-  // If it's an internal node that passed tests, check its children
-  if (node->left) {
-    frustumCullRecursive(node->left.get(), frustum, visibleObjectIDs);
-  }
-  if (node->right) {
-    frustumCullRecursive(node->right.get(), frustum, visibleObjectIDs);
-  }
-}
-
-std::vector<int> BVH::frustumCullIterative(const BVHNode* root,
-                                           const Frustum& frustum) const {
+std::vector<int> FrustumCull(const BVHNode* root, const Frustum& frustum) {
   std::vector<int> visible_object_ids;
   if (!root)
     return visible_object_ids;
@@ -309,18 +203,6 @@ std::vector<int> BVH::frustumCullIterative(const BVHNode* root,
 
   return visible_object_ids;
 }
-/**
- * @brief Dumps a visual representation of the entire BVH tree to the console.
- */
-void BVH::dumpTree() const {
-  DLOG(0) << "\n--- BVH Tree Dump ---";
-  if (root) {
-    dumpNodeRecursive(root.get(), "", true);
-  } else {
-    DLOG(0) << "[Empty Tree]";
-  }
-  DLOG(0) << "---------------------";
-}
 
 /**
  * @brief Recursively prints a node and its children with ASCII art connectors.
@@ -328,9 +210,7 @@ void BVH::dumpTree() const {
  * @param prefix The string prefix that creates the connecting lines.
  * @param isLast True if this is the last child of its parent (a right child).
  */
-void BVH::dumpNodeRecursive(const BVHNode* node,
-                            const std::string& prefix,
-                            bool isLast) const {
+void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool isLast) {
   if (!node)
     return;
 
@@ -360,8 +240,8 @@ void BVH::dumpNodeRecursive(const BVHNode* node,
   // Recurse for children (if they exist)
   if (!node->object) {
     // The right child is always the "last" one for its parent
-    dumpNodeRecursive(node->left.get(), childPrefix, false);
-    dumpNodeRecursive(node->right.get(), childPrefix, true);
+    DumpBVHTree(node->left.get(), childPrefix, false);
+    DumpBVHTree(node->right.get(), childPrefix, true);
   }
 }
 
@@ -400,14 +280,18 @@ Frustum CreateTestFrustum() {
 }
 
 int TestBVH() {
-  BVH bvh;
+  std::unique_ptr<BVHNode> root;
 
   // 1. Create a scene with some mesh objects
   std::vector<MeshObject> sceneObjects = CreateTestObjects(1000);
   DLOG(0) << "Created " << sceneObjects.size() << " objects in the scene.";
 
   // Build the BVH from the list of objects
-  bvh.build(sceneObjects);
+  std::vector<const MeshObject*> objectPointers;
+  objectPointers.reserve(sceneObjects.size());
+  for (const auto& obj : sceneObjects)
+    objectPointers.push_back(&obj);
+  root = BuildBVHTree(objectPointers);
   DLOG(0) << "BVH built with initial objects.";
 
   //   bvh.dumpTree();
@@ -416,7 +300,7 @@ int TestBVH() {
   Frustum viewFrustum = CreateTestFrustum();
 
   // 3. Perform frustum culling
-  std::vector<int> visibleObjects = bvh.frustumCull(viewFrustum);
+  std::vector<int> visibleObjects = FrustumCull(root.get(), viewFrustum);
   DLOG(0) << "Found " << visibleObjects.size() << " visible objects.";
   DCHECK(visibleObjects.size() == 163);
 
@@ -440,11 +324,15 @@ int TestBVH() {
   DLOG(0) << "Removed object with ID 5.";
 
   // Rebuild the BVH with the modified object list
-  bvh.build(sceneObjects);
+  objectPointers.clear();
+  objectPointers.reserve(sceneObjects.size());
+  for (const auto& obj : sceneObjects)
+    objectPointers.push_back(&obj);
+  root = BuildBVHTree(objectPointers);
   DLOG(0) << "BVH rebuilt after updates.";
 
   // Perform culling again with the updated BVH
-  visibleObjects = bvh.frustumCull(viewFrustum);
+  visibleObjects = FrustumCull(root.get(), viewFrustum);
   DLOG(0) << "Found " << visibleObjects.size()
           << " visible objects after update.";
   DCHECK(visibleObjects.size() == 164);
