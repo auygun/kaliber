@@ -506,6 +506,23 @@ class Vector3 {
     k[2] /= v;
   }
 
+  Vector3 Lerp(const Vector3& other, T t) const {
+    T invt = 1.0f - t;
+
+    T k0 = k[0];
+    T k1 = k[1];
+    T k2 = k[2];
+    T o0 = other.k[0];
+    T o1 = other.k[1];
+    T o2 = other.k[2];
+
+    Vector3 ret;
+    ret.x = k0 * invt + t * o0;
+    ret.y = k1 * invt + t * o1;
+    ret.z = k2 * invt + t * o2;
+    return ret;
+  }
+
   void MultiplyMatrix3x3(const Matrix4<T>& mat) {
     Vector3 r;
     for (int i = 0; i < 3; i++)
@@ -829,9 +846,7 @@ class Vector4 {
     return *this;
   }
 
-  Vector3<T> GetVector3() const {
-    return Vector3<T>(x, y, z);
-  }
+  Vector3<T> GetVector3() const { return Vector3<T>(x, y, z); }
 
   const T* GetData() const { return &k[0]; }
 
@@ -1817,11 +1832,157 @@ class Quaternion {
   }
 };
 
+//
+// Plane
+//
+
+template <typename T>
+class Plane {
+ public:
+  // The plane equation is: normal · point - distance = 0
+  Vector3<T> normal;
+  T distance;  // Signed distance from origin along the normal
+
+  Plane() {}
+
+  Plane(const Plane&) = default;
+
+  Plane(const Vector3<T>& n, T d) : normal{n}, distance{d} {}
+
+  void Translate(const Vector3<T>& v) { distance -= normal.DotProduct(v); }
+
+  void Transform(const Matrix4<T>& m) {
+    normal.MultiplyMatrix3x3(m);
+    Translate(m.Row(3));
+  }
+};
+
+//
+// Axis-Aligned Bounding Box
+//
+
+template <typename T>
+class AABB {
+ public:
+  Vector3<T> min;
+  Vector3<T> max;
+
+  AABB() {}
+
+  AABB(const AABB&) = default;
+
+  AABB(Vector3<T> min, Vector3<T> max) : min{min}, max{max} {}
+
+  AABB(T half_size) : min{-half_size}, max{half_size} {}
+
+  void Expand(const AABB& other) {
+    min.x = std::min(min.x, other.min.x);
+    min.y = std::min(min.y, other.min.y);
+    min.z = std::min(min.z, other.min.z);
+    max.x = std::max(max.x, other.max.x);
+    max.y = std::max(max.y, other.max.y);
+    max.z = std::max(max.z, other.max.z);
+  }
+
+  void Expand(const Vector3<T>& v) {
+    min.x = std::min(min.x, v.x);
+    min.y = std::min(min.y, v.y);
+    min.z = std::min(min.z, v.z);
+    max.x = std::max(max.x, v.x);
+    max.y = std::max(max.y, v.y);
+    max.z = std::max(max.z, v.z);
+  }
+
+  void Grow(T v) {
+    min -= v;
+    max += v;
+  }
+
+  void Grow(const Vector3<T>& v) {
+    if (v[0] < (T)0)
+      min[0] += v[0];
+    else
+      max[0] += v[0];
+    if (v[1] < (T)0)
+      min[1] += v[1];
+    else
+      max[1] += v[1];
+    if (v[2] < (T)0)
+      min[2] += v[2];
+    else
+      max[2] += v[2];
+  }
+
+  bool IsOutsidePlane(const Plane<T>& p) const {
+    // Find the positive vertex (corner of AABB extending furthest in the
+    // direction of the plane's n)
+    Vector3<T> positive_vertex = min;
+    if (p.normal.x >= 0)
+      positive_vertex.x = max.x;
+    if (p.normal.y >= 0)
+      positive_vertex.y = max.y;
+    if (p.normal.z >= 0)
+      positive_vertex.z = max.z;
+
+    // If positive_vertex is outside, the whole box is outside
+    float dist = p.normal.DotProduct(positive_vertex) + p.distance;
+    return dist < 0;
+  }
+};
+
+//
+// Oriented Bounding Box
+//
+
+template <typename T>
+struct OBB {
+ public:
+  Vector3<T> center{0, 0, 0};
+  Vector3<T> extents{0, 0, 0};  // Half-sizes along each axis
+  Vector3<T> axes[3]{{1, 0, 0},
+                     {0, 1, 0},
+                     {0, 0, 1}};  // Orientation (rotation matrix columns)
+
+  OBB() {}
+
+  OBB(const OBB&) = default;
+
+  OBB(const Vector3<T>& e, const Vector3<T>& c)
+      : extents{e}, center{c}, axes{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}} {}
+
+  OBB(const Vector3<T>& e, const Vector3<T>& c, const Matrix4<T>& m)
+      : extents{e}, center{c}, axes{m.Row(0), m.Row(1), m.Row(2)} {}
+
+  OBB(const AABB<T>& aabb)
+      : center{aabb.max.Lerp(aabb.min, T(0.5))},
+        extents{aabb.max - center},
+        axes{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}} {}
+
+  void GetBoundBox(AABB<T>& aabb) const {
+    for (int k = 0; k < 3; k++)
+      aabb.max.k[k] = Abs(axes[0][k] * extents[0]) +
+                      Abs(axes[1][k] * extents[1]) +
+                      Abs(axes[2][k] * extents[2]);
+
+    aabb.min = -aabb.max;
+    aabb.min += center;
+    aabb.max += center;
+  }
+
+  void GetLocalBox(AABB<T>& aabb) const {
+    aabb.min = -extents;
+    aabb.max = extents;
+  }
+};
+
 using Vector2f = Vector2<float>;
 using Vector3f = Vector3<float>;
 using Vector4f = Vector4<float>;
 using Matrix4f = Matrix4<float>;
 using Quatf = Quaternion<float>;
+using Planef= Plane<float>;
+using AABBf= AABB<float>;
+using OBBf= OBB<float>;
 
 }  // namespace base
 

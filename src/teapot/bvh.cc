@@ -47,62 +47,6 @@ Frustum CreateTestFrustum() {
 }  // namespace
 
 // static
-AABB AABB::CreateFromOBB(const OBB& obb) {
-  AABB aabb;
-  for (int i = 0; i < 8; ++i) {
-    Vector3f p = obb.center;
-    p = p + obb.axes[0] * obb.extents.x * ((i & 1) ? 1.0f : -1.0f);
-    p = p + obb.axes[1] * obb.extents.y * ((i & 2) ? 1.0f : -1.0f);
-    p = p + obb.axes[2] * obb.extents.z * ((i & 4) ? 1.0f : -1.0f);
-    aabb.Expand(p);
-  }
-  return aabb;
-}
-
-void AABB::Expand(const AABB& other) {
-  min.x = std::min(min.x, other.min.x);
-  min.y = std::min(min.y, other.min.y);
-  min.z = std::min(min.z, other.min.z);
-  max.x = std::max(max.x, other.max.x);
-  max.y = std::max(max.y, other.max.y);
-  max.z = std::max(max.z, other.max.z);
-}
-
-void AABB::Expand(const base::Vector3f& p) {
-  min.x = std::min(min.x, p.x);
-  min.y = std::min(min.y, p.y);
-  min.z = std::min(min.z, p.z);
-  max.x = std::max(max.x, p.x);
-  max.y = std::max(max.y, p.y);
-  max.z = std::max(max.z, p.z);
-}
-
-void Plane::Translate(const base::Vector3f& v) {
-  distance -= normal.DotProduct(v);
-}
-
-void Plane::Transform(const base::Matrix4f& mat) {
-  normal.MultiplyMatrix3x3(mat);
-  Translate(mat.Row(3));
-}
-
-bool Plane::IsOutside(const AABB& aabb) const {
-  // Find the positive vertex (corner of AABB extending furthest in the
-  // direction of the plane's normal)
-  Vector3f p_vertex = aabb.min;
-  if (normal.x >= 0)
-    p_vertex.x = aabb.max.x;
-  if (normal.y >= 0)
-    p_vertex.y = aabb.max.y;
-  if (normal.z >= 0)
-    p_vertex.z = aabb.max.z;
-
-  // If p_vertex is outside, the whole box is outside
-  float dist = normal.DotProduct(p_vertex) + distance;
-  return dist < 0;
-}
-
-// static
 Frustum Frustum::CreateFromMatrix(const Matrix4f& vp) {
   Frustum frustum;
 
@@ -125,27 +69,27 @@ Frustum Frustum::CreateFromMatrix(const Matrix4f& vp) {
 }
 
 // Test AABB vs. all 6 planes
-bool Frustum::Intersects(const AABB& aabb) const {
+bool Frustum::Intersects(const AABBf& aabb) const {
   for (int i = 0; i < 6; ++i) {
-    if (planes[i].IsOutside(aabb))
+    if (aabb.IsOutsidePlane(planes[i]))
       return false;
   }
   return true;
 }
 
-bool Frustum::Intersects(const OBB& obb, const Matrix4f& model) const {
-  // obb is in the local space
-  AABB aabb = AABB::CreateFromOBB(obb);
-
+bool Frustum::Intersects(const OBBf& obb, const Matrix4f& model) const {
   Matrix4f inverse_model;
   model.InverseOrthogonal(inverse_model);
+
+  AABBf aabb;
+  obb.GetLocalBox(aabb);
 
   // Transform each plane to the model's local space and test
   for (int i = 0; i < 6; i++) {
     Plane p = planes[i];
     p.Transform(inverse_model);
 
-    if (p.IsOutside(aabb))
+    if (aabb.IsOutsidePlane(p))
       return false;
   }
   return true;
@@ -174,7 +118,8 @@ std::unique_ptr<BVHNode> BuildBVHTree(std::vector<const MeshObject*>& objects) {
 
     // Calculate the combined AABB for all node_objects in this job.
     for (const auto& obj : node_objects) {
-      AABB aabb = AABB::CreateFromOBB(obj->obb);
+      AABBf aabb;
+      obj->obb.GetLocalBox(aabb);
       aabb.min *= obj->model;
       aabb.max *= obj->model;
       node->aabb.Expand(aabb);
