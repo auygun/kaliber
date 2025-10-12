@@ -78,7 +78,7 @@ std::vector<int> FrustumCull(const BVHNode* root, const Frustum& frustum);
 
 void DumpBVHTree(const BVHNode* node,
                  const std::string& prefix,
-                 bool isLast = true);
+                 bool is_last = true);
 
 int TestBVH();
 

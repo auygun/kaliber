@@ -258,13 +258,7 @@ std::vector<int> FrustumCull(const BVHNode* root, const Frustum& frustum) {
   return visible_object_ids;
 }
 
-/**
- * @brief Recursively prints a node and its children with ASCII art connectors.
- * @param node The current node to print.
- * @param prefix The string prefix that creates the connecting lines.
- * @param isLast True if this is the last child of its parent (a right child).
- */
-void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool isLast) {
+void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool is_last) {
   if (!node)
     return;
 
@@ -272,7 +266,7 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool isLast) {
 
   // Print the current node's line
   out << prefix;
-  out << (isLast ? "└──" : "├──");
+  out << (is_last ? "└──" : "├──");
 
   // Print node details
   if (node->object) {
@@ -289,7 +283,7 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool isLast) {
   DLOG(0) << out.str();
 
   // Prepare the prefix for the children
-  std::string child_prefix = prefix + (isLast ? "    " : "│   ");
+  std::string child_prefix = prefix + (is_last ? "    " : "│   ");
 
   // Recurse for children (if they exist)
   if (!node->object) {
