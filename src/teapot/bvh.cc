@@ -46,7 +46,10 @@ Frustum CreateTestFrustum() {
 
 }  // namespace
 
-void Frustum::CreateFromMatrix(const Matrix4f& vp) {
+// static
+Frustum Frustum::CreateFromMatrix(const Matrix4f& vp) {
+  Frustum frustum;
+
   Vector4f raw_planes[6];
   raw_planes[0] = vp.Row4(3) + vp.Row4(0);
   raw_planes[1] = vp.Row4(3) - vp.Row4(0);
@@ -59,9 +62,10 @@ void Frustum::CreateFromMatrix(const Matrix4f& vp) {
     Vector3f n = raw_planes[i].GetVector3();
     float d = raw_planes[i][3];
     float magnitude = n.Length();
-    planes[i].normal = n / magnitude;
-    planes[i].distance = d / -magnitude;
+    frustum.planes[i].normal = n / magnitude;
+    frustum.planes[i].distance = d / -magnitude;
   }
+  return frustum;
 }
 
 // Test AABB vs. all 6 planes
@@ -203,9 +207,9 @@ std::vector<int> FrustumCull(const BVHNode* root, const Frustum& frustum) {
  * @brief Recursively prints a node and its children with ASCII art connectors.
  * @param node The current node to print.
  * @param prefix The string prefix that creates the connecting lines.
- * @param is_last True if this is the last child of its parent (a right child).
+ * @param isLast True if this is the last child of its parent (a right child).
  */
-void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool is_last) {
+void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool isLast) {
   if (!node)
     return;
 
@@ -213,7 +217,7 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool is_last) {
 
   // Print the current node's line
   out << prefix;
-  out << (is_last ? "└──" : "├──");
+  out << (isLast ? "└──" : "├──");
 
   // Print node details
   if (node->object) {
@@ -230,7 +234,7 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool is_last) {
   DLOG(0) << out.str();
 
   // Prepare the prefix for the children
-  std::string child_prefix = prefix + (is_last ? "    " : "│   ");
+  std::string child_prefix = prefix + (isLast ? "    " : "│   ");
 
   // Recurse for children (if they exist)
   if (!node->object) {

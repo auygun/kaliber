@@ -10,7 +10,7 @@ class Frustum {
  public:
   base::Planef planes[6];
 
-  void CreateFromMatrix(const base::Matrix4f& vp);
+  static Frustum CreateFromMatrix(const base::Matrix4f& vp);
 
   // Intersection test methods
   bool Intersects(const base::AABBf& aabb) const;
@@ -45,7 +45,7 @@ std::vector<int> FrustumCull(const BVHNode* root, const Frustum& frustum);
 
 void DumpBVHTree(const BVHNode* node,
                  const std::string& prefix,
-                 bool is_last = true);
+                 bool isLast = true);
 
 int TestBVH();
 

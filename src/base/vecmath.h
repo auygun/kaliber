@@ -1928,14 +1928,6 @@ class AABB {
     float dist = p.normal.DotProduct(positive_vertex) + p.distance;
     return dist < 0;
   }
-
-  std::string ToString() {
-    using namespace std::string_literals;
-    return "("s + std::to_string(min.k[0]) + ", "s + std::to_string(min.k[1]) +
-           ", "s + std::to_string(min.k[2]) + "), ("s +
-           std::to_string(max.k[0]) + ", "s + std::to_string(max.k[1]) + ", "s +
-           std::to_string(max.k[2]) + ")"s;
-  }
 };
 
 //
@@ -1988,9 +1980,9 @@ using Vector3f = Vector3<float>;
 using Vector4f = Vector4<float>;
 using Matrix4f = Matrix4<float>;
 using Quatf = Quaternion<float>;
-using Planef = Plane<float>;
-using AABBf = AABB<float>;
-using OBBf = OBB<float>;
+using Planef= Plane<float>;
+using AABBf= AABB<float>;
+using OBBf= OBB<float>;
 
 }  // namespace base
 
