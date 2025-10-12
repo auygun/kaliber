@@ -12,6 +12,14 @@ struct Plane {
   base::Vector3f normal{0, 1, 0};
   float distance = 0.0f;  // Signed distance from origin along the normal
 
+  Plane() = default;
+
+  Plane(const base::Vector3f& p, const base::Vector3f& n) {
+    normal = n;
+    normal.Normalize();
+    distance = -(normal.DotProduct(p));
+  }
+
   void Translate(const base::Vector3f& v);
   void Transform(const base::Matrix4f& mat);
 };
@@ -43,7 +51,13 @@ class Frustum {
  public:
   Plane planes[6];
 
-  static Frustum CreateFromMatrix(const base::Matrix4f& vp);
+  void CreateFromMatrix(const base::Matrix4f& vp);
+
+  void CreateFromCamera(const base::Matrix4f& cam,
+                        float aspect,
+                        float fovY,
+                        float zNear,
+                        float zFar);
 
   // Intersection test methods
   bool Intersects(const AABB& aabb) const;

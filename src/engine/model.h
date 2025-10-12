@@ -36,6 +36,9 @@ class Model {
 
   void Draw(unsigned int instance_index);
 
+  base::Vector3f GetCenter() const;
+  base::Vector3f GetExtents() const;
+
  private:
   struct Mesh {
     size_t num_indices = 0;
@@ -51,6 +54,9 @@ class Model {
     float _pad0;
     float _pad1;
   };
+
+  base::Vector3f min_{0};
+  base::Vector3f max_{0};
 
   std::vector<Mesh> meshes_;
   Geometry geometry_;

@@ -83,6 +83,15 @@ void GenerateTangents(const std::vector<uint32_t>& indices,
   }
 }
 
+void Expand(base::Vector3f& min, base::Vector3f& max, const base::Vector3f& p) {
+  min.x = std::min(min.x, p.x);
+  min.y = std::min(min.y, p.y);
+  min.z = std::min(min.z, p.z);
+  max.x = std::max(max.x, p.x);
+  max.y = std::max(max.y, p.y);
+  max.z = std::max(max.z, p.z);
+}
+
 }  // namespace
 
 bool Model::LoadObj(Renderer* renderer,
@@ -160,6 +169,8 @@ bool Model::LoadObj(Renderer* renderer,
         uint32_t new_index = vertices.size();
         vertices.push_back(vert);
         material_indices[material_id].push_back(new_index);
+
+        Expand(min_, max_, vert.position);
       }
       index_offset += fv;
     }
@@ -296,7 +307,12 @@ void Model::CreateMesh(Renderer* renderer,
   meshopt_remapVertexBuffer(unique_vertices.data(), vertices.data(),
                             vertex_count, sizeof(Vertex), remap.data());
 
+  for (auto& v : unique_vertices)
+    Expand(min_, max_, v.position);
   DLOG(0) << "- Unique vertices: " << unique_vertices.size();
+  DLOG(0) << "- min: " << min_.ToString() << " max: " << max_.ToString();
+  DLOG(0) << "- center: " << GetCenter().ToString()
+          << " extents: " << GetExtents().ToString();
 
   // Remap indices to unique vertices.
   std::vector<uint32_t> remapped_indices(indices.size());
@@ -391,6 +407,14 @@ void Model::Draw(unsigned int instance_count) {
     geometry_.Draw(mesh.num_indices, mesh.index_offset, instance_count, 0);
     ++material_index;
   }
+}
+
+Vector3f Model::GetCenter() const {
+  return (min_ + max_) * 0.5f;
+}
+
+Vector3f Model::GetExtents() const {
+  return (max_ - min_) * 0.5f;
 }
 
 }  // namespace eng

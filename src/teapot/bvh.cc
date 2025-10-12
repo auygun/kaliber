@@ -35,12 +35,12 @@ Frustum CreateTestFrustum() {
   // This is a simplified frustum. A real one would be derived from a projection
   // matrix. For this example, we define 6 planes that form a box-like view
   // volume.
-  f.planes[0] = {{1, 0, 0}, 50};   // Left
-  f.planes[1] = {{-1, 0, 0}, 50};  // Right
-  f.planes[2] = {{0, 1, 0}, 50};   // Bottom
-  f.planes[3] = {{0, -1, 0}, 50};  // Top
-  f.planes[4] = {{0, 0, 1}, 50};   // Near
-  f.planes[5] = {{0, 0, -1}, 50};  // Far
+  // f.planes[0] = {{1, 0, 0}, 50};   // Left
+  // f.planes[1] = {{-1, 0, 0}, 50};  // Right
+  // f.planes[2] = {{0, 1, 0}, 50};   // Bottom
+  // f.planes[3] = {{0, -1, 0}, 50};  // Top
+  // f.planes[4] = {{0, 0, 1}, 50};   // Near
+  // f.planes[5] = {{0, 0, -1}, 50};  // Far
   return f;
 }
 
@@ -100,10 +100,7 @@ void OBB::GetBoundBox(AABB& aabb) const {
   aabb.max += center;
 }
 
-// static
-Frustum Frustum::CreateFromMatrix(const Matrix4f& vp) {
-  Frustum frustum;
-
+void Frustum::CreateFromMatrix(const Matrix4f& vp) {
   Vector4f raw_planes[6];
   raw_planes[0] = vp.Row4(3) + vp.Row4(0);
   raw_planes[1] = vp.Row4(3) - vp.Row4(0);
@@ -116,11 +113,40 @@ Frustum Frustum::CreateFromMatrix(const Matrix4f& vp) {
     Vector3f n = raw_planes[i].GetVector3();
     float d = raw_planes[i][3];
     float magnitude = n.Length();
-    frustum.planes[i].normal = n / magnitude;
-    frustum.planes[i].distance = -d / magnitude;
+    planes[i].normal = n / magnitude;
+    planes[i].distance = -d / magnitude;
   }
-  return frustum;
 }
+
+void Frustum::CreateFromCamera(const Matrix4f& cam,
+                               float aspect,
+                               float fovY,
+                               float zNear,
+                               float zFar) {
+  float fovRadians = fovY * (float)(M_PI / 180.0);
+  const float halfVSide = zFar * tanf(fovRadians * .5f);
+  const float halfHSide = halfVSide * aspect;
+  const Vector3f frontMultFar = cam.Row(2) * zFar;
+
+  // Near and Far planes
+  planes[4] = {cam.Row(3) + cam.Row(2) * zNear, cam.Row(2)};
+  planes[5] = {cam.Row(3) + frontMultFar, -cam.Row(2)};
+
+  // Left and Right planes
+  planes[0] = {cam.Row(3),
+               cam.Row(0).CrossProduct(frontMultFar + cam.Row(1) * halfHSide)};
+  planes[1] = {
+      cam.Row(3),
+      (frontMultFar - cam.Row(1) * halfHSide).CrossProduct(cam.Row(0))};
+
+  // Top and Bottom planes
+  planes[3] = {cam.Row(3),
+               cam.Row(1).CrossProduct(frontMultFar - cam.Row(0) * halfVSide)};
+  planes[2] = {
+      cam.Row(3),
+      (frontMultFar + cam.Row(0) * halfVSide).CrossProduct(cam.Row(1))};
+}
+
 
 // Test AABB vs. all 6 planes
 bool Frustum::Intersects(const AABB& aabb) const {
@@ -241,8 +267,8 @@ std::vector<int> FrustumCull(const BVHNode* root, const Frustum& frustum) {
     // If the node is a leaf, it's representing a single object. Otherwise It's
     // an internal node with children.
     if (node->isLeaf()) {
-      if (frustum.Intersects(node->object->obb, node->object->model))
-        visible_object_ids.push_back(node->object->id);
+      // if (frustum.Intersects(node->object->obb, node->object->model))
+      visible_object_ids.push_back(node->object->id);
       continue;
     } else if (!frustum.Intersects(node->aabb)) {
       continue;

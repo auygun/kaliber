@@ -1,12 +1,10 @@
 #include "teapot/scene.h"
 
-#include <memory>
 #include <vector>
 
 #include "engine/asset/shader_source.h"
 #include "engine/engine.h"
 #include "engine/renderer/renderer.h"
-#include "teapot/bvh.h"
 #include "third_party/imgui/imgui.h"
 
 using namespace base;
@@ -76,7 +74,7 @@ Scene::Scene() {
 Scene::~Scene() = default;
 
 void Scene::Create() {
-  TestBVH();
+  // TestBVH();
 
   SetVisible(true);
 
@@ -137,7 +135,16 @@ void Scene::Create() {
   for (size_t i = 0; i < 10; ++i) {
     instances_.emplace_back().model.CreateXRotation(0.5f);
     instances_.back().model.Row(3) = {2.2f * i, 0, 0};
+
+    auto c = model_.GetCenter();
+    auto e = model_.GetExtents();
+    bvh_mesh_objects_.push_back({(int)i,
+                                 {c, e, {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}},
+                                 instances_.back().model});
+    bvh_mesh_object_ptrs_.push_back(&bvh_mesh_objects_.back());
   }
+  bvh_root_ = BuildBVHTree(bvh_mesh_object_ptrs_);
+  DumpBVHTree(bvh_root_.get(), "");
 
 #endif
 
@@ -216,6 +223,15 @@ void Scene::Update(const Vector2f& angles, float zoom) {
                                             sizeof(lights_));
 
   model_.Update(metallic_, roughness_, ao_);
+
+  Frustum f;
+  // f.CreateFromMatrix(scene_data_.view_projection);
+  f.CreateFromCamera(camera_.GetMatrix(),
+                     (float)Engine::Get().GetScreenWidth() /
+                         (float)Engine::Get().GetScreenHeight(),
+                     45, 1, 2048);
+  auto objects = FrustumCull(bvh_root_.get(), f);
+  DLOG(0) << "FrustumCull: " << objects.size();
 }
 
 void Scene::CreateProjectionMatrix() {
