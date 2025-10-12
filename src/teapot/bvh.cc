@@ -46,17 +46,13 @@ Frustum CreateTestFrustum() {
 
 }  // namespace
 
-// static
-AABB AABB::CreateFromOBB(const OBB& obb) {
-  AABB aabb;
-  for (int i = 0; i < 8; ++i) {
-    Vector3f p = obb.center;
-    p = p + obb.axes[0] * obb.extents.x * ((i & 1) ? 1.0f : -1.0f);
-    p = p + obb.axes[1] * obb.extents.y * ((i & 2) ? 1.0f : -1.0f);
-    p = p + obb.axes[2] * obb.extents.z * ((i & 4) ? 1.0f : -1.0f);
-    aabb.Expand(p);
-  }
-  return aabb;
+void Plane::Translate(const base::Vector3f& v) {
+  distance -= normal.DotProduct(v);
+}
+
+void Plane::Transform(const base::Matrix4f& mat) {
+  normal.MultiplyMatrix3x3(mat);
+  Translate(mat.Row(3));
 }
 
 void AABB::Expand(const AABB& other) {
@@ -93,13 +89,15 @@ bool AABB::IsOutsidePlane(const Plane& p) const {
   return dist < 0;
 }
 
-void Plane::Translate(const base::Vector3f& v) {
-  distance -= normal.DotProduct(v);
-}
+void OBB::GetBoundBox(AABB& aabb) const {
+  for (int k = 0; k < 3; k++)
+    aabb.max.k[k] = std::abs(axes[0][k] * extents[0]) +
+                    std::abs(axes[1][k] * extents[1]) +
+                    std::abs(axes[2][k] * extents[2]);
 
-void Plane::Transform(const base::Matrix4f& mat) {
-  normal.MultiplyMatrix3x3(mat);
-  Translate(mat.Row(3));
+  aabb.min = -aabb.max;
+  aabb.min += center;
+  aabb.max += center;
 }
 
 // static
@@ -135,7 +133,8 @@ bool Frustum::Intersects(const AABB& aabb) const {
 
 bool Frustum::Intersects(const OBB& obb, const Matrix4f& model) const {
   // obb is in the local space
-  AABB aabb = AABB::CreateFromOBB(obb);
+  AABB aabb;
+  obb.GetBoundBox(aabb);
 
   Matrix4f inverse_model;
   model.InverseOrthogonal(inverse_model);
@@ -174,7 +173,8 @@ std::unique_ptr<BVHNode> BuildBVHTree(std::vector<const MeshObject*>& objects) {
 
     // Calculate the combined AABB for all node_objects in this job.
     for (const auto& obj : node_objects) {
-      AABB aabb = AABB::CreateFromOBB(obj->obb);
+      AABB aabb;
+      obj->obb.GetBoundBox(aabb);
       aabb.min *= obj->model;
       aabb.max *= obj->model;
       node->aabb.Expand(aabb);

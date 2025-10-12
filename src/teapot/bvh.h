@@ -16,6 +16,17 @@ struct Plane {
   void Transform(const base::Matrix4f& mat);
 };
 
+// Axis-Aligned Bounding Box
+struct AABB {
+  base::Vector3f min{std::numeric_limits<float>::max()};
+  base::Vector3f max{std::numeric_limits<float>::lowest()};
+
+  void Expand(const AABB& other);
+  void Expand(const base::Vector3f& p);
+
+  bool IsOutsidePlane(const Plane& p) const;
+};
+
 // Oriented Bounding Box
 struct OBB {
   base::Vector3f center{0, 0, 0};
@@ -23,20 +34,9 @@ struct OBB {
   base::Vector3f axes[3]{{1, 0, 0},
                          {0, 1, 0},
                          {0, 0, 1}};  // Orientation (rotation matrix columns)
-};
 
-// Axis-Aligned Bounding Box
-struct AABB {
-  base::Vector3f min{std::numeric_limits<float>::max()};
-  base::Vector3f max{std::numeric_limits<float>::lowest()};
-
-  // Computes the World-Space AABB that tightly encloses the given OBB.
-  static AABB CreateFromOBB(const OBB& obb);
-
-  void Expand(const AABB& other);
-  void Expand(const base::Vector3f& p);
-
-  bool IsOutsidePlane(const Plane& p) const;
+  // Computes the World-Space AABB that tightly encloses this OBB.
+  void GetBoundBox(AABB& aabb) const;
 };
 
 class Frustum {
