@@ -77,6 +77,22 @@ void AABB::Expand(const base::Vector3f& p) {
   max.z = std::max(max.z, p.z);
 }
 
+bool AABB::IsOutsidePlane(const Plane& p) const {
+  // Find the positive vertex (corner of AABB extending furthest in the
+  // direction of the plane's normal)
+  Vector3f p_vertex = min;
+  if (p.normal.x >= 0)
+    p_vertex.x = max.x;
+  if (p.normal.y >= 0)
+    p_vertex.y = max.y;
+  if (p.normal.z >= 0)
+    p_vertex.z = max.z;
+
+  // If p_vertex is outside, the whole box is outside
+  float dist = p.normal.DotProduct(p_vertex) + p.distance;
+  return dist < 0;
+}
+
 void Plane::Translate(const base::Vector3f& v) {
   distance -= normal.DotProduct(v);
 }
@@ -84,22 +100,6 @@ void Plane::Translate(const base::Vector3f& v) {
 void Plane::Transform(const base::Matrix4f& mat) {
   normal.MultiplyMatrix3x3(mat);
   Translate(mat.Row(3));
-}
-
-bool Plane::IsOutside(const AABB& aabb) const {
-  // Find the positive vertex (corner of AABB extending furthest in the
-  // direction of the plane's normal)
-  Vector3f p_vertex = aabb.min;
-  if (normal.x >= 0)
-    p_vertex.x = aabb.max.x;
-  if (normal.y >= 0)
-    p_vertex.y = aabb.max.y;
-  if (normal.z >= 0)
-    p_vertex.z = aabb.max.z;
-
-  // If p_vertex is outside, the whole box is outside
-  float dist = normal.DotProduct(p_vertex) + distance;
-  return dist < 0;
 }
 
 // static
@@ -127,7 +127,7 @@ Frustum Frustum::CreateFromMatrix(const Matrix4f& vp) {
 // Test AABB vs. all 6 planes
 bool Frustum::Intersects(const AABB& aabb) const {
   for (int i = 0; i < 6; ++i) {
-    if (planes[i].IsOutside(aabb))
+    if (aabb.IsOutsidePlane(planes[i]))
       return false;
   }
   return true;
@@ -145,7 +145,7 @@ bool Frustum::Intersects(const OBB& obb, const Matrix4f& model) const {
     Plane p = planes[i];
     p.Transform(inverse_model);
 
-    if (p.IsOutside(aabb))
+    if (aabb.IsOutsidePlane(p))
       return false;
   }
   return true;

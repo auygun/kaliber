@@ -7,6 +7,15 @@
 
 #include "base/vecmath.h"
 
+// The plane equation is: normal · point - distance = 0
+struct Plane {
+  base::Vector3f normal{0, 1, 0};
+  float distance = 0.0f;  // Signed distance from origin along the normal
+
+  void Translate(const base::Vector3f& v);
+  void Transform(const base::Matrix4f& mat);
+};
+
 // Oriented Bounding Box
 struct OBB {
   base::Vector3f center{0, 0, 0};
@@ -26,17 +35,8 @@ struct AABB {
 
   void Expand(const AABB& other);
   void Expand(const base::Vector3f& p);
-};
 
-// The plane equation is: normal · point - distance = 0
-struct Plane {
-  base::Vector3f normal{0, 1, 0};
-  float distance = 0.0f;  // Signed distance from origin along the normal
-
-  void Translate(const base::Vector3f& v);
-  void Transform(const base::Matrix4f& mat);
-
-  bool IsOutside(const AABB& aabb) const;
+  bool IsOutsidePlane(const Plane& p) const;
 };
 
 class Frustum {
