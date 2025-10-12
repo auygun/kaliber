@@ -117,7 +117,7 @@ Frustum Frustum::CreateFromMatrix(const Matrix4f& vp) {
     float d = raw_planes[i][3];
     float magnitude = n.Length();
     frustum.planes[i].normal = n / magnitude;
-    frustum.planes[i].distance = d / -magnitude;
+    frustum.planes[i].distance = -d / magnitude;
   }
   return frustum;
 }
