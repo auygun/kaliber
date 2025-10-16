@@ -829,9 +829,7 @@ class Vector4 {
     return *this;
   }
 
-  Vector3<T> GetVector3() const {
-    return Vector3<T>(x, y, z);
-  }
+  Vector3<T> GetVector3() const { return Vector3<T>(x, y, z); }
 
   const T* GetData() const { return &k[0]; }
 
@@ -1254,7 +1252,6 @@ class Matrix4 {
     k[2][2] = far_plane / (far_plane - near_plane);
     k[3][2] = -near_plane * far_plane / (far_plane - near_plane);
     k[2][3] = 1.0f;
-
   }
 #endif
 
