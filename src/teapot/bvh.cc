@@ -216,21 +216,22 @@ std::unique_ptr<BVHNode> BuildBVHTree(
       axis = 2;
 
     // Sort node_objects along the chosen axis based on their center point.
-    std::sort(node_objects.begin(), node_objects.end(),
-              [axis](const MeshObject* a, const MeshObject* b) {
-                float ca, cb;
-                if (axis == 0) {
-                  ca = a->model.Row(3).x;
-                  cb = b->model.Row(3).x;
-                } else if (axis == 1) {
-                  ca = a->model.Row(3).y;
-                  cb = b->model.Row(3).y;
-                } else {  // axis == 2
-                  ca = a->model.Row(3).z;
-                  cb = b->model.Row(3).z;
-                }
-                return ca < cb;
-              });
+    if (axis == 0) {
+      std::sort(node_objects.begin(), node_objects.end(),
+                [](const MeshObject* a, const MeshObject* b) {
+                  return a->model.Row(3).x < b->model.Row(3).x;
+                });
+    } else if (axis == 1) {
+      std::sort(node_objects.begin(), node_objects.end(),
+                [](const MeshObject* a, const MeshObject* b) {
+                  return a->model.Row(3).y < b->model.Row(3).y;
+                });
+    } else {  // axis == 2
+      std::sort(node_objects.begin(), node_objects.end(),
+                [](const MeshObject* a, const MeshObject* b) {
+                  return a->model.Row(3).z < b->model.Row(3).z;
+                });
+    }
 
     // Split the objects into two halves
     size_t mid = node_objects.size() / 2;
