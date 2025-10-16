@@ -9,13 +9,14 @@
 
 // The plane equation is: normal · point - distance = 0
 struct Plane {
-  base::Vector3f normal{0, 1, 0};
-  float distance = 0.0f;  // Signed distance from origin along the normal
+  base::Vector3f normal;
+  float distance;
 
   Plane() = default;
 
-  Plane(const base::Vector3f& p, const base::Vector3f& n) {
-    normal = n;
+  Plane(const base::Vector3f& n, float d) : normal{n}, distance{d} {}
+
+  Plane(const base::Vector3f& p, const base::Vector3f& n) : normal{n} {
     normal.Normalize();
     distance = -(normal.DotProduct(p));
   }
@@ -86,7 +87,8 @@ struct BVHNode {
   bool isLeaf() const { return object != nullptr; }
 };
 
-std::unique_ptr<BVHNode> BuildBVHTree(std::vector<const MeshObject*>& objects);
+std::unique_ptr<BVHNode> BuildBVHTree(
+    const std::vector<const MeshObject*>& objects);
 
 std::vector<int> FrustumCull(const BVHNode* root, const Frustum& frustum);
 

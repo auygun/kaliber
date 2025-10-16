@@ -141,8 +141,9 @@ void Scene::Create() {
     bvh_mesh_objects_.push_back({(int)i,
                                  {c, e, {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}},
                                  instances_.back().model});
-    bvh_mesh_object_ptrs_.push_back(&bvh_mesh_objects_.back());
   }
+  for (auto& mo : bvh_mesh_objects_)
+    bvh_mesh_object_ptrs_.push_back(&mo);
   bvh_root_ = BuildBVHTree(bvh_mesh_object_ptrs_);
   DumpBVHTree(bvh_root_.get(), "");
 

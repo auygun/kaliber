@@ -35,12 +35,12 @@ Frustum CreateTestFrustum() {
   // This is a simplified frustum. A real one would be derived from a projection
   // matrix. For this example, we define 6 planes that form a box-like view
   // volume.
-  // f.planes[0] = {{1, 0, 0}, 50};   // Left
-  // f.planes[1] = {{-1, 0, 0}, 50};  // Right
-  // f.planes[2] = {{0, 1, 0}, 50};   // Bottom
-  // f.planes[3] = {{0, -1, 0}, 50};  // Top
-  // f.planes[4] = {{0, 0, 1}, 50};   // Near
-  // f.planes[5] = {{0, 0, -1}, 50};  // Far
+  f.planes[0] = {{1, 0, 0}, 50};   // Left
+  f.planes[1] = {{-1, 0, 0}, 50};  // Right
+  f.planes[2] = {{0, 1, 0}, 50};   // Bottom
+  f.planes[3] = {{0, -1, 0}, 50};  // Top
+  f.planes[4] = {{0, 0, 1}, 50};   // Near
+  f.planes[5] = {{0, 0, -1}, 50};  // Far
   return f;
 }
 
@@ -52,6 +52,7 @@ void Plane::Translate(const base::Vector3f& v) {
 
 void Plane::Transform(const base::Matrix4f& mat) {
   normal.MultiplyMatrix3x3(mat);
+  normal.Normalize();
   Translate(mat.Row(3));
 }
 
@@ -147,7 +148,6 @@ void Frustum::CreateFromCamera(const Matrix4f& cam,
       (frontMultFar + cam.Row(0) * halfVSide).CrossProduct(cam.Row(1))};
 }
 
-
 // Test AABB vs. all 6 planes
 bool Frustum::Intersects(const AABB& aabb) const {
   for (int i = 0; i < 6; ++i) {
@@ -176,7 +176,8 @@ bool Frustum::Intersects(const OBB& obb, const Matrix4f& model) const {
   return true;
 }
 
-std::unique_ptr<BVHNode> BuildBVHTree(std::vector<const MeshObject*>& objects) {
+std::unique_ptr<BVHNode> BuildBVHTree(
+    const std::vector<const MeshObject*>& objects) {
   if (objects.empty())
     return nullptr;
 
@@ -267,8 +268,8 @@ std::vector<int> FrustumCull(const BVHNode* root, const Frustum& frustum) {
     // If the node is a leaf, it's representing a single object. Otherwise It's
     // an internal node with children.
     if (node->isLeaf()) {
-      // if (frustum.Intersects(node->object->obb, node->object->model))
-      visible_object_ids.push_back(node->object->id);
+      if (frustum.Intersects(node->object->obb, node->object->model))
+        visible_object_ids.push_back(node->object->id);
       continue;
     } else if (!frustum.Intersects(node->aabb)) {
       continue;
@@ -294,16 +295,22 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool is_last) {
   out << prefix;
   out << (is_last ? "└──" : "├──");
 
+  AABB aabb;
+
   // Print node details
   if (node->object) {
     out << "[Leaf] ID: " << node->object->id << " ";
+    node->object->obb.GetBoundBox(aabb);
+    aabb.min *= node->object->model;
+    aabb.max *= node->object->model;
   } else {
     out << "[Internal] ";
+    aabb = node->aabb;
   }
 
   // Print bounding box info
-  Vector3f center = (node->aabb.min + node->aabb.max) * 0.5f;
-  float radius = (node->aabb.max - center).Length();
+  Vector3f center = (aabb.min + aabb.max) * 0.5f;
+  float radius = (aabb.max - center).Length();
   out << "Center: (" << center.x << ", " << center.y << ", " << center.z
       << ") Radius: " << radius;
   DLOG(0) << out.str();
