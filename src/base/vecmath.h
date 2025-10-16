@@ -364,7 +364,7 @@ class Vector2 {
 
   const T* GetData() const { return &k[0]; }
 
-  std::string ToString() {
+  std::string ToString() const {
     using namespace std::string_literals;
     return "("s + std::to_string(k[0]) + ", "s + std::to_string(k[1]) + ")"s;
   }
@@ -600,7 +600,7 @@ class Vector3 {
 
   const T* GetData() const { return &k[0]; }
 
-  std::string ToString() {
+  std::string ToString() const {
     using namespace std::string_literals;
     return "("s + std::to_string(k[0]) + ", "s + std::to_string(k[1]) + ", "s +
            std::to_string(k[2]) + ")"s;
@@ -835,7 +835,7 @@ class Vector4 {
 
   const T* GetData() const { return &k[0]; }
 
-  std::string ToString() {
+  std::string ToString() const {
     using namespace std::string_literals;
     return "("s + std::to_string(k[0]) + ", "s + std::to_string(k[1]) + ", "s +
            std::to_string(k[2]) + ", "s + std::to_string(k[3]) + ")"s;
@@ -1557,7 +1557,7 @@ class Matrix4 {
 
   const T* GetData() const { return &k[0][0]; }
 
-  std::string ToString() {
+  std::string ToString() const {
     using namespace std::string_literals;
     std::string str = "(";
     for (int row = 0; row < 4; row++)
@@ -1830,7 +1830,7 @@ class Quaternion {
     mat.UnitNot3x3();
   }
 
-  std::string ToString() {
+  std::string ToString() const {
     using namespace std::string_literals;
     return "("s + std::to_string(k[0]) + ", "s + std::to_string(k[1]) +
            std::to_string(k[2]) + ", "s + std::to_string(k[3]) + ")"s;
