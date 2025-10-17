@@ -78,7 +78,8 @@ class RendererVulkan final : public Renderer {
   uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
                         const VertexDescription& vertex_description,
                         Primitive primitive,
-                        bool enable_depth_test) final;
+                        bool enable_depth_test,
+                        CullMode cull_mode) final;
   void DestroyShader(uint64_t resource_id) final;
   void ActivateShader(uint64_t resource_id) final;
 

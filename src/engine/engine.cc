@@ -332,7 +332,7 @@ std::shared_ptr<Shader> Engine::GetShader(const std::string& asset_name) {
     auto source = std::make_unique<ShaderSource>();
     if (source->Load(it->second.file_name))
       shader->Create(std::move(source), quad_.vertex_description(),
-                     quad_.primitive(), false);
+                     quad_.primitive(), false, CullMode::kNone);
   }
 
   return shader;
@@ -648,7 +648,7 @@ void Engine::CreateRenderResources() {
   auto source = std::make_unique<ShaderSource>();
   if (source->Load("engine/pass_through.glsl")) {
     pass_through_shader_.Create(std::move(source), quad_.vertex_description(),
-                                quad_.primitive(), false);
+                                quad_.primitive(), false, CullMode::kNone);
   } else {
     LOG(0) << "Could not create pass through shader.";
   }
@@ -657,7 +657,7 @@ void Engine::CreateRenderResources() {
   source = std::make_unique<ShaderSource>();
   if (source->Load("engine/solid.glsl")) {
     solid_shader_.Create(std::move(source), quad_.vertex_description(),
-                         quad_.primitive(), false);
+                         quad_.primitive(), false, CullMode::kNone);
   } else {
     LOG(0) << "Could not create solid shader.";
   }
@@ -701,7 +701,7 @@ void Engine::CreateRenderResources() {
             --async_work_count_;
             if (source)
               ptr->Create(std::move(source), quad_.vertex_description(),
-                          quad_.primitive(), false);
+                          quad_.primitive(), false, CullMode::kNone);
           });
     }
   }

@@ -28,10 +28,11 @@ Shader& Shader::operator=(Shader&& other) {
 void Shader::Create(std::unique_ptr<ShaderSource> source,
                     const VertexDescription& vd,
                     Primitive primitive,
-                    bool enable_depth_test) {
+                    bool enable_depth_test,
+                    CullMode cull_mode) {
   Destroy();
   resource_id_ = renderer_->CreateShader(std::move(source), vd, primitive,
-                                         enable_depth_test);
+                                         enable_depth_test, cull_mode);
 }
 
 void Shader::Destroy() {

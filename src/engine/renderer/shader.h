@@ -25,7 +25,8 @@ class Shader : public RenderResource {
   void Create(std::unique_ptr<ShaderSource> source,
               const VertexDescription& vd,
               Primitive primitive,
-              bool enable_depth_test);
+              bool enable_depth_test,
+              CullMode cull_mode);
 
   void Destroy();
 

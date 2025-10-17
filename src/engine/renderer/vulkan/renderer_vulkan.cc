@@ -78,6 +78,11 @@ constexpr VkFormat kVkDataType[kDataType_Max][4] = {
     },
 };
 
+constexpr VkCullModeFlagBits kVkCullMode[static_cast<int>(CullMode::kMax)] = {
+    VK_CULL_MODE_NONE,
+    VK_CULL_MODE_BACK_BIT,
+};
+
 constexpr uint32_t kMaxDescriptorsPerPool = 64;
 
 std::vector<uint8_t> CompileGlsl(EShLanguage stage,
@@ -539,7 +544,8 @@ uint64_t RendererVulkan::CreateShader(
     std::unique_ptr<ShaderSource> source,
     const VertexDescription& vertex_description,
     Primitive primitive,
-    bool enable_depth_test) {
+    bool enable_depth_test,
+    CullMode cull_mode) {
   auto it = spirv_cache_.find(source->name());
   if (it == spirv_cache_.end()) {
     std::array<std::vector<uint8_t>, 2> spirv;
@@ -641,9 +647,9 @@ uint64_t RendererVulkan::CreateShader(
   rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
   rasterizer.depthClampEnable = VK_FALSE;
   rasterizer.rasterizerDiscardEnable = VK_FALSE;
-  rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+  rasterizer.polygonMode = VK_POLYGON_MODE_FILL;  // VK_POLYGON_MODE_LINE
   rasterizer.lineWidth = 1.0f;
-  rasterizer.cullMode = VK_CULL_MODE_NONE;
+  rasterizer.cullMode = kVkCullMode[static_cast<int>(cull_mode)]; // VK_CULL_MODE_BACK_BIT;  // VK_CULL_MODE_NONE;
   rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterizer.depthBiasEnable = VK_FALSE;
 

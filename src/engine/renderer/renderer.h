@@ -81,7 +81,8 @@ class Renderer {
   virtual uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
                                 const VertexDescription& vertex_description,
                                 Primitive primitive,
-                                bool enable_depth_test) = 0;
+                                bool enable_depth_test,
+                                CullMode cull_mode) = 0;
   virtual void DestroyShader(uint64_t resource_id) = 0;
   virtual void ActivateShader(uint64_t resource_id) = 0;
 
