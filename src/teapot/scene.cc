@@ -217,6 +217,8 @@ void Scene::Update(const Vector2f& angles, float zoom) {
   camera_.GetMatrix().InverseOrthogonal(view);
   view.Multiply(projection_, scene_data_.view_projection);
   scene_data_.cam_pos = camera_.GetMatrix().Row(3);
+  scene_data_.light_dir = {1, 1, 1};
+  scene_data_.light_radiance = {1, 1, 1};
   Engine::Get().GetRenderer()->UpdateBuffer(scene_data_ubo_, &scene_data_,
                                             sizeof(scene_data_));
 

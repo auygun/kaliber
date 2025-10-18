@@ -2,7 +2,9 @@ layout(set = 1, binding = 0, std140) uniform SceneData {
   mat4 view_projection;
   vec3 cam_pos;
   float white;
+  vec3 light_dir;
   float exposure;
+  vec3 light_radiance;
 }
 scene_data;
 

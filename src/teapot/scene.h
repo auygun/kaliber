@@ -29,10 +29,10 @@ class Scene : public eng::Drawable {
     base::Matrix4f view_projection;
     base::Vector3f cam_pos;
     float white = 5.0f;
+    base::Vector3f light_dir;
     float exposure = 1.0f;
+    base::Vector3f light_radiance;
     float _pad0;
-    float _pad1;
-    float _pad2;
   };
 
   struct LightData {
