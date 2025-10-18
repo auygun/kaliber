@@ -91,12 +91,14 @@ void Scene::Create() {
 
 #if 0
 
-  // model_.LoadObj(Engine::Get().GetRenderer(), "teapot/viking_room.obj",
-  //                "teapot/viking_room.png", shader_.resource_id());
-  // model_.LoadObj(Engine::Get().GetRenderer(), "teapot/buddha.obj");
+  // model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+  //                vertex_description_, "teapot/viking_room.obj", "",
+  //                {"teapot/viking_room.png"});
+  // model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+  //                vertex_description_, "teapot/buddha.obj", "", {});
   // model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
   //                vertex_description_, "teapot/sportsCar.obj",
-  //                "teapot/sportsCar.mtl", "");
+  //                "teapot/sportsCar.mtl", {});
   model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
                  vertex_description_, "teapot/Cerberus_LP.obj",
                  "teapot/Cerberus_LP.mtl",

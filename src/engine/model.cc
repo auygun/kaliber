@@ -1,6 +1,7 @@
 #include "engine/model.h"
 
 #include <iostream>
+#include <memory>
 #include <span>
 #include <sstream>
 
@@ -116,25 +117,36 @@ bool Model::LoadObj(Renderer* renderer,
   }
   std::istringstream obj_stream(std::istringstream(obj.get()));
 
-  auto mtl = AssetFile::ReadWholeFile(mtl_file_name.c_str(),
-                                      Engine::Get().GetRootPath().c_str(),
-                                      &buffer_size, true);
-  if (!mtl) {
-    LOG(0) << "Failed to read mtl file: " << file_name;
-    return false;
+  std::unique_ptr<tinyobj::MaterialStreamReader> mtl_reader;
+  std::istringstream mtl_stream;
+  if (!mtl_file_name.empty()) {
+    auto mtl = AssetFile::ReadWholeFile(mtl_file_name.c_str(),
+                                        Engine::Get().GetRootPath().c_str(),
+                                        &buffer_size, true);
+    if (!mtl) {
+      LOG(0) << "Failed to read mtl file: " << file_name;
+      return false;
+    }
+    mtl_stream = std::istringstream(std::istringstream(mtl.get()));
+    mtl_reader = std::make_unique<tinyobj::MaterialStreamReader>(mtl_stream);
   }
-  std::istringstream mtl_stream(std::istringstream(mtl.get()));
 
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
   std::vector<tinyobj::material_t> materials;
   std::string err;
-  tinyobj::MaterialStreamReader mtl_reader(mtl_stream);
 
   if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &err, &obj_stream,
-                        &mtl_reader)) {
+                        mtl_reader.get())) {
     LOG(0) << "tinyobj::LoadObj failed";
     return false;
+  }
+
+  if (materials.empty()) {
+    materials.push_back({});
+    materials.back().diffuse[0] = 1;
+    materials.back().diffuse[1] = 1;
+    materials.back().diffuse[2] = 1;
   }
 
   std::vector<Vertex> vertices;
@@ -199,7 +211,10 @@ bool Model::LoadObj(Renderer* renderer,
     int material_id = mi.first;
     auto& indices = mi.second;
 
-    if (material_id < 0 || material_id >= materials.size()) {
+    if (material_id < 0) {
+      // No material. Use id 0.
+      material_id = 0;
+    } else if (material_id >= materials.size()) {
       LOG(0) << "Invalid material id: " << material_id;
       return false;
     }
@@ -265,23 +280,19 @@ bool Model::LoadObj(Renderer* renderer,
                    aggregated_indices.size(), aggregated_indices.data());
 
   size_t index = 0;
+  std::vector<std::vector<uint64_t>> textures(5);
   for (auto& file_name : texture_file_names) {
     bool is_srgb = index == kAlbedoMap;
     bool normalize = index == kNormalMap;
     LoadTexture(file_name, index, is_srgb, normalize);
+    textures[index + 1].push_back(texture_[index].resource_id());
     ++index;
   }
 
   materials_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
       shader_id, 2, 0, sizeof(MaterialData) * meshes_.size());
   materials_dset_ =
-      renderer->CreateDescriptorSet(shader_id, 2,
-                                    {{},
-                                     {texture_[0].resource_id()},   // albedo
-                                     {texture_[1].resource_id()},   // normal
-                                     {texture_[2].resource_id()},   // metallic
-                                     {texture_[3].resource_id()}},  // roughness
-                                    {materials_ubo_});
+      renderer->CreateDescriptorSet(shader_id, 2, textures, {materials_ubo_});
   materials_.resize(meshes_.size());
 
   return true;
@@ -345,23 +356,19 @@ void Model::CreateMesh(Renderer* renderer,
                    remapped_indices.size(), remapped_indices.data());
 
   size_t index = 0;
+  std::vector<std::vector<uint64_t>> textures(5);
   for (auto& file_name : texture_file_names) {
     bool is_srgb = index == kAlbedoMap;
     bool normalize = index == kNormalMap;
     LoadTexture(file_name, index, is_srgb, normalize);
+    textures[index + 1].push_back(texture_[index].resource_id());
     ++index;
   }
 
   materials_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
       shader_id, 2, 0, sizeof(MaterialData) * meshes_.size());
   materials_dset_ =
-      renderer->CreateDescriptorSet(shader_id, 2,
-                                    {{},
-                                     {texture_[0].resource_id()},   // albedo
-                                     {texture_[1].resource_id()},   // normal
-                                     {texture_[2].resource_id()},   // metallic
-                                     {texture_[3].resource_id()}},  // roughness
-                                    {materials_ubo_});
+      renderer->CreateDescriptorSet(shader_id, 2, textures, {materials_ubo_});
   materials_.resize(meshes_.size());
 }
 
