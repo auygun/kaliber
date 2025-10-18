@@ -28,7 +28,10 @@ enum TextureUsage {
 struct PushConstant {
   unsigned int material_index;
   bool is_material = false;
-  unsigned int _pad0;
+  char _pad0[3];
+  bool dir_light = true;
+  char _pad1[3];
+  unsigned int _pad2;
 };
 
 struct Vertex {

@@ -7,6 +7,7 @@ precision highp float;
 layout(push_constant, std430) uniform DrawCall {
   uint material_index;
   bool is_material;
+  bool dir_light;
 }
 draw_call;
 
@@ -171,16 +172,14 @@ void main() {
     material.albedo = materials.data[mat_ind].albedo;
     material.metallic = materials.data[mat_ind].metallic;
     material.roughness = materials.data[mat_ind].roughness;
-    material.ao = materials.data[mat_ind].ao;
-    N = normalize(normal);
   } else {
     material.albedo = texture(albedo_map, tex_coord).rgb;
     material.metallic = texture(metallic_map, tex_coord).r;
     material.roughness = texture(roughness_map, tex_coord).r;
-    material.ao = materials.data[mat_ind].ao;
     vec3 tangent_normal = texture(normal_map, tex_coord).xyz * 2.0 - 1.0;
     N = normalize(TBN * tangent_normal);
   }
+  material.ao = materials.data[mat_ind].ao;
 
   vec3 V = normalize(scene_data.cam_pos - world_pos);
 
@@ -212,15 +211,17 @@ void main() {
   }
 
   // --- Directional Light ---
-  // L_dir is the vector towards the light.
-  vec3 L_dir = normalize(-scene_data.dir_light_direction);
+  if (draw_call.dir_light) {
+    // L_dir is the vector towards the light.
+    vec3 L_dir = normalize(-scene_data.dir_light_direction);
 
-  // Calculate PBR contribution
-  vec3 PBR_dir = PBR_Contribution(L_dir, V, N, F0, material);
-  float NdotL_dir = max(dot(N, L_dir), 0.0);
+    // Calculate PBR contribution
+    vec3 PBR_dir = PBR_Contribution(L_dir, V, N, F0, material);
+    float NdotL_dir = max(dot(N, L_dir), 0.0);
 
-  // add to outgoing radiance Lo
-  Lo += PBR_dir * scene_data.dir_light_radiance * NdotL_dir;
+    // add to outgoing radiance Lo
+    Lo += PBR_dir * scene_data.dir_light_radiance * NdotL_dir;
+  }
 
   // --- Final Output ---
   // ambient lighting
