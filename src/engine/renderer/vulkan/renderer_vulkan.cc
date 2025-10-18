@@ -336,8 +336,8 @@ uint64_t RendererVulkan::CreateGeometry(std::unique_ptr<Mesh> mesh) {
   if (id != kInvalidId)
     UpdateGeometry(id, mesh->num_vertices(), mesh->GetVertices(),
                    mesh->num_indices(), mesh->GetIndices());
-  task_runner_.Delete(HERE, std::move(mesh));
-  semaphore_.release();
+  // task_runner_.Delete(HERE, std::move(mesh));
+  // semaphore_.release();
   return id;
 }
 
@@ -383,24 +383,18 @@ void RendererVulkan::UpdateGeometry(uint64_t resource_id,
     it->second.buffer_size = data_size;
   }
 
-  task_runner_.PostTask(HERE, std::bind(&RendererVulkan::CopyBuffer, this,
-                                        std::get<0>(it->second.buffer), 0,
-                                        vertices, vertex_data_size));
+  CopyBuffer(std::get<0>(it->second.buffer), 0, vertices, vertex_data_size);
   if (it->second.num_indices > 0) {
     it->second.index_data_offset = vertex_data_size;
-    task_runner_.PostTask(HERE, std::bind(&RendererVulkan::CopyBuffer, this,
-                                          std::get<0>(it->second.buffer),
-                                          it->second.index_data_offset, indices,
-                                          index_data_size));
+    CopyBuffer(std::get<0>(it->second.buffer), it->second.index_data_offset,
+               indices, index_data_size);
   }
-  task_runner_.PostTask(HERE,
-                        std::bind(&RendererVulkan::BufferMemoryBarrier, this,
-                                  std::get<0>(it->second.buffer), 0, data_size,
-                                  VK_PIPELINE_STAGE_TRANSFER_BIT,
-                                  VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
-                                  VK_ACCESS_TRANSFER_WRITE_BIT,
-                                  VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT));
-  semaphore_.release();
+
+  BufferMemoryBarrier(
+      std::get<0>(it->second.buffer), 0, data_size,
+      VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+      VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT);
+  // semaphore_.release();
 }
 
 void RendererVulkan::DestroyGeometry(uint64_t resource_id) {
@@ -455,8 +449,8 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
                                    std::unique_ptr<Image> image) {
   UpdateTexture(resource_id, image->GetWidth(), image->GetHeight(), 1, 0,
                 image->GetFormat(), image->GetSize(), image->GetBuffer());
-  task_runner_.Delete(HERE, std::move(image));
-  semaphore_.release();
+  // task_runner_.Delete(HERE, std::move(image));
+  // semaphore_.release();
 }
 
 void RendererVulkan::UpdateTexture(uint64_t resource_id,
@@ -466,8 +460,8 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
     UpdateTexture(resource_id, image->GetWidth(), image->GetHeight(),
                   images.size(), mip_level++, image->GetFormat(),
                   image->GetSize(), image->GetBuffer());
-    task_runner_.Delete(HERE, std::move(image));
-    semaphore_.release();
+    // task_runner_.Delete(HERE, std::move(image));
+    // semaphore_.release();
   }
 }
 
@@ -508,26 +502,18 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
     it->second.num_mip_levels = num_mip_levels;
   }
 
-  task_runner_.PostTask(
-      HERE,
-      std::bind(&RendererVulkan::ImageMemoryBarrier, this,
-                std::get<0>(it->second.image),
-                VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
-                old_layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL));
-  task_runner_.PostTask(
-      HERE,
-      std::bind(&RendererVulkan::CopyImage, this, std::get<0>(it->second.image),
-                vk_format, image_data, width, height, mip_level));
-  task_runner_.PostTask(
-      HERE,
-      std::bind(&RendererVulkan::ImageMemoryBarrier, this,
-                std::get<0>(it->second.image), VK_PIPELINE_STAGE_TRANSFER_BIT,
-                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
-                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
-  semaphore_.release();
+  ImageMemoryBarrier(
+      std::get<0>(it->second.image), VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+      VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
+      old_layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+  CopyImage(std::get<0>(it->second.image), vk_format, image_data, width, height,
+            mip_level);
+  ImageMemoryBarrier(
+      std::get<0>(it->second.image), VK_PIPELINE_STAGE_TRANSFER_BIT,
+      VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT,
+      VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  // semaphore_.release();
 }
 
 void RendererVulkan::DestroyTexture(uint64_t resource_id) {
@@ -826,16 +812,12 @@ void RendererVulkan::UpdateBuffer(uint64_t resource_id,
     } break;
   }
 
-  task_runner_.PostTask(
-      HERE, std::bind(&RendererVulkan::CopyBuffer, this,
-                      std::get<0>(it->second.buffer), 0, data, size));
-  task_runner_.PostTask(HERE,
-                        std::bind(&RendererVulkan::BufferMemoryBarrier, this,
-                                  std::get<0>(it->second.buffer), 0, size,
-                                  VK_PIPELINE_STAGE_TRANSFER_BIT,
-                                  VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
-                                  VK_ACCESS_TRANSFER_WRITE_BIT, dst_access));
-  semaphore_.release();
+  CopyBuffer(std::get<0>(it->second.buffer), 0, data, size);
+  BufferMemoryBarrier(std::get<0>(it->second.buffer), 0, size,
+                      VK_PIPELINE_STAGE_TRANSFER_BIT,
+                      VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+                      VK_ACCESS_TRANSFER_WRITE_BIT, dst_access);
+  // semaphore_.release();
 }
 
 void RendererVulkan::DestroyBuffer(uint64_t resource_id) {
@@ -1338,7 +1320,7 @@ bool RendererVulkan::InitializeInternal() {
   // Use a background thread for filling up staging buffers and recording setup
   // commands.
   quit_.store(false, std::memory_order_relaxed);
-  setup_thread_ = std::thread(&RendererVulkan::SetupThreadMain, this);
+  // setup_thread_ = std::thread(&RendererVulkan::SetupThreadMain, this);
 
   // Begin the first command buffer for the first frame.
   BeginFrame();
@@ -1353,10 +1335,10 @@ bool RendererVulkan::InitializeInternal() {
 void RendererVulkan::Shutdown() {
   LOG(0) << "Shutting down renderer.";
   if (device_ != VK_NULL_HANDLE) {
-    task_runner_.CancelTasks();
-    quit_.store(true, std::memory_order_relaxed);
-    semaphore_.release();
-    setup_thread_.join();
+    // task_runner_.CancelTasks();
+    // quit_.store(true, std::memory_order_relaxed);
+    // semaphore_.release();
+    // setup_thread_.join();
 
     for (size_t i = 0; i < staging_buffers_.size(); i++) {
       auto [buffer, allocation] = staging_buffers_[i].buffer;
@@ -1536,7 +1518,7 @@ bool RendererVulkan::AllocateStagingBuffer(uint32_t amount,
                                            uint32_t alignment,
                                            uint32_t& alloc_offset,
                                            uint32_t& alloc_size) {
-  DCHECK(std::this_thread::get_id() == setup_thread_.get_id());
+  // DCHECK(std::this_thread::get_id() == setup_thread_.get_id());
 
   alloc_size = amount;
 
@@ -2380,7 +2362,7 @@ void RendererVulkan::DrawListEnd() {
 
 void RendererVulkan::SwapBuffers() {
   // Ensure all tasks in the background thread are complete.
-  task_runner_.WaitForCompletion();
+  // task_runner_.WaitForCompletion();
 
   vkEndCommandBuffer(frames_[current_frame_].setup_command_buffer);
   vkEndCommandBuffer(frames_[current_frame_].draw_command_buffer);
