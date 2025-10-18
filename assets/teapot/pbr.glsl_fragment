@@ -200,7 +200,7 @@ void main() {
     float NdotL = max(dot(N, L), 0.0);
 
     // add to outgoing radiance Lo
-    Lo += PBR * radiance.rgb * NdotL;
+    Lo += PBR * radiance * NdotL;
   }
 
   // --- Directional Light ---
@@ -212,7 +212,7 @@ void main() {
   float NdotL_dir = max(dot(N, L_dir), 0.0);
 
   // add to outgoing radiance Lo
-  Lo += PBR_dir * scene_data.dir_light_radiance.rgb * NdotL_dir;
+  Lo += PBR_dir * scene_data.dir_light_radiance * NdotL_dir;
 
   // --- Final Output ---
   // ambient lighting
