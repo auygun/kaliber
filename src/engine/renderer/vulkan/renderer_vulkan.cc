@@ -651,8 +651,7 @@ uint64_t RendererVulkan::CreateShader(
   rasterizer.polygonMode =
       wireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
   rasterizer.lineWidth = 1.0f;
-  rasterizer.cullMode = kVkCullMode[static_cast<int>(
-      cull_mode)];
+  rasterizer.cullMode = kVkCullMode[static_cast<int>(cull_mode)];
   rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -2059,6 +2058,7 @@ bool RendererVulkan::ParseDescriptorBindings(
     for (size_t i = 0; i < spv_binding_count; ++i) {
       const SpvReflectDescriptorBinding& spv_binding = *spv_bindings[i];
 
+      // Binding
       DLOG(0) << "  name: " << spv_binding.name
               << ", type: " << spv_binding.descriptor_type
               << ", set: " << spv_binding.set
@@ -2069,6 +2069,14 @@ bool RendererVulkan::ParseDescriptorBindings(
       for (uint32_t k = 0; k < spv_binding.array.dims_count; k++) {
         DLOG(0) << "  spv_binding.array.dims[" << k
                 << "]: " << spv_binding.array.dims[k];
+      }
+
+      // Members
+      for (uint32_t j = 0; j < spv_binding.block.member_count; j++) {
+        DLOG(0) << "   name: " << spv_binding.block.members[j].name
+                << " offset: " << spv_binding.block.members[j].offset
+                << " size: " << spv_binding.block.members[j].size
+                << " padded_size: " << spv_binding.block.members[j].padded_size;
       }
 
       DescriptorBindingInfo binding_info;
