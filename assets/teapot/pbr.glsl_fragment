@@ -6,6 +6,7 @@ precision highp float;
 
 layout(push_constant, std430) uniform DrawCall {
   uint material_index;
+  bool is_material;
 }
 draw_call;
 
@@ -166,15 +167,22 @@ void main() {
   uint mat_ind = draw_call.material_index;
   MaterialData material;
 
-  material.albedo = texture(albedo_map, tex_coord).rgb;
-  material.metallic = texture(metallic_map, tex_coord).r;
-  material.roughness = texture(roughness_map, tex_coord).r;
-  material.ao = materials.data[mat_ind].ao;
+  if (draw_call.is_material) {
+    material.albedo = materials.data[mat_ind].albedo;
+    material.metallic = materials.data[mat_ind].metallic;
+    material.roughness = materials.data[mat_ind].roughness;
+    material.ao = materials.data[mat_ind].ao;
+    N = normalize(normal);
+  } else {
+    material.albedo = texture(albedo_map, tex_coord).rgb;
+    material.metallic = texture(metallic_map, tex_coord).r;
+    material.roughness = texture(roughness_map, tex_coord).r;
+    material.ao = materials.data[mat_ind].ao;
+    vec3 tangent_normal = texture(normal_map, tex_coord).xyz * 2.0 - 1.0;
+    N = normalize(TBN * tangent_normal);
+  }
 
   vec3 V = normalize(scene_data.cam_pos - world_pos);
-
-  vec3 tangent_normal = texture(normal_map, tex_coord).xyz * 2.0 - 1.0;
-  N = normalize(TBN * tangent_normal);
 
   // calculate reflectance at normal incidence; if dia-electric (like plastic)
   // use F0 of 0.04 and if it's a metal, use the albedo color as F0 (metallic
