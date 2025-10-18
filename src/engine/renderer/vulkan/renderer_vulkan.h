@@ -79,6 +79,7 @@ class RendererVulkan final : public Renderer {
                         const VertexDescription& vertex_description,
                         Primitive primitive,
                         bool enable_depth_test,
+                        bool wireframe,
                         CullMode cull_mode) final;
   void DestroyShader(uint64_t resource_id) final;
   void ActivateShader(uint64_t resource_id) final;

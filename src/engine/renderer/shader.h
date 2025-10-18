@@ -26,6 +26,7 @@ class Shader : public RenderResource {
               const VertexDescription& vd,
               Primitive primitive,
               bool enable_depth_test,
+              bool wireframe,
               CullMode cull_mode);
 
   void Destroy();

@@ -87,7 +87,7 @@ void Scene::Create() {
   auto source = std::make_unique<ShaderSource>();
   CHECK(source->Load("teapot/pbr.glsl")) << "Could not create ShaderSource";
   shader_.Create(std::move(source), vertex_description_, kPrimitive_Triangles,
-                 true, CullMode::kBack);
+                 true, false, CullMode::kBack);
 
 #if 0
 

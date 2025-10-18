@@ -66,7 +66,7 @@ void ImguiBackend::CreateRenderResources(Renderer* renderer) {
   auto source = std::make_unique<ShaderSource>();
   if (source->Load("engine/imgui.glsl")) {
     shader_.Create(std::move(source), vertex_description_, kPrimitive_Triangles,
-                   false, CullMode::kNone);
+                   false, false, CullMode::kNone);
   } else {
     LOG(0) << "Could not create imgui shader.";
   }

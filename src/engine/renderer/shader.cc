@@ -29,10 +29,12 @@ void Shader::Create(std::unique_ptr<ShaderSource> source,
                     const VertexDescription& vd,
                     Primitive primitive,
                     bool enable_depth_test,
+                    bool wireframe,
                     CullMode cull_mode) {
   Destroy();
-  resource_id_ = renderer_->CreateShader(std::move(source), vd, primitive,
-                                         enable_depth_test, cull_mode);
+  resource_id_ =
+      renderer_->CreateShader(std::move(source), vd, primitive,
+                              enable_depth_test, wireframe, cull_mode);
 }
 
 void Shader::Destroy() {
