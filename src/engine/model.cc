@@ -1,15 +1,15 @@
 #include "engine/model.h"
 
 #include <iostream>
-#include <memory>
-#include <span>
 #include <sstream>
 
 #include "base/log.h"
 #include "engine/asset/image.h"
+#include "engine/asset/mesh.h"
 #include "engine/engine.h"
 #include "engine/platform/asset_file.h"
 #include "engine/renderer/renderer.h"
+#include "engine/renderer/renderer_types.h"
 #include "third_party/meshoptimizer/meshoptimizer.h"
 #include "third_party/tiny_obj_loader/tiny_obj_loader.h"
 
@@ -18,6 +18,8 @@ using namespace base;
 namespace eng {
 
 namespace {
+
+const char vertex_description[] = "p3f;n3f;a3f;t2f";
 
 enum TextureUsage {
   kAlbedoMap,
@@ -28,9 +30,9 @@ enum TextureUsage {
 
 struct PushConstant {
   unsigned int material_index;
-  bool is_material = false;
+  bool is_material;
   char _pad0[3];
-  bool dir_light = true;
+  bool dir_light;
   char _pad1[3];
   unsigned int _pad2;
 };
@@ -43,7 +45,7 @@ struct Vertex {
 };
 
 void GenerateTangents(const std::vector<uint32_t>& indices,
-                      std::span<Vertex>& vertices) {
+                      std::vector<Vertex>& vertices) {
   // Iterate over triangles. We sum the face tangents for shared vertices, then
   // normalize and orthogonalize later.
   for (size_t i = 0; i < indices.size(); i += 3) {
@@ -99,7 +101,6 @@ void Expand(base::Vector3f& min, base::Vector3f& max, const base::Vector3f& p) {
 
 bool Model::LoadObj(Renderer* renderer,
                     uint64_t shader_id,
-                    VertexDescription vertex_description,
                     const std::string& file_name,
                     const std::string& mtl_file_name,
                     const std::vector<std::string>& texture_file_names) {
@@ -233,17 +234,19 @@ bool Model::LoadObj(Renderer* renderer,
                              &unique_vertices[0].position[0],
                              unique_vertices.size(), sizeof(Vertex), 1.05f);
 
+    // Add the material and a DrawCmd for the sub-mesh.
+    materials_.emplace_back(Vector3f{materials[material_id].diffuse[0],
+                                     materials[material_id].diffuse[1],
+                                     materials[material_id].diffuse[2]},
+                            1.0f, 0.3f, 0.5f);
+    draw_list_.emplace_back(remapped_indices.size(), aggregated_indices.size());
+
     // Aggregate all indices into one index buffer.
-    meshes_.push_back(
-        {remapped_indices.size(),
-         aggregated_indices.size(),
-         {materials[material_id].diffuse[0], materials[material_id].diffuse[1],
-          materials[material_id].diffuse[2]}});
     aggregated_indices.insert(aggregated_indices.end(),
                               remapped_indices.begin(), remapped_indices.end());
   }
 
-  DLOG(0) << "- Meshes: " << meshes_.size();
+  DLOG(0) << "- draw_list_.size: " << draw_list_.size();
 
   // Optimize vertices
   meshopt_optimizeVertexFetch(unique_vertices.data(), aggregated_indices.data(),
@@ -251,9 +254,9 @@ bool Model::LoadObj(Renderer* renderer,
                               unique_vertices.size(), sizeof(Vertex));
 
 #if 0
-  for (auto& mesh : meshes_) {
+  for (auto& draw_cmd : draw_list_) {
     meshopt_VertexCacheStatistics vcs = meshopt_analyzeVertexCache(
-        &aggregated_indices[mesh.index_offset], mesh.num_indices,
+        &aggregated_indices[draw_cmd.index_offset], draw_cmd.num_indices,
         unique_vertices.size(), 16, 0, 0);
     DLOG(0) << "meshopt_analyzeVertexCache:";
     DLOG(0) << "- vertices_transformed: " << vcs.vertices_transformed;
@@ -262,7 +265,7 @@ bool Model::LoadObj(Renderer* renderer,
     DLOG(0) << "- atvr (1.0 - 6.0)    : " << vcs.atvr;
 
     meshopt_VertexFetchStatistics vfs = meshopt_analyzeVertexFetch(
-        &aggregated_indices[mesh.index_offset], mesh.num_indices,
+        &aggregated_indices[draw_cmd.index_offset], draw_cmd.num_indices,
         unique_vertices.size(), sizeof(Vertex));
     DLOG(0) << "meshopt_analyzeVertexFetch:";
     DLOG(0) << "- bytes_fetched: " << vfs.bytes_fetched;
@@ -270,37 +273,19 @@ bool Model::LoadObj(Renderer* renderer,
   }
 #endif
 
-  std::span vertex_view(unique_vertices.data(), unique_vertices.size());
-  GenerateTangents(aggregated_indices, vertex_view);
+  GenerateTangents(aggregated_indices, unique_vertices);
 
-  // Create geometry
-  geometry_.SetRenderer(renderer);
-  geometry_.Create(kPrimitive_Triangles, vertex_description, kDataType_UInt);
-  geometry_.Update(unique_vertices.size(), unique_vertices.data(),
-                   aggregated_indices.size(), aggregated_indices.data());
+  auto mesh = std::make_unique<Mesh>();
+  mesh->Create(kPrimitive_Triangles, vertex_description, unique_vertices.size(),
+               unique_vertices.data(), kDataType_UInt,
+               aggregated_indices.size(), aggregated_indices.data());
 
-  size_t index = 0;
-  std::vector<std::vector<uint64_t>> textures(5);
-  for (auto& file_name : texture_file_names) {
-    bool is_srgb = index == kAlbedoMap;
-    bool normalize = index == kNormalMap;
-    LoadTexture(file_name, index, is_srgb, normalize);
-    textures[index + 1].push_back(texture_[index].resource_id());
-    ++index;
-  }
-
-  materials_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
-      shader_id, 2, 0, sizeof(MaterialData) * meshes_.size());
-  materials_dset_ =
-      renderer->CreateDescriptorSet(shader_id, 2, textures, {materials_ubo_});
-  materials_.resize(meshes_.size());
-
+  CreateRenderResources(shader_id, std::move(mesh), texture_file_names);
   return true;
 }
 
 void Model::CreateMesh(Renderer* renderer,
                        uint64_t shader_id,
-                       VertexDescription vertex_description,
                        const std::vector<float>& vertices,
                        const std::vector<uint32_t>& indices,
                        const std::vector<std::string>& texture_file_names) {
@@ -345,16 +330,36 @@ void Model::CreateMesh(Renderer* renderer,
                               remapped_indices.size(), unique_vertices.data(),
                               unique_vertices.size(), sizeof(Vertex));
 
-  std::span vertex_view(unique_vertices.data(), unique_vertices.size());
-  GenerateTangents(remapped_indices, vertex_view);
+  GenerateTangents(remapped_indices, unique_vertices);
 
-  meshes_.push_back({remapped_indices.size(), 0, {1, 1, 1}});
+  // Add the material and a DrawCmd for the mesh.
+  materials_.emplace_back(Vector3f{1, 1, 1}, 1.0f, 0.3f, 0.5f);
+  draw_list_.emplace_back(remapped_indices.size(), 0);
 
-  geometry_.SetRenderer(renderer);
-  geometry_.Create(kPrimitive_Triangles, vertex_description, kDataType_UInt);
-  geometry_.Update(unique_vertices.size(), unique_vertices.data(),
-                   remapped_indices.size(), remapped_indices.data());
+  auto mesh = std::make_unique<Mesh>();
+  mesh->Create(kPrimitive_Triangles, vertex_description, unique_vertices.size(),
+               unique_vertices.data(), kDataType_UInt, remapped_indices.size(),
+               remapped_indices.data());
 
+  CreateRenderResources(shader_id, std::move(mesh), texture_file_names);
+}
+
+void Model::CreateRenderResources(
+    uint64_t shader_id,
+    std::unique_ptr<Mesh> mesh,
+    const std::vector<std::string>& texture_file_names) {
+  // Create the geometry.
+  geometry_.SetRenderer(renderer_);
+  geometry_.Create(std::move(mesh));
+
+  // Create a UBO for all materials.
+  materials_ubo_ = renderer_->CreateBuffer(
+      shader_id, 2, 0, sizeof(MaterialData) * materials_.size());
+  renderer_->UpdateBuffer(materials_ubo_, materials_.data(),
+                          sizeof(MaterialData) * materials_.size());
+
+  // Create all textures and mipmaps.
+  is_material_ = texture_file_names.empty();
   size_t index = 0;
   std::vector<std::vector<uint64_t>> textures(5);
   for (auto& file_name : texture_file_names) {
@@ -365,11 +370,9 @@ void Model::CreateMesh(Renderer* renderer,
     ++index;
   }
 
-  materials_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
-      shader_id, 2, 0, sizeof(MaterialData) * meshes_.size());
+  // Create the descriptor set.
   materials_dset_ =
-      renderer->CreateDescriptorSet(shader_id, 2, textures, {materials_ubo_});
-  materials_.resize(meshes_.size());
+      renderer_->CreateDescriptorSet(shader_id, 2, textures, {materials_ubo_});
 }
 
 void Model::LoadTexture(const std::string& file_name,
@@ -393,12 +396,11 @@ void Model::LoadTexture(const std::string& file_name,
   texture_[index].Update(std::move(images));
 }
 
-void Model::Update(float metallic, float roughness, float ao) {
-  for (int i = 0; i < meshes_.size(); ++i) {
-    materials_[i].albedo = meshes_[i].color;
-    materials_[i].metallic = metallic;
-    materials_[i].roughness = roughness;
-    materials_[i].ao = ao;
+void Model::UpdateMaterial(float metallic, float roughness, float ao) {
+  for (auto& m : materials_) {
+    m.metallic = metallic;
+    m.roughness = roughness;
+    m.ao = ao;
   }
   renderer_->UpdateBuffer(materials_ubo_, materials_.data(),
                           sizeof(MaterialData) * materials_.size());
@@ -409,11 +411,14 @@ void Model::Draw(unsigned int instance_count) {
   renderer_->ActivateGeometry(geometry_.resource_id());
 
   unsigned int material_index = 0;
-  for (auto& mesh : meshes_) {
+  for (auto& draw_cmd : draw_list_) {
     PushConstant pc{};
     pc.material_index = material_index;
+    pc.dir_light = true;
+    pc.is_material = is_material_;
     renderer_->UpdatePushConstants(sizeof(pc), &pc);
-    geometry_.Draw(mesh.num_indices, mesh.index_offset, instance_count, 0);
+    geometry_.Draw(draw_cmd.num_indices, draw_cmd.index_offset, instance_count,
+                   0);
     ++material_index;
   }
 }

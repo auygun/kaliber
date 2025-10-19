@@ -89,21 +89,18 @@ void Scene::Create() {
   shader_.Create(std::move(source), vertex_description_, kPrimitive_Triangles,
                  true, false, CullMode::kBack);
 
-#if 0
+#if 1
 
   // model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
-  //                vertex_description_, "teapot/viking_room.obj", "",
-  //                {"teapot/viking_room.png"});
-  // model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
-  //                vertex_description_, "teapot/buddha.obj", "", {});
-  // model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
-  //                vertex_description_, "teapot/sportsCar.obj",
-  //                "teapot/sportsCar.mtl", {});
+  //                "teapot/viking_room.obj", "", {"teapot/viking_room.png"});
   model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
-                 vertex_description_, "teapot/Cerberus_LP.obj",
-                 "teapot/Cerberus_LP.mtl",
-                 {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
-                  "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
+                 "teapot/buddha.obj", "", {});
+  // model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+  //                "teapot/sportsCar.obj", "teapot/sportsCar.mtl", {});
+  // model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+  //                "teapot/Cerberus_LP.obj", "teapot/Cerberus_LP.mtl",
+  //                {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
+  //                 "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
 
   for (size_t i = 0; i < 1; ++i) {
     instances_.emplace_back().model.CreateXRotation(0.5f);
@@ -116,8 +113,7 @@ void Scene::Create() {
   std::vector<uint32_t> indices;
   CreateSphere(vertices, indices, 32, 32);
   model_.CreateMesh(
-      Engine::Get().GetRenderer(), shader_.resource_id(), vertex_description_,
-      vertices, indices,
+      Engine::Get().GetRenderer(), shader_.resource_id(), vertices, indices,
       // {"teapot/iron-rusted4-basecolor.png", "teapot/iron-rusted4-normal.png",
       //  "teapot/iron-rusted4-metalness.png",
       //  "teapot/iron-rusted4-roughness.png"});
@@ -227,7 +223,7 @@ void Scene::Update(const Vector2f& angles, float zoom) {
   Engine::Get().GetRenderer()->UpdateBuffer(lights_ubo_, &lights_,
                                             sizeof(lights_));
 
-  model_.Update(metallic_, roughness_, ao_);
+  model_.UpdateMaterial(metallic_, roughness_, ao_);
 
   Frustum f;
   // f.CreateFromMatrix(scene_data_.view_projection);

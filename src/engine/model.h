@@ -1,16 +1,17 @@
 #ifndef ENGINE_ASSET_MODEL_H
 #define ENGINE_ASSET_MODEL_H
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "base/vecmath.h"
 #include "engine/renderer/geometry.h"
-#include "engine/renderer/renderer_types.h"
 #include "engine/renderer/texture.h"
 
 namespace eng {
 
+class Mesh;
 class Renderer;
 
 class Model {
@@ -20,19 +21,17 @@ class Model {
 
   bool LoadObj(Renderer* renderer,
                uint64_t shader_id,
-               VertexDescription vertex_description,
                const std::string& file_name,
                const std::string& mtl_file_name,
                const std::vector<std::string>& texture_file_names);
 
   void CreateMesh(Renderer* renderer,
                   uint64_t shader_id,
-                  VertexDescription vertex_description,
                   const std::vector<float>& vertices,
                   const std::vector<uint32_t>& indices,
                   const std::vector<std::string>& texture_file_names);
 
-  void Update(float metallic, float roughness, float ao);
+  void UpdateMaterial(float metallic, float roughness, float ao);
 
   void Draw(unsigned int instance_index);
 
@@ -40,10 +39,9 @@ class Model {
   base::Vector3f GetExtents() const;
 
  private:
-  struct Mesh {
+  struct DrawCmd {
     size_t num_indices = 0;
     size_t index_offset = 0;
-    base::Vector3f color{};
   };
 
   struct MaterialData {
@@ -58,15 +56,21 @@ class Model {
   base::Vector3f min_{0};
   base::Vector3f max_{0};
 
-  std::vector<Mesh> meshes_;
+  std::vector<DrawCmd> draw_list_;
   Geometry geometry_;
   Texture texture_[4];
   Renderer* renderer_ = nullptr;
 
+  bool is_material_ = true;
   std::vector<MaterialData> materials_;
 
   uint64_t materials_ubo_ = 0;
   uint64_t materials_dset_ = 0;
+
+  void CreateRenderResources(
+      uint64_t shader_id,
+      std::unique_ptr<Mesh> mesh,
+      const std::vector<std::string>& texture_file_names);
 
   void LoadTexture(const std::string& file_name,
                    size_t index,
