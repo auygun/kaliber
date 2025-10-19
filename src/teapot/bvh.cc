@@ -83,20 +83,31 @@ bool AABB::IsOutsidePlane(const Plane& p) const {
                   extents.y * std::abs(p.normal.y) +
                   extents.z * std::abs(p.normal.z);
 
-  // float d = p.normal.DotProduct(-center) + p.distance - r;
-  float d = p.normal.DotProduct(center) + p.distance - r;
+  float d = p.normal.DotProduct(-center) + p.distance - r;
+  // float d = p.normal.DotProduct(center) + p.distance - r;
   return d > 0.0f;
 }
 
-void OBB::GetBoundBox(AABB& aabb) const {
+void OBB::GetBoundBox(AABB& aabb, const base::Matrix4f& model) const {
+  OBB obb = *this;
+  obb.axes[0].MultiplyMatrix3x3(model);
+  obb.axes[1].MultiplyMatrix3x3(model);
+  obb.axes[2].MultiplyMatrix3x3(model);
+  obb.center += model.Row(3);
+
   for (int k = 0; k < 3; k++)
-    aabb.max.k[k] = std::abs(axes[0][k] * extents[0]) +
-                    std::abs(axes[1][k] * extents[1]) +
-                    std::abs(axes[2][k] * extents[2]);
+    aabb.max.k[k] = std::abs(obb.axes[0][k] * obb.extents[0]) +
+                    std::abs(obb.axes[1][k] * obb.extents[1]) +
+                    std::abs(obb.axes[2][k] * obb.extents[2]);
 
   aabb.min = -aabb.max;
-  aabb.min += center;
-  aabb.max += center;
+  aabb.min += obb.center;
+  aabb.max += obb.center;
+}
+
+void OBB::GetLocalBox(AABB& aabb) const {
+  aabb.min = center - extents;
+  aabb.max = center + extents;
 }
 
 void Frustum::CreateFromMatrix(const Matrix4f& vp) {
@@ -156,9 +167,8 @@ bool Frustum::Intersects(const AABB& aabb) const {
 }
 
 bool Frustum::Intersects(const OBB& obb, const Matrix4f& model) const {
-  // obb is in the local space
   AABB aabb;
-  obb.GetBoundBox(aabb);
+  obb.GetLocalBox(aabb);
 
   Matrix4f inverse_model;
   model.InverseOrthogonal(inverse_model);
@@ -199,9 +209,7 @@ std::unique_ptr<BVHNode> BuildBVHTree(
     // Calculate the combined AABB for all node_objects in this job.
     for (const auto& obj : node_objects) {
       AABB aabb;
-      obj->obb.GetBoundBox(aabb);
-      aabb.min *= obj->model;
-      aabb.max *= obj->model;
+      obj->obb.GetBoundBox(aabb, obj->model);
       node->aabb.Expand(aabb);
     }
 
@@ -267,7 +275,7 @@ std::vector<int> FrustumCull(const BVHNode* root, const Frustum& frustum) {
     // If the node is a leaf, it's representing a single object. Otherwise It's
     // an internal node with children.
     if (node->isLeaf()) {
-      // if (frustum.Intersects(node->object->obb, node->object->model))
+      if (frustum.Intersects(node->object->obb, node->object->model))
         visible_object_ids.push_back(node->object->id);
       continue;
     } else if (!frustum.Intersects(node->aabb)) {
@@ -299,9 +307,7 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool is_last) {
   // Print node details
   if (node->object) {
     out << "[Leaf] ID: " << node->object->id << " ";
-    node->object->obb.GetBoundBox(aabb);
-    aabb.min *= node->object->model;
-    aabb.max *= node->object->model;
+    node->object->obb.GetBoundBox(aabb, node->object->model);
   } else {
     out << "[Internal] ";
     aabb = node->aabb;

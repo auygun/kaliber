@@ -45,7 +45,9 @@ struct OBB {
                          {0, 0, 1}};  // Orientation (rotation matrix columns)
 
   // Computes the World-Space AABB that tightly encloses this OBB.
-  void GetBoundBox(AABB& aabb) const;
+  void GetBoundBox(AABB& aabb, const base::Matrix4f& model) const;
+
+  void GetLocalBox(AABB& aabb) const;
 };
 
 class Frustum {
