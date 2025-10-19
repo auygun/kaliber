@@ -83,9 +83,8 @@ bool AABB::IsOutsidePlane(const Plane& p) const {
                   extents.y * std::abs(p.normal.y) +
                   extents.z * std::abs(p.normal.z);
 
-  float d = p.normal.DotProduct(-center) + p.distance - r;
-  // float d = p.normal.DotProduct(center) + p.distance - r;
-  return d > 0.0f;
+  float d = p.normal.DotProduct(center) - p.distance + r;
+  return d < 0.0f;
 }
 
 void OBB::GetBoundBox(AABB& aabb, const base::Matrix4f& model) const {
