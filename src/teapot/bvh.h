@@ -18,7 +18,7 @@ struct Plane {
 
   Plane(const base::Vector3f& p, const base::Vector3f& n) : normal{n} {
     normal.Normalize();
-    distance = -(normal.DotProduct(p));
+    distance = normal.DotProduct(p);
   }
 
   void Translate(const base::Vector3f& v);

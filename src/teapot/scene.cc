@@ -89,7 +89,7 @@ void Scene::Create() {
   shader_.Create(std::move(source), vertex_description_, kPrimitive_Triangles,
                  true, false, CullMode::kBack);
 
-#if 1
+#if 0
 
   // model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
   //                "teapot/viking_room.obj", "", {"teapot/viking_room.png"});

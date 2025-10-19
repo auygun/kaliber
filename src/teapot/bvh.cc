@@ -47,7 +47,7 @@ Frustum CreateTestFrustum() {
 }  // namespace
 
 void Plane::Translate(const base::Vector3f& v) {
-  distance -= normal.DotProduct(v);
+  distance += normal.DotProduct(v);
 }
 
 void Plane::Transform(const base::Matrix4f& mat) {
@@ -75,19 +75,17 @@ void AABB::Expand(const base::Vector3f& p) {
 }
 
 bool AABB::IsOutsidePlane(const Plane& p) const {
-  // Find the positive vertex (corner of AABB extending furthest in the
-  // direction of the plane's normal)
-  Vector3f p_vertex = min;
-  if (p.normal.x >= 0)
-    p_vertex.x = max.x;
-  if (p.normal.y >= 0)
-    p_vertex.y = max.y;
-  if (p.normal.z >= 0)
-    p_vertex.z = max.z;
+  Vector3f center{(max + min) * 0.5f};
+  Vector3f extents{max - center};
 
-  // If p_vertex is outside, the whole box is outside
-  float dist = p.normal.DotProduct(p_vertex) + p.distance;
-  return dist < 0;
+  // Compute the projection interval radius of b onto L(t) = b.c + t * p.n
+  const float r = extents.x * std::abs(p.normal.x) +
+                  extents.y * std::abs(p.normal.y) +
+                  extents.z * std::abs(p.normal.z);
+
+  // float d = p.normal.DotProduct(-center) + p.distance - r;
+  float d = p.normal.DotProduct(center) + p.distance - r;
+  return d > 0.0f;
 }
 
 void OBB::GetBoundBox(AABB& aabb) const {
@@ -269,7 +267,7 @@ std::vector<int> FrustumCull(const BVHNode* root, const Frustum& frustum) {
     // If the node is a leaf, it's representing a single object. Otherwise It's
     // an internal node with children.
     if (node->isLeaf()) {
-      if (frustum.Intersects(node->object->obb, node->object->model))
+      // if (frustum.Intersects(node->object->obb, node->object->model))
         visible_object_ids.push_back(node->object->id);
       continue;
     } else if (!frustum.Intersects(node->aabb)) {
