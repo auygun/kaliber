@@ -68,6 +68,8 @@ constexpr double PId = Constants<double>::PI;
 constexpr double PI2d = Constants<double>::PI2;
 constexpr double PIHALFd = Constants<double>::PIHALF;
 
+constexpr float EPSILON = 0.000001f;
+
 //
 // Miscellaneous helper templates.
 //
