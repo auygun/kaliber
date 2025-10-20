@@ -71,8 +71,8 @@ void OBB::GetBoundBox(AABB& aabb) const {
 }
 
 void OBB::GetLocalBox(AABB& aabb) const {
-  aabb.min = center - extents;
-  aabb.max = center + extents;
+  aabb.min = -extents;
+  aabb.max = extents;
 }
 
 void Frustum::CreateFromMatrix(const Matrix4f& vp) {
