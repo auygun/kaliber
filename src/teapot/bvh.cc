@@ -279,10 +279,9 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool is_last) {
   }
 
   // Print bounding box info
-  Vector3f center = (aabb.min + aabb.max) * 0.5f;
-  float radius = (aabb.max - center).Length();
-  out << "Center: (" << center.x << ", " << center.y << ", " << center.z
-      << ") Radius: " << radius;
+  Vector3f center = (aabb.max + aabb.min) * 0.5f;
+  Vector3f extent = (aabb.max - aabb.min) * 0.5f;
+  out << "Center: " << center.ToString() << " Extent: " << extent.ToString();
   DLOG(0) << out.str();
 
   // Prepare the prefix for the children
