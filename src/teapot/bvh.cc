@@ -51,6 +51,14 @@ bool AABB::IsOutsidePlane(const Plane& p) const {
   return d < 0.0f;
 }
 
+void OBB::Transform(const base::Matrix4f& m) {
+  for (int i = 0; i < 3; i++) {
+    axes[i].MultiplyMatrix3x3(m);
+    axes[i].Normalize();
+  }
+  center *= m;
+}
+
 void OBB::GetBoundBox(AABB& aabb) const {
   for (int k = 0; k < 3; k++)
     aabb.max.k[k] = std::abs(axes[0][k] * extents[0]) +

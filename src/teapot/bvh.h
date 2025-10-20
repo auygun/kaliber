@@ -44,6 +44,8 @@ struct OBB {
                          {0, 1, 0},
                          {0, 0, 1}};  // Orientation (rotation matrix columns)
 
+  void Transform(const base::Matrix4f& m);
+
   // Computes the World-Space AABB that tightly encloses this OBB.
   void GetBoundBox(AABB& aabb) const;
 
