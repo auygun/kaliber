@@ -150,6 +150,8 @@ bool Model::LoadObj(Renderer* renderer,
     materials.back().diffuse[2] = 1;
   }
 
+  Vector3f min{0};
+  Vector3f max{0};
   std::vector<Vertex> vertices;
 
   // Indices grouped by material
@@ -185,14 +187,18 @@ bool Model::LoadObj(Renderer* renderer,
         vertices.push_back(vert);
         material_indices[material_id].push_back(new_index);
 
-        Expand(min_, max_, vert.position);
+        Expand(min, max, vert.position);
       }
       index_offset += fv;
     }
     total_index_count += index_offset;
   }
 
+  Vector3f center = (min + max) * 0.5f;
+  extents_ = (max - min) * 0.5f;
+
   DLOG(0) << "- Total vertices: " << vertices.size();
+  DLOG(0) << "- extents: " << extents_.ToString();
 
   // Deduplicate vertices.
   std::vector<uint32_t> remap(vertices.size());
@@ -205,6 +211,11 @@ bool Model::LoadObj(Renderer* renderer,
                             vertices.size(), sizeof(Vertex), remap.data());
 
   DLOG(0) << "- Unique vertices: " << unique_vertices.size();
+
+  // Translate the mesh vertices so that its geometric center is at the local
+  // origin (0,0,0).
+  for (auto& v : unique_vertices)
+    v.position -= center;
 
   std::vector<uint32_t> aggregated_indices(total_index_count);
 
@@ -305,12 +316,21 @@ void Model::CreateMesh(Renderer* renderer,
   meshopt_remapVertexBuffer(unique_vertices.data(), vertices.data(),
                             vertex_count, sizeof(Vertex), remap.data());
 
-  for (auto& v : unique_vertices)
-    Expand(min_, max_, v.position);
   DLOG(0) << "- Unique vertices: " << unique_vertices.size();
-  DLOG(0) << "- min: " << min_.ToString() << " max: " << max_.ToString();
-  DLOG(0) << "- center: " << GetCenter().ToString()
-          << " extents: " << GetExtents().ToString();
+
+  Vector3f min{0};
+  Vector3f max{0};
+  for (auto& v : unique_vertices)
+    Expand(min, max, v.position);
+
+  extents_ = (max - min) * 0.5f;
+  DLOG(0) << "- extents: " << extents_.ToString();
+
+  // Translate the mesh vertices so that its geometric center is at the local
+  // origin (0,0,0).
+  Vector3f center = (min + max) * 0.5f;
+  for (auto& v : unique_vertices)
+    v.position -= center;
 
   // Remap indices to unique vertices.
   std::vector<uint32_t> remapped_indices(indices.size());
@@ -421,14 +441,6 @@ void Model::Draw(unsigned int instance_count) {
                    0);
     ++material_index;
   }
-}
-
-Vector3f Model::GetCenter() const {
-  return (min_ + max_) * 0.5f;
-}
-
-Vector3f Model::GetExtents() const {
-  return (max_ - min_) * 0.5f;
 }
 
 }  // namespace eng

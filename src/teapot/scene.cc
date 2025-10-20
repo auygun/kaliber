@@ -136,7 +136,7 @@ void Scene::Create() {
     model_mat.Row(3) = {2.2f * i, 0, 0};
 
     OBB obb{};
-    obb.center = model_.GetCenter() + model_mat.Row(3);
+    obb.center = model_mat.Row(3);
     obb.extents = model_.GetExtents();
     obb.axes[0] = model_mat.Row(0);
     obb.axes[1] = model_mat.Row(1);

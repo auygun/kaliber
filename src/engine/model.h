@@ -35,8 +35,7 @@ class Model {
 
   void Draw(unsigned int instance_index);
 
-  base::Vector3f GetCenter() const;
-  base::Vector3f GetExtents() const;
+  const base::Vector3f& GetExtents() const { return extents_; }
 
  private:
   struct DrawCmd {
@@ -53,8 +52,7 @@ class Model {
     float _pad1;
   };
 
-  base::Vector3f min_{0};
-  base::Vector3f max_{0};
+  base::Vector3f extents_{0};
 
   std::vector<DrawCmd> draw_list_;
   Geometry geometry_;
