@@ -132,13 +132,16 @@ void Scene::Create() {
 
   for (size_t i = 0; i < 10; ++i) {
     instances_.emplace_back().model.CreateXRotation(0.5f);
-    instances_.back().model.Row(3) = {2.2f * i, 0, 0};
+    auto& model_mat = instances_.back().model;
+    model_mat.Row(3) = {2.2f * i, 0, 0};
 
-    auto c = model_.GetCenter();
-    auto e = model_.GetExtents();
-    bvh_mesh_objects_.push_back({(int)i,
-                                 {c, e, {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}},
-                                 instances_.back().model});
+    OBB obb{};
+    obb.center = model_.GetCenter() + model_mat.Row(3);
+    obb.extents = model_.GetExtents();
+    obb.axes[0] = model_mat.Row(0);
+    obb.axes[1] = model_mat.Row(1);
+    obb.axes[2] = model_mat.Row(2);
+    bvh_mesh_objects_.emplace_back((int)i, obb, model_mat);
   }
   for (auto& mo : bvh_mesh_objects_)
     bvh_mesh_object_ptrs_.push_back(&mo);

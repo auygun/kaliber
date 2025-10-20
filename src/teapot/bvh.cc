@@ -51,21 +51,15 @@ bool AABB::IsOutsidePlane(const Plane& p) const {
   return d < 0.0f;
 }
 
-void OBB::GetBoundBox(AABB& aabb, const base::Matrix4f& model) const {
-  OBB obb = *this;
-  obb.axes[0].MultiplyMatrix3x3(model);
-  obb.axes[1].MultiplyMatrix3x3(model);
-  obb.axes[2].MultiplyMatrix3x3(model);
-  obb.center += model.Row(3);
-
+void OBB::GetBoundBox(AABB& aabb) const {
   for (int k = 0; k < 3; k++)
-    aabb.max.k[k] = std::abs(obb.axes[0][k] * obb.extents[0]) +
-                    std::abs(obb.axes[1][k] * obb.extents[1]) +
-                    std::abs(obb.axes[2][k] * obb.extents[2]);
+    aabb.max.k[k] = std::abs(axes[0][k] * extents[0]) +
+                    std::abs(axes[1][k] * extents[1]) +
+                    std::abs(axes[2][k] * extents[2]);
 
   aabb.min = -aabb.max;
-  aabb.min += obb.center;
-  aabb.max += obb.center;
+  aabb.min += center;
+  aabb.max += center;
 }
 
 void OBB::GetLocalBox(AABB& aabb) const {
@@ -172,7 +166,7 @@ std::unique_ptr<BVHNode> BuildBVHTree(
     // Calculate the combined AABB for all node_objects in this job.
     for (const auto& obj : node_objects) {
       AABB aabb;
-      obj->obb.GetBoundBox(aabb, obj->model);
+      obj->obb.GetBoundBox(aabb);
       node->aabb.Expand(aabb);
     }
 
@@ -188,17 +182,17 @@ std::unique_ptr<BVHNode> BuildBVHTree(
     if (axis == 0) {
       std::sort(node_objects.begin(), node_objects.end(),
                 [](const MeshObject* a, const MeshObject* b) {
-                  return a->model.Row(3).x < b->model.Row(3).x;
+                  return a->obb.center.x < b->obb.center.x;
                 });
     } else if (axis == 1) {
       std::sort(node_objects.begin(), node_objects.end(),
                 [](const MeshObject* a, const MeshObject* b) {
-                  return a->model.Row(3).y < b->model.Row(3).y;
+                  return a->obb.center.y < b->obb.center.y;
                 });
     } else {  // axis == 2
       std::sort(node_objects.begin(), node_objects.end(),
                 [](const MeshObject* a, const MeshObject* b) {
-                  return a->model.Row(3).z < b->model.Row(3).z;
+                  return a->obb.center.z < b->obb.center.z;
                 });
     }
 
@@ -270,7 +264,7 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool is_last) {
   // Print node details
   if (node->object) {
     out << "[Leaf] ID: " << node->object->id << " ";
-    node->object->obb.GetBoundBox(aabb, node->object->model);
+    node->object->obb.GetBoundBox(aabb);
   } else {
     out << "[Internal] ";
     aabb = node->aabb;
