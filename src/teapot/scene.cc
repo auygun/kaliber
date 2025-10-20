@@ -240,6 +240,6 @@ void Scene::Update(const Vector2f& angles, float zoom) {
 
 void Scene::CreateProjectionMatrix() {
   projection_.CreatePerspectiveProjection(
-      45, 4.0f / 3.0f, (float)Engine::Get().GetScreenWidth(),
+      45, (float)Engine::Get().GetScreenWidth(),
       (float)Engine::Get().GetScreenHeight(), 1, 2048);
 }

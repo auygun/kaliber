@@ -54,6 +54,7 @@ struct OBB {
 
 class Frustum {
  public:
+  // Plane order: [0]=Left, [1]=Right, [2]=Bottom, [3]=Top, [4]=Near, [5]=Far
   Plane planes[6];
 
   void CreateFromMatrix(const base::Matrix4f& vp);
