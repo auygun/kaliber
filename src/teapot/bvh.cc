@@ -8,43 +8,7 @@
 
 using namespace base;
 
-namespace {
-
-// Helper function to create some random mesh objects for testing
-std::vector<MeshObject> CreateTestObjects(int count) {
-  std::vector<MeshObject> objects;
-  for (int i = 0; i < count; ++i) {
-    MeshObject obj;
-    obj.id = i;
-    float x = static_cast<float>(rand() % 200 - 100);
-    float y = static_cast<float>(rand() % 200 - 100);
-    float z = static_cast<float>(rand() % 200 - 100);
-    float size = static_cast<float>(rand() % 5 + 1);
-
-    obj.obb.center = {0, 0, 0};
-    obj.obb.extents = {size, size, size};
-    obj.model.CreateTranslation({x, y, z});
-    objects.push_back(obj);
-  }
-  return objects;
-}
-
-// Helper to create a sample frustum for testing
-Frustum CreateTestFrustum() {
-  Frustum f;
-  // This is a simplified frustum. A real one would be derived from a projection
-  // matrix. For this example, we define 6 planes that form a box-like view
-  // volume.
-  f.planes[0] = {{1, 0, 0}, 50};   // Left
-  f.planes[1] = {{-1, 0, 0}, 50};  // Right
-  f.planes[2] = {{0, 1, 0}, 50};   // Bottom
-  f.planes[3] = {{0, -1, 0}, 50};  // Top
-  f.planes[4] = {{0, 0, 1}, 50};   // Near
-  f.planes[5] = {{0, 0, -1}, 50};  // Far
-  return f;
-}
-
-}  // namespace
+namespace {}  // namespace
 
 void Plane::Translate(const base::Vector3f& v) {
   distance += normal.DotProduct(v);
@@ -328,80 +292,4 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool is_last) {
     DumpBVHTree(node->left.get(), child_prefix, false);
     DumpBVHTree(node->right.get(), child_prefix, true);
   }
-}
-
-int TestBVH() {
-  std::unique_ptr<BVHNode> root;
-
-  // 1. Create a scene with some mesh objects
-  std::vector<MeshObject> scene_objects = CreateTestObjects(1000);
-  DLOG(0) << "Created " << scene_objects.size() << " objects in the scene.";
-
-  // Build the BVH from the list of objects
-  std::vector<const MeshObject*> object_pointers;
-  object_pointers.reserve(scene_objects.size());
-  for (const auto& obj : scene_objects)
-    object_pointers.push_back(&obj);
-  root = BuildBVHTree(object_pointers);
-  DLOG(0) << "BVH built with initial objects.";
-
-  //   bvh.dumpTree();
-
-  // 2. Define a viewing frustum for culling
-  Frustum view_frustum = CreateTestFrustum();
-
-  // 3. Perform frustum culling
-  std::vector<int> visible_objects = FrustumCull(root.get(), view_frustum);
-  DLOG(0) << "Found " << visible_objects.size() << " visible objects.";
-  DCHECK(visible_objects.size() == 163);
-
-  // --- 4. Example of dynamic object management ---
-  DLOG(0) << "\n--- Simulating dynamic updates ---";
-
-  // Add a new object that should be visible
-  MeshObject new_obj;
-  new_obj.id = 1001;
-  new_obj.obb.center = {0, 0, 0};
-  new_obj.obb.extents = {5, 5, 5};
-  new_obj.model.CreateTranslation({0, 0, 0});
-  scene_objects.push_back(new_obj);
-  DLOG(0) << "Added a new object (ID 1001) at the origin.";
-
-  // Remove an existing object (ID 5)
-  scene_objects.erase(
-      std::remove_if(scene_objects.begin(), scene_objects.end(),
-                     [](const MeshObject& obj) { return obj.id == 5; }),
-      scene_objects.end());
-  DLOG(0) << "Removed object with ID 5.";
-
-  // Rebuild the BVH with the modified object list
-  object_pointers.clear();
-  object_pointers.reserve(scene_objects.size());
-  for (const auto& obj : scene_objects)
-    object_pointers.push_back(&obj);
-  root = BuildBVHTree(object_pointers);
-  DLOG(0) << "BVH rebuilt after updates.";
-
-  // Perform culling again with the updated BVH
-  visible_objects = FrustumCull(root.get(), view_frustum);
-  DLOG(0) << "Found " << visible_objects.size()
-          << " visible objects after update.";
-  DCHECK(visible_objects.size() == 164);
-
-  // Check if the new object is in the visible set
-  bool found_new = false;
-  for (int id : visible_objects) {
-    if (id == 1001) {
-      found_new = true;
-      break;
-    }
-  }
-  if (found_new) {
-    DLOG(0) << "The newly added object (ID 1001) is visible as expected.";
-  } else {
-    NOTREACHED()
-        << "Error: The newly added object was not found in the visible set.";
-  }
-
-  return 0;
 }

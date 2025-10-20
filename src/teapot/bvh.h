@@ -98,6 +98,4 @@ void DumpBVHTree(const BVHNode* node,
                  const std::string& prefix,
                  bool is_last = true);
 
-int TestBVH();
-
 #endif  // BVH_H
