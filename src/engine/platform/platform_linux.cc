@@ -42,7 +42,7 @@ Platform::Platform() {
 }
 
 void Platform::CreateMainWindow() {
-  bool res = CreateWindow(800, 1205);
+  bool res = CreateWindow(1920, 1080);
   CHECK(res) << "Failed to create window.";
 
   XSelectInput(display_, window_,
