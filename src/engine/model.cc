@@ -246,9 +246,9 @@ bool Model::LoadObj(Renderer* renderer,
                              unique_vertices.size(), sizeof(Vertex), 1.05f);
 
     // Add the material and a DrawCmd for the sub-mesh.
-    materials_.emplace_back(Vector3f{materials[material_id].diffuse[0],
+    materials_.emplace_back(Vector4f{materials[material_id].diffuse[0],
                                      materials[material_id].diffuse[1],
-                                     materials[material_id].diffuse[2]},
+                                     materials[material_id].diffuse[2], 1.0f},
                             1.0f, 0.3f, 0.5f);
     draw_list_.emplace_back(remapped_indices.size(), aggregated_indices.size());
 
@@ -353,7 +353,7 @@ void Model::CreateMesh(Renderer* renderer,
   GenerateTangents(remapped_indices, unique_vertices);
 
   // Add the material and a DrawCmd for the mesh.
-  materials_.emplace_back(Vector3f{1, 1, 1}, 1.0f, 0.3f, 0.5f);
+  materials_.emplace_back(Vector4f{1, 1, 1, 1}, 1.0f, 0.3f, 0.5f);
   draw_list_.emplace_back(remapped_indices.size(), 0);
 
   auto mesh = std::make_unique<Mesh>();

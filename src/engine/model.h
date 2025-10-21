@@ -44,12 +44,11 @@ class Model {
   };
 
   struct MaterialData {
-    base::Vector3f albedo;
+    base::Vector4f albedo;
     float metallic;
     float roughness;
     float ao;
     float _pad0;
-    float _pad1;
   };
 
   base::Vector3f extents_{0};
