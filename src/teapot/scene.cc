@@ -78,6 +78,8 @@ void Scene::Create() {
 
   SetVisible(true);
 
+  debug_layer_.CreateRenderResources(Engine::Get().GetRenderer());
+
   if (!ParseVertexDescription(vertex_description, vertex_description_)) {
     LOG(0) << "Failed to parse vertex description.";
     return;
@@ -180,9 +182,14 @@ void Scene::Draw(float frame_frac) {
   shader_.Activate();
   Engine::Get().GetRenderer()->ActivateDescriptorSet(scene_dset_);
   model_.Draw(instances_.size());
+
+  Matrix4f view, view_projection;
+  camera_.GetMatrix().InverseOrthogonal(view);
+  view.Multiply(projection_, view_projection);
+  debug_layer_.Draw(view_projection);
 }
 
-void Scene::Update(const Vector2f& angles, float zoom) {
+void Scene::Update(float delta_time, const Vector2f& angles, float zoom) {
   camera_.Orbit(-angles.y, angles.x, zoom);
 
   int renderer_type = static_cast<int>(Engine::Get().GetRendererType());
@@ -214,6 +221,12 @@ void Scene::Update(const Vector2f& angles, float zoom) {
   if (selected_type != Engine::Get().GetRendererType())
     Engine::Get().CreateRenderer(selected_type);
 
+  debug_layer_.Update(delta_time);
+
+  for (auto& i : instances_)
+    debug_layer_.DrawMatrix(i.model);
+  // debug_layer_.DrawLine({0, 2, 0}, {2.2f, 2, 0});
+
   Matrix4f view;
   camera_.GetMatrix().InverseOrthogonal(view);
   view.Multiply(projection_, scene_data_.view_projection);
@@ -234,6 +247,7 @@ void Scene::Update(const Vector2f& angles, float zoom) {
                      (float)Engine::Get().GetScreenWidth() /
                          (float)Engine::Get().GetScreenHeight(),
                      45, 1, 2048);
+  debug_layer_.DrawFrustum(f.planes);
   auto objects = FrustumCull(bvh_root_.get(), f);
   DLOG(0) << "FrustumCull: " << objects.size();
 }

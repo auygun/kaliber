@@ -48,7 +48,7 @@ class Renderer {
 
   virtual uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) = 0;
   virtual uint64_t CreateGeometry(
-      Primitive primitive,
+      Primitive primitive, // TODO: Unused, remove!
       VertexDescription vertex_description,
       DataType index_description = kDataType_Invalid) = 0;
   virtual void UpdateGeometry(uint64_t resource_id,

@@ -1,6 +1,8 @@
 copy("engine") {
   sources = [
     "RobotoMono-Regular.ttf",
+    "debug.glsl_fragment",
+    "debug.glsl_vertex",
     "imgui.glsl_fragment",
     "imgui.glsl_vertex",
     "pass_through.glsl_fragment",

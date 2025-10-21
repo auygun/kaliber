@@ -18,6 +18,7 @@ enum class CullMode {
 
 enum Primitive {
   kPrimitive_Invalid = -1,
+  kPrimitive_Lines,
   kPrimitive_Triangles,
   kPrimitive_TriangleStrip,
   kPrimitive_Max

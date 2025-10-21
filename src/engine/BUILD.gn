@@ -39,6 +39,8 @@ source_set("engine") {
     "solid_quad.h",
     "sound_player.cc",
     "sound_player.h",
+    "debug_layer.h",
+    "debug_layer.cc",
   ]
 
   deps = [

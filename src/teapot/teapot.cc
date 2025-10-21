@@ -46,7 +46,7 @@ class Teapot final : public eng::Game {
     last_pos_ = pos;
     auto zoom = last_dist_ - dist;
     last_dist_ = dist;
-    scene_.Update(angles, zoom * 80.0f);
+    scene_.Update(delta_time, angles, zoom * 80.0f);
   }
 
   void ContextLost() final { scene_.Create(); }

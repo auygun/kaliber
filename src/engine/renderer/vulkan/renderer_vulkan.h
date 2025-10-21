@@ -46,7 +46,7 @@ class RendererVulkan final : public Renderer {
   void ResetScissor() final;
 
   uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) final;
-  uint64_t CreateGeometry(Primitive primitive,
+  uint64_t CreateGeometry(Primitive primitive, // TODO: Unused, remove!
                           VertexDescription vertex_description,
                           DataType index_description = kDataType_Invalid) final;
   void UpdateGeometry(uint64_t resource_id,

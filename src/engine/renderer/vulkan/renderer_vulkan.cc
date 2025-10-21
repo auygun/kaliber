@@ -35,6 +35,7 @@ using VertexInputDescription =
               std::vector<VkVertexInputAttributeDescription>>;
 
 constexpr VkPrimitiveTopology kVkPrimitiveType[kPrimitive_Max] = {
+    VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
     VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
     VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,
 };
@@ -650,7 +651,7 @@ uint64_t RendererVulkan::CreateShader(
   rasterizer.rasterizerDiscardEnable = VK_FALSE;
   rasterizer.polygonMode =
       wireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
-  rasterizer.lineWidth = 1.0f;
+  rasterizer.lineWidth = 2.0f;
   rasterizer.cullMode = kVkCullMode[static_cast<int>(cull_mode)];
   rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterizer.depthBiasEnable = VK_FALSE;

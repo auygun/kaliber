@@ -1,0 +1,14 @@
+layout(push_constant, std430) uniform DrawCall {
+  mat4 view_projection;
+}
+draw_call;
+
+layout(location = 0) in vec3 in_position;
+layout(location = 1) in vec4 in_color;
+
+layout(location = 0) out vec4 color;
+
+void main() {
+  color = in_color;
+  gl_Position = draw_call.view_projection * vec4(in_position, 1.0);
+}

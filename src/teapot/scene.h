@@ -7,6 +7,7 @@
 #include "engine/bvh.h"
 #include "engine/drawable.h"
 #include "engine/model.h"
+#include "engine/debug_layer.h"
 #include "engine/renderer/renderer_types.h"
 #include "engine/renderer/shader.h"
 #include "teapot/camera.h"
@@ -20,7 +21,7 @@ class Scene : public eng::Drawable {
 
   void Draw(float frame_frac) override;
 
-  void Update(const base::Vector2f& angles, float zoom);
+  void Update(float delta_time, const base::Vector2f& angles, float zoom);
 
   void CreateProjectionMatrix();
 
@@ -50,6 +51,8 @@ class Scene : public eng::Drawable {
 
   Camera camera_;
   base::Matrix4f projection_;
+
+  eng::DebugLayer debug_layer_;
 
   std::unique_ptr<eng::BVHNode> bvh_root_;
   std::vector<eng::MeshObject> bvh_mesh_objects_;

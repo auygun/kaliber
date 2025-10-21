@@ -1461,7 +1461,7 @@ class Matrix4 {
   void RecreateMatrix() {
     // Normalize the priority0 row, and use it together with the priority1 row
     // to create an orthogonal matrix. The third row is ignored.
-    DCHECK(priority0 >= 0 && priority1 <= 2);
+    static_assert(priority0 >= 0 && priority1 <= 2);
     int missing = 3 - (priority0 + priority1);
     constexpr int type = priority0 - priority1;
     if constexpr (type == -1 || type == 2) {
