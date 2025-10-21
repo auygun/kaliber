@@ -18,6 +18,8 @@ source_set("engine") {
     "asset/shader_source.h",
     "asset/sound.cc",
     "asset/sound.h",
+    "bvh.cc",
+    "bvh.h",
     "drawable.cc",
     "drawable.h",
     "engine.cc",

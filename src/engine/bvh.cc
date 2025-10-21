@@ -1,4 +1,4 @@
-#include "teapot/bvh.h"
+#include "engine/bvh.h"
 
 #include <algorithm>
 #include <deque>
@@ -7,6 +7,8 @@
 #include "base/log.h"
 
 using namespace base;
+
+namespace eng {
 
 std::unique_ptr<BVHNode> BuildBVHTree(
     const std::vector<const MeshObject*>& objects) {
@@ -153,3 +155,5 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool is_last) {
     DumpBVHTree(node->right.get(), child_prefix, true);
   }
 }
+
+}  // namespace eng

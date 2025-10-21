@@ -1,11 +1,12 @@
-#ifndef BVH_H
-#define BVH_H
+#ifndef ENGINE_BVH_H
+#define ENGINE_BVH_H
 
-#include <limits>
 #include <memory>
 #include <vector>
 
 #include "base/vecmath.h"
+
+namespace eng {
 
 // Represents a mesh object in the scene
 struct MeshObject {
@@ -38,4 +39,6 @@ void DumpBVHTree(const BVHNode* node,
                  const std::string& prefix,
                  bool is_last = true);
 
-#endif  // BVH_H
+}  // namespace eng
+
+#endif  // ENGINE_BVH_H

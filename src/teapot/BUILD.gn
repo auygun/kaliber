@@ -2,8 +2,6 @@ import("//build/rules.gni")
 
 game("teapot") {
   sources = [
-    "bvh.cc",
-    "bvh.h",
     "camera.cc",
     "camera.h",
     "scene.cc",

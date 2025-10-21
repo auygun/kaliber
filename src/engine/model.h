@@ -1,5 +1,5 @@
-#ifndef ENGINE_ASSET_MODEL_H
-#define ENGINE_ASSET_MODEL_H
+#ifndef ENGINE_MODEL_H
+#define ENGINE_MODEL_H
 
 #include <memory>
 #include <string>
@@ -78,4 +78,4 @@ class Model {
 
 }  // namespace eng
 
-#endif  // ENGINE_ASSET_MODEL_H
+#endif  // ENGINE_MODEL_H

@@ -4,11 +4,11 @@
 #include <memory>
 
 #include "base/vecmath.h"
+#include "engine/bvh.h"
 #include "engine/drawable.h"
 #include "engine/model.h"
 #include "engine/renderer/renderer_types.h"
 #include "engine/renderer/shader.h"
-#include "teapot/bvh.h"
 #include "teapot/camera.h"
 
 class Scene : public eng::Drawable {
@@ -51,9 +51,9 @@ class Scene : public eng::Drawable {
   Camera camera_;
   base::Matrix4f projection_;
 
-  std::unique_ptr<BVHNode> bvh_root_;
-  std::vector<MeshObject> bvh_mesh_objects_;
-  std::vector<const MeshObject*> bvh_mesh_object_ptrs_;
+  std::unique_ptr<eng::BVHNode> bvh_root_;
+  std::vector<eng::MeshObject> bvh_mesh_objects_;
+  std::vector<const eng::MeshObject*> bvh_mesh_object_ptrs_;
 
   base::Vector3f albedo_{0.8f, 0.4f, 0.2f};
   float metallic_ = 1.0f;
