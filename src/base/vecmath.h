@@ -1968,9 +1968,9 @@ class Frustum {
                         T zNear,
                         T zFar) {
     T fovRadians = fovY * (T)(M_PI / 180.0);
-    const T halfVSide = zFar * tanf(fovRadians * .5f);
-    const T halfHSide = halfVSide * aspect;
-    const Vector3<T> frontMultFar = cam.Row(2) * zFar;
+    T halfHSide = zFar * tanf(fovRadians * .5f);
+    T halfVSide = halfHSide * aspect;
+    Vector3<T> frontMultFar = cam.Row(2) * zFar;
 
     // Near and Far planes
     planes[4] = {cam.Row(3) + cam.Row(2) * zNear, cam.Row(2)};
