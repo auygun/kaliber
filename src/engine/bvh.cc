@@ -105,9 +105,9 @@ std::vector<int> FrustumCull(const BVHNode* root, const Frustumf& frustum) {
       if (frustum.Intersects(node->object->obb, node->object->model))
         visible_object_ids.push_back(node->object->id);
       continue;
-    } /*else if (!frustum.Intersects(node->aabb)) {
+    } else if (!frustum.Intersects(node->aabb)) {
       continue;
-    }*/
+    }
 
     // The internal node passed tests, check its children
     if (node->left)
