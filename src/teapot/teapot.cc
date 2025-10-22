@@ -40,6 +40,9 @@ class Teapot final : public eng::Game {
         } else if (event->GetPointerId() == 0) {
           pos = event->GetVector();
         }
+      } else if (event->GetType() == InputEvent::kKeyPress) {
+        if (event->GetKeyPress() == 'd')
+        scene_.GetCamera().ToggleDebugCamera();
       }
     }
     auto angles = last_pos_ - pos;

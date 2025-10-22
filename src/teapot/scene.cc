@@ -243,11 +243,12 @@ void Scene::Update(float delta_time, const Vector2f& angles, float zoom) {
 
   Frustumf f;
   // f.CreateFromMatrix(scene_data_.view_projection);
-  f.CreateFromCamera(camera_.GetMatrix(),
+  f.CreateFromCamera(camera_.GetMatrixMainCam(),
                      (float)Engine::Get().GetScreenWidth() /
                          (float)Engine::Get().GetScreenHeight(),
                      45, 1, 2048);
   debug_layer_.DrawFrustum(f.planes);
+  debug_layer_.DrawMatrix(camera_.GetMatrixMainCam());
   auto objects = FrustumCull(bvh_root_.get(), f);
   DLOG(0) << "FrustumCull: " << objects.size();
 }

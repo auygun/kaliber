@@ -25,6 +25,8 @@ class Scene : public eng::Drawable {
 
   void CreateProjectionMatrix();
 
+  Camera& GetCamera() { return camera_; }
+
  private:
   struct SceneData {
     base::Matrix4f view_projection;
