@@ -10,14 +10,14 @@
 // Represents a mesh object in the scene
 struct MeshObject {
   int id;
-  base::OBB obb;
+  base::OBBf obb;
   base::Matrix4f model{1};
   // In a real engine, this would point to the actual mesh data and transform
 };
 
 struct BVHNode {
   // Bounding volume for the node
-  base::AABB aabb;
+  base::AABBf aabb;
 
   // Tree structure
   std::unique_ptr<BVHNode> left = nullptr;
@@ -32,7 +32,7 @@ struct BVHNode {
 std::unique_ptr<BVHNode> BuildBVHTree(
     const std::vector<const MeshObject*>& objects);
 
-std::vector<int> FrustumCull(const BVHNode* root, const base::Frustum& frustum);
+std::vector<int> FrustumCull(const BVHNode* root, const base::Frustumf& frustum);
 
 void DumpBVHTree(const BVHNode* node,
                  const std::string& prefix,

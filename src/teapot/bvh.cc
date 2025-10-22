@@ -32,7 +32,7 @@ std::unique_ptr<BVHNode> BuildBVHTree(
 
     // Calculate the combined AABB for all node_objects in this job.
     for (const auto& obj : node_objects) {
-      AABB aabb;
+      AABBf aabb;
       obj->obb.GetBoundBox(aabb);
       node->aabb.Expand(aabb);
     }
@@ -82,7 +82,7 @@ std::unique_ptr<BVHNode> BuildBVHTree(
   return root;
 }
 
-std::vector<int> FrustumCull(const BVHNode* root, const Frustum& frustum) {
+std::vector<int> FrustumCull(const BVHNode* root, const Frustumf& frustum) {
   std::vector<int> visible_object_ids;
   if (!root)
     return visible_object_ids;
@@ -126,7 +126,7 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool is_last) {
   out << prefix;
   out << (is_last ? "└──" : "├──");
 
-  AABB aabb;
+  AABBf aabb;
 
   // Print node details
   if (node->object) {

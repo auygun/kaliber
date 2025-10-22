@@ -135,7 +135,7 @@ void Scene::Create() {
     auto& model_mat = instances_.back().model;
     model_mat.Row(3) = {2.2f * i, 0, 0};
 
-    OBB obb{};
+    OBBf obb{};
     obb.center = model_mat.Row(3);
     obb.extents = model_.GetExtents();
     obb.axes[0] = model_mat.Row(0);
@@ -228,7 +228,7 @@ void Scene::Update(const Vector2f& angles, float zoom) {
 
   model_.UpdateMaterial(metallic_, roughness_, ao_);
 
-  Frustum f;
+  Frustumf f;
   // f.CreateFromMatrix(scene_data_.view_projection);
   f.CreateFromCamera(camera_.GetMatrix(),
                      (float)Engine::Get().GetScreenWidth() /

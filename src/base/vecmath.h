@@ -1843,22 +1843,23 @@ using Matrix4f = Matrix4<float>;
 using Quatf = Quaternion<float>;
 
 // The plane equation is: normal · point - distance = 0
+template <typename T>
 struct Plane {
-  base::Vector3f normal;
-  float distance;
+  base::Vector3<T> normal;
+  T distance;
 
   Plane() = default;
 
-  Plane(const base::Vector3f& n, float d) : normal{n}, distance{d} {}
+  Plane(const base::Vector3<T>& n, T d) : normal{n}, distance{d} {}
 
-  Plane(const base::Vector3f& p, const base::Vector3f& n) : normal{n} {
+  Plane(const base::Vector3<T>& p, const base::Vector3<T>& n) : normal{n} {
     normal.Normalize();
     distance = normal.DotProduct(p);
   }
 
-  void Translate(const base::Vector3f& v) { distance += normal.DotProduct(v); }
+  void Translate(const base::Vector3<T>& v) { distance += normal.DotProduct(v); }
 
-  void Transform(const base::Matrix4f& mat) {
+  void Transform(const base::Matrix4<T>& mat) {
     normal.MultiplyMatrix3x3(mat);
     normal.Normalize();
     Translate(mat.Row(3));
@@ -1866,11 +1867,12 @@ struct Plane {
 };
 
 // Axis-Aligned Bounding Box
+template <typename T>
 struct AABB {
-  base::Vector3f min{std::numeric_limits<float>::max()};
-  base::Vector3f max{std::numeric_limits<float>::lowest()};
+  base::Vector3<T> min{std::numeric_limits<T>::max()};
+  base::Vector3<T> max{std::numeric_limits<T>::lowest()};
 
-  void Expand(const AABB& other) {
+  void Expand(const AABB<T>& other) {
     min.x = std::min(min.x, other.min.x);
     min.y = std::min(min.y, other.min.y);
     min.z = std::min(min.z, other.min.z);
@@ -1879,7 +1881,7 @@ struct AABB {
     max.z = std::max(max.z, other.max.z);
   }
 
-  void Expand(const base::Vector3f& p) {
+  void Expand(const base::Vector3<T>& p) {
     min.x = std::min(min.x, p.x);
     min.y = std::min(min.y, p.y);
     min.z = std::min(min.z, p.z);
@@ -1888,29 +1890,30 @@ struct AABB {
     max.z = std::max(max.z, p.z);
   }
 
-  bool IsOutsidePlane(const Plane& p) const {
-    Vector3f center{(max + min) * 0.5f};
-    Vector3f extents{max - center};
+  bool IsOutsidePlane(const Plane<T>& p) const {
+    Vector3<T> center{(max + min) * 0.5f};
+    Vector3<T> extents{max - center};
 
     // Compute the projection interval radius of b onto L(t) = b.c + t * p.n
-    const float r = extents.x * std::abs(p.normal.x) +
+    const T r = extents.x * std::abs(p.normal.x) +
                     extents.y * std::abs(p.normal.y) +
                     extents.z * std::abs(p.normal.z);
 
-    float d = p.normal.DotProduct(center) - p.distance + r;
+    T d = p.normal.DotProduct(center) - p.distance + r;
     return d < 0.0f;
   }
 };
 
 // Oriented Bounding Box
+template <typename T>
 struct OBB {
-  base::Vector3f center{0, 0, 0};
-  base::Vector3f extents{0, 0, 0};  // Half-sizes along each axis
-  base::Vector3f axes[3]{{1, 0, 0},
+  base::Vector3<T> center{0, 0, 0};
+  base::Vector3<T> extents{0, 0, 0};  // Half-sizes along each axis
+  base::Vector3<T> axes[3]{{1, 0, 0},
                          {0, 1, 0},
                          {0, 0, 1}};  // Orientation (rotation matrix columns)
 
-  void Transform(const base::Matrix4f& m) {
+  void Transform(const base::Matrix4<T>& m) {
     for (int i = 0; i < 3; i++) {
       axes[i].MultiplyMatrix3x3(m);
       axes[i].Normalize();
@@ -1918,7 +1921,7 @@ struct OBB {
     center *= m;
   }
 
-  void GetBoundBox(AABB& aabb) const {
+  void GetBoundBox(AABB<T>& aabb) const {
     for (int k = 0; k < 3; k++)
       aabb.max.k[k] = std::abs(axes[0][k] * extents[0]) +
                       std::abs(axes[1][k] * extents[1]) +
@@ -1929,18 +1932,19 @@ struct OBB {
     aabb.max += center;
   }
 
-  void GetLocalBox(AABB& aabb) const {
+  void GetLocalBox(AABB<T>& aabb) const {
     aabb.min = -extents;
     aabb.max = extents;
   }
 };
 
+template <typename T>
 class Frustum {
  public:
   // Plane order: [0]=Left, [1]=Right, [2]=Bottom, [3]=Top, [4]=Near, [5]=Far
-  Plane planes[6];
+  Plane<T> planes[6];
 
-  void CreateFromMatrix(const Matrix4f& vp) {
+  void CreateFromMatrix(const Matrix4<T>& vp) {
     Vector4f raw_planes[6];
     raw_planes[0] = vp.Row4(3) + vp.Row4(0);
     raw_planes[1] = vp.Row4(3) - vp.Row4(0);
@@ -1950,23 +1954,23 @@ class Frustum {
     raw_planes[5] = vp.Row4(3) - vp.Row4(2);
 
     for (int i = 0; i < 6; ++i) {
-      Vector3f n = raw_planes[i].GetVector3();
-      float d = raw_planes[i][3];
-      float magnitude = n.Length();
+      Vector3<T> n = raw_planes[i].GetVector3();
+      T d = raw_planes[i][3];
+      T magnitude = n.Length();
       planes[i].normal = n / magnitude;
       planes[i].distance = -d / magnitude;
     }
   }
 
-  void CreateFromCamera(const Matrix4f& cam,
-                        float aspect,
-                        float fovY,
-                        float zNear,
-                        float zFar) {
-    float fovRadians = fovY * (float)(M_PI / 180.0);
-    const float halfVSide = zFar * tanf(fovRadians * .5f);
-    const float halfHSide = halfVSide * aspect;
-    const Vector3f frontMultFar = cam.Row(2) * zFar;
+  void CreateFromCamera(const Matrix4<T>& cam,
+                        T aspect,
+                        T fovY,
+                        T zNear,
+                        T zFar) {
+    T fovRadians = fovY * (T)(M_PI / 180.0);
+    const T halfVSide = zFar * tanf(fovRadians * .5f);
+    const T halfHSide = halfVSide * aspect;
+    const Vector3<T> frontMultFar = cam.Row(2) * zFar;
 
     // Near and Far planes
     planes[4] = {cam.Row(3) + cam.Row(2) * zNear, cam.Row(2)};
@@ -1988,7 +1992,7 @@ class Frustum {
   }
 
   // Test AABB vs. all 6 planes
-  bool Intersects(const AABB& aabb) const {
+  bool Intersects(const AABB<T>& aabb) const {
     for (int i = 0; i < 6; ++i) {
       if (aabb.IsOutsidePlane(planes[i]))
         return false;
@@ -1996,16 +2000,16 @@ class Frustum {
     return true;
   }
 
-  bool Intersects(const OBB& obb, const Matrix4f& model) const {
-    AABB aabb;
+  bool Intersects(const OBB<T>& obb, const Matrix4<T>& model) const {
+    AABB<T> aabb;
     obb.GetLocalBox(aabb);
 
-    Matrix4f inverse_model;
+    Matrix4<T> inverse_model;
     model.InverseOrthogonal(inverse_model);
 
     // Transform each plane to the model's local space and test
     for (int i = 0; i < 6; i++) {
-      Plane p = planes[i];
+      Plane<T> p = planes[i];
       p.Transform(inverse_model);
 
       if (aabb.IsOutsidePlane(p))
@@ -2014,6 +2018,11 @@ class Frustum {
     return true;
   }
 };
+
+using Planef = Plane<float>;
+using AABBf = AABB<float>;
+using OBBf = OBB<float>;
+using Frustumf = Frustum<float>;
 
 }  // namespace base
 
