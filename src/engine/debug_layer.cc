@@ -91,7 +91,7 @@ void DebugLayer::Draw(const Matrix4f& view_projection) {
   aggregated_vertices_.clear();
   for (const auto& shape : shapes_) {
     aggregated_vertices_.insert(aggregated_vertices_.end(),
-                               shape.vertices.begin(), shape.vertices.end());
+                                shape.vertices.begin(), shape.vertices.end());
   }
 
   if (aggregated_vertices_.empty())
@@ -221,9 +221,35 @@ void DebugLayer::DrawObb(const OBBf& obb,
                          const Vector3f& color,
                          float duration,
                          bool fade) {
-  AABBf aabb;
-  obb.GetBoundBox(aabb);
-  DrawAabb(aabb, color, duration, fade);
+  Vector3f ext = obb.extents;
+  Matrix4f orientation{1};
+  orientation.Row(0) = obb.axes[0];
+  orientation.Row(1) = obb.axes[1];
+  orientation.Row(2) = obb.axes[2];
+
+  Vector3f corners[8];
+  corners[0] = obb.center + Vector3f(-ext.x, -ext.y, -ext.z) * orientation;
+  corners[1] = obb.center + Vector3f(ext.x, -ext.y, -ext.z) * orientation;
+  corners[2] = obb.center + Vector3f(ext.x, ext.y, -ext.z) * orientation;
+  corners[3] = obb.center + Vector3f(-ext.x, ext.y, -ext.z) * orientation;
+  corners[4] = obb.center + Vector3f(-ext.x, -ext.y, ext.z) * orientation;
+  corners[5] = obb.center + Vector3f(ext.x, -ext.y, ext.z) * orientation;
+  corners[6] = obb.center + Vector3f(ext.x, ext.y, ext.z) * orientation;
+  corners[7] = obb.center + Vector3f(-ext.x, ext.y, ext.z) * orientation;
+
+  // Draw the 12 edges
+  DrawLine(corners[0], corners[1], color, duration, fade);
+  DrawLine(corners[1], corners[2], color, duration, fade);
+  DrawLine(corners[2], corners[3], color, duration, fade);
+  DrawLine(corners[3], corners[0], color, duration, fade);
+  DrawLine(corners[4], corners[5], color, duration, fade);
+  DrawLine(corners[5], corners[6], color, duration, fade);
+  DrawLine(corners[6], corners[7], color, duration, fade);
+  DrawLine(corners[7], corners[4], color, duration, fade);
+  DrawLine(corners[0], corners[4], color, duration, fade);
+  DrawLine(corners[1], corners[5], color, duration, fade);
+  DrawLine(corners[2], corners[6], color, duration, fade);
+  DrawLine(corners[3], corners[7], color, duration, fade);
 }
 
 void DebugLayer::DrawFrustum(const Planef frustumPlanes[6],
