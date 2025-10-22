@@ -133,7 +133,7 @@ void Scene::Create() {
        "teapot/alien-slime1-roughness.png"});
 
   for (size_t i = 0; i < 10; ++i) {
-    instances_.emplace_back().model.CreateXRotation(0.5f);
+    instances_.emplace_back().model.CreateFromAngles({0.1f, 0.1f, 0.1f}, 0);
     auto& model_mat = instances_.back().model;
     model_mat.Row(3) = {2.2f * i, 0, 0};
 
@@ -225,7 +225,7 @@ void Scene::Update(float delta_time, const Vector2f& angles, float zoom) {
 
   for (auto& i : instances_)
     debug_layer_.DrawMatrix(i.model);
-  // debug_layer_.DrawLine({0, 2, 0}, {2.2f, 2, 0});
+  DrawBVHTree(bvh_root_.get(), debug_layer_);
 
   Matrix4f view;
   camera_.GetMatrix().InverseOrthogonal(view);

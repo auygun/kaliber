@@ -8,6 +8,8 @@
 
 namespace eng {
 
+class DebugLayer;
+
 // Represents a mesh object in the scene
 struct MeshObject {
   int id;
@@ -38,6 +40,8 @@ std::vector<int> FrustumCull(const BVHNode* root, const base::Frustumf& frustum)
 void DumpBVHTree(const BVHNode* node,
                  const std::string& prefix,
                  bool is_last = true);
+
+void DrawBVHTree(const BVHNode* node, DebugLayer& debug_layer);
 
 }  // namespace eng
 

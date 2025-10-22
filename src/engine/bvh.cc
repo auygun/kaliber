@@ -5,6 +5,7 @@
 #include <tuple>
 
 #include "base/log.h"
+#include "engine/debug_layer.h"
 
 using namespace base;
 
@@ -153,6 +154,24 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool is_last) {
     // The right child is always the "last" one for its parent
     DumpBVHTree(node->left.get(), child_prefix, false);
     DumpBVHTree(node->right.get(), child_prefix, true);
+  }
+}
+
+void DrawBVHTree(const BVHNode* node, DebugLayer& debug_layer) {
+  if (!node)
+    return;
+
+  if (node->object) {
+    debug_layer.DrawObb(node->object->obb, {1, 1, 0});
+  } else {
+    debug_layer.DrawAabb(node->aabb, {1, 0, 1});
+  }
+
+  // Recurse for children (if they exist)
+  if (!node->object) {
+    // The right child is always the "last" one for its parent
+    DrawBVHTree(node->left.get(), debug_layer);
+    DrawBVHTree(node->right.get(), debug_layer);
   }
 }
 
