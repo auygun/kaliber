@@ -246,7 +246,7 @@ void Scene::Update(float delta_time, const Vector2f& angles, float zoom) {
   f.CreateFromCamera(camera_.GetMatrixMainCam(),
                      (float)Engine::Get().GetScreenWidth() /
                          (float)Engine::Get().GetScreenHeight(),
-                     45, 1, 2048);
+                     45, 1, 20);
   debug_layer_.DrawFrustum(f.planes);
   debug_layer_.DrawMatrix(camera_.GetMatrixMainCam());
   auto objects = FrustumCull(bvh_root_.get(), f);

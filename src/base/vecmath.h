@@ -1857,7 +1857,9 @@ struct Plane {
     distance = normal.DotProduct(p);
   }
 
-  void Translate(const base::Vector3<T>& v) { distance += normal.DotProduct(v); }
+  void Translate(const base::Vector3<T>& v) {
+    distance += normal.DotProduct(v);
+  }
 
   void Transform(const base::Matrix4<T>& mat) {
     normal.MultiplyMatrix3x3(mat);
@@ -1896,8 +1898,8 @@ struct AABB {
 
     // Compute the projection interval radius of b onto L(t) = b.c + t * p.n
     const T r = extents.x * std::abs(p.normal.x) +
-                    extents.y * std::abs(p.normal.y) +
-                    extents.z * std::abs(p.normal.z);
+                extents.y * std::abs(p.normal.y) +
+                extents.z * std::abs(p.normal.z);
 
     T d = p.normal.DotProduct(center) - p.distance + r;
     return d < 0.0f;
@@ -1910,8 +1912,8 @@ struct OBB {
   base::Vector3<T> center{0, 0, 0};
   base::Vector3<T> extents{0, 0, 0};  // Half-sizes along each axis
   base::Vector3<T> axes[3]{{1, 0, 0},
-                         {0, 1, 0},
-                         {0, 0, 1}};  // Orientation (rotation matrix columns)
+                           {0, 1, 0},
+                           {0, 0, 1}};  // Orientation (rotation matrix columns)
 
   void Transform(const base::Matrix4<T>& m) {
     for (int i = 0; i < 3; i++) {
@@ -1991,9 +1993,9 @@ class Frustum {
         (frontMultFar + cam.Row(0) * halfVSide).CrossProduct(cam.Row(1))};
   }
 
-  // Test AABB vs. all 6 planes
   bool Intersects(const AABB<T>& aabb) const {
-    for (int i = 0; i < 6; ++i) {
+    // Test AABB vs. 5 planes (ignore the far plane)
+    for (int i = 0; i < 5; ++i) {
       if (aabb.IsOutsidePlane(planes[i]))
         return false;
     }
@@ -2007,8 +2009,9 @@ class Frustum {
     Matrix4<T> inverse_model;
     model.InverseOrthogonal(inverse_model);
 
-    // Transform each plane to the model's local space and test
-    for (int i = 0; i < 6; i++) {
+    // Transform each plane to the model's local space and test AABB vs. 5
+    // planes (ignore the far plane)
+    for (int i = 0; i < 5; i++) {
       Plane<T> p = planes[i];
       p.Transform(inverse_model);
 
