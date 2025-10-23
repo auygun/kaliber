@@ -242,11 +242,14 @@ void Scene::Update(float delta_time, const Vector2f& angles, float zoom) {
   model_.UpdateMaterial(metallic_, roughness_, ao_);
 
   Frustumf f;
-  // f.CreateFromMatrix(scene_data_.view_projection);
-  f.CreateFromCamera(camera_.GetMatrixMainCam(),
-                     (float)Engine::Get().GetScreenWidth() /
-                         (float)Engine::Get().GetScreenHeight(),
-                     45, 1.0f, 20);
+  Matrix4f f_view, f_view_projection;
+  camera_.GetMatrixMainCam().InverseOrthogonal(f_view);
+  f_view.Multiply(projection_, f_view_projection);
+  f.CreateFromMatrix(f_view_projection);
+  // f.CreateFromCamera(camera_.GetMatrixMainCam(),
+  //                    (float)Engine::Get().GetScreenWidth() /
+  //                        (float)Engine::Get().GetScreenHeight(),
+  //                    45, 1.0f, 20);
   debug_layer_.DrawFrustum(f.planes);
   debug_layer_.DrawMatrix(camera_.GetMatrixMainCam());
   auto objects = FrustumCull(bvh_root_.get(), f);

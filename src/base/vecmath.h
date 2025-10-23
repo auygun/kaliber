@@ -1954,13 +1954,18 @@ class Frustum {
   Plane<T> planes[6];
 
   void CreateFromMatrix(const Matrix4<T>& vp) {
+    // Transpose the matrix to swap rows and columns
+    Matrix4<T> vp_transposed;
+    vp.Transpose(vp_transposed);
+
     Vector4<T> raw_planes[6];
-    raw_planes[0] = vp.Row4(3) + vp.Row4(0);
-    raw_planes[1] = vp.Row4(3) - vp.Row4(0);
-    raw_planes[2] = vp.Row4(3) + vp.Row4(1);
-    raw_planes[3] = vp.Row4(3) - vp.Row4(1);
-    raw_planes[4] = vp.Row4(2);
-    raw_planes[5] = vp.Row4(3) - vp.Row4(2);
+    // Now vp_transposed.Row4(i) is the same as vp.Column4(i)
+    raw_planes[0] = vp_transposed.Row4(3) + vp_transposed.Row4(0);
+    raw_planes[1] = vp_transposed.Row4(3) - vp_transposed.Row4(0);
+    raw_planes[2] = vp_transposed.Row4(3) + vp_transposed.Row4(1);
+    raw_planes[3] = vp_transposed.Row4(3) - vp_transposed.Row4(1);
+    raw_planes[4] = vp_transposed.Row4(2);
+    raw_planes[5] = vp_transposed.Row4(3) - vp_transposed.Row4(2);
 
     for (int i = 0; i < 6; ++i) {
       Vector3<T> n = raw_planes[i].GetVector3();
