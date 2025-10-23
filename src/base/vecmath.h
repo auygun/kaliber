@@ -1976,8 +1976,8 @@ class Frustum {
   }
 
   bool Intersects(const AABB<T>& aabb) const {
-    // Test AABB vs. 5 planes (ignore the far plane)
-    for (int i = 0; i < 5; ++i) {
+    // Test AABB vs. 6 planes
+    for (int i = 0; i < 6; ++i) {
       if (aabb.IsOutsidePlane(planes[i]))
         return false;
     }
@@ -1991,9 +1991,8 @@ class Frustum {
     Matrix4<T> inverse_model;
     model.InverseOrthogonal(inverse_model);
 
-    // Transform each plane to the model's local space and test AABB vs. 5
-    // planes (ignore the far plane)
-    for (int i = 0; i < 5; i++) {
+    // Transform each plane to the model's local space and test
+    for (int i = 0; i < 6; i++) {
       Plane<T> p = planes[i];
       p.Transform(inverse_model);
 
