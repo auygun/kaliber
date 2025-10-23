@@ -1959,7 +1959,6 @@ class Frustum {
     vp.Transpose(vp_transposed);
 
     Vector4<T> raw_planes[6];
-    // Now vp_transposed.Row4(i) is the same as vp.Column4(i)
     raw_planes[0] = vp_transposed.Row4(3) + vp_transposed.Row4(0);
     raw_planes[1] = vp_transposed.Row4(3) - vp_transposed.Row4(0);
     raw_planes[2] = vp_transposed.Row4(3) + vp_transposed.Row4(1);
@@ -1974,35 +1973,6 @@ class Frustum {
       planes[i].normal = n / magnitude;
       planes[i].distance = -d / magnitude;
     }
-  }
-
-  void CreateFromCamera(const Matrix4<T>& cam,
-                        T aspect,
-                        T fovY,
-                        T zNear,
-                        T zFar) {
-    T fovRadians = fovY * (T)(M_PI / 180.0);
-    T halfHSide = zFar * tanf(fovRadians * .5f);
-    T halfVSide = halfHSide * aspect;
-    Vector3<T> frontMultFar = cam.Row(2) * zFar;
-
-    // Near and Far planes
-    planes[4] = {cam.Row(3) + cam.Row(2) * zNear, cam.Row(2)};
-    planes[5] = {cam.Row(3) + frontMultFar, -cam.Row(2)};
-
-    // Left and Right planes
-    planes[0] = {cam.Row(3), cam.Row(0).CrossProduct(frontMultFar +
-                                                     cam.Row(1) * halfHSide)};
-    planes[1] = {
-        cam.Row(3),
-        (frontMultFar - cam.Row(1) * halfHSide).CrossProduct(cam.Row(0))};
-
-    // Bottom and Top planes
-    planes[2] = {
-        cam.Row(3),
-        (frontMultFar + cam.Row(0) * halfVSide).CrossProduct(cam.Row(1))};
-    planes[3] = {cam.Row(3), cam.Row(1).CrossProduct(frontMultFar -
-                                                     cam.Row(0) * halfVSide)};
   }
 
   bool Intersects(const AABB<T>& aabb) const {
