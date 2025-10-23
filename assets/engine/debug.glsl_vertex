@@ -1,4 +1,4 @@
-layout(push_constant, std430) uniform DrawCall {
+layout(push_constant, row_major, std430) uniform DrawCall {
   mat4 view_projection;
 }
 draw_call;
@@ -10,5 +10,5 @@ layout(location = 0) out vec4 color;
 
 void main() {
   color = in_color;
-  gl_Position = draw_call.view_projection * vec4(in_position, 1.0);
+  gl_Position = vec4(in_position, 1.0) * draw_call.view_projection;
 }

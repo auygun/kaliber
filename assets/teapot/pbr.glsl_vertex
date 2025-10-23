@@ -1,4 +1,4 @@
-layout(set = 1, binding = 0, std140) uniform SceneData {
+layout(set = 1, binding = 0, row_major, std140) uniform SceneData {
   mat4 view_projection;
   vec3 cam_pos;
   float white;
@@ -12,7 +12,8 @@ struct InstanceData {
   mat4 model;
 };
 
-layout(set = 1, binding = 2, std430) buffer restrict readonly Instances {
+layout(set = 1, binding = 2, row_major, std430) buffer
+    restrict readonly Instances {
   InstanceData data[];
 }
 instances;
@@ -30,11 +31,11 @@ layout(location = 3) out vec2 tex_coord;
 void main() {
   const InstanceData instance_data = instances.data[gl_InstanceIndex];
 
-  world_pos = vec3(instance_data.model * vec4(in_position, 1.0));
+  world_pos = vec3(vec4(in_position, 1.0) * instance_data.model);
   // Model matrix doesn't contain non-uniform scale.
-  normal = mat3(instance_data.model) * in_normal;
-  tangent = mat3(instance_data.model) * in_tangent;
+  normal = in_normal * mat3(instance_data.model);
+  tangent = in_tangent * mat3(instance_data.model);
   tex_coord = in_tex_coord;
 
-  gl_Position = scene_data.view_projection * vec4(world_pos, 1.0);
+  gl_Position = vec4(world_pos, 1.0) * scene_data.view_projection;
 }
