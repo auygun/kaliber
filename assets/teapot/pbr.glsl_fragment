@@ -5,9 +5,10 @@ precision highp float;
 #endif
 
 layout(push_constant, std430) uniform DrawCall {
-  uint material_index;
-  bool is_material;
-  bool dir_light;
+  uint material_index;  // Index into the Materials buffer
+  bool is_material;     // Use the Materials buffer or the texture maps
+  bool dir_light;       // Include the directional light in calculations
+  bool cookie_cutter;   // Enable alpha-tested "cookie-cutter" rendering
 }
 draw_call;
 
@@ -159,24 +160,31 @@ vec3 PBR_Contribution(vec3 L, vec3 V, vec3 N, vec3 F0, MaterialData material) {
 }
 
 void main() {
-  // Build TBN
-  vec3 N = normalize(normal);
-  vec3 T = normalize(tangent);
-  vec3 B = normalize(cross(N, T));
-  mat3 TBN = mat3(T, B, N);
-
   uint mat_ind = draw_call.material_index;
   MaterialData material;
 
+  vec3 N;
+
   if (draw_call.is_material) {
-    material.albedo = materials.data[mat_ind].albedo; // Assumes buffer now contains vec4
+    material.albedo = materials.data[mat_ind].albedo;
     material.metallic = materials.data[mat_ind].metallic;
     material.roughness = materials.data[mat_ind].roughness;
+    N = normalize(normal);
   } else {
     material.albedo = texture(albedo_map, tex_coord);
+    if (draw_call.cookie_cutter && material.albedo.a < 0.5) {
+      discard;  // Stop all further execution for this pixel
+    }
+
     material.metallic = texture(metallic_map, tex_coord).r;
     material.roughness = texture(roughness_map, tex_coord).r;
     vec3 tangent_normal = texture(normal_map, tex_coord).xyz * 2.0 - 1.0;
+
+    // Build TBN
+    N = normalize(normal);
+    vec3 T = normalize(tangent);
+    vec3 B = normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
     N = normalize(TBN * tangent_normal);
   }
   material.ao = materials.data[mat_ind].ao;

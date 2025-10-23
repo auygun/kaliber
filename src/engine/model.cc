@@ -34,7 +34,8 @@ struct PushConstant {
   char _pad0[3];
   bool dir_light;
   char _pad1[3];
-  unsigned int _pad2;
+  bool cookie_cutter;
+  char _pad2[3];
 };
 
 struct Vertex {
@@ -436,6 +437,7 @@ void Model::Draw(unsigned int instance_count) {
     pc.material_index = material_index;
     pc.dir_light = true;
     pc.is_material = is_material_;
+    pc.cookie_cutter = false;
     renderer_->UpdatePushConstants(sizeof(pc), &pc);
     geometry_.Draw(draw_cmd.num_indices, draw_cmd.index_offset, instance_count,
                    0);
