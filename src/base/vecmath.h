@@ -1541,7 +1541,7 @@ class Matrix4 {
     q2.Create(other);
     q1.Lerp(q2, t, qr);
     qr.CreateMatrix(dst);
-    dst.Row(3) = base::Lerp(Row(3), other.Row(3), t);
+    dst.Row(3) = Lerp(Row(3), other.Row(3), t);
   }
 
   Vector3<T>& Row(int row) { return *((Vector3<T>*)&k[row][0]); }
@@ -1824,9 +1824,9 @@ class Quaternion {
     mat.k[2][2] = (T(1.0) - (xx + yy));
   }
 
-  void CreateMatrix(Matrix4<T>& mat) const {
-    CreateMatrix3x3(mat);
-    mat.UnitNot3x3();
+  void CreateMatrix(Matrix4<T>& m) const {
+    CreateMatrix3x3(m);
+    m.UnitNot3x3();
   }
 
   std::string ToString() const {
@@ -1836,45 +1836,44 @@ class Quaternion {
   }
 };
 
-using Vector2f = Vector2<float>;
-using Vector3f = Vector3<float>;
-using Vector4f = Vector4<float>;
-using Matrix4f = Matrix4<float>;
-using Quatf = Quaternion<float>;
+//
+// Plane
+//
 
-// The plane equation is: normal · point - distance = 0
 template <typename T>
 struct Plane {
-  base::Vector3<T> normal;
+  // The plane equation is: normal · point - distance = 0
+  Vector3<T> normal;
   T distance;
 
   Plane() = default;
 
-  Plane(const base::Vector3<T>& n, T d) : normal{n}, distance{d} {}
+  Plane(const Vector3<T>& n, T d) : normal{n}, distance{d} {}
 
-  Plane(const base::Vector3<T>& p, const base::Vector3<T>& n) : normal{n} {
+  Plane(const Vector3<T>& p, const Vector3<T>& n) : normal{n} {
     normal.Normalize();
     distance = normal.DotProduct(p);
   }
 
-  void Translate(const base::Vector3<T>& v) {
-    distance += normal.DotProduct(v);
-  }
+  void Translate(const Vector3<T>& v) { distance += normal.DotProduct(v); }
 
-  void Transform(const base::Matrix4<T>& mat) {
-    normal.MultiplyMatrix3x3(mat);
+  void Transform(const Matrix4<T>& m) {
+    normal.MultiplyMatrix3x3(m);
     normal.Normalize();
-    Translate(mat.Row(3));
+    Translate(m.Row(3));
   }
 };
 
+//
 // Axis-Aligned Bounding Box
+//
+
 template <typename T>
 struct AABB {
-  base::Vector3<T> min{std::numeric_limits<T>::max()};
-  base::Vector3<T> max{std::numeric_limits<T>::lowest()};
+  Vector3<T> min{std::numeric_limits<T>::max()};
+  Vector3<T> max{std::numeric_limits<T>::lowest()};
 
-  void Expand(const AABB<T>& other) {
+  void Expand(const AABB& other) {
     min.x = std::min(min.x, other.min.x);
     min.y = std::min(min.y, other.min.y);
     min.z = std::min(min.z, other.min.z);
@@ -1883,7 +1882,7 @@ struct AABB {
     max.z = std::max(max.z, other.max.z);
   }
 
-  void Expand(const base::Vector3<T>& p) {
+  void Expand(const Vector3<T>& p) {
     min.x = std::min(min.x, p.x);
     min.y = std::min(min.y, p.y);
     min.z = std::min(min.z, p.z);
@@ -1906,16 +1905,19 @@ struct AABB {
   }
 };
 
+//
 // Oriented Bounding Box
+//
+
 template <typename T>
 struct OBB {
-  base::Vector3<T> center{0, 0, 0};
-  base::Vector3<T> extents{0, 0, 0};  // Half-sizes along each axis
-  base::Vector3<T> axes[3]{{1, 0, 0},
-                           {0, 1, 0},
-                           {0, 0, 1}};  // Orientation (rotation matrix columns)
+  Vector3<T> center{0, 0, 0};
+  Vector3<T> extents{0, 0, 0};  // Half-sizes along each axis
+  Vector3<T> axes[3]{{1, 0, 0},
+                     {0, 1, 0},
+                     {0, 0, 1}};  // Orientation (rotation matrix rows)
 
-  void Transform(const base::Matrix4<T>& m) {
+  void Transform(const Matrix4<T>& m) {
     for (int i = 0; i < 3; i++) {
       axes[i].MultiplyMatrix3x3(m);
       axes[i].Normalize();
@@ -1923,6 +1925,7 @@ struct OBB {
     center *= m;
   }
 
+  // Computes the World-Space AABB that tightly encloses this OBB.
   void GetBoundBox(AABB<T>& aabb) const {
     for (int k = 0; k < 3; k++)
       aabb.max.k[k] = std::abs(axes[0][k] * extents[0]) +
@@ -1940,6 +1943,10 @@ struct OBB {
   }
 };
 
+//
+// Frustum
+//
+
 template <typename T>
 class Frustum {
  public:
@@ -1947,7 +1954,7 @@ class Frustum {
   Plane<T> planes[6];
 
   void CreateFromMatrix(const Matrix4<T>& vp) {
-    Vector4f raw_planes[6];
+    Vector4<T> raw_planes[6];
     raw_planes[0] = vp.Row4(3) + vp.Row4(0);
     raw_planes[1] = vp.Row4(3) - vp.Row4(0);
     raw_planes[2] = vp.Row4(3) + vp.Row4(1);
@@ -1985,12 +1992,12 @@ class Frustum {
         cam.Row(3),
         (frontMultFar - cam.Row(1) * halfHSide).CrossProduct(cam.Row(0))};
 
-    // Top and Bottom planes
-    planes[3] = {cam.Row(3), cam.Row(1).CrossProduct(frontMultFar -
-                                                     cam.Row(0) * halfVSide)};
+    // Bottom and Top planes
     planes[2] = {
         cam.Row(3),
         (frontMultFar + cam.Row(0) * halfVSide).CrossProduct(cam.Row(1))};
+    planes[3] = {cam.Row(3), cam.Row(1).CrossProduct(frontMultFar -
+                                                     cam.Row(0) * halfVSide)};
   }
 
   bool Intersects(const AABB<T>& aabb) const {
@@ -2022,6 +2029,11 @@ class Frustum {
   }
 };
 
+using Vector2f = Vector2<float>;
+using Vector3f = Vector3<float>;
+using Vector4f = Vector4<float>;
+using Matrix4f = Matrix4<float>;
+using Quatf = Quaternion<float>;
 using Planef = Plane<float>;
 using AABBf = AABB<float>;
 using OBBf = OBB<float>;
