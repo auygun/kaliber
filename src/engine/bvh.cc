@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <span>
 #include <tuple>
 
 #include "base/log.h"
@@ -20,8 +21,9 @@ std::vector<BVHNode> BuildBVHTree(std::vector<MeshObject> objects) {
 
   // Create stack for depth-first traversal and start the process with the root
   // node using all objects.
-  std::deque<std::tuple<size_t, std::vector<MeshObject>>> stack;
-  stack.push_back(std::make_tuple(node_ind_last, std::move(objects)));
+  std::deque<std::tuple<size_t, std::span<MeshObject>>> stack;
+  std::span objects_view(objects.data(), objects.size());
+  stack.push_back(std::make_tuple(node_ind_last, std::move(objects_view)));
 
   while (!stack.empty()) {
     auto [node_ind, node_objects] = std::move(stack.back());
@@ -69,10 +71,10 @@ std::vector<BVHNode> BuildBVHTree(std::vector<MeshObject> objects) {
 
     // Split the objects into two halves
     size_t mid = node_objects.size() / 2;
-    std::vector<MeshObject> left_objects(node_objects.begin(),
-                                         node_objects.begin() + mid);
-    std::vector<MeshObject> right_objects(node_objects.begin() + mid,
-                                          node_objects.end());
+    std::span<MeshObject> left_objects(node_objects.begin(),
+                                       node_objects.begin() + mid);
+    std::span<MeshObject> right_objects(node_objects.begin() + mid,
+                                        node_objects.end());
 
     // Create the child nodes.
     bvh_nodes.emplace_back();

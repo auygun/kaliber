@@ -12,7 +12,7 @@ class DebugLayer;
 
 // Represents a mesh object in the scene
 struct MeshObject {
-  int id = -1;
+  size_t id = -1;
   base::OBBf obb;
   base::Matrix4f model{1};
   // In a real engine, this would point to the actual mesh data and transform

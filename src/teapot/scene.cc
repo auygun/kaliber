@@ -144,7 +144,7 @@ void Scene::Create() {
     obb.axes[0] = model_mat.Row(0);
     obb.axes[1] = model_mat.Row(1);
     obb.axes[2] = model_mat.Row(2);
-    bvh_mesh_objects.emplace_back((int)i, obb, model_mat);
+    bvh_mesh_objects.emplace_back(i, obb, model_mat);
   }
   bvh_tree_ = BuildBVHTree(std::move(bvh_mesh_objects));
   DumpBVHTree(bvh_tree_, 0, "");
