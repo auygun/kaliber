@@ -1917,6 +1917,16 @@ struct OBB {
                      {0, 1, 0},
                      {0, 0, 1}};  // Orientation (rotation matrix rows)
 
+  OBB() = default;
+
+  OBB(const Matrix4<T>& m, const Vector3<T>& e) {
+    center = m.Row(3);
+    extents = e;
+    axes[0] = m.Row(0);
+    axes[1] = m.Row(1);
+    axes[2] = m.Row(2);
+  }
+
   void Transform(const Matrix4<T>& m) {
     for (int i = 0; i < 3; i++) {
       axes[i].MultiplyMatrix3x3(m);

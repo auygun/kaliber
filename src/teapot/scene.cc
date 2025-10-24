@@ -138,12 +138,7 @@ void Scene::Create() {
     auto& model_mat = instances_.back().model;
     model_mat.Row(3) = {2.2f * i, 0, 0};
 
-    OBBf obb{};
-    obb.center = model_mat.Row(3);
-    obb.extents = model_.GetExtents();
-    obb.axes[0] = model_mat.Row(0);
-    obb.axes[1] = model_mat.Row(1);
-    obb.axes[2] = model_mat.Row(2);
+    OBBf obb{model_mat, model_.GetExtents()};
     bvh_mesh_objects.emplace_back(i, obb, model_mat);
   }
   bvh_tree_ = BuildBVHTree(std::move(bvh_mesh_objects));
