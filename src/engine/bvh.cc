@@ -16,7 +16,7 @@ std::vector<BVHNode> BuildBVHTree(std::vector<MeshObject> objects) {
   if (objects.empty())
     return {};
 
-  std::vector<BVHNode> bvh_nodes(1);
+  std::vector<BVHNode> bvh_nodes(2 * objects.size() - 1);
   size_t node_ind_last = 0;  // std::make_unique<BVHNode>();
 
   // Create stack for depth-first traversal and start the process with the root
@@ -77,8 +77,6 @@ std::vector<BVHNode> BuildBVHTree(std::vector<MeshObject> objects) {
                                         node_objects.end());
 
     // Create the child nodes.
-    bvh_nodes.emplace_back();
-    bvh_nodes.emplace_back();
     bvh_nodes[node_ind].left = ++node_ind_last;
     bvh_nodes[node_ind].right = ++node_ind_last;
 
