@@ -168,24 +168,4 @@ void SceneNode::setDirty() {
   }
 }
 
-SceneG::SceneG() {
-  m_root = std::make_unique<SceneNode>((size_t)-1, "Root");
-}
-
-SceneNode* SceneG::getRoot() {
-  return m_root.get();
-}
-
-std::vector<WorldObject> SceneG::GetWorldObjects() {
-  return m_root->GetWorldObjects();
-}
-
-void SceneG::update(float deltaTime) {
-  m_root->update(deltaTime);
-}
-
-void SceneG::render() {
-  m_root->render();
-}
-
 }  // namespace eng

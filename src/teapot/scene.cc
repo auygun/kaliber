@@ -1,6 +1,7 @@
 #include "teapot/scene.h"
 
 #include <memory>
+#include <unordered_map>
 
 #include "engine/asset/shader_source.h"
 #include "engine/engine.h"
@@ -69,6 +70,7 @@ const char vertex_description[] = "p3f;n3f;a3f;t2f";
 
 Scene::Scene() {
   camera_.Create({0, 0, 0}, -0.06f, 0.1f, 5);
+  scene_root_ = std::make_unique<SceneNode>((size_t)-1, "Root");
 }
 
 Scene::~Scene() = default;
@@ -92,33 +94,34 @@ void Scene::Create() {
                  true, false, CullMode::kBack);
 
 #if 1
-
-  // model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+  auto& model = models_.emplace_back();
+  // model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
   //                "teapot/viking_room.obj", "", {"teapot/viking_room.png"});
-  model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
-                 "teapot/buddha.obj", "", {});
-  // model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+  model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+                "teapot/buddha.obj", "", {});
+  // model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
   //                "teapot/sportsCar.obj", "teapot/sportsCar.mtl", {});
-  // model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+  // model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
   //                "teapot/Cerberus_LP.obj", "teapot/Cerberus_LP.mtl",
   //                {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
   //                 "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
 
   for (size_t i = 0; i < 10; ++i) {
-    auto node = std::make_unique<SceneNode>(0);
+    auto node = std::make_unique<SceneNode>(models_.size() - 1);
     Quatf q;
     q.Create({0.5f, 0.0f, 0.0f});
     node->setRotation(q);
     node->setPosition({2.2f * i, 0, 0});
-    scene_.getRoot()->addChild(std::move(node));
+    scene_root_->addChild(std::move(node));
   }
 
 #else
 
+  auto& model = models_.emplace_back();
   std::vector<float> vertices;
   std::vector<uint32_t> indices;
   CreateSphere(vertices, indices, 32, 32);
-  model_.CreateMesh(
+  model.CreateMesh(
       Engine::Get().GetRenderer(), shader_.resource_id(), vertices, indices,
       // {"teapot/iron-rusted4-basecolor.png", "teapot/iron-rusted4-normal.png",
       //  "teapot/iron-rusted4-metalness.png",
@@ -138,12 +141,12 @@ void Scene::Create() {
 
   // std::vector<eng::MeshObject> bvh_mesh_objects;
   for (size_t i = 0; i < 10; ++i) {
-    auto node = std::make_unique<SceneNode>(0);
+    auto node = std::make_unique<SceneNode>(models_.size() - 1);
     Quatf q;
     q.Create({0.1f, 0.1f, 0.1f});
     node->setRotation(q);
     node->setPosition({2.2f * i, 0, 0});
-    scene_.getRoot()->addChild(std::move(node));
+    scene_root_->addChild(std::move(node));
   }
 
 #endif
@@ -172,10 +175,11 @@ void Scene::Create() {
 
 void Scene::Draw(float frame_frac) {
   std::vector<eng::MeshObject> bvh_mesh_objects;
-  std::vector<WorldObject> world_objects = scene_.GetWorldObjects();
+  std::vector<WorldObject> world_objects = scene_root_->GetWorldObjects();
   size_t object_ind = 0;
   for (auto& world_object : world_objects) {
-    OBBf obb{world_object.transform, model_.GetExtents()};
+    OBBf obb{world_object.transform,
+             models_[world_object.model_ind].GetExtents()};
     bvh_mesh_objects.emplace_back(object_ind++, obb, world_object.transform);
   }
 
@@ -198,15 +202,10 @@ void Scene::Draw(float frame_frac) {
   auto objects = FrustumCull(bvh_tree_, f);
   DLOG(0) << "FrustumCull: " << objects.size();
 
-  std::vector<InstanceData> instances;
-  for (auto& object_ind : objects) {
-    instances.emplace_back(world_objects[object_ind].transform);
-    debug_layer_.DrawMatrix(instances.back().model);
+  std::unordered_map<size_t, std::vector<size_t>> instance_map;
+  for (auto obj_ind : objects) {
+    instance_map[world_objects[obj_ind].model_ind].push_back(obj_ind);
   }
-
-  Engine::Get().GetRenderer()->UpdateBuffer(
-      instances_ubo_, instances.data(),
-      sizeof(InstanceData) * instances.size());
 
   scene_data_.cam_pos = camera_.GetMatrix().Row(3);
   scene_data_.light_dir = {1, 1, 1};
@@ -217,12 +216,23 @@ void Scene::Draw(float frame_frac) {
   Engine::Get().GetRenderer()->UpdateBuffer(lights_ubo_, &lights_,
                                             sizeof(lights_));
 
-  model_.UpdateMaterial(metallic_, roughness_, ao_);
+  for (auto& ins : instance_map) {
+    std::vector<InstanceData> instances;
+    for (auto& obj : ins.second) {
+      instances.emplace_back(world_objects[obj].transform);
+      debug_layer_.DrawMatrix(instances.back().model);
+    }
 
+    Engine::Get().GetRenderer()->UpdateBuffer(
+        instances_ubo_, instances.data(),
+        sizeof(InstanceData) * instances.size());
 
-  shader_.Activate();
-  Engine::Get().GetRenderer()->ActivateDescriptorSet(scene_dset_);
-  model_.Draw(instances.size());
+    models_[ins.first].UpdateMaterial(metallic_, roughness_, ao_);
+
+    shader_.Activate();
+    Engine::Get().GetRenderer()->ActivateDescriptorSet(scene_dset_);
+    models_[ins.first].Draw(instances.size());
+  }
 
   debug_layer_.Draw(scene_data_.view_projection);
 }

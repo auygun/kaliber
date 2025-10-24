@@ -370,8 +370,7 @@ void Model::CreateRenderResources(
     std::unique_ptr<Mesh> mesh,
     const std::vector<std::string>& texture_file_names) {
   // Create the geometry.
-  geometry_.SetRenderer(renderer_);
-  geometry_.Create(std::move(mesh));
+  geometry_id_ = renderer_->CreateGeometry(std::move(mesh));
 
   // Create a UBO for all materials.
   materials_ubo_ = renderer_->CreateBuffer(
@@ -387,7 +386,7 @@ void Model::CreateRenderResources(
     bool is_srgb = index == kAlbedoMap;
     bool normalize = index == kNormalMap;
     LoadTexture(file_name, index, is_srgb, normalize);
-    textures[index + 1].push_back(texture_[index].resource_id());
+    textures[index + 1].push_back(texture_ids_[index]);
     ++index;
   }
 
@@ -413,8 +412,7 @@ void Model::LoadTexture(const std::string& file_name,
   } while (image->CreateMip(*images.back(), normalize));
   DLOG(0) << file_name << " mip levels: " << images.size();
 
-  texture_[index].SetRenderer(renderer_);
-  texture_[index].Update(std::move(images));
+  renderer_->UpdateTexture(texture_ids_[index], std::move(images));
 }
 
 void Model::UpdateMaterial(float metallic, float roughness, float ao) {
@@ -429,7 +427,7 @@ void Model::UpdateMaterial(float metallic, float roughness, float ao) {
 
 void Model::Draw(unsigned int instance_count) {
   renderer_->ActivateDescriptorSet(materials_dset_);
-  renderer_->ActivateGeometry(geometry_.resource_id());
+  renderer_->ActivateGeometry(geometry_id_);
 
   unsigned int material_index = 0;
   for (auto& draw_cmd : draw_list_) {
@@ -439,7 +437,7 @@ void Model::Draw(unsigned int instance_count) {
     pc.is_material = is_material_;
     pc.cookie_cutter = false;
     renderer_->UpdatePushConstants(sizeof(pc), &pc);
-    geometry_.Draw(draw_cmd.num_indices, draw_cmd.index_offset, instance_count,
+    renderer_->Draw(draw_cmd.num_indices, draw_cmd.index_offset, instance_count,
                    0);
     ++material_index;
   }

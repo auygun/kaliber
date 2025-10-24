@@ -5,12 +5,13 @@
 
 #include "base/vecmath.h"
 #include "engine/bvh.h"
+#include "engine/debug_layer.h"
 #include "engine/drawable.h"
 #include "engine/model.h"
-#include "engine/debug_layer.h"
 #include "engine/scene_graph.h"
 #include "engine/renderer/renderer_types.h"
 #include "engine/renderer/shader.h"
+#include "engine/scene_graph.h"
 #include "teapot/camera.h"
 
 class Scene : public eng::Drawable {
@@ -50,14 +51,14 @@ class Scene : public eng::Drawable {
 
   eng::VertexDescription vertex_description_;
   eng::Shader shader_;
-  eng::Model model_;
+  std::vector<eng::Model> models_;
 
   Camera camera_;
   base::Matrix4f projection_;
 
   eng::DebugLayer debug_layer_;
 
-  eng::SceneG scene_;
+  std::unique_ptr<eng::SceneNode> scene_root_;
   std::vector<eng::BVHNode> bvh_tree_;
 
   base::Vector3f albedo_{0.8f, 0.4f, 0.2f};

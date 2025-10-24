@@ -88,9 +88,9 @@ std::vector<BVHNode> BuildBVHTree(std::vector<MeshObject> objects) {
   return bvh_nodes;
 }
 
-std::vector<int> FrustumCull(const std::vector<BVHNode>& nodes,
+std::vector<size_t> FrustumCull(const std::vector<BVHNode>& nodes,
                              const Frustumf& frustum) {
-  std::vector<int> visible_object_ids;
+  std::vector<size_t> visible_object_ids;
   if (nodes.empty())
     return visible_object_ids;
 

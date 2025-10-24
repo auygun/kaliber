@@ -152,25 +152,6 @@ class SceneNode {
   size_t model_ind = (size_t)-1;
 };
 
-/**
- * @brief A simple "Scene" class that just holds the root node.
- */
-class SceneG {
- public:
-  SceneG();
-
-  SceneNode* getRoot();
-
-  std::vector<WorldObject> GetWorldObjects();
-
-  void update(float deltaTime);
-
-  void render();
-
- private:
-  std::unique_ptr<SceneNode> m_root;
-};
-
 }  // namespace eng
 
 #endif  // ENGINE_SCENE_GRAPH_H

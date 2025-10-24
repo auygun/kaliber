@@ -6,8 +6,6 @@
 #include <vector>
 
 #include "base/vecmath.h"
-#include "engine/renderer/geometry.h"
-#include "engine/renderer/texture.h"
 
 namespace eng {
 
@@ -54,8 +52,8 @@ class Model {
   base::Vector3f extents_{0};
 
   std::vector<DrawCmd> draw_list_;
-  Geometry geometry_;
-  Texture texture_[4];
+  uint64_t geometry_id_;
+  uint64_t texture_ids_[4];
   Renderer* renderer_ = nullptr;
 
   bool is_material_ = true;
