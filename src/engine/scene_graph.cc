@@ -103,17 +103,22 @@ const Matrix4f& SceneNode::getWorldTransform() {
 
 // --- Main Game Loop Functions ---
 
-std::vector<WorldObject> SceneNode::GetWorldObjects() {
+std::vector<WorldObject> SceneNode::GetWorldObjects(
+    const std::vector<eng::Model>& models) {
   std::vector<WorldObject> world_objects;
   std::deque<SceneNode*> stack;
   stack.push_back(this);
 
+  size_t index = 0;
   while (!stack.empty()) {
     auto* node = stack.back();
     stack.pop_back();
 
-    if (node->model_ind != (size_t)-1)
-      world_objects.emplace_back(node->model_ind, node->getWorldTransform());
+    if (node->model_ind != (size_t)-1) {
+      OBBf obb{node->getWorldTransform(), models[node->model_ind].GetExtents()};
+      world_objects.emplace_back(index++, node->model_ind, obb,
+                                 node->getWorldTransform());
+    }
 
     for (auto& child : node->m_children)
       stack.push_back(child.get());

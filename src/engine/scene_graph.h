@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "base/vecmath.h"
+#include "engine/model.h"
 
 using namespace base;
 
@@ -40,7 +41,9 @@ class Component {
 };
 
 struct WorldObject {
+  size_t id;
   size_t model_ind = (size_t)-1;
+  base::OBBf obb;
   base::Matrix4f transform;
 };
 
@@ -110,7 +113,8 @@ class SceneNode {
   SceneNode* getParent() const { return m_parent; }
   // --- Main Game Loop Functions ---
 
-  std::vector<WorldObject> GetWorldObjects();
+  std::vector<WorldObject> GetWorldObjects(
+      const std::vector<eng::Model>& models);
 
   /**
    * @brief Updates this node and all its children.

@@ -189,12 +189,11 @@ void Scene::Create() {
 
 void Scene::Draw(float frame_frac) {
   std::vector<eng::MeshObject> bvh_mesh_objects;
-  std::vector<WorldObject> world_objects = scene_root_->GetWorldObjects();
+  std::vector<WorldObject> world_objects =
+      scene_root_->GetWorldObjects(models_);
   size_t object_ind = 0;
   for (auto& world_object : world_objects) {
-    OBBf obb{world_object.transform,
-             models_[world_object.model_ind].GetExtents()};
-    bvh_mesh_objects.emplace_back(object_ind++, obb, world_object.transform);
+    bvh_mesh_objects.emplace_back(object_ind++, world_object.obb, world_object.transform);
   }
 
   bvh_tree_ = BuildBVHTree(std::move(bvh_mesh_objects));
