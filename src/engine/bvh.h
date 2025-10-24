@@ -12,7 +12,7 @@ class DebugLayer;
 
 // Represents a mesh object in the scene
 struct MeshObject {
-  int id;
+  int id = -1;
   base::OBBf obb;
   base::Matrix4f model{1};
   // In a real engine, this would point to the actual mesh data and transform
@@ -23,25 +23,28 @@ struct BVHNode {
   base::AABBf aabb;
 
   // Tree structure
-  std::unique_ptr<BVHNode> left = nullptr;
-  std::unique_ptr<BVHNode> right = nullptr;
+  size_t left = (size_t)-1;
+  size_t right = (size_t)-1;
 
-  // Payload: only one is valid
-  const MeshObject* object = nullptr;  // If not null, this is a leaf node
+  // size_t object_ind = (size_t)-1;  // If not -1, this is a leaf node
+  MeshObject object;
 
-  bool isLeaf() const { return object != nullptr; }
+  bool isLeaf() const { return object.id != -1; }
 };
 
-std::unique_ptr<BVHNode> BuildBVHTree(
-    const std::vector<const MeshObject*>& objects);
+std::vector<BVHNode> BuildBVHTree(std::vector<MeshObject> objects);
 
-std::vector<int> FrustumCull(const BVHNode* root, const base::Frustumf& frustum);
+std::vector<int> FrustumCull(const std::vector<BVHNode>& nodes,
+                             const base::Frustumf& frustum);
 
-void DumpBVHTree(const BVHNode* node,
+void DumpBVHTree(const std::vector<BVHNode>& nodes,
+                 size_t node_ind,
                  const std::string& prefix,
                  bool is_last = true);
 
-void DrawBVHTree(const BVHNode* node, DebugLayer& debug_layer);
+void DrawBVHTree(const std::vector<BVHNode>& nodes,
+                 size_t node_ind,
+                 DebugLayer& debug_layer);
 
 }  // namespace eng
 

@@ -11,37 +11,38 @@ using namespace base;
 
 namespace eng {
 
-std::unique_ptr<BVHNode> BuildBVHTree(
-    const std::vector<const MeshObject*>& objects) {
+std::vector<BVHNode> BuildBVHTree(std::vector<MeshObject> objects) {
   if (objects.empty())
-    return nullptr;
+    return {};
 
-  auto root = std::make_unique<BVHNode>();
+  std::vector<BVHNode> bvh_nodes(1);
+  size_t node_ind_last = 0;  // std::make_unique<BVHNode>();
 
   // Create stack for depth-first traversal and start the process with the root
   // node using all objects.
-  std::deque<std::tuple<BVHNode*, std::vector<const MeshObject*>>> stack;
-  stack.push_back(std::make_tuple(root.get(), objects));
+  std::deque<std::tuple<size_t, std::vector<MeshObject>>> stack;
+  stack.push_back(std::make_tuple(node_ind_last, std::move(objects)));
 
   while (!stack.empty()) {
-    auto [node, node_objects] = stack.back();
+    auto [node_ind, node_objects] = std::move(stack.back());
     stack.pop_back();
 
     // If only one object remains, this is a leaf.
     if (node_objects.size() == 1) {
-      node->object = node_objects[0];
+      bvh_nodes[node_ind].object = node_objects[0];
       continue;
     }
 
     // Calculate the combined AABB for all node_objects in this job.
-    for (const auto& obj : node_objects) {
+    for (auto& obj : node_objects) {
       AABBf aabb;
-      obj->obb.GetBoundBox(aabb);
-      node->aabb.Expand(aabb);
+      obj.obb.GetBoundBox(aabb);
+      bvh_nodes[node_ind].aabb.Expand(aabb);
     }
 
     // Find the longest axis of the combined AABB to split along.
-    Vector3f extent = node->aabb.max - node->aabb.min;
+    Vector3f extent =
+        bvh_nodes[node_ind].aabb.max - bvh_nodes[node_ind].aabb.min;
     int axis = 0;
     if (extent.y > extent.x)
       axis = 1;
@@ -51,76 +52,83 @@ std::unique_ptr<BVHNode> BuildBVHTree(
     // Sort node_objects along the chosen axis based on their center point.
     if (axis == 0) {
       std::sort(node_objects.begin(), node_objects.end(),
-                [](const MeshObject* a, const MeshObject* b) {
-                  return a->obb.center.x < b->obb.center.x;
+                [](MeshObject& a, MeshObject& b) {
+                  return a.obb.center.x < b.obb.center.x;
                 });
     } else if (axis == 1) {
       std::sort(node_objects.begin(), node_objects.end(),
-                [](const MeshObject* a, const MeshObject* b) {
-                  return a->obb.center.y < b->obb.center.y;
+                [](MeshObject& a, MeshObject& b) {
+                  return a.obb.center.y < b.obb.center.y;
                 });
     } else {  // axis == 2
       std::sort(node_objects.begin(), node_objects.end(),
-                [](const MeshObject* a, const MeshObject* b) {
-                  return a->obb.center.z < b->obb.center.z;
+                [](MeshObject& a, MeshObject& b) {
+                  return a.obb.center.z < b.obb.center.z;
                 });
     }
 
     // Split the objects into two halves
     size_t mid = node_objects.size() / 2;
-    std::vector<const MeshObject*> left_objects(node_objects.begin(),
-                                                node_objects.begin() + mid);
-    std::vector<const MeshObject*> right_objects(node_objects.begin() + mid,
-                                                 node_objects.end());
+    std::vector<MeshObject> left_objects(node_objects.begin(),
+                                         node_objects.begin() + mid);
+    std::vector<MeshObject> right_objects(node_objects.begin() + mid,
+                                          node_objects.end());
 
     // Create the child nodes.
-    node->left = std::make_unique<BVHNode>();
-    node->right = std::make_unique<BVHNode>();
+    bvh_nodes.emplace_back();
+    bvh_nodes.emplace_back();
+    bvh_nodes[node_ind].left = ++node_ind_last;
+    bvh_nodes[node_ind].right = ++node_ind_last;
 
     // Push the children onto the stack.
-    stack.push_back({node->right.get(), std::move(right_objects)});
-    stack.push_back({node->left.get(), std::move(left_objects)});
+    stack.push_back({bvh_nodes[node_ind].left, std::move(right_objects)});
+    stack.push_back({bvh_nodes[node_ind].right, std::move(left_objects)});
   }
 
-  return root;
+  return bvh_nodes;
 }
 
-std::vector<int> FrustumCull(const BVHNode* root, const Frustumf& frustum) {
+std::vector<int> FrustumCull(const std::vector<BVHNode>& nodes,
+                             const Frustumf& frustum) {
   std::vector<int> visible_object_ids;
-  if (!root)
+  if (nodes.empty())
     return visible_object_ids;
 
   // Create stack for depth-first traversal and start the process with the root
   // of the BVH tree.
-  std::deque<const BVHNode*> stack;
-  stack.push_back(root);
+  std::deque<size_t> stack;
+  stack.push_back(0);
 
   while (!stack.empty()) {
-    const BVHNode* node = stack.back();
+    size_t node_ind = stack.back();
     stack.pop_back();
 
     // If the node is a leaf, it's representing a single object. Otherwise It's
     // an internal node with children.
-    if (node->isLeaf()) {
-      if (frustum.Intersects(node->object->obb, node->object->model))
-        visible_object_ids.push_back(node->object->id);
+    if (nodes[node_ind].isLeaf()) {
+      if (frustum.Intersects(nodes[node_ind].object.obb,
+                             nodes[node_ind].object.model))
+        visible_object_ids.push_back(nodes[node_ind].object.id);
       continue;
-    } else if (!frustum.Intersects(node->aabb)) {
+    } else if (!frustum.Intersects(nodes[node_ind].aabb)) {
       continue;
     }
 
     // The internal node passed tests, check its children
-    if (node->left)
-      stack.push_back(node->left.get());
-    if (node->right)
-      stack.push_back(node->right.get());
+    if (nodes[node_ind].left)
+      stack.push_back(nodes[node_ind].left);
+    if (nodes[node_ind].right)
+      stack.push_back(nodes[node_ind].right);
   }
 
   return visible_object_ids;
 }
 
-void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool is_last) {
-  if (!node)
+void DumpBVHTree(const std::vector<BVHNode>& nodes,
+                 size_t node_ind,
+                 const std::string& prefix,
+                 bool is_last) {
+  if (nodes.empty())
     return;
 
   std::ostringstream out;
@@ -132,12 +140,12 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool is_last) {
   AABBf aabb;
 
   // Print node details
-  if (node->object) {
-    out << "[Leaf] ID: " << node->object->id << " ";
-    node->object->obb.GetBoundBox(aabb);
+  if (nodes[node_ind].object.id != (size_t)-1) {
+    out << "[Leaf] ID: " << nodes[node_ind].object.id << " ";
+    nodes[node_ind].object.obb.GetBoundBox(aabb);
   } else {
     out << "[Internal] ";
-    aabb = node->aabb;
+    aabb = nodes[node_ind].aabb;
   }
 
   // Print bounding box info
@@ -150,28 +158,30 @@ void DumpBVHTree(const BVHNode* node, const std::string& prefix, bool is_last) {
   std::string child_prefix = prefix + (is_last ? "    " : "│   ");
 
   // Recurse for children (if they exist)
-  if (!node->object) {
+  if (nodes[node_ind].object.id == (size_t)-1) {
     // The right child is always the "last" one for its parent
-    DumpBVHTree(node->left.get(), child_prefix, false);
-    DumpBVHTree(node->right.get(), child_prefix, true);
+    DumpBVHTree(nodes, nodes[node_ind].left, child_prefix, false);
+    DumpBVHTree(nodes, nodes[node_ind].right, child_prefix, true);
   }
 }
 
-void DrawBVHTree(const BVHNode* node, DebugLayer& debug_layer) {
-  if (!node)
+void DrawBVHTree(const std::vector<BVHNode>& nodes,
+                 size_t node_ind,
+                 DebugLayer& debug_layer) {
+  if (nodes.empty())
     return;
 
-  if (node->object) {
-    debug_layer.DrawObb(node->object->obb, {1, 1, 0});
+  if (nodes[node_ind].object.id != (size_t)-1) {
+    debug_layer.DrawObb(nodes[node_ind].object.obb, {1, 1, 0});
   } else {
-    debug_layer.DrawAabb(node->aabb, {1, 0, 1});
+    debug_layer.DrawAabb(nodes[node_ind].aabb, {1, 0, 1});
   }
 
   // Recurse for children (if they exist)
-  if (!node->object) {
+  if (nodes[node_ind].object.id == (size_t)-1) {
     // The right child is always the "last" one for its parent
-    DrawBVHTree(node->left.get(), debug_layer);
-    DrawBVHTree(node->right.get(), debug_layer);
+    DrawBVHTree(nodes, nodes[node_ind].left, debug_layer);
+    DrawBVHTree(nodes, nodes[node_ind].right, debug_layer);
   }
 }
 

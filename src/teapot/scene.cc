@@ -1,6 +1,6 @@
 #include "teapot/scene.h"
 
-#include <vector>
+#include <memory>
 
 #include "engine/asset/shader_source.h"
 #include "engine/engine.h"
@@ -132,6 +132,7 @@ void Scene::Create() {
        "teapot/alien-slime1-metallic.png",
        "teapot/alien-slime1-roughness.png"});
 
+  std::vector<eng::MeshObject> bvh_mesh_objects;
   for (size_t i = 0; i < 10; ++i) {
     instances_.emplace_back().model.CreateFromAngles({0.1f, 0.1f, 0.1f}, 0);
     auto& model_mat = instances_.back().model;
@@ -143,12 +144,10 @@ void Scene::Create() {
     obb.axes[0] = model_mat.Row(0);
     obb.axes[1] = model_mat.Row(1);
     obb.axes[2] = model_mat.Row(2);
-    bvh_mesh_objects_.emplace_back((int)i, obb, model_mat);
+    bvh_mesh_objects.emplace_back((int)i, obb, model_mat);
   }
-  for (auto& mo : bvh_mesh_objects_)
-    bvh_mesh_object_ptrs_.push_back(&mo);
-  bvh_root_ = BuildBVHTree(bvh_mesh_object_ptrs_);
-  DumpBVHTree(bvh_root_.get(), "");
+  bvh_tree_ = BuildBVHTree(std::move(bvh_mesh_objects));
+  DumpBVHTree(bvh_tree_, 0, "");
 
 #endif
 
@@ -225,7 +224,7 @@ void Scene::Update(float delta_time, const Vector2f& angles, float zoom) {
 
   for (auto& i : instances_)
     debug_layer_.DrawMatrix(i.model);
-  DrawBVHTree(bvh_root_.get(), debug_layer_);
+  DrawBVHTree(bvh_tree_, 0, debug_layer_);
 
   Matrix4f view;
   camera_.GetMatrix().InverseOrthogonal(view);
@@ -248,7 +247,7 @@ void Scene::Update(float delta_time, const Vector2f& angles, float zoom) {
   f.CreateFromMatrix(f_view_projection);
   debug_layer_.DrawFrustum(f.planes);
   debug_layer_.DrawMatrix(camera_.GetMatrixMainCam());
-  auto objects = FrustumCull(bvh_root_.get(), f);
+  auto objects = FrustumCull(bvh_tree_, f);
   DLOG(0) << "FrustumCull: " << objects.size();
 }
 

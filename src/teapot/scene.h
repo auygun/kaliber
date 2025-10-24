@@ -1,7 +1,7 @@
 #ifndef TEAPOT_SCENE_H
 #define TEAPOT_SCENE_H
 
-#include <memory>
+#include <vector>
 
 #include "base/vecmath.h"
 #include "engine/bvh.h"
@@ -56,9 +56,7 @@ class Scene : public eng::Drawable {
 
   eng::DebugLayer debug_layer_;
 
-  std::unique_ptr<eng::BVHNode> bvh_root_;
-  std::vector<eng::MeshObject> bvh_mesh_objects_;
-  std::vector<const eng::MeshObject*> bvh_mesh_object_ptrs_;
+  std::vector<eng::BVHNode> bvh_tree_;
 
   base::Vector3f albedo_{0.8f, 0.4f, 0.2f};
   float metallic_ = 1.0f;
