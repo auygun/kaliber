@@ -29,7 +29,7 @@ struct BVHNode {
   // size_t object_ind = (size_t)-1;  // If not -1, this is a leaf node
   MeshObject object;
 
-  bool isLeaf() const { return object.id != -1; }
+  bool isLeaf() const { return object.id != (size_t)-1; }
 };
 
 std::vector<BVHNode> BuildBVHTree(std::vector<MeshObject> objects);

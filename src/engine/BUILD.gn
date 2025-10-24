@@ -20,6 +20,8 @@ source_set("engine") {
     "asset/sound.h",
     "bvh.cc",
     "bvh.h",
+    "scene_graph.cc",
+    "scene_graph.h",
     "drawable.cc",
     "drawable.h",
     "engine.cc",

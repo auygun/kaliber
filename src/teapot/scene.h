@@ -8,6 +8,7 @@
 #include "engine/drawable.h"
 #include "engine/model.h"
 #include "engine/debug_layer.h"
+#include "engine/scene_graph.h"
 #include "engine/renderer/renderer_types.h"
 #include "engine/renderer/shader.h"
 #include "teapot/camera.h"
@@ -56,6 +57,7 @@ class Scene : public eng::Drawable {
 
   eng::DebugLayer debug_layer_;
 
+  eng::SceneG scene_;
   std::vector<eng::BVHNode> bvh_tree_;
 
   base::Vector3f albedo_{0.8f, 0.4f, 0.2f};
@@ -65,7 +67,6 @@ class Scene : public eng::Drawable {
 
   SceneData scene_data_;
   LightData lights_[4];
-  std::vector<InstanceData> instances_;
 
   uint64_t scene_data_ubo_ = 0;
   uint64_t lights_ubo_ = 0;

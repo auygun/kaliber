@@ -91,7 +91,7 @@ void Scene::Create() {
   shader_.Create(std::move(source), vertex_description_, kPrimitive_Triangles,
                  true, false, CullMode::kBack);
 
-#if 0
+#if 1
 
   // model_.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
   //                "teapot/viking_room.obj", "", {"teapot/viking_room.png"});
@@ -104,9 +104,13 @@ void Scene::Create() {
   //                {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
   //                 "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
 
-  for (size_t i = 0; i < 1; ++i) {
-    instances_.emplace_back().model.CreateXRotation(0.5f);
-    instances_.back().model.Row(3) = {2.2f * i, 0, 0};
+  for (size_t i = 0; i < 10; ++i) {
+    auto node = std::make_unique<SceneNode>(0);
+    Quatf q;
+    q.Create({0.5f, 0.0f, 0.0f});
+    node->setRotation(q);
+    node->setPosition({2.2f * i, 0, 0});
+    scene_.getRoot()->addChild(std::move(node));
   }
 
 #else
@@ -132,17 +136,15 @@ void Scene::Create() {
        "teapot/alien-slime1-metallic.png",
        "teapot/alien-slime1-roughness.png"});
 
-  std::vector<eng::MeshObject> bvh_mesh_objects;
+  // std::vector<eng::MeshObject> bvh_mesh_objects;
   for (size_t i = 0; i < 10; ++i) {
-    instances_.emplace_back().model.CreateFromAngles({0.1f, 0.1f, 0.1f}, 0);
-    auto& model_mat = instances_.back().model;
-    model_mat.Row(3) = {2.2f * i, 0, 0};
-
-    OBBf obb{model_mat, model_.GetExtents()};
-    bvh_mesh_objects.emplace_back(i, obb, model_mat);
+    auto node = std::make_unique<SceneNode>(0);
+    Quatf q;
+    q.Create({0.1f, 0.1f, 0.1f});
+    node->setRotation(q);
+    node->setPosition({2.2f * i, 0, 0});
+    scene_.getRoot()->addChild(std::move(node));
   }
-  bvh_tree_ = BuildBVHTree(std::move(bvh_mesh_objects));
-  DumpBVHTree(bvh_tree_, 0, "");
 
 #endif
 
@@ -151,14 +153,10 @@ void Scene::Create() {
   lights_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
       shader_.resource_id(), 1, 1, sizeof(lights_));
   instances_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
-      shader_.resource_id(), 1, 2, sizeof(InstanceData) * instances_.size());
+      shader_.resource_id(), 1, 2, sizeof(InstanceData) * 20);
   scene_dset_ = Engine::Get().GetRenderer()->CreateDescriptorSet(
       shader_.resource_id(), 1, {},
       {scene_data_ubo_, lights_ubo_, instances_ubo_});
-
-  Engine::Get().GetRenderer()->UpdateBuffer(
-      instances_ubo_, instances_.data(),
-      sizeof(InstanceData) * instances_.size());
 
   CreateProjectionMatrix();
 
@@ -173,14 +171,60 @@ void Scene::Create() {
 }
 
 void Scene::Draw(float frame_frac) {
+  std::vector<eng::MeshObject> bvh_mesh_objects;
+  std::vector<WorldObject> world_objects = scene_.GetWorldObjects();
+  size_t object_ind = 0;
+  for (auto& world_object : world_objects) {
+    OBBf obb{world_object.transform, model_.GetExtents()};
+    bvh_mesh_objects.emplace_back(object_ind++, obb, world_object.transform);
+  }
+
+  bvh_tree_ = BuildBVHTree(std::move(bvh_mesh_objects));
+  // DumpBVHTree(bvh_tree_, 0, "");
+  DrawBVHTree(bvh_tree_, 0, debug_layer_);
+
+  Matrix4f view;
+  camera_.GetMatrix().InverseOrthogonal(view);
+  view.Multiply(projection_, scene_data_.view_projection);
+
+  Frustumf f;
+  Matrix4f f_view, f_view_projection;
+  camera_.GetMatrixMainCam().InverseOrthogonal(f_view);
+  f_view.Multiply(projection_, f_view_projection);
+  f.CreateFromMatrix(f_view_projection);
+  debug_layer_.DrawFrustum(f.planes);
+  debug_layer_.DrawMatrix(camera_.GetMatrixMainCam());
+
+  auto objects = FrustumCull(bvh_tree_, f);
+  DLOG(0) << "FrustumCull: " << objects.size();
+
+  std::vector<InstanceData> instances;
+  for (auto& object_ind : objects) {
+    instances.emplace_back(world_objects[object_ind].transform);
+    debug_layer_.DrawMatrix(instances.back().model);
+  }
+
+  Engine::Get().GetRenderer()->UpdateBuffer(
+      instances_ubo_, instances.data(),
+      sizeof(InstanceData) * instances.size());
+
+  scene_data_.cam_pos = camera_.GetMatrix().Row(3);
+  scene_data_.light_dir = {1, 1, 1};
+  scene_data_.light_radiance = {1, 1, 1};
+  Engine::Get().GetRenderer()->UpdateBuffer(scene_data_ubo_, &scene_data_,
+                                            sizeof(scene_data_));
+
+  Engine::Get().GetRenderer()->UpdateBuffer(lights_ubo_, &lights_,
+                                            sizeof(lights_));
+
+  model_.UpdateMaterial(metallic_, roughness_, ao_);
+
+
   shader_.Activate();
   Engine::Get().GetRenderer()->ActivateDescriptorSet(scene_dset_);
-  model_.Draw(instances_.size());
+  model_.Draw(instances.size());
 
-  Matrix4f view, view_projection;
-  camera_.GetMatrix().InverseOrthogonal(view);
-  view.Multiply(projection_, view_projection);
-  debug_layer_.Draw(view_projection);
+  debug_layer_.Draw(scene_data_.view_projection);
 }
 
 void Scene::Update(float delta_time, const Vector2f& angles, float zoom) {
@@ -216,34 +260,6 @@ void Scene::Update(float delta_time, const Vector2f& angles, float zoom) {
     Engine::Get().CreateRenderer(selected_type);
 
   debug_layer_.Update(delta_time);
-
-  for (auto& i : instances_)
-    debug_layer_.DrawMatrix(i.model);
-  DrawBVHTree(bvh_tree_, 0, debug_layer_);
-
-  Matrix4f view;
-  camera_.GetMatrix().InverseOrthogonal(view);
-  view.Multiply(projection_, scene_data_.view_projection);
-  scene_data_.cam_pos = camera_.GetMatrix().Row(3);
-  scene_data_.light_dir = {1, 1, 1};
-  scene_data_.light_radiance = {1, 1, 1};
-  Engine::Get().GetRenderer()->UpdateBuffer(scene_data_ubo_, &scene_data_,
-                                            sizeof(scene_data_));
-
-  Engine::Get().GetRenderer()->UpdateBuffer(lights_ubo_, &lights_,
-                                            sizeof(lights_));
-
-  model_.UpdateMaterial(metallic_, roughness_, ao_);
-
-  Frustumf f;
-  Matrix4f f_view, f_view_projection;
-  camera_.GetMatrixMainCam().InverseOrthogonal(f_view);
-  f_view.Multiply(projection_, f_view_projection);
-  f.CreateFromMatrix(f_view_projection);
-  debug_layer_.DrawFrustum(f.planes);
-  debug_layer_.DrawMatrix(camera_.GetMatrixMainCam());
-  auto objects = FrustumCull(bvh_tree_, f);
-  DLOG(0) << "FrustumCull: " << objects.size();
 }
 
 void Scene::CreateProjectionMatrix() {
