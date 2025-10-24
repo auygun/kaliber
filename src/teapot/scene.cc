@@ -94,27 +94,42 @@ void Scene::Create() {
                  true, false, CullMode::kBack);
 
 #if 1
-  auto& model = models_.emplace_back();
-  // model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
-  //                "teapot/viking_room.obj", "", {"teapot/viking_room.png"});
-  model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
-                "teapot/buddha.obj", "", {});
-  // model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
-  //                "teapot/sportsCar.obj", "teapot/sportsCar.mtl", {});
-  // model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
-  //                "teapot/Cerberus_LP.obj", "teapot/Cerberus_LP.mtl",
-  //                {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
-  //                 "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
+  {
+    auto& model = models_.emplace_back();
+    // model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+    //                "teapot/viking_room.obj", "", {"teapot/viking_room.png"});
+    model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+                  "teapot/buddha.obj", "", {});
+    // model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+    //                "teapot/sportsCar.obj", "teapot/sportsCar.mtl", {});
+    // model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+    //                "teapot/Cerberus_LP.obj", "teapot/Cerberus_LP.mtl",
+    //                {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
+    //                 "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
 
-  for (size_t i = 0; i < 10; ++i) {
-    auto node = std::make_unique<SceneNode>(models_.size() - 1);
-    Quatf q;
-    q.Create({0.5f, 0.0f, 0.0f});
-    node->setRotation(q);
-    node->setPosition({2.2f * i, 0, 0});
-    scene_root_->addChild(std::move(node));
+    for (size_t i = 0; i < 10; ++i) {
+      auto node = std::make_unique<SceneNode>(models_.size() - 1);
+      Quatf q;
+      q.Create({0.5f, 0.0f, 0.0f});
+      node->setRotation(q);
+      node->setPosition({2.2f * i, 0, 0});
+      scene_root_->addChild(std::move(node));
+    }
   }
+  {
+    auto& model = models_.emplace_back();
+    model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+                  "teapot/sportsCar.obj", "teapot/sportsCar.mtl", {});
 
+    for (size_t i = 0; i < 3; ++i) {
+      auto node = std::make_unique<SceneNode>(models_.size() - 1);
+      Quatf q;
+      q.Create({0.5f, 0.0f, 0.0f});
+      node->setRotation(q);
+      node->setPosition({2.2f * (10 + i), 0, 0});
+      scene_root_->addChild(std::move(node));
+    }
+  }
 #else
 
   auto& model = models_.emplace_back();
