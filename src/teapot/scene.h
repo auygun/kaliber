@@ -105,10 +105,10 @@ class Scene : public eng::Drawable {
     size_t left = (size_t)-1;
     size_t right = (size_t)-1;
 
-    // size_t object_ind = (size_t)-1;  // If not -1, this is a leaf node
+    // Payload
     WorldObject object;
 
-    bool is_leaf() const { return object.model_ind != (size_t)-1; }
+    bool IsLeaf() const { return object.model_ind != (size_t)-1; }
   };
 
   // --- UBO ---
@@ -138,6 +138,7 @@ class Scene : public eng::Drawable {
 
   Camera camera_;
   base::Matrix4f projection_;
+  base::Frustumf frustum_;
 
   eng::DebugLayer debug_layer_;
 
@@ -157,6 +158,14 @@ class Scene : public eng::Drawable {
   uint64_t lights_ubo_ = 0;
   uint64_t instances_ubo_ = 0;
   uint64_t scene_dset_ = 0;
+
+  void UpdateViewProjectionMatrix();
+  void UpdateFrustum();
+
+  std::vector<std::tuple<size_t, size_t, size_t>> UpdateInstancesAndGetDrawList(
+      const std::vector<Scene::WorldObject>& objects);
+
+  void UploadSceneData();
 
   std::vector<BVHNode> BuildBVHTree(std::vector<WorldObject> objects);
 

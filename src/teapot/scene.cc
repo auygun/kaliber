@@ -188,79 +188,50 @@ void Scene::Create() {
 }
 
 void Scene::Draw(float frame_frac) {
-  std::vector<WorldObject> world_objects =
-      scene_root_->GetWorldObjects(models_);
+  do {
+    std::vector<WorldObject> world_objects =
+        scene_root_->GetWorldObjects(models_);
 
-  if (world_objects.empty())
-    return;
+    if (world_objects.empty())
+      break;
 
-  bvh_tree_ = BuildBVHTree(world_objects);
-  // DumpBVHTree(bvh_tree_, 0, "");
-  DrawBVHTree(bvh_tree_, 0);
+    bvh_tree_ = BuildBVHTree(world_objects);
+    // DumpBVHTree(bvh_tree_, 0, "");
 
-  Matrix4f view;
-  camera_.GetMatrix().InverseOrthogonal(view);
-  view.Multiply(projection_, scene_data_.view_projection);
+    UpdateViewProjectionMatrix();
+    UpdateFrustum();
 
-  Frustumf f;
-  Matrix4f f_view, f_view_projection;
-  camera_.GetMatrixMainCam().InverseOrthogonal(f_view);
-  f_view.Multiply(projection_, f_view_projection);
-  f.CreateFromMatrix(f_view_projection);
-  debug_layer_.DrawFrustum(f.planes);
-  debug_layer_.DrawMatrix(camera_.GetMatrixMainCam());
+    auto visible_objects = FrustumCull(bvh_tree_, frustum_);
+    DLOG(0) << "FrustumCull: " << visible_objects.size();
 
-  auto visible_objects = FrustumCull(bvh_tree_, f);
-  DLOG(0) << "FrustumCull: " << visible_objects.size();
+    if (visible_objects.empty())
+      break;
 
-  if (visible_objects.empty())
-    return;
+    std::sort(visible_objects.begin(), visible_objects.end(),
+              [](WorldObject& a, WorldObject& b) {
+                return a.model_ind < b.model_ind;
+              });
 
-  std::sort(
-      visible_objects.begin(), visible_objects.end(),
-      [](WorldObject& a, WorldObject& b) { return a.model_ind < b.model_ind; });
+    auto draw_list = UpdateInstancesAndGetDrawList(visible_objects);
 
-  instances_.clear();
-  std::vector<std::tuple<size_t, size_t, size_t>> draw_list;
-  {
-    size_t last_model_ind = visible_objects[0].model_ind;
-    size_t instance_ind = 0;
-    size_t first_instance = 0;
-    size_t instance_count = 0;
-    for (auto& obj : visible_objects) {
-      if (obj.model_ind != last_model_ind) {
-        draw_list.emplace_back(last_model_ind, first_instance, instance_count);
-        last_model_ind = obj.model_ind;
-        first_instance = instance_ind;
-        instance_count = 0;
-      }
-      instances_.emplace_back(obj.transform);
-      ++instance_ind;
-      ++instance_count;
+    UploadSceneData();
+
+    Engine::Get().GetRenderer()->ActivateShader(shader_id_);
+    Engine::Get().GetRenderer()->ActivateDescriptorSet(scene_dset_);
+
+    for (auto& draw_call : draw_list) {
+      auto [model_ind, first_instance, instance_count] = draw_call;
+      models_[model_ind].Draw(instance_count, first_instance);
     }
-    draw_list.emplace_back(last_model_ind, first_instance, instance_count);
-  }
+  } while (false);
 
-  Engine::Get().GetRenderer()->UpdateBuffer(
-      instances_ubo_, instances_.data(),
-      sizeof(InstanceData) * instances_.size());
-
-  scene_data_.cam_pos = camera_.GetMatrix().Row(3);
-  scene_data_.light_dir = {1, 1, 1};
-  scene_data_.light_radiance = {1, 1, 1};
-  Engine::Get().GetRenderer()->UpdateBuffer(scene_data_ubo_, &scene_data_,
-                                            sizeof(scene_data_));
-
-  Engine::Get().GetRenderer()->UpdateBuffer(lights_ubo_, &lights_,
-                                            sizeof(lights_));
-
-  Engine::Get().GetRenderer()->ActivateShader(shader_id_);
-  Engine::Get().GetRenderer()->ActivateDescriptorSet(scene_dset_);
-
-  for (auto& draw_call : draw_list) {
-    auto [model_ind, first_instance, instance_count] = draw_call;
-    models_[model_ind].Draw(instance_count, first_instance);
-  }
+#if 1
+  DrawBVHTree(bvh_tree_, 0);
+  debug_layer_.DrawFrustum(frustum_.planes);
+  debug_layer_.DrawMatrix(camera_.GetMatrixMainCam());
+  for (auto& instance : instances_)
+    debug_layer_.DrawMatrix(instance.model);
+#endif
 
   debug_layer_.Draw(scene_data_.view_projection);
 }
@@ -304,6 +275,58 @@ void Scene::CreateProjectionMatrix() {
   projection_.CreatePerspectiveProjection(
       45, (float)Engine::Get().GetScreenWidth(),
       (float)Engine::Get().GetScreenHeight(), 1.0f, 1000);
+}
+
+void Scene::UpdateViewProjectionMatrix() {
+  Matrix4f view;
+  camera_.GetMatrix().InverseOrthogonal(view);
+  view.Multiply(projection_, scene_data_.view_projection);
+}
+
+void Scene::UpdateFrustum() {
+  Matrix4f view, view_projection;
+  camera_.GetMatrixMainCam().InverseOrthogonal(view);
+  view.Multiply(projection_, view_projection);
+  frustum_.CreateFromMatrix(view_projection);
+}
+
+std::vector<std::tuple<size_t, size_t, size_t>>
+Scene::UpdateInstancesAndGetDrawList(
+    const std::vector<Scene::WorldObject>& objects) {
+  instances_.clear();
+  std::vector<std::tuple<size_t, size_t, size_t>> draw_list;
+  size_t last_model_ind = objects[0].model_ind;
+  size_t instance_ind = 0;
+  size_t first_instance = 0;
+  size_t instance_count = 0;
+  for (auto& obj : objects) {
+    if (obj.model_ind != last_model_ind) {
+      draw_list.emplace_back(last_model_ind, first_instance, instance_count);
+      last_model_ind = obj.model_ind;
+      first_instance = instance_ind;
+      instance_count = 0;
+    }
+    instances_.emplace_back(obj.transform);
+    ++instance_ind;
+    ++instance_count;
+  }
+  draw_list.emplace_back(last_model_ind, first_instance, instance_count);
+  return draw_list;
+}
+
+void Scene::UploadSceneData() {
+  Engine::Get().GetRenderer()->UpdateBuffer(
+      instances_ubo_, instances_.data(),
+      sizeof(InstanceData) * instances_.size());
+
+  scene_data_.cam_pos = camera_.GetMatrix().Row(3);
+  scene_data_.light_dir = {1, 1, 1};
+  scene_data_.light_radiance = {1, 1, 1};
+  Engine::Get().GetRenderer()->UpdateBuffer(scene_data_ubo_, &scene_data_,
+                                            sizeof(scene_data_));
+
+  Engine::Get().GetRenderer()->UpdateBuffer(lights_ubo_, &lights_,
+                                            sizeof(lights_));
 }
 
 //
@@ -534,7 +557,7 @@ std::vector<Scene::WorldObject> Scene::FrustumCull(
 
     // If the node is a leaf, it's representing a single object. Otherwise It's
     // an internal node with children.
-    if (nodes[node_ind].is_leaf()) {
+    if (nodes[node_ind].IsLeaf()) {
       if (frustum.Intersects(nodes[node_ind].object.obb,
                              nodes[node_ind].object.transform))
         visible_objects.push_back(nodes[node_ind].object);
@@ -569,7 +592,7 @@ void Scene::DumpBVHTree(const std::vector<BVHNode>& nodes,
   AABBf aabb;
 
   // Print node details
-  if (nodes[node_ind].is_leaf()) {
+  if (nodes[node_ind].IsLeaf()) {
     out << "[Leaf] model_ind: " << nodes[node_ind].object.model_ind << " ";
     nodes[node_ind].object.obb.GetBoundBox(aabb);
   } else {
@@ -587,7 +610,7 @@ void Scene::DumpBVHTree(const std::vector<BVHNode>& nodes,
   std::string child_prefix = prefix + (is_last ? "    " : "│   ");
 
   // Recurse for children (if they exist)
-  if (!nodes[node_ind].is_leaf()) {
+  if (!nodes[node_ind].IsLeaf()) {
     // The right child is always the "last" one for its parent
     DumpBVHTree(nodes, nodes[node_ind].left, child_prefix, false);
     DumpBVHTree(nodes, nodes[node_ind].right, child_prefix, true);
@@ -598,14 +621,14 @@ void Scene::DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_ind) {
   if (nodes.empty())
     return;
 
-  if (nodes[node_ind].is_leaf()) {
+  if (nodes[node_ind].IsLeaf()) {
     debug_layer_.DrawObb(nodes[node_ind].object.obb, {1, 1, 0});
   } else {
     debug_layer_.DrawAabb(nodes[node_ind].aabb, {1, 0, 1});
   }
 
   // Recurse for children (if they exist)
-  if (!nodes[node_ind].is_leaf()) {
+  if (!nodes[node_ind].IsLeaf()) {
     // The right child is always the "last" one for its parent
     DrawBVHTree(nodes, nodes[node_ind].left);
     DrawBVHTree(nodes, nodes[node_ind].right);
