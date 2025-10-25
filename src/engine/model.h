@@ -29,9 +29,7 @@ class Model {
                   const std::vector<uint32_t>& indices,
                   const std::vector<std::string>& texture_file_names);
 
-  void UpdateMaterial(float metallic, float roughness, float ao);
-
-  void Draw(unsigned int instance_index);
+  void Draw(unsigned int instance_index, unsigned int fist_instance);
 
   const base::Vector3f& GetExtents() const { return extents_; }
 

@@ -415,17 +415,7 @@ void Model::LoadTexture(const std::string& file_name,
   renderer_->UpdateTexture(texture_ids_[index], std::move(images));
 }
 
-void Model::UpdateMaterial(float metallic, float roughness, float ao) {
-  for (auto& m : materials_) {
-    m.metallic = metallic;
-    m.roughness = roughness;
-    m.ao = ao;
-  }
-  renderer_->UpdateBuffer(materials_ubo_, materials_.data(),
-                          sizeof(MaterialData) * materials_.size());
-}
-
-void Model::Draw(unsigned int instance_count) {
+void Model::Draw(unsigned int instance_count, unsigned int fist_instance) {
   renderer_->ActivateDescriptorSet(materials_dset_);
   renderer_->ActivateGeometry(geometry_id_);
 
@@ -438,7 +428,7 @@ void Model::Draw(unsigned int instance_count) {
     pc.cookie_cutter = false;
     renderer_->UpdatePushConstants(sizeof(pc), &pc);
     renderer_->Draw(draw_cmd.num_indices, draw_cmd.index_offset, instance_count,
-                   0);
+                   fist_instance);
     ++material_index;
   }
 }

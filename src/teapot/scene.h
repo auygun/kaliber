@@ -68,6 +68,7 @@ class Scene : public eng::Drawable {
 
   SceneData scene_data_;
   LightData lights_[4];
+  std::vector<InstanceData> instances_;
 
   uint64_t scene_data_ubo_ = 0;
   uint64_t lights_ubo_ = 0;
