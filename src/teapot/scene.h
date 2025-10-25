@@ -161,8 +161,8 @@ class Scene : public eng::Drawable {
 
   std::vector<BVHNode> BuildBVHTree(std::vector<WorldObject> objects);
 
-  std::vector<size_t> FrustumCull(const std::vector<BVHNode>& nodes,
-                                  const base::Frustumf& frustum);
+  std::vector<WorldObject> FrustumCull(const std::vector<BVHNode>& nodes,
+                                       const base::Frustumf& frustum);
 
   void DumpBVHTree(const std::vector<BVHNode>& nodes,
                    size_t node_ind,

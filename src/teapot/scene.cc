@@ -191,8 +191,7 @@ void Scene::Draw(float frame_frac) {
   std::vector<WorldObject> world_objects =
       scene_root_->GetWorldObjects(models_);
 
-  std::vector<WorldObject> copy_of_world_objects = world_objects;
-  bvh_tree_ = BuildBVHTree(std::move(copy_of_world_objects));
+  bvh_tree_ = BuildBVHTree(world_objects);
   // DumpBVHTree(bvh_tree_, 0, "");
   DrawBVHTree(bvh_tree_, 0);
 
@@ -211,14 +210,14 @@ void Scene::Draw(float frame_frac) {
   auto objects = FrustumCull(bvh_tree_, f);
   DLOG(0) << "FrustumCull: " << objects.size();
 
-  std::unordered_map<size_t, std::vector<size_t>> instance_map;
-  for (auto obj_ind : objects) {
-    instance_map[world_objects[obj_ind].model_ind].push_back(obj_ind);
+  std::unordered_map<size_t, std::vector<WorldObject>> instance_map;
+  for (auto obj : objects) {
+    instance_map[obj.model_ind].push_back(obj);
   }
   instances_.clear();
   for (auto& ins : instance_map) {
     for (auto& obj : ins.second) {
-      instances_.emplace_back(world_objects[obj].transform);
+      instances_.emplace_back(obj.transform);
       debug_layer_.DrawMatrix(instances_.back().model);
     }
   }
@@ -500,11 +499,12 @@ std::vector<Scene::BVHNode> Scene::BuildBVHTree(
   return bvh_nodes;
 }
 
-std::vector<size_t> Scene::FrustumCull(const std::vector<BVHNode>& nodes,
-                                       const Frustumf& frustum) {
-  std::vector<size_t> visible_object_ids;
+std::vector<Scene::WorldObject> Scene::FrustumCull(
+    const std::vector<BVHNode>& nodes,
+    const Frustumf& frustum) {
+  std::vector<WorldObject> visible_objects;
   if (nodes.empty())
-    return visible_object_ids;
+    return visible_objects;
 
   // Create stack for depth-first traversal and start the process with the root
   // of the BVH tree.
@@ -520,7 +520,7 @@ std::vector<size_t> Scene::FrustumCull(const std::vector<BVHNode>& nodes,
     if (nodes[node_ind].isLeaf()) {
       if (frustum.Intersects(nodes[node_ind].object.obb,
                              nodes[node_ind].object.transform))
-        visible_object_ids.push_back(nodes[node_ind].object.id);
+        visible_objects.push_back(nodes[node_ind].object);
       continue;
     } else if (!frustum.Intersects(nodes[node_ind].aabb)) {
       continue;
@@ -533,7 +533,7 @@ std::vector<size_t> Scene::FrustumCull(const std::vector<BVHNode>& nodes,
       stack.push_back(nodes[node_ind].right);
   }
 
-  return visible_object_ids;
+  return visible_objects;
 }
 
 void Scene::DumpBVHTree(const std::vector<BVHNode>& nodes,
