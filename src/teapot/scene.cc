@@ -189,22 +189,20 @@ void Scene::Create() {
 }
 
 void Scene::Draw(float frame_frac) {
+  UpdateViewProjectionMatrix();
+  UpdateFrustum();
+
+  instances_.clear();
   do {
     std::vector<WorldObject> world_objects =
         scene_root_.GetWorldObjects(models_);
-
     if (world_objects.empty())
       break;
 
     bvh_tree_ = BuildBVHTree(world_objects);
-    // DumpBVHTree(bvh_tree_, 0, "");
-
-    UpdateViewProjectionMatrix();
-    UpdateFrustum();
 
     auto visible_objects = FrustumCull(bvh_tree_, frustum_);
     DLOG(0) << "FrustumCull: " << visible_objects.size();
-
     if (visible_objects.empty())
       break;
 
@@ -227,6 +225,7 @@ void Scene::Draw(float frame_frac) {
   } while (false);
 
 #if 1
+  // DumpBVHTree(bvh_tree_, 0, "");
   DrawBVHTree(bvh_tree_, 0);
   debug_layer_.DrawFrustum(frustum_.planes);
   debug_layer_.DrawMatrix(camera_.GetMatrixMainCam());
@@ -294,7 +293,7 @@ void Scene::UpdateFrustum() {
 std::vector<std::tuple<size_t, size_t, size_t>>
 Scene::UpdateInstancesAndGetDrawList(
     const std::vector<Scene::WorldObject>& objects) {
-  instances_.clear();
+  DCHECK(instances_.empty());
   std::vector<std::tuple<size_t, size_t, size_t>> draw_list;
   size_t last_model_ind = objects[0].model_ind;
   size_t instance_ind = 0;
