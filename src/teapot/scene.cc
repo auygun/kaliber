@@ -87,22 +87,22 @@ void Scene::Create() {
     return;
   }
 
-  shader_.SetRenderer(Engine::Get().GetRenderer());
   auto source = std::make_unique<ShaderSource>();
   CHECK(source->Load("teapot/pbr.glsl")) << "Could not create ShaderSource";
-  shader_.Create(std::move(source), vertex_description_, kPrimitive_Triangles,
-                 true, false, CullMode::kBack);
+  shader_id_ = Engine::Get().GetRenderer()->CreateShader(
+      std::move(source), vertex_description_, kPrimitive_Triangles, true, false,
+      CullMode::kBack);
 
 #if 1
   models_.resize(2);
   {
-    // model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+    // model.LoadObj(Engine::Get().GetRenderer(), shader_id_,
     //                "teapot/viking_room.obj", "", {"teapot/viking_room.png"});
-    models_[0].LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+    models_[0].LoadObj(Engine::Get().GetRenderer(), shader_id_,
                        "teapot/buddha.obj", "", {});
-    // model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+    // model.LoadObj(Engine::Get().GetRenderer(), shader_id_,
     //                "teapot/sportsCar.obj", "teapot/sportsCar.mtl", {});
-    // model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+    // model.LoadObj(Engine::Get().GetRenderer(), shader_id_,
     //                "teapot/Cerberus_LP.obj", "teapot/Cerberus_LP.mtl",
     //                {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
     //                 "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
@@ -117,7 +117,7 @@ void Scene::Create() {
     }
   }
   {
-    models_[1].LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
+    models_[1].LoadObj(Engine::Get().GetRenderer(), shader_id_,
                        "teapot/sportsCar.obj", "teapot/sportsCar.mtl", {});
 
     for (size_t i = 0; i < 3; ++i) {
@@ -136,7 +136,7 @@ void Scene::Create() {
   std::vector<uint32_t> indices;
   CreateSphere(vertices, indices, 32, 32);
   model.CreateMesh(
-      Engine::Get().GetRenderer(), shader_.resource_id(), vertices, indices,
+      Engine::Get().GetRenderer(), shader_id_, vertices, indices,
       // {"teapot/iron-rusted4-basecolor.png", "teapot/iron-rusted4-normal.png",
       //  "teapot/iron-rusted4-metalness.png",
       //  "teapot/iron-rusted4-roughness.png"});
@@ -166,14 +166,13 @@ void Scene::Create() {
 #endif
 
   scene_data_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
-      shader_.resource_id(), 1, 0, sizeof(SceneData));
-  lights_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
-      shader_.resource_id(), 1, 1, sizeof(lights_));
+      shader_id_, 1, 0, sizeof(SceneData));
+  lights_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(shader_id_, 1, 1,
+                                                          sizeof(lights_));
   instances_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
-      shader_.resource_id(), 1, 2, sizeof(InstanceData) * 20);
+      shader_id_, 1, 2, sizeof(InstanceData) * 20);
   scene_dset_ = Engine::Get().GetRenderer()->CreateDescriptorSet(
-      shader_.resource_id(), 1, {},
-      {scene_data_ubo_, lights_ubo_, instances_ubo_});
+      shader_id_, 1, {}, {scene_data_ubo_, lights_ubo_, instances_ubo_});
 
   CreateProjectionMatrix();
 
@@ -236,7 +235,7 @@ void Scene::Draw(float frame_frac) {
   Engine::Get().GetRenderer()->UpdateBuffer(lights_ubo_, &lights_,
                                             sizeof(lights_));
 
-  shader_.Activate();
+  Engine::Get().GetRenderer()->ActivateShader(shader_id_);
   Engine::Get().GetRenderer()->ActivateDescriptorSet(scene_dset_);
 
   size_t first_instance = 0;

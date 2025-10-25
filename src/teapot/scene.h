@@ -10,7 +10,7 @@
 #include "engine/model.h"
 #include "engine/scene_graph.h"
 #include "engine/renderer/renderer_types.h"
-#include "engine/renderer/shader.h"
+// #include "engine/renderer/shader.h"
 #include "engine/scene_graph.h"
 #include "teapot/camera.h"
 
@@ -50,7 +50,7 @@ class Scene : public eng::Drawable {
   };
 
   eng::VertexDescription vertex_description_;
-  eng::Shader shader_;
+  uint64_t shader_id_;
   std::vector<eng::Model> models_;
 
   Camera camera_;
