@@ -1,9 +1,11 @@
 #include "teapot/scene.h"
 
+#include <algorithm>
 #include <memory>
-#include <unordered_map>
+#include <span>
+#include <tuple>
 
-#include "base/vecmath.h"
+#include "base/log.h"
 #include "engine/asset/shader_source.h"
 #include "engine/engine.h"
 #include "engine/renderer/renderer.h"
@@ -71,7 +73,6 @@ const char vertex_description[] = "p3f;n3f;a3f;t2f";
 
 Scene::Scene() {
   camera_.Create({0, 0, 0}, -0.06f, 0.1f, 5);
-  scene_root_ = std::make_unique<SceneNode>((size_t)-1, "Root");
 }
 
 Scene::~Scene() = default;
@@ -114,7 +115,7 @@ void Scene::Create() {
       q.Create({0.5f, 0.0f, 0.0f});
       node->setRotation(q);
       node->setPosition({2.2f * i, 0, 0});
-      scene_root_->addChild(std::move(node));
+      scene_root_.addChild(std::move(node));
     }
   }
   {
@@ -127,7 +128,7 @@ void Scene::Create() {
       q.Create({0.5f, 0.0f, 0.0f});
       node->setRotation(q);
       node->setPosition({2.2f * (10 + i), 0, 0});
-      scene_root_->addChild(std::move(node));
+      scene_root_.addChild(std::move(node));
     }
   }
 #else
@@ -161,7 +162,7 @@ void Scene::Create() {
     q.Create({0.1f, 0.1f, 0.1f});
     node->setRotation(q);
     node->setPosition({2.2f * i, 0, 0});
-    scene_root_->addChild(std::move(node));
+    scene_root_.addChild(std::move(node));
   }
 
 #endif
@@ -190,7 +191,7 @@ void Scene::Create() {
 void Scene::Draw(float frame_frac) {
   do {
     std::vector<WorldObject> world_objects =
-        scene_root_->GetWorldObjects(models_);
+        scene_root_.GetWorldObjects(models_);
 
     if (world_objects.empty())
       break;

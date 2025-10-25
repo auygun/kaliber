@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include "base/vecmath.h"
 #include "engine/debug_layer.h"
 #include "engine/drawable.h"
 #include "engine/model.h"
@@ -142,7 +143,7 @@ class Scene : public eng::Drawable {
 
   eng::DebugLayer debug_layer_;
 
-  std::unique_ptr<SceneNode> scene_root_;
+  SceneNode scene_root_{(size_t)-1, "Root"};
   std::vector<BVHNode> bvh_tree_;
 
   base::Vector3f albedo_{0.8f, 0.4f, 0.2f};
