@@ -54,9 +54,9 @@ class Scene : public eng::Drawable {
     size_t GetModelIndex() const { return model_ind; }
     const std::string& GetName() const { return name; }
     SceneNode* GetParent() const { return parent; }
-
-    std::vector<WorldObject> GetWorldObjects(
-        const std::vector<eng::Model>& models);
+    const std::vector<std::unique_ptr<SceneNode>>& GetChildren() const {
+      return children;
+    }
 
    private:
     // Marks this node and all its descendants as dirty. This forces a transform
@@ -151,6 +151,8 @@ class Scene : public eng::Drawable {
       const std::vector<Scene::WorldObject>& objects);
 
   void UploadSceneData();
+
+  std::vector<WorldObject> GetSceneObjects();
 
   std::vector<BVHNode> BuildBVHTree(std::vector<WorldObject> objects);
 

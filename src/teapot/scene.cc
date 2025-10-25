@@ -194,8 +194,7 @@ void Scene::Draw(float frame_frac) {
 
   instances_.clear();
   do {
-    std::vector<WorldObject> world_objects =
-        scene_root_.GetWorldObjects(models_);
+    std::vector<WorldObject> world_objects = GetSceneObjects();
     if (world_objects.empty())
       break;
 
@@ -405,29 +404,6 @@ const Matrix4f& Scene::SceneNode::GetWorldTransform() {
   return world_transform;
 }
 
-std::vector<Scene::WorldObject> Scene::SceneNode::GetWorldObjects(
-    const std::vector<eng::Model>& models) {
-  std::vector<WorldObject> world_objects;
-  std::deque<SceneNode*> stack;
-  stack.push_back(this);
-
-  while (!stack.empty()) {
-    auto* node = stack.back();
-    stack.pop_back();
-
-    if (node->model_ind != (size_t)-1) {
-      OBBf obb{node->GetWorldTransform(), models[node->model_ind].GetExtents()};
-      world_objects.emplace_back(node->model_ind, obb,
-                                 node->GetWorldTransform());
-    }
-
-    for (auto& child : node->children)
-      stack.push_back(child.get());
-  }
-
-  return world_objects;
-}
-
 void Scene::SceneNode::SetDirty() {
   if (is_dirty)
     return;  // Already dirty, no need to propagate
@@ -436,6 +412,29 @@ void Scene::SceneNode::SetDirty() {
   for (auto& child : children) {
     child->SetDirty();
   }
+}
+
+std::vector<Scene::WorldObject> Scene::GetSceneObjects() {
+  std::vector<WorldObject> world_objects;
+  std::deque<SceneNode*> stack;
+  stack.push_back(&scene_root_);
+
+  while (!stack.empty()) {
+    auto* node = stack.back();
+    stack.pop_back();
+
+    if (node->GetModelIndex() != (size_t)-1) {
+      OBBf obb{node->GetWorldTransform(),
+               models_[node->GetModelIndex()].GetExtents()};
+      world_objects.emplace_back(node->GetModelIndex(), obb,
+                                 node->GetWorldTransform());
+    }
+
+    for (auto& child : node->GetChildren())
+      stack.push_back(child.get());
+  }
+
+  return world_objects;
 }
 
 std::vector<Scene::BVHNode> Scene::BuildBVHTree(
