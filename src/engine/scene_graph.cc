@@ -127,42 +127,6 @@ std::vector<WorldObject> SceneNode::GetWorldObjects(
   return world_objects;
 }
 
-/**
- * @brief Updates this node and all its children.
- * This recalculates transforms and calls update() on all components.
- */
-void SceneNode::update(float deltaTime) {
-  // 1. Ensure our transform is up-to-date
-  // This call will lazily recalculate if this node is dirty.
-  getWorldTransform();
-
-  // 2. Update all attached components
-  for (auto& component : m_components) {
-    component->update(deltaTime);
-  }
-
-  // 3. Recursively update all children
-  for (auto& child : m_children) {
-    child->update(deltaTime);
-  }
-}
-
-/**
- * @brief Renders this node and all its children.
- * This calls render() on all components.
- */
-void SceneNode::render() {
-  // 1. Render all attached components
-  for (auto& component : m_components) {
-    component->render();
-  }
-
-  // 2. Recursively render all children
-  for (auto& child : m_children) {
-    child->render();
-  }
-}
-
 void SceneNode::setDirty() {
   if (m_isDirty)
     return;  // Already dirty, no need to propagate

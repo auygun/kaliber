@@ -15,32 +15,6 @@ using namespace base;
 
 namespace eng {
 
-// --- 2. COMPONENT INTERFACE ---
-
-class SceneNode;  // Forward-declaration
-
-/**
- * @brief Base class for all Components.
- * Components are attached to SceneNodes to add behavior like rendering,
- * physics, scripts, lights, etc.
- */
-class Component {
- public:
-  virtual ~Component() = default;
-
-  // Called when the component is attached to a SceneNode
-  virtual void onAttach(SceneNode* owner) { m_owner = owner; }
-
-  // Called every frame by the SceneNode's update loop
-  virtual void update(float deltaTime) {}
-
-  // Called for rendering (often in a separate pass)
-  virtual void render() {}
-
- protected:
-  SceneNode* m_owner = nullptr;
-};
-
 // struct WorldObject {
 //   size_t id;
 //   size_t model_ind = (size_t)-1;
@@ -75,27 +49,6 @@ class SceneNode {
    */
   std::unique_ptr<SceneNode> removeChild(SceneNode* child);
 
-  // --- Component Management ---
-
-  /**
-   * @brief Creates and adds a component of type T to this node.
-   * @tparam T The Component type to create (e.g., MeshRenderer).
-   * @tparam Args Arguments for the Component's constructor.
-   * @return Raw pointer to the newly created component.
-   */
-  template <typename T, typename... Args>
-  T* addComponent(Args&&... args) {
-    static_assert(std::is_base_of<Component, T>::value,
-                  "T must be a Component");
-
-    auto newComponent = std::make_unique<T>(std::forward<Args>(args)...);
-    T* componentPtr = newComponent.get();  // Get raw pointer before move
-
-    m_components.push_back(std::move(newComponent));
-    componentPtr->onAttach(this);  // Notify component
-    return componentPtr;
-  }
-
   // --- Transform Management ---
 
   void setPosition(const Vector3f& position);
@@ -116,18 +69,6 @@ class SceneNode {
 
   std::vector<WorldObject> GetWorldObjects(
       const std::vector<eng::Model>& models);
-
-  /**
-   * @brief Updates this node and all its children.
-   * This recalculates transforms and calls update() on all components.
-   */
-  void update(float deltaTime);
-
-  /**
-   * @brief Renders this node and all its children.
-   * This calls render() on all components.
-   */
-  void render();
 
  private:
   /**
@@ -150,9 +91,6 @@ class SceneNode {
   std::string m_name;
   SceneNode* m_parent = nullptr;
   std::vector<std::unique_ptr<SceneNode>> m_children;
-
-  // --- Attached Components ---
-  std::vector<std::unique_ptr<Component>> m_components;
 
   size_t model_ind = (size_t)-1;
 };
