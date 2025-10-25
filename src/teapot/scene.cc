@@ -191,6 +191,9 @@ void Scene::Draw(float frame_frac) {
   std::vector<WorldObject> world_objects =
       scene_root_->GetWorldObjects(models_);
 
+  if (world_objects.empty())
+    return;
+
   bvh_tree_ = BuildBVHTree(world_objects);
   // DumpBVHTree(bvh_tree_, 0, "");
   DrawBVHTree(bvh_tree_, 0);
@@ -207,19 +210,35 @@ void Scene::Draw(float frame_frac) {
   debug_layer_.DrawFrustum(f.planes);
   debug_layer_.DrawMatrix(camera_.GetMatrixMainCam());
 
-  auto objects = FrustumCull(bvh_tree_, f);
-  DLOG(0) << "FrustumCull: " << objects.size();
+  auto visible_objects = FrustumCull(bvh_tree_, f);
+  DLOG(0) << "FrustumCull: " << visible_objects.size();
 
-  std::unordered_map<size_t, std::vector<WorldObject>> instance_map;
-  for (auto obj : objects) {
-    instance_map[obj.model_ind].push_back(obj);
-  }
+  if (visible_objects.empty())
+    return;
+
+  std::sort(
+      visible_objects.begin(), visible_objects.end(),
+      [](WorldObject& a, WorldObject& b) { return a.model_ind < b.model_ind; });
+
   instances_.clear();
-  for (auto& ins : instance_map) {
-    for (auto& obj : ins.second) {
+  std::vector<std::tuple<size_t, size_t, size_t>> draw_list;
+  {
+    size_t last_model_ind = visible_objects[0].model_ind;
+    size_t instance_ind = 0;
+    size_t first_instance = 0;
+    size_t instance_count = 0;
+    for (auto& obj : visible_objects) {
+      if (obj.model_ind != last_model_ind) {
+        draw_list.emplace_back(last_model_ind, first_instance, instance_count);
+        last_model_ind = obj.model_ind;
+        first_instance = instance_ind;
+        instance_count = 0;
+      }
       instances_.emplace_back(obj.transform);
-      debug_layer_.DrawMatrix(instances_.back().model);
+      ++instance_ind;
+      ++instance_count;
     }
+    draw_list.emplace_back(last_model_ind, first_instance, instance_count);
   }
 
   Engine::Get().GetRenderer()->UpdateBuffer(
@@ -238,10 +257,9 @@ void Scene::Draw(float frame_frac) {
   Engine::Get().GetRenderer()->ActivateShader(shader_id_);
   Engine::Get().GetRenderer()->ActivateDescriptorSet(scene_dset_);
 
-  size_t first_instance = 0;
-  for (auto& ins : instance_map) {
-    models_[ins.first].Draw(ins.second.size(), first_instance);
-    first_instance += ins.second.size();
+  for (auto& draw_call : draw_list) {
+    auto [model_ind, first_instance, instance_count] = draw_call;
+    models_[model_ind].Draw(instance_count, first_instance);
   }
 
   debug_layer_.Draw(scene_data_.view_projection);
@@ -394,14 +412,13 @@ std::vector<Scene::WorldObject> Scene::SceneNode::GetWorldObjects(
   std::deque<SceneNode*> stack;
   stack.push_back(this);
 
-  size_t index = 0;
   while (!stack.empty()) {
     auto* node = stack.back();
     stack.pop_back();
 
     if (node->model_ind != (size_t)-1) {
       OBBf obb{node->getWorldTransform(), models[node->model_ind].GetExtents()};
-      world_objects.emplace_back(index++, node->model_ind, obb,
+      world_objects.emplace_back(node->model_ind, obb,
                                  node->getWorldTransform());
     }
 
@@ -517,7 +534,7 @@ std::vector<Scene::WorldObject> Scene::FrustumCull(
 
     // If the node is a leaf, it's representing a single object. Otherwise It's
     // an internal node with children.
-    if (nodes[node_ind].isLeaf()) {
+    if (nodes[node_ind].is_leaf()) {
       if (frustum.Intersects(nodes[node_ind].object.obb,
                              nodes[node_ind].object.transform))
         visible_objects.push_back(nodes[node_ind].object);
@@ -552,8 +569,8 @@ void Scene::DumpBVHTree(const std::vector<BVHNode>& nodes,
   AABBf aabb;
 
   // Print node details
-  if (nodes[node_ind].object.id != (size_t)-1) {
-    out << "[Leaf] ID: " << nodes[node_ind].object.id << " ";
+  if (nodes[node_ind].is_leaf()) {
+    out << "[Leaf] model_ind: " << nodes[node_ind].object.model_ind << " ";
     nodes[node_ind].object.obb.GetBoundBox(aabb);
   } else {
     out << "[Internal] ";
@@ -570,7 +587,7 @@ void Scene::DumpBVHTree(const std::vector<BVHNode>& nodes,
   std::string child_prefix = prefix + (is_last ? "    " : "│   ");
 
   // Recurse for children (if they exist)
-  if (nodes[node_ind].object.id == (size_t)-1) {
+  if (!nodes[node_ind].is_leaf()) {
     // The right child is always the "last" one for its parent
     DumpBVHTree(nodes, nodes[node_ind].left, child_prefix, false);
     DumpBVHTree(nodes, nodes[node_ind].right, child_prefix, true);
@@ -581,14 +598,14 @@ void Scene::DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_ind) {
   if (nodes.empty())
     return;
 
-  if (nodes[node_ind].object.id != (size_t)-1) {
+  if (nodes[node_ind].is_leaf()) {
     debug_layer_.DrawObb(nodes[node_ind].object.obb, {1, 1, 0});
   } else {
     debug_layer_.DrawAabb(nodes[node_ind].aabb, {1, 0, 1});
   }
 
   // Recurse for children (if they exist)
-  if (nodes[node_ind].object.id == (size_t)-1) {
+  if (!nodes[node_ind].is_leaf()) {
     // The right child is always the "last" one for its parent
     DrawBVHTree(nodes, nodes[node_ind].left);
     DrawBVHTree(nodes, nodes[node_ind].right);

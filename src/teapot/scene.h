@@ -26,7 +26,6 @@ class Scene : public eng::Drawable {
 
  private:
   struct WorldObject {
-    size_t id = -1;
     size_t model_ind = (size_t)-1;
     base::OBBf obb;
     base::Matrix4f transform{1};
@@ -109,7 +108,7 @@ class Scene : public eng::Drawable {
     // size_t object_ind = (size_t)-1;  // If not -1, this is a leaf node
     WorldObject object;
 
-    bool isLeaf() const { return object.id != (size_t)-1; }
+    bool is_leaf() const { return object.model_ind != (size_t)-1; }
   };
 
   // --- UBO ---
