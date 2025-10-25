@@ -10,12 +10,11 @@ namespace eng {
 
 class DebugLayer;
 
-// Represents a mesh object in the scene
-struct MeshObject {
+struct WorldObject {
   size_t id = -1;
+  size_t model_ind = (size_t)-1;
   base::OBBf obb;
-  base::Matrix4f model{1};
-  // In a real engine, this would point to the actual mesh data and transform
+  base::Matrix4f transform{1};
 };
 
 struct BVHNode {
@@ -27,12 +26,12 @@ struct BVHNode {
   size_t right = (size_t)-1;
 
   // size_t object_ind = (size_t)-1;  // If not -1, this is a leaf node
-  MeshObject object;
+  WorldObject object;
 
   bool isLeaf() const { return object.id != (size_t)-1; }
 };
 
-std::vector<BVHNode> BuildBVHTree(std::vector<MeshObject> objects);
+std::vector<BVHNode> BuildBVHTree(std::vector<WorldObject> objects);
 
 std::vector<size_t> FrustumCull(const std::vector<BVHNode>& nodes,
                              const base::Frustumf& frustum);

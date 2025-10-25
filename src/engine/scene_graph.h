@@ -9,6 +9,7 @@
 
 #include "base/vecmath.h"
 #include "engine/model.h"
+#include "engine/bvh.h"
 
 using namespace base;
 
@@ -40,12 +41,12 @@ class Component {
   SceneNode* m_owner = nullptr;
 };
 
-struct WorldObject {
-  size_t id;
-  size_t model_ind = (size_t)-1;
-  base::OBBf obb;
-  base::Matrix4f transform;
-};
+// struct WorldObject {
+//   size_t id;
+//   size_t model_ind = (size_t)-1;
+//   base::OBBf obb;
+//   base::Matrix4f transform;
+// };
 
 // --- 3. THE SCENE NODE ---
 

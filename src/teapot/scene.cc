@@ -99,7 +99,7 @@ void Scene::Create() {
     // model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
     //                "teapot/viking_room.obj", "", {"teapot/viking_room.png"});
     models_[0].LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
-                  "teapot/buddha.obj", "", {});
+                       "teapot/buddha.obj", "", {});
     // model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
     //                "teapot/sportsCar.obj", "teapot/sportsCar.mtl", {});
     // model.LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
@@ -118,7 +118,7 @@ void Scene::Create() {
   }
   {
     models_[1].LoadObj(Engine::Get().GetRenderer(), shader_.resource_id(),
-                  "teapot/sportsCar.obj", "teapot/sportsCar.mtl", {});
+                       "teapot/sportsCar.obj", "teapot/sportsCar.mtl", {});
 
     for (size_t i = 0; i < 3; ++i) {
       auto node = std::make_unique<SceneNode>(1);
@@ -188,15 +188,11 @@ void Scene::Create() {
 }
 
 void Scene::Draw(float frame_frac) {
-  std::vector<eng::MeshObject> bvh_mesh_objects;
   std::vector<WorldObject> world_objects =
       scene_root_->GetWorldObjects(models_);
-  size_t object_ind = 0;
-  for (auto& world_object : world_objects) {
-    bvh_mesh_objects.emplace_back(object_ind++, world_object.obb, world_object.transform);
-  }
 
-  bvh_tree_ = BuildBVHTree(std::move(bvh_mesh_objects));
+  std::vector<WorldObject> copy_of_world_objects = world_objects;
+  bvh_tree_ = BuildBVHTree(std::move(copy_of_world_objects));
   // DumpBVHTree(bvh_tree_, 0, "");
   DrawBVHTree(bvh_tree_, 0, debug_layer_);
 

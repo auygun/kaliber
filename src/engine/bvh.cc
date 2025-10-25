@@ -12,7 +12,7 @@ using namespace base;
 
 namespace eng {
 
-std::vector<BVHNode> BuildBVHTree(std::vector<MeshObject> objects) {
+std::vector<BVHNode> BuildBVHTree(std::vector<WorldObject> objects) {
   if (objects.empty())
     return {};
 
@@ -21,7 +21,7 @@ std::vector<BVHNode> BuildBVHTree(std::vector<MeshObject> objects) {
 
   // Create stack for depth-first traversal and start the process with the root
   // node using all objects.
-  std::deque<std::tuple<size_t, std::span<MeshObject>>> stack;
+  std::deque<std::tuple<size_t, std::span<WorldObject>>> stack;
   std::span objects_view(objects.data(), objects.size());
   stack.push_back(std::make_tuple(node_ind_last, std::move(objects_view)));
 
@@ -54,27 +54,27 @@ std::vector<BVHNode> BuildBVHTree(std::vector<MeshObject> objects) {
     // Sort node_objects along the chosen axis based on their center point.
     if (axis == 0) {
       std::sort(node_objects.begin(), node_objects.end(),
-                [](MeshObject& a, MeshObject& b) {
+                [](WorldObject& a, WorldObject& b) {
                   return a.obb.center.x < b.obb.center.x;
                 });
     } else if (axis == 1) {
       std::sort(node_objects.begin(), node_objects.end(),
-                [](MeshObject& a, MeshObject& b) {
+                [](WorldObject& a, WorldObject& b) {
                   return a.obb.center.y < b.obb.center.y;
                 });
     } else {  // axis == 2
       std::sort(node_objects.begin(), node_objects.end(),
-                [](MeshObject& a, MeshObject& b) {
+                [](WorldObject& a, WorldObject& b) {
                   return a.obb.center.z < b.obb.center.z;
                 });
     }
 
     // Split the objects into two halves
     size_t mid = node_objects.size() / 2;
-    std::span<MeshObject> left_objects(node_objects.begin(),
-                                       node_objects.begin() + mid);
-    std::span<MeshObject> right_objects(node_objects.begin() + mid,
-                                        node_objects.end());
+    std::span<WorldObject> left_objects(node_objects.begin(),
+                                        node_objects.begin() + mid);
+    std::span<WorldObject> right_objects(node_objects.begin() + mid,
+                                         node_objects.end());
 
     // Create the child nodes.
     bvh_nodes[node_ind].left = ++node_ind_last;
@@ -89,7 +89,7 @@ std::vector<BVHNode> BuildBVHTree(std::vector<MeshObject> objects) {
 }
 
 std::vector<size_t> FrustumCull(const std::vector<BVHNode>& nodes,
-                             const Frustumf& frustum) {
+                                const Frustumf& frustum) {
   std::vector<size_t> visible_object_ids;
   if (nodes.empty())
     return visible_object_ids;
@@ -107,7 +107,7 @@ std::vector<size_t> FrustumCull(const std::vector<BVHNode>& nodes,
     // an internal node with children.
     if (nodes[node_ind].isLeaf()) {
       if (frustum.Intersects(nodes[node_ind].object.obb,
-                             nodes[node_ind].object.model))
+                             nodes[node_ind].object.transform))
         visible_object_ids.push_back(nodes[node_ind].object.id);
       continue;
     } else if (!frustum.Intersects(nodes[node_ind].aabb)) {
