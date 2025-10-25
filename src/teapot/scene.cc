@@ -113,9 +113,9 @@ void Scene::Create() {
       auto node = std::make_unique<SceneNode>(0);
       Quatf q;
       q.Create({0.5f, 0.0f, 0.0f});
-      node->setRotation(q);
-      node->setPosition({2.2f * i, 0, 0});
-      scene_root_.addChild(std::move(node));
+      node->SetRotation(q);
+      node->SetPosition({2.2f * i, 0, 0});
+      scene_root_.AddChild(std::move(node));
     }
   }
   {
@@ -126,9 +126,9 @@ void Scene::Create() {
       auto node = std::make_unique<SceneNode>(1);
       Quatf q;
       q.Create({0.5f, 0.0f, 0.0f});
-      node->setRotation(q);
-      node->setPosition({2.2f * (10 + i), 0, 0});
-      scene_root_.addChild(std::move(node));
+      node->SetRotation(q);
+      node->SetPosition({2.2f * (10 + i), 0, 0});
+      scene_root_.AddChild(std::move(node));
     }
   }
 #else
@@ -160,9 +160,9 @@ void Scene::Create() {
     auto node = std::make_unique<SceneNode>(models_.size() - 1);
     Quatf q;
     q.Create({0.1f, 0.1f, 0.1f});
-    node->setRotation(q);
-    node->setPosition({2.2f * i, 0, 0});
-    scene_root_.addChild(std::move(node));
+    node->SetRotation(q);
+    node->SetPosition({2.2f * i, 0, 0});
+    scene_root_.AddChild(std::move(node));
   }
 
 #endif
@@ -335,100 +335,76 @@ void Scene::UploadSceneData() {
 //
 
 Scene::SceneNode::SceneNode(size_t model_ind, const std::string& name)
-    : m_name{name}, model_ind{model_ind} {
-  // Start with default, clean transforms
-  m_localTransform.Unit();  // = Matrix4f::identity();
-  m_worldTransform.Unit();  // = Matrix4f::identity();
-}
+    : name{name}, model_ind{model_ind} {}
 
-// --- Hierarchy Management ---
-
-/**
- * @brief Adds a child node. Takes ownership of the unique_ptr.
- * The child is automatically detached from its previous parent.
- */
-void Scene::SceneNode::addChild(std::unique_ptr<SceneNode> child) {
+void Scene::SceneNode::AddChild(std::unique_ptr<SceneNode> child) {
   if (!child)
     return;
 
   // Detach from previous parent if one exists
-  if (child->m_parent) {
+  if (child->parent) {
     // Find the child in its parent's list and release it
     // This is a bit complex, so a helper is used.
     // A raw pointer comparison is safe here.
-    child->m_parent->removeChild(child.get());
+    child->parent->RemoveChild(child.get());
   }
 
   // Set new parent and add to list
-  child->m_parent = this;
-  m_children.push_back(std::move(child));
+  child->parent = this;
+  children.push_back(std::move(child));
 }
 
-/**
- * @brief Removes a child node and returns ownership to the caller.
- * @param child Raw pointer to the child node to remove.
- * @return std::unique_ptr<SceneNode> to the detached child, or nullptr if not
- * found.
- */
-std::unique_ptr<Scene::SceneNode> Scene::SceneNode::removeChild(
+std::unique_ptr<Scene::SceneNode> Scene::SceneNode::RemoveChild(
     SceneNode* child) {
   if (!child)
     return nullptr;
 
-  auto found = std::find_if(m_children.begin(), m_children.end(),
+  auto found = std::find_if(children.begin(), children.end(),
                             [child](const std::unique_ptr<SceneNode>& p) {
                               return p.get() == child;
                             });
 
-  if (found != m_children.end()) {
+  if (found != children.end()) {
     // Found it. Move the unique_ptr out of the vector.
     std::unique_ptr<SceneNode> detachedChild = std::move(*found);
-    m_children.erase(found);  // Erase the (now empty) unique_ptr
-    detachedChild->m_parent = nullptr;
+    children.erase(found);  // Erase the (now empty) unique_ptr
+    detachedChild->parent = nullptr;
     return detachedChild;
   }
   return nullptr;
 }
 
-// --- Transform Management ---
-
-void Scene::SceneNode::setPosition(const Vector3f& position) {
-  m_position = position;
-  setDirty();
+void Scene::SceneNode::SetPosition(const Vector3f& p) {
+  position = p;
+  SetDirty();
 }
-void Scene::SceneNode::setRotation(const Quatf& rotation) {
-  m_rotation = rotation;
-  setDirty();
+void Scene::SceneNode::SetRotation(const Quatf& r) {
+  rotation = r;
+  SetDirty();
 }
-void Scene::SceneNode::setScale(const Vector3f& scale) {
-  m_scale = scale;
-  setDirty();
+void Scene::SceneNode::SetScale(float s) {
+  scale = s;
+  SetDirty();
 }
 
-/**
- * @brief Gets the node's final world transform.
- * Recalculates if dirty.
- */
-const Matrix4f& Scene::SceneNode::getWorldTransform() {
-  if (m_isDirty) {
+const Matrix4f& Scene::SceneNode::GetWorldTransform() {
+  if (is_dirty) {
     // 1. Recalculate local transform
-    m_localTransform.Create(m_rotation, m_position);
+    local_transform.Create(rotation, position);
+    local_transform.Multiply(scale);
 
     // 2. Combine with parent's world transform
-    if (m_parent) {
-      m_parent->getWorldTransform().Multiply(m_localTransform,
-                                             m_worldTransform);
+    if (parent) {
+      parent->GetWorldTransform().Multiply(local_transform, world_transform);
     } else {
-      m_worldTransform = m_localTransform;  // This is the root node
+      world_transform = local_transform;  // This is the root node
     }
 
     // 3. Mark as clean
-    m_isDirty = false;
+    is_dirty = false;
   }
-  return m_worldTransform;
+  return world_transform;
 }
-
-// --- Main Game Loop Functions ---
 
 std::vector<Scene::WorldObject> Scene::SceneNode::GetWorldObjects(
     const std::vector<eng::Model>& models) {
@@ -441,25 +417,25 @@ std::vector<Scene::WorldObject> Scene::SceneNode::GetWorldObjects(
     stack.pop_back();
 
     if (node->model_ind != (size_t)-1) {
-      OBBf obb{node->getWorldTransform(), models[node->model_ind].GetExtents()};
+      OBBf obb{node->GetWorldTransform(), models[node->model_ind].GetExtents()};
       world_objects.emplace_back(node->model_ind, obb,
-                                 node->getWorldTransform());
+                                 node->GetWorldTransform());
     }
 
-    for (auto& child : node->m_children)
+    for (auto& child : node->children)
       stack.push_back(child.get());
   }
 
   return world_objects;
 }
 
-void Scene::SceneNode::setDirty() {
-  if (m_isDirty)
+void Scene::SceneNode::SetDirty() {
+  if (is_dirty)
     return;  // Already dirty, no need to propagate
 
-  m_isDirty = true;
-  for (auto& child : m_children) {
-    child->setDirty();
+  is_dirty = true;
+  for (auto& child : children) {
+    child->SetDirty();
   }
 }
 
@@ -469,7 +445,7 @@ std::vector<Scene::BVHNode> Scene::BuildBVHTree(
     return {};
 
   std::vector<BVHNode> bvh_nodes(2 * objects.size() - 1);
-  size_t node_ind_last = 0;  // std::make_unique<BVHNode>();
+  size_t node_ind_last = 0;
 
   // Create stack for depth-first traversal and start the process with the root
   // node using all objects.

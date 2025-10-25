@@ -36,65 +36,49 @@ class Scene : public eng::Drawable {
    public:
     SceneNode(size_t model_ind, const std::string& name = "SceneNode");
 
-    // --- Hierarchy Management ---
+    // Adds a child node. Takes ownership of the unique_ptr. The child is
+    // automatically detached from its previous parent.
+    void AddChild(std::unique_ptr<SceneNode> child);
 
-    /**
-     * @brief Adds a child node. Takes ownership of the unique_ptr.
-     * The child is automatically detached from its previous parent.
-     */
-    void addChild(std::unique_ptr<SceneNode> child);
+    // Removes a child node and returns ownership to the caller.
+    std::unique_ptr<SceneNode> RemoveChild(SceneNode* child);
 
-    /**
-     * @brief Removes a child node and returns ownership to the caller.
-     * @param child Raw pointer to the child node to remove.
-     * @return std::unique_ptr<SceneNode> to the detached child, or nullptr if
-     * not found.
-     */
-    std::unique_ptr<SceneNode> removeChild(SceneNode* child);
+    // Transformations
+    void SetPosition(const base::Vector3f& p);
+    void SetRotation(const base::Quatf& r);
+    void SetScale(float s);
 
-    // --- Transform Management ---
+    // Gets the node's final world transform. Recalculates if dirty.
+    const base::Matrix4f& GetWorldTransform();
 
-    void setPosition(const base::Vector3f& position);
-    void setRotation(const base::Quatf& rotation);
-    void setScale(const base::Vector3f& scale);
-
-    /**
-     * @brief Gets the node's final world transform.
-     * Recalculates if dirty.
-     */
-    const base::Matrix4f& getWorldTransform();
-
-    // --- Getters ---
     size_t GetModelIndex() const { return model_ind; }
-    const std::string& getName() const { return m_name; }
-    SceneNode* getParent() const { return m_parent; }
-    // --- Main Game Loop Functions ---
+    const std::string& GetName() const { return name; }
+    SceneNode* GetParent() const { return parent; }
 
     std::vector<WorldObject> GetWorldObjects(
         const std::vector<eng::Model>& models);
 
    private:
-    /**
-     * @brief Marks this node and all its descendants as dirty.
-     * This forces a transform recalculation on the next update().
-     */
-    void setDirty();
+    // Marks this node and all its descendants as dirty. This forces a transform
+    // recalculation on the next update().
+    void SetDirty();
 
-    // --- Transform Data ---
-    base::Vector3f m_position{0};
-    base::Quatf m_rotation{0, 0, 0, 1};
-    base::Vector3f m_scale{1.0f};
+    // Transform data
+    base::Vector3f position{0};
+    base::Quatf rotation{0, 0, 0, 1};
+    float scale{1.0f};  // Uniform scale
 
-    // --- Cached Matrices ---
-    base::Matrix4f m_localTransform{1};
-    base::Matrix4f m_worldTransform{1};
-    bool m_isDirty = true;  // Start dirty to force initial calculation
+    // Cached matrices
+    base::Matrix4f local_transform{1};
+    base::Matrix4f world_transform{1};
+    bool is_dirty = true;  // Start dirty to force initial calculation
 
-    // --- Hierarchy ---
-    std::string m_name;
-    SceneNode* m_parent = nullptr;
-    std::vector<std::unique_ptr<SceneNode>> m_children;
+    // Hierarchy
+    std::string name;
+    SceneNode* parent = nullptr;
+    std::vector<std::unique_ptr<SceneNode>> children;
 
+    // Payload
     size_t model_ind = (size_t)-1;
   };
 
