@@ -72,6 +72,17 @@ const char vertex_description[] = "p3f;n3f;a3f;t2f";
 }  // namespace
 
 Scene::Scene() {
+  // Create the root node at index 0
+  Node root_node;
+  root_node.is_active = true;
+  root_node.name = "Root";
+
+  nodes_.push_back(root_node);
+  root_index_ = 0;
+
+  // Free list is initially empty
+  free_list_head_ = NO_NODE;
+
   camera_.Create({0, 0, 0}, -0.06f, 0.1f, 5);
 }
 
@@ -110,12 +121,11 @@ void Scene::Create() {
     //                 "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
 
     for (size_t i = 0; i < 10; ++i) {
-      auto node = std::make_unique<SceneNode>(0);
+      auto node_index = CreateNode(root_index_, 0);
       Quatf q;
       q.Create({0.5f, 0.0f, 0.0f});
-      node->SetRotation(q);
-      node->SetPosition({2.2f * i, 0, 0});
-      scene_root_.AddChild(std::move(node));
+      SetRotation(node_index, q);
+      SetPosition(node_index, {2.2f * i, 0, 0});
     }
   }
   {
@@ -123,12 +133,11 @@ void Scene::Create() {
                        "teapot/sportsCar.obj", "teapot/sportsCar.mtl", {});
 
     for (size_t i = 0; i < 3; ++i) {
-      auto node = std::make_unique<SceneNode>(1);
+      auto node_index = CreateNode(root_index_, 1);
       Quatf q;
       q.Create({0.5f, 0.0f, 0.0f});
-      node->SetRotation(q);
-      node->SetPosition({2.2f * (10 + i), 0, 0});
-      scene_root_.AddChild(std::move(node));
+      SetRotation(node_index, q);
+      SetPosition(node_index, {2.2f * (10 + i), 0, 0});
     }
   }
 #else
@@ -157,7 +166,7 @@ void Scene::Create() {
 
   // std::vector<eng::MeshObject> bvh_mesh_objects;
   for (size_t i = 0; i < 10; ++i) {
-    auto node = std::make_unique<SceneNode>(models_.size() - 1);
+    auto node = std::make_unique<Node>(models_.size() - 1);
     Quatf q;
     q.Create({0.1f, 0.1f, 0.1f});
     node->SetRotation(q);
@@ -329,109 +338,242 @@ void Scene::UploadSceneData() {
 }
 
 //
-// SceneNode
+// Node
 //
 
-Scene::SceneNode::SceneNode(size_t model_ind, const std::string& name)
-    : name{name}, model_ind{model_ind} {}
+size_t Scene::AllocateNode() {
+  if (free_list_head_ != NO_NODE) {
+    // --- Reuse a node from the free list ---
+    size_t new_index = free_list_head_;
+    Node& new_node = nodes_[new_index];
+    free_list_head_ = new_node.next_sibling;  // Pop from free list
 
-void Scene::SceneNode::AddChild(std::unique_ptr<SceneNode> child) {
-  if (!child)
+    // Reset the node to a default state
+    new_node = Node{};
+    new_node.is_active = true;
+    return new_index;
+  } else {
+    // --- No free nodes, create a new one ---
+    size_t new_index = nodes_.size();
+    Node new_node;
+    new_node.is_active = true;
+    nodes_.push_back(new_node);
+    return new_index;
+  }
+}
+
+void Scene::FreeNode(size_t index) {
+  if (index == root_index_ || index >= nodes_.size() ||
+      !nodes_[index].is_active) {
+    // Cannot free the root node or an already-inactive node
     return;
-
-  // Detach from previous parent if one exists
-  if (child->parent) {
-    // Find the child in its parent's list and release it
-    // This is a bit complex, so a helper is used.
-    // A raw pointer comparison is safe here.
-    child->parent->RemoveChild(child.get());
   }
 
-  // Set new parent and add to list
-  child->parent = this;
-  children.push_back(std::move(child));
+  Node& node = nodes_[index];
+  node.is_active = false;
+
+  // Add this node's index to the front of the free list
+  node.next_sibling = free_list_head_;
+  free_list_head_ = index;
 }
 
-std::unique_ptr<Scene::SceneNode> Scene::SceneNode::RemoveChild(
-    SceneNode* child) {
-  if (!child)
-    return nullptr;
+size_t Scene::CreateNode(size_t parent_index,
+                         size_t model_ind,
+                         const std::string& name) {
+  assert(parent_index < nodes_.size() && nodes_[parent_index].is_active &&
+         "Invalid parent index");
 
-  auto found = std::find_if(children.begin(), children.end(),
-                            [child](const std::unique_ptr<SceneNode>& p) {
-                              return p.get() == child;
-                            });
+  size_t new_index = AllocateNode();
 
-  if (found != children.end()) {
-    // Found it. Move the unique_ptr out of the vector.
-    std::unique_ptr<SceneNode> detachedChild = std::move(*found);
-    children.erase(found);  // Erase the (now empty) unique_ptr
-    detachedChild->parent = nullptr;
-    return detachedChild;
+  Node& node = nodes_[new_index];
+  node.name = name;
+  node.model_ind = model_ind;
+
+  // Attach to parent
+  AttachToParent(parent_index, new_index);
+
+  return new_index;
+}
+
+void Scene::DeleteNode(size_t index) {
+  if (index == root_index_ || index >= nodes_.size() ||
+      !nodes_[index].is_active) {
+    return;  // Cannot delete root or invalid node
   }
-  return nullptr;
+
+  Node& node = nodes_[index];
+
+  // --- 1. Recursively delete all children ---
+  // We must iterate carefully as the child list will be modified.
+  size_t child_index = node.first_child;
+  while (child_index != NO_NODE) {
+    // Get the *next* sibling *before* deleting the current child,
+    // as DeleteNode will modify the 'next_sibling' field when it's freed.
+    size_t next_child = nodes_[child_index].next_sibling;
+    DeleteNode(child_index);  // Recursive call
+    child_index = next_child;
+  }
+
+  // --- 2. Detach from parent ---
+  DetachFromParent(index);
+
+  // --- 3. Return this node to the free list ---
+  FreeNode(index);
 }
 
-void Scene::SceneNode::SetPosition(const Vector3f& p) {
-  position = p;
-  SetDirty();
-}
-void Scene::SceneNode::SetRotation(const Quatf& r) {
-  rotation = r;
-  SetDirty();
-}
-void Scene::SceneNode::SetScale(float s) {
-  scale = s;
-  SetDirty();
+void Scene::SetParent(size_t parent_index, size_t child_index) {
+  assert(parent_index < nodes_.size() && nodes_[parent_index].is_active &&
+         "Invalid parent index");
+  assert(child_index < nodes_.size() && nodes_[child_index].is_active &&
+         "Invalid child index");
+  assert(child_index != root_index_ && "Cannot re-parent the root node");
+
+  if (nodes_[child_index].parent == parent_index) {
+    return;  // Already attached to this parent
+  }
+
+  // 1. Detach from old parent
+  DetachFromParent(child_index);
+
+  // 2. Attach to new parent
+  AttachToParent(parent_index, child_index);
 }
 
-const Matrix4f& Scene::SceneNode::GetWorldTransform() {
-  if (is_dirty) {
+void Scene::AttachToParent(size_t parent_index, size_t child_index) {
+  Node& parent = nodes_[parent_index];
+  Node& child = nodes_[child_index];
+
+  child.parent = parent_index;
+
+  // Insert at the front of the parent's child list
+  size_t old_first_child = parent.first_child;
+  parent.first_child = child_index;
+
+  child.next_sibling = old_first_child;
+  child.prev_sibling = NO_NODE;
+
+  if (old_first_child != NO_NODE) {
+    nodes_[old_first_child].prev_sibling = child_index;
+  }
+}
+
+void Scene::DetachFromParent(size_t node_index) {
+  assert(node_index < nodes_.size() && "Invalid node index");
+  Node& node = nodes_[node_index];
+  size_t parent_index = node.parent;
+
+  if (parent_index == NO_NODE) {
+    return;  // Already detached (or is the root)
+  }
+
+  assert(parent_index < nodes_.size() && "Invalid parent index on node");
+  Node& parent = nodes_[parent_index];
+  size_t prev_sib = node.prev_sibling;
+  size_t next_sib = node.next_sibling;
+
+  // Unlink from the doubly-linked sibling list
+  if (prev_sib != NO_NODE) {
+    nodes_[prev_sib].next_sibling = next_sib;
+  } else {
+    // This was the first child, so update parent's pointer
+    parent.first_child = next_sib;
+  }
+
+  if (next_sib != NO_NODE) {
+    nodes_[next_sib].prev_sibling = prev_sib;
+  }
+
+  // Clear the node's own hierarchy links
+  node.parent = NO_NODE;
+  node.next_sibling = NO_NODE;
+  node.prev_sibling = NO_NODE;
+}
+
+void Scene::SetPosition(size_t index, const base::Vector3f& p) {
+  assert(index < nodes_.size() && nodes_[index].is_active &&
+         "Invalid node index");
+  nodes_[index].position = p;
+  SetDirty(index);
+}
+
+void Scene::SetRotation(size_t index, const base::Quatf& r) {
+  assert(index < nodes_.size() && nodes_[index].is_active &&
+         "Invalid node index");
+  nodes_[index].rotation = r;
+  SetDirty(index);
+}
+
+void Scene::SetScale(size_t index, float s) {
+  assert(index < nodes_.size() && nodes_[index].is_active &&
+         "Invalid node index");
+  nodes_[index].scale = s;
+  SetDirty(index);
+}
+
+void Scene::SetDirty(size_t index) {
+  assert(index < nodes_.size() && "Invalid node index");
+  Node& node = nodes_[index];
+  if (node.is_dirty) {
+    return;  // Already dirty, no need to propagate
+  }
+
+  node.is_dirty = true;
+
+  // Propagate dirty flag to all children
+  size_t child_index = node.first_child;
+  while (child_index != NO_NODE) {
+    SetDirty(child_index);  // Recursive call
+    child_index = nodes_[child_index].next_sibling;
+  }
+}
+
+const base::Matrix4f& Scene::GetWorldTransform(size_t index) {
+  assert(index < nodes_.size() && nodes_[index].is_active &&
+         "Invalid node index");
+  Node& node = nodes_[index];
+
+  if (node.is_dirty) {
     // 1. Recalculate local transform
-    local_transform.Create(rotation, position);
-    local_transform.Multiply(scale);
+    node.local_transform.Create(node.rotation, node.position);
+    node.local_transform.Multiply(node.scale);
 
     // 2. Combine with parent's world transform
-    if (parent) {
-      parent->GetWorldTransform().Multiply(local_transform, world_transform);
+    if (node.parent != NO_NODE) {
+      // Recursively update parent first
+      const base::Matrix4f& parentWorld = GetWorldTransform(node.parent);
+      parentWorld.Multiply(node.local_transform, node.world_transform);
     } else {
-      world_transform = local_transform;  // This is the root node
+      node.world_transform = node.local_transform;  // This is the root node
     }
 
     // 3. Mark as clean
-    is_dirty = false;
+    node.is_dirty = false;
   }
-  return world_transform;
-}
 
-void Scene::SceneNode::SetDirty() {
-  if (is_dirty)
-    return;  // Already dirty, no need to propagate
-
-  is_dirty = true;
-  for (auto& child : children) {
-    child->SetDirty();
-  }
+  return node.world_transform;
 }
 
 std::vector<Scene::WorldObject> Scene::GetSceneObjects() {
   std::vector<WorldObject> world_objects;
-  std::deque<SceneNode*> stack;
-  stack.push_back(&scene_root_);
+  std::deque<size_t> stack;
+  stack.push_back(root_index_);
 
   while (!stack.empty()) {
-    auto* node = stack.back();
+    size_t index = stack.back();
     stack.pop_back();
 
-    if (node->GetModelIndex() != (size_t)-1) {
-      OBBf obb{node->GetWorldTransform(),
-               models_[node->GetModelIndex()].GetExtents()};
-      world_objects.emplace_back(node->GetModelIndex(), obb,
-                                 node->GetWorldTransform());
+    if (nodes_[index].model_ind != (size_t)-1) {
+      OBBf obb{GetWorldTransform(index),
+               models_[nodes_[index].model_ind].GetExtents()};
+      world_objects.emplace_back(nodes_[index].model_ind, obb,
+                                 GetWorldTransform(index));
     }
 
-    for (auto& child : node->GetChildren())
-      stack.push_back(child.get());
+    size_t child_index = nodes_[index].first_child;
+    while (child_index != NO_NODE) {
+      stack.push_back(child_index);
+      child_index = nodes_[child_index].next_sibling;
+    }
   }
 
   return world_objects;
