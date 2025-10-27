@@ -9,6 +9,7 @@
 #include "engine/model.h"
 #include "engine/renderer/renderer_types.h"
 #include "teapot/camera.h"
+#include "teapot/ecs.h"
 
 class Scene : public eng::Drawable {
  public:
@@ -30,51 +31,6 @@ class Scene : public eng::Drawable {
 
   Camera& GetCamera() { return camera_; }
 
-  /**
-   * @brief Creates a new node as a child of the given parent.
-   * @param parent_index The index of the parent node.
-   * @param model_ind The "payload" model index for this node.
-   * @param name An optional name for the node.
-   * @return The index of the newly created node.
-   */
-  size_t CreateNode(size_t parent_index,
-                    size_t model_ind,
-                    const std::string& name = "SceneNode");
-
-  /**
-   * @brief Deletes a node and recursively deletes all of its children.
-   * The node is returned to the free list for reuse.
-   * @param index The index of the node to delete.
-   */
-  void DeleteNode(size_t index);
-
-  /**
-   * @brief Attaches a node to a new parent.
-   * The node is automatically detached from its previous parent, if any.
-   * @param parent_index The index of the new parent.
-   * @param child_index The index of the child to move.
-   */
-  void SetParent(size_t parent_index, size_t child_index);
-
-  // --- Getters ---
-  Node& GetNode(size_t index) { return nodes_[index]; }
-  const Node& GetNode(size_t index) const { return nodes_[index]; }
-  size_t GetRootIndex() const { return root_index_; }
-  size_t GetNodeCount() const { return nodes_.size(); }
-
-  // --- Transformations ---
-  void SetPosition(size_t index, const base::Vector3f& p);
-  void SetRotation(size_t index, const base::Quatf& r);
-  void SetScale(size_t index, float s);
-
-  /**
-   * @brief Gets the node's final world transform. Recalculates if dirty.
-   * This is a recursive call; it will update the node and all its ancestors.
-   * @param index The index of the node.
-   * @return A const reference to the node's cached world_transform.
-   */
-  const base::Matrix4f& GetWorldTransform(size_t index);
-
  private:
   struct WorldObject {
     size_t model_ind = (size_t)-1;
@@ -82,32 +38,21 @@ class Scene : public eng::Drawable {
     base::Matrix4f transform{1};
   };
 
-  /**
-   * @brief Represents a single node in the scene.
-   * This is a simple data struct; all logic is in the Scene class.
-   */
-  struct Node {
-    // --- Transform Data ---
-    base::Vector3f position{0};
-    base::Quatf rotation{0, 0, 0, 1};
-    float scale{1.0f};
+  struct SceneNodeComponent {
+    std::string name;
 
-    // --- Cached Matrices ---
     base::Matrix4f local_transform{1};
     base::Matrix4f world_transform{1};
-    bool is_dirty = true;
+    bool is_dirty{true};
 
-    // --- Hierarchy (Indices) ---
-    // We use a doubly-linked sibling list for O(1) child removal.
-    size_t parent = NO_NODE;
-    size_t first_child = NO_NODE;
-    size_t next_sibling = NO_NODE;
-    size_t prev_sibling = NO_NODE;  // For O(1) removal
+    Entity parent{NULL_ENTITY};
+    std::vector<Entity> children{};
 
-    // --- Payload & State ---
-    std::string name;
-    size_t model_ind = NO_NODE;
-    bool is_active = false;  // True if this slot in the vector is in use
+    void AddChild(Entity child_entity) { children.push_back(child_entity); }
+  };
+
+  struct ModelComponent {
+    size_t model_index{(size_t)-1};
   };
 
   struct BVHNode {
@@ -155,14 +100,9 @@ class Scene : public eng::Drawable {
 
   eng::DebugLayer debug_layer_;
 
-  // The single, contiguous block of memory for all nodes.
-  std::vector<Node> nodes_;
-  // The index of the scene's root node (always 0).
-  size_t root_index_ = 0;
-
-  // The head of a intrusive linked list of unused node indices.
-  // We use the `next_sibling` field of inactive nodes to store this list.
-  size_t free_list_head_ = NO_NODE;
+  // ECS Registry for all entities in the world.
+  Registry registry_;
+  Entity root_entity_{NULL_ENTITY};
 
   std::vector<BVHNode> bvh_tree_;
 
@@ -203,37 +143,18 @@ class Scene : public eng::Drawable {
   void DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_ind);
 
   /**
-   * @brief Detaches a node from its current parent's sibling list.
-   * Helper function for SetParent and DeleteNode.
-   * Assumes node_index has a valid parent.
-   * @param node_index The index of the node to detach.
+   * @brief Gets the node's final world transform. Recalculates if dirty.
+   * This is a recursive call; it will update the node and all its ancestors.
+   * @param index The index of the node.
+   * @return A const reference to the node's cached world_transform.
    */
-  void DetachFromParent(size_t node_index);
-
-  /**
-   * @brief Attaches a node to a parent's sibling list.
-   * @param parent_index Index of the new parent.
-   * @param child_index Index of the child to attach.
-   */
-  void AttachToParent(size_t parent_index, size_t child_index);
+  const base::Matrix4f& GetWorldTransform(SceneNodeComponent& node);
 
   /**
    * @brief Marks this node and all its descendants as dirty.
    * @param index The index of the node to start from.
    */
-  void SetDirty(size_t index);
-
-  /**
-   * @brief Gets an unused node index from the free list, or creates a new one.
-   * @return A valid index.
-   */
-  size_t AllocateNode();
-
-  /**
-   * @brief Returns a node index to the free list for reuse.
-   * @param index The index to free.
-   */
-  void FreeNode(size_t index);
+  void SetDirty(SceneNodeComponent& node);
 };
 
 #endif  // TEAPOT_SCENE_H

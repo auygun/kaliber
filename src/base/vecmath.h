@@ -1582,6 +1582,8 @@ class Quaternion {
 
   Quaternion(const Vector3<T>& v, T w) { Create(v, w); }
 
+  explicit Quaternion(const Vector3<T>& v) { Create(v); }
+
   Quaternion(T x, T y, T z, T w) {
     k[0] = x;
     k[1] = y;
