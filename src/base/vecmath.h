@@ -1839,6 +1839,16 @@ class Quaternion {
 };
 
 //
+// Ray
+//
+
+template <typename T>
+struct Ray {
+  Vector3<T> origin;
+  Vector3<T> direction;
+};
+
+//
 // Plane
 //
 
@@ -1925,6 +1935,54 @@ struct AABB {
     T d = p.normal.DotProduct(center) - p.distance + r;
     return d < 0.0f;
   }
+
+  // Returns the distance 't' along the ray to the first intersection, or -1.0
+  // if there is no intersection.
+  T IntersectRay(const Ray<T>& ray) const {
+    // Calculate the inverse of the ray's direction. This handles division by
+    // zero by resulting in +/- infinity, which works correctly with the min/max
+    // logic.
+    Vector3<T> inv_dir = 1.0f / ray.direction;
+
+    // Calculate intersection distances for the X-axis slabs
+    T t1 = (min.x - ray.origin.x) * inv_dir.x;
+    T t2 = (max.x - ray.origin.x) * inv_dir.x;
+
+    // Determine the near (t_min) and far (t_max) intersections for X
+    T t_min = std::min(t1, t2);
+    T t_max = std::max(t1, t2);
+
+    // Repeat for Y-axis
+    T t3 = (min.y - ray.origin.y) * inv_dir.y;
+    T t4 = (max.y - ray.origin.y) * inv_dir.y;
+
+    // Update the overall t_min and t_max
+    // We want the largest of the near intersections
+    // and the smallest of the far intersections.
+    t_min = std::max(t_min, std::min(t3, t4));
+    t_max = std::min(t_max, std::max(t3, t4));
+
+    // Repeat for Z-axis
+    T t5 = (min.z - ray.origin.z) * inv_dir.z;
+    T t6 = (max.z - ray.origin.z) * inv_dir.z;
+
+    // Update the overall t_min and t_max
+    t_min = std::max(t_min, std::min(t5, t6));
+    t_max = std::min(t_max, std::max(t5, t6));
+
+    // If t_min > t_max, the ray misses the box entirely.
+    // If t_max < 0, the box is entirely behind the ray.
+    if (t_min > t_max || t_max < 0.0f)
+      return -1.0f;
+
+    // If t_min < 0, the ray starts inside the box.
+    // The first intersection is at the ray's origin (distance 0).
+    if (t_min < 0.0f)
+      return 0.0f;
+
+    // Otherwise, the ray hits the box at distance t_min.
+    return t_min;
+  }
 };
 
 //
@@ -1972,6 +2030,63 @@ struct OBB {
   void GetLocalBox(AABB<T>& aabb) const {
     aabb.min = -extents;
     aabb.max = extents;
+  }
+
+  // Returns the distance 't' along the ray to the first intersection, or -1.0
+  // if there is no intersection.
+  T IntersectRay(const Ray<T>& ray) const {
+    T t_min = 0.0f;
+    T t_max = std::numeric_limits<T>::max();
+
+    // Vector from ray origin to OBB center
+    Vector3<T> p = center - ray.origin;
+
+    for (int i = 0; i < 3; ++i) {
+      // Project p and ray.direction onto the axis
+      T e = axes[i].DotProduct(p);
+      T f = axes[i].DotProduct(ray.direction);
+
+      // Epsilon for parallel check
+      constexpr T epsilon = 1e-5f;
+
+      if (std::abs(f) > epsilon) {
+        // Ray is not parallel to the slab
+        T t1 = (e + extents[i]) / f;
+        T t2 = (e - extents[i]) / f;
+
+        // Ensure t1 is the "near" intersection and t2 is the "far"
+        if (t1 > t2)
+          std::swap(t1, t2);
+
+        // Update the overall t_min and t_max
+        t_min = std::max(t_min, t1);
+        t_max = std::min(t_max, t2);
+
+        // If the intersection range is invalid, we missed
+        if (t_min > t_max)
+          return -1.0f;
+      } else {
+        // Ray is parallel to this slab.
+        // Check if the ray origin is outside the slab.
+        if (-e - extents[i] > 0 || -e + extents[i] < 0)
+          return -1.0f;  // Miss
+      }
+    }
+
+    // After checking all 3 axes, t_min is the entry distance
+    // We need to handle cases where the ray starts inside the box
+
+    if (t_min > t_max || t_max < 0.0f) {
+      // No intersection, or intersection is fully behind the ray
+      return -1.0f;
+    }
+
+    if (t_min < 0.0f) {
+      // Ray starts inside the box. The "hit" is at the origin (distance 0).
+      return 0.0f;
+    }
+
+    return t_min;  // Standard hit
   }
 };
 
@@ -2040,6 +2155,7 @@ using Vector3f = Vector3<float>;
 using Vector4f = Vector4<float>;
 using Matrix4f = Matrix4<float>;
 using Quatf = Quaternion<float>;
+using Rayf = Ray<float>;
 using Planef = Plane<float>;
 using AABBf = AABB<float>;
 using OBBf = OBB<float>;
