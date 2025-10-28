@@ -96,7 +96,7 @@ void Scene::Create() {
       CullMode::kBack);
 
   root_entity_ = registry_.CreateEntity();
-  registry_.AddComponent(root_entity_, SceneNodeComponent{.name{"root"}});
+  registry_.AddComponent(root_entity_, CoreComponent{.name{"root"}});
 
 #if 1
   models_.resize(2);
@@ -114,13 +114,12 @@ void Scene::Create() {
 
     for (size_t i = 0; i < 10; ++i) {
       Entity entity = registry_.CreateEntity();
-      SceneNodeComponent scene_node_component{.name{"model"},
-                                              .parent{root_entity_}};
+      CoreComponent scene_node_component{.name{"model"}, .parent{root_entity_}};
       scene_node_component.local_transform.Create(Quatf({0.5f, 0.0f, 0.0f}),
                                                   {2.2f * i, 0, 0});
       registry_.AddComponent(entity, scene_node_component);
       registry_.AddComponent(entity, ModelComponent{0});
-      registry_.GetComponent<SceneNodeComponent>(root_entity_).AddChild(entity);
+      registry_.GetComponent<CoreComponent>(root_entity_).AddChild(entity);
     }
   }
   {
@@ -129,13 +128,12 @@ void Scene::Create() {
 
     for (size_t i = 0; i < 3; ++i) {
       Entity entity = registry_.CreateEntity();
-      SceneNodeComponent scene_node_component{.name{"model"},
-                                              .parent{root_entity_}};
+      CoreComponent scene_node_component{.name{"model"}, .parent{root_entity_}};
       scene_node_component.local_transform.Create(Quatf({0.5f, 0.0f, 0.0f}),
                                                   {2.2f * (10 + i), 0, 0});
       registry_.AddComponent(entity, scene_node_component);
       registry_.AddComponent(entity, ModelComponent{1});
-      registry_.GetComponent<SceneNodeComponent>(root_entity_).AddChild(entity);
+      registry_.GetComponent<CoreComponent>(root_entity_).AddChild(entity);
     }
   }
 #else
@@ -335,22 +333,21 @@ void Scene::UploadSceneData() {
                                             sizeof(lights_));
 }
 
-void Scene::SetDirty(SceneNodeComponent& node) {
+void Scene::SetDirty(CoreComponent& node) {
   if (node.is_dirty) {
     for (Entity child : node.children) {
-      DCHECK(registry_.HasComponent<SceneNodeComponent>(child));
-      auto& child_node = registry_.GetComponent<SceneNodeComponent>(child);
+      DCHECK(registry_.HasComponent<CoreComponent>(child));
+      auto& child_node = registry_.GetComponent<CoreComponent>(child);
       SetDirty(child_node);
     }
   }
 }
 
-const base::Matrix4f& Scene::GetWorldTransform(SceneNodeComponent& node) {
+const base::Matrix4f& Scene::GetWorldTransform(CoreComponent& node) {
   if (node.is_dirty) {
     if (node.parent != NULL_ENTITY) {
-      DCHECK(registry_.HasComponent<SceneNodeComponent>(node.parent));
-      auto& parent_node =
-          registry_.GetComponent<SceneNodeComponent>(node.parent);
+      DCHECK(registry_.HasComponent<CoreComponent>(node.parent));
+      auto& parent_node = registry_.GetComponent<CoreComponent>(node.parent);
       const base::Matrix4f& parent_world = GetWorldTransform(parent_node);
       parent_world.Multiply(node.local_transform, node.world_transform);
     }
@@ -365,11 +362,11 @@ void Scene::DestroyEntityAndChildren(Entity entity) {
   }
 
   // Remove the entity from its parent's child list.
-  DCHECK(registry_.HasComponent<SceneNodeComponent>(entity));
-  auto& node = registry_.GetComponent<SceneNodeComponent>(entity);
+  DCHECK(registry_.HasComponent<CoreComponent>(entity));
+  auto& node = registry_.GetComponent<CoreComponent>(entity);
   if (node.parent != NULL_ENTITY) {
-    DCHECK(registry_.HasComponent<SceneNodeComponent>(node.parent));
-    auto& parent_node = registry_.GetComponent<SceneNodeComponent>(node.parent);
+    DCHECK(registry_.HasComponent<CoreComponent>(node.parent));
+    auto& parent_node = registry_.GetComponent<CoreComponent>(node.parent);
 
     parent_node.children.erase(std::remove(parent_node.children.begin(),
                                            parent_node.children.end(), entity),
@@ -383,8 +380,8 @@ void Scene::DestroyEntityAndChildren(Entity entity) {
     Entity entity_to_destroy = stack.back();
     stack.pop_back();
 
-    DCHECK(registry_.HasComponent<SceneNodeComponent>(entity_to_destroy));
-    auto& node = registry_.GetComponent<SceneNodeComponent>(entity_to_destroy);
+    DCHECK(registry_.HasComponent<CoreComponent>(entity_to_destroy));
+    auto& node = registry_.GetComponent<CoreComponent>(entity_to_destroy);
     for (Entity child : node.children)
       stack.push_back(child);
     registry_.DestroyEntity(entity_to_destroy);
@@ -394,7 +391,7 @@ void Scene::DestroyEntityAndChildren(Entity entity) {
 std::vector<Scene::WorldObject> Scene::GetSceneObjects() {
   std::vector<WorldObject> world_objects;
   for (auto [entity, node, model] :
-       registry_.View<SceneNodeComponent, ModelComponent>()) {
+       registry_.View<CoreComponent, ModelComponent>()) {
     OBBf obb{GetWorldTransform(node), models_[model.model_index].GetExtents()};
     world_objects.emplace_back(model.model_index, obb, GetWorldTransform(node));
   }
