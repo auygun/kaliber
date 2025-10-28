@@ -338,6 +338,7 @@ void Scene::UploadSceneData() {
 void Scene::SetDirty(SceneNodeComponent& node) {
   if (node.is_dirty) {
     for (Entity child : node.children) {
+      DCHECK(registry_.HasComponent<SceneNodeComponent>(child));
       auto& child_node = registry_.GetComponent<SceneNodeComponent>(child);
       SetDirty(child_node);
     }
@@ -347,6 +348,7 @@ void Scene::SetDirty(SceneNodeComponent& node) {
 const base::Matrix4f& Scene::GetWorldTransform(SceneNodeComponent& node) {
   if (node.is_dirty) {
     if (node.parent != NULL_ENTITY) {
+      DCHECK(registry_.HasComponent<SceneNodeComponent>(node.parent));
       auto& parent_node =
           registry_.GetComponent<SceneNodeComponent>(node.parent);
       const base::Matrix4f& parent_world = GetWorldTransform(parent_node);
@@ -355,6 +357,38 @@ const base::Matrix4f& Scene::GetWorldTransform(SceneNodeComponent& node) {
   }
 
   return node.world_transform;
+}
+
+void Scene::DestroyEntityAndChildren(Entity entity) {
+  if (entity == NULL_ENTITY) {
+    return;
+  }
+
+  // Remove the entity from its parent's child list.
+  DCHECK(registry_.HasComponent<SceneNodeComponent>(entity));
+  auto& node = registry_.GetComponent<SceneNodeComponent>(entity);
+  if (node.parent != NULL_ENTITY) {
+    DCHECK(registry_.HasComponent<SceneNodeComponent>(node.parent));
+    auto& parent_node = registry_.GetComponent<SceneNodeComponent>(node.parent);
+
+    parent_node.children.erase(std::remove(parent_node.children.begin(),
+                                           parent_node.children.end(), entity),
+                               parent_node.children.end());
+  }
+
+  // Cascade delete all children.
+  std::deque<Entity> stack;
+  stack.push_back(entity);
+  while (!stack.empty()) {
+    Entity entity_to_destroy = stack.back();
+    stack.pop_back();
+
+    DCHECK(registry_.HasComponent<SceneNodeComponent>(entity_to_destroy));
+    auto& node = registry_.GetComponent<SceneNodeComponent>(entity_to_destroy);
+    for (Entity child : node.children)
+      stack.push_back(child);
+    registry_.DestroyEntity(entity_to_destroy);
+  }
 }
 
 std::vector<Scene::WorldObject> Scene::GetSceneObjects() {

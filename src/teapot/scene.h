@@ -155,6 +155,14 @@ class Scene : public eng::Drawable {
    * @param index The index of the node to start from.
    */
   void SetDirty(SceneNodeComponent& node);
+
+  /**
+   * @brief Recursively destroys an entity, its children, and updates its
+   * parent.
+   *
+   * This is the "smart" way to destroy an entity in a scene graph.
+   */
+  void DestroyEntityAndChildren(Entity entity);
 };
 
 #endif  // TEAPOT_SCENE_H
