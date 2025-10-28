@@ -228,18 +228,18 @@ void DebugLayer::DrawObb(const OBBf& obb,
   DrawLine(corners[3], corners[7], color, duration, fade);
 }
 
-void DebugLayer::DrawFrustum(const Planef frustumPlanes[6],
+void DebugLayer::DrawFrustum(const Frustumf& frustum,
                              const Vector3f& color,
                              float duration,
                              bool fade) {
   // Assumes plane order: [0]=Left, [1]=Right, [2]=Bottom, [3]=Top, [4]=Near,
   // [5]=Far
-  const Planef& left = frustumPlanes[0];
-  const Planef& right = frustumPlanes[1];
-  const Planef& bottom = frustumPlanes[2];
-  const Planef& top = frustumPlanes[3];
-  const Planef& near = frustumPlanes[4];
-  const Planef& far = frustumPlanes[5];
+  const Planef& left = frustum.planes[0];
+  const Planef& right = frustum.planes[1];
+  const Planef& bottom = frustum.planes[2];
+  const Planef& top = frustum.planes[3];
+  const Planef& near = frustum.planes[4];
+  const Planef& far = frustum.planes[5];
 
   Vector3f corners[8];
   // Near face (Top-Left, Top-Right, Bottom-Right, Bottom-Left)

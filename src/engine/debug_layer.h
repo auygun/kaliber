@@ -75,9 +75,7 @@ class DebugLayer {
                bool fade = false);
 
   // Draws a frustum from its 6 defining planes.
-  // Assumes plane order: [0]=Left, [1]=Right, [2]=Bottom, [3]=Top, [4]=Near,
-  // [5]=Far
-  void DrawFrustum(const base::Planef frustumPlanes[6],
+  void DrawFrustum(const base::Frustumf& frustum,
                    const base::Vector3f& color = base::Vector3f{1.0f},
                    float duration = 0.0f,
                    bool fade = false);

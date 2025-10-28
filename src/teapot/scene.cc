@@ -231,7 +231,7 @@ void Scene::Draw(float frame_frac) {
 #if 1
   // DumpBVHTree(bvh_tree_, 0, "");
   DrawBVHTree(bvh_tree_, 0);
-  debug_layer_.DrawFrustum(frustum_.planes);
+  debug_layer_.DrawFrustum(frustum_);
   debug_layer_.DrawMatrix(camera_.GetMatrixMainCam());
   for (auto& instance : instances_)
     debug_layer_.DrawMatrix(instance.model);
