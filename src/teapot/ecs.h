@@ -144,18 +144,21 @@ class Registry {
   // Adds a component of type T to an entity.
   template <typename T>
   T& AddComponent(Entity entity, T component) {
+    DCHECK(GetPool<T>());
     return GetPool<T>()->Add(entity, component);
   }
 
   // Removes a component of type T from an entity.
   template <typename T>
   void RemoveComponent(Entity entity) {
+    DCHECK(GetPool<T>());
     GetPool<T>()->Remove(entity);
   }
 
   // Gets the component of type T for an entity.
   template <typename T>
   T& GetComponent(Entity entity) {
+    DCHECK(GetPool<T>());
     return GetPool<T>()->Get(entity);
   }
 
@@ -164,6 +167,32 @@ class Registry {
   bool HasComponent(Entity entity) {
     auto pool = GetPool<T>();
     return pool && pool->Has(entity);
+  }
+
+  // Create the ComponentPool for type T.
+  template <typename T>
+  ComponentPool<T>* CreatePool() {
+    std::type_index type_index = std::type_index(typeid(T));
+
+    // Create a new pool for this component type if doesn't exist.
+    if (component_pools_.find(type_index) == component_pools_.end())
+      component_pools_[type_index] = std::make_unique<ComponentPool<T>>();
+
+    // Downcast and return the pointer
+    return static_cast<ComponentPool<T>*>(component_pools_[type_index].get());
+  }
+
+  // Access to the ComponentPool for type T.
+  template <typename T>
+  ComponentPool<T>* GetPool() {
+    std::type_index type_index = std::type_index(typeid(T));
+
+    // Create a new pool for this component type if doesn't exist.
+    if (component_pools_.find(type_index) == component_pools_.end())
+      return nullptr;
+
+    // Downcast and return the pointer
+    return static_cast<ComponentPool<T>*>(component_pools_[type_index].get());
   }
 
   // Returns an iterable view for all entities with component T, and optionally
@@ -176,19 +205,6 @@ class Registry {
   }
 
  private:
-  // Helper to get (or create) the ComponentPool for type T.
-  template <typename T>
-  ComponentPool<T>* GetPool() {
-    std::type_index type_index = std::type_index(typeid(T));
-
-    // Create a new pool for this component type if doesn't exist.
-    if (component_pools_.find(type_index) == component_pools_.end())
-      component_pools_[type_index] = std::make_unique<ComponentPool<T>>();
-
-    // Downcast and return the pointer
-    return static_cast<ComponentPool<T>*>(component_pools_[type_index].get());
-  }
-
   // Entity management
   size_t next_entity_id_ = 0;
   std::queue<Entity> free_list_;
