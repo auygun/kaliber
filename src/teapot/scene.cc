@@ -199,7 +199,7 @@ void Scene::Draw(float frame_frac) {
 
   instances_.clear();
   do {
-    std::vector<WorldObject> world_objects = GetSceneObjects();
+    std::vector<WorldObject> world_objects = GetWorldObjects();
     if (world_objects.empty())
       break;
 
@@ -388,7 +388,7 @@ void Scene::DestroyEntityAndChildren(Entity entity) {
   }
 }
 
-std::vector<Scene::WorldObject> Scene::GetSceneObjects() {
+std::vector<Scene::WorldObject> Scene::GetWorldObjects() {
   std::vector<WorldObject> world_objects;
   for (auto [entity, node, model] :
        registry_.View<CoreComponent, ModelComponent>()) {
@@ -422,7 +422,7 @@ std::vector<Scene::BVHNode> Scene::BuildBVHTree(
       continue;
     }
 
-    // Calculate the combined AABB for all node_objects in this job.
+    // Calculate the combined AABB for all node_objects in this branch.
     for (auto& obj : node_objects) {
       AABBf aabb;
       obj.obb.GetBoundBox(aabb);

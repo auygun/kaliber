@@ -13,11 +13,6 @@
 
 class Scene : public eng::Drawable {
  public:
-  /**
-   * @brief A sentinel value representing "no node", equivalent to nullptr.
-   */
-  static const size_t NO_NODE = (size_t)-1;
-
   Scene();
   ~Scene();
 
@@ -131,7 +126,7 @@ class Scene : public eng::Drawable {
 
   void UploadSceneData();
 
-  std::vector<WorldObject> GetSceneObjects();
+  std::vector<WorldObject> GetWorldObjects();
 
   std::vector<BVHNode> BuildBVHTree(std::vector<WorldObject> objects);
 
@@ -145,26 +140,14 @@ class Scene : public eng::Drawable {
 
   void DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_ind);
 
-  /**
-   * @brief Gets the node's final world transform. Recalculates if dirty.
-   * This is a recursive call; it will update the node and all its ancestors.
-   * @param index The index of the node.
-   * @return A const reference to the node's cached world_transform.
-   */
+  // Gets the node's final world transform. Recalculates if dirty. This is a
+  // recursive call; it will update the node and all its ancestors.
   const base::Matrix4f& GetWorldTransform(CoreComponent& node);
 
-  /**
-   * @brief Marks this node and all its descendants as dirty.
-   * @param index The index of the node to start from.
-   */
+  // Marks this node and all its descendants as dirty.
   void SetDirty(CoreComponent& node);
 
-  /**
-   * @brief Recursively destroys an entity, its children, and updates its
-   * parent.
-   *
-   * This is the "smart" way to destroy an entity in a scene graph.
-   */
+  // Destroys an entity, its children, and updates its parent.
   void DestroyEntityAndChildren(Entity entity);
 };
 
