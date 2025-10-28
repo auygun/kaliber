@@ -1864,6 +1864,26 @@ struct Plane {
     normal.Normalize();
     Translate(m.Row(3));
   }
+
+  // Finds the intersection point of three planes.
+  // Solves a 3x3 system of linear equations using Cramer's rule.
+  Vector3<T> PlaneIntersection(const Plane& p2, const Plane& p3) const {
+    Vector3<T> n1 = normal;
+    Vector3<T> n2 = p2.normal;
+    Vector3<T> n3 = p3.normal;
+
+    T det = n1.DotProduct(n2.CrossProduct(n3));
+
+    if (std::abs(det) < 1e-6f) {
+      // No unique intersection point (planes are parallel or coincident)
+      return Vector3<T>(0.0f);
+    }
+
+    // p = ( d1(n2 x n3) + d2(n3 x n1) + d3(n1 x n2) ) / det
+    return (n2.CrossProduct(n3) * distance + n3.CrossProduct(n1) * p2.distance +
+            n1.CrossProduct(n2) * p3.distance) /
+           det;
+  }
 };
 
 //

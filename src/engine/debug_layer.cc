@@ -20,30 +20,6 @@ struct PushConstant {
 
 }  // namespace
 
-// --- Helper function for 3-plane intersection ---
-// Solves a 3x3 system of linear equations using Cramer's rule.
-// Finds the intersection point of three planes.
-static Vector3f planeIntersection(const Planef& p1,
-                                  const Planef& p2,
-                                  const Planef& p3) {
-  Vector3f n1 = p1.normal;
-  Vector3f n2 = p2.normal;
-  Vector3f n3 = p3.normal;
-
-  float det = n1.DotProduct(n2.CrossProduct(n3));
-
-  if (std::abs(det) < 1e-6f) {
-    // No unique intersection point (planes are parallel or coincident)
-    return Vector3f(0.0f);
-  }
-
-  // p = ( d1(n2 x n3) + d2(n3 x n1) + d3(n1 x n2) ) / det
-  return (n2.CrossProduct(n3) * p1.distance +
-          n3.CrossProduct(n1) * p2.distance +
-          n1.CrossProduct(n2) * p3.distance) /
-         det;
-}
-
 DebugLayer::DebugLayer() {
   if (!ParseVertexDescription(vertex_description, vertex_description_))
     LOG(0) << "Failed to parse vertex description.";
@@ -267,15 +243,15 @@ void DebugLayer::DrawFrustum(const Planef frustumPlanes[6],
 
   Vector3f corners[8];
   // Near face (Top-Left, Top-Right, Bottom-Right, Bottom-Left)
-  corners[0] = planeIntersection(near, left, bottom);
-  corners[1] = planeIntersection(near, right, bottom);
-  corners[2] = planeIntersection(near, right, top);
-  corners[3] = planeIntersection(near, left, top);
+  corners[0] = near.PlaneIntersection(left, bottom);
+  corners[1] = near.PlaneIntersection(right, bottom);
+  corners[2] = near.PlaneIntersection(right, top);
+  corners[3] = near.PlaneIntersection(left, top);
   // Far face
-  corners[4] = planeIntersection(far, left, bottom);
-  corners[5] = planeIntersection(far, right, bottom);
-  corners[6] = planeIntersection(far, right, top);
-  corners[7] = planeIntersection(far, left, top);
+  corners[4] = far.PlaneIntersection(left, bottom);
+  corners[5] = far.PlaneIntersection(right, bottom);
+  corners[6] = far.PlaneIntersection(right, top);
+  corners[7] = far.PlaneIntersection(left, top);
 
   // Draw near face
   DrawLine(corners[0], corners[1], color, duration, fade);
