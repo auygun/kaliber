@@ -435,7 +435,8 @@ std::vector<Scene::WorldObject> Scene::GetWorldObjects() {
   for (auto [entity, node, model] :
        registry_.View<CoreComponent, ModelComponent>()) {
     OBBf obb{GetWorldTransform(node), models_[model.model_index].GetExtents()};
-    world_objects.emplace_back(model.model_index, obb, GetWorldTransform(node));
+    world_objects.emplace_back(entity, model.model_index, obb,
+                               GetWorldTransform(node));
   }
   return world_objects;
 }

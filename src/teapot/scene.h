@@ -28,6 +28,7 @@ class Scene : public eng::Drawable {
 
  private:
   struct WorldObject {
+    Entity entity;
     size_t model_ind = (size_t)-1;
     base::OBBf obb;
     base::Matrix4f transform{1};
