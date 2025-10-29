@@ -36,7 +36,7 @@ class Scene : public eng::Drawable {
 
   // The component for storing parent-child relationships and transformations of
   // world objects. This is the core of the scene graph.
-  struct CoreComponent {
+  struct CoreDataComponent {
     std::string name;
 
     base::Matrix4f local_transform{1};
@@ -46,12 +46,9 @@ class Scene : public eng::Drawable {
     Entity parent{NULL_ENTITY};
     std::vector<Entity> children{};
 
-    void AddChild(Entity child_entity) { children.push_back(child_entity); }
-  };
-
-  // The component for world objects with a model.
-  struct ModelComponent {
     size_t model_index{(size_t)-1};
+
+    void AddChild(Entity child_entity) { children.push_back(child_entity); }
   };
 
   struct BVHNode {
@@ -143,10 +140,10 @@ class Scene : public eng::Drawable {
 
   // Gets the node's final world transform. Recalculates if dirty. This is a
   // recursive call; it will update the node and all its ancestors.
-  const base::Matrix4f& GetWorldTransform(CoreComponent& node);
+  const base::Matrix4f& GetWorldTransform(CoreDataComponent& node);
 
   // Marks this node and all its descendants as dirty.
-  void SetDirty(CoreComponent& node);
+  void SetDirty(CoreDataComponent& node);
 
   // Destroys an entity, its children, and updates its parent.
   void DestroyEntityAndChildren(Entity entity);
