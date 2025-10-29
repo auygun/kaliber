@@ -199,13 +199,13 @@ class Registry {
   // Returns an iterable view for all entities with a specific set of
   // components.
   template <typename... Components>
-  ECSView<Components...> View() {
+  ECSView<Components...> View(size_t begin_index = 0) {
     // Ensure the view is not empty
     static_assert(sizeof...(Components) > 0,
                   "View must be called with at least one component type.");
 
     // Pass all pools to the constructor using a pack expansion
-    return ECSView<Components...>(GetPool<Components>()...);
+    return ECSView<Components...>(begin_index, GetPool<Components>()...);
   }
 
  private:
@@ -292,8 +292,8 @@ class ECSView {
 
  public:
   // Constructor that accepts a variadic pack of component pools.
-  ECSView(ComponentPool<Components>*... pools)
-      : pools_(std::make_tuple(pools...)) {
+  ECSView(size_t begin_index, ComponentPool<Components>*... pools)
+      : pools_(std::make_tuple(pools...)), begin_index_(begin_index) {
     // Find the smallest pool to iterate.
     size_t minSize = std::numeric_limits<size_t>::max();
     auto findSmallest = [&](auto* pool) {
@@ -307,7 +307,8 @@ class ECSView {
   }
 
   Iterator begin() {
-    return Iterator(&pools_, smallest_pool_, dense_to_entity_map_, 0);
+    return Iterator(&pools_, smallest_pool_, dense_to_entity_map_,
+                    begin_index_);
   }
 
   Iterator end() {
@@ -319,6 +320,7 @@ class ECSView {
   std::tuple<ComponentPool<Components>*...> pools_;
   ComponentPoolBase* smallest_pool_;
   std::vector<Entity>* dense_to_entity_map_;
+  size_t begin_index_;
 };
 
 #endif  // TEAPOT_ECS_H
