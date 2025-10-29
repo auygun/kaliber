@@ -206,12 +206,13 @@ void Scene::Draw(float frame_frac) {
   UpdateFrustum();
 
   instances_.clear();
+
   do {
-    std::vector<WorldObject> world_objects = GetWorldObjects();
+    auto world_objects = GetWorldObjects();
     if (world_objects.empty())
       break;
 
-    bvh_tree_ = BuildBVHTree(world_objects);
+    bvh_tree_ = BuildBVHTree(std::move(world_objects));
 
     auto visible_objects = FrustumCull(bvh_tree_, frustum_);
     DLOG(0) << "FrustumCull: " << visible_objects.size();
