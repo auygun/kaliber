@@ -112,7 +112,8 @@ class ComponentPool : public ComponentPoolBase {
   std::vector<Entity> entity_to_dense_;
 };
 
-template <typename T, typename... Rest>
+// Forward declaration.
+template <typename... Components>
 class ECSView;
 
 // The main class that holds all entities and components.
@@ -195,13 +196,16 @@ class Registry {
     return static_cast<ComponentPool<T>*>(component_pools_[type_index].get());
   }
 
-  // Returns an iterable view for all entities with component T, and optionally
-  // all components in Rest... Iteration is performed on the pool of type T.
-  // For best performance, T should be the rarest component in the query.
-  template <typename T, typename... Rest>
-  ECSView<T, Rest...> View() {
-    // We iterate on the first component type, T
-    return ECSView<T, Rest...>(this, GetPool<T>());
+  // Returns an iterable view for all entities with a specific set of
+  // components.
+  template <typename... Components>
+  ECSView<Components...> View() {
+    // Ensure the view is not empty
+    static_assert(sizeof...(Components) > 0,
+                  "View must be called with at least one component type.");
+
+    // Pass all pools to the constructor using a pack expansion
+    return ECSView<Components...>(GetPool<Components>()...);
   }
 
  private:
@@ -216,56 +220,57 @@ class Registry {
 
 // An iterable object that a system uses to loop over all entities with a
 // specific set of components.
-// T is the primary component type to iterate over.
-// Rest is the other component types that an entity must also have.
-template <typename T, typename... Rest>
+// Components is the component types that an entity must have.
+template <typename... Components>
 class ECSView {
- public:
+ private:
   class Iterator {
    public:
-    Iterator(Registry* registry, ComponentPool<T>* pool, size_t index)
-        : registry_(registry), pool_(pool), index_(index) {
-      // Find the first valid entity that has all components
+    Iterator(std::tuple<ComponentPool<Components>*...>* pools,
+             ComponentPoolBase* smallest_pool,
+             std::vector<Entity>* dense_to_entity_map,
+             size_t index)
+        : pools_(pools),
+          smallest_pool_(smallest_pool),
+          dense_to_entity_map_(dense_to_entity_map),
+          index_(index) {
       FindNextValid();
     }
 
-    // Finds the next entity in the main pool that also has all components in
-    // 'Rest...'.
+    // Finds the next entity that has all components in 'Components...'.
     void FindNextValid() {
-      auto& entities = pool_->GetDenseToEntityMap();
+      while (index_ < dense_to_entity_map_->size()) {
+        Entity entity = (*dense_to_entity_map_)[index_];
 
-      while (index_ < entities.size()) {
-        Entity entity = entities[index_];
+        bool hasAll = true;
+        std::apply(
+            [&](auto*... pools) {
+              auto check = [&](auto* p) {
+                // Don't check the pool we're already iterating.
+                if (static_cast<ComponentPoolBase*>(p) == smallest_pool_)
+                  return true;
+                return p->Has(entity);
+              };
+              hasAll = (check(pools) && ...);
+            },
+            *pools_);  // Unpack the tuple of all pools
 
-        // If we are checking for more than one component...
-        if constexpr (sizeof...(Rest) > 0) {
-          // Use a C++17 fold expression to check all components
-          if (!(registry_->HasComponent<Rest>(entity) && ...)) {
-            // This entity is missing a required component, skip it
-            index_++;
-            continue;
-          }
-        }
-
-        // This entity has all required components, stop here
-        break;
+        if (hasAll)
+          break;   // Found a valid entity
+        index_++;  // Keep searching
       }
     }
 
-    // Returns the (Entity, Component&) pair or (Entity, Component&,
-    // Component&...) tuple.
+    // Returns a tuple of (Entity, Component&, Component&...).
     auto operator*() {
-      Entity entity = pool_->GetDenseToEntityMap()[index_];
+      Entity entity = (*dense_to_entity_map_)[index_];
 
-      if constexpr (sizeof...(Rest) == 0) {
-        // Single component case. Return std::pair<Entity, T&>
-        return std::pair<Entity, T&>{entity, pool_->GetDenseData()[index_]};
-
-      } else {
-        // Multi component case. Return std::tuple<Entity, T&, Rest&...>
-        return std::forward_as_tuple(entity, pool_->GetDenseData()[index_],
-                                     registry_->GetComponent<Rest>(entity)...);
-      }
+      // C++17 'apply' unfolds the tuple of pools
+      return std::apply(
+          [&](auto*... pools) {
+            return std::forward_as_tuple(entity, pools->Get(entity)...);
+          },
+          *pools_);
     }
 
     bool operator!=(const Iterator& other) const {
@@ -279,22 +284,41 @@ class ECSView {
     }
 
    private:
-    Registry* registry_;
-    ComponentPool<T>* pool_;  // The pool we are iterating over
+    std::tuple<ComponentPool<Components>*...>* pools_;
+    ComponentPoolBase* smallest_pool_;
+    std::vector<Entity>* dense_to_entity_map_;
     size_t index_;
   };
 
-  ECSView(Registry* registry, ComponentPool<T>* pool)
-      : registry_(registry), pool_(pool) {}
+ public:
+  // Constructor that accepts a variadic pack of component pools.
+  ECSView(ComponentPool<Components>*... pools)
+      : pools_(std::make_tuple(pools...)) {
+    // Find the smallest pool to iterate.
+    size_t minSize = std::numeric_limits<size_t>::max();
+    auto findSmallest = [&](auto* pool) {
+      if (pool->GetDenseData().size() < minSize) {
+        minSize = pool->GetDenseData().size();
+        smallest_pool_ = pool;
+        dense_to_entity_map_ = &pool->GetDenseToEntityMap();
+      }
+    };
+    (findSmallest(pools), ...);
+  }
 
-  Iterator begin() { return Iterator(registry_, pool_, 0); }
+  Iterator begin() {
+    return Iterator(&pools_, smallest_pool_, dense_to_entity_map_, 0);
+  }
+
   Iterator end() {
-    return Iterator(registry_, pool_, pool_->GetDenseData().size());
+    return Iterator(&pools_, smallest_pool_, dense_to_entity_map_,
+                    dense_to_entity_map_->size());
   }
 
  private:
-  Registry* registry_;
-  ComponentPool<T>* pool_;
+  std::tuple<ComponentPool<Components>*...> pools_;
+  ComponentPoolBase* smallest_pool_;
+  std::vector<Entity>* dense_to_entity_map_;
 };
 
 #endif  // TEAPOT_ECS_H
