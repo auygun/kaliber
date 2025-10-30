@@ -1,5 +1,7 @@
 #include "engine/audio/audio_bus.h"
 
+#include <cstring>
+
 #include "base/log.h"
 #include "engine/audio/sinc_resampler.h"
 #include "engine/engine.h"
@@ -96,8 +98,8 @@ void AudioBus::FromInterleaved(std::unique_ptr<float[]> source_buffer,
     for (size_t i = 0; i < num_channels_; ++i) {
       resampler_[i]->Resample(num_resampled_samples, channel_data_[i].get(),
                               [&](int frames, float* destination) {
-                                memcpy(destination, channels[i].get(),
-                                       frames * sizeof(float));
+                                std::memcpy(destination, channels[i].get(),
+                                            frames * sizeof(float));
                               });
     }
 

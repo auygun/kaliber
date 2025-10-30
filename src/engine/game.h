@@ -8,13 +8,11 @@ class Game {
   Game() = default;
   virtual ~Game() = default;
 
-  // Called before async-loading assets.
-  virtual bool PreInitialize() { return true; }
-
-  // Called after resources are created.
   virtual bool Initialize() { return true; }
 
   virtual void Update(float delta_time) {}
+
+  virtual void Render(float frame_frac) {}
 
   virtual void ContextLost() {}
 

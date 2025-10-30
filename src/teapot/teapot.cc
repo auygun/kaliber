@@ -42,7 +42,7 @@ class Teapot final : public eng::Game {
         }
       } else if (event->GetType() == InputEvent::kKeyPress) {
         if (event->GetKeyPress() == 'd')
-        scene_.GetCamera().ToggleDebugCamera();
+          scene_.GetCamera().ToggleDebugCamera();
       }
     }
     auto angles = last_pos_ - pos;
@@ -51,6 +51,8 @@ class Teapot final : public eng::Game {
     last_dist_ = dist;
     scene_.Update(delta_time, angles, zoom * 80.0f);
   }
+
+  void Render(float frame_frac) final { scene_.Render(frame_frac); }
 
   void ContextLost() final { scene_.Create(); }
 

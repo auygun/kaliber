@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 
 #include "base/interpolation.h"
 #include "base/log.h"
@@ -104,7 +105,7 @@ void Image::Copy(const Image& other) {
   if (other.buffer_) {
     int size = other.GetSize();
     buffer_.reset((uint8_t*)AlignedAlloc(size, 16));
-    memcpy(buffer_.get(), other.buffer_.get(), size);
+    std::memcpy(buffer_.get(), other.buffer_.get(), size);
   }
   width_ = other.width_;
   height_ = other.height_;
@@ -242,12 +243,12 @@ void Image::ConvertToPow2() {
     int offset_x = (new_width - width_) / 2;
     int offset_y = (new_height - height_) / 2;
     for (int y = 0; y < height_; ++y)
-      memcpy(bigger_buffer + (offset_x + (y + offset_y) * new_width) * 4,
+      std::memcpy(bigger_buffer + (offset_x + (y + offset_y) * new_width) * 4,
               buffer_.get() + y * width_ * 4, width_ * 4);
 #else
     for (int y = 0; y < height_; ++y)
-      memcpy(bigger_buffer + (y * new_width) * 4,
-             buffer_.get() + y * width_ * 4, width_ * 4);
+      std::memcpy(bigger_buffer + (y * new_width) * 4,
+                  buffer_.get() + y * width_ * 4, width_ * 4);
 #endif
 
     // Swap the buffers and dimensions.
@@ -319,7 +320,7 @@ void Image::Clear(Vector4f rgba) {
 
   // Copy the first line to the rest of them.
   for (int h = 1; h < height_; ++h)
-    memcpy(buffer_.get() + h * width_ * 4, buffer_.get(), width_ * 4);
+    std::memcpy(buffer_.get() + h * width_ * 4, buffer_.get(), width_ * 4);
 }
 
 void Image::GradientH() {
@@ -334,7 +335,7 @@ void Image::GradientH() {
 
   // Copy the first line to the rest of them.
   for (int h = 1; h < height_; ++h)
-    memcpy(buffer_.get() + h * width_ * 4, buffer_.get(), width_ * 4);
+    std::memcpy(buffer_.get() + h * width_ * 4, buffer_.get(), width_ * 4);
 }
 
 void Image::GradientV(const Vector4f& c1, const Vector4f& c2, int height) {

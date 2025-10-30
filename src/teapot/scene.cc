@@ -81,8 +81,6 @@ Scene::~Scene() = default;
 void Scene::Create() {
   // TestBVH();
 
-  SetVisible(true);
-
   debug_layer_.CreateRenderResources(Engine::Get().GetRenderer());
 
   if (!ParseVertexDescription(vertex_description, vertex_description_)) {
@@ -199,7 +197,7 @@ void Scene::Create() {
   lights_[3].power = 400.0f;
 }
 
-void Scene::Draw(float frame_frac) {
+void Scene::Render(float frame_frac) {
   UpdateViewProjectionMatrix();
   UpdateFrustum();
 

@@ -5,7 +5,6 @@
 
 #include "base/vecmath.h"
 #include "engine/debug_layer.h"
-#include "engine/drawable.h"
 #include "engine/model.h"
 #include "engine/renderer/renderer_types.h"
 #include "teapot/camera.h"
@@ -13,14 +12,14 @@
 
 namespace eng {
 
-class Scene : public eng::Drawable {
+class Scene {
  public:
   Scene();
   ~Scene();
 
   void Create();
 
-  void Draw(float frame_frac) override;
+  void Render(float frame_frac);
 
   void Update(float delta_time, const base::Vector2f& angles, float zoom);
 

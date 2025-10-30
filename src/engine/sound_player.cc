@@ -18,7 +18,8 @@ SoundPlayer::~SoundPlayer() {
 }
 
 void SoundPlayer::SetSound(const std::string& asset_name) {
-  input_->SetAudioBus(Engine::Get().GetAudioBus(asset_name));
+  // TODO:
+  // input_->SetAudioBus(Engine::Get().GetAudioBus(asset_name));
 }
 
 void SoundPlayer::SetSound(std::shared_ptr<AudioBus> sound) {
