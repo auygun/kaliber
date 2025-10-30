@@ -15,7 +15,6 @@
 
 #include "base/task_runner.h"
 #include "engine/renderer/renderer.h"
-#include "third_party/vma/vk_mem_alloc.h"
 
 namespace eng {
 
@@ -190,8 +189,6 @@ class RendererVulkan final : public Renderer {
   bool context_lost_ = false;
 
   VulkanContext context_;
-
-  VmaAllocator allocator_ = nullptr;
 
   VkDevice device_ = VK_NULL_HANDLE;
   size_t frames_drawn_ = 0;
