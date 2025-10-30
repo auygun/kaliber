@@ -1,16 +1,9 @@
 source_set("renderer") {
   sources = [
-    "geometry.cc",
-    "geometry.h",
-    "render_resource.h",
     "renderer.cc",
     "renderer.h",
     "renderer_types.cc",
     "renderer_types.h",
-    "shader.cc",
-    "shader.h",
-    "texture.cc",
-    "texture.h",
     "vulkan/renderer_vulkan.cc",
     "vulkan/vulkan_context.cc",
   ]

@@ -197,6 +197,11 @@ void Scene::Create() {
   lights_[3].power = 400.0f;
 }
 
+void Scene::Shutdown() {
+  // TODO: Destroy render resources.
+  debug_layer_.Shutdown();
+}
+
 void Scene::Render(float frame_frac) {
   UpdateViewProjectionMatrix();
   UpdateFrustum();

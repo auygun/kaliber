@@ -1,12 +1,11 @@
 #ifndef ENGINE_DEBUG_LAYER_H
 #define ENGINE_DEBUG_LAYER_H
 
+#include <cstdint>
 #include <vector>
 
 #include "base/vecmath.h"
-#include "engine/renderer/geometry.h"
 #include "engine/renderer/renderer_types.h"
-#include "engine/renderer/shader.h"
 
 namespace eng {
 
@@ -19,6 +18,8 @@ class DebugLayer {
 
   // Initializes the debug layer, creating shaders and buffers.
   void CreateRenderResources(Renderer* renderer);
+
+  void Shutdown();
 
   // Updates the lifetime and fade of all shapes. Call this once per frame.
   void Update(float delta_time);
@@ -100,8 +101,8 @@ class DebugLayer {
 
   Renderer* renderer_ = nullptr;
   VertexDescription vertex_description_;
-  Geometry geometry_;
-  Shader shader_;
+  uint64_t geometry_;
+  uint64_t shader_;
 };
 
 }  // namespace eng

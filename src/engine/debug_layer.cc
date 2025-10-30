@@ -27,19 +27,24 @@ DebugLayer::DebugLayer() {
 
 void DebugLayer::CreateRenderResources(Renderer* renderer) {
   renderer_ = renderer;
-  shader_.SetRenderer(renderer);
 
   // Create the shader.
   auto source = std::make_unique<ShaderSource>();
   if (source->Load("engine/debug.glsl")) {
-    shader_.Create(std::move(source), vertex_description_, kPrimitive_Lines,
-                   false, true, CullMode::kNone);
+    shader_ =
+        renderer_->CreateShader(std::move(source), vertex_description_,
+                                kPrimitive_Lines, false, true, CullMode::kNone);
   } else {
     LOG(0) << "Could not create debug shader.";
   }
 
-  geometry_.SetRenderer(renderer);
-  geometry_.Create(kPrimitive_Lines, vertex_description_, kDataType_Invalid);
+  geometry_ = renderer_->CreateGeometry(kPrimitive_Lines, vertex_description_,
+                                        kDataType_Invalid);
+}
+
+void DebugLayer::Shutdown() {
+  renderer_->DestroyGeometry(geometry_);
+  renderer_->DestroyShader(shader_);
 }
 
 void DebugLayer::Update(float delta_time) {
@@ -73,15 +78,15 @@ void DebugLayer::Draw(const Matrix4f& view_projection) {
   if (aggregated_vertices_.empty())
     return;
 
-  geometry_.Update(aggregated_vertices_.size(), aggregated_vertices_.data(), 0,
-                   nullptr);
+  renderer_->UpdateGeometry(geometry_, aggregated_vertices_.size(),
+                            aggregated_vertices_.data(), 0, nullptr);
 
-  shader_.Activate();
-  renderer_->ActivateGeometry(geometry_.resource_id());
+  renderer_->ActivateShader(shader_);
+  renderer_->ActivateGeometry(geometry_);
   PushConstant pc{};
   pc.view_projection = view_projection;
   renderer_->UpdatePushConstants(sizeof(pc), &pc);
-  geometry_.Draw(0, 0);
+  renderer_->Draw(0, 0);
 }
 
 void DebugLayer::Clear() {

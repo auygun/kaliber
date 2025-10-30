@@ -1,13 +1,11 @@
 #ifndef ENGINE_IMGUI_BACKEND_H
 #define ENGINE_IMGUI_BACKEND_H
 
+#include <memory>
 #include <vector>
 
 #include "base/vecmath.h"
-#include "engine/renderer/geometry.h"
 #include "engine/renderer/renderer_types.h"
-#include "engine/renderer/shader.h"
-#include "engine/renderer/texture.h"
 
 namespace eng {
 
@@ -36,9 +34,9 @@ class ImguiBackend {
   };
 
   VertexDescription vertex_description_;
-  std::vector<Geometry> geometries_;
-  Shader shader_;
-  Texture font_atlas_;
+  std::vector<uint64_t> geometries_;
+  uint64_t shader_;
+  uint64_t font_atlas_;
   uint32_t texture_dset_ = 0;
   Renderer* renderer_ = nullptr;
   bool needs_update_ = false;

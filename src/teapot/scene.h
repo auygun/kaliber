@@ -19,6 +19,8 @@ class Scene {
 
   void Create();
 
+  void Shutdown();
+
   void Render(float frame_frac);
 
   void Update(float delta_time, const base::Vector2f& angles, float zoom);

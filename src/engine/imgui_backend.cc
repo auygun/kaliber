@@ -50,23 +50,22 @@ void ImguiBackend::Initialize(bool is_mobile, std::string root_path) {
 
 void ImguiBackend::Shutdown() {
   ImGui::DestroyContext();
+  for (auto geometry : geometries_)
+    renderer_->DestroyGeometry(geometry);
   geometries_.clear();
-  font_atlas_.Destroy();
-  shader_.Destroy();
+  renderer_->DestroyTexture(font_atlas_);
+  renderer_->DestroyShader(shader_);
 }
 
 void ImguiBackend::CreateRenderResources(Renderer* renderer) {
   renderer_ = renderer;
-  shader_.SetRenderer(renderer);
-  font_atlas_.SetRenderer(renderer);
-  for (auto& g : geometries_)
-    g.SetRenderer(renderer);
 
   // Create the shader.
   auto source = std::make_unique<ShaderSource>();
   if (source->Load("engine/imgui.glsl")) {
-    shader_.Create(std::move(source), vertex_description_, kPrimitive_Triangles,
-                   false, false, CullMode::kNone);
+    shader_ = renderer_->CreateShader(std::move(source), vertex_description_,
+                                      kPrimitive_Triangles, false, false,
+                                      CullMode::kNone);
   } else {
     LOG(0) << "Could not create imgui shader.";
   }
@@ -76,17 +75,17 @@ void ImguiBackend::CreateRenderResources(Renderer* renderer) {
   int width, height;
   ImGui::GetIO().Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
   LOG(0) << "Font atlas size: " << width << ", " << height;
-  font_atlas_.Update(width, height, ImageFormat::kRGBA32, width * height * 4,
-                     pixels);
+  font_atlas_ = renderer_->CreateTexture();
+  renderer_->UpdateTexture(font_atlas_, width, height, 1, 0,
+                           ImageFormat::kRGBA32, width * height * 4, pixels);
 
-  texture_dset_ = Engine::Get().GetRenderer()->CreateDescriptorSet(
-      shader_.resource_id(), 2, {{font_atlas_.resource_id()}}, {});
+  texture_dset_ =
+      renderer_->CreateDescriptorSet(shader_, 2, {{font_atlas_}}, {});
   ImGui::GetIO().Fonts->SetTexID((ImTextureID)(intptr_t)texture_dset_);
 
-  scene_data_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
-      shader_.resource_id(), 1, 0, sizeof(SceneData));
-  scene_dset_ = Engine::Get().GetRenderer()->CreateDescriptorSet(
-      shader_.resource_id(), 1, {}, {scene_data_ubo_});
+  scene_data_ubo_ = renderer_->CreateBuffer(shader_, 1, 0, sizeof(SceneData));
+  scene_dset_ =
+      renderer_->CreateDescriptorSet(shader_, 1, {}, {scene_data_ubo_});
 }
 
 std::unique_ptr<InputEvent> ImguiBackend::OnInputEvent(
@@ -133,12 +132,13 @@ void ImguiBackend::UpdateGeometries() {
   for (int n = 0; n < draw_data->CmdListsCount; n++) {
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
     if ((int)geometries_.size() <= n)
-      geometries_.emplace_back(renderer_);
-    if (!geometries_[n].IsValid())
-      geometries_[n].Create(kPrimitive_Triangles, vertex_description_,
-                            kDataType_UShort);
-    geometries_[n].Update(cmd_list->VtxBuffer.Size, cmd_list->VtxBuffer.Data,
-                          cmd_list->IdxBuffer.Size, cmd_list->IdxBuffer.Data);
+      geometries_.emplace_back((uint64_t)-1);
+    if (geometries_[n] == (uint64_t)-1)
+      geometries_[n] = renderer_->CreateGeometry(
+          kPrimitive_Triangles, vertex_description_, kDataType_UShort);
+    renderer_->UpdateGeometry(
+        geometries_[n], cmd_list->VtxBuffer.Size, cmd_list->VtxBuffer.Data,
+        cmd_list->IdxBuffer.Size, cmd_list->IdxBuffer.Data);
   }
 }
 
@@ -158,16 +158,15 @@ void ImguiBackend::Draw() {
       draw_data->DisplayPos.x + draw_data->DisplaySize.x,
       draw_data->DisplayPos.y + draw_data->DisplaySize.y,
       draw_data->DisplayPos.y);
-  Engine::Get().GetRenderer()->UpdateBuffer(scene_data_ubo_, &scene_data_,
-                                            sizeof(scene_data_));
+  renderer_->UpdateBuffer(scene_data_ubo_, &scene_data_, sizeof(scene_data_));
 
   renderer_->SetViewport(0, 0, draw_data->DisplaySize.x,
                          draw_data->DisplaySize.y);
-  shader_.Activate();
-  Engine::Get().GetRenderer()->ActivateDescriptorSet(scene_dset_);
+  renderer_->ActivateShader(shader_);
+  renderer_->ActivateDescriptorSet(scene_dset_);
 
   for (int n = 0; n < draw_data->CmdListsCount; n++) {
-    renderer_->ActivateGeometry(geometries_[n].resource_id());
+    renderer_->ActivateGeometry(geometries_[n]);
 
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
     for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
@@ -175,12 +174,11 @@ void ImguiBackend::Draw() {
       if (pcmd->ClipRect.z <= pcmd->ClipRect.x ||
           pcmd->ClipRect.w <= pcmd->ClipRect.y)
         continue;
-      Engine::Get().GetRenderer()->ActivateDescriptorSet(
-          (uint32_t)(intptr_t)pcmd->GetTexID());
+      renderer_->ActivateDescriptorSet((uint32_t)(intptr_t)pcmd->GetTexID());
       renderer_->SetScissor(int(pcmd->ClipRect.x), int(pcmd->ClipRect.y),
                             int(pcmd->ClipRect.z - pcmd->ClipRect.x),
                             int(pcmd->ClipRect.w - pcmd->ClipRect.y));
-      geometries_[n].Draw(pcmd->ElemCount, pcmd->IdxOffset);
+      renderer_->Draw(pcmd->ElemCount, pcmd->IdxOffset);
     }
   }
   renderer_->ResetScissor();
