@@ -1,9 +1,9 @@
 #ifndef TEAPOT_ECS_H
 #define TEAPOT_ECS_H
 
+#include <deque>
 #include <limits>
 #include <memory>
-#include <queue>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
@@ -126,7 +126,7 @@ class Registry {
   Entity CreateEntity() {
     if (!free_list_.empty()) {
       Entity id = free_list_.front();
-      free_list_.pop();
+      free_list_.pop_front();
       return id;
     }
     return next_entity_id_++;
@@ -142,7 +142,7 @@ class Registry {
     for (auto const& [type, pool] : component_pools_)
       pool->OnEntityDestroyed(entity);
 
-    free_list_.push(entity);
+    free_list_.push_back(entity);
   }
 
   // Adds a component of type T to an entity.
@@ -214,7 +214,7 @@ class Registry {
  private:
   // Entity management
   size_t next_entity_id_ = 0;
-  std::queue<Entity> free_list_;
+  std::deque<Entity> free_list_;
 
   // Component management
   std::unordered_map<std::type_index, std::unique_ptr<ComponentPoolBase>>
