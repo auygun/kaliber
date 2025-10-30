@@ -227,7 +227,7 @@ class RendererVulkan final : public Renderer {
   void MemoryBarrier(VkPipelineStageFlags src_stage_mask,
                      VkPipelineStageFlags dst_stage_mask,
                      VkAccessFlags src_access,
-                     VkAccessFlags dst_sccess);
+                     VkAccessFlags dst_access);
   void FullBarrier();
 
   bool AllocateStagingBuffer(uint32_t amount,
@@ -255,7 +255,7 @@ class RendererVulkan final : public Renderer {
                            VkPipelineStageFlags src_stage_mask,
                            VkPipelineStageFlags dst_stage_mask,
                            VkAccessFlags src_access,
-                           VkAccessFlags dst_sccess);
+                           VkAccessFlags dst_access);
 
   bool AllocateImage(Buffer<VkImage>& image,
                      VkImageView& view,
@@ -274,11 +274,12 @@ class RendererVulkan final : public Renderer {
                    const uint8_t* data,
                    int width,
                    int height);
-  void ImageMemoryBarrier(VkImage image,
+  void ImageMemoryBarrier(VkCommandBuffer command_buffer,
+                          VkImage image,
                           VkPipelineStageFlags src_stage_mask,
                           VkPipelineStageFlags dst_stage_mask,
                           VkAccessFlags src_access,
-                          VkAccessFlags dst_sccess,
+                          VkAccessFlags dst_access,
                           VkImageLayout old_layout,
                           VkImageLayout new_layout);
 

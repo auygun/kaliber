@@ -495,6 +495,7 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
   task_runner_.PostTask(
       HERE,
       std::bind(&RendererVulkan::ImageMemoryBarrier, this,
+                frames_[current_frame_].setup_command_buffer,
                 std::get<0>(it->second.image),
                 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                 VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
@@ -505,6 +506,7 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
   task_runner_.PostTask(
       HERE,
       std::bind(&RendererVulkan::ImageMemoryBarrier, this,
+                frames_[current_frame_].setup_command_buffer,
                 std::get<0>(it->second.image), VK_PIPELINE_STAGE_TRANSFER_BIT,
                 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                 VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
@@ -848,7 +850,8 @@ void RendererVulkan::BeginRenderToTexture(uint64_t texture_id) {
 
   vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
 
-  ImageMemoryBarrier(std::get<0>(it->second.image),
+  ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
+                     std::get<0>(it->second.image),
                      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
                      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0,
                      VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -920,7 +923,8 @@ void RendererVulkan::EndRenderToTexture(uint64_t texture_id) {
     return;
   }
 
-  ImageMemoryBarrier(std::get<0>(it->second.image),
+  ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
+                     std::get<0>(it->second.image),
                      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                      VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                      VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -1287,11 +1291,11 @@ void RendererVulkan::FreePendingResources(int frame) {
 void RendererVulkan::MemoryBarrier(VkPipelineStageFlags src_stage_mask,
                                    VkPipelineStageFlags dst_stage_mask,
                                    VkAccessFlags src_access,
-                                   VkAccessFlags dst_sccess) {
+                                   VkAccessFlags dst_access) {
   VkMemoryBarrier mem_barrier{};
   mem_barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
   mem_barrier.srcAccessMask = src_access;
-  mem_barrier.dstAccessMask = dst_sccess;
+  mem_barrier.dstAccessMask = dst_access;
 
   vkCmdPipelineBarrier(frames_[current_frame_].draw_command_buffer,
                        src_stage_mask, dst_stage_mask, 0, 1, &mem_barrier, 0,
@@ -1599,13 +1603,13 @@ void RendererVulkan::BufferMemoryBarrier(VkBuffer buffer,
                                          VkPipelineStageFlags src_stage_mask,
                                          VkPipelineStageFlags dst_stage_mask,
                                          VkAccessFlags src_access,
-                                         VkAccessFlags dst_sccess) {
+                                         VkAccessFlags dst_access) {
   VkBufferMemoryBarrier buffer_mem_barrier{};
   buffer_mem_barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
   buffer_mem_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   buffer_mem_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   buffer_mem_barrier.srcAccessMask = src_access;
-  buffer_mem_barrier.dstAccessMask = dst_sccess;
+  buffer_mem_barrier.dstAccessMask = dst_access;
   buffer_mem_barrier.buffer = buffer;
   buffer_mem_barrier.offset = from;
   buffer_mem_barrier.size = size;
@@ -1792,17 +1796,18 @@ void RendererVulkan::UpdateImage(VkImage image,
   }
 }
 
-void RendererVulkan::ImageMemoryBarrier(VkImage image,
+void RendererVulkan::ImageMemoryBarrier(VkCommandBuffer command_buffer,
+                                        VkImage image,
                                         VkPipelineStageFlags src_stage_mask,
                                         VkPipelineStageFlags dst_stage_mask,
                                         VkAccessFlags src_access,
-                                        VkAccessFlags dst_sccess,
+                                        VkAccessFlags dst_access,
                                         VkImageLayout old_layout,
                                         VkImageLayout new_layout) {
   VkImageMemoryBarrier image_mem_barrier{};
   image_mem_barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   image_mem_barrier.srcAccessMask = src_access;
-  image_mem_barrier.dstAccessMask = dst_sccess;
+  image_mem_barrier.dstAccessMask = dst_access;
   image_mem_barrier.oldLayout = old_layout;
   image_mem_barrier.newLayout = new_layout;
   image_mem_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -1814,9 +1819,8 @@ void RendererVulkan::ImageMemoryBarrier(VkImage image,
   image_mem_barrier.subresourceRange.baseArrayLayer = 0;
   image_mem_barrier.subresourceRange.layerCount = 1;
 
-  vkCmdPipelineBarrier(frames_[current_frame_].setup_command_buffer,
-                       src_stage_mask, dst_stage_mask, 0, 0, nullptr, 0,
-                       nullptr, 1, &image_mem_barrier);
+  vkCmdPipelineBarrier(command_buffer, src_stage_mask, dst_stage_mask, 0, 0,
+                       nullptr, 0, nullptr, 1, &image_mem_barrier);
 }
 
 bool RendererVulkan::CreatePipelineLayout(
