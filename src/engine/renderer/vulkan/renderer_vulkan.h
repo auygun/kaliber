@@ -316,7 +316,8 @@ class RendererVulkan final : public Renderer {
                  int width,
                  int height,
                  int mip_level);
-  void ImageMemoryBarrier(VkImage image,
+  void ImageMemoryBarrier(VkCommandBuffer command_buffer,
+                          VkImage image,
                           VkPipelineStageFlags src_stage_mask,
                           VkPipelineStageFlags dst_stage_mask,
                           VkAccessFlags src_access,
