@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include "third_party/vma/vk_mem_alloc.h"
 #include "third_party/volk/volk.h"
 
 #if defined(__ANDROID__)
@@ -52,6 +53,8 @@ class VulkanContext {
   VkDevice GetDevice() { return device_; }
   VkPhysicalDevice GetPhysicalDevice() { return gpu_; }
 
+  VmaAllocator GetAllocator() { return allocator_; }
+
   uint32_t GetSwapchainImageCount() const { return swapchain_image_count_; }
 
   uint32_t GetGraphicsQueue() const { return graphics_queue_family_index_; }
@@ -80,7 +83,7 @@ class VulkanContext {
     VkSwapchainKHR swapchain = VK_NULL_HANDLE;
     std::vector<SwapchainImageResources> swapchain_image_resources;
     VkImage depth_image = VK_NULL_HANDLE;
-    VkDeviceMemory depth_image_memory = VK_NULL_HANDLE;
+    VmaAllocation depth_image_allocation = VK_NULL_HANDLE;
     VkImageView depth_view = VK_NULL_HANDLE;
     uint32_t current_buffer = 0;
     int width = 0;
@@ -93,6 +96,7 @@ class VulkanContext {
   VkInstance instance_ = VK_NULL_HANDLE;
   VkPhysicalDevice gpu_ = VK_NULL_HANDLE;
   VkDevice device_ = VK_NULL_HANDLE;
+  VmaAllocator allocator_ = VK_NULL_HANDLE;
 
   VkPhysicalDeviceProperties gpu_props_;
   uint32_t queue_family_count_ = 0;

@@ -52,6 +52,12 @@ void VulkanContext::Shutdown() {
         vkDestroySemaphore(device_, image_ownership_semaphores_[i], nullptr);
       }
     }
+
+    if (allocator_ != VK_NULL_HANDLE) {
+      vmaDestroyAllocator(allocator_);
+      allocator_ = VK_NULL_HANDLE;
+    }
+
     vkDestroyDevice(device_, nullptr);
     device_ = VK_NULL_HANDLE;
   }
@@ -613,6 +619,20 @@ bool VulkanContext::CreateDevice() {
 
   volkLoadDevice(device_);
 
+  // Initialize allocator
+  VmaAllocatorCreateInfo allocator_info{};
+  allocator_info.physicalDevice = gpu_;
+  allocator_info.device = device_;
+  allocator_info.instance = instance_;
+  const bool use_1_3_features = gpu_props_.apiVersion >= VK_API_VERSION_1_3;
+  if (use_1_3_features)
+    allocator_info.flags |= VMA_ALLOCATOR_CREATE_KHR_MAINTENANCE5_BIT;
+  err = vmaCreateAllocator(&allocator_info, &allocator_);
+  if (err) {
+    DLOG(0) << "vmaCreateAllocator failed. Error: " << string_VkResult(err);
+    return false;
+  }
+
   return true;
 }
 
@@ -819,11 +839,11 @@ bool VulkanContext::CleanUpSwapChain(Window* window) {
   vkDeviceWaitIdle(device_);
 
   vkDestroyImageView(device_, window->depth_view, nullptr);
-  vkDestroyImage(device_, window->depth_image, nullptr);
-  vkFreeMemory(device_, window->depth_image_memory, nullptr);
+  vmaDestroyImage(allocator_, window->depth_image,
+                  window->depth_image_allocation);
   window->depth_view = VK_NULL_HANDLE;
   window->depth_image = VK_NULL_HANDLE;
-  window->depth_image_memory = VK_NULL_HANDLE;
+  window->depth_image_allocation = VK_NULL_HANDLE;
 
   vkDestroySwapchainKHR(device_, window->swapchain, nullptr);
   window->swapchain = VK_NULL_HANDLE;
@@ -1258,6 +1278,8 @@ bool VulkanContext::CreateDepthImage(Window* window) {
   VkImageCreateInfo depth_img_create_info{};
   depth_img_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
   depth_img_create_info.imageType = VK_IMAGE_TYPE_2D;
+  // TODO: This format is not guaranteed to be supported; should query for a
+  // valid depth format.
   depth_img_create_info.format = VK_FORMAT_D24_UNORM_S8_UINT;
   depth_img_create_info.extent.width = window->swapchain_extent.width;
   depth_img_create_info.extent.height = window->swapchain_extent.height;
@@ -1270,46 +1292,18 @@ bool VulkanContext::CreateDepthImage(Window* window) {
   depth_img_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   depth_img_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-  VkResult err = vkCreateImage(device_, &depth_img_create_info, nullptr,
-                               &window->depth_image);
+  VmaAllocationCreateInfo alloc_info{};
+  alloc_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+  alloc_info.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+  VkResult err = vmaCreateImage(allocator_, &depth_img_create_info, &alloc_info,
+                                &window->depth_image,
+                                &window->depth_image_allocation, nullptr);
   if (err) {
-    DLOG(0) << "vkCreateImage failed. Error: " << string_VkResult(err);
+    DLOG(0) << "vmaCreateImage for depth buffer failed. Error: "
+            << string_VkResult(err);
     return false;
   }
-
-  VkMemoryRequirements mem_requirements{};
-  vkGetImageMemoryRequirements(device_, window->depth_image, &mem_requirements);
-
-  VkPhysicalDeviceMemoryProperties mem_properties{};
-  vkGetPhysicalDeviceMemoryProperties(gpu_, &mem_properties);
-  uint32_t mti = 0;
-  for (; mti < mem_properties.memoryTypeCount; mti++) {
-    if ((mem_requirements.memoryTypeBits & (1 << mti)) &&
-        (mem_properties.memoryTypes[mti].propertyFlags &
-         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) ==
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) {
-      break;
-    }
-  }
-  if (mti == mem_properties.memoryTypeCount) {
-    DLOG(0) << "Memort type index not found.";
-    return false;
-  }
-
-  VkMemoryAllocateInfo mem_alloc_info{};
-  mem_alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-  mem_alloc_info.allocationSize = mem_requirements.size;
-  mem_alloc_info.memoryTypeIndex = mti;
-
-  err = vkAllocateMemory(device_, &mem_alloc_info, nullptr,
-                         &window->depth_image_memory);
-  if (err) {
-    DLOG(0) << "vkAllocateMemory failed. Error: " << string_VkResult(err);
-    return false;
-  }
-
-  vkBindImageMemory(device_, window->depth_image, window->depth_image_memory,
-                    0);
 
   VkImageViewCreateInfo image_view_create_info{};
   image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -1331,8 +1325,9 @@ bool VulkanContext::CreateDepthImage(Window* window) {
                           &window->depth_view);
 
   if (err) {
-    vkDestroyImage(device_, window->depth_image, nullptr);
-    vkFreeMemory(device_, window->depth_image_memory, nullptr);
+    // If view creation fails, we must destroy the image we just created.
+    vmaDestroyImage(allocator_, window->depth_image,
+                    window->depth_image_allocation);
     DLOG(0) << "vkCreateImageView failed with error " << std::to_string(err);
     return false;
   }

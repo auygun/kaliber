@@ -1160,17 +1160,6 @@ bool RendererVulkan::InitializeInternal() {
   frames_.resize(frame_count);
   frames_drawn_ = frame_count;
 
-  // Initialize allocator
-  VmaAllocatorCreateInfo allocator_info{};
-  allocator_info.physicalDevice = context_.GetPhysicalDevice();
-  allocator_info.device = device_;
-  allocator_info.instance = context_.GetInstance();
-  const bool use_1_3_features =
-      context_.GetDeviceProperties().apiVersion >= VK_API_VERSION_1_3;
-  if (use_1_3_features)
-    allocator_info.flags |= VMA_ALLOCATOR_CREATE_KHR_MAINTENANCE5_BIT;
-  vmaCreateAllocator(&allocator_info, &allocator_);
-
   for (size_t i = 0; i < frames_.size(); i++) {
     // Create command pool, one per frame is recommended.
     VkCommandPoolCreateInfo cmd_pool_info{};
@@ -1358,7 +1347,7 @@ void RendererVulkan::Shutdown() {
 
     for (size_t i = 0; i < staging_buffers_.size(); i++) {
       auto [buffer, allocation] = staging_buffers_[i].buffer;
-      vmaDestroyBuffer(allocator_, buffer, allocation);
+      vmaDestroyBuffer(context_.GetAllocator(), buffer, allocation);
     }
 
     DestroyAllResources();
@@ -1371,8 +1360,6 @@ void RendererVulkan::Shutdown() {
       vkDestroyCommandPool(device_, frames_[i].setup_command_pool, nullptr);
       vkDestroyCommandPool(device_, frames_[i].draw_command_pool, nullptr);
     }
-
-    vmaDestroyAllocator(allocator_);
 
     vkDestroySampler(device_, sampler_, nullptr);
 
@@ -1468,7 +1455,8 @@ void RendererVulkan::FreePendingResources(int frame) {
     for (auto& image : frames_[frame].images_to_destroy) {
       auto [buffer, view, frame_buffer] = image;
       vkDestroyImageView(device_, view, nullptr);
-      vmaDestroyImage(allocator_, std::get<0>(buffer), std::get<1>(buffer));
+      vmaDestroyImage(context_.GetAllocator(), std::get<0>(buffer),
+                      std::get<1>(buffer));
       if (frame_buffer != VK_NULL_HANDLE)
         vkDestroyFramebuffer(device_, frame_buffer, nullptr);
     }
@@ -1477,7 +1465,8 @@ void RendererVulkan::FreePendingResources(int frame) {
 
   if (!frames_[frame].buffers_to_destroy.empty()) {
     for (auto& buffer : frames_[frame].buffers_to_destroy)
-      vmaDestroyBuffer(allocator_, std::get<0>(buffer), std::get<1>(buffer));
+      vmaDestroyBuffer(context_.GetAllocator(), std::get<0>(buffer),
+                       std::get<1>(buffer));
     frames_[frame].buffers_to_destroy.clear();
   }
 
@@ -1658,8 +1647,8 @@ bool RendererVulkan::InsertStagingBuffer() {
 
   StagingBuffer block;
 
-  VkResult err = vmaCreateBuffer(allocator_, &buffer_info, &alloc_info,
-                                 &std::get<0>(block.buffer),
+  VkResult err = vmaCreateBuffer(context_.GetAllocator(), &buffer_info,
+                                 &alloc_info, &std::get<0>(block.buffer),
                                  &std::get<1>(block.buffer), &block.alloc_info);
   if (err) {
     DLOG(0) << "vmaCreateBuffer failed with error " << string_VkResult(err);
@@ -1765,8 +1754,8 @@ bool RendererVulkan::AllocateBuffer(Buffer<VkBuffer>& buffer,
   VkBuffer vk_buffer;
   VmaAllocation allocation = nullptr;
 
-  VkResult err = vmaCreateBuffer(allocator_, &buffer_info, &alloc_info,
-                                 &vk_buffer, &allocation, nullptr);
+  VkResult err = vmaCreateBuffer(context_.GetAllocator(), &buffer_info,
+                                 &alloc_info, &vk_buffer, &allocation, nullptr);
   if (err) {
     DLOG(0) << "Can't create buffer of size: " << std::to_string(size)
             << ", error " << string_VkResult(err);
@@ -1871,8 +1860,8 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
   VkImage vk_image;
   VmaAllocation allocation = nullptr;
 
-  VkResult err = vmaCreateImage(allocator_, &image_create_info, &alloc_info,
-                                &vk_image, &allocation, nullptr);
+  VkResult err = vmaCreateImage(context_.GetAllocator(), &image_create_info,
+                                &alloc_info, &vk_image, &allocation, nullptr);
   if (err) {
     DLOG(0) << "vmaCreateImage failed with error " << string_VkResult(err);
     return false;
@@ -1897,7 +1886,7 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
   err = vkCreateImageView(device_, &image_view_create_info, nullptr, &view);
 
   if (err) {
-    vmaDestroyImage(allocator_, vk_image, allocation);
+    vmaDestroyImage(context_.GetAllocator(), vk_image, allocation);
     DLOG(0) << "vkCreateImageView failed with error " << string_VkResult(err);
     return false;
   }
