@@ -226,15 +226,16 @@ class ECSView {
  private:
   class Iterator {
    public:
-    Iterator(std::tuple<ComponentPool<Components>*...>* pools,
+    Iterator(std::tuple<ComponentPool<Components>*...> pools,
              ComponentPoolBase* smallest_pool,
              std::vector<Entity>* dense_to_entity_map,
              size_t index)
-        : pools_(pools),
+        : pools_(std::move(pools)),
           smallest_pool_(smallest_pool),
           dense_to_entity_map_(dense_to_entity_map),
           index_(index) {
-      FindNextValid();
+      if constexpr (sizeof...(Components) > 1)
+        FindNextValid();
     }
 
     // Finds the next entity that has all components in 'Components...'.
@@ -242,7 +243,7 @@ class ECSView {
       while (index_ < dense_to_entity_map_->size()) {
         Entity entity = (*dense_to_entity_map_)[index_];
 
-        bool hasAll = true;
+        bool has_all = true;
         std::apply(
             [&](auto*... pools) {
               auto check = [&](auto* p) {
@@ -251,11 +252,11 @@ class ECSView {
                   return true;
                 return p->Has(entity);
               };
-              hasAll = (check(pools) && ...);
+              has_all = (check(pools) && ...);
             },
-            *pools_);  // Unpack the tuple of all pools
+            pools_);  // Unpack the tuple of all pools
 
-        if (hasAll)
+        if (has_all)
           break;   // Found a valid entity
         index_++;  // Keep searching
       }
@@ -265,12 +266,18 @@ class ECSView {
     auto operator*() {
       Entity entity = (*dense_to_entity_map_)[index_];
 
-      // C++17 'apply' unfolds the tuple of pools
-      return std::apply(
-          [&](auto*... pools) {
-            return std::forward_as_tuple(entity, pools->Get(entity)...);
-          },
-          *pools_);
+      if constexpr (sizeof...(Components) == 1) {
+        // Single component case. Return std::pair<Entity, Component&>
+        return std::pair<Entity, Components&...>(
+            entity, std::get<0>(pools_)->GetDenseData()[index_]);
+      } else {
+        // Multi component case. Return std::tuple<Entity, Components&...>
+        return std::apply(
+            [&](auto*... pools) {
+              return std::forward_as_tuple(entity, pools->Get(entity)...);
+            },
+            pools_);
+      }
     }
 
     bool operator!=(const Iterator& other) const {
@@ -279,12 +286,13 @@ class ECSView {
 
     Iterator& operator++() {
       index_++;
-      FindNextValid();
+      if constexpr (sizeof...(Components) > 1)
+        FindNextValid();
       return *this;
     }
 
    private:
-    std::tuple<ComponentPool<Components>*...>* pools_;
+    std::tuple<ComponentPool<Components>*...> pools_;
     ComponentPoolBase* smallest_pool_;
     std::vector<Entity>* dense_to_entity_map_;
     size_t index_;
@@ -307,12 +315,11 @@ class ECSView {
   }
 
   Iterator begin() {
-    return Iterator(&pools_, smallest_pool_, dense_to_entity_map_,
-                    begin_index_);
+    return Iterator(pools_, smallest_pool_, dense_to_entity_map_, begin_index_);
   }
 
   Iterator end() {
-    return Iterator(&pools_, smallest_pool_, dense_to_entity_map_,
+    return Iterator(pools_, smallest_pool_, dense_to_entity_map_,
                     dense_to_entity_map_->size());
   }
 
