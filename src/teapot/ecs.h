@@ -1,6 +1,7 @@
 #ifndef TEAPOT_ECS_H
 #define TEAPOT_ECS_H
 
+#include <limits>
 #include <memory>
 #include <queue>
 #include <typeindex>
@@ -8,6 +9,8 @@
 #include <vector>
 
 #include "base/log.h"
+
+namespace eng {
 
 class Registry;
 
@@ -97,7 +100,7 @@ class ComponentPool : public ComponentPoolBase {
       Remove(entity);
   }
 
-  // Data access for the ECSView.
+  // Data access for the View.
   std::vector<T>& GetDenseData() { return dense_; }
   std::vector<Entity>& GetDenseToEntityMap() { return entity_to_dense_; }
 
@@ -114,7 +117,7 @@ class ComponentPool : public ComponentPoolBase {
 
 // Forward declaration.
 template <typename... Components>
-class ECSView;
+class View;
 
 // The main class that holds all entities and components.
 class Registry {
@@ -199,13 +202,13 @@ class Registry {
   // Returns an iterable view for all entities with a specific set of
   // components.
   template <typename... Components>
-  ECSView<Components...> View(size_t begin_index = 0) {
+  View<Components...> View(size_t begin_index = 0) {
     // Ensure the view is not empty
     static_assert(sizeof...(Components) > 0,
                   "View must be called with at least one component type.");
 
     // Pass all pools to the constructor using a pack expansion
-    return ECSView<Components...>(begin_index, GetPool<Components>()...);
+    return eng::View<Components...>(begin_index, GetPool<Components>()...);
   }
 
  private:
@@ -222,7 +225,7 @@ class Registry {
 // specific set of components.
 // Components is the component types that an entity must have.
 template <typename... Components>
-class ECSView {
+class View {
  private:
   class Iterator {
    public:
@@ -300,7 +303,7 @@ class ECSView {
 
  public:
   // Constructor that accepts a variadic pack of component pools.
-  ECSView(size_t begin_index, ComponentPool<Components>*... pools)
+  View(size_t begin_index, ComponentPool<Components>*... pools)
       : pools_(std::make_tuple(pools...)), begin_index_(begin_index) {
     // Find the smallest pool to iterate.
     size_t minSize = std::numeric_limits<size_t>::max();
@@ -329,5 +332,7 @@ class ECSView {
   std::vector<Entity>* dense_to_entity_map_;
   size_t begin_index_;
 };
+
+}  // namespace eng
 
 #endif  // TEAPOT_ECS_H

@@ -11,6 +11,8 @@
 #include "teapot/camera.h"
 #include "teapot/ecs.h"
 
+namespace eng {
+
 class Scene : public eng::Drawable {
  public:
   Scene();
@@ -148,5 +150,7 @@ class Scene : public eng::Drawable {
   // Destroys an entity, its children, and updates its parent.
   void DestroyEntityAndChildren(Entity entity);
 };
+
+}  // namespace eng
 
 #endif  // TEAPOT_SCENE_H

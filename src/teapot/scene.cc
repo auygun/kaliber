@@ -12,7 +12,8 @@
 #include "third_party/imgui/imgui.h"
 
 using namespace base;
-using namespace eng;
+
+namespace eng {
 
 namespace {
 
@@ -614,3 +615,5 @@ void Scene::DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_ind) {
     DrawBVHTree(nodes, nodes[node_ind].right);
   }
 }
+
+}  // namespace eng
