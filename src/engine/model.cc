@@ -420,6 +420,7 @@ void Model::LoadTexture(const std::string& file_name,
   } while (image->CreateMip(*images.back(), normalize));
   DLOG(0) << file_name << " mip levels: " << images.size();
 
+  texture_ids_[index] = renderer_->CreateTexture();
   renderer_->UpdateTexture(texture_ids_[index], std::move(images));
 }
 

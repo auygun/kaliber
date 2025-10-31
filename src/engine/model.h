@@ -50,9 +50,8 @@ class Model {
   base::Vector3f extents_{0};
 
   std::vector<DrawCmd> draw_list_;
-  uint64_t geometry_id_;
-  uint64_t texture_ids_[4] = {(uint64_t)-1, (uint64_t)-1, (uint64_t)-1,
-                              (uint64_t)-1};
+  uint64_t geometry_id_ = 0;
+  uint64_t texture_ids_[4] = {0, 0, 0, 0};
   Renderer* renderer_ = nullptr;
 
   bool is_material_ = true;
