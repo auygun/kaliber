@@ -100,6 +100,14 @@ void Expand(base::Vector3f& min, base::Vector3f& max, const base::Vector3f& p) {
 
 }  // namespace
 
+Model::~Model() {
+  renderer_->DestroyDescriptorSet(materials_dset_);
+  renderer_->DestroyBuffer(materials_ubo_);
+  for (int i = 0; i < std::size(texture_ids_); ++i)
+    renderer_->DestroyTexture(texture_ids_[i]);
+  renderer_->DestroyGeometry(geometry_id_);
+}
+
 bool Model::LoadObj(Renderer* renderer,
                     uint64_t shader_id,
                     const std::string& file_name,
@@ -428,7 +436,7 @@ void Model::Draw(unsigned int instance_count, unsigned int fist_instance) {
     pc.cookie_cutter = false;
     renderer_->UpdatePushConstants(sizeof(pc), &pc);
     renderer_->Draw(draw_cmd.num_indices, draw_cmd.index_offset, instance_count,
-                   fist_instance);
+                    fist_instance);
     ++material_index;
   }
 }

@@ -42,6 +42,7 @@ Engine::~Engine() noexcept {
   thread_pool_.Shutdown();
 
   imgui_backend_.Shutdown();
+  game_.reset();
   renderer_.reset();
   singleton = nullptr;
 }

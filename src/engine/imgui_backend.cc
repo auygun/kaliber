@@ -50,9 +50,15 @@ void ImguiBackend::Initialize(bool is_mobile, std::string root_path) {
 
 void ImguiBackend::Shutdown() {
   ImGui::DestroyContext();
+
+  renderer_->DestroyDescriptorSet(texture_dset_);
+  renderer_->DestroyDescriptorSet(scene_dset_);
+  renderer_->DestroyBuffer(scene_data_ubo_);
+
   for (auto geometry : geometries_)
     renderer_->DestroyGeometry(geometry);
   geometries_.clear();
+
   renderer_->DestroyTexture(font_atlas_);
   renderer_->DestroyShader(shader_);
 }

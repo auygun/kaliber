@@ -13,7 +13,7 @@ using namespace eng;
 class Teapot final : public eng::Game {
  public:
   bool Initialize() final {
-    scene_.Create();
+    scene_.Create(Engine::Get().GetRenderer());
     return true;
   }
 
@@ -54,7 +54,7 @@ class Teapot final : public eng::Game {
 
   void Render(float frame_frac) final { scene_.Render(frame_frac); }
 
-  void ContextLost() final { scene_.Create(); }
+  void ContextLost() final { scene_.Create(Engine::Get().GetRenderer()); }
 
   void OnWindowResized(int width, int height) final {
     scene_.CreateProjectionMatrix();

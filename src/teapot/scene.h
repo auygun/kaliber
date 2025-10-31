@@ -12,14 +12,14 @@
 
 namespace eng {
 
+class Renderer;
+
 class Scene {
  public:
   Scene();
   ~Scene();
 
-  void Create();
-
-  void Shutdown();
+  void Create(Renderer* renderer);
 
   void Render(float frame_frac);
 
@@ -119,6 +119,8 @@ class Scene {
   uint64_t instances_ubo_ = 0;
   uint64_t scene_dset_ = 0;
 
+  Renderer* renderer_ = nullptr;
+
   void UpdateViewProjectionMatrix();
   void UpdateFrustum();
 
@@ -126,8 +128,6 @@ class Scene {
       const std::vector<Scene::WorldObject>& objects);
 
   void UploadSceneData();
-
-  std::vector<WorldObject> GetWorldObjects();
 
   std::vector<BVHNode> BuildBVHTree(std::vector<WorldObject> objects);
 

@@ -76,12 +76,23 @@ Scene::Scene() {
   camera_.Create({0, 0, 0}, -0.06f, 0.1f, 5);
 }
 
-Scene::~Scene() = default;
+Scene::~Scene() {
+  debug_layer_.Shutdown();
 
-void Scene::Create() {
+  renderer_->DestroyDescriptorSet(scene_dset_);
+  renderer_->DestroyBuffer(scene_data_ubo_);
+  renderer_->DestroyBuffer(lights_ubo_);
+  renderer_->DestroyBuffer(instances_ubo_);
+
+  renderer_->DestroyShader(shader_id_);
+}
+
+void Scene::Create(Renderer* renderer) {
+  renderer_ = renderer;
+
   // TestBVH();
 
-  debug_layer_.CreateRenderResources(Engine::Get().GetRenderer());
+  debug_layer_.CreateRenderResources(renderer_);
 
   if (!ParseVertexDescription(vertex_description, vertex_description_)) {
     LOG(0) << "Failed to parse vertex description.";
@@ -90,9 +101,9 @@ void Scene::Create() {
 
   auto source = std::make_unique<ShaderSource>();
   CHECK(source->Load("teapot/pbr.glsl")) << "Could not create ShaderSource";
-  shader_id_ = Engine::Get().GetRenderer()->CreateShader(
-      std::move(source), vertex_description_, kPrimitive_Triangles, true, false,
-      CullMode::kBack);
+  shader_id_ = renderer_->CreateShader(std::move(source), vertex_description_,
+                                       kPrimitive_Triangles, true, false,
+                                       CullMode::kBack);
 
   registry_.CreatePool<CoreDataComponent>();
 
@@ -104,13 +115,12 @@ void Scene::Create() {
   Entity parent = root_entity_;
   models_.resize(2);
   {
-    // model.LoadObj(Engine::Get().GetRenderer(), shader_id_,
+    // model.LoadObj(renderer_, shader_id_,
     //                "teapot/viking_room.obj", "", {"teapot/viking_room.png"});
-    models_[0].LoadObj(Engine::Get().GetRenderer(), shader_id_,
-                       "teapot/buddha.obj", "", {});
-    // model.LoadObj(Engine::Get().GetRenderer(), shader_id_,
+    models_[0].LoadObj(renderer_, shader_id_, "teapot/buddha.obj", "", {});
+    // model.LoadObj(renderer_, shader_id_,
     //                "teapot/sportsCar.obj", "teapot/sportsCar.mtl", {});
-    // model.LoadObj(Engine::Get().GetRenderer(), shader_id_,
+    // model.LoadObj(renderer_, shader_id_,
     //                "teapot/Cerberus_LP.obj", "teapot/Cerberus_LP.mtl",
     //                {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
     //                 "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
@@ -127,8 +137,8 @@ void Scene::Create() {
     }
   }
   {
-    models_[1].LoadObj(Engine::Get().GetRenderer(), shader_id_,
-                       "teapot/sportsCar.obj", "teapot/sportsCar.mtl", {});
+    models_[1].LoadObj(renderer_, shader_id_, "teapot/sportsCar.obj",
+                       "teapot/sportsCar.mtl", {});
 
     for (size_t i = 0; i < 3; ++i) {
       Entity entity = registry_.CreateEntity();
@@ -147,7 +157,7 @@ void Scene::Create() {
   std::vector<uint32_t> indices;
   CreateSphere(vertices, indices, 32, 32);
   model.CreateMesh(
-      Engine::Get().GetRenderer(), shader_id_, vertices, indices,
+      renderer_, shader_id_, vertices, indices,
       // {"teapot/iron-rusted4-basecolor.png", "teapot/iron-rusted4-normal.png",
       //  "teapot/iron-rusted4-metalness.png",
       //  "teapot/iron-rusted4-roughness.png"});
@@ -176,13 +186,12 @@ void Scene::Create() {
 
 #endif
 
-  scene_data_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
-      shader_id_, 1, 0, sizeof(SceneData));
-  lights_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(shader_id_, 1, 1,
-                                                          sizeof(lights_));
-  instances_ubo_ = Engine::Get().GetRenderer()->CreateBuffer(
-      shader_id_, 1, 2, sizeof(InstanceData) * 20);
-  scene_dset_ = Engine::Get().GetRenderer()->CreateDescriptorSet(
+  scene_data_ubo_ =
+      renderer_->CreateBuffer(shader_id_, 1, 0, sizeof(SceneData));
+  lights_ubo_ = renderer_->CreateBuffer(shader_id_, 1, 1, sizeof(lights_));
+  instances_ubo_ =
+      renderer_->CreateBuffer(shader_id_, 1, 2, sizeof(InstanceData) * 20);
+  scene_dset_ = renderer_->CreateDescriptorSet(
       shader_id_, 1, {}, {scene_data_ubo_, lights_ubo_, instances_ubo_});
 
   CreateProjectionMatrix();
@@ -197,11 +206,6 @@ void Scene::Create() {
   lights_[3].power = 400.0f;
 }
 
-void Scene::Shutdown() {
-  // TODO: Destroy render resources.
-  debug_layer_.Shutdown();
-}
-
 void Scene::Render(float frame_frac) {
   UpdateViewProjectionMatrix();
   UpdateFrustum();
@@ -209,7 +213,14 @@ void Scene::Render(float frame_frac) {
   instances_.clear();
 
   do {
-    auto world_objects = GetWorldObjects();
+    std::vector<WorldObject> world_objects;
+    // Skip root entity and iterate through.
+    for (auto [entity, core_data] : registry_.View<CoreDataComponent>(1)) {
+      OBBf obb{GetWorldTransform(core_data),
+               models_[core_data.model_index].GetExtents()};
+      world_objects.emplace_back(entity, core_data.model_index, obb,
+                                 GetWorldTransform(core_data));
+    }
     if (world_objects.empty())
       break;
 
@@ -229,8 +240,8 @@ void Scene::Render(float frame_frac) {
 
     UploadSceneData();
 
-    Engine::Get().GetRenderer()->ActivateShader(shader_id_);
-    Engine::Get().GetRenderer()->ActivateDescriptorSet(scene_dset_);
+    renderer_->ActivateShader(shader_id_);
+    renderer_->ActivateDescriptorSet(scene_dset_);
 
     for (auto& draw_call : draw_list) {
       auto [model_ind, first_instance, instance_count] = draw_call;
@@ -329,18 +340,15 @@ Scene::UpdateInstancesAndGetDrawList(
 }
 
 void Scene::UploadSceneData() {
-  Engine::Get().GetRenderer()->UpdateBuffer(
-      instances_ubo_, instances_.data(),
-      sizeof(InstanceData) * instances_.size());
+  renderer_->UpdateBuffer(instances_ubo_, instances_.data(),
+                          sizeof(InstanceData) * instances_.size());
 
   scene_data_.cam_pos = camera_.GetMatrix().Row(3);
   scene_data_.light_dir = {1, 1, 1};
   scene_data_.light_radiance = {1, 1, 1};
-  Engine::Get().GetRenderer()->UpdateBuffer(scene_data_ubo_, &scene_data_,
-                                            sizeof(scene_data_));
+  renderer_->UpdateBuffer(scene_data_ubo_, &scene_data_, sizeof(scene_data_));
 
-  Engine::Get().GetRenderer()->UpdateBuffer(lights_ubo_, &lights_,
-                                            sizeof(lights_));
+  renderer_->UpdateBuffer(lights_ubo_, &lights_, sizeof(lights_));
 }
 
 void Scene::SetDirty(CoreDataComponent& core_data) {
@@ -432,18 +440,6 @@ void Scene::DestroyEntityAndChildren(Entity entity) {
       stack.push_back(child);
     registry_.DestroyEntity(entity_to_destroy);
   }
-}
-
-std::vector<Scene::WorldObject> Scene::GetWorldObjects() {
-  std::vector<WorldObject> world_objects;
-  // Skip root entity and iterate through.
-  for (auto [entity, core_data] : registry_.View<CoreDataComponent>(1)) {
-    OBBf obb{GetWorldTransform(core_data),
-             models_[core_data.model_index].GetExtents()};
-    world_objects.emplace_back(entity, core_data.model_index, obb,
-                               GetWorldTransform(core_data));
-  }
-  return world_objects;
 }
 
 std::vector<Scene::BVHNode> Scene::BuildBVHTree(

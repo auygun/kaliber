@@ -15,7 +15,7 @@ class Renderer;
 class Model {
  public:
   Model() = default;
-  ~Model() = default;
+  ~Model();
 
   bool LoadObj(Renderer* renderer,
                uint64_t shader_id,
@@ -51,7 +51,8 @@ class Model {
 
   std::vector<DrawCmd> draw_list_;
   uint64_t geometry_id_;
-  uint64_t texture_ids_[4];
+  uint64_t texture_ids_[4] = {(uint64_t)-1, (uint64_t)-1, (uint64_t)-1,
+                              (uint64_t)-1};
   Renderer* renderer_ = nullptr;
 
   bool is_material_ = true;
