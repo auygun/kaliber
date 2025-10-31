@@ -113,7 +113,7 @@ void Scene::Create(Renderer* renderer) {
 
 #if 1
   Entity parent = root_entity_;
-  models_.resize(2);
+  models_.resize(3);
   {
     // model.LoadObj(renderer_, shader_id_,
     //                "teapot/viking_room.obj", "", {"teapot/viking_room.png"});
@@ -150,13 +150,12 @@ void Scene::Create(Renderer* renderer) {
       parent = entity;
     }
   }
-#else
+  // #else
 
-  auto& model = models_.emplace_back();
   std::vector<float> vertices;
   std::vector<uint32_t> indices;
   CreateSphere(vertices, indices, 32, 32);
-  model.CreateMesh(
+  models_[2].CreateMesh(
       renderer_, shader_id_, vertices, indices,
       // {"teapot/iron-rusted4-basecolor.png", "teapot/iron-rusted4-normal.png",
       //  "teapot/iron-rusted4-metalness.png",
@@ -174,14 +173,14 @@ void Scene::Create(Renderer* renderer) {
        "teapot/alien-slime1-metallic.png",
        "teapot/alien-slime1-roughness.png"});
 
-  // std::vector<eng::MeshObject> bvh_mesh_objects;
   for (size_t i = 0; i < 10; ++i) {
-    auto node = std::make_unique<Node>(models_.size() - 1);
-    Quatf q;
-    q.Create({0.1f, 0.1f, 0.1f});
-    node->SetRotation(q);
-    node->SetPosition({2.2f * i, 0, 0});
-    scene_root_.AddChild(std::move(node));
+    Entity entity = registry_.CreateEntity();
+    CoreDataComponent core_data{
+        .name{"model"}, .parent{parent}, .model_index{models_.size() - 1}};
+    core_data.local_transform.Create(Quatf({0.0f, 0.0f, 0.1f}), {2.2f, 0, 0});
+    registry_.AddComponent(entity, core_data);
+    registry_.GetComponent<CoreDataComponent>(parent).AddChild(entity);
+    parent = entity;
   }
 
 #endif
@@ -190,7 +189,7 @@ void Scene::Create(Renderer* renderer) {
       renderer_->CreateBuffer(shader_id_, 1, 0, sizeof(SceneData));
   lights_ubo_ = renderer_->CreateBuffer(shader_id_, 1, 1, sizeof(lights_));
   instances_ubo_ =
-      renderer_->CreateBuffer(shader_id_, 1, 2, sizeof(InstanceData) * 20);
+      renderer_->CreateBuffer(shader_id_, 1, 2, sizeof(InstanceData) * 100);
   scene_dset_ = renderer_->CreateDescriptorSet(
       shader_id_, 1, {}, {scene_data_ubo_, lights_ubo_, instances_ubo_});
 
