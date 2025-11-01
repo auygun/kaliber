@@ -113,7 +113,7 @@ void Scene::Create(Renderer* renderer) {
 
 #if 1
   Entity parent = root_entity_;
-  models_.resize(3);
+  models_.resize(4);
   {
     // model.LoadObj(renderer_, shader_id_,
     //                "teapot/viking_room.obj", "", {"teapot/viking_room.png"});
@@ -150,12 +150,30 @@ void Scene::Create(Renderer* renderer) {
       parent = entity;
     }
   }
+  {
+    models_[2].LoadObj(renderer_, shader_id_, "teapot/Cerberus_LP.obj",
+                  "teapot/Cerberus_LP.mtl",
+                  {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
+                   "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
+
+    for (size_t i = 0; i < 1; ++i) {
+      Entity entity = registry_.CreateEntity();
+      CoreDataComponent core_data{
+          .name{"model"}, .parent{root_entity_}, .model_index{2}};
+      core_data.local_transform.Create(Quatf({0.0f, 0.0f, 0.0f}),
+                                       {200.0f, -100.0f, 0.0f});
+      core_data.local_transform.Multiply(0.05f);
+      registry_.AddComponent(entity, core_data);
+      registry_.GetComponent<CoreDataComponent>(root_entity_).AddChild(entity);
+      // parent = entity;
+    }
+  }
   // #else
 
   std::vector<float> vertices;
   std::vector<uint32_t> indices;
   CreateSphere(vertices, indices, 32, 32);
-  models_[2].CreateMesh(
+  models_[3].CreateMesh(
       renderer_, shader_id_, vertices, indices,
       // {"teapot/iron-rusted4-basecolor.png", "teapot/iron-rusted4-normal.png",
       //  "teapot/iron-rusted4-metalness.png",
