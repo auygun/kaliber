@@ -152,9 +152,9 @@ void Scene::Create(Renderer* renderer) {
   }
   {
     models_[2].LoadObj(renderer_, shader_id_, "teapot/Cerberus_LP.obj",
-                  "teapot/Cerberus_LP.mtl",
-                  {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
-                   "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
+                       "teapot/Cerberus_LP.mtl",
+                       {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
+                        "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
 
     for (size_t i = 0; i < 1; ++i) {
       Entity entity = registry_.CreateEntity();
@@ -267,12 +267,14 @@ void Scene::Render(float frame_frac) {
   } while (false);
 
 #if 1
-  // DumpBVHTree(bvh_tree_, 0, "");
-  DrawBVHTree(bvh_tree_, 0);
-  debug_layer_.DrawFrustum(frustum_);
-  debug_layer_.DrawMatrix(camera_.GetMatrixMainCam());
-  for (auto& instance : instances_)
-    debug_layer_.DrawMatrix(instance.model);
+  if (show_bounding_volumes_) {
+    // DumpBVHTree(bvh_tree_, 0, "");
+    DrawBVHTree(bvh_tree_, 0);
+    debug_layer_.DrawFrustum(frustum_);
+    debug_layer_.DrawMatrix(camera_.GetMatrixMainCam());
+    for (auto& instance : instances_)
+      debug_layer_.DrawMatrix(instance.model);
+  }
 #endif
 
   debug_layer_.Draw(scene_data_.view_projection);
@@ -293,10 +295,7 @@ void Scene::Update(float delta_time, const Vector2f& angles, float zoom) {
     ImGui::RadioButton("Vulkan", &renderer_type, 1);
     ImGui::SameLine();
     ImGui::RadioButton("OpenGL", &renderer_type, 2);
-    ImGui::ColorEdit4("albedo", albedo_.k, ImGuiColorEditFlags_NoAlpha);
-    ImGui::SliderFloat("metallic", &metallic_, 0.0f, 1.0f, "%.2f");
-    ImGui::SliderFloat("roughness", &roughness_, 0.0f, 1.0f, "%.2f");
-    ImGui::SliderFloat("ambient", &ao_, 0.0f, 1.0f, "%.2f");
+    ImGui::Checkbox("Volumes", &show_bounding_volumes_);
     ImGui::SliderFloat("light 1", &lights_[0].power, 0.0f, 2000.0f, "%.f");
     ImGui::SliderFloat("light 2", &lights_[1].power, 0.0f, 2000.0f, "%.f");
     ImGui::SliderFloat("light 3", &lights_[2].power, 0.0f, 2000.0f, "%.f");

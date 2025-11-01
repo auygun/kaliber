@@ -105,10 +105,7 @@ class Scene {
 
   std::vector<BVHNode> bvh_tree_;
 
-  base::Vector3f albedo_{0.8f, 0.4f, 0.2f};
-  float metallic_ = 1.0f;
-  float roughness_ = 0.3f;
-  float ao_ = 0.5f;
+  bool show_bounding_volumes_ = false;
 
   SceneData scene_data_;
   LightData lights_[4];
