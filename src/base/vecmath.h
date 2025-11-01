@@ -1942,7 +1942,7 @@ struct AABB {
     // Calculate the inverse of the ray's direction. This handles division by
     // zero by resulting in +/- infinity, which works correctly with the min/max
     // logic.
-    Vector3<T> inv_dir = 1.0f / ray.direction;
+    Vector3<T> inv_dir = Vector3<T>{1.0f} / ray.direction;
 
     // Calculate intersection distances for the X-axis slabs
     T t1 = (min.x - ray.origin.x) * inv_dir.x;
