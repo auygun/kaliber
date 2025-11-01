@@ -51,7 +51,8 @@ class Scene {
 
     size_t model_index{(size_t)-1};
 
-    void AddChild(Entity child_entity) { children.push_back(child_entity); }
+    void AddChild(Entity child_entity);
+    void RemoveChild(Entity child_entity);
   };
 
   struct BVHNode {
@@ -138,12 +139,16 @@ class Scene {
 
   void DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_ind);
 
-  // Gets the node's final world transform. Recalculates if dirty. This is a
-  // recursive call; it will update the node and all its ancestors.
-  const base::Matrix4f& GetWorldTransform(CoreDataComponent& node);
+  // Gets the entity's final world transform. Recalculates if dirty, updating
+  // the entity and all its ancestors.
+  const base::Matrix4f& GetWorldTransform(CoreDataComponent& core_data);
 
-  // Marks this node and all its descendants as dirty.
-  void SetDirty(CoreDataComponent& node);
+  // Marks this entity and all its descendants as dirty.
+  void SetDirty(CoreDataComponent& core_data);
+
+  // Detaches an entity from its current parent's child list and attaches to a
+  // new parent.
+  void SetParent(Entity entity, Entity new_parent);
 
   // Destroys an entity, its children, and updates its parent.
   void DestroyEntityAndChildren(Entity entity);

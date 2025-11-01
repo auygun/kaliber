@@ -423,10 +423,8 @@ const base::Matrix4f& Scene::GetWorldTransform(CoreDataComponent& core_data) {
   return core_data.world_transform;
 }
 
-void Scene::DestroyEntityAndChildren(Entity entity) {
-  if (entity == NULL_ENTITY) {
-    return;
-  }
+void Scene::SetParent(Entity entity, Entity new_parent) {
+  DCHECK(entity != NULL_ENTITY);
 
   auto* pool = registry_.GetPool<CoreDataComponent>();
 
@@ -435,12 +433,30 @@ void Scene::DestroyEntityAndChildren(Entity entity) {
   auto& core_data = pool->Get(entity);
   if (core_data.parent != NULL_ENTITY) {
     DCHECK(pool->Has(core_data.parent));
-    auto& parent_core_data = pool->Get(core_data.parent);
+    pool->Get(core_data.parent).RemoveChild(entity);
+  }
 
-    parent_core_data.children.erase(
-        std::remove(parent_core_data.children.begin(),
-                    parent_core_data.children.end(), entity),
-        parent_core_data.children.end());
+  // Set the new parent and add to its child list.
+  core_data.parent = new_parent;
+  if (new_parent != NULL_ENTITY) {
+    DCHECK(pool->Has(new_parent));
+    pool->Get(new_parent).AddChild(entity);
+  }
+
+  SetDirty(core_data);
+}
+
+void Scene::DestroyEntityAndChildren(Entity entity) {
+  DCHECK(entity != NULL_ENTITY);
+
+  auto* pool = registry_.GetPool<CoreDataComponent>();
+
+  // Remove the entity from its parent's child list.
+  DCHECK(pool->Has(entity));
+  auto& core_data = pool->Get(entity);
+  if (core_data.parent != NULL_ENTITY) {
+    DCHECK(pool->Has(core_data.parent));
+    pool->Get(core_data.parent).RemoveChild(entity);
   }
 
   // Cascade delete all children.
@@ -629,6 +645,15 @@ void Scene::DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_ind) {
     DrawBVHTree(nodes, nodes[node_ind].left);
     DrawBVHTree(nodes, nodes[node_ind].right);
   }
+}
+
+void Scene::CoreDataComponent::AddChild(Entity child_entity) {
+  children.push_back(child_entity);
+}
+
+void Scene::CoreDataComponent::RemoveChild(Entity child_entity) {
+  children.erase(std::remove(children.begin(), children.end(), child_entity),
+                 children.end());
 }
 
 }  // namespace eng
