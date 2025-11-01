@@ -647,6 +647,86 @@ void Scene::DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_ind) {
   }
 }
 
+Rayf Scene::CreateRayFromScreen(float screen_x, float screen_y) {
+  // Convert Screen Coords to Normalized Device Coords (NDC) [-1, 1]
+  // Note: Y is flipped because screen coords (0,0) are top-left,
+  // while NDC (0,0) is center and +Y is up.
+  float ndcX = (2.0f * screen_x) / Engine::Get().GetScreenWidth() - 1.0f;
+  float ndcY = 1.0f - (2.0f * screen_y) / Engine::Get().GetScreenHeight();
+
+  // Define near and far points in NDC space
+  Vector4f near_ndc(ndcX, ndcY, 0.0f, 1.0f);
+  Vector4f far_ndc(ndcX, ndcY, 1.0f, 1.0f);
+
+  // Unproject NDC points to World Space
+  Matrix4f inv_view_proj = scene_data_.view_projection;
+  inv_view_proj.Inverse();
+  Vector4f near_world = near_ndc * inv_view_proj;
+  Vector4f far_world = far_ndc * inv_view_proj;
+
+  // Perform Perspective Divide (divide by w)
+  near_world /= near_world.w;
+  far_world /= far_world.w;
+
+  // Create the Ray
+  Rayf ray;
+  ray.origin = near_world.GetVector3();
+  ray.direction = (far_world.GetVector3() - ray.origin).Normalize();
+
+  return ray;
+}
+
+// Selects an entity by casting a ray.
+Entity Scene::SelectEntity(Rayf ray) {
+  Matrix4f inv_view_proj = scene_data_.view_projection;
+  inv_view_proj.Inverse();
+
+  float closest_distance{std::numeric_limits<float>::max()};
+
+  std::deque<size_t> stack;
+  stack.push_back(0);
+
+  while (!stack.empty()) {
+    size_t node_ind = stack.back();
+    stack.pop_back();
+
+    // If the node is a leaf, it's representing a single object. Otherwise It's
+    // an internal node with children.
+    if (nodes[node_ind].IsLeaf()) {
+      float distance = nodes[node_ind].object.obb.IntersectRay(ray);
+      if (distance >= 0.0f && distance < closest_distance) {
+        closest_distance = distance;
+        // selectedObject = object;
+      }
+      continue;
+    } else if (!nodes[node_ind].aabb.IntersectRay(ray)) {
+      continue;
+    }
+
+    // The internal node passed tests, check its children
+    if (nodes[node_ind].left)
+      stack.push_back(nodes[node_ind].left);
+    if (nodes[node_ind].right)
+      stack.push_back(nodes[node_ind].right);
+  }
+
+  // Find the closest intersected object
+  GameObject* selectedObject = nullptr;
+  float closestDistance = FLT_MAX;
+
+  for (GameObject* object : objects) {
+    float distance = IntersectRayOBB(ray, object->obb);
+
+    // Check for a valid hit (distance >= 0) and if it's closer
+    if (distance >= 0.0f && distance < closestDistance) {
+      closestDistance = distance;
+      selectedObject = object;
+    }
+  }
+
+  return selectedObject;
+}
+
 void Scene::CoreDataComponent::AddChild(Entity child_entity) {
   children.push_back(child_entity);
 }

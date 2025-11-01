@@ -152,6 +152,12 @@ class Scene {
 
   // Destroys an entity, its children, and updates its parent.
   void DestroyEntityAndChildren(Entity entity);
+
+  // Creates a 3D world-space ray from 2D screen coordinates.
+  base::Rayf CreateRayFromScreen(float screen_x, float screen_y);
+
+  // Selects an entity by casting a ray.
+  Entity SelectEntity(base::Rayf ray);
 };
 
 }  // namespace eng
