@@ -32,6 +32,7 @@ class Teapot final : public eng::Game {
         }
       } else if (event->GetType() == InputEvent::kDragEnd) {
         is_active_[event->GetPointerId()] = false;
+        scene_.OnClick(positions_[event->GetPointerId()]);
       } else if (event->GetType() == InputEvent::kDrag) {
         positions_[event->GetPointerId()] = event->GetVector();
         if (is_active_[0] && is_active_[1]) {

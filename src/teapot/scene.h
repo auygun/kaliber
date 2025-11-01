@@ -25,6 +25,8 @@ class Scene {
 
   void Update(float delta_time, const base::Vector2f& angles, float zoom);
 
+  void OnClick(const base::Vector2f& pos);
+
   void CreateProjectionMatrix();
 
   Camera& GetCamera() { return camera_; }
@@ -157,7 +159,7 @@ class Scene {
   base::Rayf CreateRayFromScreen(float screen_x, float screen_y);
 
   // Selects an entity by casting a ray.
-  Entity SelectEntity(base::Rayf ray);
+  Entity SelectEntity(const std::vector<BVHNode>& nodes, const base::Rayf& ray);
 };
 
 }  // namespace eng

@@ -262,16 +262,9 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
   if (!event)
     return;
 
-  event->SetVector(ToViewportPosition(event->GetVector()) * Vector2f(1, -1));
+  // event->SetVector(ToViewportPosition(event->GetVector()) * Vector2f(1, -1));
 
   switch (event->GetType()) {
-    case InputEvent::kDragEnd:
-      if (((GetViewportSize() / 2) * 0.9f - event->GetVector()).Length() <=
-          0.25f) {
-        stats_visible_ = !stats_visible_;
-        // TODO: Enqueue DragCancel so we can consume this event.
-      }
-      break;
     case InputEvent::kKeyPress:
       if (event->GetKeyPress() == 's') {
         stats_visible_ = !stats_visible_;

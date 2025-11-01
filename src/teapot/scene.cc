@@ -312,6 +312,12 @@ void Scene::Update(float delta_time, const Vector2f& angles, float zoom) {
   debug_layer_.Update(delta_time);
 }
 
+void Scene::OnClick(const base::Vector2f& pos) {
+  Rayf ray = CreateRayFromScreen(pos.x, pos.y);
+  Entity e = SelectEntity(bvh_tree_, ray);
+  LOG(0) << "Selected entity: " << e;
+}
+
 void Scene::CreateProjectionMatrix() {
   projection_.CreatePerspectiveProjection(
       45, (float)Engine::Get().GetScreenWidth(),
@@ -677,10 +683,8 @@ Rayf Scene::CreateRayFromScreen(float screen_x, float screen_y) {
 }
 
 // Selects an entity by casting a ray.
-Entity Scene::SelectEntity(Rayf ray) {
-  Matrix4f inv_view_proj = scene_data_.view_projection;
-  inv_view_proj.Inverse();
-
+Entity Scene::SelectEntity(const std::vector<BVHNode>& nodes, const Rayf& ray) {
+  Entity selected_entity = NULL_ENTITY;
   float closest_distance{std::numeric_limits<float>::max()};
 
   std::deque<size_t> stack;
@@ -696,10 +700,10 @@ Entity Scene::SelectEntity(Rayf ray) {
       float distance = nodes[node_ind].object.obb.IntersectRay(ray);
       if (distance >= 0.0f && distance < closest_distance) {
         closest_distance = distance;
-        // selectedObject = object;
+        selected_entity = nodes[node_ind].object.entity;
       }
       continue;
-    } else if (!nodes[node_ind].aabb.IntersectRay(ray)) {
+    } else if (nodes[node_ind].aabb.IntersectRay(ray) < 0) {
       continue;
     }
 
@@ -710,21 +714,7 @@ Entity Scene::SelectEntity(Rayf ray) {
       stack.push_back(nodes[node_ind].right);
   }
 
-  // Find the closest intersected object
-  GameObject* selectedObject = nullptr;
-  float closestDistance = FLT_MAX;
-
-  for (GameObject* object : objects) {
-    float distance = IntersectRayOBB(ray, object->obb);
-
-    // Check for a valid hit (distance >= 0) and if it's closer
-    if (distance >= 0.0f && distance < closestDistance) {
-      closestDistance = distance;
-      selectedObject = object;
-    }
-  }
-
-  return selectedObject;
+  return selected_entity;
 }
 
 void Scene::CoreDataComponent::AddChild(Entity child_entity) {
