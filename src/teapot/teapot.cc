@@ -22,6 +22,8 @@ class Teapot final : public eng::Game {
     float dist = last_dist_;
     while (std::unique_ptr<InputEvent> event =
                Engine::Get().GetNextInputEvent()) {
+      InputEvent event2 = *event;
+      event->SetVector(Engine::Get().ToViewportPosition(event->GetVector()) * Vector2f(1, -1));
       if (event->GetType() == InputEvent::kDragStart) {
         is_active_[event->GetPointerId()] = true;
         positions_[event->GetPointerId()] = event->GetVector();
@@ -32,7 +34,7 @@ class Teapot final : public eng::Game {
         }
       } else if (event->GetType() == InputEvent::kDragEnd) {
         is_active_[event->GetPointerId()] = false;
-        scene_.OnClick(positions_[event->GetPointerId()]);
+        scene_.OnClick(event2.GetVector());
       } else if (event->GetType() == InputEvent::kDrag) {
         positions_[event->GetPointerId()] = event->GetVector();
         if (is_active_[0] && is_active_[1]) {

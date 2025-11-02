@@ -314,6 +314,7 @@ void Scene::Update(float delta_time, const Vector2f& angles, float zoom) {
 
 void Scene::OnClick(const base::Vector2f& pos) {
   Rayf ray = CreateRayFromScreen(pos.x, pos.y);
+  debug_layer_.DrawVector(ray.origin, ray.direction, Vector3f{1.0f}, 1000);
   Entity e = SelectEntity(bvh_tree_, ray);
   LOG(0) << "Selected entity: " << e;
 }
@@ -655,31 +656,21 @@ void Scene::DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_ind) {
 
 Rayf Scene::CreateRayFromScreen(float screen_x, float screen_y) {
   // Convert Screen Coords to Normalized Device Coords (NDC) [-1, 1]
-  // Note: Y is flipped because screen coords (0,0) are top-left,
-  // while NDC (0,0) is center and +Y is up.
-  float ndcX = (2.0f * screen_x) / Engine::Get().GetScreenWidth() - 1.0f;
-  float ndcY = 1.0f - (2.0f * screen_y) / Engine::Get().GetScreenHeight();
+  float ndc_x = (2.0f * screen_x) / Engine::Get().GetScreenWidth() - 1.0f;
+  float ndc_y = 1.0f - (2.0f * screen_y) / Engine::Get().GetScreenHeight();
 
-  // Define near and far points in NDC space
-  Vector4f near_ndc(ndcX, ndcY, 0.0f, 1.0f);
-  Vector4f far_ndc(ndcX, ndcY, 1.0f, 1.0f);
-
-  // Unproject NDC points to World Space
+  // Unproject the origin from clip space to world Space.
   Matrix4f inv_view_proj = scene_data_.view_projection;
   inv_view_proj.Inverse();
-  Vector4f near_world = near_ndc * inv_view_proj;
-  Vector4f far_world = far_ndc * inv_view_proj;
+  Vector3f origin = Vector3f(ndc_x, ndc_y, 0.0f) * inv_view_proj;
 
-  // Perform Perspective Divide (divide by w)
-  near_world /= near_world.w;
-  far_world /= far_world.w;
+  // Transform the view space ray direction into world space.
+  Vector3f v{ndc_x / projection_.k[0][0], ndc_y / projection_.k[1][1], 1.0f};
+  Vector3f dir;
+  v.MultiplyMatrix3x3(camera_.GetMatrix(), dir);
+  dir.Normalize();
 
-  // Create the Ray
-  Rayf ray;
-  ray.origin = near_world.GetVector3();
-  ray.direction = (far_world.GetVector3() - ray.origin).Normalize();
-
-  return ray;
+  return Rayf{origin, dir};
 }
 
 // Selects an entity by casting a ray.

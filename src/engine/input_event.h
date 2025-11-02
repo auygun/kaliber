@@ -27,6 +27,8 @@ class InputEvent {
   InputEvent(Type type, char key) : type_(type), key_(key) {}
   ~InputEvent() = default;
 
+  InputEvent(const InputEvent&) = default;
+
   void SetVector(base::Vector2f vec) { vec_ = vec; }
 
   Type GetType() const { return type_; }
