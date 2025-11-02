@@ -2015,11 +2015,20 @@ struct OBB {
   }
 
   void Transform(const Matrix4<T>& m) {
+    // Calculate uniform scale from the length of the first axis and apply scale
+    // to current extents
+    T scale = m.Row(0).Length();
+    extents *= scale;
+
+    // Transform center
+    center *= m;
+
+    // Apply rotation and scale to the axis and re-normalize.
+    T inv_scale = T(1.0) / scale;
     for (int i = 0; i < 3; i++) {
       axes[i].MultiplyMatrix3x3(m);
-      axes[i].Normalize();
+      axes[i] *= inv_scale;
     }
-    center *= m;
   }
 
   // Computes the World-Space AABB that tightly encloses this OBB.
