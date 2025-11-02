@@ -17,7 +17,7 @@ class Camera {
               float azimuthal,
               float radius);
 
-  void Move(const base::Vector3f& delta);
+  void Move(const base::Vector3f& offset);
   void Orbit(float polar, float azimuthal, float radius);
 
   // Returns debug camera matrix when it's active.

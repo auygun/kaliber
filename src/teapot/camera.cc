@@ -1,6 +1,7 @@
 #include "teapot/camera.h"
 
 #include <algorithm>
+#include <cmath>
 
 using namespace base;
 
@@ -22,13 +23,13 @@ void Camera::Create(const Vector3f& center,
   MakeMatrix();
 }
 
-void Camera::Move(const Vector3f& delta) {
+void Camera::Move(const Vector3f& offset) {
   if (debug_cam_) {
-    debug_cam_->Move(delta);
+    debug_cam_->Move(offset);
     return;
   }
 
-  center_ += delta;
+  center_ += offset;
   matrix_.Row(3) = center_ + (matrix_.Row(2) * -radius_);
 }
 
@@ -42,7 +43,7 @@ void Camera::Orbit(float polar, float azimuthal, float radius) {
     return;
 
   polar_ = std::clamp(polar_ + polar, -0.25f, 0.25f);
-  azimuthal_ = fmod(azimuthal_ + azimuthal, 1.0);
+  azimuthal_ = std::fmod(azimuthal_ + azimuthal, 1.0);
   radius_ = std::clamp(radius_ + radius, 0.5f, 300.0f);
   MakeMatrix();
 }
