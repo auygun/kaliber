@@ -315,8 +315,7 @@ void Scene::Update(float delta_time, const Vector2f& angles, float zoom) {
 void Scene::OnClick(const base::Vector2f& pos) {
   Rayf ray = CreateRayFromScreen(pos.x, pos.y);
   debug_layer_.DrawVector(ray.origin, ray.direction, Vector3f{1.0f}, 1, true);
-  Entity e = SelectEntity(bvh_tree_, ray);
-  LOG(0) << "Selected entity: " << e;
+  selected_entity_ = SelectEntity(bvh_tree_, ray);
 }
 
 void Scene::CreateProjectionMatrix() {
@@ -641,7 +640,10 @@ void Scene::DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_ind) {
     return;
 
   if (nodes[node_ind].IsLeaf()) {
-    debug_layer_.DrawObb(nodes[node_ind].object.obb, {1, 1, 0});
+    Vector3f color{1, 1, 0};
+    if (nodes[node_ind].object.entity == selected_entity_)
+      color = {0, 1, 1};
+    debug_layer_.DrawObb(nodes[node_ind].object.obb, color);
   } else {
     debug_layer_.DrawAabb(nodes[node_ind].aabb, {1, 0, 1});
   }

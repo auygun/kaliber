@@ -108,6 +108,8 @@ class Scene {
 
   std::vector<BVHNode> bvh_tree_;
 
+  Entity selected_entity_{NULL_ENTITY};
+
   bool show_bounding_volumes_ = false;
 
   SceneData scene_data_;
