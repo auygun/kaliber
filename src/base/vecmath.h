@@ -2001,10 +2001,17 @@ struct OBB {
 
   OBB(const Matrix4<T>& m, const Vector3<T>& e) {
     center = m.Row(3);
-    extents = e;
-    axes[0] = m.Row(0);
-    axes[1] = m.Row(1);
-    axes[2] = m.Row(2);
+
+    // Calculate uniform scale from the length of the first axis and apply scale
+    // to local extents 'e' to get world-space extents
+    T scale = m.Row(0).Length();
+    extents = e * scale;
+
+    // Extract and normalize axes
+    T inv_scale = T(1.0) / scale;
+    axes[0] = m.Row(0) * inv_scale;
+    axes[1] = m.Row(1) * inv_scale;
+    axes[2] = m.Row(2) * inv_scale;
   }
 
   void Transform(const Matrix4<T>& m) {
