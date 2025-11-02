@@ -314,7 +314,7 @@ void Scene::Update(float delta_time, const Vector2f& angles, float zoom) {
 
 void Scene::OnClick(const base::Vector2f& pos) {
   Rayf ray = CreateRayFromScreen(pos.x, pos.y);
-  debug_layer_.DrawVector(ray.origin, ray.direction, Vector3f{1.0f}, 1000);
+  debug_layer_.DrawVector(ray.origin, ray.direction, Vector3f{1.0f}, 1, true);
   Entity e = SelectEntity(bvh_tree_, ray);
   LOG(0) << "Selected entity: " << e;
 }
@@ -659,15 +659,11 @@ Rayf Scene::CreateRayFromScreen(float screen_x, float screen_y) {
   float ndc_x = (2.0f * screen_x) / Engine::Get().GetScreenWidth() - 1.0f;
   float ndc_y = 1.0f - (2.0f * screen_y) / Engine::Get().GetScreenHeight();
 
-  // Unproject the origin from clip space to world Space.
+  // Unproject the points from clip space to world space.
   Matrix4f inv_view_proj = scene_data_.view_projection;
   inv_view_proj.Inverse();
   Vector3f origin = Vector3f(ndc_x, ndc_y, 0.0f) * inv_view_proj;
-
-  // Transform the view space ray direction into world space.
-  Vector3f v{ndc_x / projection_.k[0][0], ndc_y / projection_.k[1][1], 1.0f};
-  Vector3f dir;
-  v.MultiplyMatrix3x3(camera_.GetMatrix(), dir);
+  Vector3f dir = Vector3f(ndc_x, ndc_y, 1.0f) * inv_view_proj;
   dir.Normalize();
 
   return Rayf{origin, dir};
