@@ -1871,8 +1871,7 @@ struct Plane {
 
   void Translate(const Vector3<T>& v) { distance -= normal.DotProduct(v); }
 
-  void Transform(const Matrix4<T>& m) {
-    Translate(m.Row(3));
+  void Rotate(const Matrix4<T>& m) {
     normal.MultiplyMatrix3x3(m);
     normal.Normalize();
   }
@@ -2155,15 +2154,14 @@ class Frustum {
 
     // Get the 3x3 transpose of the model matrix for transforming the plane
     // normals.
-    Matrix4<T> transpose_model3x3;
-    model.Transpose3x3(transpose_model3x3);
-    // Get the translation part of the model matrix.
-    transpose_model3x3.Row4(3) = model.Row4(3);
+    Matrix4<T> model_transpose_3x3;
+    model.Transpose3x3(model_transpose_3x3);
 
     // Transform each plane to the model's local space and test
     for (int i = 0; i < 6; i++) {
       Plane<T> local_plane = planes[i];
-      local_plane.Transform(transpose_model3x3);
+      local_plane.Translate(model.Row(3));
+      local_plane.Rotate(model_transpose_3x3);
 
       if (local_aabb.IsOutsidePlane(local_plane))
         return false;
