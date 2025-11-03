@@ -143,30 +143,37 @@ void DebugLayer::DrawVector(const Vector3f& start,
 }
 
 void DebugLayer::DrawMatrix(const Matrix4f& matrix,
-                            float axisLength,
+                            float axis_length,
                             float duration,
                             bool fade) {
   Vector3f position = matrix.Row(3);
-  Vector3f xAxis = matrix.Row(0) * axisLength;
-  Vector3f yAxis = matrix.Row(1) * axisLength;
-  Vector3f zAxis = matrix.Row(2) * axisLength;
+  Vector3f x_axis = matrix.Row(0);
+  Vector3f y_axis = matrix.Row(1);
+  Vector3f z_axis = matrix.Row(2);
+  x_axis.Normalize();
+  y_axis.Normalize();
+  z_axis.Normalize();
+  x_axis *= axis_length;
+  y_axis *= axis_length;
+  z_axis *= axis_length;
 
-  DrawVector(position, xAxis, Vector3f(1.0f, 0.0f, 0.0f), duration,
+  DrawVector(position, x_axis, Vector3f(1.0f, 0.0f, 0.0f), duration,
              fade);  // Red X
-  DrawVector(position, yAxis, Vector3f(0.0f, 1.0f, 0.0f), duration,
+  DrawVector(position, y_axis, Vector3f(0.0f, 1.0f, 0.0f), duration,
              fade);  // Green Y
-  DrawVector(position, zAxis, Vector3f(0.0f, 0.0f, 1.0f), duration,
+  DrawVector(position, z_axis, Vector3f(0.0f, 0.0f, 1.0f), duration,
              fade);  // Blue Z
 }
 
 void DebugLayer::DrawQuaternion(const Vector3f& position,
                                 const Quatf& orientation,
-                                float axisLength,
+                                float axis_length,
                                 float duration,
                                 bool fade) {
   Matrix4f rotation_matrix;
   orientation.CreateMatrix(rotation_matrix);
-  DrawMatrix(rotation_matrix, axisLength, duration, fade);
+  rotation_matrix.Row(3) = position;
+  DrawMatrix(rotation_matrix, axis_length, duration, fade);
 }
 
 void DebugLayer::DrawAabb(const AABBf& aabb,
@@ -237,8 +244,7 @@ void DebugLayer::DrawFrustum(const Frustumf& frustum,
                              const Vector3f& color,
                              float duration,
                              bool fade) {
-  // Assumes plane order: [0]=Left, [1]=Right, [2]=Bottom, [3]=Top, [4]=Near,
-  // [5]=Far
+  // Assumes plane order as follows.
   const Planef& left = frustum.planes[0];
   const Planef& right = frustum.planes[1];
   const Planef& bottom = frustum.planes[2];
