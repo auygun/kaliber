@@ -155,8 +155,6 @@ void Scene::Create(Renderer* renderer) {
                        "teapot/Cerberus_LP.mtl",
                        {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
                         "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
-    // models_[2].LoadObj(renderer_, shader_id_, "teapot/sportsCar.obj",
-    //                    "teapot/sportsCar.mtl", {});
 
     for (size_t i = 0; i < 1; ++i) {
       Entity entity = registry_.CreateEntity();
@@ -239,31 +237,6 @@ void Scene::Render(float frame_frac) {
                models_[core_data.model_index].GetExtents()};
       world_objects.emplace_back(entity, core_data.model_index, obb,
                                  GetWorldTransform(core_data));
-
-      if (entity == 14) {
-        AABBf aabb;
-        obb.GetLocalBox(aabb);
-
-        Matrix4f transpose_model;
-        GetWorldTransform(core_data).Transpose3x3(transpose_model);
-        transpose_model.Row4(3) = GetWorldTransform(core_data).Row4(3);
-
-        bool outside = false;
-        Frustumf f{frustum_};
-        for (int i = 0; i < 6; i++) {
-          f.planes[i].Transform(transpose_model);
-          if (aabb.IsOutsidePlane(f.planes[i]))
-            outside = true;
-        }
-        if (outside) {
-          debug_layer_.DrawAabb(aabb, Vector3f{1, 1, 0});
-          debug_layer_.DrawFrustum(f, Vector3f{1, 1, 1});
-        }
-        else {
-          debug_layer_.DrawAabb(aabb, Vector3f{1, 0, 0});
-          debug_layer_.DrawFrustum(f, Vector3f{0, 1, 0});
-        }
-      }
     }
     if (world_objects.empty())
       break;
