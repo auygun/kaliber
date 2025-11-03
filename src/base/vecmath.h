@@ -1550,6 +1550,8 @@ class Matrix4 {
     return *((const Vector3<T>*)&k[row][0]);
   }
 
+  Vector4<T>& Row4(int row) { return *((Vector4<T>*)&k[row][0]); }
+
   const Vector4<T>& Row4(int row) const {
     return *((const Vector4<T>*)&k[row][0]);
   }
@@ -1867,12 +1869,12 @@ struct Plane {
     distance = normal.DotProduct(p);
   }
 
-  void Translate(const Vector3<T>& v) { distance += normal.DotProduct(v); }
+  void Translate(const Vector3<T>& v) { distance -= normal.DotProduct(v); }
 
   void Transform(const Matrix4<T>& m) {
+    Translate(m.Row(3));
     normal.MultiplyMatrix3x3(m);
     normal.Normalize();
-    Translate(m.Row(3));
   }
 
   // Finds the intersection point of three planes.
@@ -2148,21 +2150,76 @@ class Frustum {
   }
 
   bool Intersects(const OBB<T>& obb, const Matrix4<T>& model) const {
-    AABB<T> aabb;
-    obb.GetLocalBox(aabb);
+#if 1
+    AABB<T> local_aabb;
+    obb.GetLocalBox(local_aabb);
 
-    Matrix4<T> inverse_model;
-    model.InverseOrthogonal(inverse_model);
+    // Get the 3x3 transpose of the model matrix for transforming the plane
+    // normals.
+    Matrix4<T> transpose_model3x3;
+    model.Transpose3x3(transpose_model3x3);
+    // Get the translation part of the model matrix.
+    transpose_model3x3.Row4(3) = model.Row4(3);
 
     // Transform each plane to the model's local space and test
     for (int i = 0; i < 6; i++) {
-      Plane<T> p = planes[i];
-      p.Transform(inverse_model);
+      Plane<T> local_plane = planes[i];
+      local_plane.Transform(transpose_model3x3);
 
-      if (aabb.IsOutsidePlane(p))
+      if (local_aabb.IsOutsidePlane(local_plane))
         return false;
     }
     return true;
+#else
+    AABB<T> aabb;
+    obb.GetLocalBox(aabb);
+
+    // Get the 3x3 transpose of the model matrix
+    // for transforming the plane normals.
+    Matrix4<T> model_transpose_3x3;
+    model.Transpose3x3(model_transpose_3x3);
+
+    // Get the translation part of the model matrix
+    const Vector3<T>& model_trans = model.Row(3);
+
+    for (int i = 0; i < 6; i++) {
+      const Plane<T>& world_plane = planes[i];
+
+      Plane<T> local_plane;
+
+      // 1. Transform the normal: n_l = M₃ₓ₃ᵀ * n_w
+      world_plane.normal.MultiplyMatrix3x3(model_transpose_3x3,
+                                           local_plane.normal);
+
+      // 2. Calculate the new distance: d_l = d_w - n_w · M_trans
+      local_plane.distance =
+          world_plane.distance - world_plane.normal.DotProduct(model_trans);
+
+      // 3. Normalize the new local_plane.
+      // AABB::IsOutsidePlane assumes the plane normal is normalized.
+      // We must normalize *both* the normal and the distance.
+      T len_sqr = local_plane.normal.LengthSqr();
+      if (len_sqr > 1e-6f) {  // Avoid divide by zero
+        T len = std::sqrt(len_sqr);
+        local_plane.normal /= len;
+        local_plane.distance /= len;
+      } else {
+        // Handle degenerate plane. If distance is positive, the
+        // origin (and thus the local AABB) is outside.
+        if (local_plane.distance > 0.0f)
+          return false;
+        else
+          continue;  // AABB is inside this degenerate plane
+      }
+
+      // 4. Test the local AABB against the new local_plane
+      if (aabb.IsOutsidePlane(local_plane))
+        return false;
+    }
+
+    // If the AABB is not outside any of the 6 planes, it must be intersecting
+    return true;
+#endif
   }
 };
 
