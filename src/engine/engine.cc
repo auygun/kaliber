@@ -264,17 +264,17 @@ void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
 
   // event->SetVector(ToViewportPosition(event->GetVector()) * Vector2f(1, -1));
 
-  switch (event->GetType()) {
-    case InputEvent::kKeyPress:
-      if (event->GetKeyPress() == 's') {
-        stats_visible_ = !stats_visible_;
-        // Consume event.
-        return;
-      }
-      break;
-    default:
-      break;
-  }
+  // switch (event->GetType()) {
+  //   case InputEvent::kKeyPress:
+  //     if (event->GetKeyPress() == 's') {
+  //       stats_visible_ = !stats_visible_;
+  //       // Consume event.
+  //       return;
+  //     }
+  //     break;
+  //   default:
+  //     break;
+  // }
 
   input_queue_.push_back(std::move(event));
 }

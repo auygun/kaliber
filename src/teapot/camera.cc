@@ -6,21 +6,15 @@
 using namespace base;
 
 Camera::Camera(const Camera& other)
-    : center_{0},
-      radius_(other.radius_),
-      polar_(other.polar_),
+    : polar_(other.polar_),
       azimuthal_(other.azimuthal_),
       matrix_(other.matrix_) {}
 
-void Camera::Create(const Vector3f& center,
-                    float polar,
-                    float azimuthal,
-                    float radius) {
-  center_ = center;
+void Camera::Create(const Vector3f& position, float polar, float azimuthal) {
   polar_ = std::clamp(polar, -0.25f, 0.25f);
   azimuthal_ = fmod(azimuthal, 1.0);
-  radius_ = std::clamp(radius, 0.5f, 300.0f);
   MakeMatrix();
+  matrix_.Row(3) = position;
 }
 
 void Camera::Move(const Vector3f& offset) {
@@ -29,22 +23,22 @@ void Camera::Move(const Vector3f& offset) {
     return;
   }
 
-  center_ += offset;
-  matrix_.Row(3) = center_ + (matrix_.Row(2) * -radius_);
+  // center_ += offset;
+  matrix_.Row(3) += matrix_.Row(2) * offset.z;
+  matrix_.Row(3) += matrix_.Row(0) * offset.x;
 }
 
-void Camera::Orbit(float polar, float azimuthal, float radius) {
+void Camera::Rotate(float polar, float azimuthal) {
   if (debug_cam_) {
-    debug_cam_->Orbit(polar, azimuthal, radius);
+    debug_cam_->Rotate(polar, azimuthal);
     return;
   }
 
-  if (polar == 0 && azimuthal == 0 && radius == 0)
+  if (polar == 0 && azimuthal == 0)
     return;
 
   polar_ = std::clamp(polar_ + polar, -0.25f, 0.25f);
   azimuthal_ = std::fmod(azimuthal_ + azimuthal, 1.0);
-  radius_ = std::clamp(radius_ + radius, 0.5f, 300.0f);
   MakeMatrix();
 }
 
@@ -61,7 +55,8 @@ void Camera::ToggleDebugCamera() {
 }
 
 void Camera::MakeMatrix() {
+  Vector3f pos = matrix_.Row(3);
   matrix_.CreateXRotation(polar_);
   matrix_.M_x_RotY(azimuthal_);
-  matrix_.Row(3) = center_ + (matrix_.Row(2) * -radius_);
+  matrix_.Row(3) = pos;
 }

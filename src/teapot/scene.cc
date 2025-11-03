@@ -73,7 +73,7 @@ const char vertex_description[] = "p3f;n3f;a3f;t2f";
 }  // namespace
 
 Scene::Scene() {
-  camera_.Create({0, 0, 0}, -0.06f, 0.1f, 5);
+  camera_.Create({0, 0, 0}, -0.06f, 0.1f);
 }
 
 Scene::~Scene() {
@@ -151,18 +151,20 @@ void Scene::Create(Renderer* renderer) {
     }
   }
   {
-    models_[2].LoadObj(renderer_, shader_id_, "teapot/Cerberus_LP.obj",
-                       "teapot/Cerberus_LP.mtl",
-                       {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
-                        "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
+    // models_[2].LoadObj(renderer_, shader_id_, "teapot/Cerberus_LP.obj",
+    //                    "teapot/Cerberus_LP.mtl",
+    //                    {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
+    //                     "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
+    models_[2].LoadObj(renderer_, shader_id_, "teapot/sportsCar.obj",
+                       "teapot/sportsCar.mtl", {});
 
     for (size_t i = 0; i < 1; ++i) {
       Entity entity = registry_.CreateEntity();
       CoreDataComponent core_data{
           .name{"model"}, .parent{root_entity_}, .model_index{2}};
       core_data.local_transform.Create(Quatf({0.0f, 0.0f, 0.0f}),
-                                       {200.0f, -100.0f, 0.0f});
-      core_data.local_transform.Multiply(0.05f);
+                                       Vector3f{200.0f, -100.0f, 0.0f} * 0.05f);
+      // core_data.local_transform.Multiply(0.05f);
       registry_.AddComponent(entity, core_data);
       registry_.GetComponent<CoreDataComponent>(root_entity_).AddChild(entity);
       // parent = entity;
@@ -280,8 +282,11 @@ void Scene::Render(float frame_frac) {
   debug_layer_.Draw(scene_data_.view_projection);
 }
 
-void Scene::Update(float delta_time, const Vector2f& angles, float zoom) {
-  camera_.Orbit(-angles.y, angles.x, zoom);
+void Scene::Update(float delta_time,
+                   const Vector2f& angles,
+                   const base::Vector3f& offset) {
+  camera_.Rotate(-angles.y, angles.x);
+  camera_.Move(offset);
 
   int renderer_type = static_cast<int>(Engine::Get().GetRendererType());
 
@@ -576,6 +581,21 @@ std::vector<Scene::WorldObject> Scene::FrustumCull(
     // If the node is a leaf, it's representing a single object. Otherwise It's
     // an internal node with children.
     if (nodes[node_ind].IsLeaf()) {
+      if (nodes[node_ind].object.entity == 14) {
+        AABBf aabb;
+        nodes[node_ind].object.obb.GetLocalBox(aabb);
+        debug_layer_.DrawAabb(aabb, Vector3f{1, 1, 0});
+
+        Matrix4f inverse_model;
+        nodes[node_ind].object.transform.InverseOrthogonal(inverse_model);
+
+        Frustumf f{frustum};
+        for (int i = 0; i < 6; i++) {
+          f.planes[i].Transform(inverse_model);
+        }
+        debug_layer_.DrawFrustum(f);
+      }
+
       if (frustum.Intersects(nodes[node_ind].object.obb,
                              nodes[node_ind].object.transform))
         visible_objects.push_back(nodes[node_ind].object);
@@ -641,8 +661,12 @@ void Scene::DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_ind) {
 
   if (nodes[node_ind].IsLeaf()) {
     Vector3f color{1, 1, 0};
-    if (nodes[node_ind].object.entity == selected_entity_)
+    if (nodes[node_ind].object.entity == selected_entity_) {
       color = {0, 1, 1};
+      // AABBf aabb;
+      // nodes[node_ind].object.obb.GetLocalBox(aabb);
+      // debug_layer_.DrawAabb(aabb);
+    }
     debug_layer_.DrawObb(nodes[node_ind].object.obb, color);
   } else {
     debug_layer_.DrawAabb(nodes[node_ind].aabb, {1, 0, 1});

@@ -23,7 +23,9 @@ class Scene {
 
   void Render(float frame_frac);
 
-  void Update(float delta_time, const base::Vector2f& angles, float zoom);
+  void Update(float delta_time,
+              const base::Vector2f& angles,
+              const base::Vector3f& offset);
 
   void OnClick(const base::Vector2f& pos);
 

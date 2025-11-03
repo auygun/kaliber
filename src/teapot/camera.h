@@ -12,13 +12,10 @@ class Camera {
 
   Camera(const Camera& other);
 
-  void Create(const base::Vector3f& center,
-              float polar,
-              float azimuthal,
-              float radius);
+  void Create(const base::Vector3f& center, float polar, float azimuthal);
 
   void Move(const base::Vector3f& offset);
-  void Orbit(float polar, float azimuthal, float radius);
+  void Rotate(float polar, float azimuthal);
 
   // Returns debug camera matrix when it's active.
   const base::Matrix4f& GetMatrix() const;
@@ -29,8 +26,6 @@ class Camera {
   void ToggleDebugCamera();
 
  private:
-  base::Vector3f center_{0};
-  float radius_ = 0;
   float polar_ = 0;
   float azimuthal_ = 0;
   base::Matrix4f matrix_{1};
