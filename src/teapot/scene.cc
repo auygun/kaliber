@@ -132,7 +132,7 @@ void Scene::Create(Renderer* renderer) {
       core_data.local_transform.Create(Quatf({0.0f, 0.1f, 0.0f}), {2.2f, 0, 0});
       // core_data.local_transform.M_x_RotY(0.01);
       registry_.AddComponent(entity, core_data);
-      registry_.GetComponent<CoreDataComponent>(parent).AddChild(entity);
+      SetParent(entity, parent);
       parent = entity;
     }
   }
@@ -146,7 +146,7 @@ void Scene::Create(Renderer* renderer) {
           .name{"model"}, .parent{parent}, .model_index{1}};
       core_data.local_transform.Create(Quatf({0.0f, 0.1f, 0.0f}), {2.2f, 0, 0});
       registry_.AddComponent(entity, core_data);
-      registry_.GetComponent<CoreDataComponent>(parent).AddChild(entity);
+      SetParent(entity, parent);
       parent = entity;
     }
   }
@@ -164,7 +164,7 @@ void Scene::Create(Renderer* renderer) {
                                        Vector3f{200.0f, -100.0f, 0.0f});
       core_data.local_transform.Multiply(0.05f);
       registry_.AddComponent(entity, core_data);
-      registry_.GetComponent<CoreDataComponent>(root_entity_).AddChild(entity);
+      SetParent(entity, root_entity_);
       // parent = entity;
     }
   }
@@ -197,7 +197,7 @@ void Scene::Create(Renderer* renderer) {
         .name{"model"}, .parent{parent}, .model_index{models_.size() - 1}};
     core_data.local_transform.Create(Quatf({0.0f, 0.0f, 0.1f}), {2.2f, 0, 0});
     registry_.AddComponent(entity, core_data);
-    registry_.GetComponent<CoreDataComponent>(parent).AddChild(entity);
+    SetParent(entity, parent);
     parent = entity;
   }
 
@@ -233,10 +233,10 @@ void Scene::Render(float frame_frac) {
     std::vector<WorldObject> world_objects;
     // Skip root entity and iterate through.
     for (auto [entity, core_data] : registry_.View<CoreDataComponent>(1)) {
-      OBBf obb{GetWorldTransform(core_data),
+      OBBf obb{GetWorldTransform(entity),
                models_[core_data.model_index].GetExtents()};
       world_objects.emplace_back(entity, core_data.model_index, obb,
-                                 GetWorldTransform(core_data));
+                                 GetWorldTransform(entity));
     }
     if (world_objects.empty())
       break;
@@ -376,109 +376,157 @@ void Scene::UploadSceneData() {
   renderer_->UpdateBuffer(lights_ubo_, &lights_, sizeof(lights_));
 }
 
-void Scene::SetDirty(CoreDataComponent& core_data) {
-  if (core_data.is_dirty)
-    return;
-
+void Scene::SetDirty(Entity entity) {
   auto* pool = registry_.GetPool<CoreDataComponent>();
 
   std::deque<Entity> stack;
-  for (Entity child : core_data.children)
-    stack.push_back(child);
+  stack.push_back(entity);
 
   while (!stack.empty()) {
-    Entity entity = stack.back();
+    Entity child_entity = stack.back();
     stack.pop_back();
 
-    DCHECK(pool->Has(entity));
-    auto& child_core_data = pool->Get(entity);
-    child_core_data.is_dirty = true;
-    for (Entity child : child_core_data.children)
-      stack.push_back(child);
-  }
+    DCHECK(pool->Has(child_entity));
+    auto& child_core_data = pool->Get(child_entity);
 
-  core_data.is_dirty = true;
+    // If this child is already dirty all the children must also be dirty.
+    if (child_core_data.is_dirty)
+      break;
+
+    child_core_data.is_dirty = true;
+
+    // Iterate the children of this child.
+    Entity child_of_child = child_core_data.first_child;
+    while (child_of_child != NULL_ENTITY) {
+      stack.push_back(child_of_child);
+      DCHECK(pool->Has(child_of_child));  // Sanity check
+      child_of_child = pool->Get(child_of_child).next_sibling;
+    }
+  }
 }
 
-const base::Matrix4f& Scene::GetWorldTransform(CoreDataComponent& core_data) {
-  if (core_data.is_dirty) {
-    auto* pool = registry_.GetPool<CoreDataComponent>();
+const base::Matrix4f& Scene::GetWorldTransform(Entity entity) {
+  // Get the component pool and the data for the current entity.
+  auto* pool = registry_.GetPool<CoreDataComponent>();
+  DCHECK(pool->Has(entity));
+  auto& core_data = pool->Get(entity);
 
-    std::deque<Entity> stack;
-    CoreDataComponent* parent_core_data = &core_data;
-    while (parent_core_data->parent != NULL_ENTITY) {
-      DCHECK(pool->Has(parent_core_data->parent));
-      stack.push_back(parent_core_data->parent);
-      parent_core_data = &pool->Get(parent_core_data->parent);
-    }
-
-    base::Matrix4f world_transform{1};
-    while (!stack.empty()) {
-      Entity entity = stack.back();
-      stack.pop_back();
-
-      auto& parent_core_data = pool->Get(entity);
-      world_transform.Multiply(parent_core_data.local_transform,
-                               parent_core_data.world_transform);
-      world_transform = parent_core_data.world_transform;
-      parent_core_data.is_dirty = false;
-    }
-
-    world_transform.Multiply(core_data.local_transform,
-                             core_data.world_transform);
-    core_data.is_dirty = false;
+  // If it's not dirty, its transform is already correct. We're done.
+  if (!core_data.is_dirty) {
+    return core_data.world_transform;
   }
 
+  // It's dirty, so we must recalculate.
+  if (core_data.parent == NULL_ENTITY) {
+    // This is a root node. Its world transform is just its local transform.
+    core_data.world_transform = core_data.local_transform;
+  } else {
+    // This is a child node. Recursively call this function on our parent.
+    const base::Matrix4f& parent_world_transform =
+        GetWorldTransform(core_data.parent);
+
+    // Now, calculate our own world transform.
+    parent_world_transform.Multiply(core_data.local_transform,
+                                    core_data.world_transform);
+  }
+
+  // Mark ourselves as clean and return the new transform.
+  core_data.is_dirty = false;
   return core_data.world_transform;
 }
 
 void Scene::SetParent(Entity entity, Entity new_parent) {
   DCHECK(entity != NULL_ENTITY);
+  DCHECK(entity != new_parent);
 
   auto* pool = registry_.GetPool<CoreDataComponent>();
-
-  // Remove the entity from its parent's child list.
   DCHECK(pool->Has(entity));
   auto& core_data = pool->Get(entity);
-  if (core_data.parent != NULL_ENTITY) {
-    DCHECK(pool->Has(core_data.parent));
-    pool->Get(core_data.parent).RemoveChild(entity);
-  }
 
-  // Set the new parent and add to its child list.
+  DetachFromParent(core_data);
+
+  // Link to new parent's sibling list (O(1)).
   core_data.parent = new_parent;
   if (new_parent != NULL_ENTITY) {
     DCHECK(pool->Has(new_parent));
-    pool->Get(new_parent).AddChild(entity);
+    auto& new_parent_core = pool->Get(new_parent);
+    const Entity old_first_child = new_parent_core.first_child;
+
+    // Insert this entity at the front of the new parent's list.
+    new_parent_core.first_child = entity;
+    core_data.prev_sibling = NULL_ENTITY;
+    core_data.next_sibling = old_first_child;
+
+    if (old_first_child != NULL_ENTITY) {
+      // The old first child's prev must now point to us.
+      pool->Get(old_first_child).prev_sibling = entity;
+    }
+  } else {
+    // This entity is now a root, clear its sibling pointers.
+    core_data.prev_sibling = NULL_ENTITY;
+    core_data.next_sibling = NULL_ENTITY;
   }
 
-  SetDirty(core_data);
+  // Mark the entity as dirty.
+  SetDirty(entity);
+}
+
+void Scene::DetachFromParent(CoreDataComponent& core_data) {
+  const Entity old_parent = core_data.parent;
+
+  // Unlink from old parent's sibling list (O(1)).
+  if (old_parent != NULL_ENTITY) {
+    auto* pool = registry_.GetPool<CoreDataComponent>();
+
+    DCHECK(pool->Has(old_parent));
+    auto& old_parent_core = pool->Get(old_parent);
+    const Entity prev = core_data.prev_sibling;
+    const Entity next = core_data.next_sibling;
+
+    // Unlink from the doubly-linked sibling list.
+    if (prev != NULL_ENTITY) {
+      pool->Get(prev).next_sibling = next;
+    } else {
+      // This was the first child, so update parent's pointer.
+      old_parent_core.first_child = next;
+    }
+
+    if (next != NULL_ENTITY) {
+      // Our next sibling's prev must point to our prev.
+      pool->Get(next).prev_sibling = prev;
+    }
+  }
 }
 
 void Scene::DestroyEntityAndChildren(Entity entity) {
   DCHECK(entity != NULL_ENTITY);
 
   auto* pool = registry_.GetPool<CoreDataComponent>();
-
-  // Remove the entity from its parent's child list.
   DCHECK(pool->Has(entity));
   auto& core_data = pool->Get(entity);
-  if (core_data.parent != NULL_ENTITY) {
-    DCHECK(pool->Has(core_data.parent));
-    pool->Get(core_data.parent).RemoveChild(entity);
-  }
+
+  DetachFromParent(core_data);
 
   // Cascade delete all children.
   std::deque<Entity> stack;
   stack.push_back(entity);
+
   while (!stack.empty()) {
     Entity entity_to_destroy = stack.back();
     stack.pop_back();
 
     DCHECK(pool->Has(entity_to_destroy));
-    auto& core_data = pool->Get(entity_to_destroy);
-    for (Entity child : core_data.children)
+    auto& core = pool->Get(entity_to_destroy);
+
+    // Iterate the sibling list to find all children.
+    Entity child = core.first_child;
+    while (child != NULL_ENTITY) {
       stack.push_back(child);
+      DCHECK(pool->Has(child));
+      child = pool->Get(child).next_sibling;
+    }
+
+    // Finally, destroy the entity itself.
     registry_.DestroyEntity(entity_to_destroy);
   }
 }
@@ -707,15 +755,6 @@ Entity Scene::SelectEntity(const std::vector<BVHNode>& nodes, const Rayf& ray) {
   }
 
   return selected_entity;
-}
-
-void Scene::CoreDataComponent::AddChild(Entity child_entity) {
-  children.push_back(child_entity);
-}
-
-void Scene::CoreDataComponent::RemoveChild(Entity child_entity) {
-  children.erase(std::remove(children.begin(), children.end(), child_entity),
-                 children.end());
 }
 
 }  // namespace eng
