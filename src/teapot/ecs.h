@@ -173,19 +173,6 @@ class Registry {
     return pool && pool->Has(entity);
   }
 
-  // Create the ComponentPool for type T.
-  template <typename T>
-  ComponentPool<T>* CreatePool() {
-    std::type_index type_index = std::type_index(typeid(T));
-
-    // Create a new pool for this component type if doesn't exist.
-    if (component_pools_.find(type_index) == component_pools_.end())
-      component_pools_[type_index] = std::make_unique<ComponentPool<T>>();
-
-    // Downcast and return the pointer
-    return static_cast<ComponentPool<T>*>(component_pools_[type_index].get());
-  }
-
   // Access to the ComponentPool for type T.
   template <typename T>
   ComponentPool<T>* GetPool() {
@@ -193,7 +180,7 @@ class Registry {
 
     // Create a new pool for this component type if doesn't exist.
     if (component_pools_.find(type_index) == component_pools_.end())
-      return nullptr;
+      component_pools_[type_index] = std::make_unique<ComponentPool<T>>();
 
     // Downcast and return the pointer
     return static_cast<ComponentPool<T>*>(component_pools_[type_index].get());

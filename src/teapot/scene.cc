@@ -105,7 +105,7 @@ void Scene::Create(Renderer* renderer) {
                                        kPrimitive_Triangles, true, false,
                                        CullMode::kBack);
 
-  registry_.CreatePool<CoreDataComponent>();
+  core_data_pool_ = registry_.GetPool<CoreDataComponent>();
 
   root_entity_ = registry_.CreateEntity();
   registry_.AddComponent(root_entity_, CoreDataComponent{.name{"root"}})
@@ -387,15 +387,13 @@ void Scene::SetDirty(CoreDataComponent& core_data) {
   if (core_data.first_child == NULL_ENTITY)
     return;  // No children.
 
-  auto* pool = registry_.GetPool<CoreDataComponent>();
-
   // Now, add all of the entity's children to the stack.
   std::deque<Entity> stack;
   Entity child = core_data.first_child;
   while (child != NULL_ENTITY) {
     stack.push_back(child);
-    DCHECK(pool->Has(child));
-    child = pool->Get(child).next_sibling;
+    DCHECK(core_data_pool_->Has(child));
+    child = core_data_pool_->Get(child).next_sibling;
   }
 
   // Process all descendants.
@@ -403,8 +401,8 @@ void Scene::SetDirty(CoreDataComponent& core_data) {
     Entity child_entity = stack.back();
     stack.pop_back();
 
-    DCHECK(pool->Has(child_entity));
-    auto& child_core_data = pool->Get(child_entity);
+    DCHECK(core_data_pool_->Has(child_entity));
+    auto& child_core_data = core_data_pool_->Get(child_entity);
 
     // If this child is dirty, its children are also dirty.
     // Skip it and move to the next item in the stack.
@@ -417,17 +415,16 @@ void Scene::SetDirty(CoreDataComponent& core_data) {
     Entity child_of_child = child_core_data.first_child;
     while (child_of_child != NULL_ENTITY) {
       stack.push_back(child_of_child);
-      DCHECK(pool->Has(child_of_child));
-      child_of_child = pool->Get(child_of_child).next_sibling;
+      DCHECK(core_data_pool_->Has(child_of_child));
+      child_of_child = core_data_pool_->Get(child_of_child).next_sibling;
     }
   }
 }
 
 const base::Matrix4f& Scene::GetWorldTransform(Entity entity) {
-  // Get the component pool and the data for the current entity.
-  auto* pool = registry_.GetPool<CoreDataComponent>();
-  DCHECK(pool->Has(entity));
-  auto& core_data = pool->Get(entity);
+  DCHECK(entity != NULL_ENTITY);
+  DCHECK(core_data_pool_->Has(entity));
+  auto& core_data = core_data_pool_->Get(entity);
 
   // If it's not dirty, its transform is already correct. We're done.
   if (!core_data.is_dirty) {
@@ -456,18 +453,16 @@ const base::Matrix4f& Scene::GetWorldTransform(Entity entity) {
 void Scene::SetParent(Entity entity, Entity new_parent) {
   DCHECK(entity != NULL_ENTITY);
   DCHECK(entity != new_parent);
-
-  auto* pool = registry_.GetPool<CoreDataComponent>();
-  DCHECK(pool->Has(entity));
-  auto& core_data = pool->Get(entity);
+  DCHECK(core_data_pool_->Has(entity));
+  auto& core_data = core_data_pool_->Get(entity);
 
   DetachFromParent(core_data);
 
   // Link to new parent's sibling list (O(1)).
   core_data.parent = new_parent;
   if (new_parent != NULL_ENTITY) {
-    DCHECK(pool->Has(new_parent));
-    auto& new_parent_core = pool->Get(new_parent);
+    DCHECK(core_data_pool_->Has(new_parent));
+    auto& new_parent_core = core_data_pool_->Get(new_parent);
     const Entity old_first_child = new_parent_core.first_child;
 
     // Insert this entity at the front of the new parent's list.
@@ -477,7 +472,7 @@ void Scene::SetParent(Entity entity, Entity new_parent) {
 
     if (old_first_child != NULL_ENTITY) {
       // The old first child's prev must now point to us.
-      pool->Get(old_first_child).prev_sibling = entity;
+      core_data_pool_->Get(old_first_child).prev_sibling = entity;
     }
   } else {
     // This entity is now a root, clear its sibling pointers.
@@ -494,16 +489,14 @@ void Scene::DetachFromParent(CoreDataComponent& core_data) {
 
   // Unlink from old parent's sibling list (O(1)).
   if (old_parent != NULL_ENTITY) {
-    auto* pool = registry_.GetPool<CoreDataComponent>();
-
-    DCHECK(pool->Has(old_parent));
-    auto& old_parent_core = pool->Get(old_parent);
+    DCHECK(core_data_pool_->Has(old_parent));
+    auto& old_parent_core = core_data_pool_->Get(old_parent);
     const Entity prev = core_data.prev_sibling;
     const Entity next = core_data.next_sibling;
 
     // Unlink from the doubly-linked sibling list.
     if (prev != NULL_ENTITY) {
-      pool->Get(prev).next_sibling = next;
+      core_data_pool_->Get(prev).next_sibling = next;
     } else {
       // This was the first child, so update parent's pointer.
       old_parent_core.first_child = next;
@@ -511,17 +504,15 @@ void Scene::DetachFromParent(CoreDataComponent& core_data) {
 
     if (next != NULL_ENTITY) {
       // Our next sibling's prev must point to our prev.
-      pool->Get(next).prev_sibling = prev;
+      core_data_pool_->Get(next).prev_sibling = prev;
     }
   }
 }
 
 void Scene::DestroyEntityAndChildren(Entity entity) {
   DCHECK(entity != NULL_ENTITY);
-
-  auto* pool = registry_.GetPool<CoreDataComponent>();
-  DCHECK(pool->Has(entity));
-  auto& core_data = pool->Get(entity);
+  DCHECK(core_data_pool_->Has(entity));
+  auto& core_data = core_data_pool_->Get(entity);
 
   DetachFromParent(core_data);
 
@@ -533,15 +524,15 @@ void Scene::DestroyEntityAndChildren(Entity entity) {
     Entity entity_to_destroy = stack.back();
     stack.pop_back();
 
-    DCHECK(pool->Has(entity_to_destroy));
-    auto& core = pool->Get(entity_to_destroy);
+    DCHECK(core_data_pool_->Has(entity_to_destroy));
+    auto& core = core_data_pool_->Get(entity_to_destroy);
 
     // Iterate the sibling list to find all children.
     Entity child = core.first_child;
     while (child != NULL_ENTITY) {
       stack.push_back(child);
-      DCHECK(pool->Has(child));
-      child = pool->Get(child).next_sibling;
+      DCHECK(core_data_pool_->Has(child));
+      child = core_data_pool_->Get(child).next_sibling;
     }
 
     // Finally, destroy the entity itself.
