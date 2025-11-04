@@ -149,7 +149,7 @@ class Scene {
   const base::Matrix4f& GetWorldTransform(Entity entity);
 
   // Marks this entity and all its descendants as dirty.
-  void SetDirty(Entity entity);
+  void SetDirty(CoreDataComponent& core_data);
 
   void DetachFromParent(CoreDataComponent& core_data);
 

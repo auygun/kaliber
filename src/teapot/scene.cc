@@ -376,12 +376,29 @@ void Scene::UploadSceneData() {
   renderer_->UpdateBuffer(lights_ubo_, &lights_, sizeof(lights_));
 }
 
-void Scene::SetDirty(Entity entity) {
+void Scene::SetDirty(CoreDataComponent& core_data) {
+  // If the entity is already dirty, all its descendants must also be dirty.
+  if (core_data.is_dirty)
+    return;  // We're done.
+
+  // Mark the entity as dirty.
+  core_data.is_dirty = true;
+
+  if (core_data.first_child == NULL_ENTITY)
+    return;  // No children.
+
   auto* pool = registry_.GetPool<CoreDataComponent>();
 
+  // Now, add all of the entity's children to the stack.
   std::deque<Entity> stack;
-  stack.push_back(entity);
+  Entity child = core_data.first_child;
+  while (child != NULL_ENTITY) {
+    stack.push_back(child);
+    DCHECK(pool->Has(child));
+    child = pool->Get(child).next_sibling;
+  }
 
+  // Process all descendants.
   while (!stack.empty()) {
     Entity child_entity = stack.back();
     stack.pop_back();
@@ -389,17 +406,18 @@ void Scene::SetDirty(Entity entity) {
     DCHECK(pool->Has(child_entity));
     auto& child_core_data = pool->Get(child_entity);
 
-    // If this child is already dirty all the children must also be dirty.
+    // If this child is dirty, its children are also dirty.
+    // Skip it and move to the next item in the stack.
     if (child_core_data.is_dirty)
-      break;
+      continue;
 
     child_core_data.is_dirty = true;
 
-    // Iterate the children of this child.
+    // Iterate the children of this child and add them to the stack.
     Entity child_of_child = child_core_data.first_child;
     while (child_of_child != NULL_ENTITY) {
       stack.push_back(child_of_child);
-      DCHECK(pool->Has(child_of_child));  // Sanity check
+      DCHECK(pool->Has(child_of_child));
       child_of_child = pool->Get(child_of_child).next_sibling;
     }
   }
@@ -468,7 +486,7 @@ void Scene::SetParent(Entity entity, Entity new_parent) {
   }
 
   // Mark the entity as dirty.
-  SetDirty(entity);
+  SetDirty(core_data);
 }
 
 void Scene::DetachFromParent(CoreDataComponent& core_data) {
