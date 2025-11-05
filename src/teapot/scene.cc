@@ -127,11 +127,11 @@ void Scene::Create(Renderer* renderer) {
 
     for (size_t i = 0; i < 10; ++i) {
       Entity entity = registry_.CreateEntity();
-      CoreDataComponent core_data{
-          .name{"model"}, .parent{parent}, .model_index{0}};
+      CoreDataComponent core_data{.name{"model"}, .parent{parent}};
       core_data.local_transform.Create(Quatf({0.0f, 0.1f, 0.0f}), {2.2f, 0, 0});
       // core_data.local_transform.M_x_RotY(0.01);
       registry_.AddComponent(entity, core_data);
+      registry_.AddComponent(entity, ModelComponent{0});
       SetParent(entity, parent);
       parent = entity;
     }
@@ -142,10 +142,10 @@ void Scene::Create(Renderer* renderer) {
 
     for (size_t i = 0; i < 3; ++i) {
       Entity entity = registry_.CreateEntity();
-      CoreDataComponent core_data{
-          .name{"model"}, .parent{parent}, .model_index{1}};
+      CoreDataComponent core_data{.name{"model"}, .parent{parent}};
       core_data.local_transform.Create(Quatf({0.0f, 0.1f, 0.0f}), {2.2f, 0, 0});
       registry_.AddComponent(entity, core_data);
+      registry_.AddComponent(entity, ModelComponent{1});
       SetParent(entity, parent);
       parent = entity;
     }
@@ -158,12 +158,12 @@ void Scene::Create(Renderer* renderer) {
 
     for (size_t i = 0; i < 1; ++i) {
       Entity entity = registry_.CreateEntity();
-      CoreDataComponent core_data{
-          .name{"model"}, .parent{root_entity_}, .model_index{2}};
+      CoreDataComponent core_data{.name{"model"}, .parent{root_entity_}};
       core_data.local_transform.Create(Quatf({0.0f, 0.0f, 0.0f}),
                                        Vector3f{200.0f, -100.0f, 0.0f});
       core_data.local_transform.Multiply(0.05f);
       registry_.AddComponent(entity, core_data);
+      registry_.AddComponent(entity, ModelComponent{2});
       SetParent(entity, root_entity_);
       // parent = entity;
     }
@@ -193,10 +193,10 @@ void Scene::Create(Renderer* renderer) {
 
   for (size_t i = 0; i < 10; ++i) {
     Entity entity = registry_.CreateEntity();
-    CoreDataComponent core_data{
-        .name{"model"}, .parent{parent}, .model_index{models_.size() - 1}};
+    CoreDataComponent core_data{.name{"model"}, .parent{parent}};
     core_data.local_transform.Create(Quatf({0.0f, 0.0f, 0.1f}), {2.2f, 0, 0});
     registry_.AddComponent(entity, core_data);
+    registry_.AddComponent(entity, ModelComponent{models_.size() - 1});
     SetParent(entity, parent);
     parent = entity;
   }
@@ -232,11 +232,12 @@ void Scene::Render(float frame_frac) {
   do {
     std::vector<WorldObject> world_objects;
     // Skip root entity and iterate through.
-    for (auto [entity, core_data] : registry_.View<CoreDataComponent>(1)) {
-      OBBf obb{GetWorldTransform(entity),
-               models_[core_data.model_index].GetExtents()};
-      world_objects.emplace_back(entity, core_data.model_index, obb,
-                                 GetWorldTransform(entity));
+    for (auto [entity2, core_data, model] :
+         registry_.View<CoreDataComponent, ModelComponent>(1)) {
+      OBBf obb{GetWorldTransform(entity2),
+               models_[model.model_index].GetExtents()};
+      world_objects.emplace_back(entity2, model.model_index, obb,
+                                 GetWorldTransform(entity2));
     }
     if (world_objects.empty())
       break;

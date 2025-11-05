@@ -55,6 +55,9 @@ class Scene {
     Entity first_child{NULL_ENTITY};
     Entity next_sibling{NULL_ENTITY};
     Entity prev_sibling{NULL_ENTITY};
+  };
+
+  struct ModelComponent {
     size_t model_index{(size_t)-1};
   };
 
