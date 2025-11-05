@@ -32,26 +32,32 @@ class ComponentPoolBase {
 template <typename T>
 class ComponentPool : public ComponentPoolBase {
  public:
-  // Adds a component for an entity.
-  T& Add(Entity entity, T component) {
-    // Ensure our sparse array is large enough
-    if (entity >= sparse_.size()) {
-      sparse_.resize(entity + 1, NULL_ENTITY);
-    }
+  // Adds a pre-existing component to an entity via copy or move. This is a
+  // convenience wrapper around Emplace.
+  template <typename U>
+  T& Add(Entity entity, U&& component) {
+    return Emplace(entity, std::forward<U>(component));
+  }
 
-    // If entity already has this component, just update it
+  // Constructs a component in-place for a given entity. This is the most
+  // efficient method as it forwards arguments directly to the component's
+  // constructor.
+  template <typename... Args>
+  T& Emplace(Entity entity, Args&&... args) {
+    // Ensure our sparse array is large enough
+    if (entity >= sparse_.size())
+      sparse_.resize(entity + 1, NULL_ENTITY);
+
+    // If entity already has this component, overwrite it.
     if (sparse_[entity] != NULL_ENTITY) {
-      dense_[sparse_[entity]] = component;
+      dense_[sparse_[entity]] = T(std::forward<Args>(args)...);
       return dense_[sparse_[entity]];
     }
 
     // Add the new component to the back of the dense array
-    size_t dense_index = dense_.size();
-    dense_.push_back(component);
+    sparse_[entity] = dense_.size();
+    dense_.emplace_back(std::forward<Args>(args)...);
     dense_to_entity_.push_back(entity);
-
-    // Update the sparse array to point to the new dense index
-    sparse_[entity] = dense_index;
 
     return dense_.back();
   }
@@ -139,30 +145,38 @@ class Registry {
       return;
 
     // Notify all pools that this entity is gone
-    for (auto const& [type, pool] : component_pools_)
+    for (auto* pool : pool_list_)
       pool->OnEntityDestroyed(entity);
 
     free_list_.push_back(entity);
   }
 
-  // Adds a component of type T to an entity.
+  // Adds a pre-existing component to an entity via copy or move. This is a
+  // convenience wrapper around EmplaceComponent.
   template <typename T>
-  T& AddComponent(Entity entity, T component) {
-    DCHECK(GetPool<T>());
-    return GetPool<T>()->Add(entity, component);
+  std::decay_t<T>& AddComponent(Entity entity, T&& component) {
+    using ComponentType = std::decay_t<T>;
+    return GetPool<ComponentType>()->Emplace(entity,
+                                             std::forward<T>(component));
+  }
+
+  // Constructs a component in-place for a given entity. This is the most
+  // efficient way to add a component as it avoids any intermediate copies or
+  // moves.
+  template <typename T, typename... Args>
+  T& EmplaceComponent(Entity entity, Args&&... args) {
+    return GetPool<T>()->Emplace(entity, std::forward<Args>(args)...);
   }
 
   // Removes a component of type T from an entity.
   template <typename T>
   void RemoveComponent(Entity entity) {
-    DCHECK(GetPool<T>());
     GetPool<T>()->Remove(entity);
   }
 
   // Gets the component of type T for an entity.
   template <typename T>
   T& GetComponent(Entity entity) {
-    DCHECK(GetPool<T>());
     return GetPool<T>()->Get(entity);
   }
 
@@ -173,17 +187,22 @@ class Registry {
     return pool && pool->Has(entity);
   }
 
-  // Access to the ComponentPool for type T.
+  // Get (or create) the ComponentPool for type T.
   template <typename T>
-  ComponentPool<T>* GetPool() {
-    std::type_index type_index = std::type_index(typeid(T));
+  ComponentPool<std::decay_t<T>>* GetPool() {
+    using RawType = std::decay_t<T>;
+    std::type_index type_index = std::type_index(typeid(RawType));
+    auto it = component_pools_.find(type_index);
 
     // Create a new pool for this component type if doesn't exist.
-    if (component_pools_.find(type_index) == component_pools_.end())
-      component_pools_[type_index] = std::make_unique<ComponentPool<T>>();
-
-    // Downcast and return the pointer
-    return static_cast<ComponentPool<T>*>(component_pools_[type_index].get());
+    if (it == component_pools_.end()) {
+      auto pool = std::make_unique<ComponentPool<RawType>>();
+      pool_list_.push_back(pool.get());
+      auto* raw_pool = pool.get();
+      component_pools_[type_index] = std::move(pool);
+      return raw_pool;
+    }
+    return static_cast<ComponentPool<RawType>*>(it->second.get());
   }
 
   // Returns an iterable view for all entities with a specific set of
@@ -206,6 +225,9 @@ class Registry {
   // Component management
   std::unordered_map<std::type_index, std::unique_ptr<ComponentPoolBase>>
       component_pools_;
+
+  // Side-list for fast iteration during destruction
+  std::vector<ComponentPoolBase*> pool_list_;
 };
 
 // An iterable object that a system uses to loop over all entities with a
