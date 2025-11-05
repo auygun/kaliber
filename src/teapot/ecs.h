@@ -237,17 +237,15 @@ class View {
         std::apply(
             [&](auto*... pools) {
               auto check = [&](auto* p) {
-                // Don't check the pool we're already iterating.
-                if (static_cast<ComponentPoolBase*>(p) == smallest_pool_)
-                  return true;
-                return p->Has(entity);
+                return (static_cast<ComponentPoolBase*>(p) == smallest_pool_) ||
+                       p->Has(entity);
               };
               has_all = (check(pools) && ...);
             },
-            pools_);  // Unpack the tuple of all pools
+            pools_);
 
         if (has_all)
-          break;   // Found a valid entity
+          return;  // Found a valid entity
         index_++;  // Keep searching
       }
     }
@@ -295,7 +293,7 @@ class View {
   // Constructor that accepts a variadic pack of component pools.
   View(size_t begin_index, ComponentPool<Components>*... pools)
       : pools_(std::make_tuple(pools...)), begin_index_(begin_index) {
-    // Find the smallest pool to iterate.
+    // Find smallest pool to optimized main iteration loop.
     size_t minSize = std::numeric_limits<size_t>::max();
     auto findSmallest = [&](auto* pool) {
       if (pool->GetDenseData().size() < minSize) {
@@ -318,8 +316,8 @@ class View {
 
  private:
   std::tuple<ComponentPool<Components>*...> pools_;
-  ComponentPoolBase* smallest_pool_;
-  std::vector<Entity>* dense_to_entity_map_;
+  ComponentPoolBase* smallest_pool_ = nullptr;
+  std::vector<Entity>* dense_to_entity_map_ = nullptr;
   size_t begin_index_;
 };
 
