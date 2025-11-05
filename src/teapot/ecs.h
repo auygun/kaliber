@@ -48,7 +48,7 @@ class ComponentPool : public ComponentPoolBase {
     // Add the new component to the back of the dense array
     size_t dense_index = dense_.size();
     dense_.push_back(component);
-    entity_to_dense_.push_back(entity);
+    dense_to_entity_.push_back(entity);
 
     // Update the sparse array to point to the new dense index
     sparse_[entity] = dense_index;
@@ -66,11 +66,11 @@ class ComponentPool : public ComponentPoolBase {
 
     // Get the last element's data
     T& last_component = dense_.back();
-    Entity last_entity = entity_to_dense_.back();
+    Entity last_entity = dense_to_entity_.back();
 
     // Swap the last element into the position of the one being removed
     dense_[dense_index_to_remove] = last_component;
-    entity_to_dense_[dense_index_to_remove] = last_entity;
+    dense_to_entity_[dense_index_to_remove] = last_entity;
 
     // Update the sparse array for the moved entity
     sparse_[last_entity] = dense_index_to_remove;
@@ -80,7 +80,7 @@ class ComponentPool : public ComponentPoolBase {
 
     // Pop the (now duplicate) last element
     dense_.pop_back();
-    entity_to_dense_.pop_back();
+    dense_to_entity_.pop_back();
   }
 
   // Gets the component for an entity.
@@ -102,7 +102,7 @@ class ComponentPool : public ComponentPoolBase {
 
   // Data access for the View.
   std::vector<T>& GetDenseData() { return dense_; }
-  std::vector<Entity>& GetDenseToEntityMap() { return entity_to_dense_; }
+  std::vector<Entity>& GetDenseToEntityMap() { return dense_to_entity_; }
 
  private:
   // Stores the actual component data, tightly packed.
@@ -112,7 +112,7 @@ class ComponentPool : public ComponentPoolBase {
   std::vector<size_t> sparse_;
 
   // Index = dense_ index, Value = Entity ID
-  std::vector<Entity> entity_to_dense_;
+  std::vector<Entity> dense_to_entity_;
 };
 
 // Forward declaration.
