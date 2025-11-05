@@ -216,11 +216,11 @@ class View {
  private:
   class Iterator {
    public:
-    Iterator(std::tuple<ComponentPool<Components>*...> pools,
+    Iterator(const std::tuple<ComponentPool<Components>*...>& pools,
              ComponentPoolBase* smallest_pool,
              std::vector<Entity>* dense_to_entity_map,
              size_t index)
-        : pools_(std::move(pools)),
+        : pools_(pools),
           smallest_pool_(smallest_pool),
           dense_to_entity_map_(dense_to_entity_map),
           index_(index) {
@@ -257,14 +257,17 @@ class View {
       Entity entity = (*dense_to_entity_map_)[index_];
 
       if constexpr (sizeof...(Components) == 1) {
-        // Single component case. Return std::pair<Entity, Component&>
-        return std::pair<Entity, Components&...>(
+        // Single component case. Return std::tuple<Entity, Component&>
+        return std::tuple<Entity, Components&...>(
             entity, std::get<0>(pools_)->GetDenseData()[index_]);
       } else {
         // Multi component case. Return std::tuple<Entity, Components&...>
         return std::apply(
-            [&](auto*... pools) {
-              return std::forward_as_tuple(entity, pools->Get(entity)...);
+            [entity](auto*... pools) {
+              // Use explicitly typed std::tuple to mix value (Entity) and
+              // references (Components&)
+              return std::tuple<Entity, Components&...>(entity,
+                                                        pools->Get(entity)...);
             },
             pools_);
       }
@@ -282,7 +285,7 @@ class View {
     }
 
    private:
-    std::tuple<ComponentPool<Components>*...> pools_;
+    const std::tuple<ComponentPool<Components>*...>& pools_;
     ComponentPoolBase* smallest_pool_;
     std::vector<Entity>* dense_to_entity_map_;
     size_t index_;
