@@ -62,31 +62,28 @@ class ComponentPool : public ComponentPoolBase {
     return dense_.back();
   }
 
-  // Removes a component from an entity. Uses the swap-and-pop O(1) operation.
+  // Removes a component from an entity using O(1) swap-and-pop.
   void Remove(Entity entity) {
     if (!Has(entity))
       return;
 
-    // Get the index of the component to remove
     size_t dense_index_to_remove = sparse_[entity];
-
-    // Get the last element's data
-    T& last_component = dense_.back();
-    Entity last_entity = dense_to_entity_.back();
+    size_t last_dense_index = dense_.size() - 1;
+    Entity last_entity = dense_to_entity_[last_dense_index];
 
     // Swap the last element into the position of the one being removed
-    dense_[dense_index_to_remove] = last_component;
+    dense_[dense_index_to_remove] = std::move(dense_[last_dense_index]);
     dense_to_entity_[dense_index_to_remove] = last_entity;
 
     // Update the sparse array for the moved entity
     sparse_[last_entity] = dense_index_to_remove;
 
-    // Invalidate the removed entity's sparse entry
-    sparse_[entity] = NULL_ENTITY;
-
-    // Pop the (now duplicate) last element
+    // Pop the last element
     dense_.pop_back();
     dense_to_entity_.pop_back();
+
+    // Invalidate the removed entity
+    sparse_[entity] = NULL_ENTITY;
   }
 
   // Gets the component for an entity.
@@ -138,11 +135,14 @@ class Registry {
     return next_entity_id_++;
   }
 
-  // Destroys an entity, removing all its components and adding its ID to the
-  // free list for recycling.
+  // Destroys an entity, removing all its components and recycling its ID.
   void DestroyEntity(Entity entity) {
     if (entity == NULL_ENTITY)
       return;
+
+    // This might severely slow down debug builds.
+    DCHECK(std::find(free_list_.begin(), free_list_.end(), entity) ==
+           free_list_.end());
 
     // Notify all pools that this entity is gone
     for (auto* pool : pool_list_)
@@ -153,6 +153,8 @@ class Registry {
 
   // Adds a pre-existing component to an entity via copy or move. This is a
   // convenience wrapper around EmplaceComponent.
+  // Uses std::decay_t<T> to ensure we always use the raw component type for the
+  // pool, even if a reference is passed.
   template <typename T>
   std::decay_t<T>& AddComponent(Entity entity, T&& component) {
     using ComponentType = std::decay_t<T>;
@@ -188,6 +190,7 @@ class Registry {
   }
 
   // Get (or create) the ComponentPool for type T.
+  // Uses std::decay_t automatically for safety.
   template <typename T>
   ComponentPool<std::decay_t<T>>* GetPool() {
     using RawType = std::decay_t<T>;
@@ -209,11 +212,7 @@ class Registry {
   // components.
   template <typename... Components>
   View<Components...> View(size_t begin_index = 0) {
-    // Ensure the view is not empty
-    static_assert(sizeof...(Components) > 0,
-                  "View must be called with at least one component type.");
-
-    // Pass all pools to the constructor using a pack expansion
+    static_assert(sizeof...(Components) > 0, "View must have > 0 components.");
     return eng::View<Components...>(begin_index, GetPool<Components>()...);
   }
 
@@ -222,7 +221,7 @@ class Registry {
   size_t next_entity_id_ = 0;
   std::deque<Entity> free_list_;
 
-  // Component management
+  // Ownership of pools by type.
   std::unordered_map<std::type_index, std::unique_ptr<ComponentPoolBase>>
       component_pools_;
 
@@ -246,6 +245,8 @@ class View {
           smallest_pool_(smallest_pool),
           dense_to_entity_map_(dense_to_entity_map),
           index_(index) {
+      // If we have multiple components, we need to find the first valid entity
+      // that has ALL of them.
       if constexpr (sizeof...(Components) > 1)
         FindNextValid();
     }
@@ -255,6 +256,7 @@ class View {
       while (index_ < dense_to_entity_map_->size()) {
         Entity entity = (*dense_to_entity_map_)[index_];
 
+        // Check if this entity exists in all other pools
         bool has_all = true;
         std::apply(
             [&](auto*... pools) {
@@ -262,6 +264,7 @@ class View {
                 return (static_cast<ComponentPoolBase*>(p) == smallest_pool_) ||
                        p->Has(entity);
               };
+              // Fold expression to check all pools
               has_all = (check(pools) && ...);
             },
             pools_);
@@ -273,19 +276,19 @@ class View {
     }
 
     // Returns a tuple of (Entity, Component&, Component&...).
+    // We return explicitly by tuple to ensure Entity is copied by value,
+    // while components are returned by reference.
     auto operator*() {
       Entity entity = (*dense_to_entity_map_)[index_];
 
       if constexpr (sizeof...(Components) == 1) {
-        // Single component case. Return std::tuple<Entity, Component&>
+        // Optimized single component case.
         return std::tuple<Entity, Components&...>(
             entity, std::get<0>(pools_)->GetDenseData()[index_]);
       } else {
         // Multi component case. Return std::tuple<Entity, Components&...>
         return std::apply(
             [entity](auto*... pools) {
-              // Use explicitly typed std::tuple to mix value (Entity) and
-              // references (Components&)
               return std::tuple<Entity, Components&...>(entity,
                                                         pools->Get(entity)...);
             },
@@ -315,7 +318,7 @@ class View {
   // Constructor that accepts a variadic pack of component pools.
   View(size_t begin_index, ComponentPool<Components>*... pools)
       : pools_(std::make_tuple(pools...)), begin_index_(begin_index) {
-    // Find smallest pool to optimized main iteration loop.
+    // Find the smallest pool to drive the main iteration loop efficiently.
     size_t minSize = std::numeric_limits<size_t>::max();
     auto findSmallest = [&](auto* pool) {
       if (pool->GetDenseData().size() < minSize) {
