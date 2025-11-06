@@ -7,6 +7,8 @@ game("teapot") {
     "scene.cc",
     "scene.h",
     "teapot.cc",
+    "ecs.h",
+    "builtin_components.h",
   ]
   deps = [
     "//assets/teapot",

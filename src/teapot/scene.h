@@ -1,12 +1,14 @@
 #ifndef TEAPOT_SCENE_H
 #define TEAPOT_SCENE_H
 
+#include <string>
 #include <vector>
 
 #include "base/vecmath.h"
 #include "engine/debug_layer.h"
 #include "engine/model.h"
 #include "engine/renderer/renderer_types.h"
+#include "teapot/builtin_components.h"
 #include "teapot/camera.h"
 #include "teapot/ecs.h"
 
@@ -39,26 +41,6 @@ class Scene {
     size_t model_ind = (size_t)-1;
     base::OBBf obb;
     base::Matrix4f transform{1};
-  };
-
-  // The component for storing parent-child relationships and transformations of
-  // world objects. This is the core of the scene graph.
-  struct CoreDataComponent {
-    std::string name;
-
-    base::Matrix4f local_transform{1};
-    base::Matrix4f world_transform{1};
-    bool is_dirty{true};
-
-    // Hierarchy (Doubly-Linked Sibling List)
-    Entity parent{NULL_ENTITY};
-    Entity first_child{NULL_ENTITY};
-    Entity next_sibling{NULL_ENTITY};
-    Entity prev_sibling{NULL_ENTITY};
-  };
-
-  struct ModelComponent {
-    size_t model_index{(size_t)-1};
   };
 
   struct BVHNode {
