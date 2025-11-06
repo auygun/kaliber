@@ -1,5 +1,5 @@
-#ifndef TEAPOT_BUILTIN_COMPONENTS_H
-#define TEAPOT_BUILTIN_COMPONENTS_H
+#ifndef TEAPOT_COMPONENTS_H
+#define TEAPOT_COMPONENTS_H
 
 #include "base/vecmath.h"
 #include "teapot/ecs.h"
@@ -28,4 +28,4 @@ struct ModelComponent {
 
 }  // namespace eng
 
-#endif  // TEAPOT_BUILTIN_COMPONENTS_H
+#endif  // TEAPOT_COMPONENTS_H

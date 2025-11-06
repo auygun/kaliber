@@ -8,7 +8,7 @@
 #include "engine/debug_layer.h"
 #include "engine/model.h"
 #include "engine/renderer/renderer_types.h"
-#include "teapot/builtin_components.h"
+#include "teapot/components.h"
 #include "teapot/camera.h"
 #include "teapot/ecs.h"
 
