@@ -57,6 +57,9 @@ void Engine::Run() {
   timer_ = DeltaTimer();
   float accumulator = 0.0f;
 
+  // Maximum time we allow the simulation to fall behind real-time.
+  constexpr float max_accumulator = 0.25f;  // 250ms is a common safe value.
+
   for (;;) {
     platform_->Update();
     if (platform_->should_exit())
@@ -67,6 +70,10 @@ void Engine::Run() {
 
     // Accumulate time.
     accumulator += timer_.Delta();
+
+    // Prevent the "Spiral of Death" by capping the accumulated time.
+    if (accumulator > max_accumulator)
+      accumulator = max_accumulator;
 
     // Subdivide the frame time using fixed time steps.
     while (accumulator >= time_step_) {
