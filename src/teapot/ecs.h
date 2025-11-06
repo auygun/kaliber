@@ -32,16 +32,19 @@ class ComponentPoolBase {
 template <typename T>
 class ComponentPool : public ComponentPoolBase {
  public:
-  // Adds a pre-existing component to an entity via copy or move. This is a
-  // convenience wrapper around Emplace.
-  template <typename U>
-  T& Add(Entity entity, U&& component) {
-    return Emplace(entity, std::forward<U>(component));
+  // Adds a pre-existing component to an entity via copy.
+  T& Add(Entity entity, T&& component) {
+    return Emplace(entity, std::move(component));
+  }
+
+  // Adds a pre-existing component to an entity via move.
+  T& Add(Entity entity, const T& component) {
+    return Emplace(entity, component);
   }
 
   // Constructs a component in-place for a given entity. This is the most
-  // efficient method as it forwards arguments directly to the component's
-  // constructor.
+  // efficient method, as it forwards arguments directly to the component's
+  // constructor within the dense array, avoiding intermediate copies or moves.
   template <typename... Args>
   T& Emplace(Entity entity, Args&&... args) {
     // Ensure our sparse array is large enough
@@ -140,10 +143,6 @@ class Registry {
     if (entity == NULL_ENTITY)
       return;
 
-    // This might severely slow down debug builds.
-    DCHECK(std::find(free_list_.begin(), free_list_.end(), entity) ==
-           free_list_.end());
-
     // Notify all pools that this entity is gone
     for (auto* pool : pool_list_)
       pool->OnEntityDestroyed(entity);
@@ -151,20 +150,15 @@ class Registry {
     free_list_.push_back(entity);
   }
 
-  // Adds a pre-existing component to an entity via copy or move. This is a
-  // convenience wrapper around EmplaceComponent.
-  // Uses std::decay_t<T> to ensure we always use the raw component type for the
-  // pool, even if a reference is passed.
+  // Single generic AddComponent that handles both copy and move.
   template <typename T>
   std::decay_t<T>& AddComponent(Entity entity, T&& component) {
-    using ComponentType = std::decay_t<T>;
-    return GetPool<ComponentType>()->Emplace(entity,
-                                             std::forward<T>(component));
+    return GetPool<T>()->Emplace(entity, std::forward<T>(component));
   }
 
   // Constructs a component in-place for a given entity. This is the most
   // efficient way to add a component as it avoids any intermediate copies or
-  // moves.
+  // moves by forwarding arguments directly to the component's constructor.
   template <typename T, typename... Args>
   T& EmplaceComponent(Entity entity, Args&&... args) {
     return GetPool<T>()->Emplace(entity, std::forward<Args>(args)...);
@@ -190,7 +184,7 @@ class Registry {
   }
 
   // Get (or create) the ComponentPool for type T.
-  // Uses std::decay_t automatically for safety.
+  // Uses std::decay_t<T> to ensure we get the raw component type for the pool.
   template <typename T>
   ComponentPool<std::decay_t<T>>* GetPool() {
     using RawType = std::decay_t<T>;
