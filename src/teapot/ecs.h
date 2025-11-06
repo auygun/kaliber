@@ -33,6 +33,9 @@ class ComponentPoolBase {
 template <typename T>
 class ComponentPool : public ComponentPoolBase {
  public:
+  ComponentPool(std::vector<std::vector<ComponentPoolBase*>>* entity_pools)
+      : entity_pools_{entity_pools} {}
+
   // Adds a pre-existing component to an entity via copy.
   T& Add(Entity entity, T&& component) {
     return Emplace(entity, std::move(component));
@@ -63,6 +66,8 @@ class ComponentPool : public ComponentPoolBase {
     dense_.emplace_back(std::forward<Args>(args)...);
     dense_to_entity_.push_back(entity);
 
+    TrackPoolForEntity(entity);
+
     return dense_.back();
   }
 
@@ -88,6 +93,8 @@ class ComponentPool : public ComponentPoolBase {
 
     // Invalidate the removed entity
     sparse_[entity] = NULL_ENTITY;
+
+    UntrackPoolForEntity(entity);
   }
 
   // Gets the component for an entity.
@@ -120,6 +127,27 @@ class ComponentPool : public ComponentPoolBase {
 
   // Index = dense_ index, Value = Entity ID
   std::vector<Entity> dense_to_entity_;
+
+  std::vector<std::vector<ComponentPoolBase*>>* entity_pools_;
+
+  void TrackPoolForEntity(Entity entity) {
+    if (entity >= entity_pools_->size())
+      entity_pools_->resize(entity + 1);
+    (*entity_pools_)[entity].push_back(this);
+  }
+
+  void UntrackPoolForEntity(Entity entity) {
+    if (entity >= entity_pools_->size())
+      return;
+    auto& pools = (*entity_pools_)[entity];
+    for (size_t i = 0; i < pools.size(); ++i) {
+      if (pools[i] == this) {
+        pools[i] = pools.back();
+        pools.pop_back();
+        return;
+      }
+    }
+  }
 };
 
 // Forward declaration.
@@ -131,12 +159,17 @@ class Registry {
  public:
   // Creates a new entity, recycling old IDs if available.
   Entity CreateEntity() {
+    Entity id;
     if (!free_list_.empty()) {
-      Entity id = free_list_.front();
+      id = free_list_.front();
       free_list_.pop_front();
-      return id;
+    } else {
+      id = next_entity_id_++;
+      // Ensure pool tracking vector is large enough
+      if (id >= entity_pools_.size())
+        entity_pools_.resize(id + 1);
     }
-    return next_entity_id_++;
+    return id;
   }
 
   // Destroys an entity, removing all its components and recycling its ID.
@@ -144,9 +177,14 @@ class Registry {
     if (entity == NULL_ENTITY)
       return;
 
-    // Notify all pools that this entity is gone
-    for (auto* pool : pool_list_)
-      pool->OnEntityDestroyed(entity);
+    // Only notify pools this entity actually has.
+    if (entity < entity_pools_.size()) {
+      // Safely extract pools to a local vector before iteration
+      std::vector<ComponentPoolBase*> pools;
+      std::swap(pools, entity_pools_[entity]);
+      for (auto* pool : pools)
+        pool->OnEntityDestroyed(entity);
+    }
 
     free_list_.push_back(entity);
   }
@@ -184,7 +222,7 @@ class Registry {
     return pool && pool->Has(entity);
   }
 
-  // Get (or create) the ComponentPool for type T.
+  // Get or create the ComponentPool for type T.
   // Uses std::decay_t<T> to ensure we get the raw component type for the pool.
   template <typename T>
   ComponentPool<std::decay_t<T>>* GetPool() {
@@ -194,8 +232,7 @@ class Registry {
 
     // Create a new pool for this component type if doesn't exist.
     if (it == component_pools_.end()) {
-      auto pool = std::make_unique<ComponentPool<RawType>>();
-      pool_list_.push_back(pool.get());
+      auto pool = std::make_unique<ComponentPool<RawType>>(&entity_pools_);
       auto* raw_pool = pool.get();
       component_pools_[type_index] = std::move(pool);
       return raw_pool;
@@ -220,8 +257,8 @@ class Registry {
   std::unordered_map<std::type_index, std::unique_ptr<ComponentPoolBase>>
       component_pools_;
 
-  // Side-list for fast iteration during destruction
-  std::vector<ComponentPoolBase*> pool_list_;
+  // Tracks which pools an entity has for fast destruction.
+  std::vector<std::vector<ComponentPoolBase*>> entity_pools_;
 };
 
 // An iterable object that a system uses to loop over all entities with a
