@@ -93,7 +93,7 @@ class Scene {
   Entity root_entity_{NULL_ENTITY};
 
   // Cached pointer to the core data pool for fast access.
-  ComponentPool<CoreDataComponent>* core_data_pool_{nullptr};
+  ComponentPool<SceneNodeComponent>* core_data_pool_{nullptr};
 
   std::vector<BVHNode> bvh_tree_;
 
@@ -137,9 +137,9 @@ class Scene {
   const base::Matrix4f& GetWorldTransform(Entity entity);
 
   // Marks this entity and all its descendants as dirty.
-  void SetDirty(CoreDataComponent& core_data);
+  void SetDirty(SceneNodeComponent& core_data);
 
-  void DetachFromParent(CoreDataComponent& core_data);
+  void DetachFromParent(SceneNodeComponent& core_data);
 
   // Detaches an entity from its current parent's child list and attaches to a
   // new parent.

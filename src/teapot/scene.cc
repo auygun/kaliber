@@ -105,10 +105,10 @@ void Scene::Create(Renderer* renderer) {
                                        kPrimitive_Triangles, true, false,
                                        CullMode::kBack);
 
-  core_data_pool_ = registry_.GetPool<CoreDataComponent>();
+  core_data_pool_ = registry_.GetPool<SceneNodeComponent>();
 
   root_entity_ = registry_.CreateEntity();
-  registry_.AddComponent(root_entity_, CoreDataComponent{.name{"root"}})
+  registry_.AddComponent(root_entity_, SceneNodeComponent{.name{"root"}})
       .local_transform.Create(Quatf({0.5f, 0.0f, 0.0f}), {0, 0, 0});
 
 #if 1
@@ -127,7 +127,7 @@ void Scene::Create(Renderer* renderer) {
 
     for (size_t i = 0; i < 10; ++i) {
       Entity entity = registry_.CreateEntity();
-      CoreDataComponent core_data{.name{"model"}, .parent{parent}};
+      SceneNodeComponent core_data{.name{"model"}, .parent{parent}};
       core_data.local_transform.Create(Quatf({0.0f, 0.1f, 0.0f}), {2.2f, 0, 0});
       // core_data.local_transform.M_x_RotY(0.01);
       registry_.AddComponent(entity, core_data);
@@ -142,7 +142,7 @@ void Scene::Create(Renderer* renderer) {
 
     for (size_t i = 0; i < 3; ++i) {
       Entity entity = registry_.CreateEntity();
-      CoreDataComponent core_data{.name{"model"}, .parent{parent}};
+      SceneNodeComponent core_data{.name{"model"}, .parent{parent}};
       core_data.local_transform.Create(Quatf({0.0f, 0.1f, 0.0f}), {2.2f, 0, 0});
       registry_.AddComponent(entity, core_data);
       registry_.AddComponent(entity, ModelComponent{1});
@@ -158,7 +158,7 @@ void Scene::Create(Renderer* renderer) {
 
     for (size_t i = 0; i < 1; ++i) {
       Entity entity = registry_.CreateEntity();
-      CoreDataComponent core_data{.name{"model"}, .parent{root_entity_}};
+      SceneNodeComponent core_data{.name{"model"}, .parent{root_entity_}};
       core_data.local_transform.Create(Quatf({0.0f, 0.0f, 0.0f}),
                                        Vector3f{200.0f, -100.0f, 0.0f});
       core_data.local_transform.Multiply(0.05f);
@@ -193,7 +193,7 @@ void Scene::Create(Renderer* renderer) {
 
   for (size_t i = 0; i < 10; ++i) {
     Entity entity = registry_.CreateEntity();
-    CoreDataComponent core_data{.name{"model"}, .parent{parent}};
+    SceneNodeComponent core_data{.name{"model"}, .parent{parent}};
     core_data.local_transform.Create(Quatf({0.0f, 0.0f, 0.1f}), {2.2f, 0, 0});
     registry_.AddComponent(entity, core_data);
     registry_.AddComponent(entity, ModelComponent{models_.size() - 1});
@@ -233,7 +233,7 @@ void Scene::Render(float frame_frac) {
     std::vector<WorldObject> world_objects;
     // Skip root entity and iterate through.
     for (auto [entity2, core_data, model] :
-         registry_.View<CoreDataComponent, ModelComponent>(1)) {
+         registry_.View<SceneNodeComponent, ModelComponent>(1)) {
       OBBf obb{GetWorldTransform(entity2),
                models_[model.model_index].GetExtents()};
       world_objects.emplace_back(entity2, model.model_index, obb,
@@ -377,7 +377,7 @@ void Scene::UploadSceneData() {
   renderer_->UpdateBuffer(lights_ubo_, &lights_, sizeof(lights_));
 }
 
-void Scene::SetDirty(CoreDataComponent& core_data) {
+void Scene::SetDirty(SceneNodeComponent& core_data) {
   // If the entity is already dirty, all its descendants must also be dirty.
   if (core_data.is_dirty)
     return;  // We're done.
@@ -485,7 +485,7 @@ void Scene::SetParent(Entity entity, Entity new_parent) {
   SetDirty(core_data);
 }
 
-void Scene::DetachFromParent(CoreDataComponent& core_data) {
+void Scene::DetachFromParent(SceneNodeComponent& core_data) {
   const Entity old_parent = core_data.parent;
 
   // Unlink from old parent's sibling list (O(1)).

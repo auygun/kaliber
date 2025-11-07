@@ -8,12 +8,8 @@ namespace eng {
 
 // The component for storing parent-child relationships and transformations of
 // world objects. This is the core of the scene graph.
-struct CoreDataComponent {
+struct SceneNodeComponent {
   char name[8];
-
-  base::Matrix4f local_transform{1};
-  base::Matrix4f world_transform{1};
-  bool is_dirty{true};
 
   // Hierarchy (Doubly-Linked Sibling List)
   Entity parent{NULL_ENTITY};
@@ -22,8 +18,18 @@ struct CoreDataComponent {
   Entity prev_sibling{NULL_ENTITY};
 };
 
+struct LocalTransformComponent {
+  base::Matrix4f local_transform{1};
+};
+
+struct WorldTransformComponent {
+  base::Matrix4f world_transform{1};
+  bool is_dirty{true};
+};
+
 struct ModelComponent {
   size_t model_index{(size_t)-1};
+  base::Vector3f extents_;  // Extents of the model
 };
 
 }  // namespace eng
