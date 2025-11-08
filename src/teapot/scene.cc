@@ -130,14 +130,9 @@ void Scene::Create(Renderer* renderer) {
     //                 "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
 
     for (size_t i = 0; i < 10; ++i) {
-      Entity entity = registry_.CreateEntity();
-      registry_.AddComponent(
-          entity, SceneNodeComponent{.name{"model"}, .parent{parent}});
-      registry_.AddComponent(entity, WorldTransformComponent{});
-      registry_.AddComponent(entity, LocalTransformComponent{})
-          .transform.Create(Quatf({0.0f, 0.1f, 0.0f}), {2.2f, 0, 0});
-      registry_.AddComponent(entity, ModelComponent{0});
-      SetParent(entity, parent);
+      Matrix4f transform;
+      transform.Create(Quatf({0.0f, 0.1f, 0.0f}), {2.2f, 0, 0});
+      Entity entity = NewEntity(parent, 0, transform);
       parent = entity;
     }
   }
@@ -146,14 +141,9 @@ void Scene::Create(Renderer* renderer) {
                        "teapot/sportsCar.mtl", {});
 
     for (size_t i = 0; i < 3; ++i) {
-      Entity entity = registry_.CreateEntity();
-      registry_.AddComponent(
-          entity, SceneNodeComponent{.name{"model"}, .parent{parent}});
-      registry_.AddComponent(entity, WorldTransformComponent{});
-      registry_.AddComponent(entity, LocalTransformComponent{})
-          .transform.Create(Quatf({0.0f, 0.1f, 0.0f}), {2.2f, 0, 0});
-      registry_.AddComponent(entity, ModelComponent{1});
-      SetParent(entity, parent);
+      Matrix4f transform;
+      transform.Create(Quatf({0.0f, 0.1f, 0.0f}), {2.2f, 0, 0});
+      Entity entity = NewEntity(parent, 1, transform);
       parent = entity;
     }
   }
@@ -164,18 +154,11 @@ void Scene::Create(Renderer* renderer) {
                         "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
 
     for (size_t i = 0; i < 1; ++i) {
-      Entity entity = registry_.CreateEntity();
-      registry_.AddComponent(
-          entity, SceneNodeComponent{.name{"model"}, .parent{root_entity_}});
-      registry_.AddComponent(entity, WorldTransformComponent{});
-
-      LocalTransformComponent local_transform{};
-      local_transform.transform.Create(Quatf({0.0f, 0.0f, 0.0f}),
-                                       Vector3f{200.0f, -100.0f, 0.0f});
-      local_transform.transform.Multiply(0.05f);
-      registry_.AddComponent(entity, local_transform);
-      registry_.AddComponent(entity, ModelComponent{2});
-      SetParent(entity, root_entity_);
+      Matrix4f transform;
+      transform.Create(Quatf({0.0f, 0.0f, 0.0f}),
+                       Vector3f{200.0f, -100.0f, 0.0f});
+      transform.Multiply(0.05f);
+      NewEntity(root_entity_, 2, transform);
       // parent = entity;
     }
   }
@@ -203,14 +186,9 @@ void Scene::Create(Renderer* renderer) {
        "teapot/alien-slime1-roughness.png"});
 
   for (size_t i = 0; i < 10; ++i) {
-    Entity entity = registry_.CreateEntity();
-    registry_.AddComponent(entity,
-                           SceneNodeComponent{.name{"model"}, .parent{parent}});
-    registry_.AddComponent(entity, WorldTransformComponent{});
-    registry_.AddComponent(entity, LocalTransformComponent{})
-        .transform.Create(Quatf({0.0f, 0.0f, 0.1f}), {2.2f, 0, 0});
-    registry_.AddComponent(entity, ModelComponent{models_.size() - 1});
-    SetParent(entity, parent);
+    Matrix4f transform;
+    transform.Create(Quatf({0.0f, 0.0f, 0.1f}), {2.2f, 0, 0});
+    Entity entity = NewEntity(parent, models_.size() - 1, transform);
     parent = entity;
   }
 
@@ -236,6 +214,19 @@ void Scene::Create(Renderer* renderer) {
   lights_[3].power = 400.0f;
 }
 
+Entity Scene::NewEntity(Entity parent,
+                        size_t model_index,
+                        const Matrix4f& transform) {
+  Entity entity = registry_.CreateEntity();
+  registry_.AddComponent(entity, SceneNodeComponent{.name{"model"}});
+  registry_.AddComponent(entity, WorldTransformComponent{});
+  registry_.AddComponent(entity, LocalTransformComponent{transform});
+  registry_.AddComponent(
+      entity, ModelComponent{model_index, models_[model_index].GetExtents()});
+  SetParent(entity, parent);
+  return entity;
+}
+
 void Scene::Render(float frame_frac) {
   UpdateViewProjectionMatrix();
   UpdateFrustum();
@@ -247,8 +238,7 @@ void Scene::Render(float frame_frac) {
     // Skip root entity and iterate through.
     for (auto [entity, scene_node, model] :
          registry_.View<SceneNodeComponent, ModelComponent>(1)) {
-      OBBf obb{GetWorldTransform(entity),
-               models_[model.model_index].GetExtents()};
+      OBBf obb{GetWorldTransform(entity), model.extents};
       world_objects.emplace_back(entity, model.model_index, obb,
                                  GetWorldTransform(entity));
     }

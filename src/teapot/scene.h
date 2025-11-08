@@ -114,6 +114,10 @@ class Scene {
 
   Renderer* renderer_ = nullptr;
 
+  Entity NewEntity(Entity parent,
+                   size_t model_index,
+                   const base::Matrix4f& transform);
+
   void UpdateViewProjectionMatrix();
   void UpdateFrustum();
 

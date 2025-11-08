@@ -27,9 +27,13 @@ struct WorldTransformComponent {
   bool is_dirty{true};
 };
 
+struct WorldBoundsComponent {
+  base::OBBf world_obb;
+};
+
 struct ModelComponent {
   size_t model_index{(size_t)-1};
-  base::Vector3f extents_{0};  // Extents of the model
+  base::Vector3f extents{0};  // Extents of the model
 };
 
 }  // namespace eng
