@@ -96,6 +96,7 @@ class Scene {
   ComponentPool<SceneNodeComponent>* scene_node_pool_{nullptr};
   ComponentPool<WorldTransformComponent>* world_transform_pool_{nullptr};
   ComponentPool<LocalTransformComponent>* local_transform_pool_{nullptr};
+  ComponentPool<WorldBoundsComponent>* world_bounds_pool_{nullptr};
 
   std::vector<BVHNode> bvh_tree_;
 

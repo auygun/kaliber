@@ -108,6 +108,7 @@ void Scene::Create(Renderer* renderer) {
   scene_node_pool_ = registry_.GetPool<SceneNodeComponent>();
   world_transform_pool_ = registry_.GetPool<WorldTransformComponent>();
   local_transform_pool_ = registry_.GetPool<LocalTransformComponent>();
+  world_bounds_pool_ = registry_.GetPool<WorldBoundsComponent>();
 
   root_entity_ = registry_.CreateEntity();
   registry_.AddComponent(root_entity_, SceneNodeComponent{.name{"root"}});
@@ -221,6 +222,7 @@ Entity Scene::NewEntity(Entity parent,
   registry_.AddComponent(entity, SceneNodeComponent{.name{"model"}});
   registry_.AddComponent(entity, WorldTransformComponent{});
   registry_.AddComponent(entity, LocalTransformComponent{transform});
+  registry_.AddComponent(entity, WorldBoundsComponent{});
   registry_.AddComponent(
       entity, ModelComponent{model_index, models_[model_index].GetExtents()});
   SetParent(entity, parent);
@@ -236,11 +238,12 @@ void Scene::Render(float frame_frac) {
   do {
     std::vector<WorldObject> world_objects;
     // Skip root entity and iterate through.
-    for (auto [entity, scene_node, model] :
-         registry_.View<SceneNodeComponent, ModelComponent>(1)) {
-      OBBf obb{GetWorldTransform(entity), model.extents};
-      world_objects.emplace_back(entity, model.model_index, obb,
-                                 GetWorldTransform(entity));
+    for (auto [entity, scene_node, model, bounds] :
+         registry_.View<SceneNodeComponent, ModelComponent,
+                        WorldBoundsComponent>(1)) {
+      auto& transform = GetWorldTransform(entity);
+      world_objects.emplace_back(entity, model.model_index, bounds.world_obb,
+                                 transform);
     }
     if (world_objects.empty())
       break;
@@ -429,7 +432,7 @@ void Scene::SetDirty(Entity entity) {
   }
 }
 
-const base::Matrix4f& Scene::GetWorldTransform(Entity entity) {
+const Matrix4f& Scene::GetWorldTransform(Entity entity) {
   DCHECK(entity != NULL_ENTITY);
   auto& world_transform = world_transform_pool_->Get(entity);
 
@@ -453,6 +456,13 @@ const base::Matrix4f& Scene::GetWorldTransform(Entity entity) {
     // Now, calculate our own world transform.
     parent_world_transform.Multiply(local_transform.transform,
                                     world_transform.transform);
+  }
+
+  // Update world bounds.
+  if (registry_.HasComponent<ModelComponent>(entity)) {
+    auto& model = registry_.GetComponent<ModelComponent>(entity);
+    auto& world_bounds = world_bounds_pool_->Get(entity);
+    world_bounds.world_obb = OBBf{world_transform.transform, model.extents};
   }
 
   // Mark ourselves as clean and return the new transform.
