@@ -360,6 +360,7 @@ class View {
       }
     };
     (findSmallest(pools), ...);
+    DCHECK(begin_index_ < dense_to_entity_map_->size());
   }
 
   Iterator begin() {
