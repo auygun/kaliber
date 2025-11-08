@@ -19,17 +19,17 @@ struct SceneNodeComponent {
 };
 
 struct LocalTransformComponent {
-  base::Matrix4f local_transform{1};
+  base::Matrix4f transform{1};
 };
 
 struct WorldTransformComponent {
-  base::Matrix4f world_transform{1};
+  base::Matrix4f transform{1};
   bool is_dirty{true};
 };
 
 struct ModelComponent {
   size_t model_index{(size_t)-1};
-  base::Vector3f extents_;  // Extents of the model
+  base::Vector3f extents_{0};  // Extents of the model
 };
 
 }  // namespace eng

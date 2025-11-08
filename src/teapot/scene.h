@@ -8,8 +8,8 @@
 #include "engine/debug_layer.h"
 #include "engine/model.h"
 #include "engine/renderer/renderer_types.h"
-#include "teapot/components.h"
 #include "teapot/camera.h"
+#include "teapot/components.h"
 #include "teapot/ecs.h"
 
 namespace eng {
@@ -93,7 +93,9 @@ class Scene {
   Entity root_entity_{NULL_ENTITY};
 
   // Cached pointer to the core data pool for fast access.
-  ComponentPool<SceneNodeComponent>* core_data_pool_{nullptr};
+  ComponentPool<SceneNodeComponent>* scene_node_pool_{nullptr};
+  ComponentPool<WorldTransformComponent>* world_transform_pool_{nullptr};
+  ComponentPool<LocalTransformComponent>* local_transform_pool_{nullptr};
 
   std::vector<BVHNode> bvh_tree_;
 
@@ -137,7 +139,7 @@ class Scene {
   const base::Matrix4f& GetWorldTransform(Entity entity);
 
   // Marks this entity and all its descendants as dirty.
-  void SetDirty(SceneNodeComponent& core_data);
+  void SetDirty(Entity entity);
 
   void DetachFromParent(SceneNodeComponent& core_data);
 
