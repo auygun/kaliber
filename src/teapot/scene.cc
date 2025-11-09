@@ -252,7 +252,7 @@ void Scene::Render(float frame_frac) {
     if (world_objects.empty())
       break;
 
-    bvh_tree_ = BuildBVHTree(std::move(world_objects));
+    BuildBVHTree(std::move(world_objects));
 
     auto visible_objects = FrustumCull(bvh_tree_, frustum_);
     DLOG(0) << "FrustumCull: " << visible_objects.size();
@@ -572,19 +572,23 @@ void Scene::UpdateWorldBounds() {
   }
 }
 
-std::vector<Scene::BVHNode> Scene::BuildBVHTree(
-    std::vector<WorldObject> objects) {
-  if (objects.empty())
-    return {};
+void Scene::BuildBVHTree(std::vector<WorldObject> objects) {
+  bvh_tree_.clear();
 
-  std::vector<BVHNode> bvh_nodes(2 * objects.size() - 1);
-  size_t node_ind_last = 0;
+  if (objects.empty())
+    return;
+
+  size_t bvh_tree_size = 2 * objects.size() - 1;
+  if (bvh_tree_.size() <= bvh_tree_size)
+    bvh_tree_.resize(bvh_tree_size);
+
+  size_t last_node_index = 0;
 
   // Create stack for depth-first traversal and start the process with the root
   // node using all objects.
   std::deque<std::tuple<size_t, std::span<WorldObject>>> stack;
   std::span objects_view(objects.data(), objects.size());
-  stack.push_back(std::make_tuple(node_ind_last, std::move(objects_view)));
+  stack.push_back(std::make_tuple(last_node_index, std::move(objects_view)));
 
   while (!stack.empty()) {
     auto [node_ind, node_objects] = std::move(stack.back());
@@ -592,7 +596,7 @@ std::vector<Scene::BVHNode> Scene::BuildBVHTree(
 
     // If only one object remains, this is a leaf.
     if (node_objects.size() == 1) {
-      bvh_nodes[node_ind].object = node_objects[0];
+      bvh_tree_[node_ind].object = node_objects[0];
       continue;
     }
 
@@ -600,12 +604,12 @@ std::vector<Scene::BVHNode> Scene::BuildBVHTree(
     for (auto& obj : node_objects) {
       AABBf aabb;
       obj.obb.GetBoundBox(aabb);
-      bvh_nodes[node_ind].aabb.Expand(aabb);
+      bvh_tree_[node_ind].aabb.Expand(aabb);
     }
 
     // Find the longest axis of the combined AABB to split along.
     Vector3f extent =
-        bvh_nodes[node_ind].aabb.max - bvh_nodes[node_ind].aabb.min;
+        bvh_tree_[node_ind].aabb.max - bvh_tree_[node_ind].aabb.min;
     int axis = 0;
     if (extent.y > extent.x)
       axis = 1;
@@ -632,21 +636,19 @@ std::vector<Scene::BVHNode> Scene::BuildBVHTree(
 
     // Split the objects into two halves
     size_t mid = node_objects.size() / 2;
-    std::span<WorldObject> left_objects(node_objects.begin(),
-                                        node_objects.begin() + mid);
-    std::span<WorldObject> right_objects(node_objects.begin() + mid,
-                                         node_objects.end());
+    std::span<WorldObject> left_branch(node_objects.begin(),
+                                       node_objects.begin() + mid);
+    std::span<WorldObject> right_branch(node_objects.begin() + mid,
+                                        node_objects.end());
 
     // Create the child nodes.
-    bvh_nodes[node_ind].left = ++node_ind_last;
-    bvh_nodes[node_ind].right = ++node_ind_last;
+    bvh_tree_[node_ind].left = ++last_node_index;
+    bvh_tree_[node_ind].right = ++last_node_index;
 
     // Push the children onto the stack.
-    stack.push_back({bvh_nodes[node_ind].left, std::move(right_objects)});
-    stack.push_back({bvh_nodes[node_ind].right, std::move(left_objects)});
+    stack.push_back({bvh_tree_[node_ind].left, std::move(right_branch)});
+    stack.push_back({bvh_tree_[node_ind].right, std::move(left_branch)});
   }
-
-  return bvh_nodes;
 }
 
 std::vector<Scene::WorldObject> Scene::FrustumCull(

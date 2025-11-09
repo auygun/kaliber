@@ -130,7 +130,7 @@ class Scene {
 
   void UploadSceneData();
 
-  std::vector<BVHNode> BuildBVHTree(std::vector<WorldObject> objects);
+  void BuildBVHTree(std::vector<WorldObject> objects);
 
   std::vector<WorldObject> FrustumCull(const std::vector<BVHNode>& nodes,
                                        const base::Frustumf& frustum);
