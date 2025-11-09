@@ -99,6 +99,9 @@ class ComponentPool : public ComponentPoolBase {
 
   // Removes all components from this pool.
   void RemoveAll() {
+    if (dense_.empty())
+      return;
+
     // Untrack every entity that is currently in this pool.
     for (Entity entity : dense_to_entity_)
       UntrackPoolForEntity(entity);

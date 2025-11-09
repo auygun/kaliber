@@ -108,7 +108,7 @@ void Scene::Create(Renderer* renderer) {
   scene_node_pool_ = registry_.GetOrCreatePool<SceneNodeComponent>();
   world_transform_pool_ = registry_.GetOrCreatePool<WorldTransformComponent>();
   local_transform_pool_ = registry_.GetOrCreatePool<LocalTransformComponent>();
-  world_bounds_pool_ = registry_.GetOrCreatePool<WorldBoundsComponent>();
+  dirty_tag_pool_ = registry_.GetOrCreatePool<WorldTransformDirtyTag>();
 
   root_entity_ = registry_.CreateEntity();
   registry_.AddComponent(root_entity_, SceneNodeComponent{.name{"root"}});
@@ -236,7 +236,7 @@ void Scene::Render(float frame_frac) {
   UpdateFrustum();
   UpdateWoldTransforms();
   UpdateWorldBounds();
-  registry_.RemoveAll<WorldTransformDirtyTag>();
+  dirty_tag_pool_->RemoveAll();
 
   instances_.clear();
 
@@ -420,7 +420,7 @@ void Scene::SetParent(Entity entity, Entity new_parent) {
   OnHierarchyChanged(entity, new_depth);
 
   // Tag the entity dirty.
-  registry_.AddComponent(entity, WorldTransformDirtyTag{});
+  dirty_tag_pool_->Add(entity, WorldTransformDirtyTag{});
 }
 
 void Scene::DetachFromParent(SceneNodeComponent& scene_node) {
@@ -517,7 +517,7 @@ void Scene::OnHierarchyChanged(Entity entity, size_t new_depth) {
 
 void Scene::UpdateWoldTransforms() {
   // Nothing to do here if there is no dirty node.
-  if (registry_.IsEmpty<WorldTransformDirtyTag>())
+  if (dirty_tag_pool_->IsEmpty())
     return;
 
   // Iterate sequentially through depth levels (0 -> 1 -> 2...)
@@ -533,13 +533,11 @@ void Scene::UpdateWoldTransforms() {
       // Because we process in depth order, we know the parent is already
       // up-to-date for this frame.
       if (scene_node.parent != NULL_ENTITY) {
-        parent_was_dirty =
-            registry_.HasComponent<WorldTransformDirtyTag>(scene_node.parent);
+        parent_was_dirty = dirty_tag_pool_->Has(scene_node.parent);
       }
 
       // Check self dirty state
-      bool self_is_dirty =
-          registry_.HasComponent<WorldTransformDirtyTag>(entity);
+      bool self_is_dirty = dirty_tag_pool_->Has(entity);
 
       // Update if necessary
       if (self_is_dirty || parent_was_dirty) {
@@ -562,7 +560,7 @@ void Scene::UpdateWoldTransforms() {
         // originally), we must now tag ourselves so our children will see it
         // when the loop reaches depth d+1.
         if (!self_is_dirty)
-          registry_.AddComponent(entity, WorldTransformDirtyTag{});
+          dirty_tag_pool_->Add(entity, WorldTransformDirtyTag{});
       }
     }
   }
