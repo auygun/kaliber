@@ -34,7 +34,7 @@ struct WorldTransformComponent {
 struct WorldTransformDirtyTag {};
 
 struct WorldBoundsComponent {
-  base::OBBf world_obb;
+  base::OBBf obb;
 };
 
 struct ModelComponent {

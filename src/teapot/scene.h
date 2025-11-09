@@ -54,7 +54,7 @@ class Scene {
     // Payload
     WorldObject object;
 
-    bool IsLeaf() const { return object.model_ind != (size_t)-1; }
+    bool IsLeaf() const { return left == (size_t)-1 && right == (size_t)-1; }
   };
 
   // --- UBO ---

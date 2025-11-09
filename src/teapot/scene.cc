@@ -241,12 +241,13 @@ void Scene::Render(float frame_frac) {
   instances_.clear();
 
   do {
+    // Build a BVH tree from all physical/visible objects in the scene graph.
     std::vector<WorldObject> world_objects;
-    for (auto [entity, scene_node, model, world, bounds] :
+    for (auto [entity, scene_node, model, world_transform, world_bounds] :
          registry_.View<SceneNodeComponent, ModelComponent,
                         WorldTransformComponent, WorldBoundsComponent>()) {
-      world_objects.emplace_back(entity, model.model_index, bounds.world_obb,
-                                 world.transform);
+      world_objects.emplace_back(entity, model.model_index, world_bounds.obb,
+                                 world_transform.transform);
     }
     if (world_objects.empty())
       break;
@@ -556,9 +557,6 @@ void Scene::UpdateWoldTransforms() {
         }
 
         // Propagate dirtiness downward
-        // If we updated because our parent was dirty (but we weren't
-        // originally), we must now tag ourselves so our children will see it
-        // when the loop reaches depth d+1.
         if (!self_is_dirty)
           dirty_tag_pool_->Add(entity, WorldTransformDirtyTag{});
       }
@@ -567,10 +565,10 @@ void Scene::UpdateWoldTransforms() {
 }
 
 void Scene::UpdateWorldBounds() {
-  for (auto [entity, model, world, bounds, _] :
+  for (auto [entity, model, world_transform, world_bounds, _] :
        registry_.View<ModelComponent, WorldTransformComponent,
                       WorldBoundsComponent, WorldTransformDirtyTag>()) {
-    bounds.world_obb = OBBf{world.transform, model.extents};
+    world_bounds.obb = OBBf{world_transform.transform, model.extents};
   }
 }
 
