@@ -240,25 +240,20 @@ void Scene::Render(float frame_frac) {
 
   instances_.clear();
 
-  do {
-    // Build a BVH tree from all physical/visible objects in the scene graph.
-    std::vector<WorldObject> world_objects;
-    for (auto [entity, scene_node, model, world_transform, world_bounds] :
-         registry_.View<SceneNodeComponent, ModelComponent,
-                        WorldTransformComponent, WorldBoundsComponent>()) {
-      world_objects.emplace_back(entity, model.model_index, world_bounds.obb,
-                                 world_transform.transform);
-    }
-    if (world_objects.empty())
-      break;
+  // Build a BVH tree from all physical/visible objects in the scene graph.
+  std::vector<WorldObject> world_objects;
+  for (auto [entity, scene_node, model, world_transform, world_bounds] :
+       registry_.View<SceneNodeComponent, ModelComponent,
+                      WorldTransformComponent, WorldBoundsComponent>()) {
+    world_objects.emplace_back(entity, model.model_index, world_bounds.obb,
+                               world_transform.transform);
+  }
 
-    BuildBVHTree(std::move(world_objects));
+  BuildBVHTree(std::move(world_objects));
 
-    auto visible_objects = FrustumCull(bvh_tree_, frustum_);
-    DLOG(0) << "FrustumCull: " << visible_objects.size();
-    if (visible_objects.empty())
-      break;
-
+  auto visible_objects = FrustumCull(bvh_tree_, frustum_);
+  DLOG(0) << "FrustumCull: " << visible_objects.size();
+  if (!visible_objects.empty()) {
     std::sort(visible_objects.begin(), visible_objects.end(),
               [](WorldObject& a, WorldObject& b) {
                 return a.model_ind < b.model_ind;
@@ -275,7 +270,7 @@ void Scene::Render(float frame_frac) {
       auto [model_ind, first_instance, instance_count] = draw_call;
       models_[model_ind].Draw(instance_count, first_instance);
     }
-  } while (false);
+  }
 
 #if 1
   if (show_bounding_volumes_) {
