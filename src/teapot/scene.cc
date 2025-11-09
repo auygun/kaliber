@@ -236,6 +236,7 @@ void Scene::Render(float frame_frac) {
   UpdateFrustum();
   UpdateWoldTransforms();
   UpdateWorldBounds();
+  registry_.RemoveAll<WorldTransformDirtyTag>();
 
   instances_.clear();
 
@@ -515,6 +516,10 @@ void Scene::OnHierarchyChanged(Entity entity, size_t new_depth) {
 }
 
 void Scene::UpdateWoldTransforms() {
+  // Nothing to do here if there is no dirty node.
+  if (registry_.IsEmpty<WorldTransformDirtyTag>())
+    return;
+
   // Iterate sequentially through depth levels (0 -> 1 -> 2...)
   for (int d = 0; d < depth_buckets_.size(); ++d) {
     // Iterate only the entities at this specific depth
