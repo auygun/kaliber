@@ -98,6 +98,9 @@ class Scene {
   ComponentPool<LocalTransformComponent>* local_transform_pool_{nullptr};
   ComponentPool<WorldBoundsComponent>* world_bounds_pool_{nullptr};
 
+  // A list that keeps list of entity IDs for every possible depth level.
+  std::vector<std::vector<Entity>> depth_buckets_;
+
   std::vector<BVHNode> bvh_tree_;
 
   Entity selected_entity_{NULL_ENTITY};
@@ -154,6 +157,15 @@ class Scene {
 
   // Destroys an entity, its children, and updates its parent.
   void DestroyEntityAndChildren(Entity entity);
+
+  // Called whenever an entity is created, destroyed, or re-parented.
+  void OnHierarchyChanged(Entity entity, size_t new_depth);
+
+  // Updates WorldTransformComponent for objects that were tagged as dirty.
+  void UpdateWoldTransforms();
+
+  // Updates WorldBoundsComponent based on finalized transforms.
+  void UpdateWorldBounds();
 
   // Creates a 3D world-space ray from 2D screen coordinates.
   base::Rayf CreateRayFromScreen(float screen_x, float screen_y);

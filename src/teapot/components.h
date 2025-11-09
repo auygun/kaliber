@@ -16,6 +16,11 @@ struct SceneNodeComponent {
   Entity first_child{NULL_ENTITY};
   Entity next_sibling{NULL_ENTITY};
   Entity prev_sibling{NULL_ENTITY};
+
+  // Depth in the hierarchy (root = 0, child = 1, grandchild = 2, etc.).
+  size_t depth = (size_t)-1;
+  // The index of this entity inside its specific depth_bucket vector.
+  size_t bucket_index = (size_t)-1;
 };
 
 struct LocalTransformComponent {
@@ -26,6 +31,8 @@ struct WorldTransformComponent {
   base::Matrix4f transform{1};
   bool is_dirty{true};
 };
+
+struct WorldTransformDirtyTag {};
 
 struct WorldBoundsComponent {
   base::OBBf world_obb;

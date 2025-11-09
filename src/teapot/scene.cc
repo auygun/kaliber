@@ -115,6 +115,8 @@ void Scene::Create(Renderer* renderer) {
   registry_.AddComponent(root_entity_, WorldTransformComponent{});
   registry_.AddComponent(root_entity_, LocalTransformComponent{})
       .transform.Create(Quatf({0.5f, 0.0f, 0.0f}), {0, 0, 0});
+  OnHierarchyChanged(root_entity_, 0);
+  registry_.AddComponent(root_entity_, WorldTransformDirtyTag{});
 
 #if 1
   Entity parent = root_entity_;
@@ -232,6 +234,8 @@ Entity Scene::NewEntity(Entity parent,
 void Scene::Render(float frame_frac) {
   UpdateViewProjectionMatrix();
   UpdateFrustum();
+  UpdateWoldTransforms();
+  UpdateWorldBounds();
 
   instances_.clear();
 
@@ -435,6 +439,7 @@ const Matrix4f& Scene::GetWorldTransform(Entity entity) {
   DCHECK(entity != NULL_ENTITY);
   auto& world_transform = world_transform_pool_->Get(entity);
 
+#if 0
   // If it's not dirty, its transform is already correct. We're done.
   if (!world_transform.is_dirty) {
     return world_transform.transform;
@@ -466,6 +471,7 @@ const Matrix4f& Scene::GetWorldTransform(Entity entity) {
 
   // Mark ourselves as clean and return the new transform.
   world_transform.is_dirty = false;
+#endif
   return world_transform.transform;
 }
 
@@ -473,6 +479,7 @@ void Scene::SetParent(Entity entity, Entity new_parent) {
   DCHECK(entity != NULL_ENTITY);
   DCHECK(entity != new_parent);
   auto& scene_node = scene_node_pool_->Get(entity);
+  size_t new_depth = (size_t)-1;
 
   DetachFromParent(scene_node);
 
@@ -491,14 +498,19 @@ void Scene::SetParent(Entity entity, Entity new_parent) {
       // The old first child's prev must now point to us.
       scene_node_pool_->Get(old_first_child).prev_sibling = entity;
     }
+
+    new_depth = new_parent_scene_node.depth + 1;
   } else {
     // This entity is now a root, clear its sibling pointers.
     scene_node.prev_sibling = NULL_ENTITY;
     scene_node.next_sibling = NULL_ENTITY;
   }
 
+  OnHierarchyChanged(entity, new_depth);
+
   // Mark the entity as dirty.
-  SetDirty(entity);
+  // SetDirty(entity);
+  registry_.AddComponent(entity, WorldTransformDirtyTag{});
 }
 
 void Scene::DetachFromParent(SceneNodeComponent& scene_node) {
@@ -539,6 +551,8 @@ void Scene::DestroyEntityAndChildren(Entity entity) {
     Entity entity_to_destroy = stack.back();
     stack.pop_back();
 
+    OnHierarchyChanged(entity_to_destroy, (size_t)-1);
+
     // Iterate the sibling list to find all children.
     Entity child = scene_node_pool_->Get(entity_to_destroy).first_child;
     while (child != NULL_ENTITY) {
@@ -548,6 +562,108 @@ void Scene::DestroyEntityAndChildren(Entity entity) {
 
     // Finally, destroy the entity itself.
     registry_.DestroyEntity(entity_to_destroy);
+  }
+}
+
+void Scene::OnHierarchyChanged(Entity entity, size_t new_depth) {
+  auto& scene_node = scene_node_pool_->Get(entity);
+  if (scene_node.depth == new_depth)
+    return;
+
+  // Remove from old bucket (fast swap-and-pop)
+  if (scene_node.depth != (size_t)-1 &&
+      scene_node.depth < depth_buckets_.size()) {
+    auto& bucket = depth_buckets_[scene_node.depth];
+
+    // Overwrite the entity we want to remove with the last entity
+    Entity last_entity = bucket.back();
+    bucket[scene_node.bucket_index] = last_entity;
+
+    // Update the moved entity's component to point to its new home
+    scene_node_pool_->Get(last_entity).bucket_index = scene_node.bucket_index;
+
+    // Remove the (now duplicate) last element
+    bucket.pop_back();
+  }
+
+  // Add to new bucket
+  if (new_depth != (size_t)-1) {
+    // Ensure enough buckets exist
+    if (depth_buckets_.size() <= new_depth)
+      depth_buckets_.resize(new_depth + 1);
+
+    auto& new_bucket = depth_buckets_[new_depth];
+
+    // Add to the new bucket and update the component with its new depth and
+    // index.
+    new_bucket.push_back(entity);
+    scene_node.depth = new_depth;
+    scene_node.bucket_index = new_bucket.size() - 1;
+  } else {
+    scene_node.depth = (size_t)-1;
+    scene_node.bucket_index = (size_t)-1;
+  }
+}
+
+void Scene::UpdateWoldTransforms() {
+  // Iterate sequentially through depth levels (0 -> 1 -> 2...)
+  for (int d = 0; d < depth_buckets_.size(); ++d) {
+    // Iterate ONLY the entities at this specific depth
+    for (Entity entity : depth_buckets_[d]) {
+      // We need to access components directly now
+      // (Assuming your ECS has a way to get components by ID, like
+      // registry.get<T>(id))
+      auto& scene_node = scene_node_pool_->Get(entity);
+      auto& world_transform = world_transform_pool_->Get(entity);
+
+      bool parent_was_dirty = false;
+
+      // 1. Check Parent's Dirty State (if we aren't root)
+      // Because we process in depth order, we KNOW the parent is already
+      // up-to-date for this frame.
+      if (scene_node.parent != NULL_ENTITY) {
+        parent_was_dirty =
+            registry_.HasComponent<WorldTransformDirtyTag>(scene_node.parent);
+      }
+
+      // 2. Check Self Dirty State
+      bool self_is_dirty =
+          registry_.HasComponent<WorldTransformDirtyTag>(entity);
+
+      // 3. Update if necessary
+      if (self_is_dirty || parent_was_dirty) {
+        // A. Get local transform data
+        const auto& local_transform = local_transform_pool_->Get(entity);
+
+        // B. Calculate new World Matrix
+        if (scene_node.parent == NULL_ENTITY) {
+          // Root object: World = Local
+          world_transform.transform = local_transform.transform;
+        } else {
+          // Now, calculate our own world transform.
+          const auto& parent_world_transform =
+              world_transform_pool_->Get(scene_node.parent);
+          parent_world_transform.transform.Multiply(local_transform.transform,
+                                                    world_transform.transform);
+        }
+
+        // C. Propagate Dirtiness Downward
+        // If we updated because our PARENT was dirty (but we weren't
+        // originally), we must now tag ourselves so OUR children will see it
+        // when the loop reaches depth d+1.
+        if (!self_is_dirty) {
+          registry_.AddComponent(entity, WorldTransformDirtyTag{});
+        }
+      }
+    }
+  }
+}
+
+void Scene::UpdateWorldBounds() {
+  for (auto [entity, model, world, bounds, _] :
+       registry_.View<ModelComponent, WorldTransformComponent,
+                      WorldBoundsComponent, WorldTransformDirtyTag>()) {
+    bounds.world_obb = OBBf{world.transform, model.extents};
   }
 }
 
