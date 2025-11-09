@@ -243,9 +243,9 @@ class Registry {
   // Returns an iterable view for all entities with a specific set of
   // components.
   template <typename... Components>
-  View<Components...> View(size_t begin_index = 0) {
+  View<Components...> View() {
     static_assert(sizeof...(Components) > 0, "View must have > 0 components.");
-    return eng::View<Components...>(begin_index, GetPool<Components>()...);
+    return eng::View<Components...>(GetPool<Components>()...);
   }
 
  private:
@@ -348,8 +348,8 @@ class View {
 
  public:
   // Constructor that accepts a variadic pack of component pools.
-  View(size_t begin_index, ComponentPool<Components>*... pools)
-      : pools_(std::make_tuple(pools...)), begin_index_(begin_index) {
+  View(ComponentPool<Components>*... pools)
+      : pools_(std::make_tuple(pools...)) {
     // Find the smallest pool to drive the main iteration loop efficiently.
     size_t minSize = std::numeric_limits<size_t>::max();
     auto findSmallest = [&](auto* pool) {
@@ -360,11 +360,10 @@ class View {
       }
     };
     (findSmallest(pools), ...);
-    DCHECK(begin_index_ < dense_to_entity_map_->size());
   }
 
   Iterator begin() {
-    return Iterator(pools_, smallest_pool_, dense_to_entity_map_, begin_index_);
+    return Iterator(pools_, smallest_pool_, dense_to_entity_map_, 0);
   }
 
   Iterator end() {
@@ -376,7 +375,6 @@ class View {
   std::tuple<ComponentPool<Components>*...> pools_;
   ComponentPoolBase* smallest_pool_ = nullptr;
   std::vector<Entity>* dense_to_entity_map_ = nullptr;
-  size_t begin_index_;
 };
 
 }  // namespace eng

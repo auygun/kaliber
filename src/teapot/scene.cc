@@ -237,10 +237,9 @@ void Scene::Render(float frame_frac) {
 
   do {
     std::vector<WorldObject> world_objects;
-    // Skip root entity and iterate through.
     for (auto [entity, scene_node, model, bounds] :
          registry_.View<SceneNodeComponent, ModelComponent,
-                        WorldBoundsComponent>(1)) {
+                        WorldBoundsComponent>()) {
       auto& transform = GetWorldTransform(entity);
       world_objects.emplace_back(entity, model.model_index, bounds.world_obb,
                                  transform);
