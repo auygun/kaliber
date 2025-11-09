@@ -105,10 +105,10 @@ void Scene::Create(Renderer* renderer) {
                                        kPrimitive_Triangles, true, false,
                                        CullMode::kBack);
 
-  scene_node_pool_ = registry_.GetPool<SceneNodeComponent>();
-  world_transform_pool_ = registry_.GetPool<WorldTransformComponent>();
-  local_transform_pool_ = registry_.GetPool<LocalTransformComponent>();
-  world_bounds_pool_ = registry_.GetPool<WorldBoundsComponent>();
+  scene_node_pool_ = registry_.GetOrCreatePool<SceneNodeComponent>();
+  world_transform_pool_ = registry_.GetOrCreatePool<WorldTransformComponent>();
+  local_transform_pool_ = registry_.GetOrCreatePool<LocalTransformComponent>();
+  world_bounds_pool_ = registry_.GetOrCreatePool<WorldBoundsComponent>();
 
   root_entity_ = registry_.CreateEntity();
   registry_.AddComponent(root_entity_, SceneNodeComponent{.name{"root"}});

@@ -97,6 +97,18 @@ class ComponentPool : public ComponentPoolBase {
     UntrackPoolForEntity(entity);
   }
 
+  // Removes all components from this pool.
+  void RemoveAll() {
+    // Untrack every entity that is currently in this pool.
+    for (Entity entity : dense_to_entity_)
+      UntrackPoolForEntity(entity);
+
+    // Clear the internal vectors to remove all elements.
+    dense_.clear();
+    sparse_.clear();
+    dense_to_entity_.clear();
+  }
+
   // Gets the component for an entity.
   T& Get(Entity entity) {
     DCHECK(Has(entity)) << "Entity does not have this component.";
@@ -107,6 +119,9 @@ class ComponentPool : public ComponentPoolBase {
   bool Has(Entity entity) const {
     return entity < sparse_.size() && sparse_[entity] != NULL_ENTITY;
   }
+
+  // Checks if the pool is empty (i.e., no entities have this component).
+  bool IsEmpty() const { return dense_.empty(); }
 
   // Interface implementation for when an entity is destroyed.
   void OnEntityDestroyed(Entity entity) override {
@@ -192,7 +207,7 @@ class Registry {
   // Single generic AddComponent that handles both copy and move.
   template <typename T>
   std::decay_t<T>& AddComponent(Entity entity, T&& component) {
-    return GetPool<T>()->Emplace(entity, std::forward<T>(component));
+    return GetOrCreatePool<T>()->Emplace(entity, std::forward<T>(component));
   }
 
   // Constructs a component in-place for a given entity. This is the most
@@ -200,19 +215,29 @@ class Registry {
   // moves by forwarding arguments directly to the component's constructor.
   template <typename T, typename... Args>
   T& EmplaceComponent(Entity entity, Args&&... args) {
-    return GetPool<T>()->Emplace(entity, std::forward<Args>(args)...);
+    return GetOrCreatePool<T>()->Emplace(entity, std::forward<Args>(args)...);
   }
 
   // Removes a component of type T from an entity.
   template <typename T>
   void RemoveComponent(Entity entity) {
-    GetPool<T>()->Remove(entity);
+    auto pool = GetPool<T>();
+    if (pool)
+      pool->Remove(entity);
+  }
+
+  // Removes all components of type T from all entities.
+  template <typename T>
+  void RemoveAll() {
+    auto pool = GetPool<T>();
+    if (pool)
+      pool->RemoveAll();
   }
 
   // Gets the component of type T for an entity.
   template <typename T>
   T& GetComponent(Entity entity) {
-    return GetPool<T>()->Get(entity);
+    return GetOrCreatePool<T>()->Get(entity);
   }
 
   // Checks if an entity has a component of type T.
@@ -222,10 +247,18 @@ class Registry {
     return pool && pool->Has(entity);
   }
 
+  // Checks if the component pool for type T is empty.
+  // Returns true if the pool doesn't exist or if it has no components.
+  template <typename T>
+  bool IsEmpty() {
+    auto pool = GetPool<T>();
+    return pool ? pool->IsEmpty() : true;
+  }
+
   // Get or create the ComponentPool for type T.
   // Uses std::decay_t<T> to ensure we get the raw component type for the pool.
   template <typename T>
-  ComponentPool<std::decay_t<T>>* GetPool() {
+  ComponentPool<std::decay_t<T>>* GetOrCreatePool() {
     using RawType = std::decay_t<T>;
     std::type_index type_index = std::type_index(typeid(RawType));
     auto it = component_pools_.find(type_index);
@@ -240,12 +273,26 @@ class Registry {
     return static_cast<ComponentPool<RawType>*>(it->second.get());
   }
 
+  // Gets the ComponentPool for type T, but does not create it.
+  // Returns nullptr if the pool does not exist.
+  template <typename T>
+  ComponentPool<std::decay_t<T>>* GetPool() {
+    using RawType = std::decay_t<T>;
+    std::type_index type_index = std::type_index(typeid(RawType));
+    auto it = component_pools_.find(type_index);
+
+    if (it == component_pools_.end())
+      return nullptr;
+
+    return static_cast<ComponentPool<RawType>*>(it->second.get());
+  }
+
   // Returns an iterable view for all entities with a specific set of
   // components.
   template <typename... Components>
   View<Components...> View() {
     static_assert(sizeof...(Components) > 0, "View must have > 0 components.");
-    return eng::View<Components...>(GetPool<Components>()...);
+    return eng::View<Components...>(GetOrCreatePool<Components>()...);
   }
 
  private:
