@@ -251,7 +251,7 @@ void Scene::Render(float frame_frac) {
 
   BuildBVHTree(std::move(world_objects));
 
-  auto visible_objects = FrustumCull(bvh_tree_, frustum_);
+  auto visible_objects = FrustumCull(frustum_);
   DLOG(0) << "FrustumCull: " << visible_objects.size();
   if (!visible_objects.empty()) {
     std::sort(visible_objects.begin(), visible_objects.end(),
@@ -646,11 +646,9 @@ void Scene::BuildBVHTree(std::vector<WorldObject> objects) {
   }
 }
 
-std::vector<Scene::WorldObject> Scene::FrustumCull(
-    const std::vector<BVHNode>& nodes,
-    const Frustumf& frustum) {
+std::vector<Scene::WorldObject> Scene::FrustumCull(const Frustumf& frustum) {
   std::vector<WorldObject> visible_objects;
-  if (nodes.empty())
+  if (bvh_tree_.empty())
     return visible_objects;
 
   // Create stack for depth-first traversal and start the process with the root
@@ -664,20 +662,20 @@ std::vector<Scene::WorldObject> Scene::FrustumCull(
 
     // If the node is a leaf, it's representing a single object. Otherwise It's
     // an internal node with children.
-    if (nodes[node_index].IsLeaf()) {
-      if (frustum.Intersects(nodes[node_index].object.obb,
-                             nodes[node_index].object.transform))
-        visible_objects.push_back(nodes[node_index].object);
+    if (bvh_tree_[node_index].IsLeaf()) {
+      if (frustum.Intersects(bvh_tree_[node_index].object.obb,
+                             bvh_tree_[node_index].object.transform))
+        visible_objects.push_back(bvh_tree_[node_index].object);
       continue;
-    } else if (!frustum.Intersects(nodes[node_index].aabb)) {
+    } else if (!frustum.Intersects(bvh_tree_[node_index].aabb)) {
       continue;
     }
 
     // The internal node passed tests, check its children
-    if (nodes[node_index].left)
-      stack.push_back(nodes[node_index].left);
-    if (nodes[node_index].right)
-      stack.push_back(nodes[node_index].right);
+    if (bvh_tree_[node_index].left)
+      stack.push_back(bvh_tree_[node_index].left);
+    if (bvh_tree_[node_index].right)
+      stack.push_back(bvh_tree_[node_index].right);
   }
 
   return visible_objects;

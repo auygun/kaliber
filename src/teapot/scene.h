@@ -132,8 +132,7 @@ class Scene {
 
   void BuildBVHTree(std::vector<WorldObject> objects);
 
-  std::vector<WorldObject> FrustumCull(const std::vector<BVHNode>& nodes,
-                                       const base::Frustumf& frustum);
+  std::vector<WorldObject> FrustumCull(const base::Frustumf& frustum);
 
   void DumpBVHTree(const std::vector<BVHNode>& nodes,
                    size_t node_ind,
