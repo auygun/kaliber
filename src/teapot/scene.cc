@@ -586,12 +586,12 @@ void Scene::BuildBVHTree(std::vector<WorldObject> objects) {
   stack.push_back(std::make_tuple(last_node_index, std::move(objects_view)));
 
   while (!stack.empty()) {
-    auto [node_ind, node_objects] = std::move(stack.back());
+    auto [node_index, node_objects] = std::move(stack.back());
     stack.pop_back();
 
     // If only one object remains, this is a leaf.
     if (node_objects.size() == 1) {
-      bvh_tree_[node_ind].object = node_objects[0];
+      bvh_tree_[node_index].object = node_objects[0];
       continue;
     }
 
@@ -599,12 +599,12 @@ void Scene::BuildBVHTree(std::vector<WorldObject> objects) {
     for (auto& obj : node_objects) {
       AABBf aabb;
       obj.obb.GetBoundBox(aabb);
-      bvh_tree_[node_ind].aabb.Expand(aabb);
+      bvh_tree_[node_index].aabb.Expand(aabb);
     }
 
     // Find the longest axis of the combined AABB to split along.
     Vector3f extent =
-        bvh_tree_[node_ind].aabb.max - bvh_tree_[node_ind].aabb.min;
+        bvh_tree_[node_index].aabb.max - bvh_tree_[node_index].aabb.min;
     int axis = 0;
     if (extent.y > extent.x)
       axis = 1;
@@ -637,12 +637,12 @@ void Scene::BuildBVHTree(std::vector<WorldObject> objects) {
                                         node_objects.end());
 
     // Create the child nodes.
-    bvh_tree_[node_ind].left = ++last_node_index;
-    bvh_tree_[node_ind].right = ++last_node_index;
+    bvh_tree_[node_index].left = ++last_node_index;
+    bvh_tree_[node_index].right = ++last_node_index;
 
     // Push the children onto the stack.
-    stack.push_back({bvh_tree_[node_ind].left, std::move(right_branch)});
-    stack.push_back({bvh_tree_[node_ind].right, std::move(left_branch)});
+    stack.push_back({bvh_tree_[node_index].left, std::move(right_branch)});
+    stack.push_back({bvh_tree_[node_index].right, std::move(left_branch)});
   }
 }
 
@@ -659,32 +659,32 @@ std::vector<Scene::WorldObject> Scene::FrustumCull(
   stack.push_back(0);
 
   while (!stack.empty()) {
-    size_t node_ind = stack.back();
+    size_t node_index = stack.back();
     stack.pop_back();
 
     // If the node is a leaf, it's representing a single object. Otherwise It's
     // an internal node with children.
-    if (nodes[node_ind].IsLeaf()) {
-      if (frustum.Intersects(nodes[node_ind].object.obb,
-                             nodes[node_ind].object.transform))
-        visible_objects.push_back(nodes[node_ind].object);
+    if (nodes[node_index].IsLeaf()) {
+      if (frustum.Intersects(nodes[node_index].object.obb,
+                             nodes[node_index].object.transform))
+        visible_objects.push_back(nodes[node_index].object);
       continue;
-    } else if (!frustum.Intersects(nodes[node_ind].aabb)) {
+    } else if (!frustum.Intersects(nodes[node_index].aabb)) {
       continue;
     }
 
     // The internal node passed tests, check its children
-    if (nodes[node_ind].left)
-      stack.push_back(nodes[node_ind].left);
-    if (nodes[node_ind].right)
-      stack.push_back(nodes[node_ind].right);
+    if (nodes[node_index].left)
+      stack.push_back(nodes[node_index].left);
+    if (nodes[node_index].right)
+      stack.push_back(nodes[node_index].right);
   }
 
   return visible_objects;
 }
 
 void Scene::DumpBVHTree(const std::vector<BVHNode>& nodes,
-                        size_t node_ind,
+                        size_t node_index,
                         const std::string& prefix,
                         bool is_last) {
   if (nodes.empty())
@@ -699,12 +699,12 @@ void Scene::DumpBVHTree(const std::vector<BVHNode>& nodes,
   AABBf aabb;
 
   // Print node details
-  if (nodes[node_ind].IsLeaf()) {
-    out << "[Leaf] model_ind: " << nodes[node_ind].object.model_ind << " ";
-    nodes[node_ind].object.obb.GetBoundBox(aabb);
+  if (nodes[node_index].IsLeaf()) {
+    out << "[Leaf] model_ind: " << nodes[node_index].object.model_ind << " ";
+    nodes[node_index].object.obb.GetBoundBox(aabb);
   } else {
     out << "[Internal] ";
-    aabb = nodes[node_ind].aabb;
+    aabb = nodes[node_index].aabb;
   }
 
   // Print bounding box info
@@ -717,31 +717,31 @@ void Scene::DumpBVHTree(const std::vector<BVHNode>& nodes,
   std::string child_prefix = prefix + (is_last ? "    " : "│   ");
 
   // Recurse for children (if they exist)
-  if (!nodes[node_ind].IsLeaf()) {
+  if (!nodes[node_index].IsLeaf()) {
     // The right child is always the "last" one for its parent
-    DumpBVHTree(nodes, nodes[node_ind].left, child_prefix, false);
-    DumpBVHTree(nodes, nodes[node_ind].right, child_prefix, true);
+    DumpBVHTree(nodes, nodes[node_index].left, child_prefix, false);
+    DumpBVHTree(nodes, nodes[node_index].right, child_prefix, true);
   }
 }
 
-void Scene::DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_ind) {
+void Scene::DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_index) {
   if (nodes.empty())
     return;
 
-  if (nodes[node_ind].IsLeaf()) {
+  if (nodes[node_index].IsLeaf()) {
     Vector3f color{1, 1, 0};
-    if (nodes[node_ind].object.entity == selected_entity_)
+    if (nodes[node_index].object.entity == selected_entity_)
       color = {0, 1, 1};
-    debug_layer_.DrawObb(nodes[node_ind].object.obb, color);
+    debug_layer_.DrawObb(nodes[node_index].object.obb, color);
   } else {
-    debug_layer_.DrawAabb(nodes[node_ind].aabb, {1, 0, 1});
+    debug_layer_.DrawAabb(nodes[node_index].aabb, {1, 0, 1});
   }
 
   // Recurse for children (if they exist)
-  if (!nodes[node_ind].IsLeaf()) {
+  if (!nodes[node_index].IsLeaf()) {
     // The right child is always the "last" one for its parent
-    DrawBVHTree(nodes, nodes[node_ind].left);
-    DrawBVHTree(nodes, nodes[node_ind].right);
+    DrawBVHTree(nodes, nodes[node_index].left);
+    DrawBVHTree(nodes, nodes[node_index].right);
   }
 }
 
@@ -769,27 +769,27 @@ Entity Scene::SelectEntity(const std::vector<BVHNode>& nodes, const Rayf& ray) {
   stack.push_back(0);
 
   while (!stack.empty()) {
-    size_t node_ind = stack.back();
+    size_t node_index = stack.back();
     stack.pop_back();
 
     // If the node is a leaf, it's representing a single object. Otherwise It's
     // an internal node with children.
-    if (nodes[node_ind].IsLeaf()) {
-      float distance = nodes[node_ind].object.obb.IntersectRay(ray);
+    if (nodes[node_index].IsLeaf()) {
+      float distance = nodes[node_index].object.obb.IntersectRay(ray);
       if (distance >= 0.0f && distance < closest_distance) {
         closest_distance = distance;
-        selected_entity = nodes[node_ind].object.entity;
+        selected_entity = nodes[node_index].object.entity;
       }
       continue;
-    } else if (nodes[node_ind].aabb.IntersectRay(ray) < 0) {
+    } else if (nodes[node_index].aabb.IntersectRay(ray) < 0) {
       continue;
     }
 
     // The internal node passed tests, check its children
-    if (nodes[node_ind].left)
-      stack.push_back(nodes[node_ind].left);
-    if (nodes[node_ind].right)
-      stack.push_back(nodes[node_ind].right);
+    if (nodes[node_index].left)
+      stack.push_back(nodes[node_index].left);
+    if (nodes[node_index].right)
+      stack.push_back(nodes[node_index].right);
   }
 
   return selected_entity;
