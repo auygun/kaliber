@@ -29,7 +29,6 @@ struct LocalTransformComponent {
 
 struct WorldTransformComponent {
   base::Matrix4f transform{1};
-  bool is_dirty{true};
 };
 
 struct WorldTransformDirtyTag {};

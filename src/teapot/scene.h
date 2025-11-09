@@ -142,13 +142,6 @@ class Scene {
 
   void DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_ind);
 
-  // Gets the entity's final world transform. Recalculates if dirty, recursively
-  // updating the entity and all its ancestors.
-  const base::Matrix4f& GetWorldTransform(Entity entity);
-
-  // Marks this entity and all its descendants as dirty.
-  void SetDirty(Entity entity);
-
   void DetachFromParent(SceneNodeComponent& core_data);
 
   // Detaches an entity from its current parent's child list and attaches to a

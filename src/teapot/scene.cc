@@ -241,12 +241,11 @@ void Scene::Render(float frame_frac) {
 
   do {
     std::vector<WorldObject> world_objects;
-    for (auto [entity, scene_node, model, bounds] :
+    for (auto [entity, scene_node, model, world, bounds] :
          registry_.View<SceneNodeComponent, ModelComponent,
-                        WorldBoundsComponent>()) {
-      auto& transform = GetWorldTransform(entity);
+                        WorldTransformComponent, WorldBoundsComponent>()) {
       world_objects.emplace_back(entity, model.model_index, bounds.world_obb,
-                                 transform);
+                                 world.transform);
     }
     if (world_objects.empty())
       break;
@@ -386,95 +385,6 @@ void Scene::UploadSceneData() {
   renderer_->UpdateBuffer(lights_ubo_, &lights_, sizeof(lights_));
 }
 
-void Scene::SetDirty(Entity entity) {
-  auto& transform = world_transform_pool_->Get(entity);
-
-  // If the entity is already dirty, all its descendants must also be dirty.
-  if (transform.is_dirty)
-    return;  // We're done.
-
-  // Mark the entity as dirty.
-  transform.is_dirty = true;
-
-  auto& scene_node = scene_node_pool_->Get(entity);
-
-  if (scene_node.first_child == NULL_ENTITY)
-    return;  // No children.
-
-  // Now, add all of the entity's children to the stack.
-  std::deque<Entity> stack;
-  Entity child = scene_node.first_child;
-  while (child != NULL_ENTITY) {
-    stack.push_back(child);
-    DCHECK(scene_node_pool_->Has(child));
-    child = scene_node_pool_->Get(child).next_sibling;
-  }
-
-  // Process all descendants.
-  while (!stack.empty()) {
-    Entity child_entity = stack.back();
-    stack.pop_back();
-
-    auto& child_transform = world_transform_pool_->Get(child_entity);
-
-    // If this child is dirty, its children are also dirty.
-    // Skip it and move to the next item in the stack.
-    if (child_transform.is_dirty)
-      continue;
-
-    child_transform.is_dirty = true;
-
-    auto& child_scene_node = scene_node_pool_->Get(child_entity);
-
-    // Iterate the children of this child and add them to the stack.
-    Entity child_of_child = child_scene_node.first_child;
-    while (child_of_child != NULL_ENTITY) {
-      stack.push_back(child_of_child);
-      child_of_child = scene_node_pool_->Get(child_of_child).next_sibling;
-    }
-  }
-}
-
-const Matrix4f& Scene::GetWorldTransform(Entity entity) {
-  DCHECK(entity != NULL_ENTITY);
-  auto& world_transform = world_transform_pool_->Get(entity);
-
-#if 0
-  // If it's not dirty, its transform is already correct. We're done.
-  if (!world_transform.is_dirty) {
-    return world_transform.transform;
-  }
-
-  auto& local_transform = local_transform_pool_->Get(entity);
-  auto& scene_node = scene_node_pool_->Get(entity);
-
-  // It's dirty, so we must recalculate.
-  if (scene_node.parent == NULL_ENTITY) {
-    // This is a root node. Its world transform is just its local transform.
-    world_transform.transform = local_transform.transform;
-  } else {
-    // This is a child node. Recursively call this function on our parent.
-    const base::Matrix4f& parent_world_transform =
-        GetWorldTransform(scene_node.parent);
-
-    // Now, calculate our own world transform.
-    parent_world_transform.Multiply(local_transform.transform,
-                                    world_transform.transform);
-  }
-
-  // Update world bounds.
-  if (registry_.HasComponent<ModelComponent>(entity)) {
-    auto& model = registry_.GetComponent<ModelComponent>(entity);
-    auto& world_bounds = world_bounds_pool_->Get(entity);
-    world_bounds.world_obb = OBBf{world_transform.transform, model.extents};
-  }
-
-  // Mark ourselves as clean and return the new transform.
-  world_transform.is_dirty = false;
-#endif
-  return world_transform.transform;
-}
-
 void Scene::SetParent(Entity entity, Entity new_parent) {
   DCHECK(entity != NULL_ENTITY);
   DCHECK(entity != new_parent);
@@ -508,8 +418,7 @@ void Scene::SetParent(Entity entity, Entity new_parent) {
 
   OnHierarchyChanged(entity, new_depth);
 
-  // Mark the entity as dirty.
-  // SetDirty(entity);
+  // Tag the entity dirty.
   registry_.AddComponent(entity, WorldTransformDirtyTag{});
 }
 
@@ -608,52 +517,47 @@ void Scene::OnHierarchyChanged(Entity entity, size_t new_depth) {
 void Scene::UpdateWoldTransforms() {
   // Iterate sequentially through depth levels (0 -> 1 -> 2...)
   for (int d = 0; d < depth_buckets_.size(); ++d) {
-    // Iterate ONLY the entities at this specific depth
+    // Iterate only the entities at this specific depth
     for (Entity entity : depth_buckets_[d]) {
-      // We need to access components directly now
-      // (Assuming your ECS has a way to get components by ID, like
-      // registry.get<T>(id))
       auto& scene_node = scene_node_pool_->Get(entity);
       auto& world_transform = world_transform_pool_->Get(entity);
 
       bool parent_was_dirty = false;
 
-      // 1. Check Parent's Dirty State (if we aren't root)
-      // Because we process in depth order, we KNOW the parent is already
+      // Check Parent's Dirty State (if we aren't root)
+      // Because we process in depth order, we know the parent is already
       // up-to-date for this frame.
       if (scene_node.parent != NULL_ENTITY) {
         parent_was_dirty =
             registry_.HasComponent<WorldTransformDirtyTag>(scene_node.parent);
       }
 
-      // 2. Check Self Dirty State
+      // Check self dirty state
       bool self_is_dirty =
           registry_.HasComponent<WorldTransformDirtyTag>(entity);
 
-      // 3. Update if necessary
+      // Update if necessary
       if (self_is_dirty || parent_was_dirty) {
-        // A. Get local transform data
         const auto& local_transform = local_transform_pool_->Get(entity);
 
-        // B. Calculate new World Matrix
+        // Calculate new world matrix
         if (scene_node.parent == NULL_ENTITY) {
           // Root object: World = Local
           world_transform.transform = local_transform.transform;
         } else {
-          // Now, calculate our own world transform.
+          // Child object: World = ParentWorld * Local
           const auto& parent_world_transform =
               world_transform_pool_->Get(scene_node.parent);
           parent_world_transform.transform.Multiply(local_transform.transform,
                                                     world_transform.transform);
         }
 
-        // C. Propagate Dirtiness Downward
-        // If we updated because our PARENT was dirty (but we weren't
-        // originally), we must now tag ourselves so OUR children will see it
+        // Propagate dirtiness downward
+        // If we updated because our parent was dirty (but we weren't
+        // originally), we must now tag ourselves so our children will see it
         // when the loop reaches depth d+1.
-        if (!self_is_dirty) {
+        if (!self_is_dirty)
           registry_.AddComponent(entity, WorldTransformDirtyTag{});
-        }
       }
     }
   }
