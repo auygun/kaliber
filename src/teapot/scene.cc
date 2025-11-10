@@ -450,9 +450,8 @@ void Scene::DetachFromParent(SceneNodeComponent& scene_node) {
 
 void Scene::DestroyEntityAndChildren(Entity entity) {
   DCHECK(entity != NULL_ENTITY);
-  auto& scene_node = scene_node_pool_->Get(entity);
 
-  DetachFromParent(scene_node);
+  DetachFromParent(scene_node_pool_->Get(entity));
 
   // Cascade delete all children.
   std::deque<Entity> stack;
