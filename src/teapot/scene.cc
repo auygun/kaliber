@@ -361,6 +361,8 @@ std::vector<Scene::DrawData> Scene::UpdateInstancesAndBuildDrawList(
       instance_count = 0;
     }
 
+    // This is not very cache-friendly (a few random accesses, but only on
+    // visible items).
     instances_.emplace_back(world_transform_pool_->Get(item.entity).transform);
     ++instance_index;
     ++instance_count;
@@ -386,7 +388,7 @@ void Scene::SetParent(Entity entity, Entity new_parent) {
   DCHECK(entity != NULL_ENTITY);
   DCHECK(entity != new_parent);
   auto& scene_node = scene_node_pool_->Get(entity);
-  uint32_t new_depth = (uint32_t)-1;
+  uint32_t new_depth = NULL_INDEX;
 
   DetachFromParent(scene_node);
 
@@ -457,7 +459,7 @@ void Scene::DestroyEntityAndChildren(Entity entity) {
     Entity entity_to_destroy = stack.back();
     stack.pop_back();
 
-    OnHierarchyChanged(entity_to_destroy, (uint32_t)-1);
+    OnHierarchyChanged(entity_to_destroy, NULL_INDEX);
 
     // Iterate the sibling list to find all children.
     Entity child = scene_node_pool_->Get(entity_to_destroy).first_child;
@@ -477,7 +479,7 @@ void Scene::OnHierarchyChanged(Entity entity, uint32_t new_depth) {
     return;
 
   // Remove from old bucket (fast swap-and-pop)
-  if (scene_node.depth != (uint32_t)-1 &&
+  if (scene_node.depth != NULL_INDEX &&
       scene_node.depth < depth_buckets_.size()) {
     auto& bucket = depth_buckets_[scene_node.depth];
 
@@ -493,7 +495,7 @@ void Scene::OnHierarchyChanged(Entity entity, uint32_t new_depth) {
   }
 
   // Add to new bucket
-  if (new_depth != (uint32_t)-1) {
+  if (new_depth != NULL_INDEX) {
     // Ensure enough buckets exist
     if (depth_buckets_.size() <= new_depth)
       depth_buckets_.resize(new_depth + 1);
@@ -506,8 +508,8 @@ void Scene::OnHierarchyChanged(Entity entity, uint32_t new_depth) {
     scene_node.depth = new_depth;
     scene_node.bucket_index = new_bucket.size() - 1;
   } else {
-    scene_node.depth = (uint32_t)-1;
-    scene_node.bucket_index = (uint32_t)-1;
+    scene_node.depth = NULL_INDEX;
+    scene_node.bucket_index = NULL_INDEX;
   }
 }
 

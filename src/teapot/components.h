@@ -6,10 +6,12 @@
 
 namespace eng {
 
+const uint32_t NULL_INDEX = (uint32_t)-1;
+
 // The component for storing parent-child relationships and transformations of
 // world objects. This is the core of the scene graph.
 struct SceneNodeComponent {
-  char name[8];
+  char name[8]{0};
 
   // Hierarchy (Doubly-Linked Sibling List)
   Entity parent{NULL_ENTITY};
@@ -18,9 +20,9 @@ struct SceneNodeComponent {
   Entity prev_sibling{NULL_ENTITY};
 
   // Depth in the hierarchy (root = 0, child = 1, grandchild = 2, etc.).
-  uint32_t depth = (uint32_t)-1;
+  uint32_t depth{NULL_INDEX};
   // The index of this entity inside its specific depth_bucket vector.
-  uint32_t bucket_index = (uint32_t)-1;
+  uint32_t bucket_index{NULL_INDEX};
 };
 
 struct LocalTransformComponent {
@@ -38,7 +40,7 @@ struct WorldBoundsComponent {
 };
 
 struct ModelComponent {
-  uint32_t model_index{(uint32_t)-1};
+  uint32_t model_index{NULL_INDEX};
   base::Vector3f extents{0};  // Extents of the model
 };
 

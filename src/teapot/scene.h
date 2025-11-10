@@ -49,15 +49,13 @@ class Scene {
     base::AABBf aabb;
 
     // Tree structure
-    uint32_t left = (uint32_t)-1;
-    uint32_t right = (uint32_t)-1;
+    uint32_t left{NULL_INDEX};
+    uint32_t right{NULL_INDEX};
 
     // Payload
     Entity entity;
 
-    bool IsLeaf() const {
-      return left == (uint32_t)-1 && right == (uint32_t)-1;
-    }
+    bool IsLeaf() const { return left == NULL_INDEX && right == NULL_INDEX; }
   };
 
   // Lightweight temporary struct that contains the data needed for sorting
@@ -130,7 +128,7 @@ class Scene {
 
   SceneData scene_data_;
   LightData lights_[4];
-  std::vector<InstanceData> instances_;
+  std::vector<InstanceData> instances_;  // TODO: remove
 
   uint64_t scene_data_ubo_ = 0;
   uint64_t lights_ubo_ = 0;
