@@ -345,7 +345,7 @@ void Scene::UpdateFrustum() {
 
 std::vector<Scene::DrawData> Scene::BuildDrawList(
     std::vector<SortItem> sorted_list) {
-  DCHECK(!sort_list.empty());
+  DCHECK(!sorted_list.empty());
 
   instances_.clear();
 
