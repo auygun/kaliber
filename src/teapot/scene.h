@@ -36,11 +36,12 @@ class Scene {
   Camera& GetCamera() { return camera_; }
 
  private:
-  struct WorldObject {
+  // The temporary struct used for building the BVH tree.
+  // Keep it lightweight. Bloated struct will make the sort slower.
+  struct BVHBuildItem {
     Entity entity;
-    size_t model_ind = (size_t)-1;
-    base::OBBf obb;
-    base::Matrix4f transform{1};
+    base::AABBf aabb;
+    base::Vector3f center;
   };
 
   struct BVHNode {
@@ -52,9 +53,27 @@ class Scene {
     size_t right = (size_t)-1;
 
     // Payload
-    WorldObject object;
+    Entity entity;
 
     bool IsLeaf() const { return left == (size_t)-1 && right == (size_t)-1; }
+  };
+
+  // Lightweight temporary struct that contains the data needed for sorting
+  // visible entities by model index.
+  struct SortItem {
+    Entity entity;
+    size_t model_index;
+
+    bool operator<(const SortItem& other) const {
+      return model_index < other.model_index;
+    }
+  };
+
+  // The data needed for the final draw call.
+  struct DrawData {
+    Entity entity;
+    size_t model_index;
+    base::Matrix4f transform;
   };
 
   // --- UBO ---
@@ -125,14 +144,15 @@ class Scene {
   void UpdateViewProjectionMatrix();
   void UpdateFrustum();
 
-  std::vector<std::tuple<size_t, size_t, size_t>> UpdateInstancesAndGetDrawList(
-      const std::vector<Scene::WorldObject>& objects);
+  std::vector<std::tuple<size_t, size_t, size_t>>
+  UpdateInstancesAndBuildDrawList(
+      const std::vector<SortItem>& visible_entities);
 
   void UploadSceneData();
 
-  void BuildBVHTree(std::vector<WorldObject> objects);
+  void BuildBVHTree(std::vector<BVHBuildItem> items);
 
-  std::vector<WorldObject> FrustumCull(const base::Frustumf& frustum);
+  std::vector<SortItem> FrustumCull(const base::Frustumf& frustum);
 
   void DumpBVHTree(const std::vector<BVHNode>& nodes,
                    size_t node_ind,

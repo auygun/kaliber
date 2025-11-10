@@ -240,26 +240,24 @@ void Scene::Render(float frame_frac) {
 
   instances_.clear();
 
-  // Build a BVH tree from all physical/visible objects in the scene graph.
-  std::vector<WorldObject> world_objects;
-  for (auto [entity, scene_node, model, world_transform, world_bounds] :
-       registry_.View<SceneNodeComponent, ModelComponent,
-                      WorldTransformComponent, WorldBoundsComponent>()) {
-    world_objects.emplace_back(entity, model.model_index, world_bounds.obb,
-                               world_transform.transform);
+  // Build the flat list.
+  std::vector<BVHBuildItem> bvh_build_items;
+  bvh_build_items.reserve(
+      registry_.GetOrCreatePool<WorldBoundsComponent>()->GetSize());
+  for (auto [entity, world_bounds] : registry_.View<WorldBoundsComponent>()) {
+    AABBf aabb;
+    world_bounds.obb.GetBoundBox(aabb);
+    bvh_build_items.emplace_back(entity, aabb, world_bounds.obb.center);
   }
 
-  BuildBVHTree(std::move(world_objects));
+  BuildBVHTree(std::move(bvh_build_items));
 
-  auto visible_objects = FrustumCull(frustum_);
-  DLOG(0) << "FrustumCull: " << visible_objects.size();
-  if (!visible_objects.empty()) {
-    std::sort(visible_objects.begin(), visible_objects.end(),
-              [](WorldObject& a, WorldObject& b) {
-                return a.model_ind < b.model_ind;
-              });
+  auto sort_list = FrustumCull(frustum_);
+  DLOG(0) << "FrustumCull: " << sort_list.size();
+  if (!sort_list.empty()) {
+    std::sort(sort_list.begin(), sort_list.end());
 
-    auto draw_list = UpdateInstancesAndGetDrawList(visible_objects);
+    auto draw_list = UpdateInstancesAndBuildDrawList(sort_list);
 
     UploadSceneData();
 
@@ -347,22 +345,22 @@ void Scene::UpdateFrustum() {
 }
 
 std::vector<std::tuple<size_t, size_t, size_t>>
-Scene::UpdateInstancesAndGetDrawList(
-    const std::vector<Scene::WorldObject>& objects) {
+Scene::UpdateInstancesAndBuildDrawList(
+    const std::vector<SortItem>& sorted_list) {
   DCHECK(instances_.empty());
   std::vector<std::tuple<size_t, size_t, size_t>> draw_list;
-  size_t last_model_ind = objects[0].model_ind;
+  size_t last_model_ind = sorted_list[0].model_index;
   size_t instance_ind = 0;
   size_t first_instance = 0;
   size_t instance_count = 0;
-  for (auto& obj : objects) {
-    if (obj.model_ind != last_model_ind) {
+  for (auto& item : sorted_list) {
+    if (item.model_index != last_model_ind) {
       draw_list.emplace_back(last_model_ind, first_instance, instance_count);
-      last_model_ind = obj.model_ind;
+      last_model_ind = item.model_index;
       first_instance = instance_ind;
       instance_count = 0;
     }
-    instances_.emplace_back(obj.transform);
+    instances_.emplace_back(world_transform_pool_->Get(item.entity).transform);
     ++instance_ind;
     ++instance_count;
   }
@@ -567,39 +565,37 @@ void Scene::UpdateWorldBounds() {
   }
 }
 
-void Scene::BuildBVHTree(std::vector<WorldObject> objects) {
+void Scene::BuildBVHTree(std::vector<BVHBuildItem> items) {
   bvh_tree_.clear();
 
-  if (objects.empty())
+  if (items.empty())
     return;
 
-  size_t bvh_tree_size = 2 * objects.size() - 1;
+  size_t bvh_tree_size = 2 * items.size() - 1;
   if (bvh_tree_.size() <= bvh_tree_size)
     bvh_tree_.resize(bvh_tree_size);
 
   size_t last_node_index = 0;
 
   // Create stack for depth-first traversal and start the process with the root
-  // node using all objects.
-  std::deque<std::tuple<size_t, std::span<WorldObject>>> stack;
-  std::span objects_view(objects.data(), objects.size());
-  stack.push_back(std::make_tuple(last_node_index, std::move(objects_view)));
+  // node using all items.
+  std::deque<std::tuple<size_t, std::span<BVHBuildItem>>> stack;
+  stack.push_back(
+      std::make_tuple(last_node_index, std::span{items.data(), items.size()}));
 
   while (!stack.empty()) {
-    auto [node_index, node_objects] = std::move(stack.back());
+    auto [node_index, node_items] = std::move(stack.back());
     stack.pop_back();
 
     // If only one object remains, this is a leaf.
-    if (node_objects.size() == 1) {
-      bvh_tree_[node_index].object = node_objects[0];
+    if (node_items.size() == 1) {
+      bvh_tree_[node_index].entity = node_items[0].entity;
       continue;
     }
 
-    // Calculate the combined AABB for all node_objects in this branch.
-    for (auto& obj : node_objects) {
-      AABBf aabb;
-      obj.obb.GetBoundBox(aabb);
-      bvh_tree_[node_index].aabb.Expand(aabb);
+    // Calculate the combined AABB for all node_items in this branch.
+    for (auto& item : node_items) {
+      bvh_tree_[node_index].aabb.Expand(item.aabb);
     }
 
     // Find the longest axis of the combined AABB to split along.
@@ -611,30 +607,30 @@ void Scene::BuildBVHTree(std::vector<WorldObject> objects) {
     if (extent.z > extent.y)
       axis = 2;
 
-    // Sort node_objects along the chosen axis based on their center point.
+    // Sort node_items along the chosen axis based on their center point.
     if (axis == 0) {
-      std::sort(node_objects.begin(), node_objects.end(),
-                [](WorldObject& a, WorldObject& b) {
-                  return a.obb.center.x < b.obb.center.x;
+      std::sort(node_items.begin(), node_items.end(),
+                [](BVHBuildItem& a, BVHBuildItem& b) {
+                  return a.center.x < b.center.x;
                 });
     } else if (axis == 1) {
-      std::sort(node_objects.begin(), node_objects.end(),
-                [](WorldObject& a, WorldObject& b) {
-                  return a.obb.center.y < b.obb.center.y;
+      std::sort(node_items.begin(), node_items.end(),
+                [](BVHBuildItem& a, BVHBuildItem& b) {
+                  return a.center.y < b.center.y;
                 });
     } else {  // axis == 2
-      std::sort(node_objects.begin(), node_objects.end(),
-                [](WorldObject& a, WorldObject& b) {
-                  return a.obb.center.z < b.obb.center.z;
+      std::sort(node_items.begin(), node_items.end(),
+                [](BVHBuildItem& a, BVHBuildItem& b) {
+                  return a.center.z < b.center.z;
                 });
     }
 
-    // Split the objects into two halves
-    size_t mid = node_objects.size() / 2;
-    std::span<WorldObject> left_branch(node_objects.begin(),
-                                       node_objects.begin() + mid);
-    std::span<WorldObject> right_branch(node_objects.begin() + mid,
-                                        node_objects.end());
+    // Split the items into two halves
+    size_t mid = node_items.size() / 2;
+    std::span<BVHBuildItem> left_branch(node_items.begin(),
+                                        node_items.begin() + mid);
+    std::span<BVHBuildItem> right_branch(node_items.begin() + mid,
+                                         node_items.end());
 
     // Create the child nodes.
     bvh_tree_[node_index].left = ++last_node_index;
@@ -646,10 +642,10 @@ void Scene::BuildBVHTree(std::vector<WorldObject> objects) {
   }
 }
 
-std::vector<Scene::WorldObject> Scene::FrustumCull(const Frustumf& frustum) {
-  std::vector<WorldObject> visible_objects;
+std::vector<Scene::SortItem> Scene::FrustumCull(const Frustumf& frustum) {
+  std::vector<SortItem> visible_items;
   if (bvh_tree_.empty())
-    return visible_objects;
+    return visible_items;
 
   // Create stack for depth-first traversal and start the process with the root
   // of the BVH tree.
@@ -663,9 +659,14 @@ std::vector<Scene::WorldObject> Scene::FrustumCull(const Frustumf& frustum) {
     // If the node is a leaf, it's representing a single object. Otherwise It's
     // an internal node with children.
     if (bvh_tree_[node_index].IsLeaf()) {
-      if (frustum.Intersects(bvh_tree_[node_index].object.obb,
-                             bvh_tree_[node_index].object.transform))
-        visible_objects.push_back(bvh_tree_[node_index].object);
+      auto entity = bvh_tree_[node_index].entity;
+      // This is not very cache-friendly (a few random accesses, but only on
+      // visible leafs).
+      if (frustum.Intersects(
+              registry_.GetComponent<WorldBoundsComponent>(entity).obb,
+              world_transform_pool_->Get(entity).transform))
+        visible_items.emplace_back(
+            entity, registry_.GetComponent<ModelComponent>(entity).model_index);
       continue;
     } else if (!frustum.Intersects(bvh_tree_[node_index].aabb)) {
       continue;
@@ -678,7 +679,7 @@ std::vector<Scene::WorldObject> Scene::FrustumCull(const Frustumf& frustum) {
       stack.push_back(bvh_tree_[node_index].right);
   }
 
-  return visible_objects;
+  return visible_items;
 }
 
 void Scene::DumpBVHTree(const std::vector<BVHNode>& nodes,
@@ -698,8 +699,12 @@ void Scene::DumpBVHTree(const std::vector<BVHNode>& nodes,
 
   // Print node details
   if (nodes[node_index].IsLeaf()) {
-    out << "[Leaf] model_ind: " << nodes[node_index].object.model_ind << " ";
-    nodes[node_index].object.obb.GetBoundBox(aabb);
+    out << "[Leaf] model_ind: "
+        << registry_.GetComponent<ModelComponent>(nodes[node_index].entity)
+               .model_index
+        << " ";
+    registry_.GetComponent<WorldBoundsComponent>(nodes[node_index].entity)
+        .obb.GetBoundBox(aabb);
   } else {
     out << "[Internal] ";
     aabb = nodes[node_index].aabb;
@@ -728,9 +733,12 @@ void Scene::DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_index) {
 
   if (nodes[node_index].IsLeaf()) {
     Vector3f color{1, 1, 0};
-    if (nodes[node_index].object.entity == selected_entity_)
+    if (nodes[node_index].entity == selected_entity_)
       color = {0, 1, 1};
-    debug_layer_.DrawObb(nodes[node_index].object.obb, color);
+    debug_layer_.DrawObb(
+        registry_.GetComponent<WorldBoundsComponent>(nodes[node_index].entity)
+            .obb,
+        color);
   } else {
     debug_layer_.DrawAabb(nodes[node_index].aabb, {1, 0, 1});
   }
@@ -773,10 +781,12 @@ Entity Scene::SelectEntity(const std::vector<BVHNode>& nodes, const Rayf& ray) {
     // If the node is a leaf, it's representing a single object. Otherwise It's
     // an internal node with children.
     if (nodes[node_index].IsLeaf()) {
-      float distance = nodes[node_index].object.obb.IntersectRay(ray);
+      float distance =
+          registry_.GetComponent<WorldBoundsComponent>(nodes[node_index].entity)
+              .obb.IntersectRay(ray);
       if (distance >= 0.0f && distance < closest_distance) {
         closest_distance = distance;
-        selected_entity = nodes[node_index].object.entity;
+        selected_entity = nodes[node_index].entity;
       }
       continue;
     } else if (nodes[node_index].aabb.IntersectRay(ray) < 0) {

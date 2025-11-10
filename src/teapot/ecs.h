@@ -126,6 +126,8 @@ class ComponentPool : public ComponentPoolBase {
   // Checks if the pool is empty (i.e., no entities have this component).
   bool IsEmpty() const { return dense_.empty(); }
 
+  size_t GetSize() const { return dense_.size(); }
+
   // Interface implementation for when an entity is destroyed.
   void OnEntityDestroyed(Entity entity) override {
     if (Has(entity))
