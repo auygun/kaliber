@@ -146,13 +146,19 @@ class Scene {
   void UpdateViewProjectionMatrix();
   void UpdateFrustum();
 
-  std::vector<DrawData> UpdateInstancesAndBuildDrawList(
-      std::vector<SortItem> visible_entities);
+  // Processes a sorted list of visible entities and groups them into instanced
+  // draw calls (batches).
+  // Populates the member 'instances_' vector with the world transforms.
+  // Returns a draw list where each DrawData item represents a single instanced
+  // draw call (a batch).
+  std::vector<DrawData> BuildDrawList(std::vector<SortItem> visible_entities);
 
   void UploadSceneData();
 
   void BuildBVHTree(std::vector<BVHBuildItem> items);
 
+  // Traverses the BVH and builds a list of visible entities decorated with the
+  // data needed for sorting (the model_index).
   std::vector<SortItem> FrustumCull(const base::Frustumf& frustum);
 
   void DumpBVHTree(const std::vector<BVHNode>& nodes,

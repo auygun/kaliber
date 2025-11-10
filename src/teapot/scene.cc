@@ -240,25 +240,23 @@ void Scene::Render(float frame_frac) {
   UpdateWorldBounds();
   dirty_tag_pool_->RemoveAll();
 
-  instances_.clear();
-
-  // Build the flat list.
-  std::vector<BVHBuildItem> bvh_build_items;
-  bvh_build_items.reserve(world_bounds_pool_->GetSize());
+  // Build the flat list used for building the BVH tree.
+  std::vector<BVHBuildItem> flat_list;
+  flat_list.reserve(world_bounds_pool_->GetSize());
   for (auto [entity, world_bounds] : registry_.View<WorldBoundsComponent>()) {
     AABBf aabb;
     world_bounds.obb.GetBoundBox(aabb);
-    bvh_build_items.emplace_back(entity, aabb, world_bounds.obb.center);
+    flat_list.emplace_back(entity, aabb, world_bounds.obb.center);
   }
 
-  BuildBVHTree(std::move(bvh_build_items));
+  BuildBVHTree(std::move(flat_list));
 
   auto sort_list = FrustumCull(frustum_);
   DLOG(0) << "FrustumCull: " << sort_list.size();
   if (!sort_list.empty()) {
     std::sort(sort_list.begin(), sort_list.end());
 
-    auto draw_list = UpdateInstancesAndBuildDrawList(std::move(sort_list));
+    auto draw_list = BuildDrawList(std::move(sort_list));
 
     UploadSceneData();
 
@@ -345,8 +343,12 @@ void Scene::UpdateFrustum() {
   frustum_.CreateFromMatrix(view_projection);
 }
 
-std::vector<Scene::DrawData> Scene::UpdateInstancesAndBuildDrawList(
+std::vector<Scene::DrawData> Scene::BuildDrawList(
     std::vector<SortItem> sorted_list) {
+  DCHECK(!sort_list.empty());
+
+  instances_.clear();
+
   std::vector<DrawData> draw_list;
 
   uint32_t last_model_index = sorted_list[0].model_index;
