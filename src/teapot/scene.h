@@ -116,6 +116,8 @@ class Scene {
   ComponentPool<WorldTransformComponent>* world_transform_pool_{nullptr};
   ComponentPool<LocalTransformComponent>* local_transform_pool_{nullptr};
   ComponentPool<WorldTransformDirtyTag>* dirty_tag_pool_{nullptr};
+  ComponentPool<WorldBoundsComponent>* world_bounds_pool_{nullptr};
+  ComponentPool<ModelComponent>* model_pool_{nullptr};
 
   // A list that keeps list of entity IDs for every possible depth level.
   std::vector<std::vector<Entity>> depth_buckets_;

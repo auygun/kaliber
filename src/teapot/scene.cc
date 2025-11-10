@@ -109,6 +109,8 @@ void Scene::Create(Renderer* renderer) {
   world_transform_pool_ = registry_.GetOrCreatePool<WorldTransformComponent>();
   local_transform_pool_ = registry_.GetOrCreatePool<LocalTransformComponent>();
   dirty_tag_pool_ = registry_.GetOrCreatePool<WorldTransformDirtyTag>();
+  world_bounds_pool_ = registry_.GetOrCreatePool<WorldBoundsComponent>();
+  model_pool_ = registry_.GetOrCreatePool<ModelComponent>();
 
   root_entity_ = registry_.CreateEntity();
   registry_.AddComponent(root_entity_, SceneNodeComponent{.name{"root"}});
@@ -242,8 +244,7 @@ void Scene::Render(float frame_frac) {
 
   // Build the flat list.
   std::vector<BVHBuildItem> bvh_build_items;
-  bvh_build_items.reserve(
-      registry_.GetOrCreatePool<WorldBoundsComponent>()->GetSize());
+  bvh_build_items.reserve(world_bounds_pool_->GetSize());
   for (auto [entity, world_bounds] : registry_.View<WorldBoundsComponent>()) {
     AABBf aabb;
     world_bounds.obb.GetBoundBox(aabb);
@@ -666,11 +667,10 @@ std::vector<Scene::SortItem> Scene::FrustumCull(const Frustumf& frustum) {
       auto entity = bvh_tree_[node_index].entity;
       // This is not very cache-friendly (a few random accesses, but only on
       // visible leafs).
-      if (frustum.Intersects(
-              registry_.GetComponent<WorldBoundsComponent>(entity).obb,
-              world_transform_pool_->Get(entity).transform))
-        visible_items.emplace_back(
-            entity, registry_.GetComponent<ModelComponent>(entity).model_index);
+      if (frustum.Intersects(world_bounds_pool_->Get(entity).obb,
+                             world_transform_pool_->Get(entity).transform))
+        visible_items.emplace_back(entity,
+                                   model_pool_->Get(entity).model_index);
       continue;
     } else if (!frustum.Intersects(bvh_tree_[node_index].aabb)) {
       continue;
@@ -704,11 +704,8 @@ void Scene::DumpBVHTree(const std::vector<BVHNode>& nodes,
   // Print node details
   if (nodes[node_index].IsLeaf()) {
     out << "[Leaf] model_ind: "
-        << registry_.GetComponent<ModelComponent>(nodes[node_index].entity)
-               .model_index
-        << " ";
-    registry_.GetComponent<WorldBoundsComponent>(nodes[node_index].entity)
-        .obb.GetBoundBox(aabb);
+        << model_pool_->Get(nodes[node_index].entity).model_index << " ";
+    world_bounds_pool_->Get(nodes[node_index].entity).obb.GetBoundBox(aabb);
   } else {
     out << "[Internal] ";
     aabb = nodes[node_index].aabb;
@@ -740,10 +737,8 @@ void Scene::DrawBVHTree(const std::vector<BVHNode>& nodes,
     Vector3f color{1, 1, 0};
     if (nodes[node_index].entity == selected_entity_)
       color = {0, 1, 1};
-    debug_layer_.DrawObb(
-        registry_.GetComponent<WorldBoundsComponent>(nodes[node_index].entity)
-            .obb,
-        color);
+    debug_layer_.DrawObb(world_bounds_pool_->Get(nodes[node_index].entity).obb,
+                         color);
   } else {
     debug_layer_.DrawAabb(nodes[node_index].aabb, {1, 0, 1});
   }
@@ -786,9 +781,8 @@ Entity Scene::SelectEntity(const std::vector<BVHNode>& nodes, const Rayf& ray) {
     // If the node is a leaf, it's representing a single object. Otherwise It's
     // an internal node with children.
     if (nodes[node_index].IsLeaf()) {
-      float distance =
-          registry_.GetComponent<WorldBoundsComponent>(nodes[node_index].entity)
-              .obb.IntersectRay(ray);
+      float distance = world_bounds_pool_->Get(nodes[node_index].entity)
+                           .obb.IntersectRay(ray);
       if (distance >= 0.0f && distance < closest_distance) {
         closest_distance = distance;
         selected_entity = nodes[node_index].entity;
