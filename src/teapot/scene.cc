@@ -266,8 +266,8 @@ void Scene::Render(float frame_frac) {
     renderer_->ActivateDescriptorSet(scene_dset_);
 
     for (auto& draw_call : draw_list) {
-      auto [model_ind, first_instance, instance_count] = draw_call;
-      models_[model_ind].Draw(instance_count, first_instance);
+      auto [model_index, first_instance, instance_count] = draw_call;
+      models_[model_index].Draw(instance_count, first_instance);
     }
   }
 
@@ -703,7 +703,7 @@ void Scene::DumpBVHTree(const std::vector<BVHNode>& nodes,
 
   // Print node details
   if (nodes[node_index].IsLeaf()) {
-    out << "[Leaf] model_ind: "
+    out << "[Leaf] model_index: "
         << model_pool_->Get(nodes[node_index].entity).model_index << " ";
     world_bounds_pool_->Get(nodes[node_index].entity).obb.GetBoundBox(aabb);
   } else {

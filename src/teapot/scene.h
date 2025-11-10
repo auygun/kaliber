@@ -156,11 +156,11 @@ class Scene {
   std::vector<SortItem> FrustumCull(const base::Frustumf& frustum);
 
   void DumpBVHTree(const std::vector<BVHNode>& nodes,
-                   uint32_t node_ind,
+                   uint32_t node_index,
                    const std::string& prefix,
                    bool is_last = true);
 
-  void DrawBVHTree(const std::vector<BVHNode>& nodes, uint32_t node_ind);
+  void DrawBVHTree(const std::vector<BVHNode>& nodes, uint32_t node_index);
 
   void DetachFromParent(SceneNodeComponent& core_data);
 
