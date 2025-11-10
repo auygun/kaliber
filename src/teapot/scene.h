@@ -49,20 +49,22 @@ class Scene {
     base::AABBf aabb;
 
     // Tree structure
-    size_t left = (size_t)-1;
-    size_t right = (size_t)-1;
+    uint32_t left = (uint32_t)-1;
+    uint32_t right = (uint32_t)-1;
 
     // Payload
     Entity entity;
 
-    bool IsLeaf() const { return left == (size_t)-1 && right == (size_t)-1; }
+    bool IsLeaf() const {
+      return left == (uint32_t)-1 && right == (uint32_t)-1;
+    }
   };
 
   // Lightweight temporary struct that contains the data needed for sorting
   // visible entities by model index.
   struct SortItem {
     Entity entity;
-    size_t model_index;
+    uint32_t model_index;
 
     bool operator<(const SortItem& other) const {
       return model_index < other.model_index;
@@ -71,9 +73,9 @@ class Scene {
 
   // The data needed for the final draw call.
   struct DrawData {
-    Entity entity;
-    size_t model_index;
-    base::Matrix4f transform;
+    uint32_t model_index;
+    uint32_t first_instance;
+    uint32_t instance_count;
   };
 
   // --- UBO ---
@@ -138,15 +140,14 @@ class Scene {
   Renderer* renderer_ = nullptr;
 
   Entity NewEntity(Entity parent,
-                   size_t model_index,
+                   uint32_t model_index,
                    const base::Matrix4f& transform);
 
   void UpdateViewProjectionMatrix();
   void UpdateFrustum();
 
-  std::vector<std::tuple<size_t, size_t, size_t>>
-  UpdateInstancesAndBuildDrawList(
-      const std::vector<SortItem>& visible_entities);
+  std::vector<DrawData> UpdateInstancesAndBuildDrawList(
+      std::vector<SortItem> visible_entities);
 
   void UploadSceneData();
 
@@ -155,11 +156,11 @@ class Scene {
   std::vector<SortItem> FrustumCull(const base::Frustumf& frustum);
 
   void DumpBVHTree(const std::vector<BVHNode>& nodes,
-                   size_t node_ind,
+                   uint32_t node_ind,
                    const std::string& prefix,
                    bool is_last = true);
 
-  void DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_ind);
+  void DrawBVHTree(const std::vector<BVHNode>& nodes, uint32_t node_ind);
 
   void DetachFromParent(SceneNodeComponent& core_data);
 
@@ -171,7 +172,7 @@ class Scene {
   void DestroyEntityAndChildren(Entity entity);
 
   // Called whenever an entity is created, destroyed, or re-parented.
-  void OnHierarchyChanged(Entity entity, size_t new_depth);
+  void OnHierarchyChanged(Entity entity, uint32_t new_depth);
 
   // Updates WorldTransformComponent for objects that were tagged as dirty.
   void UpdateWoldTransforms();

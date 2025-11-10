@@ -18,9 +18,9 @@ struct SceneNodeComponent {
   Entity prev_sibling{NULL_ENTITY};
 
   // Depth in the hierarchy (root = 0, child = 1, grandchild = 2, etc.).
-  size_t depth = (size_t)-1;
+  uint32_t depth = (uint32_t)-1;
   // The index of this entity inside its specific depth_bucket vector.
-  size_t bucket_index = (size_t)-1;
+  uint32_t bucket_index = (uint32_t)-1;
 };
 
 struct LocalTransformComponent {
@@ -38,7 +38,7 @@ struct WorldBoundsComponent {
 };
 
 struct ModelComponent {
-  size_t model_index{(size_t)-1};
+  uint32_t model_index{(uint32_t)-1};
   base::Vector3f extents{0};  // Extents of the model
 };
 

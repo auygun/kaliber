@@ -218,7 +218,7 @@ void Scene::Create(Renderer* renderer) {
 }
 
 Entity Scene::NewEntity(Entity parent,
-                        size_t model_index,
+                        uint32_t model_index,
                         const Matrix4f& transform) {
   Entity entity = registry_.CreateEntity();
   registry_.AddComponent(entity, SceneNodeComponent{.name{"model"}});
@@ -257,7 +257,7 @@ void Scene::Render(float frame_frac) {
   if (!sort_list.empty()) {
     std::sort(sort_list.begin(), sort_list.end());
 
-    auto draw_list = UpdateInstancesAndBuildDrawList(sort_list);
+    auto draw_list = UpdateInstancesAndBuildDrawList(std::move(sort_list));
 
     UploadSceneData();
 
@@ -344,27 +344,29 @@ void Scene::UpdateFrustum() {
   frustum_.CreateFromMatrix(view_projection);
 }
 
-std::vector<std::tuple<size_t, size_t, size_t>>
-Scene::UpdateInstancesAndBuildDrawList(
-    const std::vector<SortItem>& sorted_list) {
-  DCHECK(instances_.empty());
-  std::vector<std::tuple<size_t, size_t, size_t>> draw_list;
-  size_t last_model_ind = sorted_list[0].model_index;
-  size_t instance_ind = 0;
-  size_t first_instance = 0;
-  size_t instance_count = 0;
+std::vector<Scene::DrawData> Scene::UpdateInstancesAndBuildDrawList(
+    std::vector<SortItem> sorted_list) {
+  std::vector<DrawData> draw_list;
+
+  uint32_t last_model_index = sorted_list[0].model_index;
+  uint32_t instance_index = 0;
+  uint32_t first_instance = 0;
+  uint32_t instance_count = 0;
+
   for (auto& item : sorted_list) {
-    if (item.model_index != last_model_ind) {
-      draw_list.emplace_back(last_model_ind, first_instance, instance_count);
-      last_model_ind = item.model_index;
-      first_instance = instance_ind;
+    if (item.model_index != last_model_index) {
+      draw_list.emplace_back(last_model_index, first_instance, instance_count);
+      last_model_index = item.model_index;
+      first_instance = instance_index;
       instance_count = 0;
     }
+
     instances_.emplace_back(world_transform_pool_->Get(item.entity).transform);
-    ++instance_ind;
+    ++instance_index;
     ++instance_count;
   }
-  draw_list.emplace_back(last_model_ind, first_instance, instance_count);
+
+  draw_list.emplace_back(last_model_index, first_instance, instance_count);
   return draw_list;
 }
 
@@ -384,7 +386,7 @@ void Scene::SetParent(Entity entity, Entity new_parent) {
   DCHECK(entity != NULL_ENTITY);
   DCHECK(entity != new_parent);
   auto& scene_node = scene_node_pool_->Get(entity);
-  size_t new_depth = (size_t)-1;
+  uint32_t new_depth = (uint32_t)-1;
 
   DetachFromParent(scene_node);
 
@@ -455,7 +457,7 @@ void Scene::DestroyEntityAndChildren(Entity entity) {
     Entity entity_to_destroy = stack.back();
     stack.pop_back();
 
-    OnHierarchyChanged(entity_to_destroy, (size_t)-1);
+    OnHierarchyChanged(entity_to_destroy, (uint32_t)-1);
 
     // Iterate the sibling list to find all children.
     Entity child = scene_node_pool_->Get(entity_to_destroy).first_child;
@@ -469,13 +471,13 @@ void Scene::DestroyEntityAndChildren(Entity entity) {
   }
 }
 
-void Scene::OnHierarchyChanged(Entity entity, size_t new_depth) {
+void Scene::OnHierarchyChanged(Entity entity, uint32_t new_depth) {
   auto& scene_node = scene_node_pool_->Get(entity);
   if (scene_node.depth == new_depth)
     return;
 
   // Remove from old bucket (fast swap-and-pop)
-  if (scene_node.depth != (size_t)-1 &&
+  if (scene_node.depth != (uint32_t)-1 &&
       scene_node.depth < depth_buckets_.size()) {
     auto& bucket = depth_buckets_[scene_node.depth];
 
@@ -491,7 +493,7 @@ void Scene::OnHierarchyChanged(Entity entity, size_t new_depth) {
   }
 
   // Add to new bucket
-  if (new_depth != (size_t)-1) {
+  if (new_depth != (uint32_t)-1) {
     // Ensure enough buckets exist
     if (depth_buckets_.size() <= new_depth)
       depth_buckets_.resize(new_depth + 1);
@@ -504,8 +506,8 @@ void Scene::OnHierarchyChanged(Entity entity, size_t new_depth) {
     scene_node.depth = new_depth;
     scene_node.bucket_index = new_bucket.size() - 1;
   } else {
-    scene_node.depth = (size_t)-1;
-    scene_node.bucket_index = (size_t)-1;
+    scene_node.depth = (uint32_t)-1;
+    scene_node.bucket_index = (uint32_t)-1;
   }
 }
 
@@ -575,11 +577,11 @@ void Scene::BuildBVHTree(std::vector<BVHBuildItem> items) {
   if (bvh_tree_.size() <= bvh_tree_size)
     bvh_tree_.resize(bvh_tree_size);
 
-  size_t last_node_index = 0;
+  uint32_t last_node_index = 0;
 
   // Create stack for depth-first traversal and start the process with the root
   // node using all items.
-  std::deque<std::tuple<size_t, std::span<BVHBuildItem>>> stack;
+  std::deque<std::tuple<uint32_t, std::span<BVHBuildItem>>> stack;
   stack.push_back(
       std::make_tuple(last_node_index, std::span{items.data(), items.size()}));
 
@@ -649,11 +651,11 @@ std::vector<Scene::SortItem> Scene::FrustumCull(const Frustumf& frustum) {
 
   // Create stack for depth-first traversal and start the process with the root
   // of the BVH tree.
-  std::deque<size_t> stack;
+  std::deque<uint32_t> stack;
   stack.push_back(0);
 
   while (!stack.empty()) {
-    size_t node_index = stack.back();
+    auto node_index = stack.back();
     stack.pop_back();
 
     // If the node is a leaf, it's representing a single object. Otherwise It's
@@ -683,7 +685,7 @@ std::vector<Scene::SortItem> Scene::FrustumCull(const Frustumf& frustum) {
 }
 
 void Scene::DumpBVHTree(const std::vector<BVHNode>& nodes,
-                        size_t node_index,
+                        uint32_t node_index,
                         const std::string& prefix,
                         bool is_last) {
   if (nodes.empty())
@@ -727,7 +729,8 @@ void Scene::DumpBVHTree(const std::vector<BVHNode>& nodes,
   }
 }
 
-void Scene::DrawBVHTree(const std::vector<BVHNode>& nodes, size_t node_index) {
+void Scene::DrawBVHTree(const std::vector<BVHNode>& nodes,
+                        uint32_t node_index) {
   if (nodes.empty())
     return;
 
@@ -771,11 +774,11 @@ Entity Scene::SelectEntity(const std::vector<BVHNode>& nodes, const Rayf& ray) {
   Entity selected_entity = NULL_ENTITY;
   float closest_distance{std::numeric_limits<float>::max()};
 
-  std::deque<size_t> stack;
+  std::deque<uint32_t> stack;
   stack.push_back(0);
 
   while (!stack.empty()) {
-    size_t node_index = stack.back();
+    auto node_index = stack.back();
     stack.pop_back();
 
     // If the node is a leaf, it's representing a single object. Otherwise It's
