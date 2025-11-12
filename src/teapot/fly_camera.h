@@ -22,9 +22,6 @@ class FlyCamera {
 
  private:
   PlayerInput* player_input_{nullptr};
-
-  float last_mouse_x_ = 0.0f;
-  float last_mouse_y_ = 0.0f;
 };
 
 }  // namespace eng

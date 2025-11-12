@@ -61,8 +61,8 @@ class Platform {
 
   bool should_exit() const { return should_exit_; }
 
-  float GetMouseX() const { return mouse_x_; }
-  float GetMouseY() const { return mouse_y_; }
+  int GetMouseX() const { return mouse_x_; }
+  int GetMouseY() const { return mouse_y_; }
 
   bool IsMouseButtonDown(MouseButton button) const {
     return mouse_buttons_down_[static_cast<int>(button)];
@@ -93,8 +93,8 @@ class Platform {
   PlatformObserver* observer_ = nullptr;
 
   // Input state tracking
-  float mouse_x_{0};
-  float mouse_y_{0};
+  int mouse_x_{0};
+  int mouse_y_{0};
   std::array<bool, static_cast<int>(MouseButton::MaxButtons)>
       mouse_buttons_down_{};
   std::array<bool, static_cast<int>(Key::MaxKeys)> keys_down_{};

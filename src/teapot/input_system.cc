@@ -30,6 +30,8 @@ void InputSystem::Update(Scene* scene) {
 
 void InputSystem::ResetFrameStates() {
   // Reset all "just pressed" and "delta" values
+  player_input_->mouse_x_delta = 0.0f;
+  player_input_->mouse_y_delta = 0.0f;
   player_input_->mouse_scroll_delta = 0.0f;
   player_input_->mouse_left_pressed = false;
   player_input_->mouse_right_pressed = false;
@@ -41,6 +43,12 @@ void InputSystem::UpdateMouseState() {
   // --- 1. Absolute Position ---
   player_input_->mouse_x = Engine::Get().GetPlatform()->GetMouseX();
   player_input_->mouse_y = Engine::Get().GetPlatform()->GetMouseY();
+
+  // Delta
+  player_input_->mouse_x_delta = player_input_->mouse_x - last_mouse_x_;
+  player_input_->mouse_y_delta = player_input_->mouse_y - last_mouse_y_;
+  LOG(0) << "delta: " << player_input_->mouse_x_delta << ", "
+         << player_input_->mouse_y_delta;
 
   // --- 3. Scroll Wheel ---
   // TODO:

@@ -26,17 +26,15 @@ void FlyCamera::Update(Scene* scene) {
   else if (player_input_->keys_held[static_cast<int>(Key::E)])
     offset += {0.1f, 0, 0};
 
-  float pitch = (player_input_->mouse_y - last_mouse_y_) * 0.0005f;
-  float yaw = (player_input_->mouse_x - last_mouse_x_) * 0.0005f;
-  last_mouse_x_ = player_input_->mouse_x;
-  last_mouse_y_ = player_input_->mouse_y;
+  float pitch = player_input_->mouse_y_delta * 0.0005f;
+  float yaw = player_input_->mouse_x_delta * 0.0005f;
 
   for (auto [entity, _, fly_camera, local_transform] :
        scene->GetRegistry()
            .View<PrimaryCameraTag, FlyCameraComponent,
                  LocalTransformComponent>()) {
     // Rotate
-    if (player_input_->mouse_left_held && pitch != 0 && yaw != 0) {
+    if (player_input_->mouse_left_held) {
       fly_camera.pitch = std::clamp(fly_camera.pitch - pitch, -0.25f, 0.25f);
       fly_camera.yaw = std::fmod(fly_camera.yaw - yaw, 1.0);
 

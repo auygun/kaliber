@@ -119,6 +119,10 @@ struct Viewport {
 // frame. It holds low-level keyboard and mouse state. Input system writes to
 // this. Other game systems read from this.
 struct PlayerInput {
+  // Delta of the cursor for this frame.
+  float mouse_x_delta = 0.0f;
+  float mouse_y_delta = 0.0f;
+
   // Absolute position (in pixels) of the cursor on the screen/window.
   float mouse_x = 0.0f;
   float mouse_y = 0.0f;
