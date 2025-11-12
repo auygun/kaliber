@@ -20,7 +20,6 @@ source_set("engine") {
     "game_factory.h",
     "imgui_backend.cc",
     "imgui_backend.h",
-    "input_event.h",
     "model.cc",
     "model.h",
     "sound_player.cc",

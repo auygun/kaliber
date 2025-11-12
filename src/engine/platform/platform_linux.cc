@@ -7,7 +7,6 @@
 
 #include "base/log.h"
 #include "base/vecmath.h"
-#include "engine/input_event.h"
 #include "engine/platform/platform_observer.h"
 
 using namespace base;
@@ -210,19 +209,8 @@ void Platform::Update() {
     XEvent e;
     XNextEvent(display_, &e);
     switch (e.type) {
-      case KeyPress: {
-        KeySym keysym = XLookupKeysym(&e.xkey, 0);
-        Key translated_key = TranslateX11Key(keysym);
-        keys_down_[static_cast<int>(translated_key)] = (e.type == KeyPress);
-
-        KeySym key = XLookupKeysym(&e.xkey, 0);
-        auto input_event =
-            std::make_unique<InputEvent>(InputEvent::kKeyPress, (char)key);
-        observer_->AddInputEvent(std::move(input_event));
-        // TODO: e.xkey.state & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask))
-        break;
-      }
-
+      case KeyPress:
+        [[fallthrough]];
       case KeyRelease: {
         KeySym keysym = XLookupKeysym(&e.xkey, 0);
         Key translated_key = TranslateX11Key(keysym);
@@ -233,59 +221,11 @@ void Platform::Update() {
       case MotionNotify: {
         mouse_x_ = e.xmotion.x;
         mouse_y_ = e.xmotion.y;
-
-        // Vector2f v(e.xmotion.x, e.xmotion.y);
-        // auto input_event =
-        //     std::make_unique<InputEvent>(InputEvent::kDrag, 0, v);
-        // observer_->AddInputEvent(std::move(input_event));
         break;
       }
-      case ButtonPress: {
-        MouseButton button = MouseButton::Unknown;
-        if (e.xbutton.button == 1)
-          button = MouseButton::Left;
-        if (e.xbutton.button == 2)
-          button = MouseButton::Middle;
-        if (e.xbutton.button == 3)
-          button = MouseButton::Right;
-        mouse_buttons_down_[static_cast<int>(button)] = (e.type == ButtonPress);
-        mouse_x_ = e.xmotion.x;
-        mouse_y_ = e.xmotion.y;
 
-        if (e.xbutton.button == 1) {
-          Vector2f v(e.xbutton.x, e.xbutton.y);
-          auto input_event =
-              std::make_unique<InputEvent>(InputEvent::kDragStart, 0, v);
-          observer_->AddInputEvent(std::move(input_event));
-        } else if (e.xbutton.button == 4) {
-          observer_->AddInputEvent(std::make_unique<InputEvent>(
-              InputEvent::kDragStart, 0, Vector2f{0, 0}));
-          observer_->AddInputEvent(std::make_unique<InputEvent>(
-              InputEvent::kDragStart, 1, Vector2f{0, 0}));
-          observer_->AddInputEvent(std::make_unique<InputEvent>(
-              InputEvent::kDrag, 0, Vector2f{0, 1}));
-          observer_->AddInputEvent(std::make_unique<InputEvent>(
-              InputEvent::kDrag, 1, Vector2f{0, -1}));
-          observer_->AddInputEvent(std::make_unique<InputEvent>(
-              InputEvent::kDragEnd, 0, Vector2f{0, 1}));
-          observer_->AddInputEvent(std::make_unique<InputEvent>(
-              InputEvent::kDragEnd, 1, Vector2f{0, -1}));
-        } else if (e.xbutton.button == 5) {
-          observer_->AddInputEvent(std::make_unique<InputEvent>(
-              InputEvent::kDragStart, 0, Vector2f{0, 1}));
-          observer_->AddInputEvent(std::make_unique<InputEvent>(
-              InputEvent::kDragStart, 1, Vector2f{0, -1}));
-          observer_->AddInputEvent(std::make_unique<InputEvent>(
-              InputEvent::kDrag, 0, Vector2f{0, 0}));
-          observer_->AddInputEvent(std::make_unique<InputEvent>(
-              InputEvent::kDrag, 1, Vector2f{0, 0}));
-          observer_->AddInputEvent(std::make_unique<InputEvent>(
-              InputEvent::kDragEnd, 0, Vector2f{0, 0}));
-          observer_->AddInputEvent(std::make_unique<InputEvent>(
-              InputEvent::kDragEnd, 1, Vector2f{0, 0}));
-        }
-        break;
-      }
+      case ButtonPress:
+        [[fallthrough]];
       case ButtonRelease: {
         MouseButton button = MouseButton::Unknown;
         if (e.xbutton.button == 1)
@@ -297,23 +237,19 @@ void Platform::Update() {
         mouse_buttons_down_[static_cast<int>(button)] = (e.type == ButtonPress);
         mouse_x_ = e.xmotion.x;
         mouse_y_ = e.xmotion.y;
-
-        if (e.xbutton.button == 1) {
-          Vector2f v(e.xbutton.x, e.xbutton.y);
-          auto input_event =
-              std::make_unique<InputEvent>(InputEvent::kDragEnd, 0, v);
-          observer_->AddInputEvent(std::move(input_event));
-        }
         break;
       }
+
       case FocusOut: {
         observer_->LostFocus();
         break;
       }
+
       case FocusIn: {
         observer_->GainedFocus(false);
         break;
       }
+
       case ClientMessage: {
         // WM_DELETE_WINDOW is the only registered type for now.
         observer_->OnWindowDestroyed();
@@ -321,6 +257,7 @@ void Platform::Update() {
         should_exit_ = true;
         return;
       }
+
       case ConfigureNotify: {
         XConfigureEvent xce = e.xconfigure;
         observer_->OnWindowResized(xce.width, xce.height);

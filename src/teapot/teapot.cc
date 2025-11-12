@@ -4,7 +4,6 @@
 #include "engine/engine.h"
 #include "engine/game.h"
 #include "engine/game_factory.h"
-#include "engine/input_event.h"
 #include "teapot/components.h"
 #include "teapot/ecs.h"
 #include "teapot/scene.h"
@@ -20,57 +19,7 @@ class Teapot final : public eng::Game {
   }
 
   void Update(float delta_time) final {
-    Vector2f pos = last_pos_;
-    float dist = last_dist_;
-    Vector3f offset{0};
-    while (std::unique_ptr<InputEvent> event =
-               Engine::Get().GetNextInputEvent()) {
-      InputEvent event2 = *event;
-      event->SetVector(Engine::Get().ToViewportPosition(event->GetVector()) *
-                       Vector2f(1, -1));
-      if (event->GetType() == InputEvent::kDragStart) {
-        is_active_[event->GetPointerId()] = true;
-        positions_[event->GetPointerId()] = event->GetVector();
-        if (is_active_[0] && is_active_[1]) {
-          dist = last_dist_ = (positions_[0] - positions_[1]).Length();
-        } else if (event->GetPointerId() == 0) {
-          pos = last_pos_ = event->GetVector();
-        }
-      } else if (event->GetType() == InputEvent::kDragEnd) {
-        is_active_[event->GetPointerId()] = false;
-        scene_.OnClick(event2.GetVector());
-      } else if (event->GetType() == InputEvent::kDrag) {
-        positions_[event->GetPointerId()] = event->GetVector();
-        if (is_active_[0] && is_active_[1]) {
-          dist = (positions_[0] - positions_[1]).Length();
-          pos = last_pos_ = positions_[0];
-        } else if (event->GetPointerId() == 0) {
-          pos = event->GetVector();
-        }
-      } else if (event->GetType() == InputEvent::kKeyPress) {
-        // if (event->GetKeyPress() == 'd')
-        //   scene_.GetCamera().ToggleDebugCamera(); else
-        if (event->GetKeyPress() == 'w')
-          offset += {0, 0, 0.1f};
-        else if (event->GetKeyPress() == 's')
-          offset += {0, 0, -0.1f};
-        else if (event->GetKeyPress() == 'q')
-          offset += {-0.1f, 0, 0};
-        else if (event->GetKeyPress() == 'e')
-          offset += {0.1f, 0, 0};
-      }
-    }
-    auto angles = last_pos_ - pos;
-    last_pos_ = pos;
-    // auto zoom = last_dist_ - dist;
-    last_dist_ = dist;
-
-    // for (auto [entity, _, fly_camera] :
-    //      scene_.GetRegistry().View<PrimaryCameraTag, FlyCameraComponent>()) {
-    //   fly_camera.
-    // }
-
-    scene_.Update(delta_time, angles, offset);
+    scene_.Update(delta_time);
   }
 
   void Render(float frame_frac) final { scene_.Render(frame_frac); }

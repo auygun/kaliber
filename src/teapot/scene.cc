@@ -315,9 +315,7 @@ void Scene::Render(float frame_frac) {
   debug_layer_.Draw(scene_data_.view_projection);
 }
 
-void Scene::Update(float delta_time,
-                   const Vector2f& angles,
-                   const base::Vector3f& offset) {
+void Scene::Update(float delta_time) {
   // camera_.Rotate(-angles.y, angles.x);
   // camera_.Move(offset);
 

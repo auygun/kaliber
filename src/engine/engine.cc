@@ -10,7 +10,6 @@
 #include "engine/audio/audio_mixer.h"
 #include "engine/game.h"
 #include "engine/game_factory.h"
-#include "engine/input_event.h"
 #include "engine/platform/platform.h"
 #include "engine/renderer/renderer.h"
 #include "third_party/imgui/imgui.h"
@@ -145,7 +144,6 @@ void Engine::CreateRenderer(RendererType type) {
       HERE, std::bind(&Engine::CreateRendererInternal, this, type));
   TaskRunner::TaskRunner::GetThreadLocalTaskRunner()->PostTask(
       HERE, std::bind(&Engine::ContextLost, this));
-  input_queue_.clear();
 }
 
 RendererType Engine::GetRendererType() {
@@ -165,15 +163,6 @@ Vector2f Engine::ToViewportScale(const Vector2f& vec) {
 
 Vector2f Engine::ToViewportPosition(const Vector2f& vec) {
   return ToViewportScale(vec) - GetViewportSize() / 2.0f;
-}
-
-std::unique_ptr<InputEvent> Engine::GetNextInputEvent() {
-  std::unique_ptr<InputEvent> event;
-  if (!input_queue_.empty()) {
-    event.swap(input_queue_.front());
-    input_queue_.pop_front();
-  }
-  return event;
 }
 
 void Engine::Vibrate(int duration) {
@@ -264,28 +253,6 @@ void Engine::GainedFocus(bool from_interstitial_ad) {
     game_->GainedFocus(from_interstitial_ad);
 }
 
-void Engine::AddInputEvent(std::unique_ptr<InputEvent> event) {
-  event = imgui_backend_.OnInputEvent(std::move(event));
-  if (!event)
-    return;
-
-  // event->SetVector(ToViewportPosition(event->GetVector()) * Vector2f(1, -1));
-
-  // switch (event->GetType()) {
-  //   case InputEvent::kKeyPress:
-  //     if (event->GetKeyPress() == 's') {
-  //       stats_visible_ = !stats_visible_;
-  //       // Consume event.
-  //       return;
-  //     }
-  //     break;
-  //   default:
-  //     break;
-  // }
-
-  input_queue_.push_back(std::move(event));
-}
-
 void Engine::CreateRendererInternal(RendererType type) {
   if (renderer_ && renderer_->GetRendererType() == type)
     return;
@@ -321,8 +288,6 @@ void Engine::CreateTextureCompressors() {
 }
 
 void Engine::ContextLost() {
-  input_queue_.clear();
-
   if (game_)
     game_->ContextLost();
 }

@@ -9,7 +9,6 @@
 
 namespace eng {
 
-class InputEvent;
 class Renderer;
 
 class ImguiBackend {
@@ -22,7 +21,7 @@ class ImguiBackend {
 
   void CreateRenderResources(Renderer* renderer);
 
-  std::unique_ptr<InputEvent> OnInputEvent(std::unique_ptr<InputEvent> event);
+  // std::unique_ptr<InputEvent> OnInputEvent(std::unique_ptr<InputEvent> event);
 
   void NewFrame(float delta_time);
   void EndFrame();

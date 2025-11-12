@@ -14,7 +14,6 @@ class PlatformObserver {
   virtual void OnWindowResized(int width, int height) = 0;
   virtual void LostFocus() = 0;
   virtual void GainedFocus(bool from_interstitial_ad) = 0;
-  virtual void AddInputEvent(std::unique_ptr<InputEvent> event) = 0;
 };
 
 }  // namespace eng

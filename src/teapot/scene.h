@@ -8,10 +8,10 @@
 #include "engine/debug_layer.h"
 #include "engine/model.h"
 #include "engine/renderer/renderer_types.h"
-#include "teapot/fly_camera.h"
-#include "teapot/input_system.h"
 #include "teapot/components.h"
 #include "teapot/ecs.h"
+#include "teapot/fly_camera.h"
+#include "teapot/input_system.h"
 
 namespace eng {
 
@@ -26,9 +26,7 @@ class Scene {
 
   void Render(float frame_frac);
 
-  void Update(float delta_time,
-              const base::Vector2f& angles,
-              const base::Vector3f& offset);
+  void Update(float delta_time);
 
   void OnClick(const base::Vector2f& pos);
 
@@ -102,10 +100,9 @@ class Scene {
   uint64_t shader_id_;
   std::vector<eng::Model> models_;
 
-
   // Camera camera_;
-  InputSystem input_system_; // TODO: Remove.
-  FlyCamera fly_camera_; // TODO: Remove.
+  InputSystem input_system_;  // TODO: Remove.
+  FlyCamera fly_camera_;      // TODO: Remove.
   base::Frustumf frustum_;
 
   eng::DebugLayer debug_layer_;

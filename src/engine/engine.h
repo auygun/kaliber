@@ -19,7 +19,6 @@ namespace eng {
 
 class AudioMixer;
 class Game;
-class InputEvent;
 class Platform;
 class Renderer;
 enum class RendererType;
@@ -43,8 +42,6 @@ class Engine : public PlatformObserver {
 
   // Convert position form pixels to viewport coordinates.
   base::Vector2f ToViewportPosition(const base::Vector2f& vec);
-
-  std::unique_ptr<InputEvent> GetNextInputEvent();
 
   // Vibrate (if supported by the platform) for the specified duration.
   void Vibrate(int duration);
@@ -122,8 +119,6 @@ class Engine : public PlatformObserver {
 
   bool vibration_enabled_ = true;
 
-  std::deque<std::unique_ptr<InputEvent>> input_queue_;
-
   base::ThreadPool thread_pool_;
   base::Randomf random_;
 
@@ -138,7 +133,6 @@ class Engine : public PlatformObserver {
   void OnWindowResized(int width, int height) final;
   void LostFocus() final;
   void GainedFocus(bool from_interstitial_ad) final;
-  void AddInputEvent(std::unique_ptr<InputEvent> event) final;
 
   void CreateRendererInternal(RendererType type);
 

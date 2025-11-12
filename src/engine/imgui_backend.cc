@@ -3,7 +3,6 @@
 #include "base/log.h"
 #include "engine/asset/shader_source.h"
 #include "engine/engine.h"
-#include "engine/input_event.h"
 #include "engine/platform/asset_file.h"
 #include "engine/renderer/renderer.h"
 #include "third_party/imgui/imgui.h"
@@ -94,30 +93,30 @@ void ImguiBackend::CreateRenderResources(Renderer* renderer) {
       renderer_->CreateDescriptorSet(shader_, 1, {}, {scene_data_ubo_});
 }
 
-std::unique_ptr<InputEvent> ImguiBackend::OnInputEvent(
-    std::unique_ptr<InputEvent> event) {
-  ImGuiIO& io = ImGui::GetIO();
-  switch (event->GetType()) {
-    case InputEvent::kDragStart:
-      io.AddMousePosEvent(event->GetVector().x, event->GetVector().y);
-      io.AddMouseButtonEvent(0, true);
-      break;
-    case InputEvent::kDragEnd:
-      io.AddMousePosEvent(event->GetVector().x, event->GetVector().y);
-      io.AddMouseButtonEvent(0, false);
-      break;
-    case InputEvent::kDrag:
-      io.AddMousePosEvent(event->GetVector().x, event->GetVector().y);
-      break;
-    default:
-      break;
-  }
-  // TODO: Keyboard input
+// std::unique_ptr<InputEvent> ImguiBackend::OnInputEvent(
+//     std::unique_ptr<InputEvent> event) {
+//   ImGuiIO& io = ImGui::GetIO();
+//   switch (event->GetType()) {
+//     case InputEvent::kDragStart:
+//       io.AddMousePosEvent(event->GetVector().x, event->GetVector().y);
+//       io.AddMouseButtonEvent(0, true);
+//       break;
+//     case InputEvent::kDragEnd:
+//       io.AddMousePosEvent(event->GetVector().x, event->GetVector().y);
+//       io.AddMouseButtonEvent(0, false);
+//       break;
+//     case InputEvent::kDrag:
+//       io.AddMousePosEvent(event->GetVector().x, event->GetVector().y);
+//       break;
+//     default:
+//       break;
+//   }
+//   // TODO: Keyboard input
 
-  if (io.WantCaptureMouse)
-    event.reset();
-  return event;
-}
+//   if (io.WantCaptureMouse)
+//     event.reset();
+//   return event;
+// }
 
 void ImguiBackend::NewFrame(float delta_time) {
   ImGuiIO& io = ImGui::GetIO();
