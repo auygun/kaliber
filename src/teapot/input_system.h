@@ -9,7 +9,7 @@
 
 namespace eng {
 
-class Platform;
+class Scene;
 
 // The one-and-only system responsible for polling hardware.
 // This system is stateful as it needs to calculate "just pressed" states and
@@ -17,20 +17,23 @@ class Platform;
 // global PlayerInput resource component.
 class InputSystem {
  public:
-  InputSystem(Registry* registry, Platform* platform);
+  InputSystem() = default;
+  ~InputSystem() = default;
 
-  void Update();
+  void Init(Scene* scene);
+
+  void Update(Scene* scene);
 
  private:
   // Cached Pointers
-  Platform* platform_{nullptr};
   PlayerInput* player_input_{nullptr};
 
   // State tracking (for deltas and "just pressed")
   float last_mouse_x_{0};
   float last_mouse_y_{0};
-  bool last_mouse_states_[3] = {false, false, false};  // Left, Right, Middle
-  std::array<bool, PlayerInput::kNumKeyCodes> last_key_states_;
+  std::array<bool, static_cast<int>(MouseButton::MaxButtons)>
+      last_mouse_states_{};
+  std::array<bool, static_cast<int>(Key::MaxKeys)> last_key_states_;
 
   void ResetFrameStates();
   void UpdateMouseState();

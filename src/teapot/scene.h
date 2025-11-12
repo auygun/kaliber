@@ -9,6 +9,7 @@
 #include "engine/model.h"
 #include "engine/renderer/renderer_types.h"
 #include "teapot/fly_camera.h"
+#include "teapot/input_system.h"
 #include "teapot/components.h"
 #include "teapot/ecs.h"
 
@@ -30,8 +31,6 @@ class Scene {
               const base::Vector3f& offset);
 
   void OnClick(const base::Vector2f& pos);
-
-  void CreateProjectionMatrix();
 
   // Camera& GetCamera() { return camera_; }
 
@@ -105,6 +104,7 @@ class Scene {
 
 
   // Camera camera_;
+  InputSystem input_system_; // TODO: Remove.
   FlyCamera fly_camera_; // TODO: Remove.
   base::Frustumf frustum_;
 

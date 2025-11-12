@@ -297,12 +297,10 @@ class Registry {
   template <typename T>
   T& GetSingletonComponent() {
     auto pool = GetOrCreatePool<T>();
-    if (pool->IsEmpty()
-      pool-> Add(0, T{});
-    for (auto [_, component] : eng::View<T>(pool))
-      return component;
-    NOTREACHED();
-    return {};
+    if (pool->IsEmpty())
+      return pool->Emplace(0, T{});
+    DCHECK(pool->GetDenseData().size() == 1);
+    return pool->GetDenseData()[0];
   }
 
   // Returns an iterable view for all entities with a specific set of

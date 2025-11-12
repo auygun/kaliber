@@ -16,9 +16,12 @@ void FlyCamera::Init(Scene* scene) {
 }
 
 void FlyCamera::Update(Scene* scene) {
-  const Vector3f& offset{0};
-  float pitch = player_input_->move_x;
-  float yaw = player_input_->move_y;
+  Vector3f offset{0};
+  float pitch = (player_input_->mouse_x - last_mouse_x_) * 0.0005f;
+  float yaw = (player_input_->mouse_y - last_mouse_y_)  * 0.0005f;
+  LOG(0) << "pitch: " << pitch << " yaw: " << yaw;
+  last_mouse_x_ = player_input_->mouse_x;
+  last_mouse_y_ = player_input_->mouse_y;
 
   for (auto [entity, _, fly_camera, local_transform] :
        scene->GetRegistry()
@@ -32,8 +35,8 @@ void FlyCamera::Update(Scene* scene) {
 
     // Update local transformation
     Vector3f pos = local_transform.transform.Row(3);
-    local_transform.transform.CreateXRotation(fly_camera.pitch);
-    local_transform.transform.M_x_RotY(fly_camera.yaw);
+    local_transform.transform.CreateXRotation(fly_camera.yaw);
+    local_transform.transform.M_x_RotY(fly_camera.pitch);
     local_transform.transform.Row(3) = pos;
 
     // Move
@@ -41,6 +44,8 @@ void FlyCamera::Update(Scene* scene) {
         local_transform.transform.Row(2) * offset.z;
     local_transform.transform.Row(3) +=
         local_transform.transform.Row(0) * offset.x;
+
+    scene->GetRegistry().AddComponent(entity, WorldTransformDirtyTag{});
 
     break;  // There can be only one primary camera.
   }

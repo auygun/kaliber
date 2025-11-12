@@ -4,6 +4,7 @@
 #include <array>
 
 #include "base/vecmath.h"
+#include "engine/input_codes.h"
 #include "teapot/ecs.h"
 
 namespace eng {
@@ -91,10 +92,10 @@ struct OrbitCameraComponent {
 // A global resource that holds the data for the entire frame. The Camera system
 // writes to this. The Render system reads from this.
 struct RenderContext {
-  base::Matrix4f view;
-  base::Matrix4f proj;
-  base::Matrix4f view_proj;
-  base::Vector3f camera_world_pos;
+  base::Matrix4f view{1};
+  base::Matrix4f proj{1};
+  base::Matrix4f view_proj{1};
+  base::Vector3f camera_world_pos{0};
 };
 
 // A global resource that provides viewport dimensions. The Camera system reads
@@ -136,16 +137,11 @@ struct PlayerInput {
   bool mouse_right_held = false;
   bool mouse_middle_held = false;
 
-  // These arrays store the state of *all* keys.
-  // The index should correspond to the integer value of your KeyCode enum.
-  static constexpr size_t kNumKeyCodes =
-      256;  // Or another appropriate max value
-
   // True for the *single frame* a key is pressed.
-  std::array<bool, kNumKeyCodes> keys_pressed = {};
+  std::array<bool, static_cast<int>(Key::MaxKeys)> keys_pressed = {};
 
   // True for *every frame* a key is held.
-  std::array<bool, kNumKeyCodes> keys_held = {};
+  std::array<bool, static_cast<int>(Key::MaxKeys)> keys_held = {};
 };
 
 }  // namespace eng

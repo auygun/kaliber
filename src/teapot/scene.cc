@@ -105,6 +105,9 @@ void Scene::Create(Renderer* renderer) {
                                        kPrimitive_Triangles, true, false,
                                        CullMode::kBack);
 
+  input_system_.Init(this);
+  fly_camera_.Init(this);
+
   // Cache pointers to the pools.
   scene_node_pool_ = registry_.GetOrCreatePool<SceneNodeComponent>();
   world_transform_pool_ = registry_.GetOrCreatePool<WorldTransformComponent>();
@@ -124,6 +127,20 @@ void Scene::Create(Renderer* renderer) {
       .transform.Create(Quatf({0.5f, 0.0f, 0.0f}), {0, 0, 0});
   OnHierarchyChanged(root_entity_, 0);
   registry_.AddComponent(root_entity_, WorldTransformDirtyTag{});
+
+  // Create camera entity
+  {
+    Entity entity = registry_.CreateEntity();
+    registry_.AddComponent(entity, SceneNodeComponent{.name{"cam"}});
+    registry_.AddComponent(entity, WorldTransformComponent{});
+    registry_.AddComponent(entity, LocalTransformComponent{});
+    registry_.AddComponent(entity, FlyCameraComponent{});
+    registry_.AddComponent(entity, PrimaryCameraTag{});
+    registry_.AddComponent(
+        entity, CameraComponent{
+                    .fov = 45.0f, .near_plane = 1.0f, .far_plane = 1000.0f});
+    SetParent(entity, root_entity_);
+  }
 
 #if 1
   Entity parent = root_entity_;
@@ -242,7 +259,8 @@ void Scene::Render(float frame_frac) {
   UpdateWorldBounds();
   dirty_tag_pool_->RemoveAll();
 
-  fly_camera_.Update();
+  input_system_.Update(this);
+  fly_camera_.Update(this);
 
   // Scene graph update (Post-Logic finalize)
   UpdateWoldTransforms();

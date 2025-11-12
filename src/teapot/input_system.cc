@@ -1,14 +1,19 @@
-#include "teapot/InputSystem.h"
+#include "teapot/input_system.h"
+
+#include "engine/engine.h"
+#include "engine/platform/platform.h"
+#include "teapot/scene.h"
+
+using namespace base;
 
 namespace eng {
 
-InputSystem::InputSystem(Registry* registry, Platform* platform)
-    : platform_(platform), last_mouse_x_(0.0f), last_mouse_y_(0.0f) {
+void InputSystem::Init(Scene* scene) {
   // Get the global PlayerInput component.
-  player_input_ = &registry->GetSingletonComponent<PlayerInput>();
+  player_input_ = &scene->GetRegistry().GetSingletonComponent<PlayerInput>();
 }
 
-void InputSystem::Update() {
+void InputSystem::Update(Scene* scene) {
   if (player_input_ == nullptr)
     return;
 
@@ -34,16 +39,21 @@ void InputSystem::ResetFrameStates() {
 
 void InputSystem::UpdateMouseState() {
   // --- 1. Absolute Position ---
-  player_input_->mouse_x = platform_->GetMouseX();
-  player_input_->mouse_y = platform_->GetMouseY();
+  player_input_->mouse_x = Engine::Get().GetPlatform()->GetMouseX();
+  player_input_->mouse_y = Engine::Get().GetPlatform()->GetMouseY();
 
   // --- 3. Scroll Wheel ---
-  player_input_->mouse_scroll_delta = platform_->GetMouseScrollDelta();
+  // TODO:
+  // player_input_->mouse_scroll_delta =
+  //     Engine::Get().GetPlatform()->GetMouseScrollDelta();
 
   // --- 4. Mouse Buttons ---
-  bool left_down = platform_->IsMouseButtonDown(MouseButton::LEFT);
-  bool right_down = platform_->IsMouseButtonDown(MouseButton::RIGHT);
-  bool middle_down = platform_->IsMouseButtonDown(MouseButton::MIDDLE);
+  bool left_down =
+      Engine::Get().GetPlatform()->IsMouseButtonDown(MouseButton::Left);
+  bool right_down =
+      Engine::Get().GetPlatform()->IsMouseButtonDown(MouseButton::Right);
+  bool middle_down =
+      Engine::Get().GetPlatform()->IsMouseButtonDown(MouseButton::Middle);
 
   // "Held" states
   player_input_->mouse_left_held = left_down;
@@ -58,13 +68,8 @@ void InputSystem::UpdateMouseState() {
 
 void InputSystem::UpdateKeyboardState() {
   // Iterate over all possible key codes supported by PlayerInput (0 to 255)
-  for (size_t i = 0; i < PlayerInput::kNumKeyCodes; ++i) {
-    // Cast index to KeyCode.
-    // In a real engine, you would likely map the index to a specific OS
-    // scancode if your KeyCode enum values aren't sequential integers.
-    KeyCode key = static_cast<KeyCode>(i);
-
-    bool isDown = platform_->IsKeyDown(key);
+  for (size_t i = 0; i < static_cast<size_t>(Key::MaxKeys); ++i) {
+    bool isDown = Engine::Get().GetPlatform()->IsKeyDown(static_cast<Key>(i));
 
     // Fill "Held" state
     player_input_->keys_held[i] = isDown;
@@ -84,5 +89,3 @@ void InputSystem::UpdateLastFrameStates() {
 }
 
 }  // namespace eng
-
-#endif  // TEAPOT_INPUT_SYSTEM_H

@@ -65,10 +65,10 @@ class Teapot final : public eng::Game {
     // auto zoom = last_dist_ - dist;
     last_dist_ = dist;
 
-    for (auto [entity, _, fly_camera] :
-         scene_.GetRegistry().View<PrimaryCameraTag, FlyCameraComponent>()) {
-      fly_camera.
-    }
+    // for (auto [entity, _, fly_camera] :
+    //      scene_.GetRegistry().View<PrimaryCameraTag, FlyCameraComponent>()) {
+    //   fly_camera.
+    // }
 
     scene_.Update(delta_time, angles, offset);
   }
@@ -78,7 +78,7 @@ class Teapot final : public eng::Game {
   void ContextLost() final { scene_.Create(Engine::Get().GetRenderer()); }
 
   void OnWindowResized(int width, int height) final {
-    scene_.CreateProjectionMatrix();
+    // scene_.CreateProjectionMatrix(); TODO
   }
 
  private:

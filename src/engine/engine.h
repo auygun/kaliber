@@ -59,6 +59,8 @@ class Engine : public PlatformObserver {
 
   void SetEnableVibration(bool enable) { vibration_enabled_ = enable; }
 
+  Platform* GetPlatform() { return platform_; }
+
   Renderer* GetRenderer() { return renderer_.get(); }
 
   AudioMixer* GetAudioMixer() { return audio_mixer_.get(); }

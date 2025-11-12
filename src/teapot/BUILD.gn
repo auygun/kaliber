@@ -8,6 +8,8 @@ game("teapot") {
     "ecs.h",
     "fly_camera.cc",
     "fly_camera.h",
+    "input_system.cc",
+    "input_system.h",
     "scene.cc",
     "scene.h",
     "teapot.cc",

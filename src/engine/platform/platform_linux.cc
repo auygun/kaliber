@@ -14,6 +14,153 @@ using namespace base;
 
 namespace eng {
 
+namespace {
+
+// Maps X11's KeySym values to our platform-agnostic Key enum.
+Key TranslateX11Key(KeySym keysym) {
+  switch (keysym) {
+    case XK_a:
+    case XK_A:
+      return Key::A;
+    case XK_b:
+    case XK_B:
+      return Key::B;
+    case XK_c:
+    case XK_C:
+      return Key::C;
+    case XK_d:
+    case XK_D:
+      return Key::D;
+    case XK_e:
+    case XK_E:
+      return Key::E;
+    case XK_f:
+    case XK_F:
+      return Key::F;
+    case XK_g:
+    case XK_G:
+      return Key::G;
+    case XK_h:
+    case XK_H:
+      return Key::H;
+    case XK_i:
+    case XK_I:
+      return Key::I;
+    case XK_j:
+    case XK_J:
+      return Key::J;
+    case XK_k:
+    case XK_K:
+      return Key::K;
+    case XK_l:
+    case XK_L:
+      return Key::L;
+    case XK_m:
+    case XK_M:
+      return Key::M;
+    case XK_n:
+    case XK_N:
+      return Key::N;
+    case XK_o:
+    case XK_O:
+      return Key::O;
+    case XK_p:
+    case XK_P:
+      return Key::P;
+    case XK_q:
+    case XK_Q:
+      return Key::Q;
+    case XK_r:
+    case XK_R:
+      return Key::R;
+    case XK_s:
+    case XK_S:
+      return Key::S;
+    case XK_t:
+    case XK_T:
+      return Key::T;
+    case XK_u:
+    case XK_U:
+      return Key::U;
+    case XK_v:
+    case XK_V:
+      return Key::V;
+    case XK_w:
+    case XK_W:
+      return Key::W;
+    case XK_x:
+    case XK_X:
+      return Key::X;
+    case XK_y:
+    case XK_Y:
+      return Key::Y;
+    case XK_z:
+    case XK_Z:
+      return Key::Z;
+
+    case XK_0:
+      return Key::Num0;
+    case XK_1:
+      return Key::Num1;
+    case XK_2:
+      return Key::Num2;
+    case XK_3:
+      return Key::Num3;
+    case XK_4:
+      return Key::Num4;
+    case XK_5:
+      return Key::Num5;
+    case XK_6:
+      return Key::Num6;
+    case XK_7:
+      return Key::Num7;
+    case XK_8:
+      return Key::Num8;
+    case XK_9:
+      return Key::Num9;
+
+    case XK_Escape:
+      return Key::Escape;
+    case XK_space:
+      return Key::Space;
+    case XK_Return:
+      return Key::Enter;
+    case XK_Tab:
+      return Key::Tab;
+    case XK_BackSpace:
+      return Key::Backspace;
+
+    case XK_Up:
+      return Key::Up;
+    case XK_Down:
+      return Key::Down;
+    case XK_Left:
+      return Key::Left;
+    case XK_Right:
+      return Key::Right;
+
+    case XK_Shift_L:
+      return Key::ShiftLeft;
+    case XK_Shift_R:
+      return Key::ShiftRight;
+    case XK_Control_L:
+      return Key::ControlLeft;
+    case XK_Control_R:
+      return Key::ControlRight;
+    case XK_Alt_L:
+      return Key::AltLeft;
+    case XK_Alt_R:
+      return Key::AltRight;
+
+      // ... (add more F-keys, Home, End, etc. as needed)
+
+    default:
+      return Key::Unknown;
+  }
+}
+
+}  // namespace
+
 void KaliberMain(Platform* platform);
 
 Platform::Platform() {
@@ -63,6 +210,10 @@ void Platform::Update() {
     XNextEvent(display_, &e);
     switch (e.type) {
       case KeyPress: {
+        KeySym keysym = XLookupKeysym(&e.xkey, 0);
+        Key translated_key = TranslateX11Key(keysym);
+        keys_down_[static_cast<int>(translated_key)] = (e.type == KeyPress);
+
         KeySym key = XLookupKeysym(&e.xkey, 0);
         auto input_event =
             std::make_unique<InputEvent>(InputEvent::kKeyPress, (char)key);
@@ -70,7 +221,18 @@ void Platform::Update() {
         // TODO: e.xkey.state & (ShiftMask | ControlMask | Mod1Mask | Mod4Mask))
         break;
       }
+
+      case KeyRelease: {
+        KeySym keysym = XLookupKeysym(&e.xkey, 0);
+        Key translated_key = TranslateX11Key(keysym);
+        keys_down_[static_cast<int>(translated_key)] = (e.type == KeyPress);
+        break;
+      }
+
       case MotionNotify: {
+        mouse_x_ = e.xmotion.x;
+        mouse_y_ = e.xmotion.y;
+
         Vector2f v(e.xmotion.x, e.xmotion.y);
         auto input_event =
             std::make_unique<InputEvent>(InputEvent::kDrag, 0, v);
@@ -78,6 +240,17 @@ void Platform::Update() {
         break;
       }
       case ButtonPress: {
+        MouseButton button = MouseButton::Unknown;
+        if (e.xbutton.button == 1)
+          button = MouseButton::Left;
+        if (e.xbutton.button == 2)
+          button = MouseButton::Middle;
+        if (e.xbutton.button == 3)
+          button = MouseButton::Right;
+        mouse_buttons_down_[static_cast<int>(button)] = (e.type == ButtonPress);
+        mouse_x_ = e.xmotion.x;
+        mouse_y_ = e.xmotion.y;
+
         if (e.xbutton.button == 1) {
           Vector2f v(e.xbutton.x, e.xbutton.y);
           auto input_event =

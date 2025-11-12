@@ -1,6 +1,7 @@
 #ifndef ENGINE_PLATFORM_PLATFORM_H
 #define ENGINE_PLATFORM_PLATFORM_H
 
+#include <array>
 #include <string>
 
 #if defined(__ANDROID__)
@@ -14,6 +15,8 @@ struct ANativeWindow;
 #elif defined(_WIN32)
 #include <windows.h>
 #endif
+
+#include "engine/input_codes.h"
 
 namespace eng {
 
@@ -58,6 +61,15 @@ class Platform {
 
   bool should_exit() const { return should_exit_; }
 
+  float GetMouseX() const { return mouse_x_; }
+  float GetMouseY() const { return mouse_y_; }
+
+  bool IsMouseButtonDown(MouseButton button) const {
+    return mouse_buttons_down_[static_cast<int>(button)];
+  }
+
+  bool IsKeyDown(Key key) const { return keys_down_[static_cast<int>(key)]; }
+
 #if defined(__ANDROID__)
   ANativeWindow* GetWindow();
 #elif defined(__linux__)
@@ -79,6 +91,13 @@ class Platform {
   bool should_exit_ = false;
 
   PlatformObserver* observer_ = nullptr;
+
+  // Input state tracking
+  float mouse_x_{0};
+  float mouse_y_{0};
+  std::array<bool, static_cast<int>(MouseButton::MaxButtons)>
+      mouse_buttons_down_{};
+  std::array<bool, static_cast<int>(Key::MaxKeys)> keys_down_{};
 
 #if defined(__ANDROID__)
 
