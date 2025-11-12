@@ -193,9 +193,9 @@ void Platform::CreateMainWindow() {
   CHECK(res) << "Failed to create window.";
 
   XSelectInput(display_, window_,
-               KeyPressMask | PointerMotionMask | Button1MotionMask |
-                   ButtonPressMask | ButtonReleaseMask | FocusChangeMask |
-                   StructureNotifyMask);
+               KeyPressMask | KeyReleaseMask | PointerMotionMask |
+                   Button1MotionMask | ButtonPressMask | ButtonReleaseMask |
+                   FocusChangeMask | StructureNotifyMask);
   Atom WM_DELETE_WINDOW = XInternAtom(display_, "WM_DELETE_WINDOW", false);
   XSetWMProtocols(display_, window_, &WM_DELETE_WINDOW, 1);
 }

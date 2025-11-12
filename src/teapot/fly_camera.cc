@@ -17,6 +17,15 @@ void FlyCamera::Init(Scene* scene) {
 
 void FlyCamera::Update(Scene* scene) {
   Vector3f offset{0};
+  if (player_input_->keys_held[static_cast<int>(Key::W)])
+    offset += {0, 0, 0.1f};
+  else if (player_input_->keys_held[static_cast<int>(Key::S)])
+    offset += {0, 0, -0.1f};
+  if (player_input_->keys_held[static_cast<int>(Key::Q)])
+    offset += {-0.1f, 0, 0};
+  else if (player_input_->keys_held[static_cast<int>(Key::E)])
+    offset += {0.1f, 0, 0};
+
   float pitch = (player_input_->mouse_y - last_mouse_y_) * 0.0005f;
   float yaw = (player_input_->mouse_x - last_mouse_x_) * 0.0005f;
   last_mouse_x_ = player_input_->mouse_x;
