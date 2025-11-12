@@ -1,12 +1,18 @@
 #ifndef TEAPOT_COMPONENTS_H
 #define TEAPOT_COMPONENTS_H
 
+#include <array>
+
 #include "base/vecmath.h"
 #include "teapot/ecs.h"
 
 namespace eng {
 
 const uint32_t NULL_INDEX = (uint32_t)-1;
+
+//
+// SceneGraph Components
+//
 
 // The component for storing parent-child relationships and transformations of
 // world objects. This is the core of the scene graph.
@@ -25,23 +31,121 @@ struct SceneNodeComponent {
   uint32_t bucket_index{NULL_INDEX};
 };
 
+// The entity's local transformation. This is the component the user or game
+// logic systems (like AI or player input) will typically modify.
 struct LocalTransformComponent {
   base::Matrix4f transform{1};
 };
 
+// The final, calculated, absolute world-space transform. This is written to by
+// the internal SceneGraph system and read from by the Render and Physics
+// systems.User code should almost never write to this directly.
 struct WorldTransformComponent {
   base::Matrix4f transform{1};
 };
-
-struct WorldTransformDirtyTag {};
 
 struct WorldBoundsComponent {
   base::OBBf obb;
 };
 
+struct WorldTransformDirtyTag {};
+
+//
+// Rendering Components
+//
+
+// A component that holds the data needed to draw an entity.
 struct ModelComponent {
   uint32_t model_index{NULL_INDEX};
   base::Vector3f extents{0};  // Extents of the model
+};
+
+// A component that defines the lens of a camera. It does not store position or
+// rotation (that's in LocalTransformComponent).
+struct CameraComponent {
+  float fov = 45.0f;  // In degrees (TODO: [1,0])
+  float near_plane = 1.0f;
+  float far_plane = 1000.0f;
+};
+
+// An empty tag component You add this to the one entity you want to be the
+// active camera. The Camera system will look for the entity with this tag.
+struct PrimaryCameraTag {};
+
+// A component that stores the state for a fly-camera control logic.
+struct FlyCameraComponent {
+  base::Vector3f offset{0};
+  float pitch = 0.0f;
+  float yaw = -90.0f;
+  // float mouse_sensitivity = 0.1f;
+};
+
+// A component that stores the control state for an orbit-camera control logic.
+struct OrbitCameraComponent {
+  base::Vector3f center_{0};
+  float radius = 0;
+  float polar = 0;
+  float azimuthal = 0;
+};
+
+// A global resource that holds the data for the entire frame. The Camera system
+// writes to this. The Render system reads from this.
+struct RenderContext {
+  base::Matrix4f view;
+  base::Matrix4f proj;
+  base::Matrix4f view_proj;
+  base::Vector3f camera_world_pos;
+};
+
+// A global resource that provides viewport dimensions. The Camera system reads
+// this to get the aspect ratio. Render system updates this on resize.
+struct Viewport {
+  float width = 1280.0f;
+  float height = 720.0f;
+
+  float GetAspectRatio() const {
+    if (height == 0)
+      return 1.0f;
+    return width / height;
+  }
+};
+
+//
+// Input
+//
+
+// A global resource that stores the state of all player inputs for the current
+// frame. It holds low-level keyboard and mouse state. Input system writes to
+// this. Other game systems read from this.
+struct PlayerInput {
+  // Absolute position (in pixels) of the cursor on the screen/window.
+  float mouse_x = 0.0f;
+  float mouse_y = 0.0f;
+
+  // Scroll wheel delta for this frame.
+  // Positive values for scroll up/forward, negative for scroll down/backward.
+  float mouse_scroll_delta = 0.0f;
+
+  // True for the single frame it's pressed.
+  bool mouse_left_pressed = false;
+  bool mouse_right_pressed = false;
+  bool mouse_middle_pressed = false;
+
+  // True for *every frame* it's held.
+  bool mouse_left_held = false;
+  bool mouse_right_held = false;
+  bool mouse_middle_held = false;
+
+  // These arrays store the state of *all* keys.
+  // The index should correspond to the integer value of your KeyCode enum.
+  static constexpr size_t kNumKeyCodes =
+      256;  // Or another appropriate max value
+
+  // True for the *single frame* a key is pressed.
+  std::array<bool, kNumKeyCodes> keys_pressed = {};
+
+  // True for *every frame* a key is held.
+  std::array<bool, kNumKeyCodes> keys_held = {};
 };
 
 }  // namespace eng

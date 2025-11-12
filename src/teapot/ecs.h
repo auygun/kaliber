@@ -242,7 +242,9 @@ class Registry {
   // Gets the component of type T for an entity.
   template <typename T>
   T& GetComponent(Entity entity) {
-    return GetOrCreatePool<T>()->Get(entity);
+    auto pool = GetPool<T>();
+    DCHECK(pool);
+    return pool->Get(entity);
   }
 
   // Checks if an entity has a component of type T.
@@ -290,6 +292,17 @@ class Registry {
       return nullptr;
 
     return static_cast<ComponentPool<RawType>*>(it->second.get());
+  }
+
+  template <typename T>
+  T& GetSingletonComponent() {
+    auto pool = GetOrCreatePool<T>();
+    if (pool->IsEmpty()
+      pool-> Add(0, T{});
+    for (auto [_, component] : eng::View<T>(pool))
+      return component;
+    NOTREACHED();
+    return {};
   }
 
   // Returns an iterable view for all entities with a specific set of

@@ -8,7 +8,7 @@
 #include "engine/debug_layer.h"
 #include "engine/model.h"
 #include "engine/renderer/renderer_types.h"
-#include "teapot/camera.h"
+#include "teapot/fly_camera.h"
 #include "teapot/components.h"
 #include "teapot/ecs.h"
 
@@ -33,7 +33,9 @@ class Scene {
 
   void CreateProjectionMatrix();
 
-  Camera& GetCamera() { return camera_; }
+  // Camera& GetCamera() { return camera_; }
+
+  Registry& GetRegistry() { return registry_; }
 
  private:
   // The temporary struct used for building the BVH tree.
@@ -101,17 +103,23 @@ class Scene {
   uint64_t shader_id_;
   std::vector<eng::Model> models_;
 
-  Camera camera_;
-  base::Matrix4f projection_;
+
+  // Camera camera_;
+  FlyCamera fly_camera_; // TODO: Remove.
   base::Frustumf frustum_;
 
   eng::DebugLayer debug_layer_;
 
   // ECS Registry for all entities in the world.
   Registry registry_;
+
+  // Root of the scene-graph.
   Entity root_entity_{NULL_ENTITY};
 
-  // Cached pointer to the core data pool for fast access.
+  // Cached pointers to globals.
+  RenderContext* render_context_{nullptr};
+
+  // Cached pointers to the pools for fast access.
   ComponentPool<SceneNodeComponent>* scene_node_pool_{nullptr};
   ComponentPool<WorldTransformComponent>* world_transform_pool_{nullptr};
   ComponentPool<LocalTransformComponent>* local_transform_pool_{nullptr};
@@ -143,8 +151,7 @@ class Scene {
                    uint32_t model_index,
                    const base::Matrix4f& transform);
 
-  void UpdateViewProjectionMatrix();
-  void UpdateFrustum();
+  void UpdateRenderContext();
 
   // Processes a sorted list of visible entities and groups them into instanced
   // draw calls (batches).

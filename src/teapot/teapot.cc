@@ -5,6 +5,8 @@
 #include "engine/game.h"
 #include "engine/game_factory.h"
 #include "engine/input_event.h"
+#include "teapot/components.h"
+#include "teapot/ecs.h"
 #include "teapot/scene.h"
 
 using namespace base;
@@ -24,7 +26,8 @@ class Teapot final : public eng::Game {
     while (std::unique_ptr<InputEvent> event =
                Engine::Get().GetNextInputEvent()) {
       InputEvent event2 = *event;
-      event->SetVector(Engine::Get().ToViewportPosition(event->GetVector()) * Vector2f(1, -1));
+      event->SetVector(Engine::Get().ToViewportPosition(event->GetVector()) *
+                       Vector2f(1, -1));
       if (event->GetType() == InputEvent::kDragStart) {
         is_active_[event->GetPointerId()] = true;
         positions_[event->GetPointerId()] = event->GetVector();
@@ -45,9 +48,9 @@ class Teapot final : public eng::Game {
           pos = event->GetVector();
         }
       } else if (event->GetType() == InputEvent::kKeyPress) {
-        if (event->GetKeyPress() == 'd')
-          scene_.GetCamera().ToggleDebugCamera();
-        else if (event->GetKeyPress() == 'w')
+        // if (event->GetKeyPress() == 'd')
+        //   scene_.GetCamera().ToggleDebugCamera(); else
+        if (event->GetKeyPress() == 'w')
           offset += {0, 0, 0.1f};
         else if (event->GetKeyPress() == 's')
           offset += {0, 0, -0.1f};
@@ -61,6 +64,12 @@ class Teapot final : public eng::Game {
     last_pos_ = pos;
     // auto zoom = last_dist_ - dist;
     last_dist_ = dist;
+
+    for (auto [entity, _, fly_camera] :
+         scene_.GetRegistry().View<PrimaryCameraTag, FlyCameraComponent>()) {
+      fly_camera.
+    }
+
     scene_.Update(delta_time, angles, offset);
   }
 

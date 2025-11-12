@@ -73,7 +73,7 @@ const char vertex_description[] = "p3f;n3f;a3f;t2f";
 }  // namespace
 
 Scene::Scene() {
-  camera_.Create({0, 0, 0}, -0.06f, 0.1f);
+  // camera_.Create({0, 0, 0}, -0.06f, 0.1f);
 }
 
 Scene::~Scene() {
@@ -105,6 +105,7 @@ void Scene::Create(Renderer* renderer) {
                                        kPrimitive_Triangles, true, false,
                                        CullMode::kBack);
 
+  // Cache pointers to the pools.
   scene_node_pool_ = registry_.GetOrCreatePool<SceneNodeComponent>();
   world_transform_pool_ = registry_.GetOrCreatePool<WorldTransformComponent>();
   local_transform_pool_ = registry_.GetOrCreatePool<LocalTransformComponent>();
@@ -112,6 +113,10 @@ void Scene::Create(Renderer* renderer) {
   world_bounds_pool_ = registry_.GetOrCreatePool<WorldBoundsComponent>();
   model_pool_ = registry_.GetOrCreatePool<ModelComponent>();
 
+  // Create global resources and cache the pointers.
+  render_context_ = &registry_.GetSingletonComponent<RenderContext>();
+
+  // Create the root entity of the scene-graph.
   root_entity_ = registry_.CreateEntity();
   registry_.AddComponent(root_entity_, SceneNodeComponent{.name{"root"}});
   registry_.AddComponent(root_entity_, WorldTransformComponent{});
@@ -207,8 +212,6 @@ void Scene::Create(Renderer* renderer) {
   scene_dset_ = renderer_->CreateDescriptorSet(
       shader_id_, 1, {}, {scene_data_ubo_, lights_ubo_, instances_ubo_});
 
-  CreateProjectionMatrix();
-
   lights_[0].pos = {-15, -4, -15};
   lights_[1].pos = {15, -4, -15};
   lights_[2].pos = {-15, -4, 15};
@@ -234,11 +237,20 @@ Entity Scene::NewEntity(Entity parent,
 }
 
 void Scene::Render(float frame_frac) {
-  UpdateViewProjectionMatrix();
-  UpdateFrustum();
+  // Scene graph update for objects moved by physics
   UpdateWoldTransforms();
   UpdateWorldBounds();
   dirty_tag_pool_->RemoveAll();
+
+  fly_camera_.Update();
+
+  // Scene graph update (Post-Logic finalize)
+  UpdateWoldTransforms();
+  UpdateWorldBounds();
+  dirty_tag_pool_->RemoveAll();
+
+  UpdateRenderContext();
+  frustum_.CreateFromMatrix(render_context_->view_proj);
 
   // Build the flat list used for building the BVH tree.
   std::vector<BVHBuildItem> flat_list;
@@ -274,7 +286,9 @@ void Scene::Render(float frame_frac) {
     // DumpBVHTree(bvh_tree_, 0, "");
     DrawBVHTree(bvh_tree_, 0);
     debug_layer_.DrawFrustum(frustum_);
-    debug_layer_.DrawMatrix(camera_.GetMatrixMainCam());
+    Matrix4f camera_mat;
+    render_context_->view.InverseOrthogonal(camera_mat);
+    debug_layer_.DrawMatrix(camera_mat);
     for (auto& instance : instances_)
       debug_layer_.DrawMatrix(instance.model);
   }
@@ -286,8 +300,8 @@ void Scene::Render(float frame_frac) {
 void Scene::Update(float delta_time,
                    const Vector2f& angles,
                    const base::Vector3f& offset) {
-  camera_.Rotate(-angles.y, angles.x);
-  camera_.Move(offset);
+  // camera_.Rotate(-angles.y, angles.x);
+  // camera_.Move(offset);
 
   int renderer_type = static_cast<int>(Engine::Get().GetRendererType());
 
@@ -324,23 +338,22 @@ void Scene::OnClick(const base::Vector2f& pos) {
   selected_entity_ = SelectEntity(bvh_tree_, ray);
 }
 
-void Scene::CreateProjectionMatrix() {
-  projection_.CreatePerspectiveProjection(
-      45, (float)Engine::Get().GetScreenWidth(),
-      (float)Engine::Get().GetScreenHeight(), 1.0f, 1000);
-}
+void Scene::UpdateRenderContext() {
+  // Update the render context from the primary camera.
+  for (auto [entity, _, camera, world_transform] :
+       registry_.View<PrimaryCameraTag, CameraComponent,
+                      WorldTransformComponent>()) {
+    render_context_->proj.CreatePerspectiveProjection(
+        camera.fov, (float)Engine::Get().GetScreenWidth(),
+        (float)Engine::Get().GetScreenHeight(), camera.near_plane,
+        camera.far_plane);
+    world_transform.transform.InverseOrthogonal(render_context_->view);
+    render_context_->view.Multiply(render_context_->proj,
+                                   render_context_->view_proj);
+    render_context_->camera_world_pos = world_transform.transform.Row(3);
 
-void Scene::UpdateViewProjectionMatrix() {
-  Matrix4f view;
-  camera_.GetMatrix().InverseOrthogonal(view);
-  view.Multiply(projection_, scene_data_.view_projection);
-}
-
-void Scene::UpdateFrustum() {
-  Matrix4f view, view_projection;
-  camera_.GetMatrixMainCam().InverseOrthogonal(view);
-  view.Multiply(projection_, view_projection);
-  frustum_.CreateFromMatrix(view_projection);
+    return;  // There can be only one primary camera.
+  }
 }
 
 std::vector<Scene::DrawData> Scene::BuildDrawList(
@@ -379,7 +392,8 @@ void Scene::UploadSceneData() {
   renderer_->UpdateBuffer(instances_ubo_, instances_.data(),
                           sizeof(InstanceData) * instances_.size());
 
-  scene_data_.cam_pos = camera_.GetMatrix().Row(3);
+  scene_data_.view_projection = render_context_->view_proj;
+  scene_data_.cam_pos = render_context_->camera_world_pos;
   scene_data_.light_dir = {1, 1, 1};
   scene_data_.light_radiance = {1, 1, 1};
   renderer_->UpdateBuffer(scene_data_ubo_, &scene_data_, sizeof(scene_data_));

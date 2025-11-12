@@ -4,11 +4,13 @@ game("teapot") {
   sources = [
     "camera.cc",
     "camera.h",
+    "components.h",
+    "ecs.h",
+    "fly_camera.cc",
+    "fly_camera.h",
     "scene.cc",
     "scene.h",
     "teapot.cc",
-    "ecs.h",
-    "components.h",
   ]
   deps = [
     "//assets/teapot",
