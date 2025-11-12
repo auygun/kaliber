@@ -139,7 +139,7 @@ void Scene::Create(Renderer* renderer) {
     registry_.AddComponent(
         entity, CameraComponent{
                     .fov = 45.0f, .near_plane = 1.0f, .far_plane = 1000.0f});
-    SetParent(entity, root_entity_);
+    SetParent(entity, NULL_ENTITY);
   }
 
 #if 1
@@ -448,6 +448,7 @@ void Scene::SetParent(Entity entity, Entity new_parent) {
     // This entity is now a root, clear its sibling pointers.
     scene_node.prev_sibling = NULL_ENTITY;
     scene_node.next_sibling = NULL_ENTITY;
+    new_depth = 0;
   }
 
   OnHierarchyChanged(entity, new_depth);

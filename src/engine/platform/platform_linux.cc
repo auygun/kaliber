@@ -193,8 +193,9 @@ void Platform::CreateMainWindow() {
   CHECK(res) << "Failed to create window.";
 
   XSelectInput(display_, window_,
-               KeyPressMask | Button1MotionMask | ButtonPressMask |
-                   ButtonReleaseMask | FocusChangeMask | StructureNotifyMask);
+               KeyPressMask | PointerMotionMask | Button1MotionMask |
+                   ButtonPressMask | ButtonReleaseMask | FocusChangeMask |
+                   StructureNotifyMask);
   Atom WM_DELETE_WINDOW = XInternAtom(display_, "WM_DELETE_WINDOW", false);
   XSetWMProtocols(display_, window_, &WM_DELETE_WINDOW, 1);
 }
@@ -233,10 +234,10 @@ void Platform::Update() {
         mouse_x_ = e.xmotion.x;
         mouse_y_ = e.xmotion.y;
 
-        Vector2f v(e.xmotion.x, e.xmotion.y);
-        auto input_event =
-            std::make_unique<InputEvent>(InputEvent::kDrag, 0, v);
-        observer_->AddInputEvent(std::move(input_event));
+        // Vector2f v(e.xmotion.x, e.xmotion.y);
+        // auto input_event =
+        //     std::make_unique<InputEvent>(InputEvent::kDrag, 0, v);
+        // observer_->AddInputEvent(std::move(input_event));
         break;
       }
       case ButtonPress: {
@@ -286,6 +287,17 @@ void Platform::Update() {
         break;
       }
       case ButtonRelease: {
+        MouseButton button = MouseButton::Unknown;
+        if (e.xbutton.button == 1)
+          button = MouseButton::Left;
+        if (e.xbutton.button == 2)
+          button = MouseButton::Middle;
+        if (e.xbutton.button == 3)
+          button = MouseButton::Right;
+        mouse_buttons_down_[static_cast<int>(button)] = (e.type == ButtonPress);
+        mouse_x_ = e.xmotion.x;
+        mouse_y_ = e.xmotion.y;
+
         if (e.xbutton.button == 1) {
           Vector2f v(e.xbutton.x, e.xbutton.y);
           auto input_event =
