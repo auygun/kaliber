@@ -34,7 +34,7 @@ void FlyCamera::Update(Scene* scene) {
            .View<PrimaryCameraTag, FlyCameraComponent,
                  LocalTransformComponent>()) {
     // Rotate
-    if (player_input_->mouse_left_held) {
+    if (player_input_->mouse_left_held && (pitch != 0.0f || yaw != 0.0f)) {
       fly_camera.pitch = std::clamp(fly_camera.pitch - pitch, -0.25f, 0.25f);
       fly_camera.yaw = std::fmod(fly_camera.yaw - yaw, 1.0);
 
@@ -46,10 +46,12 @@ void FlyCamera::Update(Scene* scene) {
     }
 
     // Move
-    local_transform.transform.Row(3) +=
-        local_transform.transform.Row(2) * offset.z;
-    local_transform.transform.Row(3) +=
-        local_transform.transform.Row(0) * offset.x;
+    if (offset != 0.0f) {
+      local_transform.transform.Row(3) +=
+          local_transform.transform.Row(2) * offset.z;
+      local_transform.transform.Row(3) +=
+          local_transform.transform.Row(0) * offset.x;
+    }
 
     scene->GetRegistry().AddComponent(entity, WorldTransformDirtyTag{});
 

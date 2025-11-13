@@ -47,8 +47,6 @@ void InputSystem::UpdateMouseState() {
   // Delta
   player_input_->mouse_x_delta = player_input_->mouse_x - last_mouse_x_;
   player_input_->mouse_y_delta = player_input_->mouse_y - last_mouse_y_;
-  LOG(0) << "delta: " << player_input_->mouse_x_delta << ", "
-         << player_input_->mouse_y_delta;
 
   // --- 3. Scroll Wheel ---
   // TODO:
