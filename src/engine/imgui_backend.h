@@ -21,7 +21,7 @@ class ImguiBackend {
 
   void CreateRenderResources(Renderer* renderer);
 
-  // std::unique_ptr<InputEvent> OnInputEvent(std::unique_ptr<InputEvent> event);
+  void OnInputEvent();
 
   void NewFrame(float delta_time);
   void EndFrame();

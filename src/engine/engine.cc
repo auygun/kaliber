@@ -132,6 +132,8 @@ void Engine::Update(float delta_time) {
 }
 
 void Engine::Draw(float frame_frac) {
+  imgui_backend_.OnInputEvent();
+
   renderer_->PrepareForDrawing();
   game_->Render(frame_frac);
   imgui_backend_.Draw();
