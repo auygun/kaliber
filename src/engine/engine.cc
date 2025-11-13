@@ -129,7 +129,7 @@ void Engine::Initialize() {
     registry.AddComponent(entity, SceneNodeComponent{.name{"cam"}});
     registry.AddComponent(entity, WorldTransformComponent{});
     registry.AddComponent(entity, LocalTransformComponent{});
-    registry.AddComponent(entity, FlyCameraComponent{});
+    registry.AddComponent(entity, FlyCameraComponent{.speed = 4.0f});
     registry.AddComponent(entity, PrimaryCameraTag{});
     registry.AddComponent(
         entity, CameraComponent{

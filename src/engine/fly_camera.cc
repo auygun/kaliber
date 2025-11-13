@@ -17,23 +17,13 @@ void FlyCamera::Init(World& world) {
 }
 
 void FlyCamera::Update(World& world, float delta_time) {
-  Vector3f offset{0};
-  if (player_input_->keys_held[static_cast<int>(Key::W)])
-    offset += {0, 0, 0.1f};
-  else if (player_input_->keys_held[static_cast<int>(Key::S)])
-    offset += {0, 0, -0.1f};
-  if (player_input_->keys_held[static_cast<int>(Key::Q)])
-    offset += {-0.1f, 0, 0};
-  else if (player_input_->keys_held[static_cast<int>(Key::E)])
-    offset += {0.1f, 0, 0};
-
-  float pitch = player_input_->mouse_y_delta * 0.0005f;
-  float yaw = player_input_->mouse_x_delta * 0.0005f;
-
   for (auto [entity, _, fly_camera, local_transform] :
        world.GetRegistry()
            .View<PrimaryCameraTag, FlyCameraComponent,
                  LocalTransformComponent>()) {
+    float pitch = player_input_->mouse_y_delta * fly_camera.sensitivity;
+    float yaw = player_input_->mouse_x_delta * fly_camera.sensitivity;
+
     // Rotate
     if (player_input_->mouse_left_held && (pitch != 0.0f || yaw != 0.0f)) {
       fly_camera.pitch = std::clamp(fly_camera.pitch - pitch, -0.25f, 0.25f);
@@ -45,6 +35,17 @@ void FlyCamera::Update(World& world, float delta_time) {
       local_transform.transform.M_x_RotY(fly_camera.yaw);
       local_transform.transform.Row(3) = pos;
     }
+
+    Vector3f offset{0};
+    float velocity = fly_camera.speed * delta_time;
+    if (player_input_->keys_held[static_cast<int>(Key::W)])
+      offset += {0, 0, velocity};
+    else if (player_input_->keys_held[static_cast<int>(Key::S)])
+      offset += {0, 0, -velocity};
+    if (player_input_->keys_held[static_cast<int>(Key::Q)])
+      offset += {-velocity, 0, 0};
+    else if (player_input_->keys_held[static_cast<int>(Key::E)])
+      offset += {velocity, 0, 0};
 
     // Move
     if (offset != 0.0f) {

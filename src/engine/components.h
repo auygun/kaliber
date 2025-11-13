@@ -79,7 +79,8 @@ struct FlyCameraComponent {
   base::Vector3f offset{0};
   float pitch = 0.0f;
   float yaw = -90.0f;
-  // float mouse_sensitivity = 0.1f;
+  float sensitivity = 0.0005f;
+  float speed = 1.0f;
 };
 
 // A component that stores the control state for an orbit-camera control logic.
