@@ -122,20 +122,13 @@ void Engine::Initialize() {
 
   imgui_backend_.CreateRenderResources(renderer_.get());
 
-  // Create camera entity
-  {
-    auto& registry = world_.GetRegistry();
-    Entity entity = registry.CreateEntity();
-    registry.AddComponent(entity, SceneNodeComponent{.name{"cam"}});
-    registry.AddComponent(entity, WorldTransformComponent{});
-    registry.AddComponent(entity, LocalTransformComponent{});
-    registry.AddComponent(entity, FlyCameraComponent{.speed = 4.0f});
-    registry.AddComponent(entity, PrimaryCameraTag{});
-    registry.AddComponent(
-        entity, CameraComponent{
-                    .fov = 45.0f, .near_plane = 1.0f, .far_plane = 1000.0f});
-    world_.SetParent(entity, NULL_ENTITY);
-  }
+  auto cam_entity = world_.CreateSceneNode("cam");
+  auto& registry = world_.GetRegistry();
+  registry.AddComponent(cam_entity, FlyCameraComponent{.speed = 4.0f});
+  registry.AddComponent(cam_entity, PrimaryCameraTag{});
+  registry.AddComponent(
+      cam_entity,
+      CameraComponent{.fov = 45.0f, .near_plane = 1.0f, .far_plane = 1000.0f});
 }
 
 void Engine::FixedUpdate(float delta_time) {

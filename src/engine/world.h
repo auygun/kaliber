@@ -5,11 +5,11 @@
 #include <vector>
 
 #include "base/vecmath.h"
+#include "engine/components.h"
 #include "engine/debug_layer.h"
+#include "engine/ecs.h"
 #include "engine/model.h"
 #include "engine/renderer/renderer_types.h"
-#include "engine/components.h"
-#include "engine/ecs.h"
 
 namespace eng {
 
@@ -29,6 +29,10 @@ class World {
   void Update(float delta_time);
 
   void OnClick(const base::Vector2f& pos);
+
+  Entity CreateSceneNode(std::string_view name = "",
+                         Entity parent = NULL_ENTITY,
+                         const base::Matrix4f& transform = base::Matrix4f{1});
 
   // Detaches an entity from its current parent's child list and attaches to a
   // new parent.

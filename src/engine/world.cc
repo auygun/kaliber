@@ -234,6 +234,19 @@ void World::Create(Renderer* renderer) {
   lights_[3].power = 400.0f;
 }
 
+Entity World::CreateSceneNode(std::string_view name,
+                              Entity parent,
+                              const Matrix4f& transform) {
+  Entity entity = registry_.CreateEntity();
+  SceneNodeComponent scene_node{};
+  name.copy(scene_node.name, 7, 0);
+  registry_.AddComponent(entity, scene_node);
+  registry_.AddComponent(entity, WorldTransformComponent{});
+  registry_.AddComponent(entity, LocalTransformComponent{transform});
+  SetParent(entity, parent);
+  return entity;
+}
+
 Entity World::NewEntity(Entity parent,
                         uint32_t model_index,
                         const Matrix4f& transform) {
