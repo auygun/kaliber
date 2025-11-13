@@ -8,8 +8,10 @@
 #include "engine/asset/shader_source.h"
 #include "engine/asset/sound.h"
 #include "engine/audio/audio_mixer.h"
+#include "engine/fly_camera.h"
 #include "engine/game.h"
 #include "engine/game_factory.h"
+#include "engine/input_system.h"
 #include "engine/platform/platform.h"
 #include "engine/renderer/renderer.h"
 #include "third_party/imgui/imgui.h"
@@ -84,8 +86,6 @@ void Engine::Run() {
     // Variable update
     Update(frame_delta);
 
-    TaskRunner::GetThreadLocalTaskRunner()->RunTasks<Consumer::Single>();
-
     // Calculate frame fraction from remainder of the frame time.
     float frame_frac = accumulator / time_step_;
     Draw(frame_frac);
@@ -97,6 +97,8 @@ void Engine::Initialize() {
 
   thread_pool_.Initialize();
 
+  input_system_.Init(world_.GetRegistry());
+
   imgui_backend_.Initialize(IsMobile(), GetRootPath());
 
   platform_->CreateMainWindow();
@@ -107,21 +109,61 @@ void Engine::Initialize() {
   LOG(0) << "aspect_ratio: " << aspect_ratio;
   screen_size_ = {1.0f, aspect_ratio * 1.0f};
 
+  world_.Create(renderer_.get());
+
+  input_system_.Init(world_.GetRegistry());
+
+  systems_.push_back(std::make_unique<FlyCamera>());
+  systems_.back()->Init(world_);
+
   game_ = GameFactoryBase::CreateGame("");
   CHECK(game_) << "No game found to run.";
   CHECK(game_->Initialize()) << "Failed to initialize the game.";
 
   imgui_backend_.CreateRenderResources(renderer_.get());
-  imgui_backend_.NewFrame(0);
+
+  // Create camera entity
+  {
+    auto& registry = world_.GetRegistry();
+    Entity entity = registry.CreateEntity();
+    registry.AddComponent(entity, SceneNodeComponent{.name{"cam"}});
+    registry.AddComponent(entity, WorldTransformComponent{});
+    registry.AddComponent(entity, LocalTransformComponent{});
+    registry.AddComponent(entity, FlyCameraComponent{});
+    registry.AddComponent(entity, PrimaryCameraTag{});
+    registry.AddComponent(
+        entity, CameraComponent{
+                    .fov = 45.0f, .near_plane = 1.0f, .far_plane = 1000.0f});
+    world_.SetParent(entity, NULL_ENTITY);
+  }
 }
 
 void Engine::FixedUpdate(float delta_time) {
   seconds_accumulated_ += delta_time;
   ++tick_;
+}
 
+void Engine::Update(float delta_time) {
   imgui_backend_.NewFrame(delta_time);
+  auto [mouse_captured, keyboard_captured] =
+      imgui_backend_.ProcessInput(platform_);
+
+  input_system_.Update(mouse_captured, keyboard_captured);
+
+  // Scene graph update for objects moved by physics
+  world_.SceneGraphUpdate();
+
+  TaskRunner::GetThreadLocalTaskRunner()->RunTasks<Consumer::Single>();
+
+  for (auto& system : systems_)
+    system->Update(world_, delta_time);
 
   game_->Update(delta_time);
+
+  world_.Update(delta_time);
+
+  // Scene graph update (Post-Logic finalize)
+  world_.SceneGraphUpdate();
 
   fps_seconds_ += delta_time;
   if (fps_seconds_ >= 1) {
@@ -131,18 +173,12 @@ void Engine::FixedUpdate(float delta_time) {
 
   if (stats_visible_)
     ShowStats();
-
-  imgui_backend_.EndFrame();
-}
-
-void Engine::Update(float delta_time) {
 }
 
 void Engine::Draw(float frame_frac) {
-  imgui_backend_.OnInputEvent();
-
   renderer_->PrepareForDrawing();
-  game_->Render(frame_frac);
+  // game_->Render(frame_frac);
+  world_.Render(frame_frac);
   imgui_backend_.Draw();
   renderer_->Present();
 }

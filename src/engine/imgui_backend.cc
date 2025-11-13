@@ -1,8 +1,9 @@
 #include "engine/imgui_backend.h"
 
+#include <memory>
+
 #include "base/log.h"
 #include "engine/asset/shader_source.h"
-#include "engine/engine.h"
 #include "engine/input_codes.h"
 #include "engine/platform/asset_file.h"
 #include "engine/platform/platform.h"
@@ -259,10 +260,9 @@ void ImguiBackend::CreateRenderResources(Renderer* renderer) {
       renderer_->CreateDescriptorSet(shader_, 1, {}, {scene_data_ubo_});
 }
 
-void ImguiBackend::OnInputEvent() {
+std::pair<bool, bool> ImguiBackend::ProcessInput(Platform* platform) {
   // TODO: Use PlayerInput component
   ImGuiIO& io = ImGui::GetIO();
-  auto* platform = Engine::Get().GetPlatform();
   io.AddMousePosEvent(platform->GetMouseX(), platform->GetMouseY());
   io.AddMouseButtonEvent(ImGuiMouseButton_Left,
                          platform->IsMouseButtonDown(MouseButton::Left));
@@ -277,8 +277,7 @@ void ImguiBackend::OnInputEvent() {
     io.AddKeyEvent(imgui_key, is_down);
   }
 
-  // if (io.WantCaptureMouse)
-  //   event.reset();
+  return std::make_pair(io.WantCaptureMouse, io.WantCaptureKeyboard);
 }
 
 void ImguiBackend::NewFrame(float delta_time) {
@@ -290,9 +289,9 @@ void ImguiBackend::NewFrame(float delta_time) {
   needs_update_ = true;
 }
 
-void ImguiBackend::EndFrame() {
-  ImGui::EndFrame();
-}
+// void ImguiBackend::EndFrame() {
+//   ImGui::EndFrame();
+// }
 
 void ImguiBackend::UpdateGeometries() {
   // Create a geometry for each draw list and upload the vertex data.

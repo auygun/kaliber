@@ -12,6 +12,9 @@
 #include "base/timer.h"
 #include "engine/imgui_backend.h"
 #include "engine/platform/platform_observer.h"
+#include "engine/world.h"
+#include "engine/system.h"
+#include "engine/input_system.h"
 
 class TextureCompressor;
 
@@ -68,6 +71,8 @@ class Engine : public PlatformObserver {
 
   Game* GetGame() { return game_.get(); }
 
+  World& GetWorld() { return world_; }
+
   // Return screen width/height in pixels.
   int GetScreenWidth() const;
   int GetScreenHeight() const;
@@ -99,6 +104,11 @@ class Engine : public PlatformObserver {
   std::unique_ptr<Renderer> renderer_;
   std::unique_ptr<AudioMixer> audio_mixer_;
   std::unique_ptr<Game> game_;
+
+  InputSystem input_system_;
+
+  World world_;
+  std::vector<std::unique_ptr<System>> systems_;
 
   base::Vector2f screen_size_ = {0, 0};
 

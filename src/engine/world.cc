@@ -1,4 +1,4 @@
-#include "teapot/scene.h"
+#include "engine/world.h"
 
 #include <algorithm>
 #include <memory>
@@ -72,11 +72,9 @@ const char vertex_description[] = "p3f;n3f;a3f;t2f";
 
 }  // namespace
 
-Scene::Scene() {
-  // camera_.Create({0, 0, 0}, -0.06f, 0.1f);
-}
+World::World() = default;
 
-Scene::~Scene() {
+World::~World() {
   debug_layer_.Shutdown();
 
   renderer_->DestroyDescriptorSet(scene_dset_);
@@ -87,7 +85,7 @@ Scene::~Scene() {
   renderer_->DestroyShader(shader_id_);
 }
 
-void Scene::Create(Renderer* renderer) {
+void World::Create(Renderer* renderer) {
   renderer_ = renderer;
 
   // TestBVH();
@@ -104,9 +102,6 @@ void Scene::Create(Renderer* renderer) {
   shader_id_ = renderer_->CreateShader(std::move(source), vertex_description_,
                                        kPrimitive_Triangles, true, false,
                                        CullMode::kBack);
-
-  input_system_.Init(this);
-  fly_camera_.Init(this);
 
   // Cache pointers to the pools.
   scene_node_pool_ = registry_.GetOrCreatePool<SceneNodeComponent>();
@@ -128,19 +123,19 @@ void Scene::Create(Renderer* renderer) {
   OnHierarchyChanged(root_entity_, 0);
   registry_.AddComponent(root_entity_, WorldTransformDirtyTag{});
 
-  // Create camera entity
-  {
-    Entity entity = registry_.CreateEntity();
-    registry_.AddComponent(entity, SceneNodeComponent{.name{"cam"}});
-    registry_.AddComponent(entity, WorldTransformComponent{});
-    registry_.AddComponent(entity, LocalTransformComponent{});
-    registry_.AddComponent(entity, FlyCameraComponent{});
-    registry_.AddComponent(entity, PrimaryCameraTag{});
-    registry_.AddComponent(
-        entity, CameraComponent{
-                    .fov = 45.0f, .near_plane = 1.0f, .far_plane = 1000.0f});
-    SetParent(entity, NULL_ENTITY);
-  }
+  // // Create camera entity
+  // {
+  //   Entity entity = registry_.CreateEntity();
+  //   registry_.AddComponent(entity, SceneNodeComponent{.name{"cam"}});
+  //   registry_.AddComponent(entity, WorldTransformComponent{});
+  //   registry_.AddComponent(entity, LocalTransformComponent{});
+  //   registry_.AddComponent(entity, FlyCameraComponent{});
+  //   registry_.AddComponent(entity, PrimaryCameraTag{});
+  //   registry_.AddComponent(
+  //       entity, CameraComponent{
+  //                   .fov = 45.0f, .near_plane = 1.0f, .far_plane = 1000.0f});
+  //   SetParent(entity, NULL_ENTITY);
+  // }
 
 #if 1
   Entity parent = root_entity_;
@@ -239,7 +234,7 @@ void Scene::Create(Renderer* renderer) {
   lights_[3].power = 400.0f;
 }
 
-Entity Scene::NewEntity(Entity parent,
+Entity World::NewEntity(Entity parent,
                         uint32_t model_index,
                         const Matrix4f& transform) {
   Entity entity = registry_.CreateEntity();
@@ -253,20 +248,13 @@ Entity Scene::NewEntity(Entity parent,
   return entity;
 }
 
-void Scene::Render(float frame_frac) {
-  // Scene graph update for objects moved by physics
+void World::SceneGraphUpdate() {
   UpdateWoldTransforms();
   UpdateWorldBounds();
   dirty_tag_pool_->RemoveAll();
+}
 
-  input_system_.Update(this);
-  fly_camera_.Update(this);
-
-  // Scene graph update (Post-Logic finalize)
-  UpdateWoldTransforms();
-  UpdateWorldBounds();
-  dirty_tag_pool_->RemoveAll();
-
+void World::Render(float frame_frac) {
   UpdateRenderContext();
   frustum_.CreateFromMatrix(render_context_->view_proj);
 
@@ -315,10 +303,7 @@ void Scene::Render(float frame_frac) {
   debug_layer_.Draw(scene_data_.view_projection);
 }
 
-void Scene::Update(float delta_time) {
-  // camera_.Rotate(-angles.y, angles.x);
-  // camera_.Move(offset);
-
+void World::Update(float delta_time) {
   int renderer_type = static_cast<int>(Engine::Get().GetRendererType());
 
   float label_width = ImGui::CalcTextSize("roughness").x;
@@ -348,13 +333,13 @@ void Scene::Update(float delta_time) {
   debug_layer_.Update(delta_time);
 }
 
-void Scene::OnClick(const base::Vector2f& pos) {
+void World::OnClick(const base::Vector2f& pos) {
   Rayf ray = CreateRayFromScreen(pos.x, pos.y);
   debug_layer_.DrawVector(ray.origin, ray.direction, Vector3f{1.0f}, 1, true);
   selected_entity_ = SelectEntity(bvh_tree_, ray);
 }
 
-void Scene::UpdateRenderContext() {
+void World::UpdateRenderContext() {
   // Update the render context from the primary camera.
   for (auto [entity, _, camera, world_transform] :
        registry_.View<PrimaryCameraTag, CameraComponent,
@@ -372,7 +357,7 @@ void Scene::UpdateRenderContext() {
   }
 }
 
-std::vector<Scene::DrawData> Scene::BuildDrawList(
+std::vector<World::DrawData> World::BuildDrawList(
     std::vector<SortItem> sorted_list) {
   DCHECK(!sorted_list.empty());
 
@@ -404,7 +389,7 @@ std::vector<Scene::DrawData> Scene::BuildDrawList(
   return draw_list;
 }
 
-void Scene::UploadSceneData() {
+void World::UploadSceneData() {
   renderer_->UpdateBuffer(instances_ubo_, instances_.data(),
                           sizeof(InstanceData) * instances_.size());
 
@@ -417,7 +402,7 @@ void Scene::UploadSceneData() {
   renderer_->UpdateBuffer(lights_ubo_, &lights_, sizeof(lights_));
 }
 
-void Scene::SetParent(Entity entity, Entity new_parent) {
+void World::SetParent(Entity entity, Entity new_parent) {
   DCHECK(entity != NULL_ENTITY);
   DCHECK(entity != new_parent);
   auto& scene_node = scene_node_pool_->Get(entity);
@@ -455,7 +440,7 @@ void Scene::SetParent(Entity entity, Entity new_parent) {
   dirty_tag_pool_->Add(entity, WorldTransformDirtyTag{});
 }
 
-void Scene::DetachFromParent(SceneNodeComponent& scene_node) {
+void World::DetachFromParent(SceneNodeComponent& scene_node) {
   const Entity old_parent = scene_node.parent;
 
   // Unlink from old parent's sibling list (O(1)).
@@ -479,7 +464,7 @@ void Scene::DetachFromParent(SceneNodeComponent& scene_node) {
   }
 }
 
-void Scene::DestroyEntityAndChildren(Entity entity) {
+void World::DestroyEntityAndChildren(Entity entity) {
   DCHECK(entity != NULL_ENTITY);
 
   DetachFromParent(scene_node_pool_->Get(entity));
@@ -506,7 +491,7 @@ void Scene::DestroyEntityAndChildren(Entity entity) {
   }
 }
 
-void Scene::OnHierarchyChanged(Entity entity, uint32_t new_depth) {
+void World::OnHierarchyChanged(Entity entity, uint32_t new_depth) {
   auto& scene_node = scene_node_pool_->Get(entity);
   if (scene_node.depth == new_depth)
     return;
@@ -546,7 +531,7 @@ void Scene::OnHierarchyChanged(Entity entity, uint32_t new_depth) {
   }
 }
 
-void Scene::UpdateWoldTransforms() {
+void World::UpdateWoldTransforms() {
   // Nothing to do here if there is no dirty node.
   if (dirty_tag_pool_->IsEmpty())
     return;
@@ -594,7 +579,7 @@ void Scene::UpdateWoldTransforms() {
   }
 }
 
-void Scene::UpdateWorldBounds() {
+void World::UpdateWorldBounds() {
   for (auto [entity, model, world_transform, world_bounds, _] :
        registry_.View<ModelComponent, WorldTransformComponent,
                       WorldBoundsComponent, WorldTransformDirtyTag>()) {
@@ -602,7 +587,7 @@ void Scene::UpdateWorldBounds() {
   }
 }
 
-void Scene::BuildBVHTree(std::vector<BVHBuildItem> items) {
+void World::BuildBVHTree(std::vector<BVHBuildItem> items) {
   bvh_tree_.clear();
 
   if (items.empty())
@@ -679,7 +664,7 @@ void Scene::BuildBVHTree(std::vector<BVHBuildItem> items) {
   }
 }
 
-std::vector<Scene::SortItem> Scene::FrustumCull(const Frustumf& frustum) {
+std::vector<World::SortItem> World::FrustumCull(const Frustumf& frustum) {
   std::vector<SortItem> visible_items;
   if (bvh_tree_.empty())
     return visible_items;
@@ -718,7 +703,7 @@ std::vector<Scene::SortItem> Scene::FrustumCull(const Frustumf& frustum) {
   return visible_items;
 }
 
-void Scene::DumpBVHTree(const std::vector<BVHNode>& nodes,
+void World::DumpBVHTree(const std::vector<BVHNode>& nodes,
                         uint32_t node_index,
                         const std::string& prefix,
                         bool is_last) {
@@ -760,7 +745,7 @@ void Scene::DumpBVHTree(const std::vector<BVHNode>& nodes,
   }
 }
 
-void Scene::DrawBVHTree(const std::vector<BVHNode>& nodes,
+void World::DrawBVHTree(const std::vector<BVHNode>& nodes,
                         uint32_t node_index) {
   if (nodes.empty())
     return;
@@ -783,7 +768,7 @@ void Scene::DrawBVHTree(const std::vector<BVHNode>& nodes,
   }
 }
 
-Rayf Scene::CreateRayFromScreen(float screen_x, float screen_y) {
+Rayf World::CreateRayFromScreen(float screen_x, float screen_y) {
   // Convert Screen Coords to Normalized Device Coords (NDC) [-1, 1]
   float ndc_x = (2.0f * screen_x) / Engine::Get().GetScreenWidth() - 1.0f;
   float ndc_y = 1.0f - (2.0f * screen_y) / Engine::Get().GetScreenHeight();
@@ -799,7 +784,7 @@ Rayf Scene::CreateRayFromScreen(float screen_x, float screen_y) {
 }
 
 // Selects an entity by casting a ray.
-Entity Scene::SelectEntity(const std::vector<BVHNode>& nodes, const Rayf& ray) {
+Entity World::SelectEntity(const std::vector<BVHNode>& nodes, const Rayf& ray) {
   Entity selected_entity = NULL_ENTITY;
   float closest_distance{std::numeric_limits<float>::max()};
 

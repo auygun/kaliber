@@ -1,21 +1,22 @@
-#include "teapot/fly_camera.h"
+#include "engine/fly_camera.h"
 
 #include <algorithm>
 #include <cmath>
 
-#include "teapot/components.h"
-#include "teapot/ecs.h"
-#include "teapot/scene.h"
+#include "base/vecmath.h"
+#include "engine/components.h"
+#include "engine/ecs.h"
+#include "engine/world.h"
 
 using namespace base;
 
 namespace eng {
 
-void FlyCamera::Init(Scene* scene) {
-  player_input_ = &scene->GetRegistry().GetSingletonComponent<PlayerInput>();
+void FlyCamera::Init(World& world) {
+  player_input_ = &world.GetRegistry().GetSingletonComponent<PlayerInput>();
 }
 
-void FlyCamera::Update(Scene* scene) {
+void FlyCamera::Update(World& world, float delta_time) {
   Vector3f offset{0};
   if (player_input_->keys_held[static_cast<int>(Key::W)])
     offset += {0, 0, 0.1f};
@@ -30,7 +31,7 @@ void FlyCamera::Update(Scene* scene) {
   float yaw = player_input_->mouse_x_delta * 0.0005f;
 
   for (auto [entity, _, fly_camera, local_transform] :
-       scene->GetRegistry()
+       world.GetRegistry()
            .View<PrimaryCameraTag, FlyCameraComponent,
                  LocalTransformComponent>()) {
     // Rotate
@@ -53,7 +54,7 @@ void FlyCamera::Update(Scene* scene) {
           local_transform.transform.Row(0) * offset.x;
     }
 
-    scene->GetRegistry().AddComponent(entity, WorldTransformDirtyTag{});
+    world.GetRegistry().AddComponent(entity, WorldTransformDirtyTag{});
 
     break;  // There can be only one primary camera.
   }

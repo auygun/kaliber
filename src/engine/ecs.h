@@ -1,5 +1,5 @@
-#ifndef TEAPOT_ECS_H
-#define TEAPOT_ECS_H
+#ifndef ENGINE_ECS_H
+#define ENGINE_ECS_H
 
 #include <deque>
 #include <limits>
@@ -442,4 +442,4 @@ class View {
 
 }  // namespace eng
 
-#endif  // TEAPOT_ECS_H
+#endif  // ENGINE_ECS_H

@@ -1,5 +1,5 @@
-#ifndef TEAPOT_SCENE_H
-#define TEAPOT_SCENE_H
+#ifndef ENGINE_SCENE_H
+#define ENGINE_SCENE_H
 
 #include <string>
 #include <vector>
@@ -8,21 +8,21 @@
 #include "engine/debug_layer.h"
 #include "engine/model.h"
 #include "engine/renderer/renderer_types.h"
-#include "teapot/components.h"
-#include "teapot/ecs.h"
-#include "teapot/fly_camera.h"
-#include "teapot/input_system.h"
+#include "engine/components.h"
+#include "engine/ecs.h"
 
 namespace eng {
 
 class Renderer;
 
-class Scene {
+class World {
  public:
-  Scene();
-  ~Scene();
+  World();
+  ~World();
 
   void Create(Renderer* renderer);
+
+  void SceneGraphUpdate();
 
   void Render(float frame_frac);
 
@@ -30,7 +30,9 @@ class Scene {
 
   void OnClick(const base::Vector2f& pos);
 
-  // Camera& GetCamera() { return camera_; }
+  // Detaches an entity from its current parent's child list and attaches to a
+  // new parent.
+  void SetParent(Entity entity, Entity new_parent);
 
   Registry& GetRegistry() { return registry_; }
 
@@ -100,9 +102,6 @@ class Scene {
   uint64_t shader_id_;
   std::vector<eng::Model> models_;
 
-  // Camera camera_;
-  InputSystem input_system_;  // TODO: Remove.
-  FlyCamera fly_camera_;      // TODO: Remove.
   base::Frustumf frustum_;
 
   eng::DebugLayer debug_layer_;
@@ -174,10 +173,6 @@ class Scene {
 
   void DetachFromParent(SceneNodeComponent& core_data);
 
-  // Detaches an entity from its current parent's child list and attaches to a
-  // new parent.
-  void SetParent(Entity entity, Entity new_parent);
-
   // Destroys an entity, its children, and updates its parent.
   void DestroyEntityAndChildren(Entity entity);
 
@@ -199,4 +194,4 @@ class Scene {
 
 }  // namespace eng
 
-#endif  // TEAPOT_SCENE_H
+#endif  // ENGINE_SCENE_H

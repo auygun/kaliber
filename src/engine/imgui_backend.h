@@ -1,7 +1,8 @@
 #ifndef ENGINE_IMGUI_BACKEND_H
 #define ENGINE_IMGUI_BACKEND_H
 
-#include <memory>
+#include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "base/vecmath.h"
@@ -10,6 +11,7 @@
 namespace eng {
 
 class Renderer;
+class Platform;
 
 class ImguiBackend {
  public:
@@ -21,10 +23,10 @@ class ImguiBackend {
 
   void CreateRenderResources(Renderer* renderer);
 
-  void OnInputEvent();
+  std::pair<bool, bool> ProcessInput(Platform* platform);
 
   void NewFrame(float delta_time);
-  void EndFrame();
+  // void EndFrame();
   void Draw();
 
  private:

@@ -1,19 +1,20 @@
-#include "teapot/input_system.h"
+#include "engine/input_system.h"
 
+#include "engine/components.h"
+#include "engine/ecs.h"
 #include "engine/engine.h"
 #include "engine/platform/platform.h"
-#include "teapot/scene.h"
 
 using namespace base;
 
 namespace eng {
 
-void InputSystem::Init(Scene* scene) {
+void InputSystem::Init(Registry& registry) {
   // Get the global PlayerInput component.
-  player_input_ = &scene->GetRegistry().GetSingletonComponent<PlayerInput>();
+  player_input_ = &registry.GetSingletonComponent<PlayerInput>();
 }
 
-void InputSystem::Update(Scene* scene) {
+void InputSystem::Update(bool mouse_captured, bool keyboard_captured) {
   if (player_input_ == nullptr)
     return;
 
@@ -21,8 +22,10 @@ void InputSystem::Update(Scene* scene) {
   ResetFrameStates();
 
   // --- 2. Poll Mouse and Keyboard ---
-  UpdateMouseState();
-  UpdateKeyboardState();
+  if (!mouse_captured)
+    UpdateMouseState();
+  if (!keyboard_captured)
+    UpdateKeyboardState();
 
   // --- 3. Store current states for next frame's comparison ---
   UpdateLastFrameStates();

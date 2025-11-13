@@ -1,15 +1,14 @@
-#ifndef TEAPOT_INPUT_SYSTEM_H
-#define TEAPOT_INPUT_SYSTEM_H
+#ifndef ENGINE_INPUT_SYSTEM_H
+#define ENGINE_INPUT_SYSTEM_H
 
-#include <iostream>
-#include <map>
+#include <array>
 
-#include "teapot/components.h"
-#include "teapot/ecs.h"
+#include "engine/input_codes.h"
 
 namespace eng {
 
-class Scene;
+class Registry;
+class PlayerInput;
 
 // The one-and-only system responsible for polling hardware.
 // This system is stateful as it needs to calculate "just pressed" states and
@@ -20,9 +19,9 @@ class InputSystem {
   InputSystem() = default;
   ~InputSystem() = default;
 
-  void Init(Scene* scene);
+  void Init(Registry& registry);
 
-  void Update(Scene* scene);
+  void Update(bool mouse_captured, bool keyboard_captured);
 
  private:
   // Cached Pointers
@@ -43,4 +42,4 @@ class InputSystem {
 
 }  // namespace eng
 
-#endif  // TEAPOT_INPUT_SYSTEM_H
+#endif  // ENGINE_INPUT_SYSTEM_H

@@ -1,11 +1,12 @@
-#ifndef TEAPOT_COMPONENTS_H
-#define TEAPOT_COMPONENTS_H
+#ifndef ENGINE_COMPONENTS_H
+#define ENGINE_COMPONENTS_H
 
 #include <array>
+#include <cstdint>
 
 #include "base/vecmath.h"
+#include "engine/ecs.h"
 #include "engine/input_codes.h"
-#include "teapot/ecs.h"
 
 namespace eng {
 
@@ -150,7 +151,7 @@ struct PlayerInput {
 
 }  // namespace eng
 
-#endif  // TEAPOT_COMPONENTS_H
+#endif  // ENGINE_COMPONENTS_H
 
 #if 0
 
