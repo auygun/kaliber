@@ -67,18 +67,22 @@ void Engine::Run() {
     if (!renderer_->IsInitialzed())
       continue;
 
-    // Accumulate time.
-    accumulator += timer_.Delta();
+    // Capture frame time once.
+    float frame_delta = timer_.Delta();
+    accumulator += frame_delta;
 
-    // Prevent the "Spiral of Death" by capping the accumulated time.
+    // Safety clamp to prevent "spiral of death" on lag spikes.
     if (accumulator > max_accumulator)
       accumulator = max_accumulator;
 
     // Subdivide the frame time using fixed time steps.
     while (accumulator >= time_step_) {
-      Update(time_step_);
+      FixedUpdate(time_step_);
       accumulator -= time_step_;
     };
+
+    // Variable update
+    Update(frame_delta);
 
     TaskRunner::GetThreadLocalTaskRunner()->RunTasks<Consumer::Single>();
 
@@ -111,7 +115,7 @@ void Engine::Initialize() {
   imgui_backend_.NewFrame(0);
 }
 
-void Engine::Update(float delta_time) {
+void Engine::FixedUpdate(float delta_time) {
   seconds_accumulated_ += delta_time;
   ++tick_;
 
@@ -129,6 +133,9 @@ void Engine::Update(float delta_time) {
     ShowStats();
 
   imgui_backend_.EndFrame();
+}
+
+void Engine::Update(float delta_time) {
 }
 
 void Engine::Draw(float frame_frac) {

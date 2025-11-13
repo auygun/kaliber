@@ -124,6 +124,7 @@ class Engine : public PlatformObserver {
 
   void Initialize();
 
+  void FixedUpdate(float delta_time);
   void Update(float delta_time);
   void Draw(float frame_frac);
 
