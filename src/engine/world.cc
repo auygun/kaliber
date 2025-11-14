@@ -104,12 +104,12 @@ void World::Create(Renderer* renderer) {
                                        CullMode::kBack);
 
   // Cache pointers to the pools.
-  scene_node_pool_ = registry_.GetOrCreatePool<SceneNodeComponent>();
-  world_transform_pool_ = registry_.GetOrCreatePool<WorldTransformComponent>();
-  local_transform_pool_ = registry_.GetOrCreatePool<LocalTransformComponent>();
-  dirty_tag_pool_ = registry_.GetOrCreatePool<WorldTransformDirtyTag>();
-  world_bounds_pool_ = registry_.GetOrCreatePool<WorldBoundsComponent>();
-  model_pool_ = registry_.GetOrCreatePool<ModelComponent>();
+  scene_node_pool_ = registry_.GetPool<SceneNodeComponent>();
+  world_transform_pool_ = registry_.GetPool<WorldTransformComponent>();
+  local_transform_pool_ = registry_.GetPool<LocalTransformComponent>();
+  dirty_tag_pool_ = registry_.GetPool<WorldTransformDirtyTag>();
+  world_bounds_pool_ = registry_.GetPool<WorldBoundsComponent>();
+  model_pool_ = registry_.GetPool<ModelComponent>();
 
   // Create global resources and cache the pointers.
   render_context_ = &registry_.GetSingletonComponent<RenderContext>();

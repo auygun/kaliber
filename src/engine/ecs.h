@@ -212,7 +212,7 @@ class Registry {
   // Single generic AddComponent that handles both copy and move.
   template <typename T>
   std::decay_t<T>& AddComponent(Entity entity, T&& component) {
-    return GetOrCreatePool<T>()->Emplace(entity, std::forward<T>(component));
+    return GetPool<T>()->Emplace(entity, std::forward<T>(component));
   }
 
   // Constructs a component in-place for a given entity. This is the most
@@ -220,13 +220,13 @@ class Registry {
   // moves by forwarding arguments directly to the component's constructor.
   template <typename T, typename... Args>
   T& EmplaceComponent(Entity entity, Args&&... args) {
-    return GetOrCreatePool<T>()->Emplace(entity, std::forward<Args>(args)...);
+    return GetPool<T>()->Emplace(entity, std::forward<Args>(args)...);
   }
 
   // Removes a component of type T from an entity.
   template <typename T>
   void RemoveComponent(Entity entity) {
-    auto pool = GetPool<T>();
+    auto pool = FindPool<T>();
     if (pool)
       pool->Remove(entity);
   }
@@ -234,7 +234,7 @@ class Registry {
   // Removes all components of type T from all entities.
   template <typename T>
   void RemoveAll() {
-    auto pool = GetPool<T>();
+    auto pool = FindPool<T>();
     if (pool)
       pool->RemoveAll();
   }
@@ -242,7 +242,7 @@ class Registry {
   // Gets the component of type T for an entity.
   template <typename T>
   T& GetComponent(Entity entity) {
-    auto pool = GetPool<T>();
+    auto pool = FindPool<T>();
     DCHECK(pool);
     return pool->Get(entity);
   }
@@ -250,7 +250,7 @@ class Registry {
   // Checks if an entity has a component of type T.
   template <typename T>
   bool HasComponent(Entity entity) {
-    auto pool = GetPool<T>();
+    auto pool = FindPool<T>();
     return pool && pool->Has(entity);
   }
 
@@ -258,14 +258,14 @@ class Registry {
   // Returns true if the pool doesn't exist or if it has no components.
   template <typename T>
   bool IsEmpty() {
-    auto pool = GetPool<T>();
+    auto pool = FindPool<T>();
     return pool ? pool->IsEmpty() : true;
   }
 
   // Get or create the ComponentPool for type T.
   // Uses std::decay_t<T> to ensure we get the raw component type for the pool.
   template <typename T>
-  ComponentPool<std::decay_t<T>>* GetOrCreatePool() {
+  ComponentPool<std::decay_t<T>>* GetPool() {
     using RawType = std::decay_t<T>;
     std::type_index type_index = std::type_index(typeid(RawType));
     auto it = component_pools_.find(type_index);
@@ -283,7 +283,7 @@ class Registry {
   // Gets the ComponentPool for type T, but does not create it.
   // Returns nullptr if the pool does not exist.
   template <typename T>
-  ComponentPool<std::decay_t<T>>* GetPool() {
+  ComponentPool<std::decay_t<T>>* FindPool() {
     using RawType = std::decay_t<T>;
     std::type_index type_index = std::type_index(typeid(RawType));
     auto it = component_pools_.find(type_index);
@@ -296,7 +296,7 @@ class Registry {
 
   template <typename T>
   T& GetSingletonComponent() {
-    auto pool = GetOrCreatePool<T>();
+    auto pool = GetPool<T>();
     if (pool->IsEmpty())
       return pool->Emplace(0, T{});
     DCHECK(pool->GetDenseData().size() == 1);
@@ -308,7 +308,7 @@ class Registry {
   template <typename... Components>
   View<Components...> View() {
     static_assert(sizeof...(Components) > 0, "View must have > 0 components.");
-    return eng::View<Components...>(GetOrCreatePool<Components>()...);
+    return eng::View<Components...>(GetPool<Components>()...);
   }
 
  private:
