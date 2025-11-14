@@ -313,7 +313,7 @@ class Registry {
 
  private:
   // Entity management
-  size_t next_entity_id_ = 1;  // 0 is for singletons.
+  Entity next_entity_id_ = 1;  // 0 is for singletons.
   std::deque<Entity> free_list_;
 
   // Ownership of pools by type.
@@ -414,15 +414,15 @@ class View {
   View(ComponentPool<Components>*... pools)
       : pools_(std::make_tuple(pools...)) {
     // Find the smallest pool to drive the main iteration loop efficiently.
-    size_t minSize = std::numeric_limits<size_t>::max();
-    auto findSmallest = [&](auto* pool) {
-      if (pool->GetDenseData().size() < minSize) {
-        minSize = pool->GetDenseData().size();
+    size_t min_size = std::numeric_limits<size_t>::max();
+    auto find_smallest = [&](auto* pool) {
+      if (pool->GetDenseData().size() < min_size) {
+        min_size = pool->GetDenseData().size();
         smallest_pool_ = pool;
         dense_to_entity_map_ = &pool->GetDenseToEntityMap();
       }
     };
-    (findSmallest(pools), ...);
+    (find_smallest(pools), ...);
   }
 
   Iterator begin() {
