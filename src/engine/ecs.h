@@ -313,7 +313,7 @@ class Registry {
 
  private:
   // Entity management
-  size_t next_entity_id_ = 0;
+  size_t next_entity_id_ = 1;  // 0 is for singletons.
   std::deque<Entity> free_list_;
 
   // Ownership of pools by type.
