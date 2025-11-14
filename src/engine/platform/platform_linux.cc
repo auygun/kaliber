@@ -246,9 +246,9 @@ void Platform::Update() {
 
         // Handle scroll event.
         if (e.xbutton.button == 4)
-          mouse_scroll_delta_ -= 1.0f;
-        else if (e.xbutton.button == 5)
           mouse_scroll_delta_ += 1.0f;
+        else if (e.xbutton.button == 5)
+          mouse_scroll_delta_ -= 1.0f;
         break;
       }
 

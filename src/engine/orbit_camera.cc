@@ -40,8 +40,8 @@ void OrbitCamera::Update(World& world, float delta_time) {
           std::clamp(orbit_camera.radius + radius, 0.0f, 500.0f);
 
       // Update local transformation
-      local_transform.transform.CreateXRotation(orbit_camera.polar);
-      local_transform.transform.M_x_RotY(orbit_camera.azimuthal);
+      local_transform.transform.CreateXRotation(-orbit_camera.polar);
+      local_transform.transform.M_x_RotY(-orbit_camera.azimuthal);
     }
 
     local_transform.transform.Row(3) =
