@@ -30,6 +30,8 @@ source_set("engine") {
     "input_system.h",
     "model.cc",
     "model.h",
+    "orbit_camera.cc",
+    "orbit_camera.h",
     "sound_player.cc",
     "sound_player.h",
     "system.h",

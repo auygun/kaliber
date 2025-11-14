@@ -74,9 +74,8 @@ struct CameraComponent {
 // active camera. The Camera system will look for the entity with this tag.
 struct PrimaryCameraTag {};
 
-// A component that stores the state for a fly-camera control logic.
+// A component that stores the control state for a fly-camera control logic.
 struct FlyCameraComponent {
-  base::Vector3f offset{0};
   float pitch = 0.0f;
   float yaw = -90.0f;
   float sensitivity = 0.0005f;
@@ -85,10 +84,12 @@ struct FlyCameraComponent {
 
 // A component that stores the control state for an orbit-camera control logic.
 struct OrbitCameraComponent {
-  base::Vector3f center_{0};
-  float radius = 0;
-  float polar = 0;
-  float azimuthal = 0;
+  float polar = 0.0f;
+  float azimuthal = 0.0f;
+  float radius = 0.0f;
+  base::Vector3f center{0};
+  float sensitivity = 0.0005f;
+  float speed = 100.0f;
 };
 
 // A global resource that holds the data for the entire frame. The Camera system

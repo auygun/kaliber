@@ -1,5 +1,5 @@
-#ifndef ENGINE_FLY_CAMERA_H
-#define ENGINE_FLY_CAMERA_H
+#ifndef ENGINE_ORBIT_CAMERA_H
+#define ENGINE_ORBIT_CAMERA_H
 
 #include <memory>
 
@@ -11,10 +11,10 @@ class World;
 struct PlayerInput;
 
 // Fly Camera System.
-class FlyCamera : public System {
+class OrbitCamera : public System {
  public:
-  FlyCamera() = default;
-  ~FlyCamera() final = default;
+  OrbitCamera() = default;
+  ~OrbitCamera() final = default;
 
   void Init(World& world) final;
 
@@ -28,4 +28,4 @@ class FlyCamera : public System {
 
 }  // namespace eng
 
-#endif  // ENGINE_FLY_CAMERA_H
+#endif  // ENGINE_ORBIT_CAMERA_H

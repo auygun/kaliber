@@ -205,6 +205,8 @@ Platform::~Platform() {
 }
 
 void Platform::Update() {
+  mouse_scroll_delta_ = 0.0f;
+
   while (XPending(display_)) {
     XEvent e;
     XNextEvent(display_, &e);
@@ -227,16 +229,26 @@ void Platform::Update() {
       case ButtonPress:
         [[fallthrough]];
       case ButtonRelease: {
+        // Handle regular click.
         MouseButton button = MouseButton::Unknown;
         if (e.xbutton.button == 1)
           button = MouseButton::Left;
-        if (e.xbutton.button == 2)
+        else if (e.xbutton.button == 2)
           button = MouseButton::Middle;
-        if (e.xbutton.button == 3)
+        else if (e.xbutton.button == 3)
           button = MouseButton::Right;
-        mouse_buttons_down_[static_cast<int>(button)] = (e.type == ButtonPress);
-        mouse_x_ = e.xmotion.x;
-        mouse_y_ = e.xmotion.y;
+        if (button != MouseButton::Unknown) {
+          mouse_buttons_down_[static_cast<int>(button)] = (e.type == ButtonPress);
+          mouse_x_ = e.xmotion.x;
+          mouse_y_ = e.xmotion.y;
+          break;
+        }
+
+        // Handle scroll event.
+        if (e.xbutton.button == 4)
+          mouse_scroll_delta_ -= 1.0f;
+        else if (e.xbutton.button == 5)
+          mouse_scroll_delta_ += 1.0f;
         break;
       }
 

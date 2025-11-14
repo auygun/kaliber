@@ -52,9 +52,8 @@ void InputSystem::UpdateMouseState() {
   player_input_->mouse_y_delta = player_input_->mouse_y - last_mouse_y_;
 
   // --- 3. Scroll Wheel ---
-  // TODO:
-  // player_input_->mouse_scroll_delta =
-  //     Engine::Get().GetPlatform()->GetMouseScrollDelta();
+  player_input_->mouse_scroll_delta =
+      Engine::Get().GetPlatform()->GetMouseScrollDelta();
 
   // --- 4. Mouse Buttons ---
   bool left_down =
