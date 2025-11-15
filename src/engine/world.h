@@ -134,8 +134,6 @@ class World {
 
   Entity selected_entity_{NULL_ENTITY};
 
-  bool show_bounding_volumes_ = false;
-
   SceneData scene_data_;
   LightData lights_[4];
   std::vector<InstanceData> instances_;  // TODO: remove

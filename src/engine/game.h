@@ -8,11 +8,11 @@ class Game {
   Game() = default;
   virtual ~Game() = default;
 
-  virtual bool Initialize() { return true; }
+  virtual bool Initialize(World& world) { return true; }
 
-  virtual void Update(float delta_time) {}
+  virtual void FixedUpdate(World& world) {}
 
-  virtual void Render(float frame_frac) {}
+  virtual void Update(World& world, float delta_time) {}
 
   virtual void ContextLost() {}
 

@@ -120,7 +120,7 @@ void Engine::Initialize() {
 
   game_ = GameFactoryBase::CreateGame("");
   CHECK(game_) << "No game found to run.";
-  CHECK(game_->Initialize()) << "Failed to initialize the game.";
+  CHECK(game_->Initialize(world_)) << "Failed to initialize the game.";
 
   imgui_backend_.CreateRenderResources(renderer_.get());
 
@@ -137,6 +137,8 @@ void Engine::Initialize() {
 void Engine::FixedUpdate(float delta_time) {
   seconds_accumulated_ += delta_time;
   ++tick_;
+
+  game_->FixedUpdate(world_);
 }
 
 void Engine::Update(float delta_time) {
@@ -154,7 +156,7 @@ void Engine::Update(float delta_time) {
   for (auto& system : systems_)
     system->Update(world_, delta_time);
 
-  game_->Update(delta_time);
+  game_->Update(world_, delta_time);
 
   world_.Update(delta_time);
 
@@ -173,7 +175,6 @@ void Engine::Update(float delta_time) {
 
 void Engine::Draw(float frame_frac) {
   renderer_->PrepareForDrawing();
-  // game_->Render(frame_frac);
   world_.Render(frame_frac);
   imgui_backend_.Draw();
   renderer_->Present();

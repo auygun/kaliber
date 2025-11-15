@@ -9,7 +9,6 @@
 #include "engine/asset/shader_source.h"
 #include "engine/engine.h"
 #include "engine/renderer/renderer.h"
-#include "third_party/imgui/imgui.h"
 
 using namespace base;
 
@@ -301,7 +300,7 @@ void World::Render(float frame_frac) {
   }
 
 #if 1
-  if (show_bounding_volumes_) {
+  if (render_context_->show_bounding_volumes) {
     // DumpBVHTree(bvh_tree_, 0, "");
     DrawBVHTree(bvh_tree_, 0);
     debug_layer_.DrawFrustum(frustum_);
@@ -317,32 +316,6 @@ void World::Render(float frame_frac) {
 }
 
 void World::Update(float delta_time) {
-  int renderer_type = static_cast<int>(Engine::Get().GetRendererType());
-
-  float label_width = ImGui::CalcTextSize("roughness").x;
-  ImGui::SetNextWindowSize(ImVec2(label_width * 3.0f, -1.0f), ImGuiCond_Once);
-  if (ImGui::Begin("Teapot", nullptr,
-                   ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoNav |
-                       ImGuiWindowFlags_NoSavedSettings |
-                       ImGuiWindowFlags_NoResize)) {
-    ImGui::PushItemWidth(-label_width);
-    ImGui::RadioButton("Vulkan", &renderer_type, 1);
-    ImGui::SameLine();
-    ImGui::RadioButton("OpenGL", &renderer_type, 2);
-    ImGui::Checkbox("Volumes", &show_bounding_volumes_);
-    ImGui::SliderFloat("light 1", &lights_[0].power, 0.0f, 2000.0f, "%.f");
-    ImGui::SliderFloat("light 2", &lights_[1].power, 0.0f, 2000.0f, "%.f");
-    ImGui::SliderFloat("light 3", &lights_[2].power, 0.0f, 2000.0f, "%.f");
-    ImGui::SliderFloat("light 4", &lights_[3].power, 0.0f, 2000.0f, "%.f");
-    ImGui::SliderFloat("white", &scene_data_.white, 0.0f, 30.0f, "%.1f");
-    ImGui::SliderFloat("exposure", &scene_data_.exposure, 0.0f, 20.0f, "%.1f");
-  }
-  ImGui::End();
-
-  RendererType selected_type = static_cast<RendererType>(renderer_type);
-  if (selected_type != Engine::Get().GetRendererType())
-    Engine::Get().CreateRenderer(selected_type);
-
   debug_layer_.Update(delta_time);
 }
 
@@ -410,6 +383,8 @@ void World::UploadSceneData() {
   scene_data_.cam_pos = render_context_->camera_world_pos;
   scene_data_.light_dir = {1, 1, 1};
   scene_data_.light_radiance = {1, 1, 1};
+  scene_data_.white = render_context_->white;
+  scene_data_.exposure = render_context_->exposure;
   renderer_->UpdateBuffer(scene_data_ubo_, &scene_data_, sizeof(scene_data_));
 
   renderer_->UpdateBuffer(lights_ubo_, &lights_, sizeof(lights_));

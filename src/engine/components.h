@@ -99,6 +99,10 @@ struct RenderContext {
   base::Matrix4f proj{1};
   base::Matrix4f view_proj{1};
   base::Vector3f camera_world_pos{0};
+  float white{5.0f};
+  float exposure{1.0f};
+
+  bool show_bounding_volumes = false;
 };
 
 // A global resource that provides viewport dimensions. The Camera system reads
