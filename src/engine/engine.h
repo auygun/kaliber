@@ -11,10 +11,10 @@
 #include "base/thread_pool.h"
 #include "base/timer.h"
 #include "engine/imgui_backend.h"
-#include "engine/platform/platform_observer.h"
-#include "engine/world.h"
-#include "engine/system.h"
 #include "engine/input_system.h"
+#include "engine/platform/platform_observer.h"
+#include "engine/system.h"
+#include "engine/world.h"
 
 class TextureCompressor;
 
@@ -152,6 +152,19 @@ class Engine : public PlatformObserver {
   void ContextLost();
 
   void ShowStats();
+
+  // This tracks the selected node in the UI
+  Entity selected_entity_{NULL_ENTITY};
+
+  // Used for deferred reparenting
+  Entity dragged_entity_{NULL_ENTITY};
+  Entity new_parent_entity_{NULL_ENTITY};
+
+  // The main function to draw the Scene Graph window
+  void DrawSceneGraphUI();
+
+  // Recursive helper function to draw each node
+  void DrawSceneNodeIterative(Entity entity);
 
   Engine(const Engine&) = delete;
   Engine& operator=(const Engine&) = delete;

@@ -9,10 +9,10 @@
 #include "engine/asset/sound.h"
 #include "engine/audio/audio_mixer.h"
 #include "engine/fly_camera.h"
-#include "engine/orbit_camera.h"
 #include "engine/game.h"
 #include "engine/game_factory.h"
 #include "engine/input_system.h"
+#include "engine/orbit_camera.h"
 #include "engine/platform/platform.h"
 #include "engine/renderer/renderer.h"
 #include "third_party/imgui/imgui.h"
@@ -171,6 +171,8 @@ void Engine::Update(float delta_time) {
 
   if (stats_visible_)
     ShowStats();
+
+  DrawSceneGraphUI();
 }
 
 void Engine::Draw(float frame_frac) {
@@ -346,6 +348,131 @@ void Engine::ShowStats() {
   ImGui::Text("%s", renderer_->GetDebugName());
   ImGui::Text("%d fps", fps_);
   ImGui::End();
+}
+
+// Iteratively draws a single root node and all its descendants.
+void Engine::DrawSceneNodeIterative(Entity root_entity) {
+  Registry& registry = world_.GetRegistry();
+
+  // The stack for our depth-first traversal.
+  // We need to store the entity and the depth for ImGui::TreePop.
+  struct NodeDepth {
+    Entity entity;
+    int depth;  // Number of TreePop() calls needed when we ascend from here
+  };
+
+  std::deque<NodeDepth> stack;
+  stack.push_back({root_entity, 0});
+
+  while (!stack.empty()) {
+    NodeDepth current = stack.front();
+    stack.pop_front();
+
+    if (!registry.HasComponent<SceneNodeComponent>(current.entity))
+      continue;
+
+    // If depth is -1, it's a marker to call TreePop
+    if (current.depth == -1) {
+      ImGui::TreePop();
+      continue;
+    }
+
+    auto& node = registry.GetComponent<SceneNodeComponent>(current.entity);
+
+    // Set tree node flags
+    ImGuiTreeNodeFlags flags =
+        ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+    if (node.first_child == NULL_ENTITY) {
+      flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+    }
+    if (current.entity == selected_entity_) {
+      flags |= ImGuiTreeNodeFlags_Selected;
+    }
+
+    // Draw the tree node ---
+    bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)current.entity, flags,
+                                       "%s", node.name);
+
+    // Handle selection
+    if (ImGui::IsItemClicked()) {
+      selected_entity_ = current.entity;
+    }
+
+    // Handle drag source (this node is being dragged)
+    if (ImGui::BeginDragDropSource()) {
+      ImGui::SetDragDropPayload("SCENE_NODE_ENTITY", &current.entity,
+                                sizeof(Entity));
+      ImGui::Text("%s", node.name);
+      ImGui::EndDragDropSource();
+    }
+
+    // Handle drag target (another node is dropped on this one)
+    if (ImGui::BeginDragDropTarget()) {
+      if (const ImGuiPayload* payload =
+              ImGui::AcceptDragDropPayload("SCENE_NODE_ENTITY")) {
+        Entity dragged_entity = *static_cast<Entity*>(payload->Data);
+
+        // Check for invalid parenting (self, or no-op)
+        if (dragged_entity != current.entity && dragged_entity != node.parent) {
+          // Defer reparenting until after the loop
+          dragged_entity_ = dragged_entity;
+          new_parent_entity_ = current.entity;
+        }
+      }
+      ImGui::EndDragDropTarget();
+    }
+
+    // Handle traversal
+    if (node_open && !(flags & ImGuiTreeNodeFlags_Leaf)) {
+      // Add a pop marker to the stack, to be processed after all children
+      stack.push_front({current.entity, -1});
+
+      // Add children to the front of the stack (deque) in reverse order to
+      // process them in the correct (forward) order.
+      Entity child = node.first_child;
+      std::vector<Entity> children;
+      while (child != NULL_ENTITY) {
+        if (!registry.HasComponent<SceneNodeComponent>(child))
+          break;
+        children.push_back(child);
+        child = registry.GetComponent<SceneNodeComponent>(child).next_sibling;
+      }
+
+      // Push children onto the stack (front of deque) in reverse
+      for (auto it = children.rbegin(); it != children.rend(); ++it) {
+        stack.push_front({*it, current.depth + 1});
+      }
+    }
+  }
+}
+
+// Creates the scene graph ImGui window. Calls the iterative drawing function
+// for all root nodes. Handles deferred reparenting after the UI is drawn.
+void Engine::DrawSceneGraphUI() {
+  Registry& registry = world_.GetRegistry();
+
+  // Reset the deferred reparenting request at the start of the frame
+  dragged_entity_ = NULL_ENTITY;
+  new_parent_entity_ = NULL_ENTITY;
+
+  ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_FirstUseEver);
+  if (ImGui::Begin("Scene Graph")) {
+    // Iterate over all SceneNodeComponents
+    for (auto [entity, node] : registry.View<SceneNodeComponent>()) {
+      // If an entity has no parent, it's a root node.
+      if (node.parent == NULL_ENTITY) {
+        // Start an iterative draw for this root and all its descendants
+        DrawSceneNodeIterative(entity);
+      }
+    }
+  }
+  ImGui::End();
+
+  // We only modify the scene graph after we are done iterating and drawing the
+  // UI for this frame.
+  if (dragged_entity_ != NULL_ENTITY) {
+    world_.SetParent(dragged_entity_, new_parent_entity_);
+  }
 }
 
 }  // namespace eng
