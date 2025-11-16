@@ -23,6 +23,10 @@ const Entity NULL_ENTITY = (uint32_t)-1;
 class ComponentPoolBase {
  public:
   virtual ~ComponentPoolBase() = default;
+
+  // Gets the std::type_index of the component type
+  virtual const std::type_index& GetTypeIndex() const = 0;
+
   // Called by the Registry when an entity is destroyed
   virtual void OnEntityDestroyed(Entity entity) = 0;
 };
@@ -128,8 +132,13 @@ class ComponentPool : public ComponentPoolBase {
 
   size_t GetSize() const { return dense_.size(); }
 
+  const std::type_index& GetTypeIndex() const final {
+    static const std::type_index type_index = std::type_index(typeid(T));
+    return type_index;
+  }
+
   // Interface implementation for when an entity is destroyed.
-  void OnEntityDestroyed(Entity entity) override {
+  void OnEntityDestroyed(Entity entity) final {
     if (Has(entity))
       Remove(entity);
   }
@@ -292,6 +301,16 @@ class Registry {
       return nullptr;
 
     return static_cast<ComponentPool<RawType>*>(it->second.get());
+  }
+
+  // Gets the type_index for all components attached to an entity
+  std::vector<std::type_index> GetAllComponentTypesForEntity(Entity entity) {
+    if (entity >= entity_pools_.size())
+      return {};
+    std::vector<std::type_index> out_types;
+    for (auto* pool : entity_pools_[entity])
+      out_types.push_back(pool->GetTypeIndex());
+    return out_types;
   }
 
   template <typename T>
