@@ -160,11 +160,11 @@ class Engine : public PlatformObserver {
   Entity dragged_entity_{NULL_ENTITY};
   Entity new_parent_entity_{NULL_ENTITY};
 
-  // The main function to draw the Scene Graph window
   void DrawSceneGraphUI();
 
-  // Recursive helper function to draw each node
   void DrawSceneNodeIterative(Entity entity);
+
+  void DrawNodeInspector();
 
   Engine(const Engine&) = delete;
   Engine& operator=(const Engine&) = delete;

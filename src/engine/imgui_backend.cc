@@ -200,7 +200,7 @@ void ImguiBackend::Initialize(bool is_mobile, std::string root_path) {
   if (buffer) {
     ImFontConfig font_cfg = ImFontConfig();
     font_cfg.FontDataOwnedByAtlas = false;
-    float size_pixels = is_mobile ? 64 : 32;
+    float size_pixels = is_mobile ? 64 : 16;
     ImGui::GetIO().Fonts->AddFontFromMemoryTTF(buffer.get(), (int)buffer_size,
                                                size_pixels, &font_cfg);
     ImGui::GetIO().Fonts->Build();
@@ -270,6 +270,7 @@ std::pair<bool, bool> ImguiBackend::ProcessInput(Platform* platform) {
                          platform->IsMouseButtonDown(MouseButton::Right));
   io.AddMouseButtonEvent(ImGuiMouseButton_Middle,
                          platform->IsMouseButtonDown(MouseButton::Middle));
+  io.AddMouseWheelEvent(0.0f, platform->GetMouseScrollDelta() * 0.2f);
 
   for (size_t i = 0; i < static_cast<size_t>(Key::MaxKeys); ++i) {
     auto imgui_key = TranslateKey(static_cast<Key>(i));

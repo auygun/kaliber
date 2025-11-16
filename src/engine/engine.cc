@@ -446,30 +446,118 @@ void Engine::DrawSceneNodeIterative(Entity root_entity) {
   }
 }
 
+// Draws the inspector panel for the currently selected node.
+void Engine::DrawNodeInspector() {
+  Registry& registry = world_.GetRegistry();
+
+  // 1. Handle "No Selection"
+  if (selected_entity_ == NULL_ENTITY) {
+    ImGui::Text("Select a node to inspect.");
+    return;
+  }
+
+  // 2. Handle "Invalid Selection" (e.g., entity was destroyed)
+  if (!registry.HasComponent<SceneNodeComponent>(selected_entity_)) {
+    ImGui::Text("Selected node is no longer valid.");
+    // Clear the selection so we don't check a bad pointer next frame
+    selected_entity_ = NULL_ENTITY;
+    return;
+  }
+
+  // 3. Draw Inspector UI
+  auto& node = registry.GetComponent<SceneNodeComponent>(selected_entity_);
+
+  // Entity ID (read-only)
+  ImGui::Text("Entity ID: %u", selected_entity_);
+
+  // Name (Editable)
+  // We must copy the fixed-size char array to a temporary buffer for ImGui
+  char name_buffer[8];
+  strncpy(name_buffer, node.name, 8);
+
+  if (ImGui::InputText("Name", name_buffer, 8)) {
+    // Copy the edited name back into the component
+    strncpy(node.name, name_buffer, 8);
+  }
+
+  // Parent ID (read-only)
+  ImGui::Text("Parent ID: %u", node.parent);
+
+  // Child Count (Calculated)
+  int child_count = 0;
+  Entity child = node.first_child;
+  while (child != NULL_ENTITY) {
+    if (!registry.HasComponent<SceneNodeComponent>(child))
+      break;
+    child_count++;
+    child = registry.GetComponent<SceneNodeComponent>(child).next_sibling;
+  }
+  ImGui::Text("Children: %d", child_count);
+}
+
 // Creates the scene graph ImGui window. Calls the iterative drawing function
 // for all root nodes. Handles deferred reparenting after the UI is drawn.
 void Engine::DrawSceneGraphUI() {
   Registry& registry = world_.GetRegistry();
 
-  // Reset the deferred reparenting request at the start of the frame
   dragged_entity_ = NULL_ENTITY;
   new_parent_entity_ = NULL_ENTITY;
 
-  ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_FirstUseEver);
-  if (ImGui::Begin("Scene Graph")) {
-    // Iterate over all SceneNodeComponents
-    for (auto [entity, node] : registry.View<SceneNodeComponent>()) {
-      // If an entity has no parent, it's a root node.
-      if (node.parent == NULL_ENTITY) {
-        // Start an iterative draw for this root and all its descendants
-        DrawSceneNodeIterative(entity);
+  ImGui::SetNextWindowSize(ImVec2(300, 500), ImGuiCond_FirstUseEver);
+
+  if (ImGui::Begin("Scene Hierarchy")) {
+    static float top_pane_height = 250.0f;  // Height of the tree view
+    float splitter_thickness = 8.0f;        // A thicker bar for easier grabbing
+
+    // Top Pane (Tree View)
+    ImGui::BeginChild("SceneGraphTree", ImVec2(0, top_pane_height), false,
+                      ImGuiWindowFlags_HorizontalScrollbar);
+    {
+      for (auto [entity, node] : registry.View<SceneNodeComponent>()) {
+        if (node.parent == NULL_ENTITY) {
+          DrawSceneNodeIterative(entity);
+        }
       }
     }
+    ImGui::EndChild();
+
+    // Horizontal Splitter
+    ImGui::InvisibleButton("##h_splitter", ImVec2(-1, splitter_thickness));
+
+    if (ImGui::IsItemHovered()) {
+      ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+    }
+    if (ImGui::IsItemActive()) {
+      // Adjust top pane height based on mouse delta
+      top_pane_height += ImGui::GetIO().MouseDelta.y;
+
+      // Add constraints to prevent panes from collapsing
+      float min_height = 40.0f;
+      float max_height =
+          ImGui::GetContentRegionAvail().y - splitter_thickness - min_height;
+      if (top_pane_height < min_height)
+        top_pane_height = min_height;
+      if (top_pane_height > max_height)
+        top_pane_height = max_height;
+    }
+
+    // Draw a visual line for the splitter
+    ImDrawList* draw_list = ImGui::GetWindowDrawList();
+    ImVec2 min_rect = ImGui::GetItemRectMin();
+    ImVec2 max_rect = ImGui::GetItemRectMax();
+    draw_list->AddRectFilled(min_rect, max_rect,
+                             ImGui::GetColorU32(ImGuiCol_SeparatorHovered));
+
+    // Bottom Pane (Inspector)
+    ImGui::BeginChild("NodeInspector", ImVec2(0, 0), true);
+    {
+      DrawNodeInspector();
+    }
+    ImGui::EndChild();
   }
   ImGui::End();
 
-  // We only modify the scene graph after we are done iterating and drawing the
-  // UI for this frame.
+  // Handle deferred reparenting
   if (dragged_entity_ != NULL_ENTITY) {
     world_.SetParent(dragged_entity_, new_parent_entity_);
   }
