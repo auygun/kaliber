@@ -201,8 +201,16 @@ void ImguiBackend::Initialize(bool is_mobile, std::string root_path) {
     ImFontConfig font_cfg = ImFontConfig();
     font_cfg.FontDataOwnedByAtlas = false;
     float size_pixels = is_mobile ? 64 : 16;
-    ImGui::GetIO().Fonts->AddFontFromMemoryTTF(buffer.get(), (int)buffer_size,
-                                               size_pixels, &font_cfg);
+
+    // Basic Latin, Latin-1 Supplement, Latin Extended-A, Latin Extended-B
+    static const ImWchar full_ranges[] = {
+        0x0020,
+        0x024F,
+        0,  // Null terminator
+    };
+
+    ImGui::GetIO().Fonts->AddFontFromMemoryTTF(
+        buffer.get(), (int)buffer_size, size_pixels, &font_cfg, full_ranges);
     ImGui::GetIO().Fonts->Build();
   } else {
     LOG(0) << "Failed to read font file.";
@@ -276,6 +284,12 @@ std::pair<bool, bool> ImguiBackend::ProcessInput(Platform* platform) {
     auto imgui_key = TranslateKey(static_cast<Key>(i));
     bool is_down = platform->IsKeyDown(static_cast<Key>(i));
     io.AddKeyEvent(imgui_key, is_down);
+  }
+
+  // Character input
+  const auto& chars = platform->GetInputCharacters();
+  for (unsigned int c : chars) {
+    io.AddInputCharacter(c);
   }
 
   return std::make_pair(io.WantCaptureMouse, io.WantCaptureKeyboard);

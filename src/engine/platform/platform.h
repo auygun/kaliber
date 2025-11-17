@@ -3,6 +3,7 @@
 
 #include <array>
 #include <string>
+#include <vector>
 
 #if defined(__ANDROID__)
 #include "../../base/vecmath.h"
@@ -72,6 +73,11 @@ class Platform {
 
   bool IsKeyDown(Key key) const { return keys_down_[static_cast<int>(key)]; }
 
+  // Retrieve the characters typed this frame.
+  const std::vector<unsigned int>& GetInputCharacters() const {
+    return input_characters_;
+  }
+
 #if defined(__ANDROID__)
   ANativeWindow* GetWindow();
 #elif defined(__linux__)
@@ -101,6 +107,8 @@ class Platform {
   std::array<bool, static_cast<int>(MouseButton::MaxButtons)>
       mouse_buttons_down_{};
   std::array<bool, static_cast<int>(Key::MaxKeys)> keys_down_{};
+  // Buffer to store UTF-32 characters typed this frame
+  std::vector<unsigned int> input_characters_;
 
 #if defined(__ANDROID__)
 
@@ -131,6 +139,9 @@ class Platform {
 
   Display* display_ = nullptr;
   Window window_ = 0;
+  XIM xim_ = 0;
+  XIC xic_ = 0;
+  Atom wm_delete_window_ = 0;
 
   bool CreateWindow(int width, int height);
   void DestroyWindow();

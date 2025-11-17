@@ -1,9 +1,12 @@
 #include "engine/platform/platform.h"
 
 #include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <cstring>
 #include <memory>
+
+#include <X11/keysym.h>
 
 #include "base/log.h"
 #include "base/vecmath.h"
@@ -16,8 +19,8 @@ namespace eng {
 namespace {
 
 // Maps X11's KeySym values to our platform-agnostic Key enum.
-Key TranslateX11Key(KeySym keysym) {
-  switch (keysym) {
+Key TranslateX11Key(KeySym key_sym) {
+  switch (key_sym) {
     case XK_a:
     case XK_A:
       return Key::A;
@@ -158,12 +161,79 @@ Key TranslateX11Key(KeySym keysym) {
   }
 }
 
+/**
+ * @brief Decodes a raw UTF-8 byte stream into a vector of UTF-32 codepoints.
+ * This implementation is platform-agnostic.
+ *
+ * @param buffer The raw character buffer (likely from XLookupString).
+ * @param count The number of bytes in the buffer.
+ * @param out_codepoints The vector to append UTF-32 codepoints to.
+ */
+static void DecodeUTF8ToUTF32(const char* buffer,
+                              int count,
+                              std::vector<unsigned int>& out_codepoints) {
+  for (int i = 0; i < count;) {
+    unsigned int codepoint = 0;
+    int bytes_in_char = 0;
+    unsigned char c = static_cast<unsigned char>(buffer[i]);
+
+    if (c < 0x80) {  // 1-byte sequence (0..._
+      codepoint = c;
+      bytes_in_char = 1;
+    } else if ((c & 0xE0) == 0xC0) {  // 2-byte sequence (110... 10......)
+      if (i + 1 < count) {
+        codepoint = ((c & 0x1F) << 6) | (buffer[i + 1] & 0x3F);
+        bytes_in_char = 2;
+      } else {
+        i++;  // Incomplete sequence, skip
+        continue;
+      }
+    } else if ((c & 0xF0) ==
+               0xE0) {  // 3-byte sequence (1110... 10...... 10......)
+      if (i + 2 < count) {
+        codepoint = ((c & 0x0F) << 12) | ((buffer[i + 1] & 0x3F) << 6) |
+                    (buffer[i + 2] & 0x3F);
+        bytes_in_char = 3;
+      } else {
+        i++;  // Incomplete sequence, skip
+        continue;
+      }
+    } else if ((c & 0xF8) ==
+               0xF0) {  // 4-byte sequence (11110... 10...... 10...... 10......)
+      if (i + 3 < count) {
+        codepoint = ((c & 0x07) << 18) | ((buffer[i + 1] & 0x3F) << 12) |
+                    ((buffer[i + 2] & 0x3F) << 6) | (buffer[i + 3] & 0x3F);
+        bytes_in_char = 4;
+      } else {
+        i++;  // Incomplete sequence, skip
+        continue;
+      }
+    } else {
+      // Invalid/continuation byte, skip it
+      i++;
+      continue;
+    }
+
+    // Add valid, printable characters or tab
+    if (codepoint >= 32 || codepoint == '\t') {
+      out_codepoints.push_back(codepoint);
+    }
+    i += bytes_in_char;
+  }
+}
+
 }  // namespace
 
 void KaliberMain(Platform* platform);
 
 Platform::Platform() {
   LOG(0) << "Initializing platform.";
+
+  // This tells the C library to adopt the user's environment locale.
+  // It's essential for XOpenIM to work correctly with UTF-8.
+  setlocale(LC_CTYPE, "");
+  // This tells X11 we will handle the input method.
+  XSetLocaleModifiers("@im=none");
 
   root_path_ = "./";
   data_path_ = "./";
@@ -195,28 +265,81 @@ void Platform::CreateMainWindow() {
                KeyPressMask | KeyReleaseMask | PointerMotionMask |
                    Button1MotionMask | ButtonPressMask | ButtonReleaseMask |
                    FocusChangeMask | StructureNotifyMask);
-  Atom WM_DELETE_WINDOW = XInternAtom(display_, "WM_DELETE_WINDOW", false);
-  XSetWMProtocols(display_, window_, &WM_DELETE_WINDOW, 1);
+  wm_delete_window_ = XInternAtom(display_, "WM_DELETE_WINDOW", false);
+  XSetWMProtocols(display_, window_, &wm_delete_window_, 1);
+
+  // Initialize X Input Method
+  xim_ = XOpenIM(display_, NULL, NULL, NULL);
+  if (!xim_) {
+    LOG(0) << "Warning: XOpenIM failed. Non-ASCII input may not work.";
+  } else {
+    xic_ = XCreateIC(xim_, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+                     XNClientWindow, window_, XNFocusWindow,
+                     window_,  // Tell XIM which window to focus
+                     NULL);
+    if (!xic_) {
+      LOG(0) << "Warning: XCreateIC failed. Non-ASCII input may not work.";
+    }
+  }
 }
 
 Platform::~Platform() {
   LOG(0) << "Shutting down platform.";
+
+  // Clean up XIM
+  if (xic_) {
+    XDestroyIC(xic_);
+    xic_ = 0;
+  }
+  if (xim_) {
+    XCloseIM(xim_);
+    xim_ = 0;
+  }
+
   DestroyWindow();
 }
 
 void Platform::Update() {
   mouse_scroll_delta_ = 0.0f;
+  input_characters_.clear();
 
   while (XPending(display_)) {
     XEvent e;
     XNextEvent(display_, &e);
+
+    // This allows the IMEs to hook keypresses
+    if (xic_ && XFilterEvent(&e, window_)) {
+      continue;
+    }
+
     switch (e.type) {
-      case KeyPress:
-        [[fallthrough]];
-      case KeyRelease: {
-        KeySym keysym = XLookupKeysym(&e.xkey, 0);
+      case KeyPress: {
+        KeySym keysym = 0;
+        char buffer[32];
+        int count = 0;
+        Status status = 0;
+
+        // Use Xutf8LookupString if we have an Input Context,
+        // otherwise fall back to the old method.
+        if (xic_) {
+          count = Xutf8LookupString(xic_, &e.xkey, buffer, sizeof(buffer),
+                                    &keysym, &status);
+        } else {
+          count = XLookupString(&e.xkey, buffer, sizeof(buffer), &keysym, NULL);
+        }
+
         Key translated_key = TranslateX11Key(keysym);
-        keys_down_[static_cast<int>(translated_key)] = (e.type == KeyPress);
+        keys_down_[static_cast<int>(translated_key)] = true;
+
+        if (count > 0) {
+          DecodeUTF8ToUTF32(buffer, count, input_characters_);
+        }
+        break;
+      }
+      case KeyRelease: {
+        KeySym key_sym = XLookupKeysym(&e.xkey, 0);
+        Key translated_key = TranslateX11Key(key_sym);
+        keys_down_[static_cast<int>(translated_key)] = false;
         break;
       }
 
@@ -238,7 +361,8 @@ void Platform::Update() {
         else if (e.xbutton.button == 3)
           button = MouseButton::Right;
         if (button != MouseButton::Unknown) {
-          mouse_buttons_down_[static_cast<int>(button)] = (e.type == ButtonPress);
+          mouse_buttons_down_[static_cast<int>(button)] =
+              (e.type == ButtonPress);
           mouse_x_ = e.xmotion.x;
           mouse_y_ = e.xmotion.y;
           break;
@@ -263,11 +387,13 @@ void Platform::Update() {
       }
 
       case ClientMessage: {
-        // WM_DELETE_WINDOW is the only registered type for now.
-        observer_->OnWindowDestroyed();
-        DestroyWindow();
-        should_exit_ = true;
-        return;
+        if (static_cast<Atom>(e.xclient.data.l[0]) == wm_delete_window_) {
+          observer_->OnWindowDestroyed();
+          DestroyWindow();
+          should_exit_ = true;
+          return;
+        }
+        break;
       }
 
       case ConfigureNotify: {
