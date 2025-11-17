@@ -11,6 +11,160 @@ using namespace base;
 
 namespace eng {
 
+namespace {
+
+Key TranslateWin32Key(WPARAM wparam) {
+  switch (wparam) {
+    case 'A':
+      return Key::A;
+    case 'B':
+      return Key::B;
+    case 'C':
+      return Key::C;
+    case 'D':
+      return Key::D;
+    case 'E':
+      return Key::E;
+    case 'F':
+      return Key::F;
+    case 'G':
+      return Key::G;
+    case 'H':
+      return Key::H;
+    case 'I':
+      return Key::I;
+    case 'J':
+      return Key::J;
+    case 'K':
+      return Key::K;
+    case 'L':
+      return Key::L;
+    case 'M':
+      return Key::M;
+    case 'N':
+      return Key::N;
+    case 'O':
+      return Key::O;
+    case 'P':
+      return Key::P;
+    case 'Q':
+      return Key::Q;
+    case 'R':
+      return Key::R;
+    case 'S':
+      return Key::S;
+    case 'T':
+      return Key::T;
+    case 'U':
+      return Key::U;
+    case 'V':
+      return Key::V;
+    case 'W':
+      return Key::W;
+    case 'X':
+      return Key::X;
+    case 'Y':
+      return Key::Y;
+    case 'Z':
+      return Key::Z;
+
+    case '0':
+      return Key::Num0;
+    case '1':
+      return Key::Num1;
+    case '2':
+      return Key::Num2;
+    case '3':
+      return Key::Num3;
+    case '4':
+      return Key::Num4;
+    case '5':
+      return Key::Num5;
+    case '6':
+      return Key::Num6;
+    case '7':
+      return Key::Num7;
+    case '8':
+      return Key::Num8;
+    case '9':
+      return Key::Num9;
+
+    case VK_F1:
+      return Key::F1;
+    case VK_F2:
+      return Key::F2;
+    case VK_F3:
+      return Key::F3;
+    case VK_F4:
+      return Key::F4;
+    case VK_F5:
+      return Key::F5;
+    case VK_F6:
+      return Key::F6;
+    case VK_F7:
+      return Key::F7;
+    case VK_F8:
+      return Key::F8;
+    case VK_F9:
+      return Key::F9;
+    case VK_F10:
+      return Key::F10;
+    case VK_F11:
+      return Key::F11;
+    case VK_F12:
+      return Key::F12;
+
+    case VK_ESCAPE:
+      return Key::Escape;
+    case VK_SPACE:
+      return Key::Space;
+    case VK_RETURN:
+      return Key::Enter;
+    case VK_TAB:
+      return Key::Tab;
+    case VK_BACK:
+      return Key::Backspace;
+
+    case VK_UP:
+      return Key::Up;
+    case VK_DOWN:
+      return Key::Down;
+    case VK_LEFT:
+      return Key::Left;
+    case VK_RIGHT:
+      return Key::Right;
+    case VK_PRIOR:
+      return Key::PageUp;
+    case VK_NEXT:
+      return Key::PageDown;
+    case VK_HOME:
+      return Key::Home;
+    case VK_END:
+      return Key::End;
+    case VK_INSERT:
+      return Key::Insert;
+    case VK_DELETE:
+      return Key::Delete;
+
+    case VK_LSHIFT:
+      return Key::ShiftLeft;
+    case VK_RSHIFT:
+      return Key::ShiftRight;
+    case VK_LCONTROL:
+      return Key::ControlLeft;
+    case VK_RCONTROL:
+      return Key::ControlRight;
+    case VK_LMENU:
+      return Key::AltLeft;
+    case VK_RMENU:
+      return Key::AltRight;
+    default:
+      return Key::Unknown;
+  }
+}
+
+}  // namespace
+
 void KaliberMain(Platform* platform);
 
 Platform::Platform(HINSTANCE instance, int cmd_show)
@@ -72,6 +226,8 @@ Platform::~Platform() {
 }
 
 void Platform::Update() {
+  input_characters_.clear();
+
   MSG msg;
   while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
     if (msg.message == WM_QUIT) {
@@ -111,23 +267,27 @@ LRESULT CALLBACK Platform::WndProc(HWND wnd,
       reinterpret_cast<Platform*>(GetWindowLongPtr(wnd, GWL_USERDATA));
 
   switch (message) {
-    case WM_CREATE:
+    case WM_CREATE: {
       SetWindowLongPtr(wnd, GWL_USERDATA,
                        (LONG_PTR)(((LPCREATESTRUCT)lparam)->lpCreateParams));
-      break;
-    case WM_SIZE:
+    } break;
+
+    case WM_SIZE: {
       platform->observer_->OnWindowResized(LOWORD(lparam), HIWORD(lparam));
-      break;
-    case WM_DESTROY:
+    } break;
+
+    case WM_DESTROY: {
       platform->observer_->OnWindowDestroyed();
       PostQuitMessage(0);
-      break;
-    case WM_ACTIVATEAPP:
+    } break;
+
+    case WM_ACTIVATEAPP: {
       if (wparam == TRUE)
         platform->observer_->GainedFocus(false);
       else
         platform->observer_->LostFocus();
-      break;
+    } break;
+
     case WM_MOUSEMOVE:
       if (wparam == MK_LBUTTON) {
         Vector2f v(MAKEPOINTS(lparam).x, MAKEPOINTS(lparam).y);
@@ -136,18 +296,47 @@ LRESULT CALLBACK Platform::WndProc(HWND wnd,
         platform->observer_->AddInputEvent(std::move(input_event));
       }
       break;
+
     case WM_LBUTTONDOWN: {
       Vector2f v(MAKEPOINTS(lparam).x, MAKEPOINTS(lparam).y);
       auto input_event =
           std::make_unique<InputEvent>(InputEvent::kDragStart, 0, v);
       platform->observer_->AddInputEvent(std::move(input_event));
     } break;
+
     case WM_LBUTTONUP: {
       Vector2f v(MAKEPOINTS(lparam).x, MAKEPOINTS(lparam).y);
       auto input_event =
           std::make_unique<InputEvent>(InputEvent::kDragEnd, 0, v);
       platform->observer_->AddInputEvent(std::move(input_event));
     } break;
+
+    case WM_KEYDOWN:
+    case WM_SYSKEYDOWN: {
+      Key translated_key = TranslateWin32Key(wparam);
+      if (translated_key != Key::Unknown) {
+        platform->keys_down_[static_cast<int>(translated_key)] = true;
+      }
+      break;
+    }
+    case WM_KEYUP:
+    case WM_SYSKEYUP: {
+      Key translated_key = TranslateWin32Key(wparam);
+      if (translated_key != Key::Unknown) {
+        platform->keys_down_[static_cast<int>(translated_key)] = false;
+      }
+      break;
+    }
+    case WM_CHAR: {
+      // This is the Windows equivalent of XLookupString
+      // wparam is the character (UTF-16)
+      if (wparam > 0 && wparam < 0x10000) {
+        platform->input_characters_.push_back(
+            static_cast<unsigned int>(wparam));
+      }
+      break;
+    }
+
     default:
       return DefWindowProc(wnd, message, wparam, lparam);
   }
