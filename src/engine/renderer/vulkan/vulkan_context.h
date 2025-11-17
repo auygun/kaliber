@@ -63,6 +63,10 @@ class VulkanContext {
 
   VkPhysicalDeviceProperties GetDeviceProperties() const { return gpu_props_; }
 
+  VkPhysicalDeviceFeatures GetDeviceFeatures() const {
+    return physical_device_features_;
+  }
+
   int GetWindowWidth() const { return window_.width; }
   int GetWindowHeight() const { return window_.height; }
 

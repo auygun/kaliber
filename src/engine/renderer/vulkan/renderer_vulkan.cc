@@ -644,13 +644,48 @@ uint64_t RendererVulkan::CreateShader(
   viewport_state.scissorCount = 1;
   viewport_state.pScissors = nullptr;
 
+  // Get device capabilities
+  const auto& features = context_.GetDeviceFeatures();
+  const auto& properties = context_.GetDeviceProperties();
+
+  // Validate wireframe support
+  if (wireframe && !features.fillModeNonSolid) {
+    LOG(0) << "Warning: Wireframe mode requested for shader '" << source->name()
+           << "' but 'fillModeNonSolid' feature is not supported. Forcing "
+              "solid fill.";
+    wireframe = false;  // Force fill mode
+  }
+
+  // Validate line width support if we are still in wireframe mode
+  float line_width_to_use = 1.0f;
+  if (wireframe) {
+    float requested_width = 2.0f;
+    if (requested_width != 1.0f && !features.wideLines) {
+      LOG(0) << "Warning: Line width " << requested_width
+             << " requested for shader '" << source->name()
+             << "' but 'wideLines' feature is not supported. Forcing 1.0f.";
+      // line_width_to_use is already 1.0f
+    } else {
+      // Clamp the requested width to the device's supported range
+      line_width_to_use =
+          std::clamp(requested_width, properties.limits.lineWidthRange[0],
+                     properties.limits.lineWidthRange[1]);
+      if (line_width_to_use != requested_width) {
+        LOG(0) << "Warning: Requested line width " << requested_width
+               << " for shader '" << source->name()
+               << "' is outside supported range. Clamped to "
+               << line_width_to_use;
+      }
+    }
+  }
+
   VkPipelineRasterizationStateCreateInfo rasterizer{};
   rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
   rasterizer.depthClampEnable = VK_FALSE;
   rasterizer.rasterizerDiscardEnable = VK_FALSE;
   rasterizer.polygonMode =
       wireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
-  rasterizer.lineWidth = 2.0f;
+  rasterizer.lineWidth = line_width_to_use;  // <-- Use our validated width
   rasterizer.cullMode = kVkCullMode[static_cast<int>(cull_mode)];
   rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterizer.depthBiasEnable = VK_FALSE;
