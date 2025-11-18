@@ -29,7 +29,7 @@ class MixerInput : public std::enable_shared_from_this<MixerInput> {
 
   // Starts playback. Remembers last stream position. Resets the stream position
   // if restart is true.
-  void Play(AudioMixer* mixer, bool restart);
+  void Play(AudioMixer& mixer, bool restart);
 
   // Stops playback. Does not reset stream position.
   void Stop();

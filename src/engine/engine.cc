@@ -7,7 +7,6 @@
 #include "engine/asset/mesh.h"
 #include "engine/asset/shader_source.h"
 #include "engine/asset/sound.h"
-#include "engine/audio/audio_mixer.h"
 #include "engine/fly_camera.h"
 #include "engine/game.h"
 #include "engine/game_factory.h"
@@ -29,8 +28,7 @@ extern void KaliberMain(Platform* platform) {
 
 Engine* Engine::singleton = nullptr;
 
-Engine::Engine(Platform* platform)
-    : platform_(platform), audio_mixer_{std::make_unique<AudioMixer>()} {
+Engine::Engine(Platform* platform) : platform_(platform) {
   DCHECK(!singleton);
   singleton = this;
 
@@ -41,11 +39,6 @@ Engine::~Engine() noexcept {
   LOG(0) << "Shutting down engine.";
 
   thread_pool_.CancelTasks();
-  thread_pool_.Shutdown();
-
-  imgui_backend_.Shutdown();
-  game_.reset();
-  renderer_.reset();
   singleton = nullptr;
 }
 
@@ -227,7 +220,7 @@ void Engine::SetKeepScreenOn(bool keep_screen_on) {
 }
 
 void Engine::SetEnableAudio(bool enable) {
-  audio_mixer_->SetEnableAudio(enable);
+  audio_mixer_.SetEnableAudio(enable);
 }
 
 TextureCompressor* Engine::GetTextureCompressor(bool opacity) {
@@ -255,7 +248,7 @@ const std::string& Engine::GetSharedDataPath() const {
 }
 
 size_t Engine::GetAudioHardwareSampleRate() {
-  return audio_mixer_->GetHardwareSampleRate();
+  return audio_mixer_.GetHardwareSampleRate();
 }
 
 bool Engine::IsMobile() const {
@@ -283,7 +276,7 @@ void Engine::OnWindowResized(int width, int height) {
 }
 
 void Engine::LostFocus() {
-  audio_mixer_->Suspend();
+  audio_mixer_.Suspend();
 
   if (game_)
     game_->LostFocus();
@@ -291,7 +284,7 @@ void Engine::LostFocus() {
 
 void Engine::GainedFocus(bool from_interstitial_ad) {
   timer_ = DeltaTimer();
-  audio_mixer_->Resume();
+  audio_mixer_.Resume();
 
   if (game_)
     game_->GainedFocus(from_interstitial_ad);

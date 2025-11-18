@@ -10,6 +10,7 @@
 #include "base/random.h"
 #include "base/thread_pool.h"
 #include "base/timer.h"
+#include "engine/audio/audio_mixer.h"
 #include "engine/imgui_backend.h"
 #include "engine/input_system.h"
 #include "engine/platform/platform_observer.h"
@@ -63,7 +64,7 @@ class Engine : public PlatformObserver {
 
   Renderer* GetRenderer() { return renderer_.get(); }
 
-  AudioMixer* GetAudioMixer() { return audio_mixer_.get(); }
+  AudioMixer& GetAudioMixer() { return audio_mixer_; }
 
   base::Randomf& GetRandomGenerator() { return random_; }
 
@@ -101,23 +102,9 @@ class Engine : public PlatformObserver {
 
   Platform* platform_ = nullptr;
 
-  std::unique_ptr<Renderer> renderer_;
-  std::unique_ptr<AudioMixer> audio_mixer_;
-  std::unique_ptr<Game> game_;
-
-  InputSystem input_system_;
-
-  World world_;
-  std::vector<std::unique_ptr<System>> systems_;
-
   base::Vector2f screen_size_ = {0, 0};
 
-  std::unique_ptr<TextureCompressor> tex_comp_opaque_;
-  std::unique_ptr<TextureCompressor> tex_comp_alpha_;
-
   bool stats_visible_ = false;
-
-  ImguiBackend imgui_backend_;
 
   float fps_seconds_ = 0;
   int fps_ = 0;
@@ -129,8 +116,26 @@ class Engine : public PlatformObserver {
 
   bool vibration_enabled_ = true;
 
-  base::ThreadPool thread_pool_;
+  std::unique_ptr<TextureCompressor> tex_comp_opaque_;
+  std::unique_ptr<TextureCompressor> tex_comp_alpha_;
+
+  std::unique_ptr<Renderer> renderer_;
+
+  AudioMixer audio_mixer_;
+
+  InputSystem input_system_;
+
+  std::vector<std::unique_ptr<System>> systems_;
+
   base::Randomf random_;
+
+  ImguiBackend imgui_backend_;
+
+  World world_;
+
+  std::unique_ptr<Game> game_;
+
+  base::ThreadPool thread_pool_;
 
   void Initialize();
 

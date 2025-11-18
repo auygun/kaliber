@@ -184,7 +184,9 @@ static ImGuiKey TranslateKey(Key platform_key) {
 
 ImguiBackend::ImguiBackend() = default;
 
-ImguiBackend::~ImguiBackend() = default;
+ImguiBackend::~ImguiBackend() {
+  Shutdown();
+}
 
 void ImguiBackend::Initialize(bool is_mobile, std::string root_path) {
   IMGUI_CHECKVERSION();

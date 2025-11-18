@@ -29,8 +29,8 @@ void MixerInput::SetAudioBus(std::shared_ptr<AudioBus> audio_bus) {
     audio_bus_ = audio_bus;
 }
 
-void MixerInput::Play(AudioMixer* mixer, bool restart) {
-  if (!mixer->IsAudioEnabled())
+void MixerInput::Play(AudioMixer& mixer, bool restart) {
+  if (!mixer.IsAudioEnabled())
     return;
 
   // If already playing check if stream position needs to be reset.
@@ -39,7 +39,7 @@ void MixerInput::Play(AudioMixer* mixer, bool restart) {
       flags_.fetch_or(kStopped, std::memory_order_relaxed);
 
     if (flags_.load(std::memory_order_relaxed) & kStopped)
-      restart_cb_ = [&, mixer, restart]() -> void { Play(mixer, restart); };
+      restart_cb_ = [&, restart]() -> void { Play(mixer, restart); };
 
     return;
   }
@@ -52,7 +52,7 @@ void MixerInput::Play(AudioMixer* mixer, bool restart) {
 
   playing_ = true;
   flags_.fetch_and(~kStopped, std::memory_order_relaxed);
-  mixer->AddInput(shared_from_this());
+  mixer.AddInput(shared_from_this());
 }
 
 void MixerInput::Stop() {
