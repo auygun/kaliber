@@ -168,13 +168,9 @@ bool Model::LoadObj(Renderer* renderer,
     materials.back().diffuse[2] = 1;
   }
 
-  Vector3f min{0};
-  Vector3f max{0};
   std::vector<Vertex> vertices;
-
   // Indices grouped by material
   std::unordered_map<int, std::vector<uint32_t>> material_indices;
-  size_t total_index_count = 0;
 
   for (const auto& shape : shapes) {
     size_t index_offset = 0;
@@ -204,38 +200,13 @@ bool Model::LoadObj(Renderer* renderer,
         uint32_t new_index = vertices.size();
         vertices.push_back(vert);
         material_indices[material_id].push_back(new_index);
-
-        Expand(min, max, vert.position);
       }
       index_offset += fv;
     }
-    total_index_count += index_offset;
   }
 
-  Vector3f center = (min + max) * 0.5f;
-  extents_ = (max - min) * 0.5f;
-
-  DLOG(0) << "- Total vertices: " << vertices.size();
-  DLOG(0) << "- extents: " << extents_.ToString();
-
-  // Deduplicate vertices.
-  std::vector<uint32_t> remap(vertices.size());
-  size_t total_vertices = meshopt_generateVertexRemap(
-      remap.data(), nullptr, vertices.size(), vertices.data(), vertices.size(),
-      sizeof(Vertex));
-
-  std::vector<Vertex> unique_vertices(total_vertices);
-  meshopt_remapVertexBuffer(unique_vertices.data(), vertices.data(),
-                            vertices.size(), sizeof(Vertex), remap.data());
-
-  DLOG(0) << "- Unique vertices: " << unique_vertices.size();
-
-  // Translate the mesh vertices so that its geometric center is at the local
-  // origin (0,0,0).
-  for (auto& v : unique_vertices)
-    v.position -= center;
-
-  std::vector<uint32_t> aggregated_indices(total_index_count);
+  std::vector<uint32_t> aggregated_indices;
+  std::vector<size_t> material_indices_counts;
 
   for (auto& mi : material_indices) {
     int material_id = mi.first;
@@ -249,43 +220,90 @@ bool Model::LoadObj(Renderer* renderer,
       return false;
     }
 
-    // Remap indices to unique vertices.
-    std::vector<uint32_t> remapped_indices(indices.size());
-    meshopt_remapIndexBuffer(remapped_indices.data(), indices.data(),
-                             indices.size(), remap.data());
-
-    // Optimize indices
-    meshopt_optimizeVertexCache(
-        remapped_indices.data(), remapped_indices.data(),
-        remapped_indices.size(), unique_vertices.size());
-    meshopt_optimizeOverdraw(remapped_indices.data(), remapped_indices.data(),
-                             remapped_indices.size(),
-                             &unique_vertices[0].position[0],
-                             unique_vertices.size(), sizeof(Vertex), 1.05f);
-
-    // Add the material and a DrawCmd for the sub-mesh.
+    // Add the material for the sub-mesh.
     materials_.emplace_back(Vector4f{materials[material_id].diffuse[0],
                                      materials[material_id].diffuse[1],
                                      materials[material_id].diffuse[2], 1.0f},
                             1.0f, 0.3f, 0.5f);
-    draw_list_.emplace_back(remapped_indices.size(), aggregated_indices.size());
-
+    material_indices_counts.push_back(indices.size());
     // Aggregate all indices into one index buffer.
-    aggregated_indices.insert(aggregated_indices.end(),
-                              remapped_indices.begin(), remapped_indices.end());
+    aggregated_indices.insert(aggregated_indices.end(), indices.begin(),
+                              indices.end());
+  }
+
+  DLOG(0) << "- Total vertices: " << vertices.size();
+
+  // Deduplicate vertices.
+  std::vector<uint32_t> remap(vertices.size());
+  size_t total_vertices = meshopt_generateVertexRemap(
+      remap.data(), nullptr, vertices.size(), vertices.data(), vertices.size(),
+      sizeof(Vertex));
+
+  std::vector<Vertex> unique_vertices(total_vertices);
+  meshopt_remapVertexBuffer(unique_vertices.data(), vertices.data(),
+                            vertices.size(), sizeof(Vertex), remap.data());
+
+  DLOG(0) << "- Unique vertices: " << unique_vertices.size();
+
+  // Calculate extents and center
+  Vector3f min{0};
+  Vector3f max{0};
+  for (auto& v : unique_vertices)
+    Expand(min, max, v.position);
+
+  extents_ = (max - min) * 0.5f;
+  DLOG(0) << "- extents: " << extents_.ToString();
+
+  Vector3f center = (min + max) * 0.5f;
+  for (auto& v : unique_vertices)
+    v.position -= center;
+
+  // Remap indices
+  std::vector<uint32_t> remapped_indices(aggregated_indices.size());
+  meshopt_remapIndexBuffer(remapped_indices.data(), aggregated_indices.data(),
+                           aggregated_indices.size(), remap.data());
+
+  // Process each material group
+  size_t current_index_offset = 0;
+  std::vector<uint32_t> final_indices;
+  final_indices.reserve(remapped_indices.size());
+
+  for (size_t i = 0; i < material_indices_counts.size(); ++i) {
+    size_t count = material_indices_counts[i];
+    if (count == 0)
+      continue;
+
+    uint32_t* indices_ptr = remapped_indices.data() + current_index_offset;
+
+    // Optimize indices for cache
+    meshopt_optimizeVertexCache(indices_ptr, indices_ptr, count,
+                                unique_vertices.size());
+
+    // Optimize overdraw
+    meshopt_optimizeOverdraw(indices_ptr, indices_ptr, count,
+                             &unique_vertices[0].position[0],
+                             unique_vertices.size(), sizeof(Vertex), 1.05f);
+
+    // Store draw command
+    draw_list_.emplace_back(count, final_indices.size());
+
+    // Append to final buffer
+    final_indices.insert(final_indices.end(), indices_ptr, indices_ptr + count);
+
+    current_index_offset += count;
   }
 
   DLOG(0) << "- draw_list_.size: " << draw_list_.size();
 
-  // Optimize vertices
-  meshopt_optimizeVertexFetch(unique_vertices.data(), aggregated_indices.data(),
-                              aggregated_indices.size(), unique_vertices.data(),
+  // Optimize vertex fetch
+  meshopt_optimizeVertexFetch(unique_vertices.data(), final_indices.data(),
+                              final_indices.size(), unique_vertices.data(),
                               unique_vertices.size(), sizeof(Vertex));
 
 #if 0
   for (auto& draw_cmd : draw_list_) {
     meshopt_VertexCacheStatistics vcs = meshopt_analyzeVertexCache(
-        &aggregated_indices[draw_cmd.index_offset], draw_cmd.num_indices,
+        &final_indices[draw_cmd.index_offset], draw_cmd.num_indices,
         unique_vertices.size(), 16, 0, 0);
     DLOG(0) << "meshopt_analyzeVertexCache:";
     DLOG(0) << "- vertices_transformed: " << vcs.vertices_transformed;
@@ -294,7 +312,7 @@ bool Model::LoadObj(Renderer* renderer,
     DLOG(0) << "- atvr (1.0 - 6.0)    : " << vcs.atvr;
 
     meshopt_VertexFetchStatistics vfs = meshopt_analyzeVertexFetch(
-        &aggregated_indices[draw_cmd.index_offset], draw_cmd.num_indices,
+        &final_indices[draw_cmd.index_offset], draw_cmd.num_indices,
         unique_vertices.size(), sizeof(Vertex));
     DLOG(0) << "meshopt_analyzeVertexFetch:";
     DLOG(0) << "- bytes_fetched: " << vfs.bytes_fetched;
@@ -302,12 +320,12 @@ bool Model::LoadObj(Renderer* renderer,
   }
 #endif
 
-  GenerateTangents(aggregated_indices, unique_vertices);
+  GenerateTangents(final_indices, unique_vertices);
 
   auto mesh = std::make_unique<Mesh>();
   mesh->Create(kPrimitive_Triangles, vertex_description, unique_vertices.size(),
-               unique_vertices.data(), kDataType_UInt,
-               aggregated_indices.size(), aggregated_indices.data());
+               unique_vertices.data(), kDataType_UInt, final_indices.size(),
+               final_indices.data());
 
   CreateRenderResources(shader_id, std::move(mesh), texture_file_names);
   return true;
