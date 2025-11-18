@@ -277,7 +277,9 @@ void Platform::CreateMainWindow() {
                      XNClientWindow, window_, XNFocusWindow,
                      window_,  // Tell XIM which window to focus
                      NULL);
-    if (!xic_) {
+    if (xic_) {
+      XSetICFocus(xic_);
+    } else {
       LOG(0) << "Warning: XCreateIC failed. Non-ASCII input may not work.";
     }
   }
