@@ -16,7 +16,7 @@ namespace eng {
 
 namespace {
 
-const char vertex_description[] = "p3f;n3f;a3f;t2f";
+const char vertex_description[] = "p3f;n3f;a4f;t2f";
 
 [[maybe_unused]] void CreateSphere(std::vector<float>& vertices,
                                    std::vector<uint32_t>& indices,
@@ -42,6 +42,7 @@ const char vertex_description[] = "p3f;n3f;a3f;t2f";
       vertices.push_back(z);
 
       // Tangent
+      vertices.push_back(0);
       vertices.push_back(0);
       vertices.push_back(0);
       vertices.push_back(0);

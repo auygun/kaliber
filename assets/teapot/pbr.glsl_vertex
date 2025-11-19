@@ -28,7 +28,7 @@ instances;
 
 layout(location = 0) in vec3 in_position;
 layout(location = 1) in vec3 in_normal;
-layout(location = 2) in vec3 in_tangent;
+layout(location = 2) in vec4 in_tangent;
 layout(location = 3) in vec2 in_tex_coord;
 
 layout(location = 0) out vec3 world_pos;
@@ -48,8 +48,8 @@ void main() {
   if (!draw_call.is_material) {
     // Construct the TBN matrix: the columns are T, B, and N.
     // This matrix transforms from Tangent Space to World Space.
-    vec3 tangent = normalize(in_tangent * mat3(instance_data.model_mat));
-    vec3 binormal = normalize(cross(normal, tangent));
+    vec3 tangent = normalize(in_tangent.xyz * mat3(instance_data.model_mat));
+    vec3 binormal = normalize(cross(normal, tangent)) * in_tangent.w;
     TBN = mat3(tangent, binormal, normal);
   } else {
     // Texture mapping is disabled. We just need the N column which holds the

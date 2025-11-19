@@ -19,7 +19,7 @@ namespace eng {
 
 namespace {
 
-const char vertex_description[] = "p3f;n3f;a3f;t2f";
+const char vertex_description[] = "p3f;n3f;a4f;t2f";
 
 enum TextureUsage {
   kAlbedoMap,
@@ -41,10 +41,17 @@ struct PushConstant {
 struct Vertex {
   Vector3f position{0};
   Vector3f normal{0};
-  Vector3f tangent{0};
+  Vector4f tangent{0};
   float uv[2]{0, 0};
 };
 
+// Calculates tangent vectors per-vertex for a mesh, handling shared vertices by
+// accumulating face tangents and then normalizing/orthogonalizing them.
+//
+// Limitation: This code forces the binormal direction to always be treated as
+// right-handed (sets the w component to 1.0f). This is acceptable only if the
+// given mesh doesn't use mirrored UV coordinates (e.g., simple run-time
+// generated meshes like planes, spheres, or terrain).
 void GenerateTangents(const std::vector<uint32_t>& indices,
                       std::vector<Vertex>& vertices) {
   // Iterate over triangles. We sum the face tangents for shared vertices, then
@@ -74,7 +81,7 @@ void GenerateTangents(const std::vector<uint32_t>& indices,
     float r = 1.0f / det;
 
     // Solve the linear system for the face tangent
-    Vector3f face_tangent = (edge1 * dv2 - edge2 * dv1) * r;
+    Vector4f face_tangent{(edge1 * dv2 - edge2 * dv1) * r, 0.0f};
 
     // Accumulate face tangents for all three vertices
     v1.tangent += face_tangent;
@@ -84,8 +91,10 @@ void GenerateTangents(const std::vector<uint32_t>& indices,
 
   // Normalize and orthogonalize tangent vectors
   for (Vertex& v : vertices) {
-    v.tangent = v.tangent - v.normal * v.tangent.DotProduct(v.normal);
-    v.tangent.Normalize();
+    auto t = v.tangent.GetVector3();
+    t = t - v.normal * t.DotProduct(v.normal);
+    t.Normalize();
+    v.tangent = Vector4f(t, 1.0f);
   }
 }
 
