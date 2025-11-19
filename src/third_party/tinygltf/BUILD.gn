@@ -1,0 +1,11 @@
+source_set("tinygltf") {
+  configs -= [ "//build:warnings" ]
+
+  sources = [
+    "json.hpp",
+    "tiny_gltf.cc",
+    "tiny_gltf.h",
+  ]
+
+  deps = []
+}

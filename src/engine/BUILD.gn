@@ -52,5 +52,6 @@ source_set("engine") {
     "//src/third_party/stb",
     "//src/third_party/texture_compressor",
     "//src/third_party/tiny_obj_loader",
+    "//src/third_party/tinygltf",
   ]
 }
