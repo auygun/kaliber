@@ -12,8 +12,60 @@
 #include "engine/renderer/renderer_types.h"
 #include "third_party/meshoptimizer/meshoptimizer.h"
 #include "third_party/tiny_obj_loader/tiny_obj_loader.h"
+#include "third_party/tinygltf/tiny_gltf.h"
 
 using namespace base;
+
+// Stub implementations for tinygltf to satisfy the linker.
+// We return true to indicate "success" so tinygltf doesn't abort loading,
+// but we intentionally do not load any pixel data.
+namespace tinygltf {
+
+bool LoadImageData(Image* image,
+                   const int image_idx,
+                   std::string* err,
+                   std::string* warn,
+                   int req_width,
+                   int req_height,
+                   const unsigned char* bytes,
+                   int size,
+                   void* user_data) {
+  (void)image;
+  (void)image_idx;
+  (void)err;
+  (void)warn;
+  (void)req_width;
+  (void)req_height;
+  (void)bytes;
+  (void)size;
+  (void)user_data;
+  // Return true so the parser continues.
+  // We don't populate image->image, so it stays empty.
+  // Model::LoadGLTF uses image->uri later to load the texture via the engine's
+  // asset system.
+  return true;
+}
+
+bool WriteImageData(const std::string* basepath,
+                    const std::string* filename,
+                    const Image* image,
+                    bool embedImages,
+                    const FsCallbacks* fs_cb,
+                    const URICallbacks* uri_cb,
+                    std::string* out_uri,
+                    void* user_data) {
+  (void)basepath;
+  (void)filename;
+  (void)image;
+  (void)embedImages;
+  (void)fs_cb;
+  (void)uri_cb;
+  (void)out_uri;
+  (void)user_data;
+  return true;
+}
+
+}  // namespace tinygltf
 
 namespace eng {
 
@@ -175,10 +227,286 @@ bool Model::LoadObj(Renderer* renderer,
 
   auto mesh =
       ProcessMesh(std::move(raw_vertices), std::move(aggregated_indices),
-                  material_indices_counts);
+                  material_indices_counts, true);
 
   CreateRenderResources(shader_id, std::move(mesh), texture_file_names);
 
+  return true;
+}
+
+bool Model::LoadGLTF(Renderer* renderer,
+                     uint64_t shader_id,
+                     const std::string& file_name) {
+  LOG(0) << "Loading GLTF " << file_name;
+  renderer_ = renderer;
+
+  tinygltf::Model model;
+  tinygltf::TinyGLTF loader;
+  std::string err;
+  std::string warn;
+
+  size_t buffer_size = 0;
+  auto gltf_data = AssetFile::ReadWholeFile(file_name.c_str(),
+                                            Engine::Get().GetRootPath().c_str(),
+                                            &buffer_size, true);
+  if (!gltf_data) {
+    LOG(0) << "Failed to read gltf file: " << file_name;
+    return false;
+  }
+
+  std::string base_dir = "";
+  size_t last_slash = file_name.find_last_of("/\\");
+  std::string asset_dir = file_name.substr(0, last_slash + 1);
+  if (last_slash != std::string::npos) {
+    base_dir = Engine::Get().GetRootPath() + "assets/" + asset_dir;
+  }
+
+  bool ret = false;
+  // Simple check for binary GLTF extension
+  if (file_name.size() >= 4 &&
+      file_name.substr(file_name.size() - 4) == ".glb") {
+    ret = loader.LoadBinaryFromMemory(&model, &err, &warn,
+                                      (unsigned char*)gltf_data.get(),
+                                      buffer_size, base_dir);
+  } else {
+    ret = loader.LoadASCIIFromString(&model, &err, &warn, gltf_data.get(),
+                                     buffer_size, base_dir);
+  }
+
+  if (!warn.empty()) {
+    LOG(0) << "GLTF Warning: " << warn;
+  }
+  if (!err.empty()) {
+    LOG(0) << "GLTF Error: " << err;
+  }
+  if (!ret) {
+    LOG(0) << "Failed to parse GLTF";
+    return false;
+  }
+
+  // if (!model.nodes.empty()) {
+  //   LOG(0) << "GLTF file must not contain nodes (flattened mesh required).";
+  //   return false;
+  // }
+
+  if (model.meshes.size() != 1) {
+    LOG(0) << "GLTF file must contain exactly one mesh.";
+    return false;
+  }
+
+  const tinygltf::Mesh& mesh = model.meshes[0];
+  std::vector<Vertex> raw_vertices;
+
+  // Indices grouped by material ID (same logic as LoadObj)
+  // Use std::map to ensure deterministic order if desired, though unordered is
+  // fine too. Using int for material ID (-1 is default)
+  std::map<int, std::vector<uint32_t>> material_indices_map;
+
+  for (const auto& primitive : mesh.primitives) {
+    // Validate indices exist
+    if (primitive.indices < 0) {
+      LOG(0) << "GLTF primitive must have indices.";
+      return false;
+    }
+
+    const tinygltf::Accessor& index_accessor =
+        model.accessors[primitive.indices];
+    const tinygltf::BufferView& index_buffer_view =
+        model.bufferViews[index_accessor.bufferView];
+    const tinygltf::Buffer& index_buffer =
+        model.buffers[index_buffer_view.buffer];
+
+    const uint8_t* index_data_ptr = index_buffer.data.data() +
+                                    index_buffer_view.byteOffset +
+                                    index_accessor.byteOffset;
+
+    size_t index_count = index_accessor.count;
+    std::vector<uint32_t> indices;
+    indices.reserve(index_count);
+
+    // Helper to unpack indices
+    if (index_accessor.componentType ==
+        TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
+      const uint16_t* p = (const uint16_t*)index_data_ptr;
+      for (size_t i = 0; i < index_count; ++i)
+        indices.push_back(p[i]);
+    } else if (index_accessor.componentType ==
+               TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
+      const uint32_t* p = (const uint32_t*)index_data_ptr;
+      for (size_t i = 0; i < index_count; ++i)
+        indices.push_back(p[i]);
+    } else if (index_accessor.componentType ==
+               TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
+      const uint8_t* p = (const uint8_t*)index_data_ptr;
+      for (size_t i = 0; i < index_count; ++i)
+        indices.push_back(p[i]);
+    }
+
+    // Attribute buffers
+    const float* position_buffer = nullptr;
+    const float* normal_buffer = nullptr;
+    const float* tangent_buffer = nullptr;
+    const float* texcoord_buffer = nullptr;
+
+    int pos_stride = 0;
+    int norm_stride = 0;
+    int tan_stride = 0;
+    int uv_stride = 0;
+
+    size_t vertex_count = 0;
+
+    // Find attributes
+    for (auto& attrib : primitive.attributes) {
+      const tinygltf::Accessor& accessor = model.accessors[attrib.second];
+      const tinygltf::BufferView& view = model.bufferViews[accessor.bufferView];
+      const uint8_t* data = model.buffers[view.buffer].data.data() +
+                            view.byteOffset + accessor.byteOffset;
+      int stride = accessor.ByteStride(view);
+
+      if (attrib.first == "POSITION") {
+        position_buffer = (const float*)data;
+        pos_stride = stride ? stride : 12;
+        vertex_count = accessor.count;
+      } else if (attrib.first == "NORMAL") {
+        normal_buffer = (const float*)data;
+        norm_stride = stride ? stride : 12;
+      } else if (attrib.first == "TANGENT") {
+        tangent_buffer = (const float*)data;
+        tan_stride = stride ? stride : 16;
+      } else if (attrib.first == "TEXCOORD_0") {
+        texcoord_buffer = (const float*)data;
+        uv_stride = stride ? stride : 8;
+      }
+    }
+
+    if (!position_buffer) {
+      LOG(0) << "GLTF primitive missing POSITION";
+      return false;
+    }
+
+    uint32_t base_vertex_index = raw_vertices.size();
+    for (size_t v = 0; v < vertex_count; ++v) {
+      Vertex vert{};
+
+      const float* pos =
+          (const float*)((const uint8_t*)position_buffer + v * pos_stride);
+      vert.position = base::Vector3f(pos[0], pos[1], pos[2]);
+
+      if (normal_buffer) {
+        const float* norm =
+            (const float*)((const uint8_t*)normal_buffer + v * norm_stride);
+        vert.normal = base::Vector3f(norm[0], norm[1], norm[2]);
+      }
+
+      // Load tangents directly from GLTF
+      if (tangent_buffer) {
+        const float* tan =
+            (const float*)((const uint8_t*)tangent_buffer + v * tan_stride);
+        vert.tangent = base::Vector4f(tan[0], tan[1], tan[2], tan[3]);
+      }
+
+      if (texcoord_buffer) {
+        const float* uv =
+            (const float*)((const uint8_t*)texcoord_buffer + v * uv_stride);
+        vert.uv[0] = uv[0];
+        // Flip V to match OpenGL/OBJ conventions used elsewhere in the engine
+        vert.uv[1] = 1.0f - uv[1];
+      }
+
+      raw_vertices.push_back(vert);
+    }
+
+    // Group indices by material, applying the vertex offset
+    auto& target_indices = material_indices_map[primitive.material];
+    for (uint32_t idx : indices) {
+      target_indices.push_back(base_vertex_index + idx);
+    }
+  }
+
+  // Flatten indices and build materials list
+  std::vector<uint32_t> aggregated_indices;
+  std::vector<size_t> material_indices_counts;
+
+  // Track indices of textures found in the first relevant material
+  // (Current Model implementation supports one global set of textures)
+  int found_albedo_idx = -1;
+  int found_normal_idx = -1;
+  int found_metal_rough_idx = -1;
+
+  for (const auto& entry : material_indices_map) {
+    int material_id = entry.first;
+    const std::vector<uint32_t>& indices = entry.second;
+
+    MaterialData mat_data;
+    mat_data.albedo = base::Vector4f(1, 1, 1, 1);
+    mat_data.metallic = 1.0f;
+    mat_data.roughness = 1.0f;
+
+    // Get material data if ID is valid
+    if (material_id >= 0 && material_id < model.materials.size()) {
+      const auto& mat = model.materials[material_id];
+      const auto& pbr = mat.pbrMetallicRoughness;
+
+      mat_data.albedo = base::Vector4f(
+          (float)pbr.baseColorFactor[0], (float)pbr.baseColorFactor[1],
+          (float)pbr.baseColorFactor[2], (float)pbr.baseColorFactor[3]);
+      mat_data.metallic = (float)pbr.metallicFactor;
+      mat_data.roughness = (float)pbr.roughnessFactor;
+
+      // Store texture indices from the first material we encounter that has
+      // them
+      if (found_albedo_idx == -1 && pbr.baseColorTexture.index != -1) {
+        found_albedo_idx = model.textures[pbr.baseColorTexture.index].source;
+      }
+      if (found_metal_rough_idx == -1 &&
+          pbr.metallicRoughnessTexture.index != -1) {
+        found_metal_rough_idx =
+            model.textures[pbr.metallicRoughnessTexture.index].source;
+      }
+      if (found_normal_idx == -1 && mat.normalTexture.index != -1) {
+        found_normal_idx = model.textures[mat.normalTexture.index].source;
+      }
+    }
+
+    materials_.push_back(mat_data);
+    material_indices_counts.push_back(indices.size());
+    aggregated_indices.insert(aggregated_indices.end(), indices.begin(),
+                              indices.end());
+  }
+
+  // Process mesh with generate_tangents = false
+  auto final_mesh =
+      ProcessMesh(std::move(raw_vertices), std::move(aggregated_indices),
+                  material_indices_counts, false);
+
+  // Gather texture paths
+  auto GetImageUri = [&](int index) -> std::string {
+    if (index >= 0 && index < model.images.size()) {
+      const auto& img = model.images[index];
+      if (!img.uri.empty()) {
+        return asset_dir + img.uri;
+      }
+    }
+    return "";
+  };
+
+  std::vector<std::string> textures_to_load;
+  std::string albedo_file = GetImageUri(found_albedo_idx);
+  std::string normal_file = GetImageUri(found_normal_idx);
+  std::string mr_file = GetImageUri(found_metal_rough_idx);
+
+  // If any texture exists, we populate the list for CreateRenderResources.
+  // Slot order: 0:Albedo, 1:Normal, 2:Metal, 3:Rough
+  if (!albedo_file.empty() || !normal_file.empty() || !mr_file.empty()) {
+    textures_to_load.push_back(albedo_file);
+    textures_to_load.push_back(normal_file);
+    textures_to_load.push_back(mr_file);
+    // Metal/Roughness are packed in GLTF, so we use the same file for both
+    // slots
+    textures_to_load.push_back(mr_file);
+  }
+
+  CreateRenderResources(shader_id, std::move(final_mesh), textures_to_load);
   return true;
 }
 
@@ -196,7 +524,7 @@ void Model::CreateMesh(Renderer* renderer,
   std::vector<size_t> material_indices_counts;
   material_indices_counts.push_back(indices.size());
   auto mesh = ProcessMesh(std::move(vertices), std::move(indices),
-                          material_indices_counts);
+                          material_indices_counts, true);
 
   CreateRenderResources(shader_id, std::move(mesh), texture_file_names);
 }
@@ -204,7 +532,8 @@ void Model::CreateMesh(Renderer* renderer,
 std::unique_ptr<Mesh> Model::ProcessMesh(
     std::vector<Vertex> raw_vertices,
     std::vector<uint32_t> aggregated_indices,
-    const std::vector<size_t>& material_indices_counts) {
+    const std::vector<size_t>& material_indices_counts,
+    bool generate_tangents) {
   // Deduplicate vertices.
   std::vector<uint32_t> remap(raw_vertices.size());
   size_t total_vertices = meshopt_generateVertexRemap(
@@ -292,7 +621,8 @@ std::unique_ptr<Mesh> Model::ProcessMesh(
   }
 #endif
 
-  GenerateTangents(final_indices, unique_vertices);
+  if (generate_tangents)
+    GenerateTangents(final_indices, unique_vertices);
 
   auto mesh = std::make_unique<Mesh>();
   mesh->Create(kPrimitive_Triangles, vertex_description, unique_vertices.size(),
@@ -373,10 +703,12 @@ void Model::CreateRenderResources(
   size_t index = 0;
   std::vector<std::vector<uint64_t>> textures(5);
   for (auto& file_name : texture_file_names) {
-    bool is_srgb = index == kAlbedoMap;
-    bool normalize = index == kNormalMap;
-    LoadTexture(file_name, index, is_srgb, normalize);
-    textures[index + 1].push_back(texture_ids_[index]);
+    if (!file_name.empty()) {
+      bool is_srgb = index == kAlbedoMap;
+      bool normalize = index == kNormalMap;
+      LoadTexture(file_name, index, is_srgb, normalize);
+      textures[index + 1].push_back(texture_ids_[index]);
+    }
     ++index;
   }
 

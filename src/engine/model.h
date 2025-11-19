@@ -30,6 +30,10 @@ class Model {
                const std::string& mtl_file_name,
                const std::vector<std::string>& texture_file_names);
 
+  bool LoadGLTF(Renderer* renderer,
+                uint64_t shader_id,
+                const std::string& file_name);
+
   void CreateMesh(Renderer* renderer,
                   uint64_t shader_id,
                   std::vector<Vertex> vertices,
@@ -70,7 +74,8 @@ class Model {
   std::unique_ptr<Mesh> ProcessMesh(
       std::vector<Vertex> raw_vertices,
       std::vector<uint32_t> aggregated_indices,
-      const std::vector<size_t>& material_indices_counts);
+      const std::vector<size_t>& material_indices_counts,
+      bool generate_tangents);
 
   void GenerateTangents(const std::vector<uint32_t>& indices,
                         std::vector<Vertex>& vertices);

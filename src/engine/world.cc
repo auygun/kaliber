@@ -130,7 +130,8 @@ void World::Create(Renderer* renderer) {
   {
     // model.LoadObj(renderer_, shader_id_,
     //                "teapot/viking_room.obj", "", {"teapot/viking_room.png"});
-    models_[0].LoadObj(renderer_, shader_id_, "teapot/buddha.obj", "", {});
+    // models_[0].LoadObj(renderer_, shader_id_, "teapot/buddha.obj", "", {});
+    models_[0].LoadGLTF(renderer_, shader_id_, "teapot/Cube.gltf");
     // model.LoadObj(renderer_, shader_id_,
     //                "teapot/sportsCar.obj", "teapot/sportsCar.mtl", {});
     // model.LoadObj(renderer_, shader_id_,
