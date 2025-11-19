@@ -182,6 +182,25 @@ bool Model::LoadObj(Renderer* renderer,
   return true;
 }
 
+void Model::CreateMesh(Renderer* renderer,
+                       uint64_t shader_id,
+                       std::vector<Vertex> vertices,
+                       std::vector<uint32_t> indices,
+                       const std::vector<std::string>& texture_file_names) {
+  renderer_ = renderer;
+
+  size_t vertex_count = (sizeof(float) * vertices.size()) / sizeof(Vertex);
+  DLOG(0) << "- Total vertices: " << vertex_count;
+  DLOG(0) << "- Total indices: " << indices.size();
+
+  std::vector<size_t> material_indices_counts;
+  material_indices_counts.push_back(indices.size());
+  auto mesh = ProcessMesh(std::move(vertices), std::move(indices),
+                          material_indices_counts);
+
+  CreateRenderResources(shader_id, std::move(mesh), texture_file_names);
+}
+
 std::unique_ptr<Mesh> Model::ProcessMesh(
     std::vector<Vertex> raw_vertices,
     std::vector<uint32_t> aggregated_indices,
@@ -281,25 +300,6 @@ std::unique_ptr<Mesh> Model::ProcessMesh(
                final_indices.data());
 
   return mesh;
-}
-
-void Model::CreateMesh(Renderer* renderer,
-                       uint64_t shader_id,
-                       std::vector<Vertex> vertices,
-                       std::vector<uint32_t> indices,
-                       const std::vector<std::string>& texture_file_names) {
-  renderer_ = renderer;
-
-  size_t vertex_count = (sizeof(float) * vertices.size()) / sizeof(Vertex);
-  DLOG(0) << "- Total vertices: " << vertex_count;
-  DLOG(0) << "- Total indices: " << indices.size();
-
-  std::vector<size_t> material_indices_counts;
-  material_indices_counts.push_back(indices.size());
-  auto mesh = ProcessMesh(std::move(vertices), std::move(indices),
-                          material_indices_counts);
-
-  CreateRenderResources(shader_id, std::move(mesh), texture_file_names);
 }
 
 // Calculates tangent vectors per-vertex for a mesh, handling shared vertices by
