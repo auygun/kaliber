@@ -14,6 +14,13 @@ class Renderer;
 
 class Model {
  public:
+  struct Vertex {
+    base::Vector3f position{0};
+    base::Vector3f normal{0};
+    base::Vector4f tangent{0};
+    float uv[2]{0, 0};
+  };
+
   Model() = default;
   ~Model();
 
@@ -25,8 +32,8 @@ class Model {
 
   void CreateMesh(Renderer* renderer,
                   uint64_t shader_id,
-                  const std::vector<float>& vertices,
-                  const std::vector<uint32_t>& indices,
+                  std::vector<Vertex> vertices,
+                  std::vector<uint32_t> indices,
                   const std::vector<std::string>& texture_file_names);
 
   void Draw(unsigned int instance_index, unsigned int fist_instance);
@@ -45,13 +52,6 @@ class Model {
     float roughness;
     float ao;
     float _pad0;
-  };
-
-  struct Vertex {
-    base::Vector3f position{0};
-    base::Vector3f normal{0};
-    base::Vector4f tangent{0};
-    float uv[2]{0, 0};
   };
 
   base::Vector3f extents_{0};

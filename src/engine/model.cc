@@ -285,8 +285,8 @@ std::unique_ptr<Mesh> Model::ProcessMesh(
 
 void Model::CreateMesh(Renderer* renderer,
                        uint64_t shader_id,
-                       const std::vector<float>& vertices,
-                       const std::vector<uint32_t>& indices,
+                       std::vector<Vertex> vertices,
+                       std::vector<uint32_t> indices,
                        const std::vector<std::string>& texture_file_names) {
   renderer_ = renderer;
 
@@ -294,60 +294,10 @@ void Model::CreateMesh(Renderer* renderer,
   DLOG(0) << "- Total vertices: " << vertex_count;
   DLOG(0) << "- Total indices: " << indices.size();
 
-  // Deduplicate vertices.
-  std::vector<uint32_t> remap(vertices.size());
-  size_t total_vertices = meshopt_generateVertexRemap(
-      remap.data(), indices.data(), indices.size(), vertices.data(),
-      vertex_count, sizeof(Vertex));
-
-  std::vector<Vertex> unique_vertices(total_vertices);
-  meshopt_remapVertexBuffer(unique_vertices.data(), vertices.data(),
-                            vertex_count, sizeof(Vertex), remap.data());
-
-  DLOG(0) << "- Unique vertices: " << unique_vertices.size();
-
-  Vector3f min{0};
-  Vector3f max{0};
-  for (auto& v : unique_vertices)
-    Expand(min, max, v.position);
-
-  extents_ = (max - min) * 0.5f;
-  DLOG(0) << "- extents: " << extents_.ToString();
-
-  // Translate the mesh vertices so that its geometric center is at the local
-  // origin (0,0,0).
-  Vector3f center = (min + max) * 0.5f;
-  for (auto& v : unique_vertices)
-    v.position -= center;
-
-  // Remap indices to unique vertices.
-  std::vector<uint32_t> remapped_indices(indices.size());
-  meshopt_remapIndexBuffer(remapped_indices.data(), indices.data(),
-                           indices.size(), remap.data());
-
-  // Optimize indices
-  meshopt_optimizeVertexCache(remapped_indices.data(), remapped_indices.data(),
-                              remapped_indices.size(), unique_vertices.size());
-  meshopt_optimizeOverdraw(remapped_indices.data(), remapped_indices.data(),
-                           remapped_indices.size(),
-                           &unique_vertices[0].position[0],
-                           unique_vertices.size(), sizeof(Vertex), 1.05f);
-
-  // Optimize vertices
-  meshopt_optimizeVertexFetch(unique_vertices.data(), remapped_indices.data(),
-                              remapped_indices.size(), unique_vertices.data(),
-                              unique_vertices.size(), sizeof(Vertex));
-
-  GenerateTangents(remapped_indices, unique_vertices);
-
-  // Add the material and a DrawCmd for the mesh.
-  materials_.emplace_back(Vector4f{1, 1, 1, 1}, 1.0f, 0.3f, 0.5f);
-  draw_list_.emplace_back(remapped_indices.size(), 0);
-
-  auto mesh = std::make_unique<Mesh>();
-  mesh->Create(kPrimitive_Triangles, vertex_description, unique_vertices.size(),
-               unique_vertices.data(), kDataType_UInt, remapped_indices.size(),
-               remapped_indices.data());
+  std::vector<size_t> material_indices_counts;
+  material_indices_counts.push_back(indices.size());
+  auto mesh = ProcessMesh(std::move(vertices), std::move(indices),
+                          material_indices_counts);
 
   CreateRenderResources(shader_id, std::move(mesh), texture_file_names);
 }

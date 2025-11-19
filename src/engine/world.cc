@@ -18,7 +18,7 @@ namespace {
 
 const char vertex_description[] = "p3f;n3f;a4f;t2f";
 
-[[maybe_unused]] void CreateSphere(std::vector<float>& vertices,
+[[maybe_unused]] void CreateSphere(std::vector<Model::Vertex>& vertices,
                                    std::vector<uint32_t>& indices,
                                    size_t rings,
                                    size_t sectors) {
@@ -30,28 +30,15 @@ const char vertex_description[] = "p3f;n3f;a4f;t2f";
       float y = sin(-PIHALFf + PIf * r * R);
       float x = cos(2 * PIf * s * S) * sin(PIf * r * R);
       float z = sin(2 * PIf * s * S) * sin(PIf * r * R);
-
-      // Position
-      vertices.push_back(x);
-      vertices.push_back(y);
-      vertices.push_back(z);
-
-      // Normal
-      vertices.push_back(x);
-      vertices.push_back(y);
-      vertices.push_back(z);
-
-      // Tangent
-      vertices.push_back(0);
-      vertices.push_back(0);
-      vertices.push_back(0);
-      vertices.push_back(0);
-
-      // Texture coordinates
       float u = s * S;
       float v = r * R;
-      vertices.push_back(u);
-      vertices.push_back(v);
+
+      Model::Vertex vert{};
+      vert.position = {x, y, z};
+      vert.normal = {x, y, z};
+      vert.uv[0] = u;
+      vert.uv[1] = v;
+      vertices.push_back(vert);
 
       if (r < rings - 1) {
         size_t curRow = r * sectors;
@@ -186,11 +173,11 @@ void World::Create(Renderer* renderer) {
   }
   // #else
 
-  std::vector<float> vertices;
+  std::vector<Model::Vertex> vertices;
   std::vector<uint32_t> indices;
   CreateSphere(vertices, indices, 32, 32);
   models_[3].CreateMesh(
-      renderer_, shader_id_, vertices, indices,
+      renderer_, shader_id_, std::move(vertices), std::move(indices),
       // {"teapot/iron-rusted4-basecolor.png", "teapot/iron-rusted4-normal.png",
       //  "teapot/iron-rusted4-metalness.png",
       //  "teapot/iron-rusted4-roughness.png"});
