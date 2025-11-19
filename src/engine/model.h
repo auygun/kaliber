@@ -47,6 +47,13 @@ class Model {
     float _pad0;
   };
 
+  struct Vertex {
+    base::Vector3f position{0};
+    base::Vector3f normal{0};
+    base::Vector4f tangent{0};
+    float uv[2]{0, 0};
+  };
+
   base::Vector3f extents_{0};
 
   std::vector<DrawCmd> draw_list_;
@@ -59,6 +66,14 @@ class Model {
 
   uint64_t materials_ubo_ = 0;
   uint64_t materials_dset_ = 0;
+
+  std::unique_ptr<Mesh> ProcessMesh(
+      std::vector<Vertex> raw_vertices,
+      std::vector<uint32_t> aggregated_indices,
+      const std::vector<size_t>& material_indices_counts);
+
+  void GenerateTangents(const std::vector<uint32_t>& indices,
+                        std::vector<Vertex>& vertices);
 
   void CreateRenderResources(
       uint64_t shader_id,

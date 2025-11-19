@@ -38,66 +38,6 @@ struct PushConstant {
   char _pad2[3];
 };
 
-struct Vertex {
-  Vector3f position{0};
-  Vector3f normal{0};
-  Vector4f tangent{0};
-  float uv[2]{0, 0};
-};
-
-// Calculates tangent vectors per-vertex for a mesh, handling shared vertices by
-// accumulating face tangents and then normalizing/orthogonalizing them.
-//
-// Limitation: This code forces the binormal direction to always be treated as
-// right-handed (sets the w component to 1.0f). This is acceptable only if the
-// given mesh doesn't use mirrored UV coordinates (e.g., simple run-time
-// generated meshes like planes, spheres, or terrain).
-void GenerateTangents(const std::vector<uint32_t>& indices,
-                      std::vector<Vertex>& vertices) {
-  // Iterate over triangles. We sum the face tangents for shared vertices, then
-  // normalize and orthogonalize later.
-  for (size_t i = 0; i < indices.size(); i += 3) {
-    // Get the three vertices of the current triangle
-    Vertex& v1 = vertices[indices[i + 0]];
-    Vertex& v2 = vertices[indices[i + 1]];
-    Vertex& v3 = vertices[indices[i + 2]];
-
-    // Position and UV differences
-    Vector3f edge1 = v2.position - v1.position;
-    Vector3f edge2 = v3.position - v1.position;
-
-    float du1 = v2.uv[0] - v1.uv[0];
-    float dv1 = v2.uv[1] - v1.uv[1];
-    float du2 = v3.uv[0] - v1.uv[0];
-    float dv2 = v3.uv[1] - v1.uv[1];
-
-    // Calculate the determinant of the 2x2 UV matrix
-    float det = du1 * dv2 - du2 * dv1;
-
-    // Handle degenerate UV coordinates (where det is zero or near zero)
-    if (std::abs(det) < 1e-6f)
-      continue;
-
-    float r = 1.0f / det;
-
-    // Solve the linear system for the face tangent
-    Vector4f face_tangent{(edge1 * dv2 - edge2 * dv1) * r, 0.0f};
-
-    // Accumulate face tangents for all three vertices
-    v1.tangent += face_tangent;
-    v2.tangent += face_tangent;
-    v3.tangent += face_tangent;
-  }
-
-  // Normalize and orthogonalize tangent vectors
-  for (Vertex& v : vertices) {
-    auto t = v.tangent.GetVector3();
-    t = t - v.normal * t.DotProduct(v.normal);
-    t.Normalize();
-    v.tangent = Vector4f(t, 1.0f);
-  }
-}
-
 void Expand(base::Vector3f& min, base::Vector3f& max, const base::Vector3f& p) {
   min.x = std::min(min.x, p.x);
   min.y = std::min(min.y, p.y);
@@ -168,7 +108,7 @@ bool Model::LoadObj(Renderer* renderer,
     materials.back().diffuse[2] = 1;
   }
 
-  std::vector<Vertex> vertices;
+  std::vector<Vertex> raw_vertices;
   // Indices grouped by material
   std::unordered_map<int, std::vector<uint32_t>> material_indices;
 
@@ -197,8 +137,8 @@ bool Model::LoadObj(Renderer* renderer,
           vert.uv[1] = 1.0f - attrib.texcoords[2 * idx.texcoord_index + 1];
         }
 
-        uint32_t new_index = vertices.size();
-        vertices.push_back(vert);
+        uint32_t new_index = raw_vertices.size();
+        raw_vertices.push_back(vert);
         material_indices[material_id].push_back(new_index);
       }
       index_offset += fv;
@@ -231,17 +171,30 @@ bool Model::LoadObj(Renderer* renderer,
                               indices.end());
   }
 
-  DLOG(0) << "- Total vertices: " << vertices.size();
+  DLOG(0) << "- Total raw vertices: " << raw_vertices.size();
 
+  auto mesh =
+      ProcessMesh(std::move(raw_vertices), std::move(aggregated_indices),
+                  material_indices_counts);
+
+  CreateRenderResources(shader_id, std::move(mesh), texture_file_names);
+
+  return true;
+}
+
+std::unique_ptr<Mesh> Model::ProcessMesh(
+    std::vector<Vertex> raw_vertices,
+    std::vector<uint32_t> aggregated_indices,
+    const std::vector<size_t>& material_indices_counts) {
   // Deduplicate vertices.
-  std::vector<uint32_t> remap(vertices.size());
+  std::vector<uint32_t> remap(raw_vertices.size());
   size_t total_vertices = meshopt_generateVertexRemap(
-      remap.data(), nullptr, vertices.size(), vertices.data(), vertices.size(),
-      sizeof(Vertex));
+      remap.data(), nullptr, raw_vertices.size(), raw_vertices.data(),
+      raw_vertices.size(), sizeof(Vertex));
 
   std::vector<Vertex> unique_vertices(total_vertices);
-  meshopt_remapVertexBuffer(unique_vertices.data(), vertices.data(),
-                            vertices.size(), sizeof(Vertex), remap.data());
+  meshopt_remapVertexBuffer(unique_vertices.data(), raw_vertices.data(),
+                            raw_vertices.size(), sizeof(Vertex), remap.data());
 
   DLOG(0) << "- Unique vertices: " << unique_vertices.size();
 
@@ -327,8 +280,7 @@ bool Model::LoadObj(Renderer* renderer,
                unique_vertices.data(), kDataType_UInt, final_indices.size(),
                final_indices.data());
 
-  CreateRenderResources(shader_id, std::move(mesh), texture_file_names);
-  return true;
+  return mesh;
 }
 
 void Model::CreateMesh(Renderer* renderer,
@@ -398,6 +350,59 @@ void Model::CreateMesh(Renderer* renderer,
                remapped_indices.data());
 
   CreateRenderResources(shader_id, std::move(mesh), texture_file_names);
+}
+
+// Calculates tangent vectors per-vertex for a mesh, handling shared vertices by
+// accumulating face tangents and then normalizing/orthogonalizing them.
+//
+// Limitation: This code forces the binormal direction to always be treated as
+// right-handed (sets the w component to 1.0f). This is acceptable only if the
+// given mesh doesn't use mirrored UV coordinates (e.g., simple run-time
+// generated meshes like planes, spheres, or terrain).
+void Model::GenerateTangents(const std::vector<uint32_t>& indices,
+                             std::vector<Vertex>& vertices) {
+  // Iterate over triangles. We sum the face tangents for shared vertices, then
+  // normalize and orthogonalize later.
+  for (size_t i = 0; i < indices.size(); i += 3) {
+    // Get the three vertices of the current triangle
+    Vertex& v1 = vertices[indices[i + 0]];
+    Vertex& v2 = vertices[indices[i + 1]];
+    Vertex& v3 = vertices[indices[i + 2]];
+
+    // Position and UV differences
+    Vector3f edge1 = v2.position - v1.position;
+    Vector3f edge2 = v3.position - v1.position;
+
+    float du1 = v2.uv[0] - v1.uv[0];
+    float dv1 = v2.uv[1] - v1.uv[1];
+    float du2 = v3.uv[0] - v1.uv[0];
+    float dv2 = v3.uv[1] - v1.uv[1];
+
+    // Calculate the determinant of the 2x2 UV matrix
+    float det = du1 * dv2 - du2 * dv1;
+
+    // Handle degenerate UV coordinates (where det is zero or near zero)
+    if (std::abs(det) < 1e-6f)
+      continue;
+
+    float r = 1.0f / det;
+
+    // Solve the linear system for the face tangent
+    Vector4f face_tangent{(edge1 * dv2 - edge2 * dv1) * r, 0.0f};
+
+    // Accumulate face tangents for all three vertices
+    v1.tangent += face_tangent;
+    v2.tangent += face_tangent;
+    v3.tangent += face_tangent;
+  }
+
+  // Normalize and orthogonalize tangent vectors
+  for (Vertex& v : vertices) {
+    auto t = v.tangent.GetVector3();
+    t = t - v.normal * t.DotProduct(v.normal);
+    t.Normalize();
+    v.tangent = Vector4f(t, 1.0f);
+  }
 }
 
 void Model::CreateRenderResources(
