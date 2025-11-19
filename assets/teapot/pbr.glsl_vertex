@@ -1,3 +1,11 @@
+layout(push_constant, std430) uniform DrawCall {
+  uint material_index;  // Index into the Materials buffer
+  bool is_material;     // Use the Materials buffer or the texture maps
+  bool dir_light;       // Include the directional light in calculations
+  bool cookie_cutter;   // Enable alpha-tested "cookie-cutter" rendering
+}
+draw_call;
+
 layout(set = 1, binding = 0, row_major, std140) uniform SceneData {
   mat4 view_projection;
   vec3 cam_pos;
@@ -9,7 +17,7 @@ layout(set = 1, binding = 0, row_major, std140) uniform SceneData {
 scene_data;
 
 struct InstanceData {
-  mat4 model;
+  mat4 model_mat;
 };
 
 layout(set = 1, binding = 2, row_major, std430) buffer
@@ -24,18 +32,28 @@ layout(location = 2) in vec3 in_tangent;
 layout(location = 3) in vec2 in_tex_coord;
 
 layout(location = 0) out vec3 world_pos;
-layout(location = 1) out vec3 normal;
-layout(location = 2) out vec3 tangent;
-layout(location = 3) out vec2 tex_coord;
+layout(location = 1) out vec2 tex_coord;
+layout(location = 2) out mat3 TBN;
 
 void main() {
   const InstanceData instance_data = instances.data[gl_InstanceIndex];
 
-  world_pos = vec3(vec4(in_position, 1.0) * instance_data.model);
-  // Model matrix doesn't contain non-uniform scale.
-  normal = in_normal * mat3(instance_data.model);
-  tangent = in_tangent * mat3(instance_data.model);
+  world_pos = vec3(vec4(in_position, 1.0) * instance_data.model_mat);
+  gl_Position = vec4(world_pos, 1.0) * scene_data.view_projection;
+
   tex_coord = in_tex_coord;
 
-  gl_Position = vec4(world_pos, 1.0) * scene_data.view_projection;
+  // TODO: instance_data.normal_mat
+  vec3 normal = normalize(in_normal * mat3(instance_data.model_mat));
+  if (!draw_call.is_material) {
+    // Construct the TBN matrix: the columns are T, B, and N.
+    // This matrix transforms from Tangent Space to World Space.
+    vec3 tangent = normalize(in_tangent * mat3(instance_data.model_mat));
+    vec3 binormal = normalize(cross(normal, tangent));
+    TBN = mat3(tangent, binormal, normal);
+  } else {
+    // Texture mapping is disabled. We just need the N column which holds the
+    // world-space vertex normal. The fragment shader will extract it.
+    TBN = mat3(vec3(0.0), vec3(0.0), normal);
+  }
 }

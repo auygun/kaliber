@@ -50,9 +50,8 @@ layout(set = 2, binding = 3) uniform sampler2D metallic_map;
 layout(set = 2, binding = 4) uniform sampler2D roughness_map;
 
 layout(location = 0) in vec3 world_pos;
-layout(location = 1) in vec3 normal;
-layout(location = 2) in vec3 tangent;
-layout(location = 3) in vec2 tex_coord;
+layout(location = 1) in vec2 tex_coord;
+layout(location = 2) in mat3 TBN;
 
 layout(location = 0) out vec4 frag_color;
 
@@ -169,7 +168,7 @@ void main() {
     material.albedo = materials.data[mat_ind].albedo;
     material.metallic = materials.data[mat_ind].metallic;
     material.roughness = materials.data[mat_ind].roughness;
-    N = normalize(normal);
+    N = normalize(TBN[2]);
   } else {
     material.albedo = texture(albedo_map, tex_coord);
     if (draw_call.cookie_cutter && material.albedo.a < 0.5) {
@@ -179,12 +178,6 @@ void main() {
     material.metallic = texture(metallic_map, tex_coord).r;
     material.roughness = texture(roughness_map, tex_coord).r;
     vec3 tangent_normal = texture(normal_map, tex_coord).xyz * 2.0 - 1.0;
-
-    // Build TBN
-    N = normalize(normal);
-    vec3 T = normalize(tangent);
-    vec3 B = normalize(cross(N, T));
-    mat3 TBN = mat3(T, B, N);
     N = normalize(TBN * tangent_normal);
   }
   material.ao = materials.data[mat_ind].ao;
