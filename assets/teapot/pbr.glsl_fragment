@@ -175,8 +175,8 @@ void main() {
       discard;  // Stop all further execution for this pixel
     }
 
-    material.metallic = texture(metallic_map, tex_coord).r;
-    material.roughness = texture(roughness_map, tex_coord).r;
+    material.metallic = texture(metallic_map, tex_coord).b;
+    material.roughness = texture(roughness_map, tex_coord).g;
     vec3 tangent_normal = texture(normal_map, tex_coord).xyz * 2.0 - 1.0;
     N = normalize(TBN * tangent_normal);
   }
