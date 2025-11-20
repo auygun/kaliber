@@ -65,7 +65,9 @@ class Model {
   uint64_t texture_ids_[4] = {0, 0, 0, 0};
   Renderer* renderer_ = nullptr;
 
-  bool is_material_ = true;
+  bool has_albedo_map_ = false;
+  bool has_normal_map_ = false;
+  bool has_metal_rough_map_ = false;
   std::vector<MaterialData> materials_;
 
   uint64_t materials_ubo_ = 0;

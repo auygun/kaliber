@@ -1,8 +1,10 @@
 layout(push_constant, std430) uniform DrawCall {
   uint material_index;  // Index into the Materials buffer
-  bool is_material;     // Use the Materials buffer or the texture maps
-  bool dir_light;       // Include the directional light in calculations
-  bool cookie_cutter;   // Enable alpha-tested "cookie-cutter" rendering
+  bool has_albedo_map;
+  bool has_normal_map;
+  bool has_metal_rough_map;
+  bool dir_light;      // Include the directional light in calculations
+  bool cookie_cutter;  // Enable alpha-tested "cookie-cutter" rendering
 }
 draw_call;
 
@@ -45,7 +47,7 @@ void main() {
 
   // TODO: instance_data.normal_mat
   vec3 normal = normalize(in_normal * mat3(instance_data.model_mat));
-  if (!draw_call.is_material) {
+  if (draw_call.has_normal_map) {
     // Construct the TBN matrix: the columns are T, B, and N.
     // This matrix transforms from Tangent Space to World Space.
     vec3 tangent = normalize(in_tangent.xyz * mat3(instance_data.model_mat));

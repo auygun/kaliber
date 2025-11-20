@@ -6,9 +6,11 @@ precision highp float;
 
 layout(push_constant, std430) uniform DrawCall {
   uint material_index;  // Index into the Materials buffer
-  bool is_material;     // Use the Materials buffer or the texture maps
-  bool dir_light;       // Include the directional light in calculations
-  bool cookie_cutter;   // Enable alpha-tested "cookie-cutter" rendering
+  bool has_albedo_map;
+  bool has_normal_map;
+  bool has_metal_rough_map;
+  bool dir_light;      // Include the directional light in calculations
+  bool cookie_cutter;  // Enable alpha-tested "cookie-cutter" rendering
 }
 draw_call;
 
@@ -164,22 +166,30 @@ void main() {
 
   vec3 N;
 
-  if (draw_call.is_material) {
-    material.albedo = materials.data[mat_ind].albedo;
-    material.metallic = materials.data[mat_ind].metallic;
-    material.roughness = materials.data[mat_ind].roughness;
-    N = normalize(TBN[2]);
-  } else {
+  if (draw_call.has_albedo_map) {
     material.albedo = texture(albedo_map, tex_coord);
     if (draw_call.cookie_cutter && material.albedo.a < 0.5) {
       discard;  // Stop all further execution for this pixel
     }
+  } else {
+    material.albedo = materials.data[mat_ind].albedo;
+  }
 
-    material.metallic = texture(metallic_map, tex_coord).b;
-    material.roughness = texture(roughness_map, tex_coord).g;
+  if (draw_call.has_normal_map) {
     vec3 tangent_normal = texture(normal_map, tex_coord).xyz * 2.0 - 1.0;
     N = normalize(TBN * tangent_normal);
+  } else {
+    N = normalize(TBN[2]);
   }
+
+  if (draw_call.has_metal_rough_map) {
+    material.metallic = texture(metallic_map, tex_coord).b;
+    material.roughness = texture(roughness_map, tex_coord).g;
+  } else {
+    material.metallic = materials.data[mat_ind].metallic;
+    material.roughness = materials.data[mat_ind].roughness;
+  }
+
   material.ao = materials.data[mat_ind].ao;
 
   vec3 V = normalize(scene_data.cam_pos - world_pos);

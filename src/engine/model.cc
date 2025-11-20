@@ -113,12 +113,16 @@ enum TextureUsage {
 
 struct PushConstant {
   unsigned int material_index;
-  bool is_material;
+  bool has_albedo_map;
   char _pad0[3];
-  bool dir_light;
+  bool has_normal_map;
   char _pad1[3];
-  bool cookie_cutter;
+  bool has_metal_rough_map;
   char _pad2[3];
+  bool dir_light;
+  char _pad3[3];
+  bool cookie_cutter;
+  char _pad4[3];
 };
 
 void Expand(base::Vector3f& min, base::Vector3f& max, const base::Vector3f& p) {
@@ -723,11 +727,17 @@ void Model::CreateRenderResources(
                           sizeof(MaterialData) * materials_.size());
 
   // Create all textures and mipmaps.
-  is_material_ = texture_file_names.empty();
   size_t index = 0;
   std::vector<std::vector<uint64_t>> textures(5);
   for (auto& file_name : texture_file_names) {
     if (!file_name.empty()) {
+      if (index == kAlbedoMap)
+        has_albedo_map_ = true;
+      if (index == kNormalMap)
+        has_normal_map_ = true;
+      if (index == kMetalnessMap || index == kRoughnessMap)
+        has_metal_rough_map_ = true;
+
       bool is_srgb = index == kAlbedoMap;
       bool normalize = index == kNormalMap;
       LoadTexture(file_name, index, is_srgb, normalize);
@@ -771,7 +781,9 @@ void Model::Draw(unsigned int instance_count, unsigned int fist_instance) {
     PushConstant pc{};
     pc.material_index = material_index;
     pc.dir_light = true;
-    pc.is_material = is_material_;
+    pc.has_albedo_map = has_albedo_map_;
+    pc.has_normal_map = has_normal_map_;
+    pc.has_metal_rough_map = has_metal_rough_map_;
     pc.cookie_cutter = false;
     renderer_->UpdatePushConstants(sizeof(pc), &pc);
     renderer_->Draw(draw_cmd.num_indices, draw_cmd.index_offset, instance_count,
