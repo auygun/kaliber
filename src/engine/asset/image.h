@@ -23,6 +23,15 @@ class Image {
   bool CreateMip(const Image& other, bool normalize);
   bool Load(const std::string& file_name);
 
+  // Packs channels from two images into this image.
+  // r_src, g_src, b_src, a_src: 1 for 'first' image, 2 for 'second' image.
+  void Pack(const Image& first,
+            const Image& second,
+            int r_src,
+            int g_src,
+            int b_src,
+            int a_src);
+
   bool Compress();
 
   void ConvertToPow2();

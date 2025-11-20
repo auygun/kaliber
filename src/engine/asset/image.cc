@@ -216,6 +216,33 @@ bool Image::Load(const std::string& file_name) {
   return !!buffer_;
 }
 
+void Image::Pack(const Image& first,
+                 const Image& second,
+                 int r_src,
+                 int g_src,
+                 int b_src,
+                 int a_src) {
+  DCHECK(first.width_ != 0 && first.height_ != 0);
+  DCHECK(first.width_ == second.width_ && first.height_ == second.height_);
+
+  width_ = first.width_;
+  height_ = first.height_;
+  buffer_.reset(
+      (uint8_t*)AlignedAlloc(width_ * height_ * 4 * sizeof(uint8_t), 16));
+
+  uint8_t* r_src_data = r_src == 1 ? first.buffer_.get() : second.buffer_.get();
+  uint8_t* g_src_data = g_src == 1 ? first.buffer_.get() : second.buffer_.get();
+  uint8_t* b_src_data = b_src == 1 ? first.buffer_.get() : second.buffer_.get();
+  uint8_t* a_src_data = a_src == 1 ? first.buffer_.get() : second.buffer_.get();
+
+  for (int i = 0; i < width_ * height_; ++i) {
+    buffer_[i * 4 + 0] = r_src_data[i * 4 + 0];
+    buffer_[i * 4 + 1] = g_src_data[i * 4 + 1];
+    buffer_[i * 4 + 2] = b_src_data[i * 4 + 2];
+    buffer_[i * 4 + 3] = a_src_data[i * 4 + 3];
+  }
+}
+
 bool Image::IsCompressed() const {
   return IsCompressedFormat(format_);
 }
@@ -384,16 +411,18 @@ void Image::SRGB2Linear() {
       data_ptr[(i << 2) + 2] = srgb2lin[data_ptr[(i << 2) + 2]];
     }
   }
-  // else if (format == FORMAT_RGB8) {
-  //   int len = data.size() / 3;
-  //   uint8_t* data_ptr = data.ptrw();
+#if 0
+  else if (format_ == ImageFormat::kRGB8) {
+    int len = GetSize() / 3;
+    uint8_t* data_ptr = buffer_.get();
 
-  //   for (int i = 0; i < len; i++) {
-  //     data_ptr[(i * 3) + 0] = srgb2lin[data_ptr[(i * 3) + 0]];
-  //     data_ptr[(i * 3) + 1] = srgb2lin[data_ptr[(i * 3) + 1]];
-  //     data_ptr[(i * 3) + 2] = srgb2lin[data_ptr[(i * 3) + 2]];
-  //   }
-  // }
+    for (int i = 0; i < len; i++) {
+      data_ptr[(i * 3) + 0] = srgb2lin[data_ptr[(i * 3) + 0]];
+      data_ptr[(i * 3) + 1] = srgb2lin[data_ptr[(i * 3) + 1]];
+      data_ptr[(i * 3) + 2] = srgb2lin[data_ptr[(i * 3) + 2]];
+    }
+  }
+#endif
   else {
     NOTREACHED() << "invalid image format: " << static_cast<int>(format_);
   }
