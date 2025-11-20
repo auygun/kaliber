@@ -26,7 +26,6 @@ class ImguiBackend {
   std::pair<bool, bool> ProcessInput(Platform* platform);
 
   void NewFrame(float delta_time);
-  // void EndFrame();
   void Draw();
 
  private:

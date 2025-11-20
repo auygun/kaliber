@@ -202,12 +202,12 @@ bool Image::Load(const std::string& file_name) {
 
 #if 0  // Fill the alpha channel with transparent gradient alpha for testing
   uint8_t* modifyBuf = buffer;
-  for (int j = 0; j < height; ++j, modifyBuf += width * 4)
-  {
-    for (int i = 0; i < width; ++i)
-    {
-      float dist = sqrt(float(i*i + j*j));
-      float alpha = (((dist > 0.0f ? dist : 0.0f) / sqrt((float)(width * width + height * height))) * 255.0f);
+  for (int j = 0; j < height; ++j, modifyBuf += width * 4) {
+    for (int i = 0; i < width; ++i) {
+      float dist = sqrt(float(i * i + j * j));
+      float alpha = (((dist > 0.0f ? dist : 0.0f) /
+                      sqrt((float)(width * width + height * height))) *
+                     255.0f);
       modifyBuf[i * 4 + 3] = (unsigned char)alpha;
     }
   }
@@ -229,6 +229,7 @@ void Image::Pack(const Image& first,
   height_ = first.height_;
   buffer_.reset(
       (uint8_t*)AlignedAlloc(width_ * height_ * 4 * sizeof(uint8_t), 16));
+  uint8_t* data_ptr = buffer_.get();
 
   uint8_t* r_src_data = r_src == 1 ? first.buffer_.get() : second.buffer_.get();
   uint8_t* g_src_data = g_src == 1 ? first.buffer_.get() : second.buffer_.get();
@@ -236,10 +237,10 @@ void Image::Pack(const Image& first,
   uint8_t* a_src_data = a_src == 1 ? first.buffer_.get() : second.buffer_.get();
 
   for (int i = 0; i < width_ * height_; ++i) {
-    buffer_[i * 4 + 0] = r_src_data[i * 4 + 0];
-    buffer_[i * 4 + 1] = g_src_data[i * 4 + 1];
-    buffer_[i * 4 + 2] = b_src_data[i * 4 + 2];
-    buffer_[i * 4 + 3] = a_src_data[i * 4 + 3];
+    data_ptr[i * 4 + 0] = r_src_data[i * 4 + 0];
+    data_ptr[i * 4 + 1] = g_src_data[i * 4 + 1];
+    data_ptr[i * 4 + 2] = b_src_data[i * 4 + 2];
+    data_ptr[i * 4 + 3] = a_src_data[i * 4 + 3];
   }
 }
 
@@ -271,7 +272,7 @@ void Image::ConvertToPow2() {
     int offset_y = (new_height - height_) / 2;
     for (int y = 0; y < height_; ++y)
       std::memcpy(bigger_buffer + (offset_x + (y + offset_y) * new_width) * 4,
-              buffer_.get() + y * width_ * 4, width_ * 4);
+                  buffer_.get() + y * width_ * 4, width_ * 4);
 #else
     for (int y = 0; y < height_; ++y)
       std::memcpy(bigger_buffer + (y * new_width) * 4,
@@ -336,44 +337,50 @@ void Image::Clear(Vector4f rgba) {
   // Quantize the color to target resolution.
   uint8_t r = (uint8_t)(rgba.x * 255.0f), g = (uint8_t)(rgba.y * 255.0f),
           b = (uint8_t)(rgba.z * 255.0f), a = (uint8_t)(rgba.w * 255.0f);
+  uint8_t* data_ptr = buffer_.get();
 
   // Fill out the first line manually.
   for (int w = 0; w < width_; ++w) {
-    buffer_.get()[w * 4 + 0] = r;
-    buffer_.get()[w * 4 + 1] = g;
-    buffer_.get()[w * 4 + 2] = b;
-    buffer_.get()[w * 4 + 3] = a;
+    data_ptr[w * 4 + 0] = r;
+    data_ptr[w * 4 + 1] = g;
+    data_ptr[w * 4 + 2] = b;
+    data_ptr[w * 4 + 3] = a;
   }
 
   // Copy the first line to the rest of them.
   for (int h = 1; h < height_; ++h)
-    std::memcpy(buffer_.get() + h * width_ * 4, buffer_.get(), width_ * 4);
+    std::memcpy(data_ptr + h * width_ * 4, data_ptr, width_ * 4);
 }
 
 void Image::GradientH() {
+  uint8_t* data_ptr = buffer_.get();
+
   // Fill out the first line manually.
   for (int x = 0; x < width_; ++x) {
     uint8_t intensity = x > 255 ? 255 : x;
-    buffer_.get()[x * 4 + 0] = intensity;
-    buffer_.get()[x * 4 + 1] = intensity;
-    buffer_.get()[x * 4 + 2] = intensity;
-    buffer_.get()[x * 4 + 3] = 255;
+    data_ptr[x * 4 + 0] = intensity;
+    data_ptr[x * 4 + 1] = intensity;
+    data_ptr[x * 4 + 2] = intensity;
+    data_ptr[x * 4 + 3] = 255;
   }
 
   // Copy the first line to the rest of them.
   for (int h = 1; h < height_; ++h)
-    std::memcpy(buffer_.get() + h * width_ * 4, buffer_.get(), width_ * 4);
+    std::memcpy(data_ptr + h * width_ * 4, data_ptr, width_ * 4);
 }
 
 void Image::GradientV(const Vector4f& c1, const Vector4f& c2, int height) {
+  uint8_t* data_ptr = buffer_.get();
+
   // Fill each section with gradient.
   for (int h = 0; h < height_; ++h) {
+    int l = h * width_ * 4;
     Vector4f c = Lerp(c1, c2, fmod(h, height) / (float)height);
     for (int x = 0; x < width_; ++x) {
-      buffer_.get()[h * width_ * 4 + x * 4 + 0] = c.x * 255;
-      buffer_.get()[h * width_ * 4 + x * 4 + 1] = c.y * 255;
-      buffer_.get()[h * width_ * 4 + x * 4 + 2] = c.z * 255;
-      buffer_.get()[h * width_ * 4 + x * 4 + 3] = 0;
+      data_ptr[l + x * 4 + 0] = c.x * 255;
+      data_ptr[l + x * 4 + 1] = c.y * 255;
+      data_ptr[l + x * 4 + 2] = c.z * 255;
+      data_ptr[l + x * 4 + 3] = 0;
     }
   }
 }

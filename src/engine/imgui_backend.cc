@@ -271,7 +271,6 @@ void ImguiBackend::CreateRenderResources(Renderer* renderer) {
 }
 
 std::pair<bool, bool> ImguiBackend::ProcessInput(Platform* platform) {
-  // TODO: Use PlayerInput component
   ImGuiIO& io = ImGui::GetIO();
   io.AddMousePosEvent(platform->GetMouseX(), platform->GetMouseY());
   io.AddMouseButtonEvent(ImGuiMouseButton_Left,
@@ -305,10 +304,6 @@ void ImguiBackend::NewFrame(float delta_time) {
   ImGui::NewFrame();
   needs_update_ = true;
 }
-
-// void ImguiBackend::EndFrame() {
-//   ImGui::EndFrame();
-// }
 
 void ImguiBackend::UpdateGeometries() {
   // Create a geometry for each draw list and upload the vertex data.
