@@ -16,52 +16,83 @@
 
 using namespace base;
 
-// Stub implementations for tinygltf to satisfy the linker.
-// We return true to indicate "success" so tinygltf doesn't abort loading,
-// but we intentionally do not load any pixel data.
+// Implement tinygltf callbacks.
+// These act as the default filesystem implementation for the loader.
 namespace tinygltf {
 
-bool LoadImageData(Image* image,
-                   const int image_idx,
-                   std::string* err,
-                   std::string* warn,
-                   int req_width,
-                   int req_height,
-                   const unsigned char* bytes,
-                   int size,
-                   void* user_data) {
-  (void)image;
-  (void)image_idx;
-  (void)err;
-  (void)warn;
-  (void)req_width;
-  (void)req_height;
-  (void)bytes;
-  (void)size;
+bool FileExists(const std::string& abs_filename, void* user_data) {
   (void)user_data;
-  // Return true so the parser continues.
-  // We don't populate image->image, so it stays empty.
-  // Model::LoadGLTF uses image->uri later to load the texture via the engine's
-  // asset system.
+  size_t size = 0;
+  // Check existence by attempting to read.
+  auto data = eng::AssetFile::ReadWholeFile(
+      abs_filename.c_str(), eng::Engine::Get().GetRootPath().c_str(), &size,
+      true);
+  return !!data;
+}
+
+std::string ExpandFilePath(const std::string& filepath, void* user_data) {
+  (void)user_data;
+#ifdef __ANDROID__
+  // Android assets don't use absolute paths like /sdcard/, they are relative to
+  // asset root.
+  return filepath;
+#else
+  // On desktop, we might just return the path or handle relative paths if
+  // needed. AssetFile handles concatenation with RootPath internally, so we
+  // generally pass this through.
+  return filepath;
+#endif
+}
+
+bool ReadWholeFile(std::vector<unsigned char>* out,
+                   std::string* err,
+                   const std::string& filepath,
+                   void* user_data) {
+  (void)user_data;
+  size_t size = 0;
+  auto data = eng::AssetFile::ReadWholeFile(
+      filepath.c_str(), eng::Engine::Get().GetRootPath().c_str(), &size, true);
+  if (!data) {
+    if (err)
+      *err = "Failed to read asset file: " + filepath;
+    return false;
+  }
+
+  out->resize(size);
+  if (size > 0) {
+    memcpy(out->data(), data.get(), size);
+  }
   return true;
 }
 
-bool WriteImageData(const std::string* basepath,
-                    const std::string* filename,
-                    const Image* image,
-                    bool embedImages,
-                    const FsCallbacks* fs_cb,
-                    const URICallbacks* uri_cb,
-                    std::string* out_uri,
+bool WriteWholeFile(std::string* err,
+                    const std::string& filepath,
+                    const std::vector<unsigned char>& contents,
                     void* user_data) {
-  (void)basepath;
-  (void)filename;
-  (void)image;
-  (void)embedImages;
-  (void)fs_cb;
-  (void)uri_cb;
-  (void)out_uri;
+  (void)filepath;
+  (void)contents;
   (void)user_data;
+  if (err)
+    *err = "WriteWholeFile not supported for assets";
+  return false;
+}
+
+bool GetFileSizeInBytes(size_t* filesize,
+                        std::string* err,
+                        const std::string& filepath,
+                        void* user_data) {
+  (void)user_data;
+  size_t size = 0;
+  // AssetFile doesn't expose a "PeekSize" yet, so we read to check.
+  // Optimization: Add a GetSize method to AssetFile in the future.
+  auto data = eng::AssetFile::ReadWholeFile(
+      filepath.c_str(), eng::Engine::Get().GetRootPath().c_str(), &size, true);
+  if (!data) {
+    if (err)
+      *err = "Failed to get file size: " + filepath;
+    return false;
+  }
+  *filesize = size;
   return true;
 }
 
@@ -256,9 +287,8 @@ bool Model::LoadGLTF(Renderer* renderer,
 
   std::string base_dir = "";
   size_t last_slash = file_name.find_last_of("/\\");
-  std::string asset_dir = file_name.substr(0, last_slash + 1);
   if (last_slash != std::string::npos) {
-    base_dir = Engine::Get().GetRootPath() + "assets/" + asset_dir;
+    base_dir = file_name.substr(0, last_slash + 1);
   }
 
   bool ret = false;
@@ -284,13 +314,8 @@ bool Model::LoadGLTF(Renderer* renderer,
     return false;
   }
 
-  // if (!model.nodes.empty()) {
-  //   LOG(0) << "GLTF file must not contain nodes (flattened mesh required).";
-  //   return false;
-  // }
-
-  if (model.meshes.size() != 1) {
-    LOG(0) << "GLTF file must contain exactly one mesh.";
+  if (model.meshes.size() == 0) {
+    LOG(0) << "GLTF file must contain a mesh.";
     return false;
   }
 
@@ -483,9 +508,8 @@ bool Model::LoadGLTF(Renderer* renderer,
   auto GetImageUri = [&](int index) -> std::string {
     if (index >= 0 && index < model.images.size()) {
       const auto& img = model.images[index];
-      if (!img.uri.empty()) {
-        return asset_dir + img.uri;
-      }
+      if (!img.uri.empty())
+        return base_dir + img.uri;
     }
     return "";
   };
