@@ -51,10 +51,10 @@ class Model {
   };
 
   struct MaterialData {
-    base::Vector4f albedo;
-    float metallic;
-    float roughness;
-    float ao;
+    base::Vector4f albedo{1.0f, 1.0f, 1.0f, 1.0f};
+    float metallic{1.0f};
+    float roughness{1.0f};
+    float ao{1.0f};
     float _pad0;
   };
 
@@ -62,12 +62,12 @@ class Model {
 
   std::vector<DrawCmd> draw_list_;
   uint64_t geometry_id_ = 0;
-  uint64_t texture_ids_[4] = {0, 0, 0, 0};
+  uint64_t texture_ids_[3] = {0, 0, 0};  // 0:Albedo, 1:Normal, 2:ORM
   Renderer* renderer_ = nullptr;
 
   bool has_albedo_map_ = false;
   bool has_normal_map_ = false;
-  bool has_metal_rough_map_ = false;
+  bool has_orm_map_ = false;
   std::vector<MaterialData> materials_;
 
   uint64_t materials_ubo_ = 0;
@@ -86,11 +86,6 @@ class Model {
       uint64_t shader_id,
       std::unique_ptr<Mesh> mesh,
       const std::vector<std::string>& texture_file_names);
-
-  void LoadTexture(const std::string& file_name,
-                   size_t index,
-                   bool is_srgb,
-                   bool normalize);
 };
 
 }  // namespace eng

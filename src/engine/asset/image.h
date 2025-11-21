@@ -23,14 +23,17 @@ class Image {
   bool CreateMip(const Image& other, bool normalize);
   bool Load(const std::string& file_name);
 
-  // Packs channels from two images into this image.
-  // r_src, g_src, b_src, a_src: 1 for 'first' image, 2 for 'second' image.
-  void Pack(const Image& first,
-            const Image& second,
-            int r_src,
-            int g_src,
-            int b_src,
-            int a_src);
+  // Packs channels from multiple source images into this image. Use this to
+  // create packed textures (e.g. ORM maps) from separate files.
+  // Assumes all valid input images share the same dimensions.
+  //
+  // r_src, g_src, b_src: Source images for the Red, Green, and Blue channels
+  // respectively.
+  // rgba: Fallback values (0.0 to 1.0) to use if a source image is invalid.
+  void Pack(const Image& r_src,
+            const Image& g_src,
+            const Image& b_src,
+            base::Vector4f rgba);
 
   bool Compress();
 

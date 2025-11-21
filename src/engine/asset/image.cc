@@ -216,31 +216,51 @@ bool Image::Load(const std::string& file_name) {
   return !!buffer_;
 }
 
-void Image::Pack(const Image& first,
-                 const Image& second,
-                 int r_src,
-                 int g_src,
-                 int b_src,
-                 int a_src) {
-  DCHECK(first.width_ != 0 && first.height_ != 0);
-  DCHECK(first.width_ == second.width_ && first.height_ == second.height_);
+void Image::Pack(const Image& r_src,
+                 const Image& g_src,
+                 const Image& b_src,
+                 Vector4f rgba) {
+  // Ensure at least one input is valid to establish dimensions.
+  DCHECK(r_src.IsValid() || g_src.IsValid() || b_src.IsValid());
+  // If multiple sources are valid, ensure they share identical dimensions.
+  DCHECK(!r_src.IsValid() || !b_src.IsValid() ||
+         (r_src.width_ == g_src.width_ && r_src.height_ == g_src.height_));
+  DCHECK(!r_src.IsValid() || !b_src.IsValid() ||
+         (r_src.width_ == b_src.width_ && r_src.height_ == b_src.height_));
 
-  width_ = first.width_;
-  height_ = first.height_;
+  // Determine output dimensions from the first valid source found.
+  width_ = r_src.IsValid()   ? r_src.width_
+           : g_src.IsValid() ? g_src.width_
+           : b_src.IsValid() ? b_src.width_
+                             : 0;
+  height_ = r_src.IsValid()   ? r_src.height_
+            : g_src.IsValid() ? g_src.height_
+            : b_src.IsValid() ? b_src.height_
+                              : 0;
+
+  DCHECK(width_ > 0 && height_ > 0);
+
+  // Pre-calculate fallback values from normalized (0..1) float to (0..255).
+  uint8_t r = (uint8_t)(rgba.x * 255.0f);
+  uint8_t g = (uint8_t)(rgba.y * 255.0f);
+  uint8_t b = (uint8_t)(rgba.z * 255.0f);
+  uint8_t a = (uint8_t)(rgba.w * 255.0f);
+
   buffer_.reset(
       (uint8_t*)AlignedAlloc(width_ * height_ * 4 * sizeof(uint8_t), 16));
   uint8_t* data_ptr = buffer_.get();
 
-  uint8_t* r_src_data = r_src == 1 ? first.buffer_.get() : second.buffer_.get();
-  uint8_t* g_src_data = g_src == 1 ? first.buffer_.get() : second.buffer_.get();
-  uint8_t* b_src_data = b_src == 1 ? first.buffer_.get() : second.buffer_.get();
-  uint8_t* a_src_data = a_src == 1 ? first.buffer_.get() : second.buffer_.get();
+  uint8_t* r_src_data = r_src.buffer_.get();
+  uint8_t* g_src_data = g_src.buffer_.get();
+  uint8_t* b_src_data = b_src.buffer_.get();
 
+  // For each channel, use the source image's corresponding channel if
+  // available, otherwise use the fallback value.
   for (int i = 0; i < width_ * height_; ++i) {
-    data_ptr[i * 4 + 0] = r_src_data[i * 4 + 0];
-    data_ptr[i * 4 + 1] = g_src_data[i * 4 + 1];
-    data_ptr[i * 4 + 2] = b_src_data[i * 4 + 2];
-    data_ptr[i * 4 + 3] = a_src_data[i * 4 + 3];
+    data_ptr[i * 4 + 0] = r_src_data ? r_src_data[i * 4 + 0] : r;
+    data_ptr[i * 4 + 1] = g_src_data ? g_src_data[i * 4 + 1] : g;
+    data_ptr[i * 4 + 2] = b_src_data ? b_src_data[i * 4 + 2] : b;
+    data_ptr[i * 4 + 3] = a;
   }
 }
 

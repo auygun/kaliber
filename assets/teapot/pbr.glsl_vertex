@@ -2,7 +2,7 @@ layout(push_constant, std430) uniform DrawCall {
   uint material_index;  // Index into the Materials buffer
   bool has_albedo_map;
   bool has_normal_map;
-  bool has_metal_rough_map;
+  bool has_orm_map;    // ambient-occlusion, roughness, metallic
   bool dir_light;      // Include the directional light in calculations
   bool cookie_cutter;  // Enable alpha-tested "cookie-cutter" rendering
 }

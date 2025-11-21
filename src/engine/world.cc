@@ -160,7 +160,7 @@ void World::Create(Renderer* renderer) {
   {
     models_[2].LoadObj(renderer_, shader_id_, "teapot/Cerberus_LP.obj",
                        "teapot/Cerberus_LP.mtl",
-                       {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
+                       {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga", "",
                         "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
 
     for (size_t i = 0; i < 1; ++i) {
@@ -192,7 +192,7 @@ void World::Create(Renderer* renderer) {
       //  "teapot/steelplate1_metallic.png",
       //  "teapot/steelplate1_roughness.png"});
       {"teapot/alien-slime1-albedo.png", "teapot/alien-slime1-normal-dx.png",
-       "teapot/alien-slime1-metallic.png",
+       "", "teapot/alien-slime1-metallic.png",
        "teapot/alien-slime1-roughness.png"});
 
   for (size_t i = 0; i < 10; ++i) {
