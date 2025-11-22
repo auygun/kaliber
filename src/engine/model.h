@@ -11,6 +11,7 @@ namespace eng {
 
 class Mesh;
 class Renderer;
+class Image;
 
 class Model {
  public:
@@ -79,13 +80,20 @@ class Model {
       const std::vector<size_t>& material_indices_counts,
       bool generate_tangents);
 
+  std::vector<std::unique_ptr<Image>> LoadImages(
+      const std::vector<std::string>& file_names);
+
   void GenerateTangents(const std::vector<uint32_t>& indices,
                         std::vector<Vertex>& vertices);
 
-  void CreateRenderResources(
-      uint64_t shader_id,
-      std::unique_ptr<Mesh> mesh,
-      const std::vector<std::string>& texture_file_names);
+  void CreateRenderResources(uint64_t shader_id,
+                             std::unique_ptr<Mesh> mesh,
+                             std::vector<std::unique_ptr<Image>>& images);
+
+  void ProcessTexture(std::unique_ptr<Image> image,
+                      size_t index,
+                      bool is_srgb,
+                      bool normalize);
 };
 
 }  // namespace eng

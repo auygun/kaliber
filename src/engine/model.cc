@@ -264,7 +264,9 @@ bool Model::LoadObj(Renderer* renderer,
       ProcessMesh(std::move(raw_vertices), std::move(aggregated_indices),
                   material_indices_counts, true);
 
-  CreateRenderResources(shader_id, std::move(mesh), texture_file_names);
+  auto images = LoadImages(texture_file_names);
+
+  CreateRenderResources(shader_id, std::move(mesh), images);
 
   return true;
 }
@@ -509,29 +511,44 @@ bool Model::LoadGLTF(Renderer* renderer,
       ProcessMesh(std::move(raw_vertices), std::move(aggregated_indices),
                   material_indices_counts, false);
 
-  // Gather texture paths
-  auto GetImageUri = [&](int index) -> std::string {
-    if (index >= 0 && index < model.images.size()) {
-      const auto& img = model.images[index];
-      if (!img.uri.empty())
-        return base_dir + img.uri;
+  // Helper to load an image from GLTF source index
+  auto LoadGLTFImage = [&](int source_idx) -> std::unique_ptr<Image> {
+    if (source_idx < 0 || source_idx >= model.images.size())
+      return nullptr;
+    const auto& img = model.images[source_idx];
+
+    auto eng_img = std::make_unique<Image>();
+
+    // Case 1: URI present (External file)
+    if (!img.uri.empty()) {
+      if (eng_img->Load(base_dir + img.uri))
+        return eng_img;
     }
-    return "";
+    // Case 2: BufferView present (Embedded data)
+    else if (img.bufferView >= 0 && img.bufferView < model.bufferViews.size()) {
+      const auto& view = model.bufferViews[img.bufferView];
+      if (view.buffer >= 0 && view.buffer < model.buffers.size()) {
+        const auto& buf = model.buffers[view.buffer];
+        const unsigned char* data_ptr = buf.data.data() + view.byteOffset;
+
+        if (eng_img->LoadFromMemory(data_ptr, view.byteLength,
+                                    /*flip_vertically*/ true)) {
+          return eng_img;
+        }
+      }
+    }
+
+    return nullptr;
   };
 
-  std::vector<std::string> textures_to_load;
-  std::string albedo_file = GetImageUri(found_albedo_idx);
-  std::string normal_file = GetImageUri(found_normal_idx);
-  std::string metal_rough_file = GetImageUri(found_metal_rough_idx);
-  std::string occlusion_file = GetImageUri(found_occlusion_idx);
+  std::vector<std::unique_ptr<Image>> images;
+  images.push_back(LoadGLTFImage(found_albedo_idx));
+  images.push_back(LoadGLTFImage(found_normal_idx));
+  images.push_back(LoadGLTFImage(found_metal_rough_idx));
+  images.push_back(LoadGLTFImage(found_occlusion_idx));
 
-  // Slot order: 0:Albedo, 1:Normal, 2:Metal, 3:Rough, 4:Occlusion
-  textures_to_load.push_back(albedo_file);
-  textures_to_load.push_back(normal_file);
-  textures_to_load.push_back(metal_rough_file);
-  textures_to_load.push_back(occlusion_file);
+  CreateRenderResources(shader_id, std::move(final_mesh), images);
 
-  CreateRenderResources(shader_id, std::move(final_mesh), textures_to_load);
   return true;
 }
 
@@ -551,7 +568,31 @@ void Model::CreateMesh(Renderer* renderer,
   auto mesh = ProcessMesh(std::move(vertices), std::move(indices),
                           material_indices_counts, true);
 
-  CreateRenderResources(shader_id, std::move(mesh), texture_file_names);
+  auto images = LoadImages(texture_file_names);
+
+  CreateRenderResources(shader_id, std::move(mesh), images);
+}
+
+std::vector<std::unique_ptr<Image>> Model::LoadImages(
+    const std::vector<std::string>& file_names) {
+  // Load images from disk for CreateMesh (manual usage)
+  std::vector<std::unique_ptr<Image>> images;
+  for (const auto& name : file_names) {
+    if (!name.empty()) {
+      auto img = std::make_unique<Image>();
+      if (img->Load(name))
+        images.push_back(std::move(img));
+      else
+        images.push_back(nullptr);
+    } else {
+      images.push_back(nullptr);
+    }
+  }
+
+  while (images.size() < 4)
+    images.push_back(nullptr);
+
+  return images;
 }
 
 std::unique_ptr<Mesh> Model::ProcessMesh(
@@ -710,10 +751,9 @@ void Model::GenerateTangents(const std::vector<uint32_t>& indices,
   }
 }
 
-void Model::CreateRenderResources(
-    uint64_t shader_id,
-    std::unique_ptr<Mesh> mesh,
-    const std::vector<std::string>& texture_file_names) {
+void Model::CreateRenderResources(uint64_t shader_id,
+                                  std::unique_ptr<Mesh> mesh,
+                                  std::vector<std::unique_ptr<Image>>& images) {
   // Create the geometry.
   geometry_id_ = renderer_->CreateGeometry(std::move(mesh));
 
@@ -725,96 +765,71 @@ void Model::CreateRenderResources(
 
   // Create textures and mipmaps.
   std::vector<std::vector<uint64_t>> textures(4);
-  do {
-    // --- Albedo ---
-    auto it = texture_file_names.begin();
-    size_t texture_index = 0;
-    if (it == texture_file_names.end())
-      break;
-    auto image = std::make_unique<Image>();
-    if (!it->empty() && image->Load(*it)) {
-      image->SRGB2Linear();
 
-      std::vector<std::unique_ptr<Image>> images;
-      do {
-        images.push_back(std::move(image));
-        image = std::make_unique<Image>();
-      } while (image->CreateMip(*images.back(), /*normalize*/ false));
-      DLOG(0) << *it << " mip levels: " << images.size();
+  // Input images: 0:Albedo, 1:Normal, 2:Metal/Rough, 3:Occlusion
 
-      DCHECK(texture_index == 0);  // Slot 0: Albedo
-      texture_ids_[texture_index] = renderer_->CreateTexture();
-      renderer_->UpdateTexture(texture_ids_[texture_index], std::move(images));
-      textures[texture_index + 1].push_back(texture_ids_[texture_index]);
-      has_albedo_map_ = true;
-    }
+  // --- Albedo ---
+  if (images.size() > 0 && images[0]) {
+    ProcessTexture(std::move(images[0]), 0, /*is_srgb*/ true,
+                   /*normalize*/ false);
+    textures[1].push_back(texture_ids_[0]);
+    has_albedo_map_ = true;
+  }
 
-    // --- Normal ---
-    ++it;
-    ++texture_index;
-    if (it == texture_file_names.end())
-      break;
-    image = std::make_unique<Image>();
-    if (!it->empty() && image->Load(*it)) {
-      std::vector<std::unique_ptr<Image>> images;
-      do {
-        images.push_back(std::move(image));
-        image = std::make_unique<Image>();
-      } while (image->CreateMip(*images.back(), /*normalize*/ true));
-      DLOG(0) << *it << " mip levels: " << images.size();
+  // --- Normal ---
+  if (images.size() > 1 && images[1]) {
+    ProcessTexture(std::move(images[1]), 1, /*is_srgb*/ false,
+                   /*normalize*/ true);
+    textures[2].push_back(texture_ids_[1]);
+    has_normal_map_ = true;
+  }
 
-      DCHECK(texture_index == 1);  // Slot 1: Normal
-      texture_ids_[texture_index] = renderer_->CreateTexture();
-      renderer_->UpdateTexture(texture_ids_[texture_index], std::move(images));
-      textures[texture_index + 1].push_back(texture_ids_[texture_index]);
-      has_normal_map_ = true;
-    }
+  // --- ORM (Packed) ---
+  // We take Metal/Rough (index 2) and Occlusion (index 3) and pack them.
+  // GLTF MetallicRoughness: G=Roughness, B=Metallic
+  // GLTF Occlusion: R=Occlusion
+  // Target ORM: R=Occlusion, G=Roughness, B=Metallic
 
-    // --- ORM ---
-    ++it;
-    ++texture_index;
-    if (it == texture_file_names.end())
-      break;
-    // Load ORM textures
-    std::unique_ptr<Image> orm_images[4] = {
-        std::make_unique<Image>(), std::make_unique<Image>(),
-        std::make_unique<Image>(), std::make_unique<Image>()};
-    for (int i = 0; i < 4 && it != texture_file_names.end(); ++i) {
-      if (!it->empty())
-        orm_images[i]->Load(*it);
-      ++it;
-    }
+  Image* metal_rough = images.size() > 2 ? images[2].get() : nullptr;
+  Image* occlusion = images.size() > 3 ? images[3].get() : nullptr;
 
-    // Pack ORM textures
-    image = std::make_unique<Image>();
-    if (orm_images[0]->IsValid()) {
-      // Single texture containing both Metallic and Roughness
-      image->Pack(*orm_images[3], *orm_images[0], *orm_images[0], {1, 0, 0, 0});
-    } else if (orm_images[3]->IsValid() || orm_images[2]->IsValid() ||
-               orm_images[1]->IsValid()) {
-      // Separate textures for Metallic and Roughness
-      image->Pack(*orm_images[3], *orm_images[2], *orm_images[1], {1, 0, 0, 0});
-    }
+  if (metal_rough || occlusion) {
+    auto orm = std::make_unique<Image>();
 
-    if (image->IsValid()) {
-      std::vector<std::unique_ptr<Image>> images;
-      do {
-        images.push_back(std::move(image));
-        image = std::make_unique<Image>();
-      } while (image->CreateMip(*images.back(), /*normalize*/ false));
-      DLOG(0) << "Packed ORM mip levels: " << images.size();
+    // If either texture is missing, use an empty default image.
+    // Pack handles invalid (empty) input images by using fallback values.
+    // Fallback: R=1 (AO), G=1 (Rough), B=1 (Metal), A=1
+    static const Image empty_img;
+    orm->Pack(occlusion ? *occlusion : empty_img,
+              metal_rough ? *metal_rough : empty_img,
+              metal_rough ? *metal_rough : empty_img, {1, 1, 1, 1});
 
-      DCHECK(texture_index == 2);  // Slot 2: ORM
-      texture_ids_[texture_index] = renderer_->CreateTexture();
-      renderer_->UpdateTexture(texture_ids_[texture_index], std::move(images));
-      textures[texture_index + 1].push_back(texture_ids_[texture_index]);
-      has_orm_map_ = true;
-    }
-  } while (false);
+    ProcessTexture(std::move(orm), 2, /*is_srgb*/ false, /*normalize*/ false);
+    textures[3].push_back(texture_ids_[2]);
+    has_orm_map_ = true;
+  }
 
   // Create the descriptor set.
   materials_dset_ =
       renderer_->CreateDescriptorSet(shader_id, 2, textures, {materials_ubo_});
+}
+
+void Model::ProcessTexture(std::unique_ptr<Image> image,
+                           size_t index,
+                           bool is_srgb,
+                           bool normalize) {
+  if (is_srgb)
+    image->SRGB2Linear();
+
+  std::vector<std::unique_ptr<Image>> mips;
+  do {
+    mips.push_back(std::move(image));
+    image = std::make_unique<Image>();
+  } while (image->CreateMip(*mips.back(), normalize));
+  DLOG(0) << "Texture " << index << " mip levels: " << mips.size();
+
+  texture_ids_[index] = renderer_->CreateTexture();
+  renderer_->UpdateTexture(texture_ids_[index], std::move(mips));
 }
 
 void Model::Draw(unsigned int instance_count, unsigned int fist_instance) {

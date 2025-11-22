@@ -126,7 +126,7 @@ void World::Create(Renderer* renderer) {
 
 #if 1
   Entity parent = root_entity_;
-  models_.resize(4);
+  models_.resize(5);
   {
     // model.LoadObj(renderer_, shader_id_,
     //                "teapot/viking_room.obj", "", {"teapot/viking_room.png"});
@@ -172,12 +172,24 @@ void World::Create(Renderer* renderer) {
       // parent = entity;
     }
   }
+  {
+    models_[3].LoadGLTF(renderer_, shader_id_, "teapot/WaterBottle.glb");
+
+    for (size_t i = 0; i < 1; ++i) {
+      Matrix4f transform;
+      transform.Create(Quatf({0.0f, 0.0f, 0.0f}),
+                       Vector3f{0.0f, -0.5f, 0.0f});
+      transform.Multiply(10.0f);
+      NewEntity(root_entity_, 3, transform);
+      // parent = entity;
+    }
+  }
   // #else
 
   std::vector<Model::Vertex> vertices;
   std::vector<uint32_t> indices;
   CreateSphere(vertices, indices, 32, 32);
-  models_[3].CreateMesh(
+  models_[4].CreateMesh(
       renderer_, shader_id_, std::move(vertices), std::move(indices),
       // {"teapot/iron-rusted4-basecolor.png", "teapot/iron-rusted4-normal.png",
       //  "teapot/iron-rusted4-metalness.png",

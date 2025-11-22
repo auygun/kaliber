@@ -136,7 +136,7 @@ bool Image::CreateMip(const Image& other, bool normalize) {
   return true;
 }
 
-bool Image::Load(const std::string& file_name) {
+bool Image::Load(const std::string& file_name, bool flip_vertically) {
   size_t buffer_size = 0;
   auto file_buffer = AssetFile::ReadWholeFile(
       file_name.c_str(), Engine::Get().GetRootPath().c_str(), &buffer_size);
@@ -145,15 +145,26 @@ bool Image::Load(const std::string& file_name) {
     return false;
   }
 
+  DLOG(0) << "Loaded " << file_name;
+
+  return LoadFromMemory((uint8_t*)file_buffer.get(), buffer_size,
+                        flip_vertically);
+}
+
+bool Image::LoadFromMemory(const uint8_t* buffer,
+                           size_t size,
+                           bool flip_vertically) {
   int w, h, c;
-  buffer_.reset((uint8_t*)stbi_load_from_memory(
-      (const stbi_uc*)file_buffer.get(), buffer_size, &w, &h, &c, 0));
+  stbi_set_flip_vertically_on_load(flip_vertically);
+  buffer_.reset((uint8_t*)stbi_load_from_memory((const stbi_uc*)buffer, size,
+                                                &w, &h, &c, 0));
+  stbi_set_flip_vertically_on_load(false);
   if (!buffer_) {
-    LOG(0) << "Failed to load image file: " << file_name;
+    LOG(0) << "Failed to load image from memory";
     return false;
   }
 
-  DLOG(0) << "Loaded " << file_name << ". number of color components: " << c;
+  DLOG(0) << "Loaded image from memory. Number of color components: " << c;
 
   uint8_t* converted_buffer = NULL;
   switch (c) {
@@ -188,8 +199,7 @@ bool Image::Load(const std::string& file_name) {
 
     case 2:
     default:
-      LOG(0) << "Image had unsuitable number of color components: " << c << " "
-             << file_name;
+      LOG(0) << "Image had unsuitable number of color components: " << c;
       buffer_.reset();
       return false;
   }

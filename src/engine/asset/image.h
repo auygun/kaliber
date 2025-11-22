@@ -21,7 +21,12 @@ class Image {
   bool Create(int width, int height);
   void Copy(const Image& other);
   bool CreateMip(const Image& other, bool normalize);
-  bool Load(const std::string& file_name);
+  bool Load(const std::string& file_name, bool flip_vertically = false);
+
+  // Loads image data from a memory buffer and decodes it.
+  bool LoadFromMemory(const uint8_t* buffer,
+                      size_t size,
+                      bool flip_vertically = false);
 
   // Packs channels from multiple source images into this image. Use this to
   // create packed textures (e.g. ORM maps) from separate files.

@@ -10,6 +10,7 @@ copy("teapot") {
     "Cube.gltf",
     "Cube_BaseColor.png",
     "Cube_MetallicRoughness.png",
+    "WaterBottle.glb",
     "alien-slime1-albedo.png",
     "alien-slime1-metallic.png",
     "alien-slime1-normal-dx.png",
