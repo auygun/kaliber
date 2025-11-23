@@ -1,5 +1,7 @@
 copy("teapot") {
   sources = [
+    "Avocado.glb",
+    "BarramundiFish.glb",
     "Cerberus_A.tga",
     "Cerberus_LP.mtl",
     "Cerberus_LP.obj",
