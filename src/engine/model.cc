@@ -573,24 +573,52 @@ void Model::CreateMesh(Renderer* renderer,
   CreateRenderResources(shader_id, std::move(mesh), images);
 }
 
+// Load images from disk for manual usage
 std::vector<std::unique_ptr<Image>> Model::LoadImages(
     const std::vector<std::string>& file_names) {
-  // Load images from disk for CreateMesh (manual usage)
+  // Input images: 0:Albedo, 1:Normal, 2:Metal 3:Rough, 4:Occlusion
+  // Output: 0:Albedo, 1:Normal, 2:Metal/Rough, 3:Occlusion
   std::vector<std::unique_ptr<Image>> images;
-  for (const auto& name : file_names) {
-    if (!name.empty()) {
-      auto img = std::make_unique<Image>();
-      if (img->Load(name))
-        images.push_back(std::move(img));
-      else
-        images.push_back(nullptr);
-    } else {
-      images.push_back(nullptr);
-    }
+
+  // --- Albedo ---
+  if (file_names.size() > 0 && !file_names[0].empty()) {
+    images.push_back(std::make_unique<Image>());
+    images.back()->Load(file_names[0]);
+  } else {
+    images.push_back(nullptr);
   }
 
-  while (images.size() < 4)
+  // --- Normal ---
+  if (file_names.size() > 1 && !file_names[1].empty()) {
+    images.push_back(std::make_unique<Image>());
+    images.back()->Load(file_names[1]);
+  } else {
     images.push_back(nullptr);
+  }
+
+  // --- Metal/Rough ---
+  auto metal_image = std::make_unique<Image>();
+  auto rough_image = std::make_unique<Image>();
+  if (file_names.size() > 2 && !file_names[2].empty())
+    metal_image->Load(file_names[2]);
+  if (file_names.size() > 3 && !file_names[3].empty())
+    rough_image->Load(file_names[3]);
+
+  if (metal_image->IsValid() || rough_image->IsValid()) {
+    images.push_back(std::make_unique<Image>());
+    static const Image empty_img;
+    images.back()->Pack(empty_img, *rough_image, *metal_image, {1, 1, 1, 1});
+  } else {
+    images.push_back(nullptr);
+  }
+
+  // --- Occlusion ---
+  if (file_names.size() > 4 && !file_names[4].empty()) {
+    images.push_back(std::make_unique<Image>());
+    images.back()->Load(file_names[4]);
+  } else {
+    images.push_back(nullptr);
+  }
 
   return images;
 }

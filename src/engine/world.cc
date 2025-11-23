@@ -160,7 +160,7 @@ void World::Create(Renderer* renderer) {
   {
     models_[2].LoadObj(renderer_, shader_id_, "teapot/Cerberus_LP.obj",
                        "teapot/Cerberus_LP.mtl",
-                       {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga", "",
+                       {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
                         "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
 
     for (size_t i = 0; i < 1; ++i) {
@@ -177,8 +177,7 @@ void World::Create(Renderer* renderer) {
 
     for (size_t i = 0; i < 1; ++i) {
       Matrix4f transform;
-      transform.Create(Quatf({0.0f, 0.0f, 0.0f}),
-                       Vector3f{0.0f, -0.5f, 0.0f});
+      transform.Create(Quatf({0.0f, 0.0f, 0.0f}), Vector3f{0.0f, -0.5f, 0.0f});
       transform.Multiply(10.0f);
       NewEntity(root_entity_, 3, transform);
       // parent = entity;
@@ -189,8 +188,7 @@ void World::Create(Renderer* renderer) {
 
     for (size_t i = 0; i < 1; ++i) {
       Matrix4f transform;
-      transform.Create(Quatf({0.0f, 0.0f, 0.0f}),
-                       Vector3f{0.0f, -0.5f, 0.2f});
+      transform.Create(Quatf({0.0f, 0.0f, 0.0f}), Vector3f{0.0f, -0.5f, 0.2f});
       transform.Multiply(10.0f);
       NewEntity(root_entity_, 4, transform);
       // parent = entity;
@@ -201,8 +199,7 @@ void World::Create(Renderer* renderer) {
 
     for (size_t i = 0; i < 1; ++i) {
       Matrix4f transform;
-      transform.Create(Quatf({0.0f, 0.0f, 0.0f}),
-                       Vector3f{0.0f, -0.5f, 0.7f});
+      transform.Create(Quatf({0.0f, 0.0f, 0.0f}), Vector3f{0.0f, -0.5f, 0.7f});
       transform.Multiply(10.0f);
       NewEntity(root_entity_, 5, transform);
       // parent = entity;
@@ -228,7 +225,7 @@ void World::Create(Renderer* renderer) {
       //  "teapot/steelplate1_metallic.png",
       //  "teapot/steelplate1_roughness.png"});
       {"teapot/alien-slime1-albedo.png", "teapot/alien-slime1-normal-dx.png",
-       "", "teapot/alien-slime1-metallic.png",
+       "teapot/alien-slime1-metallic.png",
        "teapot/alien-slime1-roughness.png"});
 
   for (size_t i = 0; i < 10; ++i) {
