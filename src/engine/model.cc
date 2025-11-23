@@ -486,6 +486,7 @@ bool Model::LoadGLTF(Renderer* renderer,
       // them
       if (found_albedo_idx == -1 && pbr.baseColorTexture.index != -1) {
         found_albedo_idx = model.textures[pbr.baseColorTexture.index].source;
+        cookie_cutter_mode_ = mat.alphaMode == "MASK";
       }
       if (found_metal_rough_idx == -1 &&
           pbr.metallicRoughnessTexture.index != -1) {
@@ -872,7 +873,7 @@ void Model::Draw(unsigned int instance_count, unsigned int fist_instance) {
     pc.has_albedo_map = has_albedo_map_;
     pc.has_normal_map = has_normal_map_;
     pc.has_orm_map = has_orm_map_;
-    pc.cookie_cutter = false;
+    pc.cookie_cutter = cookie_cutter_mode_;
     renderer_->UpdatePushConstants(sizeof(pc), &pc);
     renderer_->Draw(draw_cmd.num_indices, draw_cmd.index_offset, instance_count,
                     fist_instance);

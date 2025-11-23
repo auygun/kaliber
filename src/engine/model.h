@@ -69,6 +69,7 @@ class Model {
   bool has_albedo_map_ = false;
   bool has_normal_map_ = false;
   bool has_orm_map_ = false;
+  bool cookie_cutter_mode_ = false;
   std::vector<MaterialData> materials_;
 
   uint64_t materials_ubo_ = 0;
