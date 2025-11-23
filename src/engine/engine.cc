@@ -107,8 +107,8 @@ void Engine::Initialize() {
 
   input_system_.Init(world_.GetRegistry());
 
-  // systems_.push_back(std::make_unique<FlyCamera>());
-  systems_.push_back(std::make_unique<OrbitCamera>());
+  systems_.push_back(std::make_unique<FlyCamera>());
+  // systems_.push_back(std::make_unique<OrbitCamera>());
   systems_.back()->Init(world_);
 
   game_ = GameFactoryBase::CreateGame("");
@@ -119,8 +119,8 @@ void Engine::Initialize() {
 
   auto cam_entity = world_.CreateSceneNode("cam");
   auto& registry = world_.GetRegistry();
-  // registry.AddComponent(cam_entity, FlyCameraComponent{.speed = 4.0f});
-  registry.AddComponent(cam_entity, OrbitCameraComponent{.speed = 200.0f});
+  registry.AddComponent(cam_entity, FlyCameraComponent{.speed = 4.0f});
+  // registry.AddComponent(cam_entity, OrbitCameraComponent{.speed = 200.0f});
   registry.AddComponent(cam_entity, PrimaryCameraTag{});
   registry.AddComponent(
       cam_entity,
