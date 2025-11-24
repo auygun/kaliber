@@ -295,7 +295,8 @@ void World::Render(float frame_frac) {
   // Build the flat list used for building the BVH tree.
   std::vector<BVHBuildItem> flat_list;
   flat_list.reserve(world_bounds_pool_->GetSize());
-  for (auto [entity, world_bounds] : registry_.View<WorldBoundsComponent>()) {
+  for (auto [entity, world_bounds] :
+       registry_.View<const WorldBoundsComponent>()) {
     AABBf aabb;
     world_bounds.obb.GetBoundBox(aabb);
     flat_list.emplace_back(entity, aabb, world_bounds.obb.center);
@@ -350,8 +351,8 @@ void World::OnClick(const base::Vector2f& pos) {
 void World::UpdateRenderContext() {
   // Update the render context from the primary camera.
   for (auto [entity, _, camera, world_transform] :
-       registry_.View<PrimaryCameraTag, CameraComponent,
-                      WorldTransformComponent>()) {
+       registry_.View<PrimaryCameraTag, const CameraComponent,
+                      const WorldTransformComponent>()) {
     render_context_->proj.CreatePerspectiveProjection(
         camera.fov, (float)Engine::Get().GetScreenWidth(),
         (float)Engine::Get().GetScreenHeight(), camera.near_plane,
@@ -591,7 +592,7 @@ void World::UpdateWoldTransforms() {
 
 void World::UpdateWorldBounds() {
   for (auto [entity, model, world_transform, world_bounds, _] :
-       registry_.View<ModelComponent, WorldTransformComponent,
+       registry_.View<const ModelComponent, const WorldTransformComponent,
                       WorldBoundsComponent, WorldTransformDirtyTag>()) {
     world_bounds.obb = OBBf{world_transform.transform, model.extents};
   }
