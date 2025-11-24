@@ -10,6 +10,7 @@
 #include "base/random.h"
 #include "base/thread_pool.h"
 #include "base/timer.h"
+#include "engine/asset_manager.h"
 #include "engine/audio/audio_mixer.h"
 #include "engine/imgui_backend.h"
 #include "engine/input_system.h"
@@ -63,6 +64,8 @@ class Engine : public PlatformObserver {
   Platform* GetPlatform() { return platform_; }
 
   Renderer* GetRenderer() { return renderer_.get(); }
+
+  AssetManager& GetAssetManager() { return asset_manager_; }
 
   AudioMixer& GetAudioMixer() { return audio_mixer_; }
 
@@ -120,6 +123,8 @@ class Engine : public PlatformObserver {
   std::unique_ptr<TextureCompressor> tex_comp_alpha_;
 
   std::unique_ptr<Renderer> renderer_;
+
+  AssetManager asset_manager_;
 
   AudioMixer audio_mixer_;
 

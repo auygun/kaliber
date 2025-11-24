@@ -8,7 +8,6 @@
 #include "engine/components.h"
 #include "engine/debug_layer.h"
 #include "engine/ecs.h"
-#include "engine/model.h"
 #include "engine/renderer/renderer_types.h"
 
 namespace eng {
@@ -37,6 +36,8 @@ class World {
   // Detaches an entity from its current parent's child list and attaches to a
   // new parent.
   void SetParent(Entity entity, Entity new_parent);
+
+  uint64_t GetShaderId() const { return shader_id_; }
 
   Registry& GetRegistry() { return registry_; }
 
@@ -104,7 +105,6 @@ class World {
 
   eng::VertexDescription vertex_description_;
   uint64_t shader_id_;
-  std::vector<eng::Model> models_;
 
   base::Frustumf frustum_;
 

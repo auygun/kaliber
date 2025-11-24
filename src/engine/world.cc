@@ -8,6 +8,7 @@
 #include "base/log.h"
 #include "engine/asset/shader_source.h"
 #include "engine/engine.h"
+#include "engine/model.h"
 #include "engine/renderer/renderer.h"
 
 using namespace base;
@@ -110,133 +111,6 @@ void World::Create(Renderer* renderer) {
   OnHierarchyChanged(root_entity_, 0);
   registry_.AddComponent(root_entity_, WorldTransformDirtyTag{});
 
-  // // Create camera entity
-  // {
-  //   Entity entity = registry_.CreateEntity();
-  //   registry_.AddComponent(entity, SceneNodeComponent{.name{"cam"}});
-  //   registry_.AddComponent(entity, WorldTransformComponent{});
-  //   registry_.AddComponent(entity, LocalTransformComponent{});
-  //   registry_.AddComponent(entity, FlyCameraComponent{});
-  //   registry_.AddComponent(entity, PrimaryCameraTag{});
-  //   registry_.AddComponent(
-  //       entity, CameraComponent{
-  //                   .fov = 45.0f, .near_plane = 1.0f, .far_plane = 1000.0f});
-  //   SetParent(entity, NULL_ENTITY);
-  // }
-
-#if 1
-  Entity parent = root_entity_;
-  models_.resize(7);
-  {
-    // model.LoadObj(renderer_, shader_id_,
-    //                "teapot/viking_room.obj", "", {"teapot/viking_room.png"});
-    // models_[0].LoadObj(renderer_, shader_id_, "teapot/buddha.obj", "", {});
-    models_[0].LoadGLTF(renderer_, shader_id_, "teapot/Cube.gltf");
-    // model.LoadObj(renderer_, shader_id_,
-    //                "teapot/sportsCar.obj", "teapot/sportsCar.mtl", {});
-    // model.LoadObj(renderer_, shader_id_,
-    //                "teapot/Cerberus_LP.obj", "teapot/Cerberus_LP.mtl",
-    //                {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
-    //                 "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
-
-    for (size_t i = 0; i < 10; ++i) {
-      Matrix4f transform;
-      transform.Create(Quatf({0.0f, 0.1f, 0.0f}), {2.2f, 0, 0});
-      Entity entity = NewEntity(parent, 0, transform);
-      parent = entity;
-    }
-  }
-  {
-    models_[1].LoadObj(renderer_, shader_id_, "teapot/sportsCar.obj",
-                       "teapot/sportsCar.mtl", {});
-
-    for (size_t i = 0; i < 3; ++i) {
-      Matrix4f transform;
-      transform.Create(Quatf({0.0f, 0.1f, 0.0f}), {2.2f, 0, 0});
-      Entity entity = NewEntity(parent, 1, transform);
-      parent = entity;
-    }
-  }
-  {
-    models_[2].LoadObj(renderer_, shader_id_, "teapot/Cerberus_LP.obj",
-                       "teapot/Cerberus_LP.mtl",
-                       {"teapot/Cerberus_A.tga", "teapot/Cerberus_N.tga",
-                        "teapot/Cerberus_M.tga", "teapot/Cerberus_R.tga"});
-
-    for (size_t i = 0; i < 1; ++i) {
-      Matrix4f transform;
-      transform.Create(Quatf({0.0f, 0.0f, 0.0f}),
-                       Vector3f{200.0f, -100.0f, 0.0f});
-      transform.Multiply(0.05f);
-      NewEntity(root_entity_, 2, transform);
-      // parent = entity;
-    }
-  }
-  {
-    models_[3].LoadGLTF(renderer_, shader_id_, "teapot/WaterBottle.glb");
-
-    for (size_t i = 0; i < 1; ++i) {
-      Matrix4f transform;
-      transform.Create(Quatf({0.0f, 0.0f, 0.0f}), Vector3f{0.0f, -0.5f, 0.0f});
-      transform.Multiply(10.0f);
-      NewEntity(root_entity_, 3, transform);
-      // parent = entity;
-    }
-  }
-  {
-    models_[4].LoadGLTF(renderer_, shader_id_, "teapot/Avocado.glb");
-
-    for (size_t i = 0; i < 1; ++i) {
-      Matrix4f transform;
-      transform.Create(Quatf({0.0f, 0.0f, 0.0f}), Vector3f{0.0f, -0.5f, 0.2f});
-      transform.Multiply(10.0f);
-      NewEntity(root_entity_, 4, transform);
-      // parent = entity;
-    }
-  }
-  {
-    models_[5].LoadGLTF(renderer_, shader_id_, "teapot/BarramundiFish.glb");
-
-    for (size_t i = 0; i < 1; ++i) {
-      Matrix4f transform;
-      transform.Create(Quatf({0.0f, 0.0f, 0.0f}), Vector3f{0.0f, -0.5f, 0.7f});
-      transform.Multiply(10.0f);
-      NewEntity(root_entity_, 5, transform);
-      // parent = entity;
-    }
-  }
-  // #else
-
-  std::vector<Model::Vertex> vertices;
-  std::vector<uint32_t> indices;
-  CreateSphere(vertices, indices, 32, 32);
-  models_[6].CreateMesh(
-      renderer_, shader_id_, std::move(vertices), std::move(indices),
-      // {"teapot/iron-rusted4-basecolor.png", "teapot/iron-rusted4-normal.png",
-      //  "teapot/iron-rusted4-metalness.png",
-      //  "teapot/iron-rusted4-roughness.png"});
-      // {"teapot/greasy-pan-2-albedo.png", "teapot/greasy-pan-2-normal.png",
-      //  "teapot/greasy-pan-2-metal.png",
-      //  "teapot/greasy-pan-2-roughness.png"});
-      // {"teapot/grimy-metal-albedo.png", "teapot/grimy-metal-normal-dx.png",
-      //  "teapot/grimy-metal-metalness.png",
-      //  "teapot/grimy-metal-roughness.png"});
-      // {"teapot/steelplate1_albedo.png", "teapot/steelplate1_normal.png",
-      //  "teapot/steelplate1_metallic.png",
-      //  "teapot/steelplate1_roughness.png"});
-      {"teapot/alien-slime1-albedo.png", "teapot/alien-slime1-normal-dx.png",
-       "teapot/alien-slime1-metallic.png",
-       "teapot/alien-slime1-roughness.png"});
-
-  for (size_t i = 0; i < 10; ++i) {
-    Matrix4f transform;
-    transform.Create(Quatf({0.0f, 0.0f, 0.1f}), {2.2f, 0, 0});
-    Entity entity = NewEntity(parent, models_.size() - 1, transform);
-    parent = entity;
-  }
-
-#endif
-
   scene_data_ubo_ =
       renderer_->CreateBuffer(shader_id_, 1, 0, sizeof(SceneData));
   lights_ubo_ = renderer_->CreateBuffer(shader_id_, 1, 1, sizeof(lights_));
@@ -276,8 +150,10 @@ Entity World::NewEntity(Entity parent,
   registry_.AddComponent(entity, WorldTransformComponent{});
   registry_.AddComponent(entity, LocalTransformComponent{transform});
   registry_.AddComponent(entity, WorldBoundsComponent{});
+
+  Model* model = Engine::Get().GetAssetManager().GetModel(model_index);
   registry_.AddComponent(
-      entity, ModelComponent{model_index, models_[model_index].GetExtents()});
+      entity, ModelComponent{model_index, model->GetExtents()});
   SetParent(entity, parent);
   return entity;
 }
@@ -318,7 +194,8 @@ void World::Render(float frame_frac) {
 
     for (auto& draw_call : draw_list) {
       auto [model_index, first_instance, instance_count] = draw_call;
-      models_[model_index].Draw(instance_count, first_instance);
+      Model* model = Engine::Get().GetAssetManager().GetModel(model_index);
+      model->Draw(instance_count, first_instance);
     }
   }
 
