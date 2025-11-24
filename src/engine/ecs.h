@@ -4,6 +4,7 @@
 #include <deque>
 #include <limits>
 #include <memory>
+#include <type_traits>
 #include <typeindex>
 #include <unordered_map>
 #include <utility>
@@ -17,6 +18,7 @@ class Registry;
 
 using Entity = uint32_t;
 const Entity NULL_ENTITY = (uint32_t)-1;
+const Entity SINGLETON_ENTITY = 0;
 
 // Base interface to allow storing all ComponentPool<T> in a single map within
 // the Registry.
@@ -114,6 +116,12 @@ class ComponentPool : public ComponentPoolBase {
     dense_.clear();
     sparse_.clear();
     dense_to_entity_.clear();
+  }
+
+  // Gets the component for an entity (const version).
+  const T& Get(Entity entity) const {
+    DCHECK(Has(entity)) << "Entity does not have this component.";
+    return dense_[sparse_[entity]];
   }
 
   // Gets the component for an entity.
@@ -215,7 +223,9 @@ class Registry {
         pool->OnEntityDestroyed(entity);
     }
 
-    free_list_.push_back(entity);
+    // Do not recycle Entity 0 (Singleton Entity).
+    if (entity != SINGLETON_ENTITY)
+      free_list_.push_back(entity);
   }
 
   // Single generic AddComponent that handles both copy and move.
@@ -248,6 +258,14 @@ class Registry {
       pool->RemoveAll();
   }
 
+  // Gets the component of type T for an entity (const version).
+  template <typename T>
+  const T& GetComponent(Entity entity) const {
+    const auto pool = FindPool<T>();
+    DCHECK(pool);
+    return pool->Get(entity);
+  }
+
   // Gets the component of type T for an entity.
   template <typename T>
   T& GetComponent(Entity entity) {
@@ -258,15 +276,15 @@ class Registry {
 
   // Checks if an entity has a component of type T.
   template <typename T>
-  bool HasComponent(Entity entity) {
-    auto pool = FindPool<T>();
+  bool HasComponent(Entity entity) const {
+    const auto pool = FindPool<T>();
     return pool && pool->Has(entity);
   }
 
   // Checks if the component pool for type T is empty.
   // Returns true if the pool doesn't exist or if it has no components.
   template <typename T>
-  bool IsEmpty() {
+  bool IsEmpty() const {
     auto pool = FindPool<T>();
     return pool ? pool->IsEmpty() : true;
   }
@@ -289,10 +307,10 @@ class Registry {
     return static_cast<ComponentPool<RawType>*>(it->second.get());
   }
 
-  // Gets the ComponentPool for type T, but does not create it.
+  // Gets the ComponentPool for type T (const version).
   // Returns nullptr if the pool does not exist.
   template <typename T>
-  ComponentPool<std::decay_t<T>>* FindPool() {
+  const ComponentPool<std::decay_t<T>>* FindPool() const {
     using RawType = std::decay_t<T>;
     std::type_index type_index = std::type_index(typeid(RawType));
     auto it = component_pools_.find(type_index);
@@ -300,7 +318,15 @@ class Registry {
     if (it == component_pools_.end())
       return nullptr;
 
-    return static_cast<ComponentPool<RawType>*>(it->second.get());
+    return static_cast<const ComponentPool<RawType>*>(it->second.get());
+  }
+
+  // Gets the ComponentPool for type T (non-const version).
+  // Implementation: Calls const version and casts back to non-const.
+  template <typename T>
+  ComponentPool<std::decay_t<T>>* FindPool() {
+    return const_cast<ComponentPool<std::decay_t<T>>*>(
+        static_cast<const Registry*>(this)->FindPool<T>());
   }
 
   // Gets the type_index for all components attached to an entity
@@ -317,7 +343,7 @@ class Registry {
   T& GetSingletonComponent() {
     auto pool = GetPool<T>();
     if (pool->IsEmpty())
-      return pool->Emplace(0, T{});
+      return pool->Emplace(SINGLETON_ENTITY, T{});
     DCHECK(pool->GetDenseData().size() == 1);
     return pool->GetDenseData()[0];
   }
@@ -349,9 +375,13 @@ class Registry {
 template <typename... Components>
 class View {
  private:
+  // Helper to strip 'const' from component types to get the actual pool type.
+  template <typename T>
+  using PoolType = ComponentPool<std::remove_const_t<T>>;
+
   class Iterator {
    public:
-    Iterator(const std::tuple<ComponentPool<Components>*...>& pools,
+    Iterator(const std::tuple<PoolType<Components>*...>& pools,
              ComponentPoolBase* smallest_pool,
              std::vector<Entity>* dense_to_entity_map,
              size_t index)
@@ -422,7 +452,7 @@ class View {
     }
 
    private:
-    const std::tuple<ComponentPool<Components>*...>& pools_;
+    const std::tuple<PoolType<Components>*...>& pools_;
     ComponentPoolBase* smallest_pool_;
     std::vector<Entity>* dense_to_entity_map_;
     size_t index_;
@@ -430,8 +460,7 @@ class View {
 
  public:
   // Constructor that accepts a variadic pack of component pools.
-  View(ComponentPool<Components>*... pools)
-      : pools_(std::make_tuple(pools...)) {
+  View(PoolType<Components>*... pools) : pools_(std::make_tuple(pools...)) {
     // Find the smallest pool to drive the main iteration loop efficiently.
     size_t min_size = std::numeric_limits<size_t>::max();
     auto find_smallest = [&](auto* pool) {
@@ -454,7 +483,7 @@ class View {
   }
 
  private:
-  std::tuple<ComponentPool<Components>*...> pools_;
+  std::tuple<PoolType<Components>*...> pools_;
   ComponentPoolBase* smallest_pool_ = nullptr;
   std::vector<Entity>* dense_to_entity_map_ = nullptr;
 };
