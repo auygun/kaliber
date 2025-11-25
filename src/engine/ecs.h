@@ -281,6 +281,30 @@ class Registry {
     return pool && pool->Has(entity);
   }
 
+  // Gets the type_index for all components attached to an entity
+  std::vector<std::type_index> GetAllComponentTypes(Entity entity) {
+    if (entity >= entity_pools_.size())
+      return {};
+    std::vector<std::type_index> out_types;
+    for (auto* pool : entity_pools_[entity])
+      out_types.push_back(pool->GetTypeIndex());
+    return out_types;
+  }
+
+  // Retrieves the global singleton instance of component type T.
+  // Ideally used for "Service" or "Context" components
+  // - If the component does not exist, it is automatically created and attached
+  // to the reserved SINGLETON_ENTITY (Entity 0).
+  // - Assumes this component type is only ever used as a singleton.
+  template <typename T>
+  T& GetSingletonComponent() {
+    auto pool = GetPool<T>();
+    if (pool->IsEmpty())
+      return pool->Emplace(SINGLETON_ENTITY, T{});
+    DCHECK(pool->GetDenseData().size() == 1);
+    return pool->GetDenseData()[0];
+  }
+
   // Checks if the component pool for type T is empty.
   // Returns true if the pool doesn't exist or if it has no components.
   template <typename T>
@@ -327,25 +351,6 @@ class Registry {
   ComponentPool<std::decay_t<T>>* FindPool() {
     return const_cast<ComponentPool<std::decay_t<T>>*>(
         static_cast<const Registry*>(this)->FindPool<T>());
-  }
-
-  // Gets the type_index for all components attached to an entity
-  std::vector<std::type_index> GetAllComponentTypesForEntity(Entity entity) {
-    if (entity >= entity_pools_.size())
-      return {};
-    std::vector<std::type_index> out_types;
-    for (auto* pool : entity_pools_[entity])
-      out_types.push_back(pool->GetTypeIndex());
-    return out_types;
-  }
-
-  template <typename T>
-  T& GetSingletonComponent() {
-    auto pool = GetPool<T>();
-    if (pool->IsEmpty())
-      return pool->Emplace(SINGLETON_ENTITY, T{});
-    DCHECK(pool->GetDenseData().size() == 1);
-    return pool->GetDenseData()[0];
   }
 
   // Returns an iterable view for all entities with a specific set of
