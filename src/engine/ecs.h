@@ -274,6 +274,26 @@ class Registry {
     return pool->Get(entity);
   }
 
+  // Tries to get a component. Returns nullptr if the entity doesn't have it.
+  template <typename T>
+  T* TryGetComponent(Entity entity) {
+    auto pool = FindPool<T>();
+    if (pool && pool->Has(entity)) {
+      return &pool->Get(entity);
+    }
+    return nullptr;
+  }
+
+  // Tries to get a component (const version).
+  template <typename T>
+  const T* TryGetComponent(Entity entity) const {
+    const auto pool = FindPool<T>();
+    if (pool && pool->Has(entity)) {
+      return &pool->Get(entity);
+    }
+    return nullptr;
+  }
+
   // Checks if an entity has a component of type T.
   template <typename T>
   bool HasComponent(Entity entity) const {
