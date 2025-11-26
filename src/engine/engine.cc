@@ -142,7 +142,7 @@ void Engine::Update(float delta_time) {
   input_system_.Update(mouse_captured, keyboard_captured);
 
   // Scene graph update for objects moved by physics
-  world_.SceneGraphUpdate();
+  world_.UpdateSceneGraph();
 
   TaskRunner::GetThreadLocalTaskRunner()->RunTasks<Consumer::Single>();
 
@@ -154,7 +154,7 @@ void Engine::Update(float delta_time) {
   world_.Update(delta_time);
 
   // Scene graph update (Post-Logic finalize)
-  world_.SceneGraphUpdate();
+  world_.UpdateSceneGraph();
 
   fps_seconds_ += delta_time;
   if (fps_seconds_ >= 1) {

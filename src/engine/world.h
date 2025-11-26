@@ -21,7 +21,7 @@ class World {
 
   void Create(Renderer* renderer);
 
-  void SceneGraphUpdate();
+  void UpdateSceneGraph();
 
   void Render(float frame_frac);
 
@@ -32,6 +32,8 @@ class World {
   Entity CreateSceneNode(std::string_view name = "",
                          Entity parent = NULL_ENTITY,
                          const base::Matrix4f& transform = base::Matrix4f{1});
+
+  void AddModelComponent(Entity entity, uint32_t model_index);
 
   // Detaches an entity from its current parent's child list and attaches to a
   // new parent.
@@ -144,10 +146,6 @@ class World {
   uint64_t scene_dset_ = 0;
 
   Renderer* renderer_ = nullptr;
-
-  Entity NewEntity(Entity parent,
-                   uint32_t model_index,
-                   const base::Matrix4f& transform);
 
   void UpdateRenderContext();
 

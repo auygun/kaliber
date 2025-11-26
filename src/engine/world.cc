@@ -142,23 +142,16 @@ Entity World::CreateSceneNode(std::string_view name,
   return entity;
 }
 
-Entity World::NewEntity(Entity parent,
-                        uint32_t model_index,
-                        const Matrix4f& transform) {
-  Entity entity = registry_.CreateEntity();
-  registry_.AddComponent(entity, SceneNodeComponent{.name{"model"}});
-  registry_.AddComponent(entity, WorldTransformComponent{});
-  registry_.AddComponent(entity, LocalTransformComponent{transform});
-  registry_.AddComponent(entity, WorldBoundsComponent{});
-
+void World::AddModelComponent(Entity entity, uint32_t model_index) {
   Model* model = Engine::Get().GetAssetManager().GetModel(model_index);
-  registry_.AddComponent(
-      entity, ModelComponent{model_index, model->GetExtents()});
-  SetParent(entity, parent);
-  return entity;
+  if (model) {
+    registry_.AddComponent(entity,
+                           ModelComponent{model_index, model->GetExtents()});
+    registry_.AddComponent(entity, WorldBoundsComponent{});
+  }
 }
 
-void World::SceneGraphUpdate() {
+void World::UpdateSceneGraph() {
   UpdateWoldTransforms();
   UpdateWorldBounds();
   dirty_tag_pool_->RemoveAll();

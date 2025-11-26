@@ -62,7 +62,8 @@ class Teapot final : public eng::Game {
     for (size_t i = 0; i < 10; ++i) {
       Matrix4f transform;
       transform.Create(Quatf({0.0f, 0.1f, 0.0f}), {2.2f, 0, 0});
-      Entity entity = CreateEntity(world, parent, cube_id, transform);
+      Entity entity = world.CreateSceneNode("cube", parent, transform);
+      world.AddModelComponent(entity, cube_id);
       parent = entity;
     }
 
@@ -71,7 +72,8 @@ class Teapot final : public eng::Game {
     for (size_t i = 0; i < 3; ++i) {
       Matrix4f transform;
       transform.Create(Quatf({0.0f, 0.1f, 0.0f}), {2.2f, -2.0f, 0});
-      Entity entity = CreateEntity(world, parent, car_id, transform);
+      Entity entity = world.CreateSceneNode("car", parent, transform);
+      world.AddModelComponent(entity, car_id);
       parent = entity;
     }
 
@@ -81,7 +83,8 @@ class Teapot final : public eng::Game {
       transform.Create(Quatf({0.0f, 0.0f, 0.0f}),
                        Vector3f{200.0f, -100.0f, 0.0f});
       transform.Multiply(0.05f);
-      CreateEntity(world, root, gun_id, transform);
+      Entity entity = world.CreateSceneNode("gun", root, transform);
+      world.AddModelComponent(entity, gun_id);
     }
 
     // Instantiate Bottle
@@ -89,7 +92,8 @@ class Teapot final : public eng::Game {
       Matrix4f transform;
       transform.Create(Quatf({0.0f, 0.0f, 0.0f}), Vector3f{0.0f, -0.5f, 0.0f});
       transform.Multiply(10.0f);
-      CreateEntity(world, root, bottle_id, transform);
+      Entity entity = world.CreateSceneNode("bottle", root, transform);
+      world.AddModelComponent(entity, bottle_id);
     }
 
     // Instantiate Avocado
@@ -98,7 +102,8 @@ class Teapot final : public eng::Game {
       transform.Create(Quatf({0.0f, 0.0f, 0.0f}), Vector3f{0});
       transform.Multiply(30.0f);
       transform.Row(3) = Vector3f{0.0f, -3.0f, 3.0f};
-      CreateEntity(world, root, avocado_id, transform);
+      Entity entity = world.CreateSceneNode("avcd", root, transform);
+      world.AddModelComponent(entity, avocado_id);
     }
 
     // Instantiate Fish
@@ -106,7 +111,8 @@ class Teapot final : public eng::Game {
       Matrix4f transform;
       transform.Create(Quatf({0.0f, 0.0f, 0.0f}), Vector3f{0.0f, -0.5f, 0.7f});
       transform.Multiply(10.0f);
-      CreateEntity(world, root, fish_id, transform);
+      Entity entity = world.CreateSceneNode("fish", root, transform);
+      world.AddModelComponent(entity, fish_id);
     }
 
     // Instantiate Spheres
@@ -114,7 +120,8 @@ class Teapot final : public eng::Game {
     for (size_t i = 0; i < 10; ++i) {
       Matrix4f transform;
       transform.Create(Quatf({0.0f, 0.0f, 0.1f}), {2.2f, 0, 0});
-      Entity entity = CreateEntity(world, parent, sphere_id, transform);
+      Entity entity = world.CreateSceneNode("sphere", parent, transform);
+      world.AddModelComponent(entity, sphere_id);
       parent = entity;
     }
 
@@ -154,26 +161,6 @@ class Teapot final : public eng::Game {
 
  private:
   RenderContext* render_context_;
-
-  Entity CreateEntity(World& world,
-                      Entity parent,
-                      uint32_t model_index,
-                      const Matrix4f& transform) {
-    auto& registry = world.GetRegistry();
-    Entity entity = registry.CreateEntity();
-    registry.AddComponent(entity, SceneNodeComponent{.name{"model"}});
-    registry.AddComponent(entity, WorldTransformComponent{});
-    registry.AddComponent(entity, LocalTransformComponent{transform});
-    registry.AddComponent(entity, WorldBoundsComponent{});
-
-    Model* model = Engine::Get().GetAssetManager().GetModel(model_index);
-    registry.AddComponent(
-        entity,
-        ModelComponent{model_index, model ? model->GetExtents() : Vector3f{0}});
-
-    world.SetParent(entity, parent);
-    return entity;
-  }
 };
 
 GAME_FACTORIES{GAME_CLASS(Teapot)};
