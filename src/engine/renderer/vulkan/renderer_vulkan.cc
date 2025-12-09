@@ -1097,18 +1097,13 @@ void RendererVulkan::BeginRenderToTexture(uint64_t texture_id) {
                      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-  // Create a new framebuffer with the texture as the color attachment.
-  // Include a dummy depth attachment for compatibility. We don’t enable depth
-  // test/write in the offscreen graphics pipeline.
   if (it->second.frame_buffer_ == VK_NULL_HANDLE) {
-    std::array<VkImageView, 2> attachments_views = {
-        it->second.view, context_.GetDepthImageView()};
-
+    // Create a new framebuffer with the texture as the color attachment.
     VkFramebufferCreateInfo framebuffer_info{};
     framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebuffer_info.renderPass = offscreen_render_pass_;
-    framebuffer_info.attachmentCount = attachments_views.size();
-    framebuffer_info.pAttachments = attachments_views.data();
+    framebuffer_info.attachmentCount = 1;
+    framebuffer_info.pAttachments = &it->second.view;
     framebuffer_info.width = it->second.width;
     framebuffer_info.height = it->second.height;
     framebuffer_info.layers = 1;
@@ -1267,34 +1262,14 @@ bool RendererVulkan::InitializeInternal() {
   color_attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   color_attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-  // Render passes and graphics pipelines must be compatible if you intend to
-  // reuse the same pipeline across different render passes. Add a dummy depth
-  // attachment to the offscreen render pass with the same format and samples as
-  // in the onscreen one.
-  VkAttachmentDescription depth_attachment{};
-  depth_attachment.format = VK_FORMAT_D24_UNORM_S8_UINT;
-  depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-  depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  depth_attachment.finalLayout =
-      VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
   VkAttachmentReference color_ref{};
   color_ref.attachment = 0;
   color_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-  VkAttachmentReference depth_ref{};
-  depth_ref.attachment = 1;
-  depth_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
   VkSubpassDescription subpass{};
   subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
   subpass.colorAttachmentCount = 1;
   subpass.pColorAttachments = &color_ref;
-  subpass.pDepthStencilAttachment = &depth_ref;
 
   // This ensures that:
   // - Fragment shaders reading the offscreen image in a previous render pass
@@ -1306,16 +1281,12 @@ bool RendererVulkan::InitializeInternal() {
   dependency.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
   dependency.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
   dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
-                             VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-  std::array<VkAttachmentDescription, 2> attachments = {color_attachment,
-                                                        depth_attachment};
+  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
   VkRenderPassCreateInfo rp_info{};
   rp_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  rp_info.attachmentCount = attachments.size();
-  rp_info.pAttachments = attachments.data();
+  rp_info.attachmentCount = 1;
+  rp_info.pAttachments = &color_attachment;
   rp_info.subpassCount = 1;
   rp_info.pSubpasses = &subpass;
   rp_info.dependencyCount = 1;
@@ -2355,11 +2326,10 @@ void RendererVulkan::DrawListBegin() {
   render_pass_begin.renderArea.offset.x = 0;
   render_pass_begin.renderArea.offset.y = 0;
 
-  std::array<VkClearValue, 2> clear_values;
-  clear_values[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-  clear_values[1].depthStencil = {1.0f, 0};
-  render_pass_begin.clearValueCount = clear_values.size();
-  render_pass_begin.pClearValues = clear_values.data();
+  VkClearValue clear_value{};
+  clear_value.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+  render_pass_begin.clearValueCount = 1;
+  render_pass_begin.pClearValues = &clear_value;
 
   vkCmdBeginRenderPass(frames_[current_frame_].draw_command_buffer,
                        &render_pass_begin, VK_SUBPASS_CONTENTS_INLINE);
