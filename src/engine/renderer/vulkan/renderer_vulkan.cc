@@ -852,18 +852,16 @@ void RendererVulkan::BeginRenderToTexture(uint64_t texture_id) {
 
   vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
 
-  // Ensure onscreen pass's write to the Swapchain is complete before the next
-  // onscreen pass potentially loads it later.
-  // Ensure the GPU pipeline is ready for offscreen pass to start.
-  ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
-                     context_.GetSwapchainImage(),
-                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                     VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                     VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
-                         VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+  // Offscreen pass doesn't read/write the Swapchain Image so the execution is
+  // immediately allowed to proceed. We only need to ensure previous onscreen
+  // pass's write to the Swapchain is complete before the next onscreen pass
+  // potentially loads it later.
+  ImageMemoryBarrier(
+      frames_[current_frame_].draw_command_buffer, context_.GetSwapchainImage(),
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+      VK_ACCESS_NONE, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
   if (it->second.frame_buffer_ == VK_NULL_HANDLE) {
     // Create a new framebuffer with the texture as the color attachment.
