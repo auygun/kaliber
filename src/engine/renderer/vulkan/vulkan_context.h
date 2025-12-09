@@ -35,6 +35,8 @@ class VulkanContext {
 
   VkFramebuffer GetFramebuffer();
 
+  VkImage GetSwapchainImage();
+
   VkRenderPass GetRenderPass() { return window_.render_pass; }
 
   VkExtent2D GetSwapchainExtent() { return window_.swapchain_extent; }

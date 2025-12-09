@@ -826,6 +826,10 @@ VkFramebuffer VulkanContext::GetFramebuffer() {
   return window_.swapchain_image_resources[window_.current_buffer].frame_buffer;
 }
 
+VkImage VulkanContext::GetSwapchainImage() {
+  return window_.swapchain_image_resources[window_.current_buffer].image;
+}
+
 bool VulkanContext::CleanUpSwapChain(Window* window) {
   if (!window->swapchain)
     return true;

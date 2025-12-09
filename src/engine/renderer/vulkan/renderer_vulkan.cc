@@ -833,7 +833,7 @@ void RendererVulkan::SetUniform(uint64_t resource_id,
 
 void RendererVulkan::PrepareForDrawing() {
   context_.PrepareBuffers();
-  DrawListBegin();
+  DrawListBegin(onscreen_clear_render_pass_);
 }
 
 void RendererVulkan::Present() {
@@ -842,6 +842,8 @@ void RendererVulkan::Present() {
 }
 
 void RendererVulkan::BeginRenderToTexture(uint64_t texture_id) {
+  DCHECK(!rendering_offscreen_);
+
   auto it = textures_.find(texture_id);
   if (it == textures_.end()) {
     DLOG(0) << "Texture not found";
@@ -850,12 +852,17 @@ void RendererVulkan::BeginRenderToTexture(uint64_t texture_id) {
 
   vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
 
+  // Ensure onscreen pass's write to the Swapchain is complete before the next
+  // onscreen pass potentially loads it later.
+  // Ensure the GPU pipeline is ready for offscreen pass to start.
   ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
-                     std::get<0>(it->second.image),
-                     VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0,
+                     context_.GetSwapchainImage(),
+                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                      VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                     VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
+                         VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
   if (it->second.frame_buffer_ == VK_NULL_HANDLE) {
@@ -895,6 +902,7 @@ void RendererVulkan::BeginRenderToTexture(uint64_t texture_id) {
 
   vkCmdBeginRenderPass(frames_[current_frame_].draw_command_buffer,
                        &render_pass_begin, VK_SUBPASS_CONTENTS_INLINE);
+  rendering_offscreen_ = true;
 
   VkViewport viewport{};
   viewport.x = 0;
@@ -911,6 +919,7 @@ void RendererVulkan::BeginRenderToTexture(uint64_t texture_id) {
 
 void RendererVulkan::EndRenderToTexture(uint64_t texture_id) {
   vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
+  rendering_offscreen_ = false;
 
   auto it = textures_.find(texture_id);
   if (it == textures_.end()) {
@@ -918,6 +927,8 @@ void RendererVulkan::EndRenderToTexture(uint64_t texture_id) {
     return;
   }
 
+  // Ensure offscreen pass's write to texture is complete and transitions it to
+  // a readable state for the next onscreen pass's fragment shader.
   ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
                      std::get<0>(it->second.image),
                      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -927,7 +938,7 @@ void RendererVulkan::EndRenderToTexture(uint64_t texture_id) {
                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-  DrawListBegin();
+  DrawListBegin(onscreen_load_render_pass_);
 }
 
 bool RendererVulkan::InitializeInternal() {
@@ -1035,35 +1046,33 @@ bool RendererVulkan::InitializeInternal() {
     return false;
   }
 
-  // Create render pass for rendering into a texture.
-  VkAttachmentDescription color_attachment{};
-  color_attachment.format = context_.GetScreenFormat();
-  color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-  color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  color_attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  color_attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  // Render Passes
 
-  VkAttachmentReference color_ref{};
-  color_ref.attachment = 0;
-  color_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  // Shared Dependency for Pass Start Sync
+  // Waits for any previous writes or completion of external commands.
+  VkSubpassDependency dependency = {};
+  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  dependency.dstSubpass = 0;
+  dependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
+  // Shared References
+  VkAttachmentReference color_ref{0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
   VkSubpassDescription subpass{};
   subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
   subpass.colorAttachmentCount = 1;
   subpass.pColorAttachments = &color_ref;
 
-  // This ensures that:
-  // - Fragment shaders reading the offscreen image in a previous render pass
-  // (or frame) have finished.
-  // - Color attachment writes can safely begin in this render pass.
-  VkSubpassDependency dependency{};
-  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-  dependency.dstSubpass = 0;
-  dependency.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-  dependency.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  // Set common values for color attachment.
+  VkAttachmentDescription color_attachment{};
+  color_attachment.format = context_.GetScreenFormat();
+  color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  color_attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
   VkRenderPassCreateInfo rp_info{};
   rp_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -1074,6 +1083,29 @@ bool RendererVulkan::InitializeInternal() {
   rp_info.dependencyCount = 1;
   rp_info.pDependencies = &dependency;
 
+  // First onscreen render pass clears the screen.
+  color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  err = vkCreateRenderPass(device_, &rp_info, nullptr,
+                           &onscreen_clear_render_pass_);
+  if (err) {
+    DLOG(0) << "vkCreateRenderPass failed. Error: " << string_VkResult(err);
+    return false;
+  }
+
+  // Following onscreen render pass loads the result from the previous pass.
+  color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+  color_attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  err = vkCreateRenderPass(device_, &rp_info, nullptr,
+                           &onscreen_load_render_pass_);
+  if (err) {
+    DLOG(0) << "vkCreateRenderPass failed. Error: " << string_VkResult(err);
+    return false;
+  }
+
+  // Offscreen render pass clears the target texture.
+  color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   err = vkCreateRenderPass(device_, &rp_info, nullptr, &offscreen_render_pass_);
   if (err) {
     DLOG(0) << "vkCreateRenderPass failed. Error: " << string_VkResult(err);
@@ -2028,10 +2060,10 @@ bool RendererVulkan::CreatePipelineLayout(
   return ret;
 }
 
-void RendererVulkan::DrawListBegin() {
+void RendererVulkan::DrawListBegin(VkRenderPass render_pass) {
   VkRenderPassBeginInfo render_pass_begin{};
   render_pass_begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  render_pass_begin.renderPass = context_.GetRenderPass();
+  render_pass_begin.renderPass = render_pass;
   render_pass_begin.framebuffer = context_.GetFramebuffer();
   render_pass_begin.renderArea.extent.width = context_.GetWindowWidth();
   render_pass_begin.renderArea.extent.height = context_.GetWindowHeight();
@@ -2053,22 +2085,17 @@ void RendererVulkan::DrawListBegin() {
 void RendererVulkan::DrawListEnd() {
   vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
 
-  // To ensure proper synchronization, we must make sure rendering is done
-  // before:
-  //  - Some buffer is copied.
-  //  - Another render pass happens (since we may be done).
+  // Prepare the Swapchain Image for display.
+  ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
+                     context_.GetSwapchainImage(),
+                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                     VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                     VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, 0,
+                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                     VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
 #ifdef FORCE_FULL_BARRIER
   FullBarrier(true);
-#else
-  MemoryBarrier(
-      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
-          VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-      VK_PIPELINE_STAGE_VERTEX_INPUT_BIT | VK_PIPELINE_STAGE_TRANSFER_BIT,
-      VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT |
-          VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-      VK_ACCESS_INDEX_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT |
-          VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_SHADER_READ_BIT |
-          VK_ACCESS_SHADER_WRITE_BIT);
 #endif
 }
 

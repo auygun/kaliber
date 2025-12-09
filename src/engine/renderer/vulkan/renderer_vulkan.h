@@ -209,7 +209,10 @@ class RendererVulkan final : public Renderer {
 
   VkSampler sampler_ = VK_NULL_HANDLE;
 
+  VkRenderPass onscreen_clear_render_pass_ = VK_NULL_HANDLE;
+  VkRenderPass onscreen_load_render_pass_ = VK_NULL_HANDLE;
   VkRenderPass offscreen_render_pass_ = VK_NULL_HANDLE;
+  bool rendering_offscreen_ = false;
 
   std::thread setup_thread_;
   base::TaskRunner task_runner_;
@@ -287,7 +290,7 @@ class RendererVulkan final : public Renderer {
                             const std::vector<uint8_t>& spirv_vertex,
                             const std::vector<uint8_t>& spirv_fragment);
 
-  void DrawListBegin();
+  void DrawListBegin(VkRenderPass render_pass);
   void DrawListEnd();
 
   void SwapBuffers();
