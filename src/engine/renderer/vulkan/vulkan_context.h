@@ -35,8 +35,6 @@ class VulkanContext {
 
   VkFramebuffer GetFramebuffer();
 
-  VkImageView GetDepthImageView();
-
   VkRenderPass GetRenderPass() { return window_.render_pass; }
 
   VkExtent2D GetSwapchainExtent() { return window_.swapchain_extent; }
@@ -82,9 +80,6 @@ class VulkanContext {
     VkSurfaceKHR surface = VK_NULL_HANDLE;
     VkSwapchainKHR swapchain = VK_NULL_HANDLE;
     std::vector<SwapchainImageResources> swapchain_image_resources;
-    VkImage depth_image = VK_NULL_HANDLE;
-    VmaAllocation depth_image_allocation = VK_NULL_HANDLE;
-    VkImageView depth_view = VK_NULL_HANDLE;
     uint32_t current_buffer = 0;
     int width = 0;
     int height = 0;
@@ -164,8 +159,6 @@ class VulkanContext {
   bool CleanUpSwapChain(Window* window);
 
   bool UpdateSwapChain(Window* window);
-
-  bool CreateDepthImage(Window* window);
 
   bool CreateSemaphores();
 

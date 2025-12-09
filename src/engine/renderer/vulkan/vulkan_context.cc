@@ -826,22 +826,11 @@ VkFramebuffer VulkanContext::GetFramebuffer() {
   return window_.swapchain_image_resources[window_.current_buffer].frame_buffer;
 }
 
-VkImageView VulkanContext::GetDepthImageView() {
-  return window_.depth_view;
-}
-
 bool VulkanContext::CleanUpSwapChain(Window* window) {
   if (!window->swapchain)
     return true;
 
   vkDeviceWaitIdle(device_);
-
-  vkDestroyImageView(device_, window->depth_view, nullptr);
-  vmaDestroyImage(allocator_, window->depth_image,
-                  window->depth_image_allocation);
-  window->depth_view = VK_NULL_HANDLE;
-  window->depth_image = VK_NULL_HANDLE;
-  window->depth_image_allocation = VK_NULL_HANDLE;
 
   vkDestroySwapchainKHR(device_, window->swapchain, nullptr);
   window->swapchain = VK_NULL_HANDLE;
@@ -1118,49 +1107,17 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
     color_reference.attachment = 0;
     color_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    VkAttachmentDescription depth_attachment{};
-    depth_attachment.format = VK_FORMAT_D24_UNORM_S8_UINT;
-    depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    depth_attachment.finalLayout =
-        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentReference depth_reference{};
-    depth_reference.attachment = 1;
-    depth_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
     VkSubpassDescription subpass{};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &color_reference;
-    subpass.pDepthStencilAttachment = &depth_reference;
 
-    VkSubpassDependency dependency{};
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
-                              VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
-                              VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
-                               VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-    dependency.dependencyFlags = 0;
-
-    VkAttachmentDescription attachments[2] = {color_attachment,
-                                              depth_attachment};
     VkRenderPassCreateInfo render_pass_create_info{};
     render_pass_create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    render_pass_create_info.attachmentCount = std::size(attachments);
-    render_pass_create_info.pAttachments = attachments;
+    render_pass_create_info.attachmentCount = 1;
+    render_pass_create_info.pAttachments = &color_attachment;
     render_pass_create_info.subpassCount = 1;
     render_pass_create_info.pSubpasses = &subpass;
-    render_pass_create_info.dependencyCount = 1;
-    render_pass_create_info.pDependencies = &dependency;
 
     err = vkCreateRenderPass(device_, &render_pass_create_info, nullptr,
                              &window->render_pass);
@@ -1169,16 +1126,13 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
       return false;
     }
 
-    CreateDepthImage(window);
-
     for (uint32_t i = 0; i < swapchain_image_count_; i++) {
-      VkImageView attachments[2] = {window->swapchain_image_resources[i].view,
-                                    window->depth_view};
       VkFramebufferCreateInfo framebuffer_create_info{};
       framebuffer_create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
       framebuffer_create_info.renderPass = window->render_pass;
-      framebuffer_create_info.attachmentCount = std::size(attachments);
-      framebuffer_create_info.pAttachments = attachments;
+      framebuffer_create_info.attachmentCount = 1;
+      framebuffer_create_info.pAttachments =
+          &window->swapchain_image_resources[i].view;
       framebuffer_create_info.width = (uint32_t)window->width;
       framebuffer_create_info.height = (uint32_t)window->height;
       framebuffer_create_info.layers = 1;
@@ -1269,66 +1223,6 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
   // Reset current buffer.
   window->current_buffer = 0;
 
-  return true;
-}
-
-bool VulkanContext::CreateDepthImage(Window* window) {
-  VkImageCreateInfo depth_img_create_info{};
-  depth_img_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-  depth_img_create_info.imageType = VK_IMAGE_TYPE_2D;
-  // TODO: This format is not guaranteed to be supported; should query for a
-  // valid depth format.
-  depth_img_create_info.format = VK_FORMAT_D24_UNORM_S8_UINT;
-  depth_img_create_info.extent.width = window->swapchain_extent.width;
-  depth_img_create_info.extent.height = window->swapchain_extent.height;
-  depth_img_create_info.extent.depth = 1;
-  depth_img_create_info.mipLevels = 1;
-  depth_img_create_info.arrayLayers = 1;
-  depth_img_create_info.samples = VK_SAMPLE_COUNT_1_BIT;
-  depth_img_create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
-  depth_img_create_info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-  depth_img_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-  depth_img_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-  VmaAllocationCreateInfo alloc_info{};
-  alloc_info.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
-  alloc_info.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-
-  VkResult err = vmaCreateImage(allocator_, &depth_img_create_info, &alloc_info,
-                                &window->depth_image,
-                                &window->depth_image_allocation, nullptr);
-  if (err) {
-    DLOG(0) << "vmaCreateImage for depth buffer failed. Error: "
-            << string_VkResult(err);
-    return false;
-  }
-
-  VkImageViewCreateInfo image_view_create_info{};
-  image_view_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-  image_view_create_info.image = window->depth_image;
-  image_view_create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-  image_view_create_info.format = VK_FORMAT_D24_UNORM_S8_UINT;
-  image_view_create_info.components.r = VK_COMPONENT_SWIZZLE_R;
-  image_view_create_info.components.g = VK_COMPONENT_SWIZZLE_G;
-  image_view_create_info.components.b = VK_COMPONENT_SWIZZLE_B;
-  image_view_create_info.components.a = VK_COMPONENT_SWIZZLE_A;
-  image_view_create_info.subresourceRange.aspectMask =
-      VK_IMAGE_ASPECT_DEPTH_BIT;
-  image_view_create_info.subresourceRange.baseMipLevel = 0;
-  image_view_create_info.subresourceRange.levelCount = 1;
-  image_view_create_info.subresourceRange.baseArrayLayer = 0;
-  image_view_create_info.subresourceRange.layerCount = 1;
-
-  err = vkCreateImageView(device_, &image_view_create_info, nullptr,
-                          &window->depth_view);
-
-  if (err) {
-    // If view creation fails, we must destroy the image we just created.
-    vmaDestroyImage(allocator_, window->depth_image,
-                    window->depth_image_allocation);
-    DLOG(0) << "vkCreateImageView failed with error " << std::to_string(err);
-    return false;
-  }
   return true;
 }
 
