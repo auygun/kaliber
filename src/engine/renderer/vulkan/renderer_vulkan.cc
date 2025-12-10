@@ -852,15 +852,6 @@ void RendererVulkan::BeginRenderToTexture(uint64_t texture_id) {
 
   vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
 
-  // Ensure previous onscreen pass's write to the Swapchain is complete before
-  // the next onscreen pass potentially loads it later.
-  ImageMemoryBarrier(
-      frames_[current_frame_].draw_command_buffer, context_.GetSwapchainImage(),
-      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-      VK_ACCESS_NONE, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
   // Ensure previous onscreen pass's read from the texture is complete before
   // offscreen pass writes to it and preform the Read -> Write transition.
   ImageMemoryBarrier(
@@ -932,6 +923,15 @@ void RendererVulkan::EndRenderToTexture(uint64_t texture_id) {
     DLOG(0) << "Texture not found";
     return;
   }
+
+  // Ensure previous onscreen pass's write to the Swapchain is complete before
+  // the next onscreen pass potentially loads it later.
+  ImageMemoryBarrier(
+      frames_[current_frame_].draw_command_buffer, context_.GetSwapchainImage(),
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+      VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+      VK_ACCESS_NONE, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
   // Ensure offscreen pass's write to texture is complete and transitions it to
   // a readable state for the next onscreen pass's fragment shader.
@@ -2094,6 +2094,8 @@ void RendererVulkan::DrawListBegin(VkRenderPass render_pass) {
 }
 
 void RendererVulkan::DrawListEnd() {
+  DCHECK(!rendering_offscreen_);
+
   vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
 
   // Prepare the Swapchain Image for display.
