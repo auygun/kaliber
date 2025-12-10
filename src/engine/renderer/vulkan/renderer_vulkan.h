@@ -209,9 +209,9 @@ class RendererVulkan final : public Renderer {
 
   VkSampler sampler_ = VK_NULL_HANDLE;
 
-  VkRenderPass onscreen_clear_render_pass_ = VK_NULL_HANDLE;
-  VkRenderPass onscreen_load_render_pass_ = VK_NULL_HANDLE;
-  VkRenderPass offscreen_render_pass_ = VK_NULL_HANDLE;
+  VkRenderPass onscreen_clear_pass_ = VK_NULL_HANDLE;
+  VkRenderPass onscreen_load_pass_ = VK_NULL_HANDLE;
+  VkRenderPass offscreen_write_pass_ = VK_NULL_HANDLE;
   bool rendering_offscreen_ = false;
 
   std::thread setup_thread_;

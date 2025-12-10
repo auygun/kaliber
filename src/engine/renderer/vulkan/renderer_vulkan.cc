@@ -833,7 +833,7 @@ void RendererVulkan::SetUniform(uint64_t resource_id,
 
 void RendererVulkan::PrepareForDrawing() {
   context_.PrepareBuffers();
-  DrawListBegin(onscreen_clear_render_pass_);
+  DrawListBegin(onscreen_clear_pass_);
 }
 
 void RendererVulkan::Present() {
@@ -875,7 +875,7 @@ void RendererVulkan::BeginRenderToTexture(uint64_t texture_id) {
     // Create a new framebuffer with the texture as the color attachment.
     VkFramebufferCreateInfo framebuffer_info{};
     framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebuffer_info.renderPass = offscreen_render_pass_;
+    framebuffer_info.renderPass = offscreen_write_pass_;
     framebuffer_info.attachmentCount = 1;
     framebuffer_info.pAttachments = &it->second.view;
     framebuffer_info.width = it->second.width;
@@ -894,7 +894,7 @@ void RendererVulkan::BeginRenderToTexture(uint64_t texture_id) {
   // Begin the render pass with the new framebuffer
   VkRenderPassBeginInfo render_pass_begin{};
   render_pass_begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  render_pass_begin.renderPass = offscreen_render_pass_;
+  render_pass_begin.renderPass = offscreen_write_pass_;
   render_pass_begin.framebuffer = it->second.frame_buffer_;
   render_pass_begin.renderArea.extent.width = it->second.width;
   render_pass_begin.renderArea.extent.height = it->second.height;
@@ -944,7 +944,7 @@ void RendererVulkan::EndRenderToTexture(uint64_t texture_id) {
                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-  DrawListBegin(onscreen_load_render_pass_);
+  DrawListBegin(onscreen_load_pass_);
 }
 
 bool RendererVulkan::InitializeInternal() {
@@ -1094,8 +1094,7 @@ bool RendererVulkan::InitializeInternal() {
   // transition is performed implicitly at the start of the render pass.
   color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  err = vkCreateRenderPass(device_, &rp_info, nullptr,
-                           &onscreen_clear_render_pass_);
+  err = vkCreateRenderPass(device_, &rp_info, nullptr, &onscreen_clear_pass_);
   if (err) {
     DLOG(0) << "vkCreateRenderPass failed. Error: " << string_VkResult(err);
     return false;
@@ -1104,8 +1103,7 @@ bool RendererVulkan::InitializeInternal() {
   // Following onscreen render pass loads the result from the previous pass.
   color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
   color_attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  err = vkCreateRenderPass(device_, &rp_info, nullptr,
-                           &onscreen_load_render_pass_);
+  err = vkCreateRenderPass(device_, &rp_info, nullptr, &onscreen_load_pass_);
   if (err) {
     DLOG(0) << "vkCreateRenderPass failed. Error: " << string_VkResult(err);
     return false;
@@ -1119,7 +1117,7 @@ bool RendererVulkan::InitializeInternal() {
   // pipeline barrier is executed for layout transition before it begins.
   color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   color_attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  err = vkCreateRenderPass(device_, &rp_info, nullptr, &offscreen_render_pass_);
+  err = vkCreateRenderPass(device_, &rp_info, nullptr, &offscreen_write_pass_);
   if (err) {
     DLOG(0) << "vkCreateRenderPass failed. Error: " << string_VkResult(err);
     return false;
