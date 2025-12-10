@@ -49,7 +49,7 @@ devenv out\vs\all.sln
 ### Build targets:
 ***demo***: 2D demo game.  
 ***hello_word***: Hello world example.  
-***teapot***: 3D rendering demo with PBR material shader.
+***teapot***: 3D test (OpenGL only. No depth buffer support in Vulkan)
 |![image info](./assets/ref2.jpg)|![image info](./assets/ref3.jpg)|![image info](./assets/ref1.jpg)|
 |-|-|-|
 

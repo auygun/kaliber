@@ -1054,8 +1054,9 @@ bool RendererVulkan::InitializeInternal() {
 
   // Render Passes
 
-  // Shared Dependency for Pass Start Sync. Ensures all previous commands on the
-  // queue have completed their execution before the render pass starts.
+  // Shared dependency for onscreen pass start Sync. Ensures all previous
+  // commands on the queue have completed their execution before the render pass
+  // starts.
   VkSubpassDependency dependency = {};
   dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
   dependency.dstSubpass = 0;
@@ -1089,7 +1090,8 @@ bool RendererVulkan::InitializeInternal() {
   rp_info.dependencyCount = 1;
   rp_info.pDependencies = &dependency;
 
-  // First onscreen render pass clears the screen.
+  // First onscreen render pass clears the screen. The required layout
+  // transition is performed implicitly at the start of the render pass.
   color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   err = vkCreateRenderPass(device_, &rp_info, nullptr,
@@ -1109,9 +1111,14 @@ bool RendererVulkan::InitializeInternal() {
     return false;
   }
 
-  // Offscreen render pass clears the target texture.
+  // Offscreen pass doesn't care about the Swapchain Image and doesn't have to
+  // wait for any specific previous stage.
+  dependency.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+  dependency.srcAccessMask = VK_ACCESS_NONE;
+  // Offscreen render pass will cover the target texture and an external
+  // pipeline barrier is executed for layout transition before it begins.
   color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-  color_attachment.initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  color_attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   err = vkCreateRenderPass(device_, &rp_info, nullptr, &offscreen_render_pass_);
   if (err) {
     DLOG(0) << "vkCreateRenderPass failed. Error: " << string_VkResult(err);
