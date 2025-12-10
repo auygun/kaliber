@@ -852,15 +852,23 @@ void RendererVulkan::BeginRenderToTexture(uint64_t texture_id) {
 
   vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
 
-  // Offscreen pass doesn't read/write the Swapchain Image so the execution is
-  // immediately allowed to proceed. We only need to ensure previous onscreen
-  // pass's write to the Swapchain is complete before the next onscreen pass
-  // potentially loads it later.
+  // Ensure previous onscreen pass's write to the Swapchain is complete before
+  // the next onscreen pass potentially loads it later.
   ImageMemoryBarrier(
       frames_[current_frame_].draw_command_buffer, context_.GetSwapchainImage(),
       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
       VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
       VK_ACCESS_NONE, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+  // Ensure previous onscreen pass's read from the texture is complete before
+  // offscreen pass writes to it and preform the Read -> Write transition.
+  ImageMemoryBarrier(
+      frames_[current_frame_].draw_command_buffer,
+      std::get<0>(it->second.image), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_ACCESS_SHADER_READ_BIT,
+      VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
   if (it->second.frame_buffer_ == VK_NULL_HANDLE) {
@@ -1046,8 +1054,8 @@ bool RendererVulkan::InitializeInternal() {
 
   // Render Passes
 
-  // Shared Dependency for Pass Start Sync
-  // Waits for any previous writes or completion of external commands.
+  // Shared Dependency for Pass Start Sync. Ensures all previous commands on the
+  // queue have completed their execution before the render pass starts.
   VkSubpassDependency dependency = {};
   dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
   dependency.dstSubpass = 0;
@@ -1102,8 +1110,8 @@ bool RendererVulkan::InitializeInternal() {
   }
 
   // Offscreen render pass clears the target texture.
-  color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  color_attachment.initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   err = vkCreateRenderPass(device_, &rp_info, nullptr, &offscreen_render_pass_);
   if (err) {
     DLOG(0) << "vkCreateRenderPass failed. Error: " << string_VkResult(err);
