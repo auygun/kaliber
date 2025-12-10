@@ -1,6 +1,8 @@
 #include "engine/audio/audio_device_alsa.h"
 
+#include <array>
 #include <memory>
+#include <string_view>
 
 #include <alsa/asoundlib.h>
 
@@ -11,6 +13,18 @@
 using namespace base;
 
 namespace eng {
+
+namespace {
+
+constexpr auto kAudioDeviceNames = std::to_array<std::string_view>({
+    "default",
+    "pipewire",
+    "pulse",
+    "plughw:0,0",
+    "sysdefault",
+});
+
+}  // namespace
 
 AudioDeviceAlsa::AudioDeviceAlsa(AudioDevice::Delegate* delegate)
     : delegate_(delegate) {}
@@ -30,18 +44,30 @@ bool AudioDeviceAlsa::Initialize() {
     DLOG(0) << dn.device_name << " : " << dn.unique_id;
 #endif
 
-  LOG(0) << "Initializing audio.";
-
-  int err;
+  LOG(0) << "Initializing Alsa Audio";
 
   // Contains information about the hardware.
   snd_pcm_hw_params_t* hw_params;
 
-  // "default" is a virtual device mapped to real device exclusively opened by
-  // the sound server (Pulse, PipeWire), so we open the device via the "default"
-  // moniker.
-  if ((err = snd_pcm_open(&device_, "default", SND_PCM_STREAM_PLAYBACK, 0)) <
-      0) {
+  int err = 0;
+  for (const auto device_name : kAudioDeviceNames) {
+    int try_count = 0;
+    do {
+      if (try_count++ > 5)
+        break;
+      if (try_count > 1)
+        Sleep(1);
+      err = snd_pcm_open(&device_, device_name.data(), SND_PCM_STREAM_PLAYBACK,
+                         0);
+    } while (err == -EBUSY);
+
+    if (err >= 0) {
+      LOG(0) << "   device:        " << device_name;
+      break;
+    }
+  }
+
+  if (err < 0) {
     LOG(0) << "Cannot open audio device. Error: " << snd_strerror(err);
     return false;
   }
@@ -130,7 +156,6 @@ bool AudioDeviceAlsa::Initialize() {
     snd_pcm_hw_params_get_periods(hw_params, &periods, nullptr);
     snd_pcm_hw_params_get_buffer_size(hw_params, &buffer_size);
 
-    LOG(0) << "Alsa Audio:";
     LOG(0) << "  access:        " << snd_pcm_access_name(access);
     LOG(0) << "  format:        " << snd_pcm_format_name(format);
     LOG(0) << "  channel count: " << num_channels;
