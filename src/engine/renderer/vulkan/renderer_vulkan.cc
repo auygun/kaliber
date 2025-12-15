@@ -1360,6 +1360,10 @@ void RendererVulkan::Shutdown() {
 
     vkDestroySampler(device_, sampler_, nullptr);
 
+    for (auto const& [key, val] : render_pass_pool_) {
+      vkDestroyRenderPass(device_, val, nullptr);
+    }
+
     device_ = VK_NULL_HANDLE;
     frames_drawn_ = 0;
     frames_.clear();
@@ -1476,6 +1480,113 @@ void RendererVulkan::FreePendingResources(int frame) {
     frames_[frame].descriptor_sets_to_destroy.clear();
   }
 }
+
+VkRenderPass RendererVulkan::GetOrCreateRenderPass(VkFormat color_format,
+                                                   VkAttachmentLoadOp load_op,
+                                                   VkImageLayout initial_layout,
+                                                   VkImageLayout final_layout,
+                                                   VkFormat depth_format) {
+  RenderPassKey key{color_format, load_op, initial_layout, final_layout,
+                    depth_format};
+  auto it = render_pass_pool_.find(key);
+  if (it != render_pass_pool_.end())
+    return it->second;
+
+  // Define a minimal dependency that covers the entry into the pass. The
+  // synchronization across render passes is achieved by explicit barriers.
+  VkSubpassDependency dependency = {};
+  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  dependency.dstSubpass = 0;
+  dependency.srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  dependency.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+  VkAttachmentReference color_ref{0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+  VkSubpassDescription subpass{};
+  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subpass.colorAttachmentCount = 1;
+  subpass.pColorAttachments = &color_ref;
+
+  auto attachments = ALLOCA_SPAN(VkAttachmentDescription,
+                                 (depth_format != VK_FORMAT_UNDEFINED ? 2 : 1));
+
+  attachments[0] = {
+      .flags = 0,
+      .format = color_format,
+      .samples = VK_SAMPLE_COUNT_1_BIT,
+      .loadOp = load_op,
+      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+      .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+      .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+      .initialLayout = initial_layout,
+      .finalLayout = final_layout,
+  };
+
+  if (depth_format != VK_FORMAT_UNDEFINED) {
+    attachments[1] = {
+        .flags = 0,
+        .format = depth_format,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    };
+
+    auto* depth_ref = ALLOCA_SINGLE(VkAttachmentReference);
+    *depth_ref = {
+        depth_ref->attachment = 1,
+        depth_ref->layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    };
+    subpass.pDepthStencilAttachment = depth_ref;
+  }
+
+  VkRenderPassCreateInfo rp_info{};
+  rp_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+  rp_info.attachmentCount = attachments.size();
+  rp_info.pAttachments = attachments.data();
+  rp_info.subpassCount = 1;
+  rp_info.pSubpasses = &subpass;
+  rp_info.dependencyCount = 1;
+  rp_info.pDependencies = &dependency;
+
+  VkRenderPass render_pass;
+  VkResult err = vkCreateRenderPass(device_, &rp_info, nullptr, &render_pass);
+  if (err) {
+    DLOG(0) << "vkCreateRenderPass failed. Error: " << string_VkResult(err);
+    return VK_NULL_HANDLE;
+  }
+
+  render_pass_pool_[key] = render_pass;
+  return render_pass;
+}
+
+#if 0
+void RendererVulkan::ActivateRenderPass(uint64_t resource_id) {
+  auto it = render_passes_.find(resource_id);
+  if (it == render_passes_.end()) {
+    DLOG(0) << "Render pass not found";
+    return;
+  }
+  VkRenderPassBeginInfo render_pass_begin{};
+  render_pass_begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  render_pass_begin.renderPass = it->second;
+  render_pass_begin.framebuffer = context_.GetFramebuffer();
+  render_pass_begin.renderArea.extent.width = context_.GetWindowWidth();
+  render_pass_begin.renderArea.extent.height = context_.GetWindowHeight();
+  render_pass_begin.renderArea.offset.x = 0;
+  render_pass_begin.renderArea.offset.y = 0;
+  VkClearValue clear_value{};
+  clear_value.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+  render_pass_begin.clearValueCount = 1;
+  render_pass_begin.pClearValues = &clear_value;
+  vkCmdBeginRenderPass(frames_[current_frame_].draw_command_buffer,
+                       &render_pass_begin, VK_SUBPASS_CONTENTS_INLINE);
+}
+#endif
 
 void RendererVulkan::MemoryBarrier(VkPipelineStageFlags src_stage_mask,
                                    VkPipelineStageFlags dst_stage_mask,

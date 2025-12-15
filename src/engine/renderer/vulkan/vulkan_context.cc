@@ -346,6 +346,21 @@ bool VulkanContext::InitializeExtensions() {
   return true;
 }
 
+VkFormat VulkanContext::FindDepthFormat() {
+  const std::vector<VkFormat> candidates = {
+      VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT,
+      VK_FORMAT_D24_UNORM_S8_UINT};
+  for (VkFormat format : candidates) {
+    VkFormatProperties props;
+    vkGetPhysicalDeviceFormatProperties(gpu_, format, &props);
+    if (props.optimalTilingFeatures &
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+      return format;
+    }
+  }
+  return VK_FORMAT_UNDEFINED;
+}
+
 bool VulkanContext::CreatePhysicalDevice() {
   if (use_validation_layers_) {
     CreateValidationLayers();
@@ -547,6 +562,12 @@ bool VulkanContext::CreatePhysicalDevice() {
   queue_props_.resize(queue_family_count_);
   vkGetPhysicalDeviceQueueFamilyProperties(gpu_, &queue_family_count_,
                                            queue_props_.data());
+
+  depth_format_ = FindDepthFormat();
+  if (depth_format_ == VK_FORMAT_UNDEFINED) {
+    DLOG(0) << "Failed to find a suitable depth format.";
+    return false;
+  }
 
   // Query fine-grained feature support for this device.
   // If app has specific feature requirements it should check supported features

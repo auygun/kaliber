@@ -223,6 +223,23 @@ class RendererVulkan final : public Renderer {
     VmaAllocationInfo alloc_info;
   };
 
+  struct RenderPassKey {
+    VkFormat color_format;
+    VkAttachmentLoadOp load_op;
+    VkImageLayout initial_layout;
+    VkImageLayout final_layout;
+    VkFormat depth_format;
+
+    bool operator<(const RenderPassKey& other) const {
+      return std::tie(color_format, load_op, initial_layout, final_layout,
+                      depth_format) <
+             std::tie(other.color_format, other.load_op, other.initial_layout,
+                      other.final_layout, other.depth_format);
+    }
+  };
+
+  std::map<RenderPassKey, VkRenderPass> render_pass_pool_;
+
   std::unordered_map<uint64_t, GeometryVulkan> geometries_;
   std::unordered_map<uint64_t, ShaderVulkan> shaders_;
   std::unordered_map<uint64_t, TextureVulkan> textures_;
@@ -268,6 +285,12 @@ class RendererVulkan final : public Renderer {
   void FlushSetupBuffer();
 
   void FreePendingResources(int frame);
+
+  VkRenderPass GetOrCreateRenderPass(VkFormat color_format,
+                                     VkAttachmentLoadOp load_op,
+                                     VkImageLayout initial_layout,
+                                     VkImageLayout final_layout,
+                                     VkFormat depth_format);
 
   void MemoryBarrier(VkPipelineStageFlags src_stage_mask,
                      VkPipelineStageFlags dst_stage_mask,

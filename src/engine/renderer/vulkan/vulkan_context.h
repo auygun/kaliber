@@ -59,6 +59,8 @@ class VulkanContext {
 
   VkFormat GetScreenFormat() const { return format_; }
 
+  VkFormat GetDepthFormat() const { return depth_format_; }
+
   VkPhysicalDeviceProperties GetDeviceProperties() const { return gpu_props_; }
 
   VkPhysicalDeviceFeatures GetDeviceFeatures() const {
@@ -111,6 +113,7 @@ class VulkanContext {
 
   VkColorSpaceKHR color_space_;
   VkFormat format_;
+  VkFormat depth_format_;
 
   uint32_t frame_index_ = 0;
 
@@ -143,6 +146,7 @@ class VulkanContext {
 
   bool CreateValidationLayers();
   bool InitializeExtensions();
+  VkFormat FindDepthFormat();
 
   VkBool32 CheckLayers(uint32_t check_count,
                        const char** check_names,
