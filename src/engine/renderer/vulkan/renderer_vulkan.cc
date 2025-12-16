@@ -498,8 +498,9 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
         it->second.image, it->second.view, vk_format, width, height,
         num_mip_levels,
         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+            // TODO: do this for offscreen render target only.
             (num_mip_levels == 1 ? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT : 0),
-        VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
+        VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, 0);
     old_layout = VK_IMAGE_LAYOUT_UNDEFINED;
     it->second.width = width;
     it->second.height = height;
@@ -1834,7 +1835,8 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
                                    int height,
                                    int mip_levels,
                                    VkImageUsageFlags usage,
-                                   VmaMemoryUsage mapping) {
+                                   VmaMemoryUsage mapping,
+                                   VkMemoryPropertyFlags mapping_flags) {
   VkImageCreateInfo image_create_info{};
   image_create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
   image_create_info.imageType = VK_IMAGE_TYPE_2D;
@@ -1852,6 +1854,7 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
 
   VmaAllocationCreateInfo alloc_info{};
   alloc_info.usage = mapping;
+  alloc_info.requiredFlags = mapping_flags;
 
   VkImage vk_image;
   VmaAllocation allocation = nullptr;
@@ -1876,8 +1879,12 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
   image_view_create_info.subresourceRange.levelCount = mip_levels;
   image_view_create_info.subresourceRange.baseArrayLayer = 0;
   image_view_create_info.subresourceRange.layerCount = 1;
-  image_view_create_info.subresourceRange.aspectMask =
-      VK_IMAGE_ASPECT_COLOR_BIT;
+  if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
+    image_view_create_info.subresourceRange.aspectMask =
+        VK_IMAGE_ASPECT_DEPTH_BIT;
+  else
+    image_view_create_info.subresourceRange.aspectMask =
+        VK_IMAGE_ASPECT_COLOR_BIT;
 
   err = vkCreateImageView(device_, &image_view_create_info, nullptr, &view);
 

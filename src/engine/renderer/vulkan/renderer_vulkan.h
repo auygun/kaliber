@@ -306,7 +306,8 @@ class RendererVulkan final : public Renderer {
                      int height,
                      int mip_levels,
                      VkImageUsageFlags usage,
-                     VmaMemoryUsage mapping);
+                     VmaMemoryUsage mapping,
+                     VkMemoryPropertyFlags mapping_flags);
   void FreeImage(Buffer<VkImage> image,
                  VkImageView image_view,
                  VkFramebuffer frame_buffer);
