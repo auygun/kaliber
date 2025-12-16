@@ -1054,9 +1054,8 @@ bool RendererVulkan::InitializeInternal() {
 
   // Render Passes
 
-  // Shared dependency for onscreen pass start Sync. Ensures all previous
-  // commands on the queue have completed their execution before the render pass
-  // starts.
+  // Define a minimal dependency that covers the entry into the pass. The
+  // synchronization across render passes is achieved by explicit barriers.
   VkSubpassDependency dependency = {};
   dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
   dependency.dstSubpass = 0;
@@ -1109,10 +1108,6 @@ bool RendererVulkan::InitializeInternal() {
     return false;
   }
 
-  // Offscreen pass doesn't care about the Swapchain Image and doesn't have to
-  // wait for any specific previous stage.
-  dependency.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-  dependency.srcAccessMask = VK_ACCESS_NONE;
   // Offscreen render pass will cover the target texture and an external
   // pipeline barrier is executed for layout transition before it begins.
   color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
