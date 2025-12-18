@@ -329,8 +329,8 @@ void RendererVulkan::ResetScissor() {
 }
 
 uint64_t RendererVulkan::CreateGeometry(std::unique_ptr<Mesh> mesh) {
-  auto id = CreateGeometry(mesh->primitive(), mesh->vertex_description(),
-                           mesh->index_description());
+  auto id =
+      CreateGeometry(mesh->vertex_description(), mesh->index_description());
   if (id != kInvalidId)
     UpdateGeometry(id, mesh->num_vertices(), mesh->GetVertices(),
                    mesh->num_indices(), mesh->GetIndices());
@@ -339,8 +339,7 @@ uint64_t RendererVulkan::CreateGeometry(std::unique_ptr<Mesh> mesh) {
   return id;
 }
 
-uint64_t RendererVulkan::CreateGeometry(Primitive primitive,
-                                        VertexDescription vertex_description,
+uint64_t RendererVulkan::CreateGeometry(VertexDescription vertex_description,
                                         DataType index_description) {
   auto& geometry = geometries_[++last_resource_id_] = {};
   geometry.vertex_size = GetVertexSize(vertex_description);

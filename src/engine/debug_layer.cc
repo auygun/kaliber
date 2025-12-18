@@ -38,8 +38,7 @@ void DebugLayer::CreateRenderResources(Renderer* renderer) {
     LOG(0) << "Could not create debug shader.";
   }
 
-  geometry_ = renderer_->CreateGeometry(kPrimitive_Lines, vertex_description_,
-                                        kDataType_Invalid);
+  geometry_ = renderer_->CreateGeometry(vertex_description_, kDataType_Invalid);
 }
 
 void DebugLayer::Shutdown() {

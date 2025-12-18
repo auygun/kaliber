@@ -313,8 +313,8 @@ void ImguiBackend::UpdateGeometries() {
     if ((int)geometries_.size() <= n)
       geometries_.emplace_back((uint64_t)-1);
     if (geometries_[n] == (uint64_t)-1)
-      geometries_[n] = renderer_->CreateGeometry(
-          kPrimitive_Triangles, vertex_description_, kDataType_UShort);
+      geometries_[n] =
+          renderer_->CreateGeometry(vertex_description_, kDataType_UShort);
     renderer_->UpdateGeometry(
         geometries_[n], cmd_list->VtxBuffer.Size, cmd_list->VtxBuffer.Data,
         cmd_list->IdxBuffer.Size, cmd_list->IdxBuffer.Data);

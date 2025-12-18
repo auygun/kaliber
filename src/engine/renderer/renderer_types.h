@@ -9,12 +9,7 @@ namespace eng {
 
 enum class ImageFormat { kRGBA32, kDXT1, kDXT5, kETC1, kATC, kATCIA };
 
-enum class CullMode {
-  kInvalid = -1,
-  kNone,
-  kBack,
-  kMax
-};
+enum class CullMode { kInvalid = -1, kNone, kBack, kMax };
 
 enum Primitive {
   kPrimitive_Invalid = -1,
