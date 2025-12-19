@@ -487,8 +487,7 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
       (it->second.width != width || it->second.height != height ||
        it->second.num_mip_levels != num_mip_levels)) {
     // Size mismatch. Recreate the texture.
-    FreeImage(std::move(it->second.image), it->second.view,
-              it->second.frame_buffer_);
+    FreeImage(std::move(it->second.image), it->second.view);
     it->second = {};
   }
 
@@ -535,8 +534,7 @@ void RendererVulkan::DestroyTexture(uint64_t resource_id) {
   if (it == textures_.end())
     return;
 
-  FreeImage(std::move(it->second.image), it->second.view,
-            it->second.frame_buffer_);
+  FreeImage(std::move(it->second.image), it->second.view);
   textures_.erase(it);
 }
 
@@ -1097,31 +1095,31 @@ void RendererVulkan::BeginRenderToTexture(uint64_t texture_id) {
                      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-  if (it->second.frame_buffer_ == VK_NULL_HANDLE) {
-    // Create a new framebuffer with the texture as the color attachment.
-    VkFramebufferCreateInfo framebuffer_info{};
-    framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebuffer_info.renderPass = offscreen_render_pass_;
-    framebuffer_info.attachmentCount = 1;
-    framebuffer_info.pAttachments = &it->second.view;
-    framebuffer_info.width = it->second.width;
-    framebuffer_info.height = it->second.height;
-    framebuffer_info.layers = 1;
+  // if (it->second.frame_buffer_ == VK_NULL_HANDLE) {
+  //   // Create a new framebuffer with the texture as the color attachment.
+  //   VkFramebufferCreateInfo framebuffer_info{};
+  //   framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+  //   framebuffer_info.renderPass = offscreen_render_pass_;
+  //   framebuffer_info.attachmentCount = 1;
+  //   framebuffer_info.pAttachments = &it->second.view;
+  //   framebuffer_info.width = it->second.width;
+  //   framebuffer_info.height = it->second.height;
+  //   framebuffer_info.layers = 1;
 
-    VkResult err = vkCreateFramebuffer(device_, &framebuffer_info, nullptr,
-                                       &it->second.frame_buffer_);
-    if (err) {
-      DLOG(0) << "vkCreateFramebuffer failed with error "
-              << string_VkResult(err);
-      return;
-    }
-  }
+  //   VkResult err = vkCreateFramebuffer(device_, &framebuffer_info, nullptr,
+  //                                      &it->second.frame_buffer_);
+  //   if (err) {
+  //     DLOG(0) << "vkCreateFramebuffer failed with error "
+  //             << string_VkResult(err);
+  //     return;
+  //   }
+  // }
 
   // Begin the render pass with the new framebuffer
   VkRenderPassBeginInfo render_pass_begin{};
   render_pass_begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   render_pass_begin.renderPass = offscreen_render_pass_;
-  render_pass_begin.framebuffer = it->second.frame_buffer_;
+  // render_pass_begin.framebuffer = it->second.frame_buffer_;
   render_pass_begin.renderArea.extent.width = it->second.width;
   render_pass_begin.renderArea.extent.height = it->second.height;
   render_pass_begin.renderArea.offset.x = 0;
@@ -1453,12 +1451,10 @@ void RendererVulkan::FreePendingResources(int frame) {
 
   if (!frames_[frame].images_to_destroy.empty()) {
     for (auto& image : frames_[frame].images_to_destroy) {
-      auto [buffer, view, frame_buffer] = image;
+      auto [buffer, view] = image;
       vkDestroyImageView(device_, view, nullptr);
       vmaDestroyImage(context_.GetAllocator(), std::get<0>(buffer),
                       std::get<1>(buffer));
-      if (frame_buffer != VK_NULL_HANDLE)
-        vkDestroyFramebuffer(device_, frame_buffer, nullptr);
     }
     frames_[frame].images_to_destroy.clear();
   }
@@ -1467,6 +1463,12 @@ void RendererVulkan::FreePendingResources(int frame) {
     for (auto& buffer : frames_[frame].buffers_to_destroy)
       vmaDestroyBuffer(context_.GetAllocator(), std::get<0>(buffer),
                        std::get<1>(buffer));
+    frames_[frame].buffers_to_destroy.clear();
+  }
+
+  if (!frames_[frame].frame_buffers_to_destroy.empty()) {
+    for (auto frame_buffer : frames_[frame].frame_buffers_to_destroy)
+      vkDestroyFramebuffer(device_, frame_buffer, nullptr);
     frames_[frame].buffers_to_destroy.clear();
   }
 
@@ -1938,6 +1940,10 @@ void RendererVulkan::BufferMemoryBarrier(VkBuffer buffer,
                        &buffer_mem_barrier, 0, nullptr);
 }
 
+void RendererVulkan::FreeFrameBuffer(VkFramebuffer frame_buffer) {
+  frames_[current_frame_].frame_buffers_to_destroy.push_back(frame_buffer);
+}
+
 bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
                                    VkImageView& view,
                                    VkFormat format,
@@ -2008,11 +2014,9 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
   return true;
 }
 
-void RendererVulkan::FreeImage(Buffer<VkImage> image,
-                               VkImageView image_view,
-                               VkFramebuffer frame_buffer) {
+void RendererVulkan::FreeImage(Buffer<VkImage> image, VkImageView image_view) {
   frames_[current_frame_].images_to_destroy.push_back(
-      std::make_tuple(std::move(image), image_view, frame_buffer));
+      std::make_tuple(std::move(image), image_view));
 }
 
 void RendererVulkan::CopyImage(VkImage image,

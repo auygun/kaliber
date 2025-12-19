@@ -138,8 +138,8 @@ class RendererVulkan final : public Renderer {
 
   // Containers to keep information of resources to be destroyed.
   using BufferDeathRow = std::vector<Buffer<VkBuffer>>;
-  using ImageDeathRow =
-      std::vector<std::tuple<Buffer<VkImage>, VkImageView, VkFramebuffer>>;
+  using FrameBufferDeathRow = std::vector<VkFramebuffer>;
+  using ImageDeathRow = std::vector<std::tuple<Buffer<VkImage>, VkImageView>>;
   using DescriptorSetDeathRow =
       std::vector<std::tuple<VkDescriptorSet,
                              DescriptorPoolKey,
@@ -182,7 +182,6 @@ class RendererVulkan final : public Renderer {
     int width = 0;
     int height = 0;
     int num_mip_levels = 0;
-    VkFramebuffer frame_buffer_ = VK_NULL_HANDLE;
   };
 
   struct BufferVulkan {
@@ -210,6 +209,7 @@ class RendererVulkan final : public Renderer {
     VkCommandBuffer draw_command_buffer = VK_NULL_HANDLE;
 
     BufferDeathRow buffers_to_destroy;
+    FrameBufferDeathRow frame_buffers_to_destroy;
     ImageDeathRow images_to_destroy;
     DescriptorSetDeathRow descriptor_sets_to_destroy;
     PipelineDeathRow pipelines_to_destroy;
@@ -321,6 +321,8 @@ class RendererVulkan final : public Renderer {
                            VkAccessFlags src_access,
                            VkAccessFlags dst_access);
 
+  void FreeFrameBuffer(VkFramebuffer frame_buffer);
+
   bool AllocateImage(Buffer<VkImage>& image,
                      VkImageView& view,
                      VkFormat format,
@@ -330,9 +332,7 @@ class RendererVulkan final : public Renderer {
                      VkImageUsageFlags usage,
                      VmaMemoryUsage mapping,
                      VkMemoryPropertyFlags mapping_flags);
-  void FreeImage(Buffer<VkImage> image,
-                 VkImageView image_view,
-                 VkFramebuffer frame_buffer);
+  void FreeImage(Buffer<VkImage> image, VkImageView image_view);
   void CopyImage(VkImage image,
                  VkFormat format,
                  const uint8_t* data,
