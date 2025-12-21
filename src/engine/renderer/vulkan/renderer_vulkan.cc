@@ -1078,6 +1078,64 @@ void RendererVulkan::Present() {
   SwapBuffers();
 }
 
+uint64_t RendererVulkan::CreateRenderTarget(ImageFormat format,
+                                            int width,
+                                            int height,
+                                            bool depth) {
+  uint64_t color_texture_id = ++last_resource_id_;
+  auto& color_texture = textures_[color_texture_id] = {};
+
+  auto attachments = ALLOCA_SPAN(VkImageView, (depth ? 2 : 1));
+
+  VkFormat vk_format = GetImageFormat(format);
+  AllocateImage(color_texture.image, color_texture.view, vk_format, width,
+                height, 1,
+                VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+                    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+                VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, 0);
+
+  attachments[0] = color_texture.view;
+
+  uint64_t depth_texture_id = 0;
+  if (depth) {
+    depth_texture_id = ++last_resource_id_;
+    auto& depth_texture = textures_[depth_texture_id] = {};
+
+    AllocateImage(depth_texture.image, depth_texture.view,
+                  VK_FORMAT_D24_UNORM_S8_UINT, width, height, 1,
+                  VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                  VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    attachments[1] = depth_texture.view;
+  }
+
+  VkFramebufferCreateInfo framebuffer_info{};
+  framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+  framebuffer_info.renderPass = context_.GetRenderPass();  // TODO
+  framebuffer_info.attachmentCount = attachments.size();
+  framebuffer_info.pAttachments = attachments.data();
+  framebuffer_info.width = (uint32_t)width;
+  framebuffer_info.height = (uint32_t)height;
+  framebuffer_info.layers = 1;
+
+  VkFramebuffer frame_buffer;
+  VkResult err =
+      vkCreateFramebuffer(device_, &framebuffer_info, nullptr, &frame_buffer);
+  if (err) {
+    DLOG(0) << "vkCreateFramebuffer failed. Error: " << string_VkResult(err);
+    DestroyTexture(color_texture_id);
+    if (depth)
+      DestroyTexture(depth_texture_id);
+    return 0;
+  }
+
+  render_targets_[++last_resource_id_] = {color_texture_id, depth_texture_id,
+                                          frame_buffer,
+                                          VK_IMAGE_LAYOUT_UNDEFINED};
+  return last_resource_id_;
+}
+
 void RendererVulkan::BeginRenderToTexture(uint64_t texture_id) {
   auto it = textures_.find(texture_id);
   if (it == textures_.end()) {

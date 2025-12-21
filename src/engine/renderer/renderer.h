@@ -108,6 +108,11 @@ class Renderer {
   virtual void PrepareForDrawing() = 0;
   virtual void Present() = 0;
 
+  virtual uint64_t CreateRenderTarget(ImageFormat format,
+                                      int width,
+                                      int height,
+                                      bool depth) = 0;
+
   virtual void BeginRenderToTexture(uint64_t texture_id) = 0;
   virtual void EndRenderToTexture(uint64_t texture_id) = 0;
 

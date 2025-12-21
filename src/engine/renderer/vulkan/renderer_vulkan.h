@@ -102,6 +102,11 @@ class RendererVulkan final : public Renderer {
   void PrepareForDrawing() final;
   void Present() final;
 
+  uint64_t CreateRenderTarget(ImageFormat format,
+                              int width,
+                              int height,
+                              bool depth) final;
+
   void BeginRenderToTexture(uint64_t texture_id) final;
   void EndRenderToTexture(uint64_t texture_id) final;
 
@@ -197,6 +202,13 @@ class RendererVulkan final : public Renderer {
     DescriptorPools::iterator pools_it;
   };
 
+  struct RenderTarget {
+    uint64_t color_texture_id = 0;
+    uint64_t depth_texture_id = 0;
+    VkFramebuffer frame_buffer = VK_NULL_HANDLE;
+    VkImageLayout last_image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+  };
+
   // Each frame contains 2 command buffers with separate synchronization scopes.
   // One for creating resources (recorded outside a render pass) and another for
   // drawing (recorded inside a render pass). Also contains list of resources to
@@ -244,6 +256,7 @@ class RendererVulkan final : public Renderer {
   std::unordered_map<uint64_t, TextureVulkan> textures_;
   std::unordered_map<uint64_t, BufferVulkan> buffers_;
   std::unordered_map<uint64_t, DescriptorSetVulkan> descriptor_sets_;
+  std::unordered_map<uint64_t, RenderTarget> render_targets_;
   uint64_t last_resource_id_ = 0;
 
   bool context_lost_ = false;
