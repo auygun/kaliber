@@ -223,7 +223,7 @@ void World::UpdateRenderContext() {
   for (auto [entity, _, camera, world_transform] :
        registry_.View<PrimaryCameraTag, const CameraComponent,
                       const WorldTransformComponent>()) {
-    render_context_->proj.CreatePerspectiveProjection(
+    render_context_->proj.CreateStandardZProjection(
         camera.fov, (float)Engine::Get().GetScreenWidth(),
         (float)Engine::Get().GetScreenHeight(), camera.near_plane,
         camera.far_plane);

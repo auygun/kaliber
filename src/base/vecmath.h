@@ -1221,32 +1221,11 @@ class Matrix4 {
     _M_SET_ROW(3, -rpl / rml, -tpb / tmb, 0, 1);
   }
 
-#if 0
-
-  void CreatePerspectiveProjection(T fov,
-                                   T fov_aspect,
-                                   T width,
-                                   T height,
-                                   T near_plane,
-                                   T far_plane) {
-    T scale =
-        T(2.0) /
-        std::sqrt(Sqr(T(1.0) / std::cos((T(PId) * fov) / T(360.0))) - T(1.0));
-    T y_scale = scale * fov_aspect / (width / height);
-    T x_scale = y_scale / (width / height);
-    _M_SET_ROW(0, x_scale / T(2.0), 0, 0, 0);
-    _M_SET_ROW(1, 0, (-y_scale) / T(2.0), 0, 0);
-    _M_SET_ROW(2, 0, 0, far_plane / (far_plane - near_plane), 1);
-    _M_SET_ROW(3, 0, 0, -near_plane * far_plane / (far_plane - near_plane), 0);
-  }
-
-#else
-
-  void CreatePerspectiveProjection(T fov,
-                                   T width,
-                                   T height,
-                                   T near_plane,
-                                   T far_plane) {
+  void CreateStandardZProjection(T fov,
+                                 T width,
+                                 T height,
+                                 T near_plane,
+                                 T far_plane) {
     float fov_radians = fov * (float)(M_PI / 180.0);
     float f = 1.0f / tan(fov_radians / 2.0f);
     _M_SET_ROW(0, f / (width / height), 0, 0, 0);
@@ -1255,7 +1234,30 @@ class Matrix4 {
     _M_SET_ROW(3, 0, 0, -near_plane * far_plane / (far_plane - near_plane), 0);
   }
 
-#endif
+  void CreateReverseZProjection(T fov,
+                                T width,
+                                T height,
+                                T near_plane,
+                                T far_plane) {
+    float fov_radians = fov * (float)(M_PI / 180.0);
+    float f = 1.0f / tan(fov_radians / 2.0f);
+    _M_SET_ROW(0, f / (width / height), 0, 0, 0);
+    _M_SET_ROW(1, 0, -f, 0, 0);
+    _M_SET_ROW(2, 0, 0, near_plane / (near_plane - far_plane), 1);
+    _M_SET_ROW(3, 0, 0, -far_plane * near_plane / (near_plane - far_plane), 0);
+  }
+
+  void CreateInfiniteReverseZProjection(T fov,
+                                        T width,
+                                        T height,
+                                        T near_plane) {
+    float fov_radians = fov * (float)(M_PI / 180.0);
+    float f = 1.0f / tan(fov_radians / 2.0f);
+    _M_SET_ROW(0, f / (width / height), 0, 0, 0);
+    _M_SET_ROW(1, 0, -f, 0, 0);
+    _M_SET_ROW(2, 0, 0, 0, 1);
+    _M_SET_ROW(3, 0, 0, near_plane, 0);
+  }
 
   void CreateTranslation(const Vector3<T>& t) {
     _M_SET_ROW(0, 1, 0, 0, 0);
