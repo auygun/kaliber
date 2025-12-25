@@ -1136,6 +1136,43 @@ uint64_t RendererVulkan::CreateRenderTarget(ImageFormat format,
   return last_resource_id_;
 }
 
+void RendererVulkan::ActivateRenderTarget(uint64_t render_target_id) {
+  auto it = render_targets_.find(render_target_id);
+  if (it == render_targets_.end()) {
+    DLOG(0) << "Render target not found: " << render_target_id;
+    return;
+  }
+
+  if (active_render_target_id_ != 0) {
+    vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
+
+    auto active_it = render_targets_.find(active_render_target_id_);
+    if (active_it == render_targets_.end()) {
+      DLOG(0) << "Render target not found: " << active_render_target_id_;
+      return;
+    }
+
+    auto texture_it = textures_.find(active_it->second.color_texture_id);
+    if (texture_it == textures_.end()) {
+      DLOG(0) << "Texture not found";
+      return;
+    }
+
+    // Ensure the previous pass's write to texture is complete and transitions
+    // it to a readable state for the next pass's fragment shader.
+    ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
+                       std::get<0>(texture_it->second.image),
+                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                       VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                       VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                       VK_ACCESS_SHADER_READ_BIT,
+                       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    active_it->second.last_image_layout =
+        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  }
+}
+
 void RendererVulkan::BeginRenderToTexture(uint64_t texture_id) {
   auto it = textures_.find(texture_id);
   if (it == textures_.end()) {

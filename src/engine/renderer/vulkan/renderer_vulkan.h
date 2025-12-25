@@ -106,6 +106,7 @@ class RendererVulkan final : public Renderer {
                               int width,
                               int height,
                               bool depth) final;
+  void ActivateRenderTarget(uint64_t render_target_id) final;
 
   void BeginRenderToTexture(uint64_t texture_id) final;
   void EndRenderToTexture(uint64_t texture_id) final;
@@ -278,6 +279,8 @@ class RendererVulkan final : public Renderer {
 
   uint32_t active_geometry_vertex_count_ = 0;
   uint32_t active_geometry_index_count_ = 0;
+
+  uint64_t active_render_target_id_ = 0;
 
   std::map<DescriptorPoolKey, DescriptorPools> descriptor_pools_map_;
 

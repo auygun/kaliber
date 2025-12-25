@@ -112,6 +112,7 @@ class Renderer {
                                       int width,
                                       int height,
                                       bool depth) = 0;
+  virtual void ActivateRenderTarget(uint64_t render_target_id) = 0;
 
   virtual void BeginRenderToTexture(uint64_t texture_id) = 0;
   virtual void EndRenderToTexture(uint64_t texture_id) = 0;
