@@ -146,7 +146,7 @@ class VulkanContext {
 
   bool CreateValidationLayers();
   bool InitializeExtensions();
-  VkFormat FindDepthFormat();
+  VkFormat FindDepthFormat(bool sampled);
 
   VkBool32 CheckLayers(uint32_t check_count,
                        const char** check_names,

@@ -1,6 +1,7 @@
 #include "engine/renderer/vulkan/vulkan_context.h"
 
 #include <string.h>
+#include <array>
 #include <limits>
 #include <string>
 
@@ -346,15 +347,18 @@ bool VulkanContext::InitializeExtensions() {
   return true;
 }
 
-VkFormat VulkanContext::FindDepthFormat() {
-  const std::vector<VkFormat> candidates = {
-      VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT,
-      VK_FORMAT_D24_UNORM_S8_UINT};
+VkFormat VulkanContext::FindDepthFormat(bool sampled) {
+  static constexpr auto candidates = std::to_array<VkFormat>(
+      {VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT});
+
+  VkFormatFeatureFlags required =
+      VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT |
+      (sampled ? VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT : 0);
+
   for (VkFormat format : candidates) {
     VkFormatProperties props;
     vkGetPhysicalDeviceFormatProperties(gpu_, format, &props);
-    if (props.optimalTilingFeatures &
-        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+    if ((props.optimalTilingFeatures & required) == required) {
       return format;
     }
   }
@@ -563,7 +567,7 @@ bool VulkanContext::CreatePhysicalDevice() {
   vkGetPhysicalDeviceQueueFamilyProperties(gpu_, &queue_family_count_,
                                            queue_props_.data());
 
-  depth_format_ = FindDepthFormat();
+  depth_format_ = FindDepthFormat(false);
   if (depth_format_ == VK_FORMAT_UNDEFINED) {
     DLOG(0) << "Failed to find a suitable depth format.";
     return false;

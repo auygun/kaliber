@@ -2092,7 +2092,7 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
   image_view_create_info.subresourceRange.layerCount = 1;
   if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
     image_view_create_info.subresourceRange.aspectMask =
-        VK_IMAGE_ASPECT_DEPTH_BIT;
+        VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
   else
     image_view_create_info.subresourceRange.aspectMask =
         VK_IMAGE_ASPECT_COLOR_BIT;
