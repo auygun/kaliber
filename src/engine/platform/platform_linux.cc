@@ -3,6 +3,7 @@
 #include <limits.h>
 #include <locale.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <cstring>
 #include <memory>
 

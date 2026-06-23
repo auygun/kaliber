@@ -3,6 +3,7 @@
 
 #include <array>
 #include <atomic>
+#include <cstdint>
 #include <cstring>
 #include <list>
 #include <map>

@@ -1,6 +1,7 @@
 #ifndef ENGINE_MODEL_H
 #define ENGINE_MODEL_H
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>

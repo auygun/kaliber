@@ -1,6 +1,7 @@
 #ifndef ENGINE_RENDERER_RENDERER_H
 #define ENGINE_RENDERER_RENDERER_H
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>

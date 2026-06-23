@@ -1,6 +1,7 @@
 #ifndef ENGINE_SCENE_H
 #define ENGINE_SCENE_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
