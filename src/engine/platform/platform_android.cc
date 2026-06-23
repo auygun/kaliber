@@ -367,7 +367,9 @@ Platform::Platform(android_app* app) {
   }
 }
 
-void Platform::CreateMainWindow() {
+void Platform::CreateMainWindow(bool /*use_opengl*/,
+                                int /*width*/,
+                                int /*height*/) {
   DCHECK(!app_->window);
   Update();
   DCHECK(app_->window);

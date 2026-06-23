@@ -9,6 +9,8 @@
 
 #if defined(__ANDROID__)
 struct ANativeWindow;
+#else
+struct GLFWwindow;
 #endif
 
 namespace eng {
@@ -25,10 +27,8 @@ class VulkanContext {
 
 #if defined(__ANDROID__)
   bool CreateSurface(ANativeWindow* window, int width, int height);
-#elif defined(__linux__)
-  bool CreateSurface(Display* display, ::Window window, int width, int height);
-#elif defined(_WIN32)
-  bool CreateSurface(HINSTANCE hInstance, HWND hWnd, int width, int height);
+#else
+  bool CreateSurface(GLFWwindow* window, int width, int height);
 #endif
 
   void ResizeSurface(int width, int height);

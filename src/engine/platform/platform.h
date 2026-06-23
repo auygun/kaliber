@@ -11,11 +11,8 @@
 struct android_app;
 struct AInputEvent;
 struct ANativeWindow;
-#elif defined(__linux__)
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#elif defined(_WIN32)
-#include <windows.h>
+#else
+struct GLFWwindow;
 #endif
 
 #include "engine/input_codes.h"
@@ -28,14 +25,14 @@ class Platform {
  public:
 #if defined(__ANDROID__)
   Platform(android_app* app);
-#elif defined(__linux__)
+#else
   Platform();
-#elif defined(_WIN32)
-  Platform(HINSTANCE instance, int cmd_show);
 #endif
   ~Platform();
 
-  void CreateMainWindow();
+  void CreateMainWindow(bool use_opengl = false,
+                        int width = 0,
+                        int height = 0);
 
   void Update();
 
@@ -44,14 +41,17 @@ class Platform {
   void SetObserver(PlatformObserver* observer) { observer_ = observer; }
 
   void Vibrate(int duration);
-
   void ShowInterstitialAd();
-
   void ShareFile(const std::string& file_name);
-
   void SetKeepScreenOn(bool keep_screen_on);
 
-  int GetDeviceDpi() const { return device_dpi_; }
+#if defined(__ANDROID__)
+  ANativeWindow* GetWindow();
+#else
+  void SetMainArgs(int argc, char** argv);
+
+  GLFWwindow* GetWindow();
+#endif
 
   const std::string& GetRootPath() const { return root_path_; }
 
@@ -66,7 +66,7 @@ class Platform {
   int GetMouseX() const { return mouse_x_; }
   int GetMouseY() const { return mouse_y_; }
 
-  float GetMouseScrollDelta() const { return mouse_scroll_delta_; }
+  float GetMouseScrollDelta() const { return mouse_scroll_y_delta_; }
 
   bool IsMouseButtonDown(MouseButton button) const {
     return mouse_buttons_down_[static_cast<int>(button)];
@@ -74,44 +74,33 @@ class Platform {
 
   bool IsKeyDown(Key key) const { return keys_down_[static_cast<int>(key)]; }
 
-  // Retrieve the characters typed this frame.
   const std::vector<unsigned int>& GetInputCharacters() const {
     return input_characters_;
   }
 
-#if defined(__ANDROID__)
-  ANativeWindow* GetWindow();
-#elif defined(__linux__)
-  Display* GetDisplay();
-  Window GetWindow();
-#elif defined(_WIN32)
-  HINSTANCE GetInstance();
-  HWND GetWindow();
-#endif
-
  private:
   bool mobile_device_ = false;
-  int device_dpi_ = 100;
   std::string root_path_;
   std::string data_path_;
   std::string shared_data_path_;
 
-  bool has_focus_ = false;
   bool should_exit_ = false;
 
   PlatformObserver* observer_ = nullptr;
 
-  // Input state tracking
   int mouse_x_{0};
   int mouse_y_{0};
-  float mouse_scroll_delta_{0.0f};
+  float mouse_scroll_x_delta_{0.0f};
+  float mouse_scroll_y_delta_{0.0f};
   std::array<bool, static_cast<int>(MouseButton::MaxButtons)>
       mouse_buttons_down_{};
   std::array<bool, static_cast<int>(Key::MaxKeys)> keys_down_{};
-  // Buffer to store UTF-32 characters typed this frame
   std::vector<unsigned int> input_characters_;
 
 #if defined(__ANDROID__)
+
+  bool has_focus_ = false;
+  int device_dpi_ = 100;
 
   android_app* app_ = nullptr;
 
@@ -136,26 +125,15 @@ class Platform {
 
   void SetFrameRate(float frame_rate);
 
-#elif defined(__linux__)
+#else
 
-  Display* display_ = nullptr;
-  Window window_ = 0;
-  XIM xim_ = 0;
-  XIC xic_ = 0;
-  Atom wm_delete_window_ = 0;
+  GLFWwindow* window_ = nullptr;
+  int pending_width_ = 0;
+  int pending_height_ = 0;
+  bool has_pending_resize_ = false;
 
-  bool CreateWindow(int width, int height);
-  void DestroyWindow();
-
-  XVisualInfo* GetXVisualInfo(Display* display);
-
-#elif defined(_WIN32)
-
-  HINSTANCE instance_;
-  HWND wnd_;
-  int cmd_show_;
-
-  static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+  void PlatformInit();
+  void PlatformShutdown();
 
 #endif
 
