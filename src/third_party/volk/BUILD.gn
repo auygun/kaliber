@@ -1,5 +1,6 @@
 config("volk_public") {
-  include_dirs = [ "." ]
+  include_dirs = [ "volk" ]
+  defines = [ "VK_NO_PROTOTYPES" ]
 }
 
 source_set("volk") {
@@ -7,8 +8,8 @@ source_set("volk") {
   public_configs = [ ":volk_public" ]
 
   sources = [
-    "volk.c",
-    "volk.h",
+    "volk/volk.c",
+    "volk/volk.h",
   ]
 
   public_deps = [ "//src/third_party/vulkan" ]

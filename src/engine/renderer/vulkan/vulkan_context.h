@@ -4,8 +4,8 @@
 #include <cstdint>
 #include <vector>
 
-#include "third_party/vma/vk_mem_alloc.h"
-#include "third_party/volk/volk.h"
+#include "vk_mem_alloc.h"
+#include "volk.h"
 
 #if defined(__ANDROID__)
 struct ANativeWindow;

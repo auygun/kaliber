@@ -8,5 +8,6 @@ game("teapot") {
     "//assets/teapot",
     "//src/base",
     "//src/engine",
+    "//src/third_party/imgui",
   ]
 }

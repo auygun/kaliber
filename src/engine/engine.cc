@@ -14,7 +14,7 @@
 #include "engine/orbit_camera.h"
 #include "engine/platform/platform.h"
 #include "engine/renderer/renderer.h"
-#include "third_party/imgui/imgui.h"
+#include "imgui.h"
 #include "third_party/texture_compressor/texture_compressor.h"
 
 using namespace base;

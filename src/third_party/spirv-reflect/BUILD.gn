@@ -1,9 +1,14 @@
+config("spirv_reflect_public") {
+  include_dirs = [ "spirv-reflect" ]
+}
+
 source_set("spirv-reflect") {
   configs -= [ "//build:warnings" ]
+  public_configs = [ ":spirv_reflect_public" ]
 
   sources = [
-    "include/spirv/unified1/spirv.h",
-    "spirv_reflect.c",
+    "spirv-reflect/include/spirv/unified1/spirv.h",
+    "spirv-reflect/spirv_reflect.c",
   ]
 
   deps = []

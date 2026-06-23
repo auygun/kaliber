@@ -1,4 +1,6 @@
 config("vma_public") {
+  include_dirs = [ "vma/include" ]
+
   defines = [
     "VMA_STATIC_VULKAN_FUNCTIONS=1",
     "USE_VOLK",
@@ -15,7 +17,6 @@ source_set("vma") {
 
   sources = [
     "vk_mem_alloc.cpp",
-    "vk_mem_alloc.h",
   ]
 
   public_deps = [ "//src/third_party/volk" ]

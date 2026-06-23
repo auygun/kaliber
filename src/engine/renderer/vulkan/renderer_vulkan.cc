@@ -13,12 +13,12 @@
 #include "engine/asset/image.h"
 #include "engine/asset/mesh.h"
 #include "engine/asset/shader_source.h"
-#include "third_party/glslang/SPIRV/GlslangToSpv.h"
-#include "third_party/glslang/glslang/Include/ResourceLimits.h"
-#include "third_party/glslang/glslang/Include/Types.h"
-#include "third_party/glslang/glslang/Public/ResourceLimits.h"
-#include "third_party/glslang/glslang/Public/ShaderLang.h"
-#include "third_party/spirv-reflect/spirv_reflect.h"
+#include "SPIRV/GlslangToSpv.h"
+#include "glslang/Include/ResourceLimits.h"
+#include "glslang/Include/Types.h"
+#include "glslang/Public/ResourceLimits.h"
+#include "glslang/Public/ShaderLang.h"
+#include "spirv_reflect.h"
 #include "third_party/vulkan/vk_enum_string_helper.h"
 
 using namespace base;

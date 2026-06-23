@@ -8,7 +8,7 @@
 #include "engine/platform/asset_file.h"
 #include "engine/platform/platform.h"
 #include "engine/renderer/renderer.h"
-#include "third_party/imgui/imgui.h"
+#include "imgui.h"
 
 using namespace base;
 

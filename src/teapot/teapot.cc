@@ -7,7 +7,7 @@
 #include "engine/engine.h"
 #include "engine/game.h"
 #include "engine/game_factory.h"
-#include "third_party/imgui/imgui.h"
+#include "imgui.h"
 
 using namespace base;
 using namespace eng;
