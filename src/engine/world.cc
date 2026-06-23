@@ -159,7 +159,7 @@ void World::UpdateSceneGraph() {
 
 void World::Render(float frame_frac) {
   UpdateRenderContext();
-  frustum_.CreateFromMatrix(render_context_->view_proj);
+  UploadSceneData();
 
   // Build the flat list used for building the BVH tree.
   std::vector<BVHBuildItem> flat_list;
@@ -173,14 +173,14 @@ void World::Render(float frame_frac) {
 
   BuildBVHTree(std::move(flat_list));
 
+  frustum_.CreateFromMatrix(render_context_->view_proj);
   auto sort_list = FrustumCull(frustum_);
   DLOG(0) << "FrustumCull: " << sort_list.size();
+
   if (!sort_list.empty()) {
     std::sort(sort_list.begin(), sort_list.end());
 
     auto draw_list = BuildDrawList(std::move(sort_list));
-
-    UploadSceneData();
 
     renderer_->ActivateShader(shader_id_);
     renderer_->ActivateDescriptorSet(scene_dset_);
