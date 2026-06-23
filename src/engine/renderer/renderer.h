@@ -77,6 +77,21 @@ class Renderer {
                              ImageFormat format,
                              size_t data_size,
                              uint8_t* image_data) = 0;
+  // Upload a sub-region of image data to an existing texture resource.
+  // |x_offset|, |y_offset| are the destination coordinates within the texture.
+  // |width|, |height| are the dimensions of the sub-region.
+  // |src_pitch| is the byte stride between rows in the source data. For
+  // uncompressed formats this is the stride between pixel rows. For compressed
+  // formats this is the stride between block rows. The pointed-to data must
+  // remain valid for the duration of the current frame.
+  virtual void UpdateTextureSubRegion(uint64_t resource_id,
+                                      int x_offset,
+                                      int y_offset,
+                                      int width,
+                                      int height,
+                                      ImageFormat format,
+                                      int src_pitch,
+                                      uint8_t* image_data) = 0;
   virtual void DestroyTexture(uint64_t resource_id) = 0;
 
   virtual uint64_t CreateShader(std::unique_ptr<ShaderSource> source,

@@ -46,7 +46,7 @@ class RendererVulkan final : public Renderer {
   void ResetScissor() final;
 
   uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) final;
-  uint64_t CreateGeometry(Primitive primitive, // TODO: Unused, remove!
+  uint64_t CreateGeometry(Primitive primitive,  // TODO: Unused, remove!
                           VertexDescription vertex_description,
                           DataType index_description = kDataType_Invalid) final;
   void UpdateGeometry(uint64_t resource_id,
@@ -73,6 +73,14 @@ class RendererVulkan final : public Renderer {
                      ImageFormat format,
                      size_t data_size,
                      uint8_t* image_data) final;
+  void UpdateTextureSubRegion(uint64_t resource_id,
+                              int x_offset,
+                              int y_offset,
+                              int width,
+                              int height,
+                              ImageFormat format,
+                              int src_pitch,
+                              uint8_t* image_data) final;
   void DestroyTexture(uint64_t resource_id) final;
 
   uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
@@ -317,6 +325,14 @@ class RendererVulkan final : public Renderer {
                  int width,
                  int height,
                  int mip_level);
+  void CopyImageSubRegion(VkImage image,
+                          VkFormat format,
+                          const uint8_t* data,
+                          int x_offset,
+                          int y_offset,
+                          int width,
+                          int height,
+                          int src_pitch);
   void ImageMemoryBarrier(VkCommandBuffer command_buffer,
                           VkImage image,
                           VkPipelineStageFlags src_stage_mask,
