@@ -291,7 +291,7 @@ class RendererVulkan final : public Renderer {
 
   std::thread setup_thread_;
   base::TaskRunner task_runner_;
-  std::binary_semaphore semaphore_{0};
+  std::counting_semaphore<> semaphore_{0};
   std::atomic<bool> quit_{false};
 
   bool InitializeInternal();
