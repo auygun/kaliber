@@ -1,10 +1,18 @@
 toolchain("gcc") {
+  if (compile_preprocess != "") {
+    CC = "$compile_preprocess $cc"
+    CXX = "$compile_preprocess $cxx"
+  } else {
+    CC = cc
+    CXX = cxx
+  }
+
   lib_switch = "-l"
   lib_dir_switch = "-L"
 
   tool("asm") {
     depfile = "{{output}}.d"
-    command = "$cc -MD -MF $depfile {{defines}} {{include_dirs}} {{asmflags}} -c {{source}} -o {{output}}"
+    command = "$CC -MD -MF $depfile {{defines}} {{include_dirs}} {{asmflags}} -c {{source}} -o {{output}}"
     depsformat = "gcc"
     outputs =
         [ "{{source_out_dir}}/{{target_output_name}}.{{source_name_part}}.o" ]
@@ -13,7 +21,7 @@ toolchain("gcc") {
 
   tool("cc") {
     depfile = "{{output}}.d"
-    command = "$cc -MMD -MF $depfile {{defines}} {{include_dirs}} {{cflags}} {{cflags_c}} -c {{source}} -o {{output}}"
+    command = "$CC -MMD -MF $depfile {{defines}} {{include_dirs}} {{cflags}} {{cflags_c}} -c {{source}} -o {{output}}"
     depsformat = "gcc"
     outputs =
         [ "{{source_out_dir}}/{{target_output_name}}.{{source_name_part}}.o" ]
@@ -22,7 +30,7 @@ toolchain("gcc") {
 
   tool("cxx") {
     depfile = "{{output}}.d"
-    command = "$cxx -MMD -MF $depfile {{defines}} {{include_dirs}} {{cflags}} {{cflags_cc}} -c {{source}} -o {{output}}"
+    command = "$CXX -MMD -MF $depfile {{defines}} {{include_dirs}} {{cflags}} {{cflags_cc}} -c {{source}} -o {{output}}"
     depsformat = "gcc"
     outputs =
         [ "{{source_out_dir}}/{{target_output_name}}.{{source_name_part}}.o" ]
@@ -31,7 +39,7 @@ toolchain("gcc") {
 
   tool("objc") {
     depfile = "{{output}}.d"
-    command = "$cc -MMD -MF $depfile {{defines}} {{include_dirs}} {{framework_dirs}} {{cflags}} {{cflags_c}} {{cflags_objc}} -c {{source}} -o {{output}}"
+    command = "$CC -MMD -MF $depfile {{defines}} {{include_dirs}} {{framework_dirs}} {{cflags}} {{cflags_c}} {{cflags_objc}} -c {{source}} -o {{output}}"
     depsformat = "gcc"
     outputs =
         [ "{{source_out_dir}}/{{target_output_name}}.{{source_name_part}}.o" ]
@@ -40,7 +48,7 @@ toolchain("gcc") {
 
   tool("objcxx") {
     depfile = "{{output}}.d"
-    command = "$cxx -MMD -MF $depfile {{defines}} {{include_dirs}} {{framework_dirs}} {{cflags}} {{cflags_cc}} {{cflags_objcc}} -c {{source}} -o {{output}}"
+    command = "$CXX -MMD -MF $depfile {{defines}} {{include_dirs}} {{framework_dirs}} {{cflags}} {{cflags_cc}} {{cflags_objcc}} -c {{source}} -o {{output}}"
     depsformat = "gcc"
     outputs =
         [ "{{source_out_dir}}/{{target_output_name}}.{{source_name_part}}.o" ]
@@ -76,7 +84,7 @@ toolchain("gcc") {
       os_specific_option = "-Wl,-soname=$soname"
       rspfile_content = "-Wl,--whole-archive {{inputs}} {{solibs}} -Wl,--no-whole-archive {{libs}}"
     }
-    command = "$cxx -shared {{ldflags}} {{frameworks}} -o $sofile $os_specific_option @$rspfile"
+    command = "$CXX -shared {{ldflags}} {{frameworks}} -o $sofile $os_specific_option @$rspfile"
     default_output_extension = ".so"
     default_output_dir = "{{root_out_dir}}"
     outputs = [ sofile ]
@@ -91,9 +99,9 @@ toolchain("gcc") {
     rspfile = "$outfile.rsp"
     rspfile_content = "{{inputs}}"
     if (is_apple) {
-      command = "$cxx {{ldflags}} {{solibs}} {{libs}} {{frameworks}} -o $outfile @$rspfile"
+      command = "$CXX {{ldflags}} {{solibs}} {{libs}} {{frameworks}} -o $outfile @$rspfile"
     } else {
-      command = "$cxx {{ldflags}} -o $outfile -Wl,--start-group @$rspfile {{solibs}} -Wl,--end-group {{libs}}"
+      command = "$CXX {{ldflags}} -o $outfile -Wl,--start-group @$rspfile {{solibs}} -Wl,--end-group {{libs}}"
     }
     default_output_dir = "{{root_out_dir}}"
     outputs = [ outfile ]
