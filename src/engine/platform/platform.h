@@ -2,6 +2,7 @@
 #define ENGINE_PLATFORM_PLATFORM_H
 
 #include <array>
+#include <cstdint>
 #include <string>
 #include <vector>
 

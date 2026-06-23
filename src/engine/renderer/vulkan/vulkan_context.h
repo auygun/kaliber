@@ -1,6 +1,7 @@
 #ifndef ENGINE_RENDERER_VULKAN_VULKAN_CONTEXT_H
 #define ENGINE_RENDERER_VULKAN_VULKAN_CONTEXT_H
 
+#include <cstdint>
 #include <vector>
 
 #include "third_party/vma/vk_mem_alloc.h"

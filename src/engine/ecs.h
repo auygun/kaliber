@@ -1,6 +1,7 @@
 #ifndef ENGINE_ECS_H
 #define ENGINE_ECS_H
 
+#include <cstdint>
 #include <deque>
 #include <limits>
 #include <memory>

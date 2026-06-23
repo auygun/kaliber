@@ -1,6 +1,7 @@
 #ifndef ENGINE_AUDIO_AUDIO_DEVICE_OBOE_H
 #define ENGINE_AUDIO_AUDIO_DEVICE_OBOE_H
 
+#include <cstdint>
 #include <memory>
 
 #include "third_party/oboe/include/oboe/AudioStream.h"

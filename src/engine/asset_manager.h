@@ -1,6 +1,7 @@
 #ifndef ENGINE_ASSET_MANAGER_H
 #define ENGINE_ASSET_MANAGER_H
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>

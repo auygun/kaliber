@@ -1,6 +1,7 @@
 #ifndef BASE_HASH_H
 #define BASE_HASH_H
 
+#include <cstdint>
 #include <stddef.h>
 #include <string>
 
