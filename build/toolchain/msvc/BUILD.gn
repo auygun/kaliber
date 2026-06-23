@@ -1,4 +1,10 @@
 toolchain("msvc") {
+  if (compile_preprocess != "") {
+    CC = "$compile_preprocess cl.exe"
+  } else {
+    CC = "cl.exe"
+  }
+
   lib_switch = ""
   lib_dir_switch = "/LIBPATH:"
 
@@ -11,7 +17,7 @@ toolchain("msvc") {
 
   tool("cc") {
     pdbname = "{{target_out_dir}}/{{label_name}}_c.pdb"
-    command = "cl.exe /nologo /showIncludes /FC {{defines}} {{include_dirs}} {{cflags}} {{cflags_c}} /c {{source}} /Fo{{output}} /Fd\"$pdbname\""
+    command = "$CC /nologo /showIncludes /FC {{defines}} {{include_dirs}} {{cflags}} {{cflags_c}} /c {{source}} /Fo{{output}} /Fd\"$pdbname\""
     depsformat = "msvc"
     outputs =
         [ "{{source_out_dir}}/{{target_output_name}}.{{source_name_part}}.obj" ]
@@ -20,10 +26,18 @@ toolchain("msvc") {
 
   tool("cxx") {
     pdbname = "{{target_out_dir}}/{{label_name}}_c.pdb"
-    command = "cl.exe /nologo /showIncludes /FC {{defines}} {{include_dirs}} {{cflags}} {{cflags_cc}} /c {{source}} /Fo{{output}} /Fd\"$pdbname\""
+    command = "$CC /nologo /showIncludes /FC {{defines}} {{include_dirs}} {{cflags}} {{cflags_cc}} /c {{source}} /Fo{{output}} /Fd\"$pdbname\""
     depsformat = "msvc"
     outputs =
         [ "{{source_out_dir}}/{{target_output_name}}.{{source_name_part}}.obj" ]
+    description = "compile {{source}}"
+  }
+
+  tool("rc") {
+    command =
+        "rc.exe /nologo {{defines}} {{include_dirs}} /fo{{output}} {{source}}"
+    outputs =
+        [ "{{source_out_dir}}/{{target_output_name}}.{{source_name_part}}.res" ]
     description = "compile {{source}}"
   }
 

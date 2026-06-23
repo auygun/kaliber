@@ -1,14 +1,31 @@
 declare_args() {
   is_debug = false
 
+  is_clang = false
+
   # Note that this uses the 'cc' and 'c++' links that should map to GCC on linux
   # systems and clang on macs.
   ar = "ar"
   cc = "cc"
   cxx = "c++"
 
+  # Useful for tools like 'ccache' and 'icecc' to speed up compilation.
+  compile_preprocess = ""
+
   ndk = ""
   ndk_api = 24
+}
+
+if (is_clang && cc == "cc" && cxx == "c++") {
+  cc = "clang"
+  cxx = "clang++"
+} else {
+  is_clang = cc == "clang" || cc == "clang++"
+}
+
+if (compile_preprocess == "" &&
+    exec_script("check_binary.py", [ "ccache" ], "value") == 1) {
+  compile_preprocess = "ccache"
 }
 
 # Platform detection
