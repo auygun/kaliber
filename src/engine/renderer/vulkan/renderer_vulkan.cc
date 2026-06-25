@@ -903,7 +903,8 @@ void RendererVulkan::UpdateBuffer(uint64_t resource_id,
                         std::bind(&RendererVulkan::BufferMemoryBarrier, this,
                                   std::get<0>(it->second.buffer), 0, size,
                                   VK_PIPELINE_STAGE_TRANSFER_BIT,
-                                  VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+                                  VK_PIPELINE_STAGE_VERTEX_SHADER_BIT |
+                                      VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                                   VK_ACCESS_TRANSFER_WRITE_BIT, dst_access));
   semaphore_.release();
 }
