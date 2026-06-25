@@ -4,6 +4,8 @@ source_set("renderer") {
     "renderer.h",
     "renderer_types.cc",
     "renderer_types.h",
+    "render_graph.cc",
+    "render_graph.h",
     "vulkan/renderer_vulkan.cc",
     "vulkan/vulkan_context.cc",
   ]

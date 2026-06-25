@@ -17,6 +17,7 @@
 #include "engine/platform/platform_observer.h"
 #include "engine/system.h"
 #include "engine/world.h"
+#include "engine/renderer/render_graph.h"
 
 class TextureCompressor;
 
@@ -137,6 +138,8 @@ class Engine : public PlatformObserver {
   ImguiBackend imgui_backend_;
 
   World world_;
+
+  RenderGraph render_graph_;
 
   std::unique_ptr<Game> game_;
 

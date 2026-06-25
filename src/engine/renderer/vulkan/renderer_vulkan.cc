@@ -562,6 +562,42 @@ uint64_t RendererVulkan::CreateShader(
   auto& spirv_vertex = it->second[0];
   auto& spirv_fragment = it->second[1];
 
+  auto& shader = shaders_[++last_resource_id_] = {};
+
+  if (!CreatePipelineLayout(shader, spirv_vertex, spirv_fragment))
+    DLOG(0) << "Failed to create pipeline layout!";
+
+  const auto& features = context_.GetDeviceFeatures();
+  if (wireframe && !features.fillModeNonSolid) {
+    DLOG(0) << "Warning: Wireframe mode requested for shader '"
+            << source->name()
+            << "' but 'fillModeNonSolid' feature is not supported.";
+    wireframe = false;
+  }
+
+  shader.name = source->name();
+  shader.vertex_description = vertex_description;
+  shader.primitive = primitive;
+  shader.enable_depth_test = enable_depth_test;
+  shader.wireframe = wireframe;
+  shader.cull_mode = cull_mode;
+
+  shader.pipeline = CreatePipeline(shader, context_.GetRenderPass());
+
+  return last_resource_id_;
+}
+
+VkPipeline RendererVulkan::CreatePipeline(ShaderVulkan& shader,
+                                          VkRenderPass render_pass) {
+  auto cache_it = spirv_cache_.find(shader.name);
+  if (cache_it == spirv_cache_.end()) {
+    DLOG(0) << "SPIR-V not found for shader: " << shader.name;
+    return VK_NULL_HANDLE;
+  }
+
+  auto& spirv_vertex = cache_it->second[0];
+  auto& spirv_fragment = cache_it->second[1];
+
   VkShaderModule vert_shader_module;
   {
     VkShaderModuleCreateInfo shader_module_info{};
@@ -573,7 +609,7 @@ uint64_t RendererVulkan::CreateShader(
     if (vkCreateShaderModule(device_, &shader_module_info, nullptr,
                              &vert_shader_module) != VK_SUCCESS) {
       DLOG(0) << "vkCreateShaderModule failed!";
-      return 0;
+      return VK_NULL_HANDLE;
     }
   }
 
@@ -588,14 +624,10 @@ uint64_t RendererVulkan::CreateShader(
     if (vkCreateShaderModule(device_, &shader_module_info, nullptr,
                              &frag_shader_module) != VK_SUCCESS) {
       DLOG(0) << "vkCreateShaderModule failed!";
-      return 0;
+      vkDestroyShaderModule(device_, vert_shader_module, nullptr);
+      return VK_NULL_HANDLE;
     }
   }
-
-  auto& shader = shaders_[++last_resource_id_] = {};
-
-  if (!CreatePipelineLayout(shader, spirv_vertex, spirv_fragment))
-    DLOG(0) << "Failed to create pipeline layout!";
 
   VkPipelineShaderStageCreateInfo vert_shader_stage_info{};
   vert_shader_stage_info.sType =
@@ -615,7 +647,7 @@ uint64_t RendererVulkan::CreateShader(
                                                     frag_shader_stage_info};
 
   VertexInputDescription vertex_input =
-      GetVertexInputDescription(vertex_description);
+      GetVertexInputDescription(shader.vertex_description);
 
   VkPipelineVertexInputStateCreateInfo vertex_input_info{};
   vertex_input_info.sType =
@@ -632,7 +664,7 @@ uint64_t RendererVulkan::CreateShader(
   VkPipelineInputAssemblyStateCreateInfo input_assembly{};
   input_assembly.sType =
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-  input_assembly.topology = kVkPrimitiveType[primitive];
+  input_assembly.topology = kVkPrimitiveType[shader.primitive];
   input_assembly.primitiveRestartEnable = VK_FALSE;
 
   VkPipelineViewportStateCreateInfo viewport_state{};
@@ -642,21 +674,9 @@ uint64_t RendererVulkan::CreateShader(
   viewport_state.scissorCount = 1;
   viewport_state.pScissors = nullptr;
 
-  // Get device capabilities
-  const auto& features = context_.GetDeviceFeatures();
   const auto& properties = context_.GetDeviceProperties();
-
-  // Validate wireframe support
-  if (wireframe && !features.fillModeNonSolid) {
-    DLOG(0) << "Warning: Wireframe mode requested for shader '"
-            << source->name()
-            << "' but 'fillModeNonSolid' feature is not supported.";
-    wireframe = false;
-  }
-
-  // Validate line width support if we are still in wireframe mode
   float line_width_to_use = 1.0f;
-  if (wireframe) {
+  if (shader.wireframe) {
     constexpr float requested_width = 2.0f;
     line_width_to_use =
         std::clamp(requested_width, properties.limits.lineWidthRange[0],
@@ -668,9 +688,9 @@ uint64_t RendererVulkan::CreateShader(
   rasterizer.depthClampEnable = VK_FALSE;
   rasterizer.rasterizerDiscardEnable = VK_FALSE;
   rasterizer.polygonMode =
-      wireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
+      shader.wireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
   rasterizer.lineWidth = line_width_to_use;
-  rasterizer.cullMode = kVkCullMode[static_cast<int>(cull_mode)];
+  rasterizer.cullMode = kVkCullMode[static_cast<int>(shader.cull_mode)];
   rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -708,8 +728,10 @@ uint64_t RendererVulkan::CreateShader(
   VkPipelineDepthStencilStateCreateInfo depth_stencil{};
   depth_stencil.sType =
       VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-  depth_stencil.depthTestEnable = enable_depth_test ? VK_TRUE : VK_FALSE;
-  depth_stencil.depthWriteEnable = enable_depth_test ? VK_TRUE : VK_FALSE;
+  depth_stencil.depthTestEnable =
+      shader.enable_depth_test ? VK_TRUE : VK_FALSE;
+  depth_stencil.depthWriteEnable =
+      shader.enable_depth_test ? VK_TRUE : VK_FALSE;
   depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
   depth_stencil.depthBoundsTestEnable = VK_FALSE;
   depth_stencil.stencilTestEnable = VK_FALSE;
@@ -737,17 +759,40 @@ uint64_t RendererVulkan::CreateShader(
   pipeline_info.pDepthStencilState = &depth_stencil;
   pipeline_info.pDynamicState = &dynamic_state_create_info;
   pipeline_info.layout = shader.pipeline_layout;
-  pipeline_info.renderPass = context_.GetRenderPass();
+  pipeline_info.renderPass = render_pass;
   pipeline_info.subpass = 0;
   pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
 
+  VkPipeline pipeline = VK_NULL_HANDLE;
   if (vkCreateGraphicsPipelines(device_, VK_NULL_HANDLE, 1, &pipeline_info,
-                                nullptr, &shader.pipeline) != VK_SUCCESS)
+                                nullptr, &pipeline) != VK_SUCCESS)
     DLOG(0) << "failed to create graphics pipeline.";
 
   vkDestroyShaderModule(device_, frag_shader_module, nullptr);
   vkDestroyShaderModule(device_, vert_shader_module, nullptr);
-  return last_resource_id_;
+  return pipeline;
+}
+
+VkPipeline RendererVulkan::GetPipelineForCurrentRenderPass(
+    ShaderVulkan& shader) {
+  VkRenderPass current_render_pass = context_.GetRenderPass();
+
+  if (active_render_target_id_ != 0) {
+    auto it = render_targets_.find(active_render_target_id_);
+    if (it != render_targets_.end())
+      current_render_pass = it->second.render_pass;
+  }
+
+  if (current_render_pass == context_.GetRenderPass())
+    return shader.pipeline;
+
+  auto it = shader.pipeline_variants.find(current_render_pass);
+  if (it != shader.pipeline_variants.end())
+    return it->second;
+
+  VkPipeline variant = CreatePipeline(shader, current_render_pass);
+  shader.pipeline_variants[current_render_pass] = variant;
+  return variant;
 }
 
 void RendererVulkan::DestroyShader(uint64_t resource_id) {
@@ -755,6 +800,10 @@ void RendererVulkan::DestroyShader(uint64_t resource_id) {
   if (it == shaders_.end())
     return;
 
+  for (auto& [rp, variant_pipeline] : it->second.pipeline_variants) {
+    frames_[current_frame_].pipelines_to_destroy.push_back(
+        std::make_tuple(variant_pipeline, VK_NULL_HANDLE));
+  }
   frames_[current_frame_].pipelines_to_destroy.push_back(
       std::make_tuple(it->second.pipeline, it->second.pipeline_layout));
   shaders_.erase(it);
@@ -765,11 +814,10 @@ void RendererVulkan::ActivateShader(uint64_t resource_id) {
   if (it == shaders_.end())
     return;
 
-  if (active_shader_id_ != resource_id) {
-    active_shader_id_ = resource_id;
-    vkCmdBindPipeline(frames_[current_frame_].draw_command_buffer,
-                      VK_PIPELINE_BIND_POINT_GRAPHICS, it->second.pipeline);
-  }
+  VkPipeline pipeline = GetPipelineForCurrentRenderPass(it->second);
+  active_shader_id_ = resource_id;
+  vkCmdBindPipeline(frames_[current_frame_].draw_command_buffer,
+                    VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 }
 
 void RendererVulkan::UpdatePushConstants(size_t size, const void* data) {
@@ -1097,12 +1145,14 @@ uint64_t RendererVulkan::CreateRenderTarget(ImageFormat format,
   attachments[0] = color_texture.view;
 
   uint64_t depth_texture_id = 0;
+  VkFormat depth_format = VK_FORMAT_UNDEFINED;
   if (depth) {
     depth_texture_id = ++last_resource_id_;
     auto& depth_texture = textures_[depth_texture_id] = {};
 
+    depth_format = context_.GetDepthFormat();
     AllocateImage(depth_texture.image, depth_texture.view,
-                  VK_FORMAT_D24_UNORM_S8_UINT, width, height, 1,
+                  depth_format, width, height, 1,
                   VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                   VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -1110,9 +1160,15 @@ uint64_t RendererVulkan::CreateRenderTarget(ImageFormat format,
     attachments[1] = depth_texture.view;
   }
 
+  // Create a render pass compatible with this render target's attachments.
+  VkRenderPass render_pass = GetOrCreateRenderPass(
+      vk_format, VK_ATTACHMENT_LOAD_OP_CLEAR,
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, depth_format);
+
   VkFramebufferCreateInfo framebuffer_info{};
   framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-  framebuffer_info.renderPass = context_.GetRenderPass();  // TODO
+  framebuffer_info.renderPass = render_pass;
   framebuffer_info.attachmentCount = attachments.size();
   framebuffer_info.pAttachments = attachments.data();
   framebuffer_info.width = (uint32_t)width;
@@ -1131,8 +1187,9 @@ uint64_t RendererVulkan::CreateRenderTarget(ImageFormat format,
   }
 
   render_targets_[++last_resource_id_] = {color_texture_id, depth_texture_id,
-                                          frame_buffer,
-                                          VK_IMAGE_LAYOUT_UNDEFINED};
+                                          frame_buffer, render_pass,
+                                          VK_IMAGE_LAYOUT_UNDEFINED,
+                                          (uint32_t)width, (uint32_t)height};
   return last_resource_id_;
 }
 
@@ -1143,33 +1200,194 @@ void RendererVulkan::ActivateRenderTarget(uint64_t render_target_id) {
     return;
   }
 
+  // End the current render pass if we're in one.
+  if (active_render_target_id_ != 0 || in_default_render_pass_) {
+    vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
+    in_default_render_pass_ = false;
+
+    if (active_render_target_id_ != 0) {
+      auto active_it = render_targets_.find(active_render_target_id_);
+      if (active_it == render_targets_.end()) {
+        DLOG(0) << "Render target not found: " << active_render_target_id_;
+        return;
+      }
+
+      auto texture_it = textures_.find(active_it->second.color_texture_id);
+      if (texture_it == textures_.end()) {
+        DLOG(0) << "Texture not found";
+        return;
+      }
+
+      // Ensure the previous pass's write to texture is complete and transitions
+      // it to a readable state for the next pass's fragment shader.
+      ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
+                         std::get<0>(texture_it->second.image),
+                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                         VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                         VK_ACCESS_SHADER_READ_BIT,
+                         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+      active_it->second.last_image_layout =
+          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    }
+    active_render_target_id_ = 0;
+  }
+
+  // Transition the new render target's color attachment to color attachment
+  // layout and begin the render pass.
+  {
+    auto texture_it = textures_.find(it->second.color_texture_id);
+    if (texture_it != textures_.end()) {
+      VkImageLayout src_layout = it->second.last_image_layout;
+      if (src_layout == VK_IMAGE_LAYOUT_UNDEFINED) {
+        // First use: transition from undefined, no prior access to sync.
+        ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
+                           std::get<0>(texture_it->second.image),
+                           VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+                           VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                           0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                           VK_IMAGE_LAYOUT_UNDEFINED,
+                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+      } else {
+        // Subsequent use: transition from shader-readable state.
+        ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
+                           std::get<0>(texture_it->second.image),
+                           VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                           VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                           VK_ACCESS_SHADER_READ_BIT,
+                           VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                           VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+      }
+    }
+  }
+
+  VkRenderPassBeginInfo render_pass_begin{};
+  render_pass_begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  render_pass_begin.renderPass = it->second.render_pass;
+  render_pass_begin.framebuffer = it->second.frame_buffer;
+  render_pass_begin.renderArea.extent.width = it->second.width;
+  render_pass_begin.renderArea.extent.height = it->second.height;
+  render_pass_begin.renderArea.offset.x = 0;
+  render_pass_begin.renderArea.offset.y = 0;
+
+  VkClearValue clear_values[2];
+  clear_values[0].color = {{0.0f, 0.0f, 0.0f, 0.0f}};
+  clear_values[1].depthStencil = {1.0f, 0};
+  size_t clear_count = (it->second.depth_texture_id != 0) ? 2 : 1;
+  render_pass_begin.clearValueCount = clear_count;
+  render_pass_begin.pClearValues = clear_values;
+
+  vkCmdBeginRenderPass(frames_[current_frame_].draw_command_buffer,
+                       &render_pass_begin, VK_SUBPASS_CONTENTS_INLINE);
+
+  VkViewport viewport{};
+  viewport.x = 0;
+  viewport.y = (float)it->second.height;
+  viewport.width = (float)it->second.width;
+  viewport.height = -(float)it->second.height;
+  viewport.minDepth = 0;
+  viewport.maxDepth = 1.0f;
+  vkCmdSetViewport(frames_[current_frame_].draw_command_buffer, 0, 1,
+                   &viewport);
+
+  VkRect2D scissor{};
+  scissor.extent.width = it->second.width;
+  scissor.extent.height = it->second.height;
+  vkCmdSetScissor(frames_[current_frame_].draw_command_buffer, 0, 1,
+                  &scissor);
+
+  active_render_target_id_ = render_target_id;
+}
+
+void RendererVulkan::DestroyRenderTarget(uint64_t render_target_id) {
+  auto it = render_targets_.find(render_target_id);
+  if (it == render_targets_.end()) {
+    DLOG(0) << "Render target not found: " << render_target_id;
+    return;
+  }
+
+  if (it->second.frame_buffer != VK_NULL_HANDLE) {
+    FreeFrameBuffer(it->second.frame_buffer);
+  }
+
+  // Destroy the associated textures.
+  if (it->second.color_texture_id != 0) {
+    DestroyTexture(it->second.color_texture_id);
+  }
+  if (it->second.depth_texture_id != 0) {
+    DestroyTexture(it->second.depth_texture_id);
+  }
+
+  render_targets_.erase(it);
+}
+
+void RendererVulkan::EndRenderPassToDefault() {
+  if (active_render_target_id_ == 0) {
+    // Already on default framebuffer, nothing to do.
+    return;
+  }
+
+  // End the current render pass.
+  vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
+
+  // Transition the active render target's color texture to shader-readable
+  // layout so it can be sampled in subsequent passes.
+  auto it = render_targets_.find(active_render_target_id_);
+  if (it != render_targets_.end()) {
+    auto texture_it = textures_.find(it->second.color_texture_id);
+    if (texture_it != textures_.end()) {
+      ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
+                         std::get<0>(texture_it->second.image),
+                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                         VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                         VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                         VK_ACCESS_SHADER_READ_BIT,
+                         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+      it->second.last_image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    }
+  }
+
+  active_render_target_id_ = 0;
+
+  // Restart the draw command buffer for the default (swapchain) render pass.
+  DrawListBegin();
+}
+
+uint64_t RendererVulkan::GetRenderTargetColorTexture(uint64_t render_target_id) {
+  auto it = render_targets_.find(render_target_id);
+  if (it == render_targets_.end()) {
+    DLOG(0) << "Render target not found: " << render_target_id;
+    return 0;
+  }
+  return it->second.color_texture_id;
+}
+
+void RendererVulkan::EndRenderPass() {
   if (active_render_target_id_ != 0) {
     vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
 
-    auto active_it = render_targets_.find(active_render_target_id_);
-    if (active_it == render_targets_.end()) {
-      DLOG(0) << "Render target not found: " << active_render_target_id_;
-      return;
+    auto it = render_targets_.find(active_render_target_id_);
+    if (it != render_targets_.end()) {
+      auto texture_it = textures_.find(it->second.color_texture_id);
+      if (texture_it != textures_.end()) {
+        ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
+                           std::get<0>(texture_it->second.image),
+                           VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                           VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                           VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                           VK_ACCESS_SHADER_READ_BIT,
+                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                           VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        it->second.last_image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+      }
     }
-
-    auto texture_it = textures_.find(active_it->second.color_texture_id);
-    if (texture_it == textures_.end()) {
-      DLOG(0) << "Texture not found";
-      return;
-    }
-
-    // Ensure the previous pass's write to texture is complete and transitions
-    // it to a readable state for the next pass's fragment shader.
-    ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
-                       std::get<0>(texture_it->second.image),
-                       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                       VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                       VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                       VK_ACCESS_SHADER_READ_BIT,
-                       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                       VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    active_it->second.last_image_layout =
-        VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    active_render_target_id_ = 0;
+  } else if (in_default_render_pass_) {
+    vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
+    in_default_render_pass_ = false;
   }
 }
 
@@ -2550,12 +2768,14 @@ void RendererVulkan::DrawListBegin() {
   vkCmdBeginRenderPass(frames_[current_frame_].draw_command_buffer,
                        &render_pass_begin, VK_SUBPASS_CONTENTS_INLINE);
 
+  in_default_render_pass_ = true;
   ResetViewport();
   ResetScissor();
 }
 
 void RendererVulkan::DrawListEnd() {
   vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
+  in_default_render_pass_ = false;
 
   // To ensure proper synchronization, we must make sure rendering is done
   // before:
@@ -2630,6 +2850,13 @@ void RendererVulkan::DestroyAllResources() {
     resource_ids.push_back(r.first);
   for (auto& r : resource_ids)
     DestroyDescriptorSet(r);
+
+  // Destroy render targets (framebuffers + associated textures).
+  resource_ids.clear();
+  for (auto& r : render_targets_)
+    resource_ids.push_back(r.first);
+  for (auto& r : resource_ids)
+    DestroyRenderTarget(r);
 
   resource_ids.clear();
   for (auto& r : textures_)

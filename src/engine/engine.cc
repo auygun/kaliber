@@ -117,6 +117,8 @@ void Engine::Initialize() {
 
   imgui_backend_.CreateRenderResources(renderer_.get());
 
+  render_graph_.Initialize(renderer_.get());
+
   auto cam_entity = world_.CreateSceneNode("cam");
   auto& registry = world_.GetRegistry();
   registry.AddComponent(cam_entity, FlyCameraComponent{.speed = 4.0f});
@@ -170,8 +172,16 @@ void Engine::Update(float delta_time) {
 
 void Engine::Draw(float frame_frac) {
   renderer_->PrepareForDrawing();
-  world_.Render(frame_frac);
-  imgui_backend_.Draw();
+
+  render_graph_.Reset();
+  render_graph_.AddPass(
+      "scene", "scene_layer",
+      [this, frame_frac](RenderGraphContext& ctx) { world_.Render(frame_frac); },
+      true);
+  render_graph_.AddPass(
+      "ui", "ui_layer",
+      [this](RenderGraphContext& ctx) { imgui_backend_.Draw(); });
+  render_graph_.Execute(renderer_.get());
   renderer_->Present();
 }
 

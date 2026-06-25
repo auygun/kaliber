@@ -108,6 +108,10 @@ class RendererVulkan final : public Renderer {
                               int height,
                               bool depth) final;
   void ActivateRenderTarget(uint64_t render_target_id) final;
+  void DestroyRenderTarget(uint64_t render_target_id) final;
+  void EndRenderPassToDefault() final;
+  uint64_t GetRenderTargetColorTexture(uint64_t render_target_id) final;
+  void EndRenderPass() final;
 
   void BeginRenderToTexture(uint64_t texture_id) final;
   void EndRenderToTexture(uint64_t texture_id) final;
@@ -181,6 +185,15 @@ class RendererVulkan final : public Renderer {
     VkPipeline pipeline = VK_NULL_HANDLE;
     std::vector<std::vector<DescriptorBindingInfo>> bindings_per_set;
     std::vector<VkDescriptorSetLayout> descriptor_set_layouts;
+
+    // Stored for creating pipeline variants per render pass.
+    std::string name;
+    VertexDescription vertex_description;
+    Primitive primitive = kPrimitive_Triangles;
+    bool enable_depth_test = false;
+    bool wireframe = false;
+    CullMode cull_mode = CullMode::kNone;
+    std::map<VkRenderPass, VkPipeline> pipeline_variants;
   };
 
   struct TextureVulkan {
@@ -208,7 +221,10 @@ class RendererVulkan final : public Renderer {
     uint64_t color_texture_id = 0;
     uint64_t depth_texture_id = 0;
     VkFramebuffer frame_buffer = VK_NULL_HANDLE;
+    VkRenderPass render_pass = VK_NULL_HANDLE;
     VkImageLayout last_image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    uint32_t width = 0;
+    uint32_t height = 0;
   };
 
   // Each frame contains 2 command buffers with separate synchronization scopes.
@@ -282,6 +298,7 @@ class RendererVulkan final : public Renderer {
   uint32_t active_geometry_index_count_ = 0;
 
   uint64_t active_render_target_id_ = 0;
+  bool in_default_render_pass_ = false;
 
   std::map<DescriptorPoolKey, DescriptorPools> descriptor_pools_map_;
 
@@ -372,6 +389,8 @@ class RendererVulkan final : public Renderer {
   bool CreatePipelineLayout(ShaderVulkan& shader,
                             const std::vector<uint8_t>& spirv_vertex,
                             const std::vector<uint8_t>& spirv_fragment);
+  VkPipeline CreatePipeline(ShaderVulkan& shader, VkRenderPass render_pass);
+  VkPipeline GetPipelineForCurrentRenderPass(ShaderVulkan& shader);
 
   void DrawListBegin();
   void DrawListEnd();
