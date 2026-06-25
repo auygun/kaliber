@@ -544,7 +544,8 @@ uint64_t RendererVulkan::CreateShader(
     Primitive primitive,
     bool enable_depth_test,
     bool wireframe,
-    CullMode cull_mode) {
+    CullMode cull_mode,
+    bool premultiplied_alpha) {
   auto it = spirv_cache_.find(source->name());
   if (it == spirv_cache_.end()) {
     std::array<std::vector<uint8_t>, 2> spirv;
@@ -581,6 +582,7 @@ uint64_t RendererVulkan::CreateShader(
   shader.enable_depth_test = enable_depth_test;
   shader.wireframe = wireframe;
   shader.cull_mode = cull_mode;
+  shader.premultiplied_alpha = premultiplied_alpha;
 
   shader.pipeline = CreatePipeline(shader, context_.GetRenderPass());
 
@@ -705,12 +707,13 @@ VkPipeline RendererVulkan::CreatePipeline(ShaderVulkan& shader,
       VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
       VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
   color_blend_attachment.blendEnable = VK_TRUE;
-  color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+  color_blend_attachment.srcColorBlendFactor =
+      shader.premultiplied_alpha ? VK_BLEND_FACTOR_ONE : VK_BLEND_FACTOR_SRC_ALPHA;
   color_blend_attachment.dstColorBlendFactor =
       VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
   color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
   color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-  color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+  color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
   color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
   VkPipelineColorBlendStateCreateInfo color_blending{};

@@ -83,7 +83,8 @@ class Renderer {
                                 Primitive primitive,
                                 bool enable_depth_test,
                                 bool wireframe,
-                                CullMode cull_mode) = 0;
+                                CullMode cull_mode,
+                                bool premultiplied_alpha = false) = 0;
   virtual void DestroyShader(uint64_t resource_id) = 0;
   virtual void ActivateShader(uint64_t resource_id) = 0;
 

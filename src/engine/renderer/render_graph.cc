@@ -46,7 +46,7 @@ void RenderGraph::CreateCompositeResources(Renderer* renderer) {
 
   composite_shader_id_ = renderer->CreateShader(std::move(source), v_desc,
                                                 kPrimitive_Triangles, false,
-                                                false, CullMode::kNone);
+                                                false, CullMode::kNone, true);
 }
 
 void RenderGraph::AddPass(std::string name, std::string layer_name,

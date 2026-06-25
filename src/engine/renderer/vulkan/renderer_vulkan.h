@@ -79,7 +79,8 @@ class RendererVulkan final : public Renderer {
                         Primitive primitive,
                         bool enable_depth_test,
                         bool wireframe,
-                        CullMode cull_mode) final;
+                        CullMode cull_mode,
+                        bool premultiplied_alpha = false) final;
   void DestroyShader(uint64_t resource_id) final;
   void ActivateShader(uint64_t resource_id) final;
 
@@ -193,6 +194,7 @@ class RendererVulkan final : public Renderer {
     bool enable_depth_test = false;
     bool wireframe = false;
     CullMode cull_mode = CullMode::kNone;
+    bool premultiplied_alpha = false;
     std::map<VkRenderPass, VkPipeline> pipeline_variants;
   };
 
