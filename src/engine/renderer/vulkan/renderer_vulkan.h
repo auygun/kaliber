@@ -114,9 +114,6 @@ class RendererVulkan final : public Renderer {
   uint64_t GetRenderTargetColorTexture(uint64_t render_target_id) final;
   void EndRenderPass() final;
 
-  void BeginRenderToTexture(uint64_t texture_id) final;
-  void EndRenderToTexture(uint64_t texture_id) final;
-
   size_t GetAndResetFPS() final;
 
   const char* GetDebugName() final { return "Vulkan"; }
@@ -305,8 +302,6 @@ class RendererVulkan final : public Renderer {
   std::map<DescriptorPoolKey, DescriptorPools> descriptor_pools_map_;
 
   VkSampler sampler_ = VK_NULL_HANDLE;
-
-  VkRenderPass offscreen_render_pass_ = VK_NULL_HANDLE;
 
   std::thread setup_thread_;
   base::TaskRunner task_runner_;

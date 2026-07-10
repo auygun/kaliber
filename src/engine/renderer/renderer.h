@@ -120,9 +120,6 @@ class Renderer {
   virtual uint64_t GetRenderTargetColorTexture(uint64_t render_target_id) = 0;
   virtual void EndRenderPass() = 0;
 
-  virtual void BeginRenderToTexture(uint64_t texture_id) = 0;
-  virtual void EndRenderToTexture(uint64_t texture_id) = 0;
-
   bool SupportsETC1() const { return texture_compression_.etc1; }
   bool SupportsDXT1() const {
     return texture_compression_.dxt1 || texture_compression_.s3tc;

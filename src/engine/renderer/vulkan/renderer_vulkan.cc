@@ -1395,95 +1395,6 @@ void RendererVulkan::EndRenderPass() {
   }
 }
 
-void RendererVulkan::BeginRenderToTexture(uint64_t texture_id) {
-  auto it = textures_.find(texture_id);
-  if (it == textures_.end()) {
-    DLOG(0) << "Texture not found";
-    return;
-  }
-
-  vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
-
-  ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
-                     std::get<0>(it->second.image),
-                     VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0,
-                     VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
-  // if (it->second.frame_buffer_ == VK_NULL_HANDLE) {
-  //   // Create a new framebuffer with the texture as the color attachment.
-  //   VkFramebufferCreateInfo framebuffer_info{};
-  //   framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-  //   framebuffer_info.renderPass = offscreen_render_pass_;
-  //   framebuffer_info.attachmentCount = 1;
-  //   framebuffer_info.pAttachments = &it->second.view;
-  //   framebuffer_info.width = it->second.width;
-  //   framebuffer_info.height = it->second.height;
-  //   framebuffer_info.layers = 1;
-
-  //   VkResult err = vkCreateFramebuffer(device_, &framebuffer_info, nullptr,
-  //                                      &it->second.frame_buffer_);
-  //   if (err) {
-  //     DLOG(0) << "vkCreateFramebuffer failed with error "
-  //             << string_VkResult(err);
-  //     return;
-  //   }
-  // }
-
-  // Begin the render pass with the new framebuffer
-  VkRenderPassBeginInfo render_pass_begin{};
-  render_pass_begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  render_pass_begin.renderPass = offscreen_render_pass_;
-  // render_pass_begin.framebuffer = it->second.frame_buffer_;
-  render_pass_begin.renderArea.extent.width = it->second.width;
-  render_pass_begin.renderArea.extent.height = it->second.height;
-  render_pass_begin.renderArea.offset.x = 0;
-  render_pass_begin.renderArea.offset.y = 0;
-
-  VkClearValue clear_value{};
-  clear_value.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-  render_pass_begin.clearValueCount = 1;
-  render_pass_begin.pClearValues = &clear_value;
-
-  vkCmdBeginRenderPass(frames_[current_frame_].draw_command_buffer,
-                       &render_pass_begin, VK_SUBPASS_CONTENTS_INLINE);
-
-  VkViewport viewport{};
-  viewport.x = 0;
-  viewport.y = 0;
-  viewport.width = (float)it->second.width;
-  viewport.height = (float)it->second.height;
-  viewport.minDepth = 0;
-  viewport.maxDepth = 1.0;
-  vkCmdSetViewport(frames_[current_frame_].draw_command_buffer, 0, 1,
-                   &viewport);
-
-  SetScissor(0, 0, it->second.width, it->second.height);
-}
-
-void RendererVulkan::EndRenderToTexture(uint64_t texture_id) {
-  vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
-
-  auto it = textures_.find(texture_id);
-  if (it == textures_.end()) {
-    DLOG(0) << "Texture not found";
-    return;
-  }
-
-  ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
-                     std::get<0>(it->second.image),
-                     VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                     VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                     VK_ACCESS_SHADER_READ_BIT,
-                     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-  DrawListBegin();
-}
-
 bool RendererVulkan::InitializeInternal() {
   glslang::InitializeProcess();
 
@@ -1565,51 +1476,6 @@ bool RendererVulkan::InitializeInternal() {
   VkResult err = vkCreateSampler(device_, &sampler_info, nullptr, &sampler_);
   if (err) {
     DLOG(0) << "vkCreateSampler failed with error " << string_VkResult(err);
-    return false;
-  }
-
-  // Create render pass for rendering into a texture.
-  VkAttachmentDescription color_attachment{};
-  color_attachment.format = context_.GetScreenFormat();
-  color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-  color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-  color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  color_attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  color_attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-  VkAttachmentReference color_ref{};
-  color_ref.attachment = 0;
-  color_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-  VkSubpassDescription subpass{};
-  subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  subpass.colorAttachmentCount = 1;
-  subpass.pColorAttachments = &color_ref;
-
-  // This ensures that:
-  // - Fragment shaders reading the offscreen image in a previous render pass
-  // (or frame) have finished.
-  // - Color attachment writes can safely begin in this render pass.
-  VkSubpassDependency dependency{};
-  dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-  dependency.dstSubpass = 0;
-  dependency.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-  dependency.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-  dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-  dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-  VkRenderPassCreateInfo rp_info{};
-  rp_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-  rp_info.attachmentCount = 1;
-  rp_info.pAttachments = &color_attachment;
-  rp_info.subpassCount = 1;
-  rp_info.pSubpasses = &subpass;
-  rp_info.dependencyCount = 1;
-  rp_info.pDependencies = &dependency;
-
-  err = vkCreateRenderPass(device_, &rp_info, nullptr, &offscreen_render_pass_);
-  if (err) {
-    DLOG(0) << "vkCreateRenderPass failed. Error: " << string_VkResult(err);
     return false;
   }
 
@@ -1786,7 +1652,7 @@ void RendererVulkan::FreePendingResources(int frame) {
   if (!frames_[frame].frame_buffers_to_destroy.empty()) {
     for (auto frame_buffer : frames_[frame].frame_buffers_to_destroy)
       vkDestroyFramebuffer(device_, frame_buffer, nullptr);
-    frames_[frame].buffers_to_destroy.clear();
+    frames_[frame].frame_buffers_to_destroy.clear();
   }
 
   if (!frames_[frame].descriptor_sets_to_destroy.empty()) {
@@ -1881,30 +1747,6 @@ VkRenderPass RendererVulkan::GetOrCreateRenderPass(VkFormat color_format,
   render_pass_pool_[key] = render_pass;
   return render_pass;
 }
-
-#if 0
-void RendererVulkan::ActivateRenderPass(uint64_t resource_id) {
-  auto it = render_passes_.find(resource_id);
-  if (it == render_passes_.end()) {
-    DLOG(0) << "Render pass not found";
-    return;
-  }
-  VkRenderPassBeginInfo render_pass_begin{};
-  render_pass_begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  render_pass_begin.renderPass = it->second;
-  render_pass_begin.framebuffer = context_.GetFramebuffer();
-  render_pass_begin.renderArea.extent.width = context_.GetWindowWidth();
-  render_pass_begin.renderArea.extent.height = context_.GetWindowHeight();
-  render_pass_begin.renderArea.offset.x = 0;
-  render_pass_begin.renderArea.offset.y = 0;
-  VkClearValue clear_value{};
-  clear_value.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-  render_pass_begin.clearValueCount = 1;
-  render_pass_begin.pClearValues = &clear_value;
-  vkCmdBeginRenderPass(frames_[current_frame_].draw_command_buffer,
-                       &render_pass_begin, VK_SUBPASS_CONTENTS_INLINE);
-}
-#endif
 
 void RendererVulkan::MemoryBarrier(VkPipelineStageFlags src_stage_mask,
                                    VkPipelineStageFlags dst_stage_mask,
