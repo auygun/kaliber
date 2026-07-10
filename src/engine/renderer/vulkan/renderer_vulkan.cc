@@ -2341,7 +2341,6 @@ bool RendererVulkan::ParseDescriptorBindings(
       }
 
       DescriptorBindingInfo binding_info;
-      binding_info.name = spv_binding.name;
       binding_info.stage_flags = shader_stage_flag;
 
       switch (spv_binding.descriptor_type) {

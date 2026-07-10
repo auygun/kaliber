@@ -157,7 +157,6 @@ class RendererVulkan final : public Renderer {
       std::vector<std::tuple<VkPipeline, VkPipelineLayout>>;
 
   struct DescriptorBindingInfo {
-    std::string name;  // TODO: remove if not needed.
     VkDescriptorType descriptor_type = (VkDescriptorType)-1;
     VkShaderStageFlags stage_flags = 0;
     size_t length = 0;  // Size of arrays (in total elements), or UBOs (in
