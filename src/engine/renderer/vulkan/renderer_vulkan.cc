@@ -495,9 +495,7 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
     AllocateImage(
         it->second.image, it->second.view, vk_format, width, height,
         num_mip_levels,
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
-            // TODO: do this for offscreen render target only.
-            (num_mip_levels == 1 ? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT : 0),
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, 0);
     old_layout = VK_IMAGE_LAYOUT_UNDEFINED;
     it->second.width = width;
