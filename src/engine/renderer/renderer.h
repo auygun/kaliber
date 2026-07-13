@@ -116,9 +116,8 @@ class Renderer {
                                       bool depth) = 0;
   virtual void ActivateRenderTarget(uint64_t render_target_id) = 0;
   virtual void DestroyRenderTarget(uint64_t render_target_id) = 0;
-  virtual void EndRenderPassToDefault() = 0;
+  virtual void ActivateScreenRenderTarget() = 0;
   virtual uint64_t GetRenderTargetColorTexture(uint64_t render_target_id) = 0;
-  virtual void EndRenderPass() = 0;
 
   bool SupportsETC1() const { return texture_compression_.etc1; }
   bool SupportsDXT1() const {

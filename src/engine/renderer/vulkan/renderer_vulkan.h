@@ -110,9 +110,8 @@ class RendererVulkan final : public Renderer {
                               bool depth) final;
   void ActivateRenderTarget(uint64_t render_target_id) final;
   void DestroyRenderTarget(uint64_t render_target_id) final;
-  void EndRenderPassToDefault() final;
+  void ActivateScreenRenderTarget() final;
   uint64_t GetRenderTargetColorTexture(uint64_t render_target_id) final;
-  void EndRenderPass() final;
 
   size_t GetAndResetFPS() final;
 

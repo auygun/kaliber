@@ -492,11 +492,10 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
   }
 
   if (it->second.view == VK_NULL_HANDLE) {
-    AllocateImage(
-        it->second.image, it->second.view, vk_format, width, height,
-        num_mip_levels,
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, 0);
+    AllocateImage(it->second.image, it->second.view, vk_format, width, height,
+                  num_mip_levels,
+                  VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                  VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE, 0);
     old_layout = VK_IMAGE_LAYOUT_UNDEFINED;
     it->second.width = width;
     it->second.height = height;
@@ -705,13 +704,15 @@ VkPipeline RendererVulkan::CreatePipeline(ShaderVulkan& shader,
       VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
       VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
   color_blend_attachment.blendEnable = VK_TRUE;
-  color_blend_attachment.srcColorBlendFactor =
-      shader.premultiplied_alpha ? VK_BLEND_FACTOR_ONE : VK_BLEND_FACTOR_SRC_ALPHA;
+  color_blend_attachment.srcColorBlendFactor = shader.premultiplied_alpha
+                                                   ? VK_BLEND_FACTOR_ONE
+                                                   : VK_BLEND_FACTOR_SRC_ALPHA;
   color_blend_attachment.dstColorBlendFactor =
       VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
   color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
   color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-  color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+  color_blend_attachment.dstAlphaBlendFactor =
+      VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
   color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
   VkPipelineColorBlendStateCreateInfo color_blending{};
@@ -729,8 +730,7 @@ VkPipeline RendererVulkan::CreatePipeline(ShaderVulkan& shader,
   VkPipelineDepthStencilStateCreateInfo depth_stencil{};
   depth_stencil.sType =
       VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-  depth_stencil.depthTestEnable =
-      shader.enable_depth_test ? VK_TRUE : VK_FALSE;
+  depth_stencil.depthTestEnable = shader.enable_depth_test ? VK_TRUE : VK_FALSE;
   depth_stencil.depthWriteEnable =
       shader.enable_depth_test ? VK_TRUE : VK_FALSE;
   depth_stencil.depthCompareOp = VK_COMPARE_OP_LESS;
@@ -1120,7 +1120,6 @@ void RendererVulkan::DestroyDescriptorSet(uint64_t resource_id) {
 
 void RendererVulkan::PrepareForDrawing() {
   context_.PrepareBuffers();
-  DrawListBegin();
 }
 
 void RendererVulkan::Present() {
@@ -1153,9 +1152,8 @@ uint64_t RendererVulkan::CreateRenderTarget(ImageFormat format,
     auto& depth_texture = textures_[depth_texture_id] = {};
 
     depth_format = context_.GetDepthFormat();
-    AllocateImage(depth_texture.image, depth_texture.view,
-                  depth_format, width, height, 1,
-                  VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+    AllocateImage(depth_texture.image, depth_texture.view, depth_format, width,
+                  height, 1, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                   VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
@@ -1188,10 +1186,9 @@ uint64_t RendererVulkan::CreateRenderTarget(ImageFormat format,
     return 0;
   }
 
-  render_targets_[++last_resource_id_] = {color_texture_id, depth_texture_id,
-                                          frame_buffer, render_pass,
-                                          VK_IMAGE_LAYOUT_UNDEFINED,
-                                          (uint32_t)width, (uint32_t)height};
+  render_targets_[++last_resource_id_] = {
+      color_texture_id,          depth_texture_id, frame_buffer,    render_pass,
+      VK_IMAGE_LAYOUT_UNDEFINED, (uint32_t)width,  (uint32_t)height};
   return last_resource_id_;
 }
 
@@ -1247,8 +1244,8 @@ void RendererVulkan::ActivateRenderTarget(uint64_t render_target_id) {
         ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
                            std::get<0>(texture_it->second.image),
                            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-                           VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                           0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                           VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0,
+                           VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
                            VK_IMAGE_LAYOUT_UNDEFINED,
                            VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
       } else {
@@ -1297,8 +1294,7 @@ void RendererVulkan::ActivateRenderTarget(uint64_t render_target_id) {
   VkRect2D scissor{};
   scissor.extent.width = it->second.width;
   scissor.extent.height = it->second.height;
-  vkCmdSetScissor(frames_[current_frame_].draw_command_buffer, 0, 1,
-                  &scissor);
+  vkCmdSetScissor(frames_[current_frame_].draw_command_buffer, 0, 1, &scissor);
 
   active_render_target_id_ = render_target_id;
 }
@@ -1325,7 +1321,7 @@ void RendererVulkan::DestroyRenderTarget(uint64_t render_target_id) {
   render_targets_.erase(it);
 }
 
-void RendererVulkan::EndRenderPassToDefault() {
+void RendererVulkan::ActivateScreenRenderTarget() {
   if (active_render_target_id_ == 0) {
     // Already on default framebuffer, nothing to do.
     return;
@@ -1358,39 +1354,14 @@ void RendererVulkan::EndRenderPassToDefault() {
   DrawListBegin();
 }
 
-uint64_t RendererVulkan::GetRenderTargetColorTexture(uint64_t render_target_id) {
+uint64_t RendererVulkan::GetRenderTargetColorTexture(
+    uint64_t render_target_id) {
   auto it = render_targets_.find(render_target_id);
   if (it == render_targets_.end()) {
     DLOG(0) << "Render target not found: " << render_target_id;
     return 0;
   }
   return it->second.color_texture_id;
-}
-
-void RendererVulkan::EndRenderPass() {
-  if (active_render_target_id_ != 0) {
-    vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
-
-    auto it = render_targets_.find(active_render_target_id_);
-    if (it != render_targets_.end()) {
-      auto texture_it = textures_.find(it->second.color_texture_id);
-      if (texture_it != textures_.end()) {
-        ImageMemoryBarrier(frames_[current_frame_].draw_command_buffer,
-                           std::get<0>(texture_it->second.image),
-                           VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                           VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                           VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                           VK_ACCESS_SHADER_READ_BIT,
-                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                           VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        it->second.last_image_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-      }
-    }
-    active_render_target_id_ = 0;
-  } else if (in_default_render_pass_) {
-    vkCmdEndRenderPass(frames_[current_frame_].draw_command_buffer);
-    in_default_render_pass_ = false;
-  }
 }
 
 bool RendererVulkan::InitializeInternal() {

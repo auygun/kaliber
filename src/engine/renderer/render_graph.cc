@@ -15,7 +15,8 @@ RenderGraph::RenderGraph() = default;
 RenderGraph::~RenderGraph() = default;
 
 void RenderGraph::Initialize(Renderer* renderer) {
-  if (initialized_) return;
+  if (initialized_)
+    return;
   CreateCompositeResources(renderer);
   initialized_ = true;
 }
@@ -44,19 +45,23 @@ void RenderGraph::CreateCompositeResources(Renderer* renderer) {
     return;
   }
 
-  composite_shader_id_ = renderer->CreateShader(std::move(source), v_desc,
-                                                kPrimitive_Triangles, false,
-                                                false, CullMode::kNone, true);
+  composite_shader_id_ =
+      renderer->CreateShader(std::move(source), v_desc, kPrimitive_Triangles,
+                             false, false, CullMode::kNone, true);
 }
 
-void RenderGraph::AddPass(std::string name, std::string layer_name,
-                          std::unique_ptr<RenderPass> pass, bool depth) {
+void RenderGraph::AddPass(std::string name,
+                          std::string layer_name,
+                          std::unique_ptr<RenderPass> pass,
+                          bool depth) {
   passes_.push_back(
       {std::move(name), std::move(layer_name), std::move(pass), depth});
 }
 
-void RenderGraph::AddPass(std::string name, std::string layer_name,
-                          LambdaRenderPass::Callback callback, bool depth) {
+void RenderGraph::AddPass(std::string name,
+                          std::string layer_name,
+                          LambdaRenderPass::Callback callback,
+                          bool depth) {
   AddPass(std::move(name), std::move(layer_name),
           std::make_unique<LambdaRenderPass>(std::move(callback)), depth);
 }
@@ -68,7 +73,8 @@ void RenderGraph::Reset() {
 
 RenderGraph::RenderLayer& RenderGraph::GetOrCreateLayer(Renderer* renderer,
                                                         const std::string& name,
-                                                        int width, int height,
+                                                        int width,
+                                                        int height,
                                                         bool depth) {
   auto it = layers_.find(name);
   if (it != layers_.end()) {
@@ -106,7 +112,8 @@ RenderGraph::RenderLayer& RenderGraph::GetOrCreateLayer(Renderer* renderer,
 }
 
 void RenderGraph::Execute(Renderer* renderer) {
-  if (!initialized_) Initialize(renderer);
+  if (!initialized_)
+    Initialize(renderer);
 
   RenderGraphContext ctx{renderer};
 
@@ -116,9 +123,8 @@ void RenderGraph::Execute(Renderer* renderer) {
 
   // 1. Execute all user passes, each rendering into its layer.
   for (auto& node : passes_) {
-    RenderLayer& layer = GetOrCreateLayer(renderer, node.layer_name,
-                                           screen_width, screen_height,
-                                           node.depth);
+    RenderLayer& layer = GetOrCreateLayer(
+        renderer, node.layer_name, screen_width, screen_height, node.depth);
 
     // Activate the render target and begin the render pass.
     renderer->ActivateRenderTarget(layer.render_target_id);
@@ -127,7 +133,7 @@ void RenderGraph::Execute(Renderer* renderer) {
   }
 
   // 2. End rendering to render targets and return to default framebuffer.
-  renderer->EndRenderPassToDefault();
+  renderer->ActivateScreenRenderTarget();
 
   // 3. Final Composition Pass - blend all layers to screen.
   renderer->ActivateShader(composite_shader_id_);
@@ -144,13 +150,15 @@ void RenderGraph::Execute(Renderer* renderer) {
 
 uint64_t RenderGraph::GetLayerTexture(const std::string& name) {
   auto it = layers_.find(name);
-  if (it != layers_.end()) return it->second.color_texture_id;
+  if (it != layers_.end())
+    return it->second.color_texture_id;
   return 0;
 }
 
 uint64_t RenderGraph::GetLayerRenderTarget(const std::string& name) {
   auto it = layers_.find(name);
-  if (it != layers_.end()) return it->second.render_target_id;
+  if (it != layers_.end())
+    return it->second.render_target_id;
   return 0;
 }
 
