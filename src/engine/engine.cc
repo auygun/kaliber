@@ -176,11 +176,13 @@ void Engine::Draw(float frame_frac) {
   render_graph_.Reset();
   render_graph_.AddPass(
       "scene", "scene_layer",
-      [this, frame_frac](RenderGraphContext& ctx) { world_.Render(frame_frac); },
+      [this, frame_frac](RenderGraphContext& ctx) {
+        world_.Render(frame_frac);
+      },
       true);
-  render_graph_.AddPass(
-      "ui", "ui_layer",
-      [this](RenderGraphContext& ctx) { imgui_backend_.Draw(); });
+  render_graph_.AddPass("ui", "ui_layer", [this](RenderGraphContext& ctx) {
+    imgui_backend_.Draw();
+  });
   render_graph_.Execute(renderer_.get());
   renderer_->Present();
 }
@@ -335,6 +337,7 @@ void Engine::CreateTextureCompressors() {
 }
 
 void Engine::ContextLost() {
+  render_graph_.ContextLost();
   if (game_)
     game_->ContextLost();
 }

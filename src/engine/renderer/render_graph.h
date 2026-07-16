@@ -35,7 +35,8 @@ class LambdaRenderPass : public RenderPass {
       : callback_(std::move(callback)) {}
 
   void Execute(RenderGraphContext& ctx) final {
-    if (callback_) callback_(ctx);
+    if (callback_)
+      callback_(ctx);
   }
 
  private:
@@ -62,13 +63,19 @@ class RenderGraph {
   // Must be called before Execute.
   void Initialize(Renderer* renderer);
 
+  void ContextLost();
+
   // Adds a pass that renders into the specified 'layer_name'.
   // If the layer doesn't exist, it is created on first use.
-  void AddPass(std::string name, std::string layer_name,
-               std::unique_ptr<RenderPass> pass, bool depth = false);
+  void AddPass(std::string name,
+               std::string layer_name,
+               std::unique_ptr<RenderPass> pass,
+               bool depth = false);
 
-  void AddPass(std::string name, std::string layer_name,
-               LambdaRenderPass::Callback callback, bool depth = false);
+  void AddPass(std::string name,
+               std::string layer_name,
+               LambdaRenderPass::Callback callback,
+               bool depth = false);
 
   // Clears all passes but keeps layer resources alive for reuse.
   void Reset();
@@ -111,8 +118,11 @@ class RenderGraph {
   uint64_t full_screen_quad_id_ = 0;
   bool initialized_ = false;
 
-  RenderLayer& GetOrCreateLayer(Renderer* renderer, const std::string& name,
-                                int width, int height, bool depth);
+  RenderLayer& GetOrCreateLayer(Renderer* renderer,
+                                const std::string& name,
+                                int width,
+                                int height,
+                                bool depth);
   void CreateCompositeResources(Renderer* renderer);
 };
 

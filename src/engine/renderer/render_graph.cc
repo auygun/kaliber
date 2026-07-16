@@ -50,6 +50,15 @@ void RenderGraph::CreateCompositeResources(Renderer* renderer) {
                              false, false, CullMode::kNone, true);
 }
 
+void RenderGraph::ContextLost() {
+  composite_shader_id_ = 0;
+  full_screen_quad_id_ = 0;
+  passes_.clear();
+  layers_.clear();
+  layer_order_.clear();
+  initialized_ = false;
+}
+
 void RenderGraph::AddPass(std::string name,
                           std::string layer_name,
                           std::unique_ptr<RenderPass> pass,
