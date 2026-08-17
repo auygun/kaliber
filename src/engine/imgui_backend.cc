@@ -563,7 +563,6 @@ std::pair<bool, bool> ImguiBackend::ProcessInput(Platform* platform) {
   return std::make_pair(io.WantCaptureMouse, io.WantCaptureKeyboard);
 }
 
-#if defined(OS_LINUX)
 // Check if an InputText field has selected text and update the primary
 // selection (middle-click paste on Linux). Called at the start of each frame
 // to capture selection state from the previous frame's widget evaluation.
@@ -593,12 +592,9 @@ void ImguiBackend::UpdatePrimarySelection() {
     prev_sel_end_ = 0;
   }
 }
-#endif  // defined(OS_LINUX)
 
 void ImguiBackend::NewFrame(float delta_time) {
-#if defined(OS_LINUX)
   UpdatePrimarySelection();
-#endif
 
   ImGuiIO& io = ImGui::GetIO();
   int window_w = platform_->GetWindowWidth();

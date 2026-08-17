@@ -547,9 +547,10 @@ const char* Platform::GetClipboardText() {
 }
 
 #if defined(OS_LINUX)
-// Primary selection (middle-click paste) is X11-only. Wayland exposes it
-// through zwp_primary_selection_v1, which GLFW neither implements nor bundles
-// the protocol for, so it is a no-op there.
+
+// Primary selection is X11-only. Wayland exposes it through
+// zwp_primary_selection_v1, which GLFW neither implements nor bundles the
+// protocol for, so it is a no-op there.
 const char* Platform::GetPrimarySelection() {
   if (glfwGetPlatform() != GLFW_PLATFORM_X11)
     return "";
@@ -562,6 +563,15 @@ void Platform::SetPrimarySelection(const char* text) {
     return;
   glfwSetX11SelectionString(text);
 }
+
+#else
+
+const char* Platform::GetPrimarySelection() {
+  return "";
+}
+
+void Platform::SetPrimarySelection(const char* /*text*/) {}
+
 #endif  // defined(OS_LINUX)
 
 }  // namespace eng

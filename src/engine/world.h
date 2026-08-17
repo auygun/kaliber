@@ -28,6 +28,8 @@ class World {
 
   void Update(float delta_time);
 
+  // |pos| is a cursor position in window units, as reported by
+  // Platform::GetMouseX/Y().
   void OnClick(const base::Vector2f& pos);
 
   Entity CreateSceneNode(std::string_view name = "",
@@ -186,8 +188,10 @@ class World {
   // Updates WorldBoundsComponent based on finalized transforms.
   void UpdateWorldBounds();
 
-  // Creates a 3D world-space ray from 2D screen coordinates.
-  base::Rayf CreateRayFromScreen(float screen_x, float screen_y);
+  // Creates a 3D world-space ray from a 2D position in framebuffer pixels,
+  // matching the space the camera projection is built in. Callers holding a
+  // cursor position must convert from window units first; see OnClick().
+  base::Rayf CreateRayFromFramebufferPos(float x, float y);
 
   // Selects an entity by casting a ray.
   Entity SelectEntity(const std::vector<BVHNode>& nodes, const base::Rayf& ray);

@@ -9,6 +9,7 @@
 #include "engine/asset/shader_source.h"
 #include "engine/engine.h"
 #include "engine/model.h"
+#include "engine/platform/platform.h"
 #include "engine/renderer/renderer.h"
 
 using namespace base;
@@ -213,7 +214,20 @@ void World::Update(float delta_time) {
 }
 
 void World::OnClick(const base::Vector2f& pos) {
-  Rayf ray = CreateRayFromScreen(pos.x, pos.y);
+  // The cursor is reported in window units but the camera projection is built
+  // from the framebuffer size, and the two differ under display scaling. Scale
+  // into framebuffer space before unprojecting. Where the two spaces coincide
+  // the scale is 1.
+  Platform* platform = Engine::Get().GetPlatform();
+  int window_w = platform->GetWindowWidth();
+  int window_h = platform->GetWindowHeight();
+  Vector2f fb_pos = pos;
+  if (window_w > 0)
+    fb_pos.x *= (float)Engine::Get().GetFramebufferWidth() / window_w;
+  if (window_h > 0)
+    fb_pos.y *= (float)Engine::Get().GetFramebufferHeight() / window_h;
+
+  Rayf ray = CreateRayFromFramebufferPos(fb_pos.x, fb_pos.y);
   debug_layer_.DrawVector(ray.origin, ray.direction, Vector3f{1.0f}, 1, true);
   selected_entity_ = SelectEntity(bvh_tree_, ray);
 }
@@ -649,10 +663,10 @@ void World::DrawBVHTree(const std::vector<BVHNode>& nodes,
   }
 }
 
-Rayf World::CreateRayFromScreen(float screen_x, float screen_y) {
-  // Convert Screen Coords to Normalized Device Coords (NDC) [-1, 1]
-  float ndc_x = (2.0f * screen_x) / Engine::Get().GetFramebufferWidth() - 1.0f;
-  float ndc_y = 1.0f - (2.0f * screen_y) / Engine::Get().GetFramebufferHeight();
+Rayf World::CreateRayFromFramebufferPos(float x, float y) {
+  // Convert framebuffer pixels to Normalized Device Coords (NDC) [-1, 1].
+  float ndc_x = (2.0f * x) / Engine::Get().GetFramebufferWidth() - 1.0f;
+  float ndc_y = 1.0f - (2.0f * y) / Engine::Get().GetFramebufferHeight();
 
   // Unproject the points from clip space to world space.
   Matrix4f inv_view_proj = scene_data_.view_projection;

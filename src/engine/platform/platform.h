@@ -114,13 +114,7 @@ class Platform {
     return input_characters_;
   }
 
-#if defined(OS_ANDROID)
-
-  ANativeWindow* GetWindow();
-
-#else
-
-  // Desktop (GLFW) ------------------------------------------------------
+  // Window --------------------------------------------------------------
 
   // Window size in window units. This is NOT the framebuffer size; the two
   // differ under display scaling. See Renderer::GetFramebufferWidth().
@@ -132,16 +126,17 @@ class Platform {
   void SetClipboardText(const char* text);
   const char* GetClipboardText();
 
-#if defined(OS_LINUX)
-  // Primary selection (middle-click paste) is an X11 concept with no
-  // equivalent elsewhere.
+  // Primary selection (middle-click paste). An X11 concept; a no-op on
+  // platforms that have no equivalent.
   void SetPrimarySelection(const char* text);
   const char* GetPrimarySelection();
-#endif
 
+  // The native window handle, for the renderer to create a surface from.
+#if defined(OS_ANDROID)
+  ANativeWindow* GetWindow();
+#else
   GLFWwindow* GetWindow();
-
-#endif  // defined(OS_ANDROID)
+#endif
 
  private:
   bool mobile_device_ = false;
@@ -153,10 +148,6 @@ class Platform {
   bool should_exit_ = false;
   bool cursor_inside_ = false;
   bool gained_focus_from_interstitial_ad_ = false;
-
-  int pending_width_ = 0;
-  int pending_height_ = 0;
-  bool has_pending_resize_ = false;
 
   PlatformObserver* observer_ = nullptr;
 
@@ -208,6 +199,11 @@ class Platform {
   GLFWwindow* window_ = nullptr;
   static constexpr int kCursorCount = 11;
   GLFWcursor* cursors_[kCursorCount] = {};
+
+  // Framebuffer size reported by GLFW's callback, applied in Update().
+  int pending_width_ = 0;
+  int pending_height_ = 0;
+  bool has_pending_resize_ = false;
 
 #endif  // defined(OS_ANDROID)
 

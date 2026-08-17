@@ -436,6 +436,33 @@ ANativeWindow* Platform::GetWindow() {
   return app_->window;
 }
 
+// The native window is measured in pixels, so window units and framebuffer
+// pixels are the same space here.
+int Platform::GetWindowWidth() const {
+  return app_->window ? ANativeWindow_getWidth(app_->window) : 0;
+}
+
+int Platform::GetWindowHeight() const {
+  return app_->window ? ANativeWindow_getHeight(app_->window) : 0;
+}
+
+// No cursor to shape on a touch screen.
+void Platform::SetMouseCursor(int /*cursor*/) {}
+
+// The clipboard requires a JNI round trip and is not implemented.
+void Platform::SetClipboardText(const char* /*text*/) {}
+
+const char* Platform::GetClipboardText() {
+  return "";
+}
+
+// Primary selection is an X11 concept.
+void Platform::SetPrimarySelection(const char* /*text*/) {}
+
+const char* Platform::GetPrimarySelection() {
+  return "";
+}
+
 }  // namespace eng
 
 void android_main(android_app* app) {

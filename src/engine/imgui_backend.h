@@ -70,17 +70,13 @@ class ImguiBackend {
   std::unordered_map<uint64_t, uint64_t> dset_to_texture_;
 
   // Track InputText selection state for primary selection updates.
-#if defined(OS_LINUX)
   unsigned int prev_sel_input_id_ = 0;
   int prev_sel_start_ = 0;
   int prev_sel_end_ = 0;
-#endif
 
   void LoadFont(const std::string& font_path);
   void MergeFallbackFont(const std::string& path);
-#if defined(OS_LINUX)
   void UpdatePrimarySelection();
-#endif
   uint64_t CreateTextureAndDescriptorSet(int width,
                                          int height,
                                          const uint8_t* pixels);
