@@ -265,16 +265,16 @@ RendererVulkan::~RendererVulkan() {
   Shutdown();
 }
 
-void RendererVulkan::OnWindowResized(int width, int height) {
+void RendererVulkan::OnFramebufferResized(int width, int height) {
   context_.ResizeSurface(width, height);
 }
 
-int RendererVulkan::GetScreenWidth() const {
-  return context_.GetWindowWidth();
+int RendererVulkan::GetFramebufferWidth() const {
+  return context_.GetFramebufferWidth();
 }
 
-int RendererVulkan::GetScreenHeight() const {
-  return context_.GetWindowHeight();
+int RendererVulkan::GetFramebufferHeight() const {
+  return context_.GetFramebufferHeight();
 }
 
 void RendererVulkan::SetViewport(int x, int y, int width, int height) {
@@ -292,9 +292,9 @@ void RendererVulkan::SetViewport(int x, int y, int width, int height) {
 void RendererVulkan::ResetViewport() {
   VkViewport viewport{};
   viewport.x = 0;
-  viewport.y = (float)context_.GetWindowHeight();
-  viewport.width = (float)context_.GetWindowWidth();
-  viewport.height = -(float)context_.GetWindowHeight();
+  viewport.y = (float)context_.GetFramebufferHeight();
+  viewport.width = (float)context_.GetFramebufferWidth();
+  viewport.height = -(float)context_.GetFramebufferHeight();
   viewport.minDepth = 0;
   viewport.maxDepth = 1.0;
   vkCmdSetViewport(frames_[current_frame_].draw_command_buffer, 0, 1,
@@ -306,10 +306,10 @@ void RendererVulkan::SetScissor(int x, int y, int width, int height) {
     x = 0;
   if (y < 0)
     y = 0;
-  if (x + width > GetScreenWidth())
-    width = GetScreenWidth() - x;
-  if (y + height > GetScreenHeight())
-    height = GetScreenHeight() - y;
+  if (x + width > GetFramebufferWidth())
+    width = GetFramebufferWidth() - x;
+  if (y + height > GetFramebufferHeight())
+    height = GetFramebufferHeight() - y;
 
   VkRect2D scissor{};
   scissor.offset.x = x;
@@ -323,8 +323,8 @@ void RendererVulkan::ResetScissor() {
   VkRect2D scissor{};
   scissor.offset.x = 0;
   scissor.offset.y = 0;
-  scissor.extent.width = context_.GetWindowWidth();
-  scissor.extent.height = context_.GetWindowHeight();
+  scissor.extent.width = context_.GetFramebufferWidth();
+  scissor.extent.height = context_.GetFramebufferHeight();
   vkCmdSetScissor(frames_[current_frame_].draw_command_buffer, 0, 1, &scissor);
 }
 
@@ -514,6 +514,45 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
       HERE,
       std::bind(&RendererVulkan::CopyImage, this, std::get<0>(it->second.image),
                 vk_format, image_data, width, height, mip_level));
+  task_runner_.PostTask(
+      HERE,
+      std::bind(&RendererVulkan::ImageMemoryBarrier, this,
+                frames_[current_frame_].setup_command_buffer,
+                std::get<0>(it->second.image), VK_PIPELINE_STAGE_TRANSFER_BIT,
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
+  semaphore_.release();
+}
+
+void RendererVulkan::UpdateTextureSubRegion(uint64_t resource_id,
+                                            int x_offset,
+                                            int y_offset,
+                                            int width,
+                                            int height,
+                                            ImageFormat format,
+                                            int src_pitch,
+                                            uint8_t* image_data) {
+  auto it = textures_.find(resource_id);
+  if (it == textures_.end() || it->second.view == VK_NULL_HANDLE)
+    return;
+
+  VkFormat vk_format = GetImageFormat(format);
+
+  task_runner_.PostTask(
+      HERE,
+      std::bind(&RendererVulkan::ImageMemoryBarrier, this,
+                frames_[current_frame_].setup_command_buffer,
+                std::get<0>(it->second.image),
+                VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL));
+  task_runner_.PostTask(
+      HERE, std::bind(&RendererVulkan::UpdateImageSubRegion, this,
+                      std::get<0>(it->second.image), vk_format, image_data,
+                      x_offset, y_offset, width, height, src_pitch));
   task_runner_.PostTask(
       HERE,
       std::bind(&RendererVulkan::ImageMemoryBarrier, this,
@@ -2214,6 +2253,79 @@ void RendererVulkan::CopyImage(VkImage image,
   }
 }
 
+void RendererVulkan::UpdateImageSubRegion(VkImage image,
+                                          VkFormat format,
+                                          const uint8_t* data,
+                                          int x_offset,
+                                          int y_offset,
+                                          int width,
+                                          int height,
+                                          int src_pitch) {
+  auto [num_blocks_x, num_blocks_y] =
+      GetNumBlocksForImageFormat(format, width, height);
+  auto [block_size, block_height] = GetBlockSizeForImageFormat(format);
+
+  uint32_t row_bytes = num_blocks_x * block_size;
+  uint32_t total = row_bytes * num_blocks_y;
+  uint32_t max_size = staging_buffer_size_ - (staging_buffer_size_ % row_bytes);
+  int current_block_row = 0;
+  uint32_t region_offset_y = 0;
+  uint32_t alignment = std::max(
+      (VkDeviceSize)16,
+      context_.GetDeviceProperties().limits.optimalBufferCopyOffsetAlignment);
+
+  // A block row must fit in a single staging buffer.
+  DCHECK(staging_buffer_size_ >= row_bytes);
+
+  while (total > 0) {
+    uint32_t write_offset;
+    uint32_t write_amount;
+    if (!AllocateStagingBuffer(std::min(total, max_size), row_bytes, alignment,
+                               write_offset, write_amount))
+      return;
+    Buffer<VkBuffer> staging_buffer =
+        staging_buffers_[current_staging_buffer_].buffer;
+
+    // Copy block rows from the strided source into the tightly packed staging
+    // buffer. Unlike CopyImage, the source rows are a sub-region of a wider
+    // image, so they are not contiguous.
+    uint8_t* dst = ((uint8_t*)staging_buffers_[current_staging_buffer_]
+                        .alloc_info.pMappedData) +
+                   write_offset;
+    int num_rows = write_amount / row_bytes;
+    for (int r = 0; r < num_rows; ++r)
+      memcpy(dst + static_cast<size_t>(r) * row_bytes,
+             data + static_cast<size_t>(current_block_row + r) * src_pitch,
+             row_bytes);
+
+    uint32_t region_height = num_rows * block_height;
+
+    VkBufferImageCopy buffer_image_copy{};
+    buffer_image_copy.bufferOffset = write_offset;
+    buffer_image_copy.bufferRowLength = 0;
+    buffer_image_copy.bufferImageHeight = 0;
+    buffer_image_copy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    buffer_image_copy.imageSubresource.mipLevel = 0;
+    buffer_image_copy.imageSubresource.baseArrayLayer = 0;
+    buffer_image_copy.imageSubresource.layerCount = 1;
+    buffer_image_copy.imageOffset.x = x_offset;
+    buffer_image_copy.imageOffset.y = y_offset + region_offset_y;
+    buffer_image_copy.imageOffset.z = 0;
+    buffer_image_copy.imageExtent.width = width;
+    buffer_image_copy.imageExtent.height = region_height;
+    buffer_image_copy.imageExtent.depth = 1;
+
+    vkCmdCopyBufferToImage(frames_[current_frame_].setup_command_buffer,
+                           std::get<0>(staging_buffer), image,
+                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
+                           &buffer_image_copy);
+
+    total -= write_amount;
+    current_block_row += num_rows;
+    region_offset_y += region_height;
+  }
+}
+
 void RendererVulkan::ImageMemoryBarrier(VkCommandBuffer command_buffer,
                                         VkImage image,
                                         VkPipelineStageFlags src_stage_mask,
@@ -2569,8 +2681,8 @@ void RendererVulkan::DrawListBegin() {
   render_pass_begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   render_pass_begin.renderPass = context_.GetRenderPass();
   render_pass_begin.framebuffer = context_.GetFramebuffer();
-  render_pass_begin.renderArea.extent.width = context_.GetWindowWidth();
-  render_pass_begin.renderArea.extent.height = context_.GetWindowHeight();
+  render_pass_begin.renderArea.extent.width = context_.GetFramebufferWidth();
+  render_pass_begin.renderArea.extent.height = context_.GetFramebufferHeight();
   render_pass_begin.renderArea.offset.x = 0;
   render_pass_begin.renderArea.offset.y = 0;
 

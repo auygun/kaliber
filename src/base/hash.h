@@ -1,9 +1,10 @@
 #ifndef BASE_HASH_H
 #define BASE_HASH_H
 
-#include <cstdint>
 #include <stddef.h>
+#include <cstdint>
 #include <string>
+#include <vector>
 
 namespace base {
 
@@ -20,6 +21,17 @@ inline size_t KR2Hash(const std::string& str) {
   for (std::string::value_type c : str)
     hash_value = c + 31 * hash_value;
   return hash_value;
+}
+
+// FNV-1a over a byte range. Chain calls by feeding the previous result in as
+// |seed| to hash several buffers together.
+inline size_t HashBytes(const void* data, size_t size, size_t seed = 0) {
+  const auto* bytes = static_cast<const uint8_t*>(data);
+  for (size_t i = 0; i < size; ++i) {
+    seed ^= bytes[i];
+    seed *= static_cast<size_t>(0x100000001b3);
+  }
+  return seed;
 }
 
 inline uint32_t HashVec32(const std::vector<uint32_t>& vec) {

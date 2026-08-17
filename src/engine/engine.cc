@@ -14,7 +14,7 @@
 #include "engine/orbit_camera.h"
 #include "engine/platform/platform.h"
 #include "engine/renderer/renderer.h"
-#include "third_party/imgui/imgui.h"
+#include "third_party/imgui/imgui/imgui.h"
 #include "third_party/texture_compressor/texture_compressor.h"
 
 using namespace base;
@@ -93,13 +93,17 @@ void Engine::Initialize() {
 
   input_system_.Init(world_.GetRegistry());
 
-  imgui_backend_.Initialize(IsMobile(), GetRootPath());
-
   platform_->CreateMainWindow();
+
+  // After the window exists, so the backend picks up the display scale that
+  // CreateMainWindow() detected.
+  imgui_backend_.Initialize(
+      platform_, GetRootPath() + "assets/engine/RobotoMono-Regular.ttf");
 
   CreateRendererInternal(RendererType::kVulkan);
 
-  float aspect_ratio = (float)GetScreenHeight() / (float)GetScreenWidth();
+  float aspect_ratio =
+      (float)GetFramebufferHeight() / (float)GetFramebufferWidth();
   LOG(0) << "aspect_ratio: " << aspect_ratio;
   screen_size_ = {1.0f, aspect_ratio * 1.0f};
 
@@ -207,7 +211,7 @@ void Engine::Exit() {
 
 Vector2f Engine::ToViewportScale(const Vector2f& vec) {
   return GetViewportSize() * vec /
-         Vector2f((float)GetScreenWidth(), (float)GetScreenHeight());
+         Vector2f((float)GetFramebufferWidth(), (float)GetFramebufferHeight());
 }
 
 Vector2f Engine::ToViewportPosition(const Vector2f& vec) {
@@ -239,12 +243,12 @@ TextureCompressor* Engine::GetTextureCompressor(bool opacity) {
   return opacity ? tex_comp_alpha_.get() : tex_comp_opaque_.get();
 }
 
-int Engine::GetScreenWidth() const {
-  return renderer_->GetScreenWidth();
+int Engine::GetFramebufferWidth() const {
+  return renderer_->GetFramebufferWidth();
 }
 
-int Engine::GetScreenHeight() const {
-  return renderer_->GetScreenHeight();
+int Engine::GetFramebufferHeight() const {
+  return renderer_->GetFramebufferHeight();
 }
 
 const std::string& Engine::GetRootPath() const {
@@ -276,14 +280,15 @@ void Engine::OnWindowDestroyed() {
   renderer_->Shutdown();
 }
 
-void Engine::OnWindowResized(int width, int height) {
-  if (renderer_ && (width != renderer_->GetScreenWidth() ||
-                    height != renderer_->GetScreenHeight())) {
-    renderer_->OnWindowResized(width, height);
-    float aspect_ratio = (float)GetScreenHeight() / (float)GetScreenWidth();
+void Engine::OnFramebufferResized(int width, int height) {
+  if (renderer_ && (width != renderer_->GetFramebufferWidth() ||
+                    height != renderer_->GetFramebufferHeight())) {
+    renderer_->OnFramebufferResized(width, height);
+    float aspect_ratio =
+        (float)GetFramebufferHeight() / (float)GetFramebufferWidth();
     LOG(0) << "aspect_ratio: " << aspect_ratio;
     screen_size_ = {1.0f, aspect_ratio * 1.0f};
-    game_->OnWindowResized(width, height);
+    game_->OnFramebufferResized(width, height);
   }
 }
 
@@ -294,12 +299,12 @@ void Engine::LostFocus() {
     game_->LostFocus();
 }
 
-void Engine::GainedFocus(bool from_interstitial_ad) {
+void Engine::GainedFocus() {
   timer_ = DeltaTimer();
   audio_mixer_.Resume();
 
   if (game_)
-    game_->GainedFocus(from_interstitial_ad);
+    game_->GainedFocus(platform_->gained_focus_from_interstitial_ad());
 }
 
 void Engine::CreateRendererInternal(RendererType type) {
@@ -338,6 +343,10 @@ void Engine::CreateTextureCompressors() {
 
 void Engine::ContextLost() {
   render_graph_.ContextLost();
+  // The imgui backend holds shader, geometry and texture handles that died
+  // with the old context. Rebuild them against the current renderer.
+  if (renderer_)
+    imgui_backend_.CreateRenderResources(renderer_.get());
   if (game_)
     game_->ContextLost();
 }

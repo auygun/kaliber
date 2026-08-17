@@ -126,14 +126,15 @@ void RenderGraph::Execute(Renderer* renderer) {
 
   RenderGraphContext ctx{renderer};
 
-  // Get screen dimensions for render target sizing.
-  int screen_width = renderer->GetScreenWidth();
-  int screen_height = renderer->GetScreenHeight();
+  // Get framebuffer dimensions for render target sizing.
+  int framebuffer_width = renderer->GetFramebufferWidth();
+  int framebuffer_height = renderer->GetFramebufferHeight();
 
   // 1. Execute all user passes, each rendering into its layer.
   for (auto& node : passes_) {
-    RenderLayer& layer = GetOrCreateLayer(
-        renderer, node.layer_name, screen_width, screen_height, node.depth);
+    RenderLayer& layer =
+        GetOrCreateLayer(renderer, node.layer_name, framebuffer_width,
+                         framebuffer_height, node.depth);
 
     // Activate the render target and begin the render pass.
     renderer->ActivateRenderTarget(layer.render_target_id);

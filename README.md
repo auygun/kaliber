@@ -11,6 +11,14 @@ based on this engine. Full game code and assets are included in this repository.
 GN build system is required for all platforms:  
 https://gn.googlesource.com/gn/
 
+Third party dependencies are git submodules, so fetch them before building:
+```text
+git submodule update --init --recursive
+```
+
+On Linux, `wayland-scanner` and the fontconfig development headers are also
+required.
+
 ## Building from the command-line:
 
 ### All platforms except Android:

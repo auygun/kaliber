@@ -10,20 +10,15 @@ source_set("renderer") {
     "vulkan/vulkan_context.cc",
   ]
 
-  if (target_os == "linux") {
-    sources += [
-      "vulkan/renderer_vulkan_linux.cc",
-      "vulkan/vulkan_context_linux.cc",
-    ]
-  } else if (target_os == "win") {
-    sources += [
-      "vulkan/renderer_vulkan_win.cc",
-      "vulkan/vulkan_context_win.cc",
-    ]
-  } else if (target_os == "android") {
+  if (target_os == "android") {
     sources += [
       "vulkan/renderer_vulkan_android.cc",
       "vulkan/vulkan_context_android.cc",
+    ]
+  } else {
+    sources += [
+      "vulkan/renderer_vulkan_glfw.cc",
+      "vulkan/vulkan_context_glfw.cc",
     ]
   }
 
@@ -32,6 +27,10 @@ source_set("renderer") {
     "//src/third_party/glslang",
     "//src/third_party/spirv-reflect",
   ]
+
+  if (target_os != "android") {
+    deps += [ "//src/third_party/glfw" ]
+  }
 
   public_deps = [
     "//src/third_party/vma",

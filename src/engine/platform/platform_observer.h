@@ -11,9 +11,9 @@ class PlatformObserver {
 
   virtual void OnWindowCreated() = 0;
   virtual void OnWindowDestroyed() = 0;
-  virtual void OnWindowResized(int width, int height) = 0;
+  virtual void OnFramebufferResized(int width, int height) = 0;
   virtual void LostFocus() = 0;
-  virtual void GainedFocus(bool from_interstitial_ad) = 0;
+  virtual void GainedFocus() = 0;
 };
 
 }  // namespace eng

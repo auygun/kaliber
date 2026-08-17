@@ -224,8 +224,8 @@ void World::UpdateRenderContext() {
        registry_.View<PrimaryCameraTag, const CameraComponent,
                       const WorldTransformComponent>()) {
     render_context_->proj.CreateStandardZProjection(
-        camera.fov, (float)Engine::Get().GetScreenWidth(),
-        (float)Engine::Get().GetScreenHeight(), camera.near_plane,
+        camera.fov, (float)Engine::Get().GetFramebufferWidth(),
+        (float)Engine::Get().GetFramebufferHeight(), camera.near_plane,
         camera.far_plane);
     world_transform.transform.InverseOrthogonal(render_context_->view);
     render_context_->view.Multiply(render_context_->proj,
@@ -651,8 +651,8 @@ void World::DrawBVHTree(const std::vector<BVHNode>& nodes,
 
 Rayf World::CreateRayFromScreen(float screen_x, float screen_y) {
   // Convert Screen Coords to Normalized Device Coords (NDC) [-1, 1]
-  float ndc_x = (2.0f * screen_x) / Engine::Get().GetScreenWidth() - 1.0f;
-  float ndc_y = 1.0f - (2.0f * screen_y) / Engine::Get().GetScreenHeight();
+  float ndc_x = (2.0f * screen_x) / Engine::Get().GetFramebufferWidth() - 1.0f;
+  float ndc_y = 1.0f - (2.0f * screen_y) / Engine::Get().GetFramebufferHeight();
 
   // Unproject the points from clip space to world space.
   Matrix4f inv_view_proj = scene_data_.view_projection;

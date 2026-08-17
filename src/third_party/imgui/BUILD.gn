@@ -1,19 +1,34 @@
+config("imgui_public") {
+  defines = [
+    "IMGUI_ENABLE_FREETYPE",
+    "IMGUI_ENABLE_STB_TRUETYPE",
+  ]
+
+  # imgui's own headers include each other unqualified (e.g. imgui_freetype.h
+  # does #include "imgui.h"), so consumers need this on the search path too.
+  include_dirs = [ "imgui" ]
+}
+
 source_set("imgui") {
   configs -= [ "//build:warnings" ]
 
+  public_configs = [ ":imgui_public" ]
+
   sources = [
-    "imconfig.h",
-    "imgui.cpp",
-    "imgui.h",
-    "imgui_demo.cpp",
-    "imgui_draw.cpp",
-    "imgui_internal.h",
-    "imgui_tables.cpp",
-    "imgui_widgets.cpp",
-    "imstb_rectpack.h",
-    "imstb_textedit.h",
-    "imstb_truetype.h",
+    "imgui/imconfig.h",
+    "imgui/imgui.cpp",
+    "imgui/imgui.h",
+    "imgui/imgui_demo.cpp",
+    "imgui/imgui_draw.cpp",
+    "imgui/imgui_internal.h",
+    "imgui/imgui_tables.cpp",
+    "imgui/imgui_widgets.cpp",
+    "imgui/imstb_rectpack.h",
+    "imgui/imstb_textedit.h",
+    "imgui/imstb_truetype.h",
+    "imgui/misc/freetype/imgui_freetype.cpp",
+    "imgui/misc/freetype/imgui_freetype.h",
   ]
 
-  deps = []
+  deps = [ "//src/third_party/freetype" ]
 }

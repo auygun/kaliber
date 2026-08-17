@@ -15,9 +15,9 @@
 #include "engine/imgui_backend.h"
 #include "engine/input_system.h"
 #include "engine/platform/platform_observer.h"
+#include "engine/renderer/render_graph.h"
 #include "engine/system.h"
 #include "engine/world.h"
-#include "engine/renderer/render_graph.h"
 
 class TextureCompressor;
 
@@ -78,9 +78,10 @@ class Engine : public PlatformObserver {
 
   World& GetWorld() { return world_; }
 
-  // Return screen width/height in pixels.
-  int GetScreenWidth() const;
-  int GetScreenHeight() const;
+  // Return the framebuffer width/height in pixels. This is the size rendered
+  // into, which differs from the window size under display scaling.
+  int GetFramebufferWidth() const;
+  int GetFramebufferHeight() const;
 
   // Return screen size in viewport scale.
   base::Vector2f GetViewportSize() const { return screen_size_; }
@@ -154,9 +155,9 @@ class Engine : public PlatformObserver {
   // PlatformObserver implementation
   void OnWindowCreated() final;
   void OnWindowDestroyed() final;
-  void OnWindowResized(int width, int height) final;
+  void OnFramebufferResized(int width, int height) final;
   void LostFocus() final;
-  void GainedFocus(bool from_interstitial_ad) final;
+  void GainedFocus() final;
 
   void CreateRendererInternal(RendererType type);
 

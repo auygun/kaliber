@@ -278,9 +278,18 @@ bool VulkanContext::InitializeExtensions() {
 
   enabled_extension_count_ = 0;
   enabled_layer_count_ = 0;
-  VkBool32 surfaceExtFound = 0;
-  VkBool32 platformSurfaceExtFound = 0;
   memset(extension_names_, 0, sizeof(extension_names_));
+
+  // Extensions the windowing system requires, e.g. VK_KHR_surface plus the
+  // surface extension for the display backend GLFW selected at runtime.
+  const char** required_extensions = nullptr;
+  uint32_t required_extension_count = 0;
+  GetRequiredInstanceExtensions(required_extensions, required_extension_count);
+
+  if (!required_extensions || required_extension_count == 0) {
+    DLOG(0) << "No required instance extensions provided by platform.";
+    return false;
+  }
 
   err = vkEnumerateInstanceExtensionProperties(
       nullptr, &instance_extension_count, nullptr);
@@ -300,20 +309,28 @@ bool VulkanContext::InitializeExtensions() {
               << string_VkResult(err);
       return false;
     }
-    for (uint32_t i = 0; i < instance_extension_count; i++) {
-      if (!strcmp(VK_KHR_SURFACE_EXTENSION_NAME,
-                  instance_extensions[i].extensionName)) {
-        surfaceExtFound = 1;
-        extension_names_[enabled_extension_count_++] =
-            VK_KHR_SURFACE_EXTENSION_NAME;
-      }
 
-      if (!strcmp(GetPlatformSurfaceExtension(),
-                  instance_extensions[i].extensionName)) {
-        platformSurfaceExtFound = 1;
-        extension_names_[enabled_extension_count_++] =
-            GetPlatformSurfaceExtension();
+    for (uint32_t r = 0; r < required_extension_count; r++) {
+      bool found = false;
+      for (uint32_t i = 0; i < instance_extension_count; i++) {
+        if (!strcmp(required_extensions[r],
+                    instance_extensions[i].extensionName)) {
+          found = true;
+          break;
+        }
       }
+      if (!found) {
+        DLOG(0) << "Required extension not found: " << required_extensions[r];
+        return false;
+      }
+      extension_names_[enabled_extension_count_++] = required_extensions[r];
+      if (enabled_extension_count_ >= kMaxExtensions) {
+        DLOG(0) << "Enabled extension count reaches kMaxExtensions";
+        return false;
+      }
+    }
+
+    for (uint32_t i = 0; i < instance_extension_count; i++) {
       if (!strcmp(VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
                   instance_extensions[i].extensionName)) {
         if (use_validation_layers_) {
@@ -333,15 +350,6 @@ bool VulkanContext::InitializeExtensions() {
         return false;
       }
     }
-  }
-
-  if (!surfaceExtFound) {
-    DLOG(0) << "No surface extension found.";
-    return false;
-  }
-  if (!platformSurfaceExtFound) {
-    DLOG(0) << "No platform surface extension found.";
-    return false;
   }
 
   return true;

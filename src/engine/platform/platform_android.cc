@@ -303,7 +303,7 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
     case APP_CMD_CONFIG_CHANGED:
       DLOG(0) << "APP_CMD_CONFIG_CHANGED";
       if (platform->app_->window != NULL)
-        platform->observer_->OnWindowResized(
+        platform->observer_->OnFramebufferResized(
             ANativeWindow_getWidth(app->window),
             ANativeWindow_getHeight(app->window));
       break;
@@ -316,7 +316,8 @@ void Platform::HandleCmd(android_app* app, int32_t cmd) {
       DLOG(0) << "APP_CMD_GAINED_FOCUS";
       platform->SetFrameRate(60);
       platform->has_focus_ = true;
-      platform->observer_->GainedFocus(g_showing_interstitial_ad);
+      platform->gained_focus_from_interstitial_ad_ = g_showing_interstitial_ad;
+      platform->observer_->GainedFocus();
       g_showing_interstitial_ad = false;
       break;
 
@@ -367,7 +368,7 @@ Platform::Platform(android_app* app) {
   }
 }
 
-void Platform::CreateMainWindow() {
+void Platform::CreateMainWindow(int /*width*/, int /*height*/) {
   DCHECK(!app_->window);
   Update();
   DCHECK(app_->window);
@@ -377,12 +378,12 @@ Platform::~Platform() {
   LOG(0) << "Shutting down platform.";
 }
 
-void Platform::Update() {
+void Platform::Update(double /*wait_timeout*/) {
   int id;
   int events;
   android_poll_source* source;
 
-  for(;;) {
+  for (;;) {
     id = ALooper_pollOnce(has_focus_ ? 0 : -1, NULL, &events, (void**)&source);
     if (id == ALOOPER_POLL_CALLBACK)
       continue;

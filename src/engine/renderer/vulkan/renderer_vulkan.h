@@ -34,10 +34,10 @@ class RendererVulkan final : public Renderer {
 
   bool IsInitialzed() const final { return device_ != VK_NULL_HANDLE; }
 
-  void OnWindowResized(int width, int height) final;
+  void OnFramebufferResized(int width, int height) final;
 
-  int GetScreenWidth() const final;
-  int GetScreenHeight() const final;
+  int GetFramebufferWidth() const final;
+  int GetFramebufferHeight() const final;
 
   void SetViewport(int x, int y, int width, int height) final;
   void ResetViewport() final;
@@ -72,6 +72,14 @@ class RendererVulkan final : public Renderer {
                      ImageFormat format,
                      size_t data_size,
                      uint8_t* image_data) final;
+  void UpdateTextureSubRegion(uint64_t resource_id,
+                              int x_offset,
+                              int y_offset,
+                              int width,
+                              int height,
+                              ImageFormat format,
+                              int src_pitch,
+                              uint8_t* image_data) final;
   void DestroyTexture(uint64_t resource_id) final;
 
   uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
@@ -368,6 +376,14 @@ class RendererVulkan final : public Renderer {
                  int width,
                  int height,
                  int mip_level);
+  void UpdateImageSubRegion(VkImage image,
+                            VkFormat format,
+                            const uint8_t* data,
+                            int x_offset,
+                            int y_offset,
+                            int width,
+                            int height,
+                            int src_pitch);
   void ImageMemoryBarrier(VkCommandBuffer command_buffer,
                           VkImage image,
                           VkPipelineStageFlags src_stage_mask,

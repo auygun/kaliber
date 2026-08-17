@@ -1,11 +1,19 @@
 #include "engine/renderer/vulkan/vulkan_context.h"
 
+#include <iterator>
+
 #include "base/log.h"
 
 namespace eng {
 
-const char* VulkanContext::GetPlatformSurfaceExtension() const {
-  return VK_KHR_ANDROID_SURFACE_EXTENSION_NAME;
+void VulkanContext::GetRequiredInstanceExtensions(const char**& extensions,
+                                                  uint32_t& count) const {
+  static const char* kExtensions[] = {
+      VK_KHR_SURFACE_EXTENSION_NAME,
+      VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
+  };
+  extensions = kExtensions;
+  count = static_cast<uint32_t>(std::size(kExtensions));
 }
 
 bool VulkanContext::CreateSurface(ANativeWindow* window,

@@ -36,10 +36,10 @@ class Renderer {
 
   virtual bool IsInitialzed() const = 0;
 
-  virtual void OnWindowResized(int width, int height) = 0;
+  virtual void OnFramebufferResized(int width, int height) = 0;
 
-  virtual int GetScreenWidth() const = 0;
-  virtual int GetScreenHeight() const = 0;
+  virtual int GetFramebufferWidth() const = 0;
+  virtual int GetFramebufferHeight() const = 0;
 
   virtual void SetViewport(int x, int y, int width, int height) = 0;
   virtual void ResetViewport() = 0;
@@ -76,6 +76,18 @@ class Renderer {
                              ImageFormat format,
                              size_t data_size,
                              uint8_t* image_data) = 0;
+  // Upload a rectangular sub-region into mip level 0 of an existing texture.
+  // |src_pitch| is the stride in bytes of one row (or block row, for
+  // compressed formats) of |image_data|, which points at the first pixel of
+  // the region rather than the start of the full image.
+  virtual void UpdateTextureSubRegion(uint64_t resource_id,
+                                      int x_offset,
+                                      int y_offset,
+                                      int width,
+                                      int height,
+                                      ImageFormat format,
+                                      int src_pitch,
+                                      uint8_t* image_data) = 0;
   virtual void DestroyTexture(uint64_t resource_id) = 0;
 
   virtual uint64_t CreateShader(std::unique_ptr<ShaderSource> source,

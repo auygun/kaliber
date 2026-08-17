@@ -7,7 +7,7 @@
 #include "engine/engine.h"
 #include "engine/game.h"
 #include "engine/game_factory.h"
-#include "third_party/imgui/imgui.h"
+#include "third_party/imgui/imgui/imgui.h"
 
 using namespace base;
 using namespace eng;
@@ -155,7 +155,7 @@ class Teapot final : public eng::Game {
 
   void ContextLost() final {}
 
-  void OnWindowResized(int width, int height) final {
+  void OnFramebufferResized(int width, int height) final {
     // scene_.CreateProjectionMatrix(); TODO
   }
 
