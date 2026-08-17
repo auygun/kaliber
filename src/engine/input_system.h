@@ -8,7 +8,7 @@
 namespace eng {
 
 class Registry;
-class PlayerInput;
+struct PlayerInput;
 
 // The one-and-only system responsible for polling hardware.
 // This system is stateful as it needs to calculate "just pressed" states and

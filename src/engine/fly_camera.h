@@ -11,7 +11,7 @@ class World;
 struct PlayerInput;
 
 // Fly Camera System.
-class FlyCamera : public System {
+class FlyCamera final : public System {
  public:
   FlyCamera() = default;
   ~FlyCamera() final = default;
