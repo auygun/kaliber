@@ -8,7 +8,6 @@
 #include <unistd.h>
 
 #include "base/log.h"
-#include "engine/input_event.h"
 #include "engine/platform/platform_observer.h"
 
 using namespace base;
@@ -206,76 +205,74 @@ void KaliberMain(Platform* platform);
 int32_t Platform::HandleInput(android_app* app, AInputEvent* event) {
   Platform* platform = reinterpret_cast<Platform*>(app->userData);
 
-  if (!platform->observer_)
+  if (AInputEvent_getType(event) != AINPUT_EVENT_TYPE_MOTION)
     return 0;
 
-  if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_KEY &&
-      AKeyEvent_getKeyCode(event) == AKEYCODE_BACK) {
-    if (AKeyEvent_getAction(event) == AKEY_EVENT_ACTION_UP) {
-      auto input_event =
-          std::make_unique<InputEvent>(InputEvent::kNavigateBack);
-      platform->observer_->AddInputEvent(std::move(input_event));
-    }
-    return 1;
-  } else if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
-    int32_t action = AMotionEvent_getAction(event);
-    int32_t index = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >>
-                    AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
-    uint32_t flags = action & AMOTION_EVENT_ACTION_MASK;
-    int32_t count = AMotionEvent_getPointerCount(event);
-    int32_t pointer_id = AMotionEvent_getPointerId(event, index);
-    Vector2f pos[2] = {platform->pointer_pos_[0], platform->pointer_pos_[1]};
-    for (auto i = 0; i < count; ++i) {
-      int32_t id = AMotionEvent_getPointerId(event, i);
-      if (id < 2) {
-        pos[id] = {AMotionEvent_getX(event, i), AMotionEvent_getY(event, i)};
+  int32_t action = AMotionEvent_getAction(event);
+  int32_t index = (action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >>
+                  AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+  uint32_t flags = action & AMOTION_EVENT_ACTION_MASK;
+  int32_t count = AMotionEvent_getPointerCount(event);
+  int32_t pointer_id = AMotionEvent_getPointerId(event, index);
+  if (pointer_id >= 2)
+    return 0;
+
+  Vector2f pos[2] = {platform->pointer_pos_[0], platform->pointer_pos_[1]};
+  for (auto i = 0; i < count; ++i) {
+    int32_t id = AMotionEvent_getPointerId(event, i);
+    if (id < 2)
+      pos[id] = {AMotionEvent_getX(event, i), AMotionEvent_getY(event, i)};
+  }
+
+  // The primary pointer drives the same state a desktop mouse does, so the
+  // imgui backend and InputSystem work unchanged. The second pointer only
+  // updates tracking state; there is no gesture channel any more.
+  constexpr int kLeft = static_cast<int>(MouseButton::Left);
+  auto move_cursor_to = [platform](const Vector2f& p) {
+    platform->mouse_x_ = static_cast<int>(p.x);
+    platform->mouse_y_ = static_cast<int>(p.y);
+    platform->cursor_inside_ = true;
+  };
+
+  switch (flags) {
+    case AMOTION_EVENT_ACTION_DOWN:
+    case AMOTION_EVENT_ACTION_POINTER_DOWN:
+      platform->pointer_pos_[pointer_id] = pos[pointer_id];
+      platform->pointer_down_[pointer_id] = true;
+      if (pointer_id == 0) {
+        move_cursor_to(pos[0]);
+        platform->mouse_buttons_down_[kLeft] = true;
+        platform->mouse_button_events_.push_back({MouseButton::Left, true});
       }
-    }
-
-    if (pointer_id >= 2)
-      return 0;
-
-    std::unique_ptr<InputEvent> input_event;
-
-    switch (flags) {
-      case AMOTION_EVENT_ACTION_DOWN:
-      case AMOTION_EVENT_ACTION_POINTER_DOWN:
-        platform->pointer_pos_[pointer_id] = pos[pointer_id];
-        platform->pointer_down_[pointer_id] = true;
-        input_event = std::make_unique<InputEvent>(InputEvent::kDragStart,
-                                                   pointer_id, pos[pointer_id]);
-        break;
-
-      case AMOTION_EVENT_ACTION_UP:
-      case AMOTION_EVENT_ACTION_POINTER_UP:
-        platform->pointer_pos_[pointer_id] = pos[pointer_id];
-        platform->pointer_down_[pointer_id] = false;
-        input_event = std::make_unique<InputEvent>(InputEvent::kDragEnd,
-                                                   pointer_id, pos[pointer_id]);
-        break;
-
-      case AMOTION_EVENT_ACTION_MOVE:
-        if (platform->pointer_down_[0] && pos[0] != platform->pointer_pos_[0]) {
-          platform->pointer_pos_[0] = pos[0];
-          input_event =
-              std::make_unique<InputEvent>(InputEvent::kDrag, 0, pos[0]);
-        }
-        if (platform->pointer_down_[1] && pos[1] != platform->pointer_pos_[1]) {
-          platform->pointer_pos_[1] = pos[1];
-          input_event =
-              std::make_unique<InputEvent>(InputEvent::kDrag, 1, pos[1]);
-        }
-        break;
-
-      case AMOTION_EVENT_ACTION_CANCEL:
-        input_event = std::make_unique<InputEvent>(InputEvent::kDragCancel);
-        break;
-    }
-
-    if (input_event) {
-      platform->observer_->AddInputEvent(std::move(input_event));
       return 1;
-    }
+
+    case AMOTION_EVENT_ACTION_UP:
+    case AMOTION_EVENT_ACTION_POINTER_UP:
+      platform->pointer_pos_[pointer_id] = pos[pointer_id];
+      platform->pointer_down_[pointer_id] = false;
+      if (pointer_id == 0) {
+        move_cursor_to(pos[0]);
+        platform->mouse_buttons_down_[kLeft] = false;
+        platform->mouse_button_events_.push_back({MouseButton::Left, false});
+      }
+      return 1;
+
+    case AMOTION_EVENT_ACTION_MOVE:
+      for (int i = 0; i < 2; ++i) {
+        if (platform->pointer_down_[i])
+          platform->pointer_pos_[i] = pos[i];
+      }
+      if (platform->pointer_down_[0])
+        move_cursor_to(platform->pointer_pos_[0]);
+      return 1;
+
+    case AMOTION_EVENT_ACTION_CANCEL:
+      platform->pointer_down_[0] = platform->pointer_down_[1] = false;
+      if (platform->mouse_buttons_down_[kLeft]) {
+        platform->mouse_buttons_down_[kLeft] = false;
+        platform->mouse_button_events_.push_back({MouseButton::Left, false});
+      }
+      return 1;
   }
 
   return 0;
@@ -379,6 +376,11 @@ Platform::~Platform() {
 }
 
 void Platform::Update(double /*wait_timeout*/) {
+  mouse_scroll_x_delta_ = 0.0f;
+  mouse_scroll_y_delta_ = 0.0f;
+  mouse_button_events_.clear();
+  input_characters_.clear();
+
   int id;
   int events;
   android_poll_source* source;
