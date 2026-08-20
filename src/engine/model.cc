@@ -560,8 +560,7 @@ void Model::CreateMesh(Renderer* renderer,
                        const std::vector<std::string>& texture_file_names) {
   renderer_ = renderer;
 
-  size_t vertex_count = (sizeof(float) * vertices.size()) / sizeof(Vertex);
-  DLOG(0) << "- Total vertices: " << vertex_count;
+  DLOG(0) << "- Total vertices: " << vertices.size();
   DLOG(0) << "- Total indices: " << indices.size();
 
   std::vector<size_t> material_indices_counts;
@@ -785,6 +784,12 @@ void Model::CreateRenderResources(uint64_t shader_id,
                                   std::vector<std::unique_ptr<Image>>& images) {
   // Create the geometry.
   geometry_id_ = renderer_->CreateGeometry(std::move(mesh));
+
+  // The shader indexes materials[material_index] unconditionally, so a model
+  // without materials would create a zero-sized UBO and end up with a null
+  // buffer descriptor, crashing the GPU driver on the first draw.
+  if (materials_.empty())
+    materials_.emplace_back();
 
   // Create a UBO for all materials.
   materials_ubo_ = renderer_->CreateBuffer(

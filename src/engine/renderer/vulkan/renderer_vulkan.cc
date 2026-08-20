@@ -886,16 +886,17 @@ uint64_t RendererVulkan::CreateBuffer(uint64_t shader_id,
   auto& binding_info = shader_it->second.bindings_per_set[set][binding];
 
   auto& buffer = buffers_[++last_resource_id_];
+  bool allocated = false;
   switch (binding_info.descriptor_type) {
     case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER: {
       DCHECK(buffer_size >= binding_info.length);
-      AllocateBuffer(
+      allocated = AllocateBuffer(
           buffer.buffer, buffer_size,
           VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
           VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
     } break;
     case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER: {
-      AllocateBuffer(
+      allocated = AllocateBuffer(
           buffer.buffer, buffer_size,
           VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
           VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE);
@@ -904,6 +905,13 @@ uint64_t RendererVulkan::CreateBuffer(uint64_t shader_id,
       NOTREACHED() << "Unsupported descriptor type: "
                    << binding_info.descriptor_type;
     } break;
+  }
+  if (!allocated) {
+    // Don't leave a default-constructed (null) buffer registered under a
+    // valid id: descriptor sets would then bind VK_NULL_BUFFER and crash
+    // the driver.
+    buffers_.erase(last_resource_id_);
+    return kInvalidId;
   }
   buffer.buffer_size = buffer_size;
   buffer.descriptor_type = binding_info.descriptor_type;
