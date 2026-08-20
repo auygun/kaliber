@@ -96,9 +96,9 @@ void Engine::Initialize() {
   platform_->CreateMainWindow();
 
   // After the window exists, so the backend picks up the display scale that
-  // CreateMainWindow() detected.
-  imgui_backend_.Initialize(
-      platform_, GetRootPath() + "assets/engine/RobotoMono-Regular.ttf");
+  // CreateMainWindow() detected. The font path is relative to the assets
+  // directory; AssetFile resolves it per platform (APK on Android).
+  imgui_backend_.Initialize(platform_, "engine/RobotoMono-Regular.ttf");
 
   CreateRendererInternal(RendererType::kVulkan);
 

@@ -5,11 +5,11 @@
 #include <cstring>
 #include <memory>
 
-#include "base/file.h"
 #include "base/hash.h"
 #include "base/log.h"
 #include "engine/asset/shader_source.h"
 #include "engine/input_codes.h"
+#include "engine/platform/asset_file.h"
 #include "engine/platform/platform.h"
 #include "engine/renderer/renderer.h"
 #include "third_party/imgui/imgui/imgui.h"
@@ -309,49 +309,54 @@ ImguiBackend::~ImguiBackend() {
 void ImguiBackend::LoadFont(const std::string& font_path) {
   if (font_path.empty())
     return;
-  ImGuiIO& io = ImGui::GetIO();
   DLOG(0) << "Font: " << font_path;
-  base::ScopedFILE fp(fopen(font_path.c_str(), "rb"));
-  if (fp) {
-    fseek(fp.get(), 0, SEEK_END);
-    long file_size = ftell(fp.get());
-    fseek(fp.get(), 0, SEEK_SET);
-
-    void* buffer = IM_ALLOC(file_size);
-    size_t bytes_read = fread(buffer, 1, file_size, fp.get());
-    if (bytes_read == static_cast<size_t>(file_size)) {
-      bool using_freetype =
-          io.Fonts->FontLoader == ImGuiFreeType::GetFontLoader();
-      if (!using_freetype &&
-          !IsTrueTypeOrOpenType(static_cast<const char*>(buffer), bytes_read)) {
-        DLOG(0) << "Unsupported font format: " << font_path.c_str();
-        IM_FREE(buffer);
-      } else {
-        // Suppress ImGui error output during font loading. AddFont()
-        // validates the data via stb_truetype and rolls back on failure,
-        // but fires IM_ASSERT_USER_ERROR which logs noisy errors for
-        // fonts with unsupported formats (e.g. Type 1, CFF2).
-        int font_count = io.Fonts->Fonts.Size;
-        auto enable_assert = io.ConfigErrorRecoveryEnableAssert;
-        auto enable_debug_log = io.ConfigErrorRecoveryEnableDebugLog;
-        auto enable_tooltip = io.ConfigErrorRecoveryEnableTooltip;
-        io.ConfigErrorRecoveryEnableAssert = false;
-        io.ConfigErrorRecoveryEnableDebugLog = false;
-        io.ConfigErrorRecoveryEnableTooltip = false;
-        io.Fonts->AddFontFromMemoryTTF(buffer, (int)file_size, kBaseFontSize);
-        io.ConfigErrorRecoveryEnableAssert = enable_assert;
-        io.ConfigErrorRecoveryEnableDebugLog = enable_debug_log;
-        io.ConfigErrorRecoveryEnableTooltip = enable_tooltip;
-        if (io.Fonts->Fonts.Size == font_count)
-          DLOG(0) << "Unsupported font format: " << font_path.c_str();
-      }
-    } else {
-      DLOG(0) << "Failed to read font file: " << font_path.c_str();
-      IM_FREE(buffer);
-    }
-  } else {
-    DLOG(0) << "Failed to open font file: " << font_path.c_str();
+  // Load through AssetFile so this also works on Android, where the font
+  // lives inside the APK and can't be opened with fopen().
+  AssetFile file;
+  if (!file.Open(font_path, platform_->GetRootPath())) {
+    DLOG(0) << "Failed to open font file: " << font_path;
+    return;
   }
+  size_t file_size = file.GetSize();
+  if (file_size == 0) {
+    DLOG(0) << "Failed to read font file: " << font_path;
+    return;
+  }
+  // Allocate with IM_ALLOC and let ImGui own the buffer (default
+  // FontDataOwnedByAtlas = true), so it stays alive for the lifetime of the
+  // font atlas.
+  void* buffer = IM_ALLOC(file_size);
+  size_t bytes_read = file.Read(static_cast<char*>(buffer), file_size);
+  if (bytes_read != file_size) {
+    DLOG(0) << "Failed to read font file: " << font_path;
+    IM_FREE(buffer);
+    return;
+  }
+  ImGuiIO& io = ImGui::GetIO();
+  bool using_freetype = io.Fonts->FontLoader == ImGuiFreeType::GetFontLoader();
+  if (!using_freetype &&
+      !IsTrueTypeOrOpenType(static_cast<const char*>(buffer), file_size)) {
+    DLOG(0) << "Unsupported font format: " << font_path;
+    IM_FREE(buffer);
+    return;
+  }
+  // Suppress ImGui error output during font loading. AddFont() validates the
+  // data via stb_truetype and rolls back on failure, but fires
+  // IM_ASSERT_USER_ERROR which logs noisy errors for fonts with unsupported
+  // formats (e.g. Type 1, CFF2).
+  int font_count = io.Fonts->Fonts.Size;
+  auto enable_assert = io.ConfigErrorRecoveryEnableAssert;
+  auto enable_debug_log = io.ConfigErrorRecoveryEnableDebugLog;
+  auto enable_tooltip = io.ConfigErrorRecoveryEnableTooltip;
+  io.ConfigErrorRecoveryEnableAssert = false;
+  io.ConfigErrorRecoveryEnableDebugLog = false;
+  io.ConfigErrorRecoveryEnableTooltip = false;
+  io.Fonts->AddFontFromMemoryTTF(buffer, (int)file_size, kBaseFontSize);
+  io.ConfigErrorRecoveryEnableAssert = enable_assert;
+  io.ConfigErrorRecoveryEnableDebugLog = enable_debug_log;
+  io.ConfigErrorRecoveryEnableTooltip = enable_tooltip;
+  if (io.Fonts->Fonts.Size == font_count)
+    DLOG(0) << "Unsupported font format: " << font_path;
 }
 
 void ImguiBackend::Initialize(Platform* platform,
@@ -393,6 +398,7 @@ void ImguiBackend::RebuildFont(const std::string& font_path,
                                bool use_freetype,
                                const std::string& fallback_font_path) {
   SetFontLoader(use_freetype);
+  // Clear() also frees the font buffers owned by the atlas.
   ImGui::GetIO().Fonts->Clear();
   LoadFont(font_path);
   MergeFallbackFont(fallback_font_path);
@@ -415,11 +421,28 @@ void ImguiBackend::MergeFallbackFont(const std::string& path) {
   if (path.empty())
     return;
   DLOG(0) << "Fallback font: " << path;
+  AssetFile file;
+  if (!file.Open(path, platform_->GetRootPath())) {
+    DLOG(0) << "Failed to open fallback font: " << path;
+    return;
+  }
+  size_t file_size = file.GetSize();
+  if (file_size == 0) {
+    DLOG(0) << "Failed to read fallback font: " << path;
+    return;
+  }
+  // Allocate with IM_ALLOC and let ImGui own the buffer (see LoadFont()).
+  void* buffer = IM_ALLOC(file_size);
+  size_t bytes_read = file.Read(static_cast<char*>(buffer), file_size);
+  if (bytes_read != file_size) {
+    DLOG(0) << "Failed to read fallback font: " << path;
+    IM_FREE(buffer);
+    return;
+  }
   ImGuiIO& io = ImGui::GetIO();
   ImFontConfig cfg;
   cfg.MergeMode = true;
-  cfg.FontDataOwnedByAtlas = true;
-  io.Fonts->AddFontFromFileTTF(path.c_str(), kBaseFontSize, &cfg);
+  io.Fonts->AddFontFromMemoryTTF(buffer, (int)file_size, kBaseFontSize, &cfg);
 }
 
 // Creates a texture plus the descriptor set that binds it, and returns the
