@@ -127,6 +127,10 @@ class RendererVulkan final : public Renderer {
 
   RendererType GetRendererType() final { return RendererType::kVulkan; }
 
+  std::vector<std::string> GetAvailableGpus() const final;
+  int GetSelectedGpuIndex() const final;
+  void SetPreferredGpu(const std::string& name) final;
+
  private:
   // VkBuffer or VkImage with allocator.
   template <typename T>

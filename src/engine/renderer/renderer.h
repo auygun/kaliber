@@ -147,6 +147,15 @@ class Renderer {
 
   virtual RendererType GetRendererType() { return RendererType::kUnknown; }
 
+  // Return the list of available GPU device names (Vulkan only).
+  virtual std::vector<std::string> GetAvailableGpus() const { return {}; }
+
+  // Return the index of the currently selected GPU.
+  virtual int GetSelectedGpuIndex() const { return 0; }
+
+  // Set the preferred GPU by device name. Must be called before Initialize().
+  virtual void SetPreferredGpu(const std::string&) {}
+
  protected:
   struct TextureCompression {
     unsigned etc1 : 1;

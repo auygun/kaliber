@@ -2790,6 +2790,18 @@ size_t RendererVulkan::GetAndResetFPS() {
   return context_.GetAndResetFPS();
 }
 
+std::vector<std::string> RendererVulkan::GetAvailableGpus() const {
+  return context_.GetDeviceNames();
+}
+
+int RendererVulkan::GetSelectedGpuIndex() const {
+  return context_.GetSelectedDeviceIndex();
+}
+
+void RendererVulkan::SetPreferredGpu(const std::string& name) {
+  context_.SetPreferredDevice(name);
+}
+
 void RendererVulkan::DestroyAllResources() {
   std::vector<uint64_t> resource_ids;
   for (auto& r : geometries_)

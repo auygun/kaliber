@@ -471,8 +471,22 @@ bool VulkanContext::CreatePhysicalDevice() {
             << string_VkResult(err);
     return false;
   }
-  // Grab the first physical device for now.
-  gpu_ = physical_devices[0];
+  // Enumerate all device names and select the preferred one if set.
+  device_names_.clear();
+  device_names_.reserve(gpu_count);
+  selected_device_index_ = 0;
+  for (uint32_t i = 0; i < gpu_count; i++) {
+    VkPhysicalDeviceProperties props;
+    vkGetPhysicalDeviceProperties(physical_devices[i], &props);
+    device_names_.emplace_back(props.deviceName);
+    if (!preferred_device_name_.empty() &&
+        preferred_device_name_ == props.deviceName) {
+      selected_device_index_ = static_cast<int>(i);
+    }
+  }
+  gpu_ = physical_devices[selected_device_index_];
+  if (selected_device_index_ != 0)
+    LOG(0) << "Selected preferred GPU: " << device_names_[selected_device_index_];
 
   // Look for device extensions.
   uint32_t device_extension_count = 0;

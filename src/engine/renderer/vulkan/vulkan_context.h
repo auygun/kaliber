@@ -2,6 +2,7 @@
 #define ENGINE_RENDERER_VULKAN_VULKAN_CONTEXT_H
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include "third_party/vma/vk_mem_alloc.h"
@@ -73,6 +74,21 @@ class VulkanContext {
 
   size_t GetAndResetFPS();
 
+  // Return the list of available GPU device names (populated during
+  // CreatePhysicalDevice()).
+  const std::vector<std::string>& GetDeviceNames() const {
+    return device_names_;
+  }
+
+  // Return the index of the currently selected GPU.
+  int GetSelectedDeviceIndex() const { return selected_device_index_; }
+
+  // Set the preferred GPU by device name. Must be called before
+  // CreatePhysicalDevice().
+  void SetPreferredDevice(const std::string& name) {
+    preferred_device_name_ = name;
+  }
+
  private:
   enum { kMaxExtensions = 128, kMaxLayers = 64, kFrameLag = 2 };
 
@@ -131,6 +147,10 @@ class VulkanContext {
   std::vector<VkCommandBuffer> command_buffers_;
 
   Window window_;
+
+  std::vector<std::string> device_names_;
+  int selected_device_index_ = 0;
+  std::string preferred_device_name_;
 
   size_t fps_ = 0;
 
