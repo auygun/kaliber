@@ -88,7 +88,8 @@ Image::Image(const Image& other) {
 Image::~Image() = default;
 
 Image& Image::operator=(const Image& other) {
-  Copy(other);
+  if (this != &other)
+    Copy(other);
   return *this;
 }
 

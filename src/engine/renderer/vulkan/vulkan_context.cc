@@ -117,6 +117,9 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VulkanContext::DebugMessengerCallback(
           VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT):
       type_string = "VALIDATION|PERFORMANCE";
       break;
+    default:
+      type_string = "UNKNOWN";
+      break;
   }
 
   std::string objects_string;

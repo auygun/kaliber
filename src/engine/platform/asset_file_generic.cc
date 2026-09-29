@@ -23,7 +23,7 @@ size_t AssetFile::GetSize() {
   if (file_) {
     if (!fseek(file_.get(), 0, SEEK_END)) {
       size = ftell(file_.get());
-      rewind(file_.get());
+      fseek(file_.get(), 0, SEEK_SET);
     }
   }
 
