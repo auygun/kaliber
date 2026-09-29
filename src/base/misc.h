@@ -31,8 +31,9 @@ inline uint32_t GetHighestBitPos(uint32_t value) {
   return result;
 }
 
-inline bool IsPow2(int value) {
-  return ((value & (value - 1)) == 0);
+template <typename T>
+inline bool IsPow2(T value) {
+  return value != 0 && (value & (value - 1)) == 0;
 }
 
 inline uint32_t RoundUpToPow2(uint32_t val) {
