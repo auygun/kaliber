@@ -92,7 +92,9 @@ size_t GetIndexSize(DataType index_description) {
 bool ParseVertexDescription(const std::string& vd_str, VertexDescription& out) {
   // Parse the description.
   char buffer[32];
-  strcpy(buffer, vd_str.c_str());
+  if (vd_str.size() >= sizeof(buffer))
+    return false;
+  memcpy(buffer, vd_str.c_str(), vd_str.size() + 1);
   char* token = strtok(buffer, kLayoutDelimiter);
 
   // Parse each encountered attribute.
