@@ -109,7 +109,7 @@ class RendererVulkan final : public Renderer {
   void ActivateDescriptorSet(uint64_t resource_id) final;
   void DestroyDescriptorSet(uint64_t resource_id) final;
 
-  void PrepareForDrawing() final;
+  bool PrepareForDrawing() final;
   void Present() final;
 
   uint64_t CreateRenderTarget(ImageFormat format,
@@ -290,6 +290,11 @@ class RendererVulkan final : public Renderer {
   size_t frames_drawn_ = 0;
   std::vector<Frame> frames_;
   int current_frame_ = 0;
+
+  // Set when PrepareForDrawing() successfully acquires a swapchain image.
+  // Present() and the default render pass are skipped when this is false
+  // (e.g. acquire timeout or zero-size window).
+  bool frame_prepared_ = false;
 
   std::vector<StagingBuffer> staging_buffers_;
   int current_staging_buffer_ = 0;

@@ -175,19 +175,31 @@ void Engine::Update(float delta_time) {
 }
 
 void Engine::Draw(float frame_frac) {
-  renderer_->PrepareForDrawing();
+  bool frame_prepared = renderer_->PrepareForDrawing();
 
-  render_graph_.Reset();
-  render_graph_.AddPass(
-      "scene", "scene_layer",
-      [this, frame_frac](RenderGraphContext& ctx) {
-        world_.Render(frame_frac);
-      },
-      true);
-  render_graph_.AddPass("ui", "ui_layer", [this](RenderGraphContext& ctx) {
-    imgui_backend_.Draw();
-  });
-  render_graph_.Execute(renderer_.get());
+  // Finalize the ImGui frame (this is what adds the windows' draw lists to
+  // the draw data). Must be called once per frame after all widgets have
+  // been drawn, even when GPU rendering is skipped, so the next NewFrame()
+  // passes ImGui's frame sanity checks.
+  imgui_backend_.Render();
+
+  // Skip the render graph when the frame could not be prepared (e.g. the
+  // window is minimized or the driver stalled). Creating render targets or
+  // recording draw commands in that state would use a null swapchain or a
+  // zero-sized framebuffer. Present() discards the frame.
+  if (frame_prepared) {
+    render_graph_.Reset();
+    render_graph_.AddPass(
+        "scene", "scene_layer",
+        [this, frame_frac](RenderGraphContext& ctx) {
+          world_.Render(frame_frac);
+        },
+        true);
+    render_graph_.AddPass("ui", "ui_layer", [this](RenderGraphContext& ctx) {
+      imgui_backend_.Draw();
+    });
+    render_graph_.Execute(renderer_.get());
+  }
   renderer_->Present();
 }
 

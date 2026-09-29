@@ -1165,11 +1165,32 @@ void RendererVulkan::DestroyDescriptorSet(uint64_t resource_id) {
   descriptor_sets_.erase(descriptor_set_it);
 }
 
-void RendererVulkan::PrepareForDrawing() {
-  context_.PrepareBuffers();
+bool RendererVulkan::PrepareForDrawing() {
+  frame_prepared_ = false;
+
+  // The window may be minimized (zero-size); skip the frame in that case.
+  if (GetFramebufferWidth() == 0 || GetFramebufferHeight() == 0)
+    return false;
+
+  if (!context_.PrepareBuffers())
+    return false;
+
+  frame_prepared_ = true;
+  return true;
 }
 
 void RendererVulkan::Present() {
+  if (!frame_prepared_) {
+    // The frame was not prepared (e.g. the swapchain image acquire timed
+    // out, or the window is zero-sized). The render graph was skipped, so
+    // no draw commands were recorded; the command buffers are still in the
+    // begun state and will be (re)used by the next frame, which retries
+    // with the same frame index. Wait for any pending background tasks so
+    // they don't interleave with the next frame's recording.
+    task_runner_.WaitForCompletion();
+    return;
+  }
+
   DrawListEnd();
   SwapBuffers();
 }
@@ -2685,6 +2706,9 @@ bool RendererVulkan::CreatePipelineLayout(
 }
 
 void RendererVulkan::DrawListBegin() {
+  if (!frame_prepared_)
+    return;
+
   VkRenderPassBeginInfo render_pass_begin{};
   render_pass_begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   render_pass_begin.renderPass = context_.GetRenderPass();

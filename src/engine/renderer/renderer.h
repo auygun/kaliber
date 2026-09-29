@@ -119,7 +119,10 @@ class Renderer {
   virtual void ActivateDescriptorSet(uint64_t resource_id) = 0;
   virtual void DestroyDescriptorSet(uint64_t resource_id) = 0;
 
-  virtual void PrepareForDrawing() = 0;
+  // Returns false if the frame could not be prepared (e.g. the window is
+  // minimized or the driver stalled). Callers must skip rendering in that
+  // case and still call Present() to discard the frame.
+  virtual bool PrepareForDrawing() = 0;
   virtual void Present() = 0;
 
   virtual uint64_t CreateRenderTarget(ImageFormat format,

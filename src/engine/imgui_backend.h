@@ -41,6 +41,11 @@ class ImguiBackend {
   std::pair<bool, bool> ProcessInput(Platform* platform);
 
   void NewFrame(float delta_time);
+  // Finalizes the ImGui frame (ImGui::Render()). Must be called once per
+  // frame after all widgets have been drawn, even when GPU rendering is
+  // skipped (e.g. the window is minimized).
+  void Render();
+  // Records the ImGui draw commands to the renderer. Call after Render().
   void Draw();
 
   void SetGeometryChangedCallback(std::function<void()> cb) {

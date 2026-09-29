@@ -622,11 +622,14 @@ void ImguiBackend::NewFrame(float delta_time) {
   ImGuiIO& io = ImGui::GetIO();
   int window_w = platform_->GetWindowWidth();
   int window_h = platform_->GetWindowHeight();
+  int fb_w = renderer_->GetFramebufferWidth();
+  int fb_h = renderer_->GetFramebufferHeight();
   io.DisplaySize = ImVec2((float)window_w, (float)window_h);
+  // The framebuffer can be zero-sized while the window is minimized; ImGui
+  // asserts on a zero frame buffer scale, so fall back to 1:1 in that case.
   io.DisplayFramebufferScale = ImVec2(
-      window_w > 0 ? (float)renderer_->GetFramebufferWidth() / window_w : 1.0f,
-      window_h > 0 ? (float)renderer_->GetFramebufferHeight() / window_h
-                   : 1.0f);
+      (window_w > 0 && fb_w > 0) ? (float)fb_w / window_w : 1.0f,
+      (window_h > 0 && fb_h > 0) ? (float)fb_h / window_h : 1.0f);
   io.DeltaTime = delta_time;
 
   // Apply the cursor that ImGui requested during the previous frame, before
@@ -701,8 +704,11 @@ void ImguiBackend::UpdateTexture(ImTextureData* tex) {
   }
 }
 
-void ImguiBackend::Draw() {
+void ImguiBackend::Render() {
   ImGui::Render();
+}
+
+void ImguiBackend::Draw() {
   ImDrawData* draw_data = ImGui::GetDrawData();
   if (!draw_data || draw_data->CmdListsCount <= 0)
     return;
