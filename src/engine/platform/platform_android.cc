@@ -188,14 +188,6 @@ void Vibrate(ANativeActivity* activity, int duration) {
   activity->vm->DetachCurrentThread();
 }
 
-int32_t GetDensityDpi(android_app* app) {
-  AConfiguration* config = AConfiguration_new();
-  AConfiguration_fromAssetManager(config, app->activity->assetManager);
-  int32_t density = AConfiguration_getDensity(config);
-  AConfiguration_delete(config);
-  return density;
-}
-
 }  // namespace
 
 namespace eng {
@@ -344,9 +336,6 @@ Platform::Platform(android_app* app) {
 
   shared_data_path_ = ::GetSharedDataPath(app->activity);
   LOG(0) << "Shared data path: " << shared_data_path_.c_str();
-
-  device_dpi_ = ::GetDensityDpi(app);
-  LOG(0) << "Device DPI: " << device_dpi_;
 
   app->userData = reinterpret_cast<void*>(this);
   app->onAppCmd = Platform::HandleCmd;

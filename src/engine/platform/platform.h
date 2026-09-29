@@ -57,8 +57,6 @@ class Platform {
 
   bool mobile_device() const { return mobile_device_; }
 
-  int GetDeviceDpi() const { return device_dpi_; }
-
   // Mobile-only hooks. No-ops on desktop.
   void Vibrate(int duration);
   void ShowInterstitialAd();
@@ -140,7 +138,6 @@ class Platform {
 
  private:
   bool mobile_device_ = false;
-  int device_dpi_ = 100;
   std::string root_path_;
   std::string data_path_;
   std::string shared_data_path_;
