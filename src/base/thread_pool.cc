@@ -111,8 +111,17 @@ void ThreadPool::WorkerMain() {
     // given runner at a time, keeping its tasks in FIFO order.
     for (auto& r : runners) {
       std::unique_lock processing_lock(*r.processing_lock, std::try_to_lock);
-      if (processing_lock)
+      if (processing_lock) {
         r.task_runner->RunTasks<Consumer::Single>();
+        // Tasks posted during the batch (after the queue swap) are still
+        // pending. Drop the lock *before* releasing the semaphore: the
+        // worker woken up by this release must be able to acquire the lock,
+        // otherwise it consumes the token, fails its try_lock and goes back
+        // to sleep, orphaning the next batch.
+        processing_lock.unlock();
+        if (r.task_runner->GetPendingTaskCount() > 0)
+          semaphore_.release();
+      }
     }
 
     // Process normal tasks. Multiple workers can run these concurrently.
