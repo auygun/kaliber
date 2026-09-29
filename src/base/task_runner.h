@@ -34,10 +34,12 @@ void ReplyAdapter(std::function<void(ReturnType)> callback,
 enum class Consumer {
   // Tasks are consumed by multiple threads.
   Multi,
-  // Tasks are consumed by a single thread.
+  // Tasks are consumed by a single thread. Prevents indefinite spinning if
+  // tasks keep posting more tasks.
   Single,
-  // Consume tasks if ownership of the mutex can be acquire without blocking.
-  NoBlocking
+  // Tasks are consumed by a single thread. Loops until the queue is fully
+  // drained, including tasks posted during execution.
+  Sequenced
 };
 
 // Runs queued tasks (in the form of Closure objects). All methods are
@@ -82,6 +84,16 @@ class TaskRunner {
     PostTask(HERE, [owned]() {});
   }
 
+  // The callback is invoked outside the lock from whichever thread calls
+  // PostTask. It must be thread-safe.
+  void SetOnTaskPostedCallback(Closure cb) {
+    on_task_posted_cb_ = std::move(cb);
+  }
+
+  size_t GetPendingTaskCount() const {
+    return task_count_.load(std::memory_order_acquire);
+  }
+
   void CancelTasks();
 
   void WaitForCompletion();
@@ -95,6 +107,8 @@ class TaskRunner {
   std::deque<Task> queue_;
   mutable std::mutex lock_;
   std::atomic<size_t> task_count_{0};
+  std::atomic<bool> cancelled_{false};
+  Closure on_task_posted_cb_;
 
   static thread_local std::shared_ptr<TaskRunner> thread_local_task_runner;
 

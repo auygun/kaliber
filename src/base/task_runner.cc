@@ -41,11 +41,15 @@ void TaskRunner::PostTask(Location from, Closure task, bool front) {
   DCHECK(task) << LOCATION(from);
 
   task_count_.fetch_add(1, std::memory_order_relaxed);
-  std::scoped_lock scoped_lock(lock_);
-  if (front)
-    queue_.emplace_front(from, std::move(task));
-  else
-    queue_.emplace_back(from, std::move(task));
+  {
+    std::scoped_lock scoped_lock(lock_);
+    if (front)
+      queue_.emplace_front(from, std::move(task));
+    else
+      queue_.emplace_back(from, std::move(task));
+  }
+  if (on_task_posted_cb_)
+    on_task_posted_cb_();
 }
 
 void TaskRunner::PostTaskAndReply(Location from,
@@ -62,6 +66,7 @@ void TaskRunner::PostTaskAndReply(Location from,
 }
 
 void TaskRunner::CancelTasks() {
+  cancelled_.store(true, std::memory_order_relaxed);
   std::scoped_lock scoped_lock(lock_);
   task_count_.fetch_sub(queue_.size(), std::memory_order_release);
   queue_.clear();
@@ -106,40 +111,54 @@ void TaskRunner::RunTasks<Consumer::Single>() {
   }
 
   while (!queue.empty()) {
-    auto [from, task_cb] = queue.front();
-    queue.pop_front();
+    if (cancelled_.load(std::memory_order_relaxed)) {
+      cancelled_.store(false, std::memory_order_relaxed);
+      task_count_.fetch_sub(queue.size(), std::memory_order_release);
+      break;
+    }
+    {
+      auto [from, task_cb] = queue.front();
+      queue.pop_front();
 
 #if 0
-    LOG << __func__ << " from: " << LOCATION(from);
+      LOG << __func__ << " from: " << LOCATION(from);
 #endif
 
-    task_cb();
+      task_cb();
+    }
     task_count_.fetch_sub(1, std::memory_order_release);
   }
 }
 
 template <>
-void TaskRunner::RunTasks<Consumer::NoBlocking>() {
-  std::deque<Task> queue;
-  {
-    std::unique_lock<std::mutex> scoped_lock(lock_, std::try_to_lock);
-    if (scoped_lock) {
+void TaskRunner::RunTasks<Consumer::Sequenced>() {
+  for (;;) {
+    std::deque<Task> queue;
+    {
+      std::scoped_lock scoped_lock(lock_);
       if (queue_.empty())
         return;
       queue.swap(queue_);
     }
-  }
 
-  while (!queue.empty()) {
-    auto [from, task_cb] = queue.front();
-    queue.pop_front();
+    while (!queue.empty()) {
+      if (cancelled_.load(std::memory_order_relaxed)) {
+        cancelled_.store(false, std::memory_order_relaxed);
+        task_count_.fetch_sub(queue.size(), std::memory_order_release);
+        break;
+      }
+      {
+        auto [from, task_cb] = queue.front();
+        queue.pop_front();
 
 #if 0
-    LOG << __func__ << " from: " << LOCATION(from);
+        LOG << __func__ << " from: " << LOCATION(from);
 #endif
 
-    task_cb();
-    task_count_.fetch_sub(1, std::memory_order_release);
+        task_cb();
+      }
+      task_count_.fetch_sub(1, std::memory_order_release);
+    }
   }
 }
 

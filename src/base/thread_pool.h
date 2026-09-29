@@ -2,6 +2,8 @@
 #define BASE_THREAD_POOL_H
 
 #include <atomic>
+#include <memory>
+#include <mutex>
 #include <semaphore>
 #include <thread>
 #include <vector>
@@ -41,6 +43,10 @@ class ThreadPool {
     semaphore_.release();
   }
 
+  std::shared_ptr<TaskRunner> CreateSequencedTaskRunner();
+
+  size_t GetPendingTaskCount() const;
+
   void CancelTasks();
 
  private:
@@ -50,6 +56,16 @@ class ThreadPool {
   std::atomic<bool> quit_{false};
 
   base::TaskRunner task_runner_;
+
+  struct SequencedTaskRunner {
+    std::shared_ptr<TaskRunner> task_runner;
+    // Ensures only one worker thread processes this runner's tasks at a time,
+    // preserving sequential execution order.
+    std::mutex processing_lock;
+  };
+
+  std::vector<std::unique_ptr<SequencedTaskRunner>> sequenced_task_runners_;
+  mutable std::mutex sequenced_task_runners_lock_;
 
   static ThreadPool* singleton;
 
