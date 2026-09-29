@@ -36,10 +36,7 @@ enum class Consumer {
   Multi,
   // Tasks are consumed by a single thread. Prevents indefinite spinning if
   // tasks keep posting more tasks.
-  Single,
-  // Tasks are consumed by a single thread. Loops until the queue is fully
-  // drained, including tasks posted during execution.
-  Sequenced
+  Single
 };
 
 // Runs queued tasks (in the form of Closure objects). All methods are

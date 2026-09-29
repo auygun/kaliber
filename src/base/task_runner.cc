@@ -130,36 +130,4 @@ void TaskRunner::RunTasks<Consumer::Single>() {
   }
 }
 
-template <>
-void TaskRunner::RunTasks<Consumer::Sequenced>() {
-  for (;;) {
-    std::deque<Task> queue;
-    {
-      std::scoped_lock scoped_lock(lock_);
-      if (queue_.empty())
-        return;
-      queue.swap(queue_);
-    }
-
-    while (!queue.empty()) {
-      if (cancelled_.load(std::memory_order_relaxed)) {
-        cancelled_.store(false, std::memory_order_relaxed);
-        task_count_.fetch_sub(queue.size(), std::memory_order_release);
-        break;
-      }
-      {
-        auto [from, task_cb] = queue.front();
-        queue.pop_front();
-
-#if 0
-        LOG << __func__ << " from: " << LOCATION(from);
-#endif
-
-        task_cb();
-      }
-      task_count_.fetch_sub(1, std::memory_order_release);
-    }
-  }
-}
-
 }  // namespace base

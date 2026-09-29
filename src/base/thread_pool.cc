@@ -107,12 +107,12 @@ void ThreadPool::WorkerMain() {
         runners.push_back({sr->task_runner, &sr->processing_lock});
     }
 
-    // Each runner uses a try_lock so that only one worker thread drains a
-    // given runner at a time, ensuring its tasks execute sequentially.
+    // Each runner uses a try_lock so that only one worker thread processes a
+    // given runner at a time, keeping its tasks in FIFO order.
     for (auto& r : runners) {
       std::unique_lock processing_lock(*r.processing_lock, std::try_to_lock);
       if (processing_lock)
-        r.task_runner->RunTasks<Consumer::Sequenced>();
+        r.task_runner->RunTasks<Consumer::Single>();
     }
 
     // Process normal tasks. Multiple workers can run these concurrently.
