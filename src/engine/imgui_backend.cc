@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cfloat>
-#include <cstring>
 #include <memory>
 
 #include "base/hash.h"
@@ -289,15 +288,6 @@ static ImGuiKey TranslateKey(Key platform_key) {
   }
 }
 
-bool IsTrueTypeOrOpenType(const char* data, size_t size) {
-  if (size < 4)
-    return false;
-  const unsigned char kTrueTypeV1[] = {0, 1, 0, 0};
-  return std::memcmp(data, kTrueTypeV1, 4) == 0 ||
-         std::memcmp(data, "true", 4) == 0 ||
-         std::memcmp(data, "OTTO", 4) == 0 || std::memcmp(data, "ttcf", 4) == 0;
-}
-
 }  // namespace
 
 ImguiBackend::ImguiBackend() = default;
@@ -333,15 +323,8 @@ void ImguiBackend::LoadFont(const std::string& font_path) {
     return;
   }
   ImGuiIO& io = ImGui::GetIO();
-  bool using_freetype = io.Fonts->FontLoader == ImGuiFreeType::GetFontLoader();
-  if (!using_freetype &&
-      !IsTrueTypeOrOpenType(static_cast<const char*>(buffer), file_size)) {
-    DLOG(0) << "Unsupported font format: " << font_path;
-    IM_FREE(buffer);
-    return;
-  }
   // Suppress ImGui error output during font loading. AddFont() validates the
-  // data via stb_truetype and rolls back on failure, but fires
+  // data via FreeType and rolls back on failure, but fires
   // IM_ASSERT_USER_ERROR which logs noisy errors for fonts with unsupported
   // formats (e.g. Type 1, CFF2).
   int font_count = io.Fonts->Fonts.Size;
@@ -361,7 +344,6 @@ void ImguiBackend::LoadFont(const std::string& font_path) {
 
 void ImguiBackend::Initialize(Platform* platform,
                               const std::string& font_path,
-                              bool use_freetype,
                               const std::string& fallback_font_path) {
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -389,15 +371,13 @@ void ImguiBackend::Initialize(Platform* platform,
   };
   io.BackendPlatformUserData = platform;
 
-  SetFontLoader(use_freetype);
+  io.Fonts->SetFontLoader(ImGuiFreeType::GetFontLoader());
   LoadFont(font_path);
   MergeFallbackFont(fallback_font_path);
 }
 
 void ImguiBackend::RebuildFont(const std::string& font_path,
-                               bool use_freetype,
                                const std::string& fallback_font_path) {
-  SetFontLoader(use_freetype);
   // Clear() also frees the font buffers owned by the atlas.
   ImGui::GetIO().Fonts->Clear();
   LoadFont(font_path);
@@ -407,14 +387,6 @@ void ImguiBackend::RebuildFont(const std::string& font_path,
   // (e.g. ImGui's 13px default after a failed load) leaves the old value
   // in place and the new font renders at the wrong scale.
   ImGui::GetStyle().FontSizeBase = 0.0f;
-}
-
-void ImguiBackend::SetFontLoader(bool use_freetype) {
-  if (use_freetype)
-    ImGui::GetIO().Fonts->SetFontLoader(ImGuiFreeType::GetFontLoader());
-  else
-    ImGui::GetIO().Fonts->SetFontLoader(
-        ImFontAtlasGetFontLoaderForStbTruetype());
 }
 
 void ImguiBackend::MergeFallbackFont(const std::string& path) {

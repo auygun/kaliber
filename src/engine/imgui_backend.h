@@ -27,14 +27,11 @@ class ImguiBackend {
 
   void Initialize(Platform* platform,
                   const std::string& font_path = {},
-                  bool use_freetype = true,
                   const std::string& fallback_font_path = {});
   void Shutdown();
 
   void RebuildFont(const std::string& font_path,
-                   bool use_freetype,
                    const std::string& fallback_font_path = {});
-  void SetFontLoader(bool use_freetype);
 
   void CreateRenderResources(Renderer* renderer);
 

@@ -1,7 +1,6 @@
 config("imgui_public") {
   defines = [
     "IMGUI_ENABLE_FREETYPE",
-    "IMGUI_ENABLE_STB_TRUETYPE",
   ]
 
   # imgui's own headers include each other unqualified (e.g. imgui_freetype.h
