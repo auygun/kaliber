@@ -53,13 +53,13 @@ bool IsCompressedFormat(ImageFormat format) {
 size_t GetImageSize(int width, int height, ImageFormat format) {
   switch (format) {
     case ImageFormat::kRGBA32:
-      return width * height * 4;
+      return static_cast<size_t>(width) * height * 4;
     case ImageFormat::kDXT1:
     case ImageFormat::kATC:
-      return ((width + 3) / 4) * ((height + 3) / 4) * 8;
+      return static_cast<size_t>((width + 3) / 4) * ((height + 3) / 4) * 8;
     case ImageFormat::kDXT5:
     case ImageFormat::kATCIA:
-      return ((width + 3) / 4) * ((height + 3) / 4) * 16;
+      return static_cast<size_t>((width + 3) / 4) * ((height + 3) / 4) * 16;
     case ImageFormat::kETC1:
       return (width * height * 4) / 8;
     default:
@@ -168,8 +168,7 @@ bool ParseVertexDescription(const std::string& vd_str, VertexDescription& out) {
         return false;
     }
 
-    out.push_back(
-        std::make_tuple(attrib_type, data_type, num_elements, type_size));
+    out.emplace_back(attrib_type, data_type, num_elements, type_size);
 
     token = strtok(NULL, kLayoutDelimiter);
   }

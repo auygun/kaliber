@@ -259,7 +259,7 @@ void SincResampler::InitializeKernel() {
     for (int i = 0; i < kernel_size_; ++i) {
       const int idx = i + offset_idx * kernel_size_;
       const float pre_sinc =
-          kPiFloat * (i - kernel_size_ / 2 - subsample_offset);
+          kPiFloat * (i - kernel_size_ / 2.0f - subsample_offset);
       kernel_pre_sinc_storage_[idx] = pre_sinc;
 
       // Compute Blackman window, matching the offset of the sinc().
@@ -330,7 +330,7 @@ void SincResampler::Resample(int frames, float* destination, ReadCB read_cb) {
 
         // We'll compute "convolutions" for the two kernels which straddle
         // |virtual_source_idx_|.
-        const float* k1 = kernel_storage_.get() + offset_idx * kernel_size_;
+        const float* k1 = kernel_storage_.get() + static_cast<ptrdiff_t>(offset_idx * kernel_size_);
         const float* k2 = k1 + kernel_size_;
 
         // Ensure |k1|, |k2| are 32-byte aligned for SIMD usage.  Should always

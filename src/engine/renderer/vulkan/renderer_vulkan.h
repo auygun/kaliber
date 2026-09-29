@@ -303,7 +303,7 @@ class RendererVulkan final : public Renderer {
   std::vector<StagingBuffer> staging_buffers_;
   int current_staging_buffer_ = 0;
   uint32_t staging_buffer_size_ = 256 * 1024;
-  uint64_t max_staging_buffer_size_ = 16 * 1024 * 1024;
+  uint64_t max_staging_buffer_size_ = 16ull * 1024 * 1024;
   bool staging_buffer_used_ = false;
 
   uint64_t active_shader_id_ = 0;

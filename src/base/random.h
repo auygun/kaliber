@@ -10,13 +10,15 @@ namespace base {
 template <typename T>
 class Random {
  public:
-  Random() {
-    std::random_device rd;
-    seed_ = rd();
-    Initialize();
-  }
+  Random()
+      : seed_(std::random_device{}()),
+        generator_(seed_),
+        real_distribution_(0, 1) {}
 
-  Random(unsigned seed) : seed_(seed) { Initialize(); }
+  Random(unsigned seed)
+      : seed_(seed),
+        generator_(seed),
+        real_distribution_(0, 1) {}
 
   ~Random() = default;
 
@@ -32,11 +34,6 @@ class Random {
   unsigned seed_ = 0;
   std::mt19937 generator_;
   std::uniform_real_distribution<T> real_distribution_;
-
-  void Initialize() {
-    generator_ = std::mt19937(seed_);
-    real_distribution_ = std::uniform_real_distribution<T>(0, 1);
-  }
 };
 
 using Randomf = Random<float>;

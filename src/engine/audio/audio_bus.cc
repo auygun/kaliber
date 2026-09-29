@@ -106,7 +106,7 @@ void AudioBus::FromInterleaved(std::unique_ptr<float[]> source_buffer,
     if (EndOfStream()) {
       // We are done with the resampler.
       for (size_t i = 0; i < num_channels_; ++i)
-        resampler_[i].reset();
+        resampler_[i].reset();  // NOLINT(clang-analyzer-security.ArrayBound)
     }
   }
 }

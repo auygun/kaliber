@@ -54,9 +54,9 @@ void GenerateMip(const CT* src,
   int down_step = (src_height == 1) ? 0 : (src_width * CC);
 
   for (uint32_t i = 0; i < dst_height; i++) {
-    const CT* rup_ptr = &src[i * 2 * down_step];
+    const CT* rup_ptr = &src[static_cast<size_t>(i) * 2 * down_step];
     const CT* rdown_ptr = rup_ptr + down_step;
-    CT* dst_ptr = &dst[i * dst_width * CC];
+    CT* dst_ptr = &dst[static_cast<size_t>(i) * dst_width * CC];
     uint32_t count = dst_width;
 
     while (count) {
@@ -97,7 +97,7 @@ bool Image::Create(int w, int h) {
   width_ = w;
   height_ = h;
 
-  buffer_.reset((uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t), 16));
+  buffer_.reset((uint8_t*)AlignedAlloc(static_cast<size_t>(w) * h * 4 * sizeof(uint8_t), 16));
 
   return true;
 }
@@ -173,7 +173,7 @@ bool Image::LoadFromMemory(const uint8_t* buffer,
       // LOG(0)("Converting image from 1 to 4 channels.\n");
       // Assume it's an intensity, duplicate it to RGB and fill A with opaque.
       converted_buffer =
-          (uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t), 16);
+          (uint8_t*)AlignedAlloc(static_cast<size_t>(w) * h * 4 * sizeof(uint8_t), 16);
       for (int i = 0; i < w * h; ++i) {
         converted_buffer[i * 4 + 0] = buffer_[i];
         converted_buffer[i * 4 + 1] = buffer_[i];
@@ -186,7 +186,7 @@ bool Image::LoadFromMemory(const uint8_t* buffer,
       // LOG(0)("Converting image from 3 to 4 channels.\n");
       // Add an opaque channel.
       converted_buffer =
-          (uint8_t*)AlignedAlloc(w * h * 4 * sizeof(uint8_t), 16);
+          (uint8_t*)AlignedAlloc(static_cast<size_t>(w) * h * 4 * sizeof(uint8_t), 16);
       for (int i = 0; i < w * h; ++i) {
         converted_buffer[i * 4 + 0] = buffer_[i * 3 + 0];
         converted_buffer[i * 4 + 1] = buffer_[i * 3 + 1];
@@ -258,7 +258,7 @@ void Image::Pack(const Image& r_src,
   uint8_t a = (uint8_t)(rgba.w * 255.0f);
 
   buffer_.reset(
-      (uint8_t*)AlignedAlloc(width_ * height_ * 4 * sizeof(uint8_t), 16));
+      (uint8_t*)AlignedAlloc(static_cast<size_t>(width_) * height_ * 4 * sizeof(uint8_t), 16));
   uint8_t* data_ptr = buffer_.get();
 
   uint8_t* r_src_data = r_src.buffer_.get();
@@ -290,7 +290,7 @@ void Image::ConvertToPow2() {
     DLOG(0) << "Converting image from (" << width_ << ", " << height_
             << ") to (" << new_width << ", " << new_height << ")";
 
-    int bigger_size = new_width * new_height * 4 * sizeof(uint8_t);
+    size_t bigger_size = static_cast<size_t>(new_width) * new_height * 4 * sizeof(uint8_t);
     uint8_t* bigger_buffer = (uint8_t*)AlignedAlloc(bigger_size, 16);
 
     // Fill it with black.
@@ -306,8 +306,8 @@ void Image::ConvertToPow2() {
                   buffer_.get() + y * width_ * 4, width_ * 4);
 #else
     for (int y = 0; y < height_; ++y)
-      std::memcpy(bigger_buffer + (y * new_width) * 4,
-                  buffer_.get() + y * width_ * 4, width_ * 4);
+      std::memcpy(bigger_buffer + static_cast<ptrdiff_t>((y * new_width) * 4),
+                  buffer_.get() + static_cast<ptrdiff_t>(y * width_ * 4), static_cast<size_t>(width_) * 4);
 #endif
 
     // Swap the buffers and dimensions.
@@ -380,7 +380,7 @@ void Image::Clear(Vector4f rgba) {
 
   // Copy the first line to the rest of them.
   for (int h = 1; h < height_; ++h)
-    std::memcpy(data_ptr + h * width_ * 4, data_ptr, width_ * 4);
+    std::memcpy(data_ptr + static_cast<ptrdiff_t>(h * width_ * 4), data_ptr, static_cast<size_t>(width_) * 4);
 }
 
 void Image::GradientH() {
@@ -397,7 +397,7 @@ void Image::GradientH() {
 
   // Copy the first line to the rest of them.
   for (int h = 1; h < height_; ++h)
-    std::memcpy(data_ptr + h * width_ * 4, data_ptr, width_ * 4);
+    std::memcpy(data_ptr + static_cast<ptrdiff_t>(h * width_ * 4), data_ptr, static_cast<size_t>(width_) * 4);
 }
 
 void Image::GradientV(const Vector4f& c1, const Vector4f& c2, int height) {

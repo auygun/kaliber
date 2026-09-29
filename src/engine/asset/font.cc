@@ -27,7 +27,7 @@ bool Font::Load(const std::string& file_name) {
     // Allocate a cache bitmap for the glyphs.
     // This is one 8 bit channel intensity data.
     // It's tighly packed.
-    glyph_cache_ = std::make_unique<uint8_t[]>(kGlyphSize * kGlyphSize);
+    glyph_cache_ = std::make_unique<uint8_t[]>(static_cast<size_t>(kGlyphSize) * kGlyphSize);
     if (!glyph_cache_) {
       LOG(0) << "Failed to allocate glyph cache.";
       break;
@@ -83,8 +83,8 @@ static void StretchBlit_I8_to_RGBA32(int dst_x0,
   // LOG(0) << "dst_width = " << dst_width << ", dst_height = " << dst_height;
   // LOG(0) << "src_width = " << src_width << ", src_height = " << src_height;
 
-  uint8_t* dst = dst_rgba + (dst_x0 + dst_y0 * dst_pitch) * 4;
-  const uint8_t* src = src_i + (src_x0 + src_y0 * src_pitch) * 1;
+  uint8_t* dst = dst_rgba + static_cast<ptrdiff_t>((dst_x0 + dst_y0 * dst_pitch) * 4);
+  const uint8_t* src = src_i + static_cast<ptrdiff_t>((src_x0 + src_y0 * src_pitch) * 1);
 
   // First check if we have to stretch at all.
   if ((dst_width == src_width) && (dst_height == src_height)) {
@@ -104,8 +104,8 @@ static void StretchBlit_I8_to_RGBA32(int dst_x0,
         }
       }
 
-      dst += dst_pitch * 4;
-      src += src_pitch * 1;
+      dst += static_cast<ptrdiff_t>(dst_pitch * 4);
+      src += static_cast<ptrdiff_t>(src_pitch * 1);
     }
   } else {
     // ToDo

@@ -13,7 +13,7 @@ using namespace base;
 
 namespace eng {
 
-constexpr size_t kMaxSamplesPerChunk = MINIMP3_MAX_SAMPLES_PER_FRAME;
+constexpr size_t kMaxSamplesPerChunk = static_cast<size_t>(MINIMP3_MAX_SAMPLES_PER_FRAME);
 
 Sound::Sound() = default;
 

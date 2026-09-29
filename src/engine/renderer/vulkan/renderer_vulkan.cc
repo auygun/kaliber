@@ -841,11 +841,11 @@ void RendererVulkan::DestroyShader(uint64_t resource_id) {
     return;
 
   for (auto& [rp, variant_pipeline] : it->second.pipeline_variants) {
-    frames_[current_frame_].pipelines_to_destroy.push_back(
-        std::make_tuple(variant_pipeline, VK_NULL_HANDLE));
+    frames_[current_frame_].pipelines_to_destroy.emplace_back(
+        variant_pipeline, VK_NULL_HANDLE);
   }
-  frames_[current_frame_].pipelines_to_destroy.push_back(
-      std::make_tuple(it->second.pipeline, it->second.pipeline_layout));
+  frames_[current_frame_].pipelines_to_destroy.emplace_back(
+      it->second.pipeline, it->second.pipeline_layout);
   shaders_.erase(it);
 }
 
@@ -1159,9 +1159,9 @@ void RendererVulkan::DestroyDescriptorSet(uint64_t resource_id) {
   if (descriptor_set_it == descriptor_sets_.end())
     return;
 
-  frames_[current_frame_].descriptor_sets_to_destroy.push_back(std::make_tuple(
+  frames_[current_frame_].descriptor_sets_to_destroy.emplace_back(
       descriptor_set_it->second.descriptor_set,
-      descriptor_set_it->second.pool_key, descriptor_set_it->second.pools_it));
+      descriptor_set_it->second.pool_key, descriptor_set_it->second.pools_it);
   descriptor_sets_.erase(descriptor_set_it);
 }
 
@@ -1528,8 +1528,8 @@ bool RendererVulkan::InitializeInternal() {
   current_staging_buffer_ = 0;
   staging_buffer_used_ = false;
 
-  if (max_staging_buffer_size_ < staging_buffer_size_ * 4)
-    max_staging_buffer_size_ = staging_buffer_size_ * 4;
+  if (max_staging_buffer_size_ < static_cast<uint64_t>(staging_buffer_size_) * 4)
+    max_staging_buffer_size_ = static_cast<uint64_t>(staging_buffer_size_) * 4;
 
   for (int i = 0; i < frame_count; i++) {
     bool err = InsertStagingBuffer();
@@ -2026,7 +2026,7 @@ bool RendererVulkan::GetOrCreateDescriptorPool(
 
   if (pools_map_it == descriptor_pools_map_.end())
     pools_map_it = descriptor_pools_map_.insert({key, {}}).first;
-  pools_map_it->second.push_front({vk_pool, 0});
+  pools_map_it->second.emplace_front(vk_pool, 0);
   pools_it = pools_map_it->second.begin();
   return true;
 }
@@ -2211,8 +2211,8 @@ bool RendererVulkan::AllocateImage(Buffer<VkImage>& image,
 }
 
 void RendererVulkan::FreeImage(Buffer<VkImage> image, VkImageView image_view) {
-  frames_[current_frame_].images_to_destroy.push_back(
-      std::make_tuple(std::move(image), image_view));
+  frames_[current_frame_].images_to_destroy.emplace_back(
+      std::move(image), image_view);
 }
 
 void RendererVulkan::CopyImage(VkImage image,
@@ -2226,7 +2226,7 @@ void RendererVulkan::CopyImage(VkImage image,
 
   auto [block_size, block_height] = GetBlockSizeForImageFormat(format);
 
-  size_t to_submit = num_blocks_x * num_blocks_y * block_size;
+  size_t to_submit = static_cast<size_t>(num_blocks_x) * num_blocks_y * block_size;
   size_t submit_from = 0;
   uint32_t segment = num_blocks_x * block_size;
   uint32_t max_size = staging_buffer_size_ - (staging_buffer_size_ % segment);
@@ -2804,6 +2804,10 @@ void RendererVulkan::SetPreferredGpu(const std::string& name) {
 
 void RendererVulkan::DestroyAllResources() {
   std::vector<uint64_t> resource_ids;
+  resource_ids.reserve(std::max({geometries_.size(), shaders_.size(),
+                                 descriptor_sets_.size(),
+                                 render_targets_.size(), textures_.size(),
+                                 buffers_.size()}));
   for (auto& r : geometries_)
     resource_ids.push_back(r.first);
   for (auto& r : resource_ids)

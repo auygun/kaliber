@@ -57,6 +57,7 @@ bool AudioDeviceAlsa::Initialize() {
         break;
       if (try_count > 1)
         Sleep(1);
+      // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
       err = snd_pcm_open(&device_, device_name.data(), SND_PCM_STREAM_PLAYBACK,
                          0);
     } while (err == -EBUSY);
@@ -77,66 +78,75 @@ bool AudioDeviceAlsa::Initialize() {
     snd_pcm_hw_params_alloca(&hw_params);
 
     // Init hw_params with full configuration space.
-    if ((err = snd_pcm_hw_params_any(device_, hw_params)) < 0) {
+    err = snd_pcm_hw_params_any(device_, hw_params);
+    if (err < 0) {
       LOG(0) << "Cannot initialize hardware parameter structure. Error: "
              << snd_strerror(err);
       break;
     }
 
-    if ((err = snd_pcm_hw_params_set_access(
-             device_, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0) {
+    err = snd_pcm_hw_params_set_access(
+             device_, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
+    if (err < 0) {
       LOG(0) << "Cannot set access type. Error: " << snd_strerror(err);
       break;
     }
 
-    if ((err = snd_pcm_hw_params_set_format(device_, hw_params,
-                                            SND_PCM_FORMAT_FLOAT)) < 0) {
+    err = snd_pcm_hw_params_set_format(device_, hw_params,
+                                            SND_PCM_FORMAT_FLOAT);
+    if (err < 0) {
       LOG(0) << "Cannot set sample format. Error: " << snd_strerror(err);
       break;
     }
 
     // Disable software resampler.
-    if ((err = snd_pcm_hw_params_set_rate_resample(device_, hw_params, 0)) <
-        0) {
+    err = snd_pcm_hw_params_set_rate_resample(device_, hw_params, 0);
+    if (err < 0) {
       LOG(0) << "Cannot disbale software resampler. Error: "
              << snd_strerror(err);
       break;
     }
 
     unsigned sample_rate = 48000;
-    if ((err = snd_pcm_hw_params_set_rate_near(device_, hw_params, &sample_rate,
-                                               0)) < 0) {
+    err = snd_pcm_hw_params_set_rate_near(device_, hw_params, &sample_rate,
+                                          0);
+    if (err < 0) {
       LOG(0) << "Cannot set sample rate. Error: " << snd_strerror(err);
       break;
     }
 
-    if ((err = snd_pcm_hw_params_set_channels(device_, hw_params, 2)) < 0) {
+    err = snd_pcm_hw_params_set_channels(device_, hw_params, 2);
+    if (err < 0) {
       LOG(0) << "Cannot set channel count. Error: " << snd_strerror(err);
       break;
     }
 
     // Set period time to 4 ms. The latency will be 12 ms for 3 periods.
     unsigned period_time = 4000;
-    if ((err = snd_pcm_hw_params_set_period_time_near(device_, hw_params,
-                                                      &period_time, 0)) < 0) {
+    err = snd_pcm_hw_params_set_period_time_near(device_, hw_params,
+                                                      &period_time, 0);
+    if (err < 0) {
       LOG(0) << "Cannot set periods. Error: " << snd_strerror(err);
       break;
     }
 
     unsigned periods = 3;
-    if ((err = snd_pcm_hw_params_set_periods_near(device_, hw_params, &periods,
-                                                  0)) < 0) {
+    err = snd_pcm_hw_params_set_periods_near(device_, hw_params, &periods,
+                                                  0);
+    if (err < 0) {
       LOG(0) << "Cannot set periods. Error: " << snd_strerror(err);
       break;
     }
 
     // Apply HW parameter settings to PCM device and prepare device.
-    if ((err = snd_pcm_hw_params(device_, hw_params)) < 0) {
+    err = snd_pcm_hw_params(device_, hw_params);
+    if (err < 0) {
       LOG(0) << "Cannot set parameters. Error: " << snd_strerror(err);
       break;
     }
 
-    if ((err = snd_pcm_prepare(device_)) < 0) {
+    err = snd_pcm_prepare(device_);
+    if (err < 0) {
       LOG(0) << "Cannot prepare audio interface for use. Error: "
              << snd_strerror(err);
       break;

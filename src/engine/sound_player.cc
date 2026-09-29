@@ -31,7 +31,7 @@ void SoundPlayer::Play(bool loop, float fade_in_duration) {
     return;
 
   int step = variate_ ? Engine::Get().GetRandomGenerator().Roll(3) - 2 : 0;
-  input_->SetResampleStep(step * 12);
+  input_->SetResampleStep(static_cast<size_t>(step) * 12);
   input_->SetLoop(loop);
   if (fade_in_duration > 0) {
     input_->SetAmplitude(0);
