@@ -142,7 +142,9 @@ config("release") {
     ]
   } else {
     cflags = [
-      "-Ofast",  # Full optimization and disregard strict standard compliance.
+      "-O3",  # Full optimization.
+      "-ffast-math",  # Disregard strict standard compliance for math (was -Ofast,
+                      # deprecated in recent clang).
       "-fno-math-errno",  # Do not check or set errno for invalid input to sqrt
                           # and other math functions.
     ]

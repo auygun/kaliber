@@ -7,3 +7,4 @@ build/android/app/.cxx
 build/android/app/build
 build/android/build
 out
+compile_commands.json
