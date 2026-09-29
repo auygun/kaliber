@@ -1304,14 +1304,18 @@ bool VulkanContext::PrepareBuffers() {
   // Ensure no more than kFrameLag renderings are outstanding.
   vkWaitForFences(device_, 1, &fences_[frame_index_], VK_TRUE,
                   std::numeric_limits<uint64_t>::max());
-  vkResetFences(device_, 1, &fences_[frame_index_]);
 
   DCHECK(window_.swapchain != VK_NULL_HANDLE);
+  if (window_.swapchain == VK_NULL_HANDLE)
+    return false;
+
+  // Use a finite timeout to avoid blocking the main thread indefinitely when
+  // the driver stalls (observed with NVIDIA after long idle periods).
+  constexpr uint64_t kAcquireTimeoutNs = 100'000'000;  // 100 ms
 
   do {
     // Get the index of the next available swapchain image:
-    err = vkAcquireNextImageKHR(device_, window_.swapchain,
-                                std::numeric_limits<uint64_t>::max(),
+    err = vkAcquireNextImageKHR(device_, window_.swapchain, kAcquireTimeoutNs,
                                 image_acquired_semaphores_[frame_index_],
                                 VK_NULL_HANDLE, &window_.current_buffer);
 
@@ -1320,18 +1324,32 @@ bool VulkanContext::PrepareBuffers() {
       // recreated:
       DLOG(0) << "Swapchain is out of date, recreating.";
       UpdateSwapChain(&window_);
+      if (window_.swapchain == VK_NULL_HANDLE)
+        return false;
     } else if (err == VK_SUBOPTIMAL_KHR) {
       // swapchain is not as optimal as it could be, but the platform's
       // presentation engine will still present the image correctly.
       DLOG(0) << "Swapchain is suboptimal, recreating.";
       UpdateSwapChain(&window_);
+      if (window_.swapchain == VK_NULL_HANDLE)
+        return false;
       break;
+    } else if (err == VK_TIMEOUT || err == VK_NOT_READY) {
+      // The driver stalled (observed with NVIDIA after long idle periods).
+      // Skip this frame and retry on the next one.
+      DLOG(0) << "vkAcquireNextImageKHR timed out, skipping frame.";
+      return false;
     } else if (err != VK_SUCCESS) {
       DLOG(0) << "vkAcquireNextImageKHR failed. Error: "
               << string_VkResult(err);
       return false;
     }
   } while (err != VK_SUCCESS);
+
+  // Reset the fence only after successfully acquiring an image. If acquire
+  // fails (timeout), the fence stays signaled so the next attempt doesn't
+  // deadlock.
+  vkResetFences(device_, 1, &fences_[frame_index_]);
 
   return true;
 }
