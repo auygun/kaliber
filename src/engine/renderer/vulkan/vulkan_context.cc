@@ -862,15 +862,14 @@ VkFramebuffer VulkanContext::GetFramebuffer() {
   return window_.swapchain_image_resources[window_.current_buffer].frame_buffer;
 }
 
-bool VulkanContext::CleanUpSwapChain(Window* window) {
-  if (!window->swapchain)
-    return true;
-
-  vkDeviceWaitIdle(device_);
-
-  vkDestroySwapchainKHR(device_, window->swapchain, nullptr);
-  window->swapchain = VK_NULL_HANDLE;
+// Destroys the per-image resources that depend on the swapchain (render
+// pass, image views, framebuffers, and the present command pool). The
+// caller must ensure that no in-flight GPU work uses them, and must destroy
+// the swapchain itself (vkDestroySwapchainKHR).
+void VulkanContext::DeinitSwapChainResources(Window* window) {
   vkDestroyRenderPass(device_, window->render_pass, nullptr);
+  window->render_pass = VK_NULL_HANDLE;
+
   if (!window->swapchain_image_resources.empty()) {
     for (uint32_t i = 0; i < swapchain_image_count_; i++) {
       vkDestroyImageView(device_, window->swapchain_image_resources[i].view,
@@ -882,8 +881,22 @@ bool VulkanContext::CleanUpSwapChain(Window* window) {
     window->swapchain_image_resources.clear();
   }
 
-  if (separate_present_queue_)
+  if (separate_present_queue_) {
     vkDestroyCommandPool(device_, window->present_cmd_pool, nullptr);
+    window->present_cmd_pool = VK_NULL_HANDLE;
+  }
+}
+
+bool VulkanContext::CleanUpSwapChain(Window* window) {
+  if (!window->swapchain)
+    return true;
+
+  vkDeviceWaitIdle(device_);
+
+  DeinitSwapChainResources(window);
+
+  vkDestroySwapchainKHR(device_, window->swapchain, nullptr);
+  window->swapchain = VK_NULL_HANDLE;
 
   return true;
 }
@@ -891,8 +904,26 @@ bool VulkanContext::CleanUpSwapChain(Window* window) {
 bool VulkanContext::UpdateSwapChain(Window* window) {
   VkResult err;
 
-  if (window->swapchain)
-    CleanUpSwapChain(window);
+  VkSwapchainKHR old_swapchain = window->swapchain;
+
+  if (old_swapchain) {
+    // Wait for all in-flight frames instead of vkDeviceWaitIdle(), which
+    // stalls the entire device and is very expensive during interactive
+    // resize. The fences cover the graphics queue submissions (Flush() is
+    // self-synchronizing), and the present queue wait covers the image
+    // ownership transfers.
+    for (uint32_t i = 0; i < kFrameLag; i++) {
+      vkWaitForFences(device_, 1, &fences_[i], VK_TRUE,
+                      std::numeric_limits<uint64_t>::max());
+    }
+    if (separate_present_queue_)
+      vkQueueWaitIdle(present_queue_);
+
+    // Destroy the old per-image resources. Safe because all in-flight work
+    // is done. The swapchain itself is destroyed only once the new one is
+    // successfully created, or below if the window is minimized.
+    DeinitSwapChainResources(window);
+  }
 
   // Check the surface capabilities and formats.
   VkSurfaceCapabilitiesKHR surface_capabilities{};
@@ -957,6 +988,10 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
 
   if (window->width == 0 || window->height == 0) {
     // likely window minimized, no swapchain created
+    if (old_swapchain) {
+      vkDestroySwapchainKHR(device_, old_swapchain, nullptr);
+      window->swapchain = VK_NULL_HANDLE;
+    }
     return true;
   }
 
@@ -1061,14 +1096,25 @@ bool VulkanContext::UpdateSwapChain(Window* window) {
   swapchain_create_info.compositeAlpha = composite_alpha;
   swapchain_create_info.presentMode = swapchain_present_mode;
   swapchain_create_info.clipped = true;
-  swapchain_create_info.oldSwapchain = VK_NULL_HANDLE;
+  swapchain_create_info.oldSwapchain = old_swapchain;
 
   err = vkCreateSwapchainKHR(device_, &swapchain_create_info, nullptr,
                              &window->swapchain);
   if (err) {
     DLOG(0) << "vkCreateSwapchainKHR failed. Error: " << string_VkResult(err);
+    // Destroy the old swapchain so the state is consistent (no swapchain,
+    // no dependent resources). Frames are skipped until the swapchain is
+    // recreated (e.g. on the next resize).
+    if (old_swapchain) {
+      vkDestroySwapchainKHR(device_, old_swapchain, nullptr);
+      window->swapchain = VK_NULL_HANDLE;
+    }
     return false;
   }
+
+  // Destroy the retired old swapchain now that the new one is created.
+  if (old_swapchain)
+    vkDestroySwapchainKHR(device_, old_swapchain, nullptr);
 
   uint32_t image_count;
   err = vkGetSwapchainImagesKHR(device_, window->swapchain, &image_count,

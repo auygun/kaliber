@@ -169,6 +169,8 @@ class VulkanContext {
 
   bool UpdateSwapChain(Window* window);
 
+  void DeinitSwapChainResources(Window* window);
+
   bool CreateSemaphores();
 
   // Instance extensions the windowing system needs. Includes VK_KHR_surface
