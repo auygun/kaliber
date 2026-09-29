@@ -1,7 +1,7 @@
 #ifndef BASE_HASH_H
 #define BASE_HASH_H
 
-#include <stddef.h>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>

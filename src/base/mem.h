@@ -1,15 +1,15 @@
 #ifndef BASE_MEM_H
 #define BASE_MEM_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <span>
 
 #if defined(OS_WIN)
 #include <malloc.h>
 #else
-#include <stdlib.h>
+#include <cstdlib>
 #endif
 
 #include "base/log.h"
