@@ -1,11 +1,13 @@
 #ifndef BASE_INTERPOLATION_H
 #define BASE_INTERPOLATION_H
 
+#include <cmath>
+
 namespace base {
 
 // Round a float to int.
 inline int Round(float f) {
-  return int(f + 0.5f);
+  return static_cast<int>(std::lroundf(f));
 }
 
 // Linearly interpolate between a and b, by fraction t.
