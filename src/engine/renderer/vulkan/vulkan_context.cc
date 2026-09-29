@@ -719,7 +719,8 @@ bool VulkanContext::InitializeQueues(VkSurfaceKHR surface) {
       (graphics_queue_family_index_ != present_queue_family_index_);
   LOG(0) << "  separate_present_queue: " << separate_present_queue_;
 
-  CreateDevice();
+  if (!CreateDevice())
+    return false;
 
   vkGetDeviceQueue(device_, graphics_queue_family_index_, 0, &graphics_queue_);
 
