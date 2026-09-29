@@ -1,6 +1,7 @@
 #include "engine/world.h"
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
 #include <span>
 #include <tuple>
@@ -29,9 +30,9 @@ const char vertex_description[] = "p3f;n3f;a4f;t2f";
 
   for (size_t r = 0; r < rings; ++r) {
     for (size_t s = 0; s < sectors; ++s) {
-      float y = sin(-PIHALFf + PIf * r * R);
-      float x = cos(2 * PIf * s * S) * sin(PIf * r * R);
-      float z = sin(2 * PIf * s * S) * sin(PIf * r * R);
+      float y = std::sin(-PIHALFf + PIf * r * R);
+      float x = std::cos(2 * PIf * s * S) * std::sin(PIf * r * R);
+      float z = std::sin(2 * PIf * s * S) * std::sin(PIf * r * R);
       float u = s * S;
       float v = r * R;
 
@@ -497,8 +498,7 @@ void World::BuildBVHTree(std::vector<BVHBuildItem> items) {
   // Create stack for depth-first traversal and start the process with the root
   // node using all items.
   std::deque<std::tuple<uint32_t, std::span<BVHBuildItem>>> stack;
-  stack.push_back(
-      std::make_tuple(last_node_index, std::span{items.data(), items.size()}));
+  stack.emplace_back(last_node_index, std::span{items.data(), items.size()});
 
   while (!stack.empty()) {
     auto [node_index, node_items] = std::move(stack.back());
@@ -554,8 +554,8 @@ void World::BuildBVHTree(std::vector<BVHBuildItem> items) {
     bvh_tree_[node_index].right = ++last_node_index;
 
     // Push the children onto the stack.
-    stack.push_back({bvh_tree_[node_index].left, std::move(right_branch)});
-    stack.push_back({bvh_tree_[node_index].right, std::move(left_branch)});
+    stack.emplace_back(bvh_tree_[node_index].left, std::move(right_branch));
+    stack.emplace_back(bvh_tree_[node_index].right, std::move(left_branch));
   }
 }
 

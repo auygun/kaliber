@@ -1227,7 +1227,7 @@ class Matrix4 {
                                  T near_plane,
                                  T far_plane) {
     float fov_radians = fov * (float)(M_PI / 180.0);
-    float f = 1.0f / tan(fov_radians / 2.0f);
+    float f = 1.0f / std::tan(fov_radians / 2.0f);
     _M_SET_ROW(0, f / (width / height), 0, 0, 0);
     _M_SET_ROW(1, 0, -f, 0, 0);
     _M_SET_ROW(2, 0, 0, far_plane / (far_plane - near_plane), 1);
@@ -1240,7 +1240,7 @@ class Matrix4 {
                                 T near_plane,
                                 T far_plane) {
     float fov_radians = fov * (float)(M_PI / 180.0);
-    float f = 1.0f / tan(fov_radians / 2.0f);
+    float f = 1.0f / std::tan(fov_radians / 2.0f);
     _M_SET_ROW(0, f / (width / height), 0, 0, 0);
     _M_SET_ROW(1, 0, -f, 0, 0);
     _M_SET_ROW(2, 0, 0, near_plane / (near_plane - far_plane), 1);
@@ -1252,7 +1252,7 @@ class Matrix4 {
                                         T height,
                                         T near_plane) {
     float fov_radians = fov * (float)(M_PI / 180.0);
-    float f = 1.0f / tan(fov_radians / 2.0f);
+    float f = 1.0f / std::tan(fov_radians / 2.0f);
     _M_SET_ROW(0, f / (width / height), 0, 0, 0);
     _M_SET_ROW(1, 0, -f, 0, 0);
     _M_SET_ROW(2, 0, 0, 0, 1);

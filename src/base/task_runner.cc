@@ -41,7 +41,7 @@ void TaskRunner::PostTask(Location from, Closure task, bool front) {
   DCHECK(task) << LOCATION(from);
 
   task_count_.fetch_add(1, std::memory_order_relaxed);
-  std::lock_guard<std::mutex> scoped_lock(lock_);
+  std::scoped_lock scoped_lock(lock_);
   if (front)
     queue_.emplace_front(from, std::move(task));
   else
@@ -62,7 +62,7 @@ void TaskRunner::PostTaskAndReply(Location from,
 }
 
 void TaskRunner::CancelTasks() {
-  std::lock_guard<std::mutex> scoped_lock(lock_);
+  std::scoped_lock scoped_lock(lock_);
   task_count_.fetch_sub(queue_.size(), std::memory_order_release);
   queue_.clear();
 }
@@ -77,7 +77,7 @@ void TaskRunner::RunTasks<Consumer::Multi>() {
   for (;;) {
     Task task;
     {
-      std::lock_guard<std::mutex> scoped_lock(lock_);
+      std::scoped_lock scoped_lock(lock_);
       if (queue_.empty())
         return;
       task.swap(queue_.front());
@@ -99,7 +99,7 @@ template <>
 void TaskRunner::RunTasks<Consumer::Single>() {
   std::deque<Task> queue;
   {
-    std::lock_guard<std::mutex> scoped_lock(lock_);
+    std::scoped_lock scoped_lock(lock_);
     if (queue_.empty())
       return;
     queue.swap(queue_);

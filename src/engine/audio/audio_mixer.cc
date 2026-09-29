@@ -41,7 +41,7 @@ AudioMixer::~AudioMixer() {
 void AudioMixer::AddInput(std::shared_ptr<MixerInput> mixer_input) {
   DCHECK(audio_enabled_);
 
-  std::lock_guard<std::mutex> scoped_lock(lock_);
+  std::scoped_lock scoped_lock(lock_);
   inputs_[0].push_back(mixer_input);
 }
 

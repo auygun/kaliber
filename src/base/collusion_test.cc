@@ -10,12 +10,12 @@ bool Intersection(const Vector2f& center,
                   const Vector2f& size,
                   const Vector2f& point) {
   float dx = point.x - center.x;
-  float px = size.x / 2 - fabs(dx);
+  float px = size.x / 2 - std::fabs(dx);
   if (px <= 0)
     return false;
 
   float dy = point.y - center.y;
-  float py = size.y / 2 - fabs(dy);
+  float py = size.y / 2 - std::fabs(dy);
   return py > 0;
 }
 

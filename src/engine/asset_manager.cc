@@ -1,5 +1,7 @@
 #include "engine/asset_manager.h"
 
+#include <cmath>
+
 #include "base/log.h"
 #include "base/vecmath.h"
 #include "engine/engine.h"
@@ -47,9 +49,9 @@ uint32_t AssetManager::CreateSphere(
 
   for (size_t r = 0; r < rings; ++r) {
     for (size_t s = 0; s < sectors; ++s) {
-      float y = sin(-base::PIHALFf + base::PIf * r * R);
-      float x = cos(2 * base::PIf * s * S) * sin(base::PIf * r * R);
-      float z = sin(2 * base::PIf * s * S) * sin(base::PIf * r * R);
+      float y = std::sin(-base::PIHALFf + base::PIf * r * R);
+      float x = std::cos(2 * base::PIf * s * S) * std::sin(base::PIf * r * R);
+      float z = std::sin(2 * base::PIf * s * S) * std::sin(base::PIf * r * R);
       float u = s * S;
       float v = r * R;
 

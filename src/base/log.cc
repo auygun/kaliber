@@ -32,7 +32,7 @@ LogMessage::LogMessage(const char* file, int line, int verbosity_level)
     : file_(file), line_(line), verbosity_level_(verbosity_level) {}
 
 LogMessage::~LogMessage() {
-  stream_ << std::endl;
+  stream_ << "\n";
   std::string message(stream_.str());
   std::string filename(file_);
   size_t last_slash_pos = filename.find_last_of("\\/");
