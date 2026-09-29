@@ -328,7 +328,7 @@ void RendererVulkan::ResetScissor() {
   vkCmdSetScissor(frames_[current_frame_].draw_command_buffer, 0, 1, &scissor);
 }
 
-uint64_t RendererVulkan::CreateGeometry(std::unique_ptr<Mesh> mesh) {
+ResourceId RendererVulkan::CreateGeometry(std::unique_ptr<Mesh> mesh) {
   auto id =
       CreateGeometry(mesh->vertex_description(), mesh->index_description());
   if (id != kInvalidId)
@@ -339,7 +339,7 @@ uint64_t RendererVulkan::CreateGeometry(std::unique_ptr<Mesh> mesh) {
   return id;
 }
 
-uint64_t RendererVulkan::CreateGeometry(VertexDescription vertex_description,
+ResourceId RendererVulkan::CreateGeometry(VertexDescription vertex_description,
                                         DataType index_description) {
   auto& geometry = geometries_[++last_resource_id_] = {};
   geometry.vertex_size = GetVertexSize(vertex_description);
@@ -348,7 +348,7 @@ uint64_t RendererVulkan::CreateGeometry(VertexDescription vertex_description,
   return last_resource_id_;
 }
 
-void RendererVulkan::UpdateGeometry(uint64_t resource_id,
+void RendererVulkan::UpdateGeometry(ResourceId resource_id,
                                     size_t num_vertices,
                                     const void* vertices,
                                     size_t num_indices,
@@ -400,7 +400,7 @@ void RendererVulkan::UpdateGeometry(uint64_t resource_id,
   semaphore_.release();
 }
 
-void RendererVulkan::DestroyGeometry(uint64_t resource_id) {
+void RendererVulkan::DestroyGeometry(ResourceId resource_id) {
   auto it = geometries_.find(resource_id);
   if (it == geometries_.end())
     return;
@@ -409,7 +409,7 @@ void RendererVulkan::DestroyGeometry(uint64_t resource_id) {
   geometries_.erase(it);
 }
 
-void RendererVulkan::ActivateGeometry(uint64_t resource_id) {
+void RendererVulkan::ActivateGeometry(ResourceId resource_id) {
   auto it = geometries_.find(resource_id);
   if (it == geometries_.end())
     return;
@@ -443,12 +443,12 @@ void RendererVulkan::Draw(size_t num_indices,
   }
 }
 
-uint64_t RendererVulkan::CreateTexture() {
+ResourceId RendererVulkan::CreateTexture() {
   textures_.insert({++last_resource_id_, {}});
   return last_resource_id_;
 }
 
-void RendererVulkan::UpdateTexture(uint64_t resource_id,
+void RendererVulkan::UpdateTexture(ResourceId resource_id,
                                    std::unique_ptr<Image> image) {
   UpdateTexture(resource_id, image->GetWidth(), image->GetHeight(), 1, 0,
                 image->GetFormat(), image->GetSize(), image->GetBuffer());
@@ -456,7 +456,7 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
   semaphore_.release();
 }
 
-void RendererVulkan::UpdateTexture(uint64_t resource_id,
+void RendererVulkan::UpdateTexture(ResourceId resource_id,
                                    std::vector<std::unique_ptr<Image>> images) {
   int mip_level = 0;
   for (auto& image : images) {
@@ -468,7 +468,7 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
   }
 }
 
-void RendererVulkan::UpdateTexture(uint64_t resource_id,
+void RendererVulkan::UpdateTexture(ResourceId resource_id,
                                    int width,
                                    int height,
                                    int num_mip_levels,
@@ -526,7 +526,7 @@ void RendererVulkan::UpdateTexture(uint64_t resource_id,
   semaphore_.release();
 }
 
-void RendererVulkan::UpdateTextureSubRegion(uint64_t resource_id,
+void RendererVulkan::UpdateTextureSubRegion(ResourceId resource_id,
                                             int x_offset,
                                             int y_offset,
                                             int width,
@@ -565,7 +565,7 @@ void RendererVulkan::UpdateTextureSubRegion(uint64_t resource_id,
   semaphore_.release();
 }
 
-void RendererVulkan::DestroyTexture(uint64_t resource_id) {
+void RendererVulkan::DestroyTexture(ResourceId resource_id) {
   auto it = textures_.find(resource_id);
   if (it == textures_.end())
     return;
@@ -574,7 +574,7 @@ void RendererVulkan::DestroyTexture(uint64_t resource_id) {
   textures_.erase(it);
 }
 
-uint64_t RendererVulkan::CreateShader(
+ResourceId RendererVulkan::CreateShader(
     std::unique_ptr<ShaderSource> source,
     const VertexDescription& vertex_description,
     Primitive primitive,
@@ -835,7 +835,7 @@ VkPipeline RendererVulkan::GetPipelineForCurrentRenderPass(
   return variant;
 }
 
-void RendererVulkan::DestroyShader(uint64_t resource_id) {
+void RendererVulkan::DestroyShader(ResourceId resource_id) {
   auto it = shaders_.find(resource_id);
   if (it == shaders_.end())
     return;
@@ -849,7 +849,7 @@ void RendererVulkan::DestroyShader(uint64_t resource_id) {
   shaders_.erase(it);
 }
 
-void RendererVulkan::ActivateShader(uint64_t resource_id) {
+void RendererVulkan::ActivateShader(ResourceId resource_id) {
   auto it = shaders_.find(resource_id);
   if (it == shaders_.end())
     return;
@@ -873,7 +873,7 @@ void RendererVulkan::UpdatePushConstants(size_t size, const void* data) {
   }
 }
 
-uint64_t RendererVulkan::CreateBuffer(uint64_t shader_id,
+ResourceId RendererVulkan::CreateBuffer(ResourceId shader_id,
                                       size_t set,
                                       size_t binding,
                                       uint32_t buffer_size) {
@@ -918,7 +918,7 @@ uint64_t RendererVulkan::CreateBuffer(uint64_t shader_id,
   return last_resource_id_;
 }
 
-void RendererVulkan::UpdateBuffer(uint64_t resource_id,
+void RendererVulkan::UpdateBuffer(ResourceId resource_id,
                                   const void* data,
                                   size_t size) {
   auto it = buffers_.find(resource_id);
@@ -954,7 +954,7 @@ void RendererVulkan::UpdateBuffer(uint64_t resource_id,
   semaphore_.release();
 }
 
-void RendererVulkan::DestroyBuffer(uint64_t resource_id) {
+void RendererVulkan::DestroyBuffer(ResourceId resource_id) {
   auto it = buffers_.find(resource_id);
   if (it == buffers_.end())
     return;
@@ -963,11 +963,11 @@ void RendererVulkan::DestroyBuffer(uint64_t resource_id) {
   buffers_.erase(it);
 }
 
-uint64_t RendererVulkan::CreateDescriptorSet(
-    uint64_t shader_id,
+ResourceId RendererVulkan::CreateDescriptorSet(
+    ResourceId shader_id,
     size_t set,
-    const std::vector<std::vector<uint64_t>>& textures,
-    const std::vector<uint64_t>& buffers) {
+    const std::vector<std::vector<ResourceId>>& textures,
+    const std::vector<ResourceId>& buffers) {
   auto shader_it = shaders_.find(shader_id);
   if (shader_it == shaders_.end())
     return kInvalidId;
@@ -1136,7 +1136,7 @@ uint64_t RendererVulkan::CreateDescriptorSet(
   return last_resource_id_;
 }
 
-void RendererVulkan::ActivateDescriptorSet(uint64_t resource_id) {
+void RendererVulkan::ActivateDescriptorSet(ResourceId resource_id) {
   auto descriptor_set_it = descriptor_sets_.find(resource_id);
   if (descriptor_set_it == descriptor_sets_.end())
     return;
@@ -1154,7 +1154,7 @@ void RendererVulkan::ActivateDescriptorSet(uint64_t resource_id) {
       &descriptor_set_it->second.descriptor_set, 0, nullptr);
 }
 
-void RendererVulkan::DestroyDescriptorSet(uint64_t resource_id) {
+void RendererVulkan::DestroyDescriptorSet(ResourceId resource_id) {
   auto descriptor_set_it = descriptor_sets_.find(resource_id);
   if (descriptor_set_it == descriptor_sets_.end())
     return;
@@ -1195,11 +1195,11 @@ void RendererVulkan::Present() {
   SwapBuffers();
 }
 
-uint64_t RendererVulkan::CreateRenderTarget(ImageFormat format,
+ResourceId RendererVulkan::CreateRenderTarget(ImageFormat format,
                                             int width,
                                             int height,
                                             bool depth) {
-  uint64_t color_texture_id = ++last_resource_id_;
+  ResourceId color_texture_id = ++last_resource_id_;
   auto& color_texture = textures_[color_texture_id] = {};
 
   auto attachments = ALLOCA_SPAN(VkImageView, (depth ? 2 : 1));
@@ -1213,7 +1213,7 @@ uint64_t RendererVulkan::CreateRenderTarget(ImageFormat format,
 
   attachments[0] = color_texture.view;
 
-  uint64_t depth_texture_id = 0;
+  ResourceId depth_texture_id = 0;
   VkFormat depth_format = VK_FORMAT_UNDEFINED;
   if (depth) {
     depth_texture_id = ++last_resource_id_;
@@ -1260,7 +1260,7 @@ uint64_t RendererVulkan::CreateRenderTarget(ImageFormat format,
   return last_resource_id_;
 }
 
-void RendererVulkan::ActivateRenderTarget(uint64_t render_target_id) {
+void RendererVulkan::ActivateRenderTarget(ResourceId render_target_id) {
   auto it = render_targets_.find(render_target_id);
   if (it == render_targets_.end()) {
     DLOG(0) << "Render target not found: " << render_target_id;
@@ -1367,7 +1367,7 @@ void RendererVulkan::ActivateRenderTarget(uint64_t render_target_id) {
   active_render_target_id_ = render_target_id;
 }
 
-void RendererVulkan::DestroyRenderTarget(uint64_t render_target_id) {
+void RendererVulkan::DestroyRenderTarget(ResourceId render_target_id) {
   auto it = render_targets_.find(render_target_id);
   if (it == render_targets_.end()) {
     DLOG(0) << "Render target not found: " << render_target_id;
@@ -1422,8 +1422,8 @@ void RendererVulkan::ActivateScreenRenderTarget() {
   DrawListBegin();
 }
 
-uint64_t RendererVulkan::GetRenderTargetColorTexture(
-    uint64_t render_target_id) {
+ResourceId RendererVulkan::GetRenderTargetColorTexture(
+    ResourceId render_target_id) {
   auto it = render_targets_.find(render_target_id);
   if (it == render_targets_.end()) {
     DLOG(0) << "Render target not found: " << render_target_id;
@@ -2803,7 +2803,7 @@ void RendererVulkan::SetPreferredGpu(const std::string& name) {
 }
 
 void RendererVulkan::DestroyAllResources() {
-  std::vector<uint64_t> resource_ids;
+  std::vector<ResourceId> resource_ids;
   resource_ids.reserve(std::max({geometries_.size(), shaders_.size(),
                                  descriptor_sets_.size(),
                                  render_targets_.size(), textures_.size(),

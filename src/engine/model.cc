@@ -145,7 +145,7 @@ Model::~Model() {
 }
 
 bool Model::LoadObj(Renderer* renderer,
-                    uint64_t shader_id,
+                    ResourceId shader_id,
                     const std::string& file_name,
                     const std::string& mtl_file_name,
                     const std::vector<std::string>& texture_file_names) {
@@ -272,7 +272,7 @@ bool Model::LoadObj(Renderer* renderer,
 }
 
 bool Model::LoadGLTF(Renderer* renderer,
-                     uint64_t shader_id,
+                     ResourceId shader_id,
                      const std::string& file_name) {
   LOG(0) << "Loading GLTF " << file_name;
   renderer_ = renderer;
@@ -554,7 +554,7 @@ bool Model::LoadGLTF(Renderer* renderer,
 }
 
 void Model::CreateMesh(Renderer* renderer,
-                       uint64_t shader_id,
+                       ResourceId shader_id,
                        std::vector<Vertex> vertices,
                        std::vector<uint32_t> indices,
                        const std::vector<std::string>& texture_file_names) {
@@ -779,7 +779,7 @@ void Model::GenerateTangents(const std::vector<uint32_t>& indices,
   }
 }
 
-void Model::CreateRenderResources(uint64_t shader_id,
+void Model::CreateRenderResources(ResourceId shader_id,
                                   std::unique_ptr<Mesh> mesh,
                                   std::vector<std::unique_ptr<Image>>& images) {
   // Create the geometry.
@@ -798,7 +798,7 @@ void Model::CreateRenderResources(uint64_t shader_id,
                           sizeof(MaterialData) * materials_.size());
 
   // Create textures and mipmaps.
-  std::vector<std::vector<uint64_t>> textures(4);
+  std::vector<std::vector<ResourceId>> textures(4);
 
   // Input images: 0:Albedo, 1:Normal, 2:Metal/Rough, 3:Occlusion
 

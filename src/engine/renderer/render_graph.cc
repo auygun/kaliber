@@ -158,14 +158,14 @@ void RenderGraph::Execute(Renderer* renderer) {
   }
 }
 
-uint64_t RenderGraph::GetLayerTexture(const std::string& name) {
+ResourceId RenderGraph::GetLayerTexture(const std::string& name) {
   auto it = layers_.find(name);
   if (it != layers_.end())
     return it->second.color_texture_id;
   return 0;
 }
 
-uint64_t RenderGraph::GetLayerRenderTarget(const std::string& name) {
+ResourceId RenderGraph::GetLayerRenderTarget(const std::string& name) {
   auto it = layers_.find(name);
   if (it != layers_.end())
     return it->second.render_target_id;

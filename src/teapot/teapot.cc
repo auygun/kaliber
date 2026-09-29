@@ -20,7 +20,7 @@ class Teapot final : public eng::Game {
 
     // Load Assets via AssetManager
     auto& asset_manager = Engine::Get().GetAssetManager();
-    uint64_t shader = world.GetShaderId();
+    ResourceId shader = world.GetShaderId();
 
     // 0: Cube
     uint32_t cube_id = asset_manager.LoadGLTF("teapot/Cube.gltf", shader);

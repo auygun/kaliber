@@ -84,10 +84,10 @@ class RenderGraph {
   void Execute(Renderer* renderer);
 
   // Returns the texture ID for a layer (for sampling in shaders).
-  uint64_t GetLayerTexture(const std::string& name);
+  ResourceId GetLayerTexture(const std::string& name);
 
   // Returns the render target ID for a layer.
-  uint64_t GetLayerRenderTarget(const std::string& name);
+  ResourceId GetLayerRenderTarget(const std::string& name);
 
  private:
   struct PassNode {
@@ -99,9 +99,9 @@ class RenderGraph {
 
   struct RenderLayer {
     std::string name;
-    uint64_t render_target_id = 0;
-    uint64_t color_texture_id = 0;
-    uint64_t descriptor_set_id = 0;
+    ResourceId render_target_id = 0;
+    ResourceId color_texture_id = 0;
+    ResourceId descriptor_set_id = 0;
     int width = 0;
     int height = 0;
     bool depth = false;
@@ -114,8 +114,8 @@ class RenderGraph {
   std::vector<std::string> layer_order_;
 
   // Resources for the final composition pass.
-  uint64_t composite_shader_id_ = 0;
-  uint64_t full_screen_quad_id_ = 0;
+  ResourceId composite_shader_id_ = 0;
+  ResourceId full_screen_quad_id_ = 0;
   bool initialized_ = false;
 
   RenderLayer& GetOrCreateLayer(Renderer* renderer,

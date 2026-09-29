@@ -13,7 +13,7 @@ AssetManager::AssetManager() = default;
 AssetManager::~AssetManager() = default;
 
 uint32_t AssetManager::LoadGLTF(const std::string& file_name,
-                                uint64_t shader_id) {
+                                ResourceId shader_id) {
   auto model = std::make_unique<Model>();
   if (model->LoadGLTF(Engine::Get().GetRenderer(), shader_id, file_name)) {
     models_.push_back(std::move(model));
@@ -24,7 +24,7 @@ uint32_t AssetManager::LoadGLTF(const std::string& file_name,
 
 uint32_t AssetManager::LoadObj(
     const std::string& file_name,
-    uint64_t shader_id,
+    ResourceId shader_id,
     const std::string& mtl_file_name,
     const std::vector<std::string>& texture_file_names) {
   auto model = std::make_unique<Model>();
@@ -37,7 +37,7 @@ uint32_t AssetManager::LoadObj(
 }
 
 uint32_t AssetManager::CreateSphere(
-    uint64_t shader_id,
+    ResourceId shader_id,
     size_t rings,
     size_t sectors,
     const std::vector<std::string>& texture_file_names) {

@@ -101,8 +101,8 @@ class DebugLayer {
 
   Renderer* renderer_ = nullptr;
   VertexDescription vertex_description_;
-  uint64_t geometry_;
-  uint64_t shader_;
+  ResourceId geometry_;
+  ResourceId shader_;
 };
 
 }  // namespace eng

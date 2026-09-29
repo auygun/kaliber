@@ -21,7 +21,7 @@ enum class RendererType { kUnknown, kVulkan };
 
 class Renderer {
  public:
-  static const unsigned kInvalidId = 0;
+  static constexpr ResourceId kInvalidId = 0;
   static const unsigned kMaxTextureUnits = 8;
 
   static std::unique_ptr<Renderer> Create(RendererType type,
@@ -47,28 +47,28 @@ class Renderer {
   virtual void SetScissor(int x, int y, int width, int height) = 0;
   virtual void ResetScissor() = 0;
 
-  virtual uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) = 0;
-  virtual uint64_t CreateGeometry(
+  virtual ResourceId CreateGeometry(std::unique_ptr<Mesh> mesh) = 0;
+  virtual ResourceId CreateGeometry(
       VertexDescription vertex_description,
       DataType index_description = kDataType_Invalid) = 0;
-  virtual void UpdateGeometry(uint64_t resource_id,
+  virtual void UpdateGeometry(ResourceId resource_id,
                               size_t num_vertices,
                               const void* vertices,
                               size_t num_indices,
                               const void* indices) = 0;
-  virtual void DestroyGeometry(uint64_t resource_id) = 0;
-  virtual void ActivateGeometry(uint64_t resource_id) = 0;
+  virtual void DestroyGeometry(ResourceId resource_id) = 0;
+  virtual void ActivateGeometry(ResourceId resource_id) = 0;
   virtual void Draw(size_t num_indices = 0,
                     size_t start_offset = 0,
                     size_t instance_count = 1,
                     size_t first_instance = 0) = 0;
 
-  virtual uint64_t CreateTexture() = 0;
-  virtual void UpdateTexture(uint64_t resource_id,
+  virtual ResourceId CreateTexture() = 0;
+  virtual void UpdateTexture(ResourceId resource_id,
                              std::unique_ptr<Image> image) = 0;
-  virtual void UpdateTexture(uint64_t resource_id,
+  virtual void UpdateTexture(ResourceId resource_id,
                              std::vector<std::unique_ptr<Image>> images) = 0;
-  virtual void UpdateTexture(uint64_t resource_id,
+  virtual void UpdateTexture(ResourceId resource_id,
                              int width,
                              int height,
                              int num_mip_levels,
@@ -80,7 +80,7 @@ class Renderer {
   // |src_pitch| is the stride in bytes of one row (or block row, for
   // compressed formats) of |image_data|, which points at the first pixel of
   // the region rather than the start of the full image.
-  virtual void UpdateTextureSubRegion(uint64_t resource_id,
+  virtual void UpdateTextureSubRegion(ResourceId resource_id,
                                       int x_offset,
                                       int y_offset,
                                       int width,
@@ -88,36 +88,36 @@ class Renderer {
                                       ImageFormat format,
                                       int src_pitch,
                                       uint8_t* image_data) = 0;
-  virtual void DestroyTexture(uint64_t resource_id) = 0;
+  virtual void DestroyTexture(ResourceId resource_id) = 0;
 
-  virtual uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
+  virtual ResourceId CreateShader(std::unique_ptr<ShaderSource> source,
                                 const VertexDescription& vertex_description,
                                 Primitive primitive,
                                 bool enable_depth_test,
                                 bool wireframe,
                                 CullMode cull_mode,
                                 bool premultiplied_alpha = false) = 0;
-  virtual void DestroyShader(uint64_t resource_id) = 0;
-  virtual void ActivateShader(uint64_t resource_id) = 0;
+  virtual void DestroyShader(ResourceId resource_id) = 0;
+  virtual void ActivateShader(ResourceId resource_id) = 0;
 
   virtual void UpdatePushConstants(size_t size, const void* data) = 0;
 
-  virtual uint64_t CreateBuffer(uint64_t shader_id,
+  virtual ResourceId CreateBuffer(ResourceId shader_id,
                                 size_t set,
                                 size_t binding,
                                 uint32_t buffer_size) = 0;
-  virtual void UpdateBuffer(uint64_t resource_id,
+  virtual void UpdateBuffer(ResourceId resource_id,
                             const void* data,
                             size_t size) = 0;
-  virtual void DestroyBuffer(uint64_t resource_id) = 0;
+  virtual void DestroyBuffer(ResourceId resource_id) = 0;
 
-  virtual uint64_t CreateDescriptorSet(
-      uint64_t shader_id,
+  virtual ResourceId CreateDescriptorSet(
+      ResourceId shader_id,
       size_t set,
-      const std::vector<std::vector<uint64_t>>& textures,
-      const std::vector<uint64_t>& buffers) = 0;
-  virtual void ActivateDescriptorSet(uint64_t resource_id) = 0;
-  virtual void DestroyDescriptorSet(uint64_t resource_id) = 0;
+      const std::vector<std::vector<ResourceId>>& textures,
+      const std::vector<ResourceId>& buffers) = 0;
+  virtual void ActivateDescriptorSet(ResourceId resource_id) = 0;
+  virtual void DestroyDescriptorSet(ResourceId resource_id) = 0;
 
   // Returns false if the frame could not be prepared (e.g. the window is
   // minimized or the driver stalled). Callers must skip rendering in that
@@ -125,14 +125,14 @@ class Renderer {
   virtual bool PrepareForDrawing() = 0;
   virtual void Present() = 0;
 
-  virtual uint64_t CreateRenderTarget(ImageFormat format,
+  virtual ResourceId CreateRenderTarget(ImageFormat format,
                                       int width,
                                       int height,
                                       bool depth) = 0;
-  virtual void ActivateRenderTarget(uint64_t render_target_id) = 0;
-  virtual void DestroyRenderTarget(uint64_t render_target_id) = 0;
+  virtual void ActivateRenderTarget(ResourceId render_target_id) = 0;
+  virtual void DestroyRenderTarget(ResourceId render_target_id) = 0;
   virtual void ActivateScreenRenderTarget() = 0;
-  virtual uint64_t GetRenderTargetColorTexture(uint64_t render_target_id) = 0;
+  virtual ResourceId GetRenderTargetColorTexture(ResourceId render_target_id) = 0;
 
   bool SupportsETC1() const { return texture_compression_.etc1; }
   bool SupportsDXT1() const {

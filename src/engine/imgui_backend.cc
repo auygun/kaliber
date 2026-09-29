@@ -447,20 +447,20 @@ void ImguiBackend::MergeFallbackFont(const std::string& path) {
 
 // Creates a texture plus the descriptor set that binds it, and returns the
 // descriptor set id. That id is what ImGui hands back to Draw() as the TexID.
-uint64_t ImguiBackend::CreateTextureAndDescriptorSet(int width,
+ResourceId ImguiBackend::CreateTextureAndDescriptorSet(int width,
                                                      int height,
                                                      const uint8_t* pixels) {
-  uint64_t texture = renderer_->CreateTexture();
+  ResourceId texture = renderer_->CreateTexture();
   renderer_->UpdateTexture(texture, width, height, 1, 0, ImageFormat::kRGBA32,
                            (size_t)width * height * 4,
                            const_cast<uint8_t*>(pixels));
-  uint64_t dset = renderer_->CreateDescriptorSet(shader_, kTextureDescriptorSet,
+  ResourceId dset = renderer_->CreateDescriptorSet(shader_, kTextureDescriptorSet,
                                                  {{texture}}, {});
   dset_to_texture_[dset] = texture;
   return dset;
 }
 
-void ImguiBackend::DestroyTextureAndDescriptorSet(uint64_t dset) {
+void ImguiBackend::DestroyTextureAndDescriptorSet(ResourceId dset) {
   if (dset == Renderer::kInvalidId)
     return;
   auto it = dset_to_texture_.find(dset);
@@ -474,7 +474,7 @@ void ImguiBackend::DestroyTextureAndDescriptorSet(uint64_t dset) {
 void ImguiBackend::Shutdown() {
   if (renderer_) {
     for (ImTextureData* tex : ImGui::GetPlatformIO().Textures)
-      DestroyTextureAndDescriptorSet((uint64_t)(intptr_t)tex->TexID);
+      DestroyTextureAndDescriptorSet((ResourceId)(intptr_t)tex->TexID);
     dset_to_texture_.clear();
 
     for (auto id : geometries_)
@@ -680,7 +680,7 @@ void ImguiBackend::UpdateTexture(ImTextureData* tex) {
       break;
     }
     case ImTextureStatus_WantUpdates: {
-      auto dset = (uint64_t)(intptr_t)tex->TexID;
+      auto dset = (ResourceId)(intptr_t)tex->TexID;
       auto it = dset_to_texture_.find(dset);
       if (it != dset_to_texture_.end()) {
         auto& r = tex->UpdateRect;
@@ -693,7 +693,7 @@ void ImguiBackend::UpdateTexture(ImTextureData* tex) {
     }
     case ImTextureStatus_WantDestroy: {
       if (tex->UnusedFrames > 0) {
-        DestroyTextureAndDescriptorSet((uint64_t)(intptr_t)tex->TexID);
+        DestroyTextureAndDescriptorSet((ResourceId)(intptr_t)tex->TexID);
         tex->SetTexID(ImTextureID_Invalid);
         tex->SetStatus(ImTextureStatus_Destroyed);
       }
@@ -758,7 +758,7 @@ void ImguiBackend::Draw() {
       if (clip_max.x <= clip_min.x || clip_max.y <= clip_min.y)
         continue;
 
-      renderer_->ActivateDescriptorSet((uint64_t)(intptr_t)pcmd->GetTexID());
+      renderer_->ActivateDescriptorSet((ResourceId)(intptr_t)pcmd->GetTexID());
       renderer_->SetScissor((int)clip_min.x, (int)clip_min.y,
                             (int)(clip_max.x - clip_min.x),
                             (int)(clip_max.y - clip_min.y));

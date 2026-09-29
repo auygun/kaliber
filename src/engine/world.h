@@ -42,7 +42,7 @@ class World {
   // new parent.
   void SetParent(Entity entity, Entity new_parent);
 
-  uint64_t GetShaderId() const { return shader_id_; }
+  ResourceId GetShaderId() const { return shader_id_; }
 
   Registry& GetRegistry() { return registry_; }
 
@@ -109,7 +109,7 @@ class World {
   };
 
   eng::VertexDescription vertex_description_;
-  uint64_t shader_id_;
+  ResourceId shader_id_;
 
   base::Frustumf frustum_;
 
@@ -143,10 +143,10 @@ class World {
   LightData lights_[4];
   std::vector<InstanceData> instances_;  // TODO: remove
 
-  uint64_t scene_data_ubo_ = 0;
-  uint64_t lights_ubo_ = 0;
-  uint64_t instances_ubo_ = 0;
-  uint64_t scene_dset_ = 0;
+  ResourceId scene_data_ubo_ = 0;
+  ResourceId lights_ubo_ = 0;
+  ResourceId instances_ubo_ = 0;
+  ResourceId scene_dset_ = 0;
 
   Renderer* renderer_ = nullptr;
 

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "base/vecmath.h"
+#include "engine/renderer/renderer_types.h"
 
 namespace eng {
 
@@ -27,17 +28,17 @@ class Model {
   ~Model();
 
   bool LoadObj(Renderer* renderer,
-               uint64_t shader_id,
+               ResourceId shader_id,
                const std::string& file_name,
                const std::string& mtl_file_name,
                const std::vector<std::string>& texture_file_names);
 
   bool LoadGLTF(Renderer* renderer,
-                uint64_t shader_id,
+                ResourceId shader_id,
                 const std::string& file_name);
 
   void CreateMesh(Renderer* renderer,
-                  uint64_t shader_id,
+                  ResourceId shader_id,
                   std::vector<Vertex> vertices,
                   std::vector<uint32_t> indices,
                   const std::vector<std::string>& texture_file_names);
@@ -63,8 +64,8 @@ class Model {
   base::Vector3f extents_{0};
 
   std::vector<DrawCmd> draw_list_;
-  uint64_t geometry_id_ = 0;
-  uint64_t texture_ids_[3] = {0, 0, 0};  // 0:Albedo, 1:Normal, 2:ORM
+  ResourceId geometry_id_ = 0;
+  ResourceId texture_ids_[3] = {0, 0, 0};  // 0:Albedo, 1:Normal, 2:ORM
   Renderer* renderer_ = nullptr;
 
   bool has_albedo_map_ = false;
@@ -73,8 +74,8 @@ class Model {
   bool cookie_cutter_mode_ = false;
   std::vector<MaterialData> materials_;
 
-  uint64_t materials_ubo_ = 0;
-  uint64_t materials_dset_ = 0;
+  ResourceId materials_ubo_ = 0;
+  ResourceId materials_dset_ = 0;
 
   std::unique_ptr<Mesh> ProcessMesh(
       std::vector<Vertex> raw_vertices,
@@ -88,7 +89,7 @@ class Model {
   void GenerateTangents(const std::vector<uint32_t>& indices,
                         std::vector<Vertex>& vertices);
 
-  void CreateRenderResources(uint64_t shader_id,
+  void CreateRenderResources(ResourceId shader_id,
                              std::unique_ptr<Mesh> mesh,
                              std::vector<std::unique_ptr<Image>>& images);
 

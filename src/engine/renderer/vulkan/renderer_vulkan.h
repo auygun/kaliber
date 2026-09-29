@@ -45,26 +45,26 @@ class RendererVulkan final : public Renderer {
   void SetScissor(int x, int y, int width, int height) final;
   void ResetScissor() final;
 
-  uint64_t CreateGeometry(std::unique_ptr<Mesh> mesh) final;
-  uint64_t CreateGeometry(VertexDescription vertex_description,
+  ResourceId CreateGeometry(std::unique_ptr<Mesh> mesh) final;
+  ResourceId CreateGeometry(VertexDescription vertex_description,
                           DataType index_description = kDataType_Invalid) final;
-  void UpdateGeometry(uint64_t resource_id,
+  void UpdateGeometry(ResourceId resource_id,
                       size_t num_vertices,
                       const void* vertices,
                       size_t num_indices,
                       const void* indices) final;
-  void DestroyGeometry(uint64_t resource_id) final;
-  void ActivateGeometry(uint64_t resource_id) final;
+  void DestroyGeometry(ResourceId resource_id) final;
+  void ActivateGeometry(ResourceId resource_id) final;
   void Draw(size_t num_indices = 0,
             size_t first_index = 0,
             size_t instance_count = 1,
             size_t first_instance = 0) final;
 
-  uint64_t CreateTexture() final;
-  void UpdateTexture(uint64_t resource_id, std::unique_ptr<Image> image) final;
-  void UpdateTexture(uint64_t resource_id,
+  ResourceId CreateTexture() final;
+  void UpdateTexture(ResourceId resource_id, std::unique_ptr<Image> image) final;
+  void UpdateTexture(ResourceId resource_id,
                      std::vector<std::unique_ptr<Image>> images) final;
-  void UpdateTexture(uint64_t resource_id,
+  void UpdateTexture(ResourceId resource_id,
                      int width,
                      int height,
                      int num_mip_levels,
@@ -72,7 +72,7 @@ class RendererVulkan final : public Renderer {
                      ImageFormat format,
                      size_t data_size,
                      uint8_t* image_data) final;
-  void UpdateTextureSubRegion(uint64_t resource_id,
+  void UpdateTextureSubRegion(ResourceId resource_id,
                               int x_offset,
                               int y_offset,
                               int width,
@@ -80,46 +80,46 @@ class RendererVulkan final : public Renderer {
                               ImageFormat format,
                               int src_pitch,
                               uint8_t* image_data) final;
-  void DestroyTexture(uint64_t resource_id) final;
+  void DestroyTexture(ResourceId resource_id) final;
 
-  uint64_t CreateShader(std::unique_ptr<ShaderSource> source,
+  ResourceId CreateShader(std::unique_ptr<ShaderSource> source,
                         const VertexDescription& vertex_description,
                         Primitive primitive,
                         bool enable_depth_test,
                         bool wireframe,
                         CullMode cull_mode,
                         bool premultiplied_alpha = false) final;
-  void DestroyShader(uint64_t resource_id) final;
-  void ActivateShader(uint64_t resource_id) final;
+  void DestroyShader(ResourceId resource_id) final;
+  void ActivateShader(ResourceId resource_id) final;
 
   void UpdatePushConstants(size_t size, const void* data) final;
 
-  uint64_t CreateBuffer(uint64_t shader_id,
+  ResourceId CreateBuffer(ResourceId shader_id,
                         size_t set,
                         size_t binding,
                         uint32_t buffer_size) final;
-  void UpdateBuffer(uint64_t resource_id, const void* data, size_t size) final;
-  void DestroyBuffer(uint64_t resource_id) final;
+  void UpdateBuffer(ResourceId resource_id, const void* data, size_t size) final;
+  void DestroyBuffer(ResourceId resource_id) final;
 
-  uint64_t CreateDescriptorSet(
-      uint64_t shader_id,
+  ResourceId CreateDescriptorSet(
+      ResourceId shader_id,
       size_t set,
-      const std::vector<std::vector<uint64_t>>& textures,
-      const std::vector<uint64_t>& buffers) final;
-  void ActivateDescriptorSet(uint64_t resource_id) final;
-  void DestroyDescriptorSet(uint64_t resource_id) final;
+      const std::vector<std::vector<ResourceId>>& textures,
+      const std::vector<ResourceId>& buffers) final;
+  void ActivateDescriptorSet(ResourceId resource_id) final;
+  void DestroyDescriptorSet(ResourceId resource_id) final;
 
   bool PrepareForDrawing() final;
   void Present() final;
 
-  uint64_t CreateRenderTarget(ImageFormat format,
+  ResourceId CreateRenderTarget(ImageFormat format,
                               int width,
                               int height,
                               bool depth) final;
-  void ActivateRenderTarget(uint64_t render_target_id) final;
-  void DestroyRenderTarget(uint64_t render_target_id) final;
+  void ActivateRenderTarget(ResourceId render_target_id) final;
+  void DestroyRenderTarget(ResourceId render_target_id) final;
   void ActivateScreenRenderTarget() final;
-  uint64_t GetRenderTargetColorTexture(uint64_t render_target_id) final;
+  ResourceId GetRenderTargetColorTexture(ResourceId render_target_id) final;
 
   size_t GetAndResetFPS() final;
 
@@ -227,8 +227,8 @@ class RendererVulkan final : public Renderer {
   };
 
   struct RenderTarget {
-    uint64_t color_texture_id = 0;
-    uint64_t depth_texture_id = 0;
+    ResourceId color_texture_id = 0;
+    ResourceId depth_texture_id = 0;
     VkFramebuffer frame_buffer = VK_NULL_HANDLE;
     VkRenderPass render_pass = VK_NULL_HANDLE;
     VkImageLayout last_image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -278,13 +278,13 @@ class RendererVulkan final : public Renderer {
 
   std::map<RenderPassKey, VkRenderPass> render_pass_pool_;
 
-  std::unordered_map<uint64_t, GeometryVulkan> geometries_;
-  std::unordered_map<uint64_t, ShaderVulkan> shaders_;
-  std::unordered_map<uint64_t, TextureVulkan> textures_;
-  std::unordered_map<uint64_t, BufferVulkan> buffers_;
-  std::unordered_map<uint64_t, DescriptorSetVulkan> descriptor_sets_;
-  std::unordered_map<uint64_t, RenderTarget> render_targets_;
-  uint64_t last_resource_id_ = 0;
+  std::unordered_map<ResourceId, GeometryVulkan> geometries_;
+  std::unordered_map<ResourceId, ShaderVulkan> shaders_;
+  std::unordered_map<ResourceId, TextureVulkan> textures_;
+  std::unordered_map<ResourceId, BufferVulkan> buffers_;
+  std::unordered_map<ResourceId, DescriptorSetVulkan> descriptor_sets_;
+  std::unordered_map<ResourceId, RenderTarget> render_targets_;
+  ResourceId last_resource_id_ = 0;
 
   bool context_lost_ = false;
 
@@ -306,12 +306,12 @@ class RendererVulkan final : public Renderer {
   uint64_t max_staging_buffer_size_ = 16ull * 1024 * 1024;
   bool staging_buffer_used_ = false;
 
-  uint64_t active_shader_id_ = 0;
+  ResourceId active_shader_id_ = 0;
 
   uint32_t active_geometry_vertex_count_ = 0;
   uint32_t active_geometry_index_count_ = 0;
 
-  uint64_t active_render_target_id_ = 0;
+  ResourceId active_render_target_id_ = 0;
   bool in_default_render_pass_ = false;
 
   std::map<DescriptorPoolKey, DescriptorPools> descriptor_pools_map_;

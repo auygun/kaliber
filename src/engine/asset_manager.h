@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "engine/model.h"
+#include "engine/renderer/renderer_types.h"
 
 namespace eng {
 
@@ -16,16 +17,16 @@ class AssetManager {
   ~AssetManager();
 
   // Loads a GLTF model and returns its ID (index).
-  uint32_t LoadGLTF(const std::string& file_name, uint64_t shader_id);
+  uint32_t LoadGLTF(const std::string& file_name, ResourceId shader_id);
 
   // Loads an OBJ model and returns its ID (index).
   uint32_t LoadObj(const std::string& file_name,
-                   uint64_t shader_id,
+                   ResourceId shader_id,
                    const std::string& mtl_file_name = "",
                    const std::vector<std::string>& texture_file_names = {});
 
   // Creates a procedural sphere mesh and returns its ID (index).
-  uint32_t CreateSphere(uint64_t shader_id,
+  uint32_t CreateSphere(ResourceId shader_id,
                         size_t rings,
                         size_t sectors,
                         const std::vector<std::string>& texture_file_names);

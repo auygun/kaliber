@@ -1,11 +1,16 @@
 #ifndef ENGINE_RENDERER_RENDERER_TYPES_H
 #define ENGINE_RENDERER_RENDERER_TYPES_H
 
+#include <cstdint>
 #include <string>
 #include <tuple>
 #include <vector>
 
 namespace eng {
+
+// Opaque handle to a GPU resource (geometry, texture, shader, buffer,
+// descriptor set, render target). 0 (kInvalidId) is the invalid sentinel.
+using ResourceId = uint32_t;
 
 enum class ImageFormat { kRGBA32, kDXT1, kDXT5, kETC1, kATC, kATCIA };
 

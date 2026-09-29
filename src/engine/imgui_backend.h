@@ -58,21 +58,21 @@ class ImguiBackend {
   };
 
   VertexDescription vertex_description_;
-  std::vector<uint64_t> geometries_;
-  uint64_t shader_ = 0;
+  std::vector<ResourceId> geometries_;
+  ResourceId shader_ = 0;
   Renderer* renderer_ = nullptr;
   Platform* platform_ = nullptr;
   size_t geometry_hash_ = 0;
   std::function<void()> on_geometry_changed_;
 
   SceneData scene_data_;
-  uint64_t scene_data_ubo_ = 0;
-  uint64_t scene_dset_ = 0;
+  ResourceId scene_data_ubo_ = 0;
+  ResourceId scene_dset_ = 0;
 
   // ImGui stores the descriptor set in ImTextureData::TexID because that is
   // what Draw() has to bind. The underlying texture must be destroyed along
   // with it, so keep the mapping here.
-  std::unordered_map<uint64_t, uint64_t> dset_to_texture_;
+  std::unordered_map<ResourceId, ResourceId> dset_to_texture_;
 
   // Track InputText selection state for primary selection updates.
   unsigned int prev_sel_input_id_ = 0;
@@ -82,10 +82,10 @@ class ImguiBackend {
   void LoadFont(const std::string& font_path);
   void MergeFallbackFont(const std::string& path);
   void UpdatePrimarySelection();
-  uint64_t CreateTextureAndDescriptorSet(int width,
+  ResourceId CreateTextureAndDescriptorSet(int width,
                                          int height,
                                          const uint8_t* pixels);
-  void DestroyTextureAndDescriptorSet(uint64_t dset);
+  void DestroyTextureAndDescriptorSet(ResourceId dset);
   void UpdateTexture(ImTextureData* tex);
   void UpdateGeometries();
 };
