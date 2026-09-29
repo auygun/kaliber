@@ -8,7 +8,7 @@
 #include "third_party/vma/vk_mem_alloc.h"
 #include "third_party/volk/volk.h"
 
-#if defined(__ANDROID__)
+#if defined(OS_ANDROID)
 struct ANativeWindow;
 #else
 struct GLFWwindow;
@@ -26,7 +26,7 @@ class VulkanContext {
   bool Initialize();
   void Shutdown();
 
-#if defined(__ANDROID__)
+#if defined(OS_ANDROID)
   bool CreateSurface(ANativeWindow* window, int width, int height);
 #else
   bool CreateSurface(GLFWwindow* window, int width, int height);

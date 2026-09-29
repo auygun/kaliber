@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-#if defined(__ANDROID__)
+#if defined(OS_ANDROID)
 #include <malloc.h>
 #endif
 
@@ -14,9 +14,9 @@ void* AlignedAlloc(size_t size, size_t alignment) {
   DCHECK((alignment % sizeof(void*)) == 0U);
 
   void* ptr = nullptr;
-#if defined(_WIN32)
+#if defined(OS_WIN)
   ptr = _aligned_malloc(size, alignment);
-#elif defined(__ANDROID__)
+#elif defined(OS_ANDROID)
   ptr = memalign(alignment, size);
 #else
   int ret = posix_memalign(&ptr, alignment, size);

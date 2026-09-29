@@ -7,11 +7,11 @@
 #include "engine/audio/audio_bus.h"
 #include "engine/audio/mixer_input.h"
 
-#if defined(__ANDROID__)
+#if defined(OS_ANDROID)
 #include "engine/audio/audio_device_oboe.h"
-#elif defined(__linux__)
+#elif defined(OS_LINUX)
 #include "engine/audio/audio_device_alsa.h"
-#elif defined(_WIN32)
+#elif defined(OS_WIN)
 #include "engine/audio/audio_device_wasapi.h"
 #endif
 
@@ -21,11 +21,11 @@ namespace eng {
 
 AudioMixer::AudioMixer()
     : main_thread_task_runner_(TaskRunner::GetThreadLocalTaskRunner()),
-#if defined(__ANDROID__)
+#if defined(OS_ANDROID)
       audio_device_{std::make_unique<AudioDeviceOboe>(this)} {
-#elif defined(__linux__)
+#elif defined(OS_LINUX)
       audio_device_{std::make_unique<AudioDeviceAlsa>(this)} {
-#elif defined(_WIN32)
+#elif defined(OS_WIN)
       audio_device_{std::make_unique<AudioDeviceWASAPI>(this)} {
 #endif
   if (!audio_device_->Initialize()) {

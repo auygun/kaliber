@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#if defined(__ANDROID__)
+#if defined(OS_ANDROID)
 #include <zlib.h>
 #include "third_party/minizip/unzip.h"
 #else
@@ -31,7 +31,7 @@ class AssetFile {
                                                bool null_terminate = false);
 
  private:
-#if defined(__ANDROID__)
+#if defined(OS_ANDROID)
   unzFile archive_ = 0;
   size_t uncompressed_size_ = 0;
 #else

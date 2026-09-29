@@ -11,7 +11,7 @@
 namespace eng {
 
 VulkanContext::VulkanContext() {
-#if defined(_DEBUG) && !defined(__ANDROID__)
+#if defined(_DEBUG) && !defined(OS_ANDROID)
   use_validation_layers_ = true;
 #endif
 }
@@ -762,9 +762,9 @@ bool VulkanContext::InitializeQueues(VkSurfaceKHR surface) {
     return false;
   }
 
-#if defined(__ANDROID__)
+#if defined(OS_ANDROID)
   VkFormat desired_format = VK_FORMAT_R8G8B8A8_UNORM;
-#elif defined(__linux__) || defined(_WIN32)
+#elif defined(OS_LINUX) || defined(OS_WIN)
   VkFormat desired_format = VK_FORMAT_B8G8R8A8_UNORM;
 #endif
 

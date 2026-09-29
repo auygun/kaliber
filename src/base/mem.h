@@ -6,7 +6,7 @@
 #include <memory>
 #include <span>
 
-#if defined(_WIN32)
+#if defined(OS_WIN)
 #include <malloc.h>
 #else
 #include <stdlib.h>
@@ -18,7 +18,7 @@
 namespace base {
 
 inline void AlignedFree(void* mem) {
-#if defined(_WIN32)
+#if defined(OS_WIN)
   _aligned_free(mem);
 #else
   free(mem);

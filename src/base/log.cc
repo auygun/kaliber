@@ -1,8 +1,8 @@
 #include "base/log.h"
 
-#if defined(__ANDROID__)
+#if defined(OS_ANDROID)
 #include <android/log.h>
-#elif defined(_WIN32)
+#elif defined(OS_WIN)
 #include <windows.h>
 #include <format>
 #else
@@ -38,11 +38,11 @@ LogMessage::~LogMessage() {
   size_t last_slash_pos = filename.find_last_of("\\/");
   if (last_slash_pos != std::string::npos)
     filename = filename.substr(last_slash_pos + 1);
-#if defined(__ANDROID__)
+#if defined(OS_ANDROID)
   __android_log_print(ANDROID_LOG_ERROR, "kaliber", "%d [%s:%d] %s",
                       verbosity_level_, filename.c_str(), line_,
                       message.c_str());
-#elif defined(_WIN32)
+#elif defined(OS_WIN)
   OutputDebugStringA(
       std::format("{} [{}:{}] {}", verbosity_level_, filename, line_, message)
           .c_str());
